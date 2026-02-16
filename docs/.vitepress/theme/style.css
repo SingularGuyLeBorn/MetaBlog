@@ -102,7 +102,8 @@ body {
 
 .vp-doc p {
   margin: 1em 0;
-  max-width: 70ch;
+  /* 移除 max-width 限制，允许段落与列表保持一致的宽度 */
+  /* 如需控制最大宽度以提高可读性，建议使用容器级别的 max-width */
 }
 
 .vp-doc a {
@@ -211,7 +212,6 @@ body {
 
 .vp-doc blockquote p {
   margin: 0;
-  max-width: none;
 }
 
 .vp-doc img {
@@ -256,6 +256,45 @@ body {
   height: 1px;
   background: var(--vp-c-divider);
   margin: 32px 0;
+}
+
+/* ============================================================
+   正文内容宽度优化
+   统一段落和列表的宽度行为，提升阅读体验
+   ============================================================ */
+
+/* 方案1：内容自然填充（推荐 - 充分利用屏幕空间） */
+.vp-doc .main {
+  /* 内容区自然填充可用宽度 */
+  width: 100%;
+}
+
+.vp-doc p,
+.vp-doc li {
+  /* 移除任何max-width限制，统一宽度行为 */
+  max-width: none;
+}
+
+/* 长段落自动换行优化 */
+.vp-doc p {
+  /* 允许在长单词/URL处换行 */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  /* 优先在空白处换行 */
+  word-break: normal;
+  /* 连字符支持（浏览器支持度较好） */
+  hyphens: auto;
+}
+
+/* 列表项保持一致的行高和间距 */
+.vp-doc li {
+  line-height: 1.8;
+}
+
+/* 嵌套列表的宽度保持一致 */
+.vp-doc li > p {
+  /* 列表内的段落与其他内容保持一致 */
+  margin: 0.5em 0;
 }
 
 mjx-container {
@@ -333,5 +372,64 @@ body.is-dragging::after {
   .vp-doc th,
   .vp-doc td {
     padding: 10px 12px;
+  }
+}
+
+/* ============================================================
+   响应式布局优化
+   ============================================================ */
+
+/* 大屏幕：限制最大宽度以提高可读性 */
+@media (min-width: 1600px) {
+  .metablog-layout .VPDoc .main {
+    /* 超宽屏幕时，限制内容区最大宽度 */
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+  }
+}
+
+/* 平板设备 */
+@media (max-width: 1024px) {
+  .vp-doc {
+    font-size: 15.5px;
+    line-height: 1.75;
+  }
+  
+  /* 侧边栏收起时的内容边距 */
+  .metablog-layout .VPDoc .main {
+    padding: 20px !important;
+  }
+}
+
+/* 移动设备 */
+@media (max-width: 768px) {
+  .vp-doc {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  
+  .vp-doc p {
+    /* 移动端优化长文本换行 */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+  }
+  
+  .metablog-layout .VPDoc .main {
+    padding: 16px !important;
+  }
+}
+
+/* 小屏手机 */
+@media (max-width: 480px) {
+  .metablog-layout .VPDoc .main {
+    padding: 12px !important;
+  }
+  
+  .vp-doc h1 {
+    font-size: 24px;
+  }
+  
+  .vp-doc h2 {
+    font-size: 19px;
   }
 }

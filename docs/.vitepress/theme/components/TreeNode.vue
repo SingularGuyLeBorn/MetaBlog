@@ -37,16 +37,17 @@
         </svg>
       </span>
       
-      <!-- Title -->
+      <!-- Title with tooltip for long text -->
       <a 
         v-if="item.link"
         :href="item.link" 
         class="node-title"
+        :title="item.text"
         @click.prevent.stop="$emit('navigate', item.link)"
       >
         {{ item.text }}
       </a>
-      <span v-else class="node-title no-link">{{ item.text }}</span>
+      <span v-else class="node-title no-link" :title="item.text">{{ item.text }}</span>
     </div>
 
     <!-- Children -->

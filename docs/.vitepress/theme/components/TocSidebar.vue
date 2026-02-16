@@ -244,23 +244,24 @@ onUnmounted(() => {
   border-radius: 4px;
   transition: color 200ms ease, background-color 200ms ease;
   
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  /* 语雀风格：单行省略，hover显示完整标题 */
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-height: 3em;
 }
 
 .toc-item a:hover {
   color: var(--vp-c-text-1, #262626);
   background: var(--vp-c-bg-soft, #f0f0f0);
+  /* hover时如果有足够空间可以展开，否则保持省略 */
+  white-space: nowrap;
 }
 
 .toc-item.is-active a {
   color: var(--vp-c-brand-1, #1677ff);
   background: var(--vp-c-brand-soft, rgba(22, 119, 255, 0.1));
   font-weight: 500;
+  white-space: nowrap;
 }
 
 /* Level styling */
