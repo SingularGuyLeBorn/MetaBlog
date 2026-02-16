@@ -13,7 +13,20 @@ const editorRef = ref<InstanceType<typeof InlineMarkdownEditor> | null>(null)
 // 判断当前页面是否可编辑 - computed property
 const isEditable = computed<boolean>(() => {
   const currentPath = route.path
-  if (currentPath === '/' || currentPath === '/index.html') {
+  // 首页组件不可编辑
+  const nonEditablePaths = [
+    '/',
+    '/index.html',
+    '/sections/posts/',
+    '/sections/posts/index.html',
+    '/sections/knowledge/',
+    '/sections/knowledge/index.html',
+    '/sections/resources/',
+    '/sections/resources/index.html',
+    '/sections/about/',
+    '/sections/about/index.html'
+  ]
+  if (nonEditablePaths.includes(currentPath)) {
     return false
   }
   // All files that have a relativePath are editable

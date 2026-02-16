@@ -1,11 +1,6 @@
 ---
-layout: page
 title: 文章列表
+description: 技术博客、学习笔记、项目总结
 ---
 
-<script setup>
-import SectionHub from '@/components/SectionHub.vue'
-import { data as posts } from '../../data/posts.data'
-</script>
-
-<SectionHub section-type="posts" :index-data="posts" />
+<PostsPage />

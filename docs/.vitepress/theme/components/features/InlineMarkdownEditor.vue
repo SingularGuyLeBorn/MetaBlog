@@ -9,8 +9,25 @@ const store = useAppStore()
 const { page } = useData()
 const route = useRoute()
 
-// Check if current file is editable
+// Check if current file is editable (not homepage components)
 const isEditableFile = computed(() => {
+  const currentPath = route.path
+  // 首页组件不可编辑
+  const nonEditablePaths = [
+    '/',
+    '/index.html',
+    '/sections/posts/',
+    '/sections/posts/index.html',
+    '/sections/knowledge/',
+    '/sections/knowledge/index.html',
+    '/sections/resources/',
+    '/sections/resources/index.html',
+    '/sections/about/',
+    '/sections/about/index.html'
+  ]
+  if (nonEditablePaths.includes(currentPath)) {
+    return false
+  }
   // All files with relativePath are editable
   // (py and ipynb files are converted to md by the backend)
   return !!page.value.relativePath
@@ -111,8 +128,7 @@ async function initEditor() {
         'undo',
         'redo',
         '|',
-        'fullscreen',
-        'outline'
+        'fullscreen'
       ],
       toolbarConfig: {
         pin: false, // Don't pin, let it scroll naturally
@@ -120,6 +136,10 @@ async function initEditor() {
       },
       cache: {
         enable: false // Disable cache to prevent stale content
+      },
+      outline: {
+        enable: true,
+        position: 'right'
       },
       preview: {
         delay: 300,
@@ -150,6 +170,10 @@ async function initEditor() {
               vditorInstance.value.setValue(content)
             }
           }
+          
+          // Setup outline click handlers for navigation
+          setupOutlineClickHandlers()
+          
           isLoading.value = false
         }, 100)
       },
@@ -249,6 +273,78 @@ function exitEditMode() {
   
   // Reload page to restore original VitePress rendered content
   window.location.reload()
+}
+
+// Setup outline click handlers
+function setupOutlineClickHandlers() {
+  // Wait for outline to be rendered
+  setTimeout(() => {
+    // Hide VitePress's default TOC/outline when editing
+    const vitepressOutline = document.querySelector('.VPDocAsideOutline, .aside-outline, .vp-doc-aside-outline, [class*="outline"]')
+    if (vitepressOutline) {
+      (vitepressOutline as HTMLElement).style.display = 'none'
+    }
+    
+    const outlineItems = document.querySelectorAll('.vditor-outline__item')
+    outlineItems.forEach(item => {
+      // Remove any existing click listeners to avoid duplicates
+      const newItem = item.cloneNode(true) as HTMLElement
+      item.parentNode?.replaceChild(newItem, item)
+      
+      newItem.addEventListener('click', (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        
+        // Get the target element id from the data-id attribute or href
+        let targetId = newItem.getAttribute('data-id')
+        
+        // If no data-id, try to get from href
+        if (!targetId) {
+          const href = newItem.getAttribute('href')
+          if (href && href.startsWith('#')) {
+            targetId = href.substring(1)
+          }
+        }
+        
+        if (targetId) {
+          // Try to find by ID in the editor content
+          let targetElement = document.getElementById(targetId)
+          
+          // If not found by ID, try to find by data-id in headings
+          if (!targetElement) {
+            const headings = document.querySelectorAll('.vditor-ir h1, .vditor-ir h2, .vditor-ir h3, .vditor-ir h4, .vditor-ir h5, .vditor-ir h6')
+            headings.forEach(heading => {
+              const headingId = heading.getAttribute('id') || heading.getAttribute('data-id')
+              if (headingId === targetId) {
+                targetElement = heading as HTMLElement
+              }
+            })
+          }
+          
+          if (targetElement) {
+            // Scroll to element smoothly with offset for toolbar
+            const offset = 100 // Account for fixed toolbar
+            const elementPosition = targetElement.getBoundingClientRect().top + window.pageYOffset
+            window.scrollTo({
+              top: elementPosition - offset,
+              behavior: 'smooth'
+            })
+            
+            // Highlight the heading temporarily
+            targetElement.style.backgroundColor = 'var(--vp-c-brand-soft)'
+            targetElement.style.transition = 'background-color 0.3s'
+            setTimeout(() => {
+              targetElement.style.backgroundColor = ''
+            }, 1500)
+            
+            // Update current state in outline
+            outlineItems.forEach(i => i.classList.remove('vditor-outline__item--current'))
+            newItem.classList.add('vditor-outline__item--current')
+          }
+        }
+      })
+    })
+  }, 800)
 }
 
 // Handle keyboard shortcuts
@@ -716,7 +812,15 @@ body.inline-editing .vp-doc .vditor-ir *:focus {
 
 /* Adjust main content area for editor */
 body.inline-editing .main-content {
-  padding-top: 80px; /* Reduced since toolbar is now inline */
+  padding-top: 80px; /* Space for toolbar */
+  padding-right: 280px; /* Space for outline on the right */
+}
+
+/* On smaller screens, remove the padding */
+@media (max-width: 1280px) {
+  body.inline-editing .main-content {
+    padding-right: 0;
+  }
 }
 
 /* Ensure Vditor toolbar items match our style */
@@ -872,38 +976,82 @@ body.inline-editing .vp-doc .vditor-ir pre code {
   background: transparent !important;
 }
 
-/* Code block styling - works for both light and dark mode */
-body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] pre {
-  background: var(--vp-c-bg-soft) !important;
-  border: 1px solid var(--vp-c-divider) !important;
-  color: var(--vp-c-text-1) !important;
+/* ========== CLEAN CODE BLOCK - 简洁代码块样式 ========== */
+
+/* Base code block container */
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] {
+  margin: 16px 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Code block preview - the actual rendered code */
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] .vditor-ir__preview {
+  background: #f6f8fa !important;
+  border: 1px solid #d0d7de !important;
+  border-radius: 6px !important;
   padding: 16px !important;
-  border-radius: 8px !important;
+  margin: 0 !important;
+}
+
+/* Code block preview content */
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] .vditor-ir__preview pre {
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
   overflow-x: auto !important;
 }
 
-/* Dark mode code blocks */
-body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] pre code,
-body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] .hljs {
-  color: var(--vp-c-text-1) !important;
-  font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace !important;
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] .vditor-ir__preview pre code {
+  color: #24292f !important;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace !important;
   font-size: 14px !important;
   line-height: 1.6 !important;
+  background: transparent !important;
 }
 
-/* Code block language label */
-body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"]::before {
-  content: attr(data-language);
-  display: block;
-  font-size: 12px;
-  color: var(--vp-c-text-3);
-  padding: 4px 12px;
-  background: var(--vp-c-bg);
-  border-bottom: 1px solid var(--vp-c-divider);
-  border-radius: 8px 8px 0 0;
-  margin: -16px -16px 12px -16px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+/* Code block markers (```java) - make them subtle */
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] > .vditor-ir__marker {
+  display: inline-block !important;
+  color: #8c959f !important;
+  font-size: 12px !important;
+  font-family: var(--vp-font-family-mono) !important;
+  margin-bottom: 4px !important;
+  opacity: 0.6 !important;
+}
+
+/* When code block is expanded (editing), show clean input area */
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"].vditor-ir__node--expand {
+  background: #f6f8fa !important;
+  border: 1px solid #d0d7de !important;
+  border-radius: 6px !important;
+  padding: 12px 16px !important;
+}
+
+/* In edit mode, hide the preview and show textarea-like input */
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"].vditor-ir__node--expand .vditor-ir__preview {
+  display: none !important;
+}
+
+/* Code block input area (when editing) */
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] textarea,
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] .vditor-ir__input {
+  background: transparent !important;
+  border: none !important;
+  color: #24292f !important;
+  font-family: 'SF Mono', Monaco, monospace !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  width: 100% !important;
+  resize: vertical !important;
+  min-height: 100px !important;
+}
+
+/* Hide closing ``` marker in preview */
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] > .vditor-ir__marker[data-type="code-block-close"],
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] span.vditor-ir__marker:last-child {
+  display: none !important;
 }
 
 /* Remove gray background on click/focus in IR mode */
@@ -927,46 +1075,178 @@ body.inline-editing .vp-doc .vditor-ir__node[data-type="blockquote"]:focus {
   outline: none !important;
 }
 
-/* Fix code block syntax highlighting colors - Use high contrast colors */
-body.inline-editing .vp-doc .vditor-ir .hljs-keyword {
+/* ========== LAYOUT ADJUSTMENTS - 编辑模式布局调整 ========== */
+
+/* Keep VitePress outline hidden, use Vditor's outline on LEFT */
+body.inline-editing .VPDocAsideOutline,
+body.inline-editing .VPDocAside,
+body.inline-editing aside[class*="VPDocAside"] {
+  display: none !important;
+}
+
+/* Widen main content - 主栏宽度增加 */
+body.inline-editing .VPDoc {
+  display: flex !important;
+}
+
+body.inline-editing .VPDoc .content {
+  flex: 1 !important;
+  max-width: none !important;
+  width: 100% !important;
+  padding: 0 24px !important;
+}
+
+body.inline-editing .vp-doc {
+  width: 100% !important;
+  max-width: 900px !important; /* 主内容最大宽度 */
+  margin: 0 auto !important;
+}
+
+/* Remove min-width from sidebars - 侧边栏不要最小宽度 */
+body.inline-editing .sidebar-left,
+body.inline-editing .VPSidebar,
+body.inline-editing .VPDocAside {
+  min-width: unset !important;
+}
+
+/* Expand sidebar width to 120% - 侧边栏宽度放大 */
+body.inline-editing .sidebar-left,
+body.inline-editing .VPSidebar {
+  width: calc(var(--vp-sidebar-width) * 1.2) !important;
+  max-width: 320px !important;
+}
+
+/* ========== Vditor Outline on LEFT - 大纲放左侧 ========== */
+body.inline-editing .vp-doc .vditor-outline {
+  display: block !important;
+  position: fixed !important;
+  left: calc(var(--vp-sidebar-width) * 1.2 + 16px) !important; /* 左侧栏右侧 */
+  top: 120px !important; /* 导航栏下方 */
+  width: 200px !important; /* 大纲宽度 */
+  max-height: calc(100vh - 160px) !important;
+  overflow-y: auto !important;
+  background: var(--vp-c-bg) !important;
+  border: 1px solid var(--vp-c-divider) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08) !important;
+  padding: 12px !important;
+  z-index: 50 !important;
+  margin: 0 !important;
+  pointer-events: auto !important;
+}
+
+/* Adjust main content margin to make room for left outline */
+body.inline-editing .VPContent {
+  padding-left: 220px !important; /* Space for left outline */
+}
+
+/* Responsive - hide outline on smaller screens */
+@media (max-width: 1280px) {
+  body.inline-editing .vp-doc .vditor-outline {
+    display: none !important; /* 小屏幕隐藏大纲 */
+  }
+  
+  body.inline-editing .VPContent {
+    padding-left: 0 !important;
+  }
+}
+
+body.inline-editing .vp-doc .vditor-outline__title {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--vp-c-text-1) !important;
+  padding-bottom: 10px !important;
+  border-bottom: 1px solid var(--vp-c-divider) !important;
+  margin-bottom: 10px !important;
+  display: block !important;
+}
+
+body.inline-editing .vp-doc .vditor-outline__item {
+  padding: 6px 10px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  font-size: 12px !important;
+  color: var(--vp-c-text-2) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  pointer-events: auto !important;
+  user-select: none !important;
+  line-height: 1.5 !important;
+}
+
+body.inline-editing .vp-doc .vditor-outline__item:hover {
+  background: var(--vp-c-brand-soft) !important;
   color: var(--vp-c-brand) !important;
+}
+
+body.inline-editing .vp-doc .vditor-outline__item--current {
+  background: var(--vp-c-brand-soft) !important;
+  color: var(--vp-c-brand) !important;
+  font-weight: 500 !important;
+}
+
+/* Indentation for different levels */
+body.inline-editing .vp-doc .vditor-outline__item[data-level="2"] {
+  padding-left: 18px !important;
+}
+
+body.inline-editing .vp-doc .vditor-outline__item[data-level="3"] {
+  padding-left: 28px !important;
+}
+
+/* Hide outline button in toolbar */
+body.inline-editing .vp-doc .vditor-toolbar__item[title="大纲"],
+body.inline-editing .vp-doc .vditor-toolbar__item[data-type="outline"] {
+  display: none !important;
+}
+
+/* Simple syntax highlighting - for light gray background */
+body.inline-editing .vp-doc .vditor-ir .hljs-keyword,
+body.inline-editing .vp-doc .vditor-ir .hljs-selector-tag,
+body.inline-editing .vp-doc .vditor-ir .hljs-doctag {
+  color: #d73a49 !important; /* Red for keywords */
   font-weight: 600 !important;
 }
 
-body.inline-editing .vp-doc .vditor-ir .hljs-string {
-  color: #22863a !important; /* Green for strings */
+body.inline-editing .vp-doc .vditor-ir .hljs-string,
+body.inline-editing .vp-doc .vditor-ir .hljs-regexp,
+body.inline-editing .vp-doc .vditor-ir .hljs-addition {
+  color: #032f62 !important; /* Dark blue for strings */
 }
 
-body.inline-editing .vp-doc .vditor-ir .hljs-number {
-  color: #032f62 !important; /* Blue for numbers */
+body.inline-editing .vp-doc .vditor-ir .hljs-number,
+body.inline-editing .vp-doc .vditor-ir .hljs-literal {
+  color: #005cc5 !important; /* Blue for numbers */
 }
 
-body.inline-editing .vp-doc .vditor-ir .hljs-comment {
+body.inline-editing .vp-doc .vditor-ir .hljs-comment,
+body.inline-editing .vp-doc .vditor-ir .hljs-meta {
   color: #6a737d !important; /* Gray for comments */
   font-style: italic !important;
 }
 
 body.inline-editing .vp-doc .vditor-ir .hljs-function,
-body.inline-editing .vp-doc .vditor-ir .hljs-title {
+body.inline-editing .vp-doc .vditor-ir .hljs-title,
+body.inline-editing .vp-doc .vditor-ir .hljs-section {
   color: #6f42c1 !important; /* Purple for functions */
 }
 
-body.inline-editing .vp-doc .vditor-ir .hljs-operator {
-  color: var(--vp-c-text-1) !important;
-}
-
-body.inline-editing .vp-doc .vditor-ir .hljs-punctuation {
-  color: var(--vp-c-text-2) !important;
-}
-
 body.inline-editing .vp-doc .vditor-ir .hljs-variable,
-body.inline-editing .vp-doc .vditor-ir .hljs-attr {
-  color: var(--vp-c-text-1) !important;
+body.inline-editing .vp-doc .vditor-ir .hljs-attr,
+body.inline-editing .vp-doc .vditor-ir .hljs-params {
+  color: #24292e !important; /* Dark for variables */
 }
 
 body.inline-editing .vp-doc .vditor-ir .hljs-built_in,
-body.inline-editing .vp-doc .vditor-ir .hljs-builtin-name {
-  color: #005cc5 !important; /* Blue for built-ins */
+body.inline-editing .vp-doc .vditor-ir .hljs-class {
+  color: #22863a !important; /* Green for classes/builtins */
+}
+
+body.inline-editing .vp-doc .vditor-ir .hljs-operator,
+body.inline-editing .vp-doc .vditor-ir .hljs-punctuation {
+  color: #444 !important;
 }
 
 /* Ensure sidebars are clickable */
@@ -1020,6 +1300,13 @@ body.inline-editing .sidebar-right {
   
   body.inline-editing .main-content {
     padding-top: 70px;
+  }
+}
+
+/* Hide outline on smaller screens */
+@media (max-width: 1280px) {
+  body.inline-editing .vp-doc .vditor-outline {
+    display: none !important;
   }
 }
 

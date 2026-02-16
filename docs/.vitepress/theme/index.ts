@@ -4,6 +4,12 @@ import Layout from './Layout.vue'
 import './style.css'
 import HomePortal from './components/HomePortal.vue'
 import SectionHub from './components/SectionHub.vue'
+import SectionHero from './components/SectionHero.vue'
+import HomePage from './components/pages/HomePage.vue'
+import PostsPage from './components/pages/PostsPage.vue'
+import KnowledgePage from './components/pages/KnowledgePage.vue'
+import ResourcesPage from './components/pages/ResourcesPage.vue'
+import AboutPage from './components/pages/AboutPage.vue'
 import Breadcrumb from './components/Breadcrumb.vue'
 import GlobalSidebar from './components/GlobalSidebar.vue'
 import TocSidebar from './components/TocSidebar.vue'
@@ -30,6 +36,12 @@ export default {
     // Register components
     app.component('HomePortal', HomePortal)
     app.component('SectionHub', SectionHub)
+    app.component('SectionHero', SectionHero)
+    app.component('HomePage', HomePage)
+    app.component('PostsPage', PostsPage)
+    app.component('KnowledgePage', KnowledgePage)
+    app.component('ResourcesPage', ResourcesPage)
+    app.component('AboutPage', AboutPage)
     app.component('InlineMarkdownEditor', InlineMarkdownEditor)
     app.component('AboutProfile', AboutProfile)
     app.component('KnowledgeGraph', KnowledgeGraph)
