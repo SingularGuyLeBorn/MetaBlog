@@ -101,3 +101,14 @@ body {
   font-weight: 600;
   margin-bottom: 8px;
 }
+
+/* Ensure Navbar Title is not clipped */
+.VPNavBarTitle .title {
+  line-height: 1.5 !important;
+  padding-bottom: 2px;
+}
+
+/* Ensure no strict overflow on the navbar title container */
+.VPNavBarTitle {
+  overflow: visible !important;
+}
