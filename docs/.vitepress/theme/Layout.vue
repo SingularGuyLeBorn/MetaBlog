@@ -6,6 +6,7 @@ import GlobalPageEditor from './components/features/GlobalPageEditor.vue'
 import GlobalSidebar from './components/GlobalSidebar.vue'
 import TocSidebar from './components/TocSidebar.vue'
 import TocFab from './components/TocFab.vue'
+import EditFab from './components/EditFab.vue'
 import Breadcrumb from './components/Breadcrumb.vue'
 import { useAppStore } from './stores/app'
 
@@ -247,6 +248,9 @@ watch(() => route.path, () => {
       v-if="showRightSidebar" 
       :headers="mergedHeaders" 
     />
+    
+    <!-- Edit FAB -->
+    <EditFab />
   </div>
 </template>
 

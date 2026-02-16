@@ -17,6 +17,8 @@ import AboutProfile from './components/Dashboards/AboutProfile.vue'
 import KnowledgeGraph from './components/features/KnowledgeGraph.vue'
 import RAGSearch from './components/features/RAGSearch.vue'
 import EditorTrigger from './components/EditorTrigger.vue'
+import PageEditor from './components/PageEditor.vue'
+import EditFab from './components/EditFab.vue'
 
 export default {
   extends: DefaultTheme,
@@ -37,6 +39,8 @@ export default {
     app.component('GlobalSidebar', GlobalSidebar)
     app.component('TocSidebar', TocSidebar)
     app.component('TocFab', TocFab)
+    app.component('PageEditor', PageEditor)
+    app.component('EditFab', EditFab)
     app.component('Breadcrumb', Breadcrumb)
     app.component('EditorTrigger', EditorTrigger)
   }
