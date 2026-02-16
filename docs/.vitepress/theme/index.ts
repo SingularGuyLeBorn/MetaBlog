@@ -12,12 +12,10 @@ import { useData, useRoute } from 'vitepress'
 import type { Theme } from 'vitepress'
 
 import { createPinia } from 'pinia'
-import GlobalPageEditor from './components/features/GlobalPageEditor.vue'
+import InlineMarkdownEditor from './components/features/InlineMarkdownEditor.vue'
 import AboutProfile from './components/Dashboards/AboutProfile.vue'
 import KnowledgeGraph from './components/features/KnowledgeGraph.vue'
 import RAGSearch from './components/features/RAGSearch.vue'
-import EditorTrigger from './components/EditorTrigger.vue'
-import PageEditor from './components/PageEditor.vue'
 import EditFab from './components/EditFab.vue'
 
 export default {
@@ -32,17 +30,15 @@ export default {
     // Register components
     app.component('HomePortal', HomePortal)
     app.component('SectionHub', SectionHub)
-    app.component('GlobalPageEditor', GlobalPageEditor)
+    app.component('InlineMarkdownEditor', InlineMarkdownEditor)
     app.component('AboutProfile', AboutProfile)
     app.component('KnowledgeGraph', KnowledgeGraph)
     app.component('RAGSearch', RAGSearch)
     app.component('GlobalSidebar', GlobalSidebar)
     app.component('TocSidebar', TocSidebar)
     app.component('TocFab', TocFab)
-    app.component('PageEditor', PageEditor)
     app.component('EditFab', EditFab)
     app.component('Breadcrumb', Breadcrumb)
-    app.component('EditorTrigger', EditorTrigger)
   }
 } satisfies Theme
 

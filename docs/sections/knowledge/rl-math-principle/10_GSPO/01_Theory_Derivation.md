@@ -1,7 +1,6 @@
 # 第10章：GSPO (Group Sequence Policy Optimization)
 
 **论文信息**：
-
 - **标题**：Group Sequence Policy Optimization
 - **作者**：Qwen Team, Alibaba Inc.
 - **年份**：2025
@@ -21,13 +20,10 @@ GSPO是**阿里巴巴Qwen团队**提出的LLM强化学习算法，解决了GRPO�
 
 本章将：
 
-分析GRPO的token级问题
-
-详细推导GSPO的序列级重要性比率
-
-解释为什么GSPO更稳定
-
-展示完整的代码实现
+1. 分析GRPO的token级问题
+2. 详细推导GSPO的序列级重要性比率
+3. 解释为什么GSPO更稳定
+4. 展示完整的代码实现
 
 ---
 
@@ -37,20 +33,16 @@ GSPO是**阿里巴巴Qwen团队**提出的LLM强化学习算法，解决了GRPO�
 
 **GRPO的矛盾**：
 
-
-| 组件 | 级别        | 说明                  |
-| ---- | ----------- | --------------------- |
-| 奖励 | **序列级**  | 整个response一个分数  |
+| 组件 | 级别 | 说明 |
+|------|------|------|
+| 奖励 | **序列级** | 整个response一个分数 |
 | 优化 | **Token级** | 每个token独立的概率比 |
 
 **问题**：Token级概率比的乘积可能爆炸或坍缩：
 
-$$
-r^{seq} = \prod_{t=1}^T \frac{\pi_\theta(y_t|y_{<t})}{\pi_{old}(y_t|y_{<t})} = \prod_{t=1}^T r_t
-$$
+$$r^{seq} = \prod_{t=1}^T \frac{\pi_\theta(y_t|y_{<t})}{\pi_{old}(y_t|y_{<t})} = \prod_{t=1}^T r_t$$
 
 当 $T$ 很大（长CoT推理）时：
-
 - 如果多数 $r_t > 1$：$r^{seq}$ 可能爆炸到 $10^{10}$
 - 如果多数 $r_t < 1$：$r^{seq}$ 可能坍缩到 $10^{-10}$
 
@@ -70,23 +62,17 @@ Mixture-of-Experts (MoE) 模型在GRPO训练中经常崩溃：
 
 **GSPO的关键改变**：在**log空间**定义序列级比率。
 
-$$
-\log r^{GSPO} = \sum_{t=1}^T \log \pi_\theta(y_t|y_{<t}) - \sum_{t=1}^T \log \pi_{old}(y_t|y_{<t})
-$$
+$$\log r^{GSPO} = \sum_{t=1}^T \log \pi_\theta(y_t|y_{<t}) - \sum_{t=1}^T \log \pi_{old}(y_t|y_{<t})$$
 
 等价于：
-
-$$
-r^{GSPO} = \exp\left(\log \pi_\theta(y) - \log \pi_{old}(y)\right)
-$$
+$$r^{GSPO} = \exp\left(\log \pi_\theta(y) - \log \pi_{old}(y)\right)$$
 
 **与GRPO的对比**：
 
-
-| 方法 | 公式                         | 数值范围                    |
-| ---- | ---------------------------- | --------------------------- |
-| GRPO | $r = \prod_t r_t$            | 可能$10^{-10}$ 到 $10^{10}$ |
-| GSPO | $r = \exp(\text{log\_diff})$ | 受控的有限范围              |
+| 方法 | 公式 | 数值范围 |
+|------|------|----------|
+| GRPO | $r = \prod_t r_t$ | 可能 $10^{-10}$ 到 $10^{10}$ |
+| GSPO | $r = \exp(\text{log\_diff})$ | 受控的有限范围 |
 
 ![Token级 vs 序列级](images/sequence_vs_token.png)
 
@@ -96,12 +82,9 @@ $$
 
 GSPO在序列级别应用PPO裁剪：
 
-$$
-L^{GSPO} = -\mathbb{E}_{x, y}\left[\min(r^{GSPO} A, \text{clip}(r^{GSPO}, 1-\epsilon, 1+\epsilon) A)\right]
-$$
+$$L^{GSPO} = -\mathbb{E}_{x, y}\left[\min(r^{GSPO} A, \text{clip}(r^{GSPO}, 1-\epsilon, 1+\epsilon) A)\right]$$
 
 **关键点**：
-
 - 裁剪作用于整个序列的概率比
 - 而不是每个token的概率比
 
@@ -109,11 +92,10 @@ $$
 
 > **Qwen的核心论点**：奖励的单位应该与优化的单位一致。
 
-
-| 单位    | 奖励 | 优化      | GSPO |
-| ------- | ---- | --------- | ---- |
-| Token级 | ✗   | ✓ (GRPO) | ✗   |
-| 序列级  | ✓   | ✓ (GSPO) | ✓   |
+| 单位 | 奖励 | 优化 | GSPO |
+|------|------|------|------|
+| Token级 | ✗ | ✓ (GRPO) | ✗ |
+| 序列级 | ✓ | ✓ (GSPO) | ✓ |
 
 ---
 
@@ -123,9 +105,7 @@ $$
 
 Token级概率比的乘积：
 
-$$
-r^{GRPO} = \prod_{t=1}^T r_t = \prod_{t=1}^T \exp(\log r_t) = \exp\left(\sum_{t=1}^T \log r_t\right)
-$$
+$$r^{GRPO} = \prod_{t=1}^T r_t = \prod_{t=1}^T \exp(\log r_t) = \exp\left(\sum_{t=1}^T \log r_t\right)$$
 
 其中 $\log r_t = \log \pi_\theta(y_t) - \log \pi_{old}(y_t)$。
 
@@ -135,14 +115,11 @@ $$
 
 **直接在log空间定义**：
 
-$$
-\log r^{GSPO} = \sum_t \log \pi_\theta(y_t) - \sum_t \log \pi_{old}(y_t)
-$$
+$$\log r^{GSPO} = \sum_t \log \pi_\theta(y_t) - \sum_t \log \pi_{old}(y_t)$$
 
 这看起来和GRPO一样，但关键区别在于**裁剪方式**：
 
 **GRPO裁剪**：
-
 ```python
 # 每个token裁剪后再乘
 clipped_ratio = [clip(r_t, 1-ε, 1+ε) for r_t in ratios]
@@ -150,7 +127,6 @@ seq_ratio = prod(clipped_ratio)  # 仍然可能爆炸
 ```
 
 **GSPO裁剪**：
-
 ```python
 # 序列ratio上直接裁剪
 seq_ratio = exp(sum_log_new - sum_log_old)
@@ -162,18 +138,12 @@ clipped_seq_ratio = clip(seq_ratio, 1-ε, 1+ε)  # 有界
 设每个token的 $\log r_t$ 服从均值为0、方差为 $\sigma^2$ 的分布。
 
 **GRPO（Token级乘积）**：
-
-$$
-\text{Var}[\log r^{GRPO}] = T \cdot \sigma^2
-$$
+$$\text{Var}[\log r^{GRPO}] = T \cdot \sigma^2$$
 
 当 $T = 4096$，$r^{GRPO}$ 的范围可达 $e^{\pm 64\sigma}$。
 
 **GSPO（序列级裁剪）**：
-
-$$
-r^{GSPO} \in [1-\epsilon, 1+\epsilon]
-$$
+$$r^{GSPO} \in [1-\epsilon, 1+\epsilon]$$
 
 始终有界。
 
@@ -216,12 +186,11 @@ $$
 
 ### 4.2 超参数
 
-
-| 参数         | 值   | 说明           |
-| ------------ | ---- | -------------- |
-| clip_epsilon | 0.2  | 裁剪范围       |
-| group_size   | 8    | 每prompt采样数 |
-| kl_coef      | 0.01 | KL惩罚系数     |
+| 参数 | 值 | 说明 |
+|------|----|----|
+| clip_epsilon | 0.2 | 裁剪范围 |
+| group_size | 8 | 每prompt采样数 |
+| kl_coef | 0.01 | KL惩罚系数 |
 
 ---
 
@@ -229,27 +198,20 @@ $$
 
 ### 5.1 核心差异
 
-
-| 特性      | GRPO        | GSPO       | DAPO        |
-| --------- | ----------- | ---------- | ----------- |
-| 比率级别  | Token级乘积 | 序列级     | Token级     |
-| 裁剪方式  | Token级对称 | 序列级对称 | Token级解耦 |
-| MoE稳定性 | ✗          | ✓         | 中          |
-| 来源      | DeepSeek    | Qwen       | ByteDance   |
+| 特性 | GRPO | GSPO | DAPO |
+|------|------|------|------|
+| 比率级别 | Token级乘积 | 序列级 | Token级 |
+| 裁剪方式 | Token级对称 | 序列级对称 | Token级解耦 |
+| MoE稳定性 | ✗ | ✓ | 中 |
+| 来源 | DeepSeek | Qwen | ByteDance |
 
 ### 5.2 公式对比
 
 **GRPO**:
-
-$$
-r^{GRPO} = \prod_t \frac{\pi_\theta(y_t)}{\pi_{old}(y_t)}
-$$
+$$r^{GRPO} = \prod_t \frac{\pi_\theta(y_t)}{\pi_{old}(y_t)}$$
 
 **GSPO**:
-
-$$
-r^{GSPO} = \exp\left(\sum_t \log\pi_\theta(y_t) - \sum_t \log\pi_{old}(y_t)\right)
-$$
+$$r^{GSPO} = \exp\left(\sum_t \log\pi_\theta(y_t) - \sum_t \log\pi_{old}(y_t)\right)$$
 
 **数学上等价，但实现上有关键区别：GSPO在序列级裁剪！**
 
@@ -259,12 +221,11 @@ $$
 
 ### 6.1 核心公式
 
-
-| 组件        | 公式                                       |
-| ----------- | ------------------------------------------ |
+| 组件 | 公式 |
+|------|------|
 | 序列log概率 | $\log\pi(y) = \sum_t \log\pi(y_t\|y_{<t})$ |
-| 序列比率    | $r = \exp(\log\pi_\theta - \log\pi_{old})$ |
-| GSPO损失    | $-\min(r \cdot A, \text{clip}(r) \cdot A)$ |
+| 序列比率 | $r = \exp(\log\pi_\theta - \log\pi_{old})$ |
+| GSPO损失 | $-\min(r \cdot A, \text{clip}(r) \cdot A)$ |
 
 ### 6.2 GSPO的贡献
 

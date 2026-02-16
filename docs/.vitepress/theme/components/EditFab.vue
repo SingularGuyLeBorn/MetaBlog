@@ -1,37 +1,44 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useData, useRoute } from 'vitepress'
-import PageEditor from './PageEditor.vue'
+import InlineMarkdownEditor from './features/InlineMarkdownEditor.vue'
 
 const { page } = useData()
 const route = useRoute()
 
+const editorRef = ref<InstanceType<typeof InlineMarkdownEditor> | null>(null)
 const showEditor = ref(false)
 
-// 判断当前页面是否可编辑（排除首页和特殊页面）
-const isEditable = () => {
-  // 首页不显示编辑按钮
-  if (route.path === '/' || route.path === '/index.html') {
+// Cache-bust: 20250217-002
+// 判断当前页面是否可编辑 - computed property
+const isEditable = computed<boolean>(() => {
+  const currentPath = route.path
+  if (currentPath === '/' || currentPath === '/index.html') {
     return false
   }
-  // 需要有文件路径
+  // All files that have a relativePath are editable
+  // (py and ipynb files are converted to md by the backend)
   return !!page.value.relativePath
-}
+})
 
 const openEditor = () => {
-  if (!isEditable()) return
-  showEditor.value = true
+  // Access computed property value
+  if (!isEditable.value) {
+    console.log('Page not editable')
+    return
+  }
+  editorRef.value?.enterEditMode()
 }
 </script>
 
 <template>
-  <!-- 浮动编辑按钮 -->
+  <!-- Edit FAB -->
   <Transition name="fab">
     <button
-      v-if="isEditable()"
+      v-if="isEditable && !showEditor"
       class="edit-fab"
       @click="openEditor"
-      title="编辑当前页面"
+      title="编辑当前页面 (双击内容也可进入编辑)"
     >
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
@@ -41,8 +48,8 @@ const openEditor = () => {
     </button>
   </Transition>
   
-  <!-- 页面编辑器 -->
-  <PageEditor v-model="showEditor" />
+  <!-- Inline Editor Component -->
+  <InlineMarkdownEditor ref="editorRef" />
 </template>
 
 <style scoped>
@@ -87,7 +94,7 @@ const openEditor = () => {
 @media (max-width: 1279px) {
   .edit-fab {
     right: 20px;
-    bottom: 80px; /* 避免与 TOC FAB 重叠 */
+    bottom: 80px;
   }
 }
 

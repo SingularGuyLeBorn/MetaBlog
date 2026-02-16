@@ -2,7 +2,6 @@
 import { ref, onMounted, computed, watch, provide, nextTick } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import { useData, useRoute } from 'vitepress'
-import GlobalPageEditor from './components/features/GlobalPageEditor.vue'
 import GlobalSidebar from './components/GlobalSidebar.vue'
 import TocSidebar from './components/TocSidebar.vue'
 import TocFab from './components/TocFab.vue'
@@ -210,7 +209,6 @@ watch(() => route.path, () => {
         <Layout>
           <template #doc-before>
             <Breadcrumb />
-            <GlobalPageEditor />
           </template>
           
           <template #doc-after>
@@ -397,9 +395,13 @@ watch(() => route.path, () => {
   z-index: 200;
 }
 
-/* Editor mode adjustments */
-.metablog-layout.is-editing .VPDoc .main {
-  display: none !important;
+/* Inline Editing Mode */
+body.inline-editing {
+  /* Layout adjustments for inline editor */
+}
+
+body.inline-editing .VPNav {
+  z-index: 1000;
 }
 
 /* Responsive Design */

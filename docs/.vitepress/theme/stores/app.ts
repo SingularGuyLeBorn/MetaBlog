@@ -15,6 +15,8 @@ export const useAppStore = defineStore('app', () => {
 
   function setEditing(status: boolean) {
     isEditing.value = status
+    // Sync isEditorOpen with isEditing
+    isEditorOpen.value = status
   }
 
   return {
