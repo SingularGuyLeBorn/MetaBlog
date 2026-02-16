@@ -1,23 +1,15 @@
----
-title: 04_Content.ipynb
-filePath: knowledge/rl-math-principle/01_Bellman_Equation/04_Content.ipynb
-aside: false
----
+# 04_Content.ipynb ​
 
-# 04_Content.ipynb
+# 第1章：贝尔曼方程 (Jupyter版)  ​
 
-# 第1章：贝尔曼方程 (Jupyter版)
+## 核心概念 ​
 
-## 核心概念
+贝尔曼最优方程是强化学习的"物理定律"。它描述了状态价值之间的递归关系：
 
-**贝尔曼最优方程**是强化学习的"物理定律"。它描述了状态价值之间的递归关系：
+V∗(s)=maxa(R(s,a)+γ∑s′P(s′|s,a)V∗(s′))我们通过价值迭代 (Value Iteration) 算法来求解这个方程。
 
-$$ V^*(s) = \max_{a} \left( R(s, a) + \gamma \sum_{s'} P(s'|s, a) V^*(s') \right) $$
-
-我们通过**价值迭代 (Value Iteration)** 算法来求解这个方程。
-
-
-```python
+python
+```
 import numpy as np
 
 # 简单的价值迭代 Demo
@@ -41,6 +33,3 @@ for i in range(10):
 ```
 
 可以看到价值从目标状态 (State 2) 一步步向后传播 (Backpropagate) 到起始状态。
-
-
-
