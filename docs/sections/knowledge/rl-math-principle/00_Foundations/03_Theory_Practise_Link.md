@@ -32,7 +32,7 @@ mean_reward = np.mean(rewards)
 
 在后续章节（如 PPO/GRPO）中，我们将推导策略梯度：
 $$ \nabla J(\theta) = \int \nabla \pi_\theta(a|s) Q(s,a) da $$
-- 这个公式成立的前提是积分和微分可以交换顺序（Leibniz Integral Rule）。这要求概率密度函数 $\pi_\theta$ 是光滑的，且满足一定的**可积性条件**。如果不理解测度论，就无法理解为什么某些"尖锐"的策略（如 Deterministic Policy）会导致梯度消失或爆炸。
+这个公式成立的前提是积分和微分可以交换顺序（Leibniz Integral Rule）。这要求概率密度函数 $\pi_\theta$ 是光滑的，且满足一定的**可积性条件**。如果不理解测度论，就无法理解为什么某些"尖锐"的策略（如 Deterministic Policy）会导致梯度消失或爆炸。
 
 ## 4. 总结
 
