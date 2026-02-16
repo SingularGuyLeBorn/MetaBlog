@@ -1,5 +1,5 @@
-import { readdirSync, statSync, existsSync, readFileSync } from 'fs'
-import { join, relative, resolve, dirname } from 'path'
+import { readdirSync, existsSync, readFileSync, statSync } from 'fs'
+import { join, relative, resolve, dirname, extname, basename } from 'path'
 
 interface SidebarNode {
   text: string
@@ -7,165 +7,161 @@ interface SidebarNode {
   items?: SidebarNode[]
   collapsed?: boolean
   id?: string
+  isLeaf?: boolean
 }
 
-// Global cache for manifests to avoid repeated IO per recursive call
 const manifestCache = new Map<string, Record<string, any>>()
 
 function getManifest(dir: string): Record<string, any> {
-    const manifestPath = join(dir, 'manifest.json')
-    if (manifestCache.has(manifestPath)) return manifestCache.get(manifestPath)!
-    
-    if (existsSync(manifestPath)) {
-        try {
-            const content = JSON.parse(readFileSync(manifestPath, 'utf-8'))
-            manifestCache.set(manifestPath, content)
-            return content
-        } catch {}
-    }
-    return {}
+  const manifestPath = join(dir, 'manifest.json')
+  if (manifestCache.has(manifestPath)) return manifestCache.get(manifestPath)!
+  
+  if (existsSync(manifestPath)) {
+    try {
+      const content = JSON.parse(readFileSync(manifestPath, 'utf-8'))
+      manifestCache.set(manifestPath, content)
+      return content
+    } catch {}
+  }
+  return {}
 }
 
 export function generateSectionSidebar(sectionsPath: string, sectionName: string): SidebarNode[] {
   const sectionDir = join(sectionsPath, sectionName)
   const root = resolve(process.cwd(), 'docs')
-  const node = scanNestNode(sectionDir, sectionName, 0, root)
-  // If we want the section root to be the top item, wrap it in an array
-  return node ? [node] : []
-}
-
-export function generateGlobalSidebar(sectionsPath: string): SidebarNode[] {
-  if (!existsSync(sectionsPath)) return []
   
-  // Scan sections: knowledge, posts, resources, about
-  const sections = readdirSync(sectionsPath, { withFileTypes: true })
-    .filter(d => d.isDirectory())
-    .sort((a, b) => {
-      const order = ['knowledge', 'posts', 'resources', 'about']
-      const idxA = order.indexOf(a.name)
-      const idxB = order.indexOf(b.name)
-      if (idxA !== -1 && idxB !== -1) return idxA - idxB
-      if (idxA !== -1) return -1
-      if (idxB !== -1) return 1
-      return a.name.localeCompare(b.name)
-    })
+  if (!existsSync(sectionDir)) return []
   
-  const root = resolve(process.cwd(), 'docs')
-
-  return sections.map(section => {
-    const sectionDir = join(sectionsPath, section.name)
-    const sectionNode = scanNestNode(sectionDir, section.name, 0, root)
+  const entries = readdirSync(sectionDir, { withFileTypes: true })
+  const nodes: SidebarNode[] = []
+  
+  for (const entry of entries) {
+    if (entry.name.startsWith('.') || entry.name === 'manifest.json') continue
     
-    if (sectionNode) {
-      sectionNode.link = `/sections/${section.name}/`
-      sectionNode.collapsed = false // Always expanded at root section level
+    const entryPath = join(sectionDir, entry.name)
+    
+    if (entry.isDirectory()) {
+      const node = scanNode(entryPath, entry.name, root, 0)
+      if (node) nodes.push(node)
+    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+      const node = createLeafNode(entryPath, entry.name, root)
+      if (node) nodes.push(node)
     }
-    
-    return sectionNode
-  }).filter(Boolean) as SidebarNode[]
-}
-
-function scanNestNode(dirPath: string, nodeName: string, level: number, rootDocPath: string): SidebarNode | null {
-  const sameNameMd = join(dirPath, `${nodeName}.md`)
-  const indexMd = join(dirPath, `index.md`)
-  
-  let folderlink = ''
-  let folderNotePath = ''
-  
-  // Identify if this folder acts as a document node (has content)
-  if (existsSync(sameNameMd)) {
-    folderNotePath = sameNameMd
-    folderlink = '/' + relative(rootDocPath, dirPath).replace(/\\/g, '/') + '/'
-  } else if (existsSync(indexMd)) {
-    folderNotePath = indexMd
-    folderlink = '/' + relative(rootDocPath, dirPath).replace(/\\/g, '/') + '/'
   }
   
-  // Clean up folder title: Priority 1. manifest.json 2. folderNote (frontmatter/H1) 3. Folder Name
-  const manifest = getManifest(dirname(dirPath))
+  return nodes.sort((a, b) => sortNodes(a, b))
+}
+
+function scanNode(dirPath: string, nodeName: string, rootDocPath: string, level: number): SidebarNode | null {
+  const sameNameMd = join(dirPath, `${nodeName}.md`)
+  const indexMd = join(dirPath, 'index.md')
+  
+  let folderLink: string | undefined
+  let folderNotePath: string | undefined
+  
+  if (existsSync(sameNameMd)) {
+    folderNotePath = sameNameMd
+    folderLink = '/' + relative(rootDocPath, dirPath).replace(/\\/g, '/') + '/'
+  } else if (existsSync(indexMd)) {
+    folderNotePath = indexMd
+    folderLink = '/' + relative(rootDocPath, dirPath).replace(/\\/g, '/') + '/'
+  }
+  
+  const parentDir = dirname(dirPath)
+  const manifest = getManifest(parentDir)
   let title = manifest[nodeName]?.title
   
   if (!title && folderNotePath) {
     title = extractTitle(folderNotePath)
   }
-  
   if (!title) {
-    title = nodeName.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    title = formatDisplayName(nodeName)
   }
+  
+  const nodeId = '/' + relative(rootDocPath, dirPath).replace(/\\/g, '/') + '/'
   
   const entries = readdirSync(dirPath, { withFileTypes: true })
   const children: SidebarNode[] = []
   
   for (const entry of entries) {
+    if (entry.name.startsWith('.') || entry.name === 'manifest.json') continue
+    
     const entryPath = join(dirPath, entry.name)
     
-    // 1. Handle Directories (Recursive)
+    if (entryPath === folderNotePath) continue
+    
     if (entry.isDirectory()) {
-      const childNode = scanNestNode(
-        entryPath,
-        entry.name,
-        level + 1,
-        rootDocPath
-      )
-      if (childNode) {
-        children.push(childNode)
-      }
-    } 
-    // 2. Handle Markdown Files
-    else if (entry.isFile() && entry.name.endsWith('.md')) {
-      // Skip if this file is the "folder note" for the current directory (already handled as the parent node's link)
-      if (entryPath === folderNotePath) continue
-      
-      
-      // User request: "index.md" is special (handled as parent), but for other files, 
-      // strict filename (without .md) should be used as title to preserve ordering/naming.
-      // Do NOT extract title from content.
-      const childTitle = entry.name.replace(/\.md$/i, '')
-      const childLink = '/' + relative(rootDocPath, entryPath).replace(/\\/g, '/').replace(/\.md$/, '')
-      
-      children.push({
-        text: childTitle,
-        link: childLink,
-        id: childLink // Use link as ID for files
-      })
+      const childNode = scanNode(entryPath, entry.name, rootDocPath, level + 1)
+      if (childNode) children.push(childNode)
+    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+      const leafNode = createLeafNode(entryPath, entry.name, rootDocPath, level + 1)
+      if (leafNode) children.push(leafNode)
     }
   }
   
-  // A node is valid if it has a link (is a document) OR has children
-  if (!folderlink && children.length === 0) {
-      return null
-  }
-
-  // Generate a predictable ID for the folder node based on its path
-  const uniqueNodeId = '/' + relative(rootDocPath, dirPath).replace(/\\/g, '/') + '/'
-
   const node: SidebarNode = {
     text: title,
+    id: nodeId,
     collapsed: level >= 1,
-    id: uniqueNodeId
+    isLeaf: false
   }
   
-  if (folderlink) node.link = folderlink
+  if (folderLink) node.link = folderLink
+  if (children.length > 0) node.items = children.sort((a, b) => sortNodes(a, b))
   
-  if (children.length > 0) {
-    // Sort: Folders first? Or Mix? Usually mix alphabetically or by some order. 
-    // Let's keep alphabetical sort by text for now to be simple and predictable.
-    node.items = children.sort((a, b) => a.text.localeCompare(b.text))
-  } else {
-     delete node.collapsed
-  }
+  if (!folderLink && children.length === 0) return null
   
   return node
+}
+
+function createLeafNode(filePath: string, fileName: string, rootDocPath: string, level: number = 0): SidebarNode | null {
+  const baseName = fileName.replace(/\.md$/i, '')
+  const title = formatDisplayName(baseName)
+  const relativePath = relative(rootDocPath, filePath)
+  const link = '/' + relativePath.replace(/\\/g, '/').replace(/\.md$/, '')
+  
+  return {
+    text: title,
+    link: link,
+    id: link,
+    collapsed: false,
+    isLeaf: true
+  }
+}
+
+function sortNodes(a: SidebarNode, b: SidebarNode): number {
+  const aText = a.text || ''
+  const bText = b.text || ''
+  
+  const aMatch = aText.match(/^(\d+)/)
+  const bMatch = bText.match(/^(\d+)/)
+  
+  if (aMatch && bMatch) {
+    const aNum = parseInt(aMatch[1], 10)
+    const bNum = parseInt(bMatch[1], 10)
+    if (aNum !== bNum) return aNum - bNum
+  }
+  
+  return aText.localeCompare(bText)
+}
+
+function formatDisplayName(name: string): string {
+  let formatted = name.replace(/_/g, ' ')
+  formatted = formatted.replace(/^(\d+)([A-Za-z])/, '$1 $2')
+  
+  return formatted.split(' ').map(word => {
+    if (!word) return ''
+    if (/^\d+$/.test(word)) return word
+    return word.charAt(0).toUpperCase() + word.slice(1)
+  }).join(' ')
 }
 
 function extractTitle(mdPath: string): string {
   try {
     const content = readFileSync(mdPath, 'utf-8')
-    // More robust frontmatter match (handles spaces, single/double quotes)
     const fmMatch = content.match(/^title:\s*["']?(.+?)["']?\s*$/m)
     if (fmMatch) return fmMatch[1].trim()
     
-    // Match first # header
     const h1Match = content.match(/^#\s+(.+)$/m)
     if (h1Match) return h1Match[1].trim()
   } catch {}

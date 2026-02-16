@@ -5,6 +5,9 @@ import './style.css'
 import HomePortal from './components/HomePortal.vue'
 import SectionHub from './components/SectionHub.vue'
 import Breadcrumb from './components/Breadcrumb.vue'
+import GlobalSidebar from './components/GlobalSidebar.vue'
+import TocSidebar from './components/TocSidebar.vue'
+import TocFab from './components/TocFab.vue'
 import { useData, useRoute } from 'vitepress'
 import type { Theme } from 'vitepress'
 
@@ -13,31 +16,34 @@ import GlobalPageEditor from './components/features/GlobalPageEditor.vue'
 import AboutProfile from './components/Dashboards/AboutProfile.vue'
 import KnowledgeGraph from './components/features/KnowledgeGraph.vue'
 import RAGSearch from './components/features/RAGSearch.vue'
-import GlobalSidebar from './components/GlobalSidebar.vue'
-
 import EditorTrigger from './components/EditorTrigger.vue'
 
 export default {
   extends: DefaultTheme,
   Layout: () => {
-    return h(Layout, null, {
-      'doc-before': () => h(Breadcrumb)
-    })
+    return h(Layout, null, {})
   },
   enhanceApp({ app, router, siteData }) {
     const pinia = createPinia()
     app.use(pinia)
     
+    // Register components
     app.component('HomePortal', HomePortal)
     app.component('SectionHub', SectionHub)
     app.component('GlobalPageEditor', GlobalPageEditor)
     app.component('AboutProfile', AboutProfile)
     app.component('KnowledgeGraph', KnowledgeGraph)
     app.component('RAGSearch', RAGSearch)
+    app.component('GlobalSidebar', GlobalSidebar)
+    app.component('TocSidebar', TocSidebar)
+    app.component('TocFab', TocFab)
+    app.component('Breadcrumb', Breadcrumb)
+    app.component('EditorTrigger', EditorTrigger)
   }
 } satisfies Theme
 
-function useSidebarData() {
+// Utility function for sidebar data (can be used in components)
+export function useSidebarData() {
     const { theme } = useData()
     const route = useRoute()
     const sidebar = theme.value.sidebar || {}

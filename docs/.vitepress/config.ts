@@ -12,14 +12,69 @@ const getWordCount = (content: string) => {
   return content.split(/\s+/g).length
 }
 
-// Extract title from markdown content
-function extractTitle(mdPath: string): string {
-  try {
-    const content = fs.readFileSync(mdPath, 'utf-8')
-    const match = content.match(/^title:\s*(.+)$/m)
-    return match ? match[1].trim() : ''
-  } catch {
-    return ''
+/**
+ * Format a name for breadcrumb display
+ */
+function formatBreadcrumbName(name: string): string {
+  let formatted = name.replace(/[_-]/g, ' ')
+  formatted = formatted.replace(/^(\d+)\s*/, '$1 ')
+  return formatted.split(' ').map(word => {
+    if (!word) return ''
+    if (/^\d+$/.test(word)) return word
+    return word.charAt(0).toUpperCase() + word.slice(1)
+  }).join(' ').trim()
+}
+
+/**
+ * Generate all rewrites for the strict nest architecture
+ * This handles the "pair rule": folder-name/folder-name.md -> folder-name/index.md
+ */
+function generateRewrites(): Record<string, string> {
+  const rewrites: Record<string, string> = {}
+  const sectionsPath = path.resolve(__dirname, '../sections')
+  
+  if (!fs.existsSync(sectionsPath)) return rewrites
+  
+  // Scan all sections
+  const sections = fs.readdirSync(sectionsPath, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+  
+  for (const section of sections) {
+    const sectionPath = path.join(sectionsPath, section.name)
+    scanForRewrites(sectionPath, `sections/${section.name}`, rewrites)
+  }
+  
+  return rewrites
+}
+
+/**
+ * Recursively scan directory for rewrites
+ */
+function scanForRewrites(dirPath: string, relativePath: string, rewrites: Record<string, string>): void {
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true })
+  const dirName = path.basename(dirPath)
+  
+  // Check for same-name.md (pair rule)
+  const sameNameMd = path.join(dirPath, `${dirName}.md`)
+  const indexMd = path.join(dirPath, 'index.md')
+  
+  if (fs.existsSync(sameNameMd)) {
+    // Rewrite: folder-name/folder-name.md -> folder-name/index.md
+    // This makes /folder-name/ work correctly
+    const source = `${relativePath}/${dirName}.md`
+    const target = `${relativePath}/index.md`
+    rewrites[source] = target
+  }
+  
+  // Recurse into subdirectories
+  for (const entry of entries) {
+    if (entry.isDirectory() && !entry.name.startsWith('.')) {
+      scanForRewrites(
+        path.join(dirPath, entry.name),
+        `${relativePath}/${entry.name}`,
+        rewrites
+      )
+    }
   }
 }
 
@@ -30,15 +85,8 @@ export default defineConfig({
   base: '/',
   cleanUrls: true,
 
-  // Rewrites for Strict Nest
-  rewrites: {
-    'sections/:section/:section.md': 'sections/:section/index.md',
-    'sections/:section/:a/:a.md': 'sections/:section/:a/index.md',
-    'sections/:section/:a/:b/:b.md': 'sections/:section/:a/:b/index.md',
-    'sections/:section/:a/:b/:c/:c.md': 'sections/:section/:a/:b/:c/index.md',
-    'sections/:section/:a/:b/:c/:d/:d.md': 'sections/:section/:a/:b/:c/:d/index.md',
-    'sections/:section/:a/:b/:c/:d/:e/:e.md': 'sections/:section/:a/:b/:c/:d/:e/index.md'
-  },
+  // Generate rewrites dynamically
+  rewrites: generateRewrites(),
   
   themeConfig: {
     nav: [
@@ -58,7 +106,10 @@ export default defineConfig({
       { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
     ],
     docFooter: { prev: false, next: false },
-    outline: { label: '页面导航' },
+    outline: { 
+      label: '页面导航',
+      level: [2, 4] // Show headers from h2 to h4
+    },
     lastUpdated: { text: '最后更新于' },
     returnToTopLabel: '回到顶部',
     sidebarMenuLabel: '菜单',
@@ -82,7 +133,6 @@ export default defineConfig({
             return content.replace(wikiLinkRegex, (match, p1) => {
                 const [link, text] = p1.split('|');
                 const displayText = text || link;
-                // Basic root-relative resolution for now
                 const url = `/sections/posts/${link.trim().replace(/\s+/g, '-').toLowerCase()}/`;
                 return `<a href="${url}">${displayText}</a>`;
             });
@@ -110,16 +160,22 @@ export default defineConfig({
         configureServer(server) {
           server.middlewares.use((req, res, next) => {
             const url = req.url || ''
-            if (url.includes('_assets') || url.includes('@fs') || url.includes('?')) {
+            
+            // Skip asset requests
+            if (url.includes('_assets') || url.includes('@fs') || url.includes('?') || url.includes('.')) {
               next()
               return
             }
-            if (url.startsWith('/sections/') && !url.endsWith('/') && !url.includes('.')) {
+            
+            // Redirect paths without trailing slash to have trailing slash
+            // This is crucial for the pair rule to work correctly
+            if (url.startsWith('/sections/') && !url.endsWith('/')) {
               res.statusCode = 301
               res.setHeader('Location', url + '/')
               res.end()
               return
             }
+            
             next()
           })
         }
@@ -171,23 +227,40 @@ export default defineConfig({
   
   async transformPageData(pageData: any) {
     pageData.frontmatter.wordCount = getWordCount(pageData.content || '')
+    
+    // Generate breadcrumbs from the actual file path
     const relativePath = pageData.relativePath
     const parts = relativePath.split('/')
     const breadcrumbs: { title: string, link?: string }[] = []
     
     let accumulatedPath = ''
     for (let i = 0; i < parts.length; i++) {
-        let part = parts[i]
-        if (part.endsWith('.md')) part = part.replace('.md', '')
-        if (part === 'index' || !part) continue
-        
-        accumulatedPath += '/' + part
-        const title = part.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-        
-        breadcrumbs.push({
-            title,
-            link: (i === parts.length - 1) ? undefined : accumulatedPath + '/'
-        })
+      let part = parts[i]
+      if (!part) continue
+      
+      // Remove .md extension
+      if (part.endsWith('.md')) {
+        part = part.replace('.md', '')
+      }
+      
+      // Skip index files in breadcrumb (they represent the folder itself)
+      if (part === 'index') {
+        continue
+      }
+      
+      accumulatedPath += '/' + part
+      
+      // Format the breadcrumb name
+      const title = formatBreadcrumbName(part)
+      
+      // Check if this is the last meaningful part
+      const remainingParts = parts.slice(i + 1).filter(p => p && p !== 'index.md' && !p.endsWith('.md'))
+      const isLastItem = remainingParts.length === 0
+      
+      breadcrumbs.push({
+        title,
+        link: isLastItem ? undefined : accumulatedPath + '/'
+      })
     }
     
     pageData.frontmatter.breadcrumb = breadcrumbs
