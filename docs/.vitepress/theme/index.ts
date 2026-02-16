@@ -24,6 +24,13 @@ import KnowledgeGraph from './components/features/KnowledgeGraph.vue'
 import RAGSearch from './components/features/RAGSearch.vue'
 import EditFab from './components/EditFab.vue'
 
+// Agent-Native Components
+import AIChatOrb from './components/agent/AIChatOrb.vue'
+import GlobalPageEditorAGI from './components/agent/GlobalPageEditorAGI.vue'
+import AgentModeToggle from './components/agent/AgentModeToggle.vue'
+import InlineSuggestion from './components/agent/InlineSuggestion.vue'
+import ContextIndicator from './components/agent/ContextIndicator.vue'
+
 export default {
   extends: DefaultTheme,
   Layout: () => {
@@ -51,6 +58,13 @@ export default {
     app.component('TocFab', TocFab)
     app.component('EditFab', EditFab)
     app.component('Breadcrumb', Breadcrumb)
+    
+    // Register Agent-Native components
+    app.component('AIChatOrb', AIChatOrb)
+    app.component('GlobalPageEditorAGI', GlobalPageEditorAGI)
+    app.component('AgentModeToggle', AgentModeToggle)
+    app.component('InlineSuggestion', InlineSuggestion)
+    app.component('ContextIndicator', ContextIndicator)
   }
 } satisfies Theme
 

@@ -14,6 +14,9 @@ const { frontmatter, page } = useData()
 const store = useAppStore()
 const route = useRoute()
 
+// Agent refs
+const aiChatOrb = ref()
+
 // Panel widths configuration
 const LEFT_CONFIG = {
   minWidth: 240,
@@ -249,6 +252,9 @@ watch(() => route.path, () => {
     
     <!-- Edit FAB -->
     <EditFab />
+    
+    <!-- AI Chat Orb (Global Agent Interface) -->
+    <AIChatOrb ref="aiChatOrb" />
   </div>
 </template>
 
