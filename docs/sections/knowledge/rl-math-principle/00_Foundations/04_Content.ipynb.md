@@ -1,23 +1,15 @@
----
-title: 04_Content.ipynb
-filePath: knowledge/rl-math-principle/00_Foundations/04_Content.ipynb
-aside: false
----
+# 04_Content.ipynb ​
 
-# 04_Content.ipynb
+# 第0章：测度论与概率空间基础 (Jupyter版) ​
 
-# 第0章：测度论与概率空间基础 (Jupyter版)
-
-## 1. 核心理论速览
+## 1. 核心理论速览 ​
 
 在强化学习中，期望（Expectation）不仅仅是平均值，它是基于测度论的勒贝格积分（Lebesgue Integral）：
 
-$$ \mathbb{E}[X] = \int_{\Omega} X(\omega) dP(\omega) $$
+E[X]=∫ΩX(ω)dP(ω)这允许我们统一处理离散（GridWorld）和连续（MuJoCo）状态空间。
 
-这允许我们统一处理离散（GridWorld）和连续（MuJoCo）状态空间。
-
-
-```python
+python
+```
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -39,12 +31,9 @@ def demonstrate_lln(n_samples=1000):
 demonstrate_lln(5000)
 ```
 
-## 2. 理论与代码的桥梁
+## 2. 理论与代码的桥梁 ​
 
-- **代码**中的 `np.random` 实际上是在模拟概率测度 $P$。
-- **代码**中的 `mean()` 实际上是勒贝格积分的蒙特卡洛近似。
+- 代码中的 np.random 实际上是在模拟概率测度 P。
+- 代码中的 mean() 实际上是勒贝格积分的蒙特卡洛近似。
 
 > "测度论是裁判，代码是运动员。裁判制定规则（收敛性），运动员尽力奔跑（计算）。"
-
-
-
