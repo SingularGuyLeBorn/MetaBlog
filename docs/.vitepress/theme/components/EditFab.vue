@@ -2,14 +2,14 @@
 import { ref, computed } from 'vue'
 import { useData, useRoute } from 'vitepress'
 import InlineMarkdownEditor from './features/InlineMarkdownEditor.vue'
+import { useAppStore } from '../stores/app'
 
 const { page } = useData()
 const route = useRoute()
+const store = useAppStore()
 
 const editorRef = ref<InstanceType<typeof InlineMarkdownEditor> | null>(null)
-const showEditor = ref(false)
 
-// Cache-bust: 20250217-002
 // 判断当前页面是否可编辑 - computed property
 const isEditable = computed<boolean>(() => {
   const currentPath = route.path
@@ -21,8 +21,12 @@ const isEditable = computed<boolean>(() => {
   return !!page.value.relativePath
 })
 
+// 是否显示编辑按钮（可编辑且不在编辑模式）
+const showFab = computed(() => {
+  return isEditable.value && !store.isEditing
+})
+
 const openEditor = () => {
-  // Access computed property value
   if (!isEditable.value) {
     console.log('Page not editable')
     return
@@ -35,7 +39,7 @@ const openEditor = () => {
   <!-- Edit FAB -->
   <Transition name="fab">
     <button
-      v-if="isEditable && !showEditor"
+      v-if="showFab"
       class="edit-fab"
       @click="openEditor"
       title="编辑当前页面 (双击内容也可进入编辑)"

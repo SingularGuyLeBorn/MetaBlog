@@ -688,11 +688,30 @@ kbd {
 <style>
 /* Global styles for inline editing */
 body.inline-editing {
-  /* Keep the layout stable */
+  /* Prevent any background changes on click */
+  -webkit-tap-highlight-color: transparent !important;
 }
 
 body.inline-editing .VPNav {
   z-index: 1000;
+}
+
+/* Fix Vditor content area background */
+body.inline-editing .vp-doc .vditor-content {
+  background: transparent !important;
+}
+
+/* Ensure the editable area doesn't have weird backgrounds */
+body.inline-editing .vp-doc .vditor-ir__wrapper {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* Remove focus outlines and backgrounds */
+body.inline-editing .vp-doc .vditor-ir *:focus {
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 /* Adjust main content area for editor */
@@ -845,6 +864,109 @@ body.inline-editing .vp-doc .vditor-ir code:not(.hljs) {
   border-radius: 4px !important;
   font-family: var(--vp-font-family-mono, monospace) !important;
   font-size: 0.9em !important;
+}
+
+/* Fix code block text color - CRITICAL */
+body.inline-editing .vp-doc .vditor-ir pre code {
+  color: var(--vp-c-text-1) !important;
+  background: transparent !important;
+}
+
+/* Code block styling - works for both light and dark mode */
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] pre {
+  background: var(--vp-c-bg-soft) !important;
+  border: 1px solid var(--vp-c-divider) !important;
+  color: var(--vp-c-text-1) !important;
+  padding: 16px !important;
+  border-radius: 8px !important;
+  overflow-x: auto !important;
+}
+
+/* Dark mode code blocks */
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] pre code,
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"] .hljs {
+  color: var(--vp-c-text-1) !important;
+  font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+/* Code block language label */
+body.inline-editing .vp-doc .vditor-ir .vditor-ir__node[data-type="code-block"]::before {
+  content: attr(data-language);
+  display: block;
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+  padding: 4px 12px;
+  background: var(--vp-c-bg);
+  border-bottom: 1px solid var(--vp-c-divider);
+  border-radius: 8px 8px 0 0;
+  margin: -16px -16px 12px -16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Remove gray background on click/focus in IR mode */
+body.inline-editing .vp-doc .vditor-ir__node--selected,
+body.inline-editing .vp-doc .vditor-ir__node--selected .vditor-ir__node {
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+body.inline-editing .vp-doc .vditor-ir__node {
+  background: transparent !important;
+}
+
+/* Remove all gray/blue selection backgrounds */
+body.inline-editing .vp-doc .vditor-ir__node[data-type="paragraph"]:focus,
+body.inline-editing .vp-doc .vditor-ir__node[data-type="heading"]:focus,
+body.inline-editing .vp-doc .vditor-ir__node[data-type="list-item"]:focus,
+body.inline-editing .vp-doc .vditor-ir__node[data-type="blockquote"]:focus {
+  background: transparent !important;
+  outline: none !important;
+}
+
+/* Fix code block syntax highlighting colors - Use high contrast colors */
+body.inline-editing .vp-doc .vditor-ir .hljs-keyword {
+  color: var(--vp-c-brand) !important;
+  font-weight: 600 !important;
+}
+
+body.inline-editing .vp-doc .vditor-ir .hljs-string {
+  color: #22863a !important; /* Green for strings */
+}
+
+body.inline-editing .vp-doc .vditor-ir .hljs-number {
+  color: #032f62 !important; /* Blue for numbers */
+}
+
+body.inline-editing .vp-doc .vditor-ir .hljs-comment {
+  color: #6a737d !important; /* Gray for comments */
+  font-style: italic !important;
+}
+
+body.inline-editing .vp-doc .vditor-ir .hljs-function,
+body.inline-editing .vp-doc .vditor-ir .hljs-title {
+  color: #6f42c1 !important; /* Purple for functions */
+}
+
+body.inline-editing .vp-doc .vditor-ir .hljs-operator {
+  color: var(--vp-c-text-1) !important;
+}
+
+body.inline-editing .vp-doc .vditor-ir .hljs-punctuation {
+  color: var(--vp-c-text-2) !important;
+}
+
+body.inline-editing .vp-doc .vditor-ir .hljs-variable,
+body.inline-editing .vp-doc .vditor-ir .hljs-attr {
+  color: var(--vp-c-text-1) !important;
+}
+
+body.inline-editing .vp-doc .vditor-ir .hljs-built_in,
+body.inline-editing .vp-doc .vditor-ir .hljs-builtin-name {
+  color: #005cc5 !important; /* Blue for built-ins */
 }
 
 /* Ensure sidebars are clickable */
