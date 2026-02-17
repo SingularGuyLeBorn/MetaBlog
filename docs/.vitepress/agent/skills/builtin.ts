@@ -1,8 +1,39 @@
 /**
  * Built-in Skills - 内置技能集
- * 核心技能实现，与原有 BFF API 集成
+ * 核心技能实现，使用真实 LLM 调用
  */
 import type { Skill, SkillContext, SkillResult } from '../core/types'
+import { getLLMManager, type LLMMessage } from '../llm'
+
+// ============================================
+// 辅助函数：调用 LLM
+// ============================================
+
+async function callLLM(
+  messages: LLMMessage[],
+  options?: { stream?: boolean; onChunk?: (chunk: string) => void }
+): Promise<{ content: string; tokens: number; cost: number }> {
+  const llm = getLLMManager()
+  
+  if (options?.stream && options.onChunk) {
+    let fullContent = ''
+    const { usage, cost } = await llm.chatStream(
+      { messages, stream: true },
+      (chunk) => {
+        fullContent += chunk.content
+        options.onChunk?.(chunk.content)
+      }
+    )
+    return { content: fullContent, tokens: usage.totalTokens, cost }
+  }
+  
+  const response = await llm.chat({ messages })
+  return { 
+    content: response.content, 
+    tokens: response.usage.totalTokens, 
+    cost: response.cost 
+  }
+}
 
 // ============================================
 // WriteArticle - 撰写文章
@@ -23,17 +54,42 @@ export const WriteArticleSkill: Skill = {
     const context = await ctx.memory.buildContext(topic)
     const relatedArticles = context.map(c => c.metadata.title || c.source).slice(0, 3)
 
-    // 2. 生成大纲（模拟 LLM 调用）
-    const outline = await generateOutline(topic, style, context)
-    
-    // 3. 生成内容（模拟）
-    const content = await generateContent(topic, outline, style)
+    // 2. 生成大纲
+    const outlinePrompt: LLMMessage[] = [
+      {
+        role: 'system',
+        content: `你是一个专业的技术博客作者。为给定的主题生成文章大纲。大纲应该结构清晰，逻辑连贯。只返回大纲，使用 Markdown 格式。`
+      },
+      {
+        role: 'user',
+        content: `主题为："${topic}"\n风格：${style}\n长度：${length}\n\n${context.length > 0 ? `相关文章：\n${context.map(c => `- ${c.metadata.title || c.source}`).join('\n')}` : ''}\n\n请生成文章大纲：`
+      }
+    ]
+
+    const outline = await callLLM(outlinePrompt)
+    ctx.logger.info('Outline generated', { tokens: outline.tokens })
+
+    // 3. 生成内容
+    const contentPrompt: LLMMessage[] = [
+      {
+        role: 'system',
+        content: `你是一个专业的技术博客作者。根据大纲撰写完整的文章内容。使用 Markdown 格式，包含适当的代码示例和解释。`
+      },
+      {
+        role: 'user',
+        content: `主题：${topic}\n大纲：\n${outline.content}\n\n请撰写完整的文章内容：`
+      }
+    ]
+
+    const content = await callLLM(contentPrompt)
+    ctx.logger.info('Content generated', { tokens: content.tokens })
 
     // 4. 生成 frontmatter
-    const frontmatter = generateFrontmatter(topic, relatedArticles)
+    const date = new Date().toISOString().split('T')[0]
+    const frontmatter = `---\ntitle: ${topic}\ndate: ${date}\nwikiLinks:\n${relatedArticles.map(r => `  - ${r}`).join('\n')}\n---`
 
     // 5. 保存文件
-    const fullContent = `${frontmatter}\n\n${content}`
+    const fullContent = `${frontmatter}\n\n${content.content}`
     const filePath = targetPath || `posts/${slugify(topic)}.md`
 
     const saveResult = await saveFile(filePath, fullContent)
@@ -55,8 +111,8 @@ export const WriteArticleSkill: Skill = {
       data: {
         message: `已创建文章「${topic}」，保存至 ${filePath}`,
         path: filePath,
-        outline: outline.data,
-        wordCount: content.data.length
+        outline: outline.content,
+        wordCount: content.content.length
       },
       tokensUsed: outline.tokens + content.tokens,
       cost: outline.cost + content.cost,
@@ -98,45 +154,57 @@ export const EditContentSkill: Skill = {
       }
     }
 
-    // 根据 action 执行不同的编辑
-    let editedContent = existingContent
-    let editDescription = ''
+    // 构建编辑提示
+    const actionMap: Record<string, string> = {
+      improve: '优化表达和结构，使内容更清晰、更专业',
+      expand: '扩写内容，添加更多细节和解释',
+      simplify: '简化表达，使其更易懂',
+      rewrite: instruction || '重写内容'
+    }
 
-    switch (action) {
-      case 'improve':
-        editDescription = '优化表达和结构'
-        editedContent = await improveContent(existingContent)
-        break
-      case 'expand':
-        editDescription = '扩写内容'
-        editedContent = await expandContent(existingContent, selectedText)
-        break
-      case 'simplify':
-        editDescription = '简化表达'
-        editedContent = await simplifyContent(existingContent)
-        break
-      case 'rewrite':
-        editDescription = instruction || '重写'
-        editedContent = await rewriteContent(existingContent, instruction)
-        break
-      default:
-        editedContent = existingContent
+    const editPrompt: LLMMessage[] = [
+      {
+        role: 'system',
+        content: `你是一个专业的内容编辑。根据用户要求编辑以下内容。只返回编辑后的内容，不要添加额外解释。`
+      },
+      {
+        role: 'user',
+        content: `编辑要求：${actionMap[action] || action}\n\n${selectedText ? `仅编辑以下段落：\n\n${selectedText}` : `编辑以下内容：\n\n${existingContent}`}\n\n请返回编辑后的内容：`
+      }
+    ]
+
+    const result = await callLLM(editPrompt)
+    
+    // 应用编辑
+    let editedContent: string
+    if (selectedText) {
+      editedContent = existingContent.replace(selectedText, result.content)
+    } else {
+      editedContent = result.content
     }
 
     // 保存修改
     const saveResult = await saveFile(targetPath, editedContent)
+    if (!saveResult.success) {
+      return {
+        success: false,
+        error: saveResult.error,
+        tokensUsed: result.tokens,
+        cost: result.cost
+      }
+    }
 
     // 创建 Git 提交
-    await gitCommit(targetPath, `agent(${ctx.taskId}): ${editDescription}`)
+    await gitCommit(targetPath, `agent(${ctx.taskId}): ${actionMap[action] || action}`)
 
     return {
       success: true,
       data: {
-        message: `已${editDescription}，保存至 ${targetPath}`,
+        message: `已${actionMap[action] || '编辑'}，保存至 ${targetPath}`,
         path: targetPath
       },
-      tokensUsed: 500, // 模拟
-      cost: 0.01
+      tokensUsed: result.tokens,
+      cost: result.cost
     }
   }
 }
@@ -156,23 +224,41 @@ export const ResearchWebSkill: Skill = {
 
     ctx.logger.info('Starting web research', { query, sources })
 
-    // 模拟搜索结果
-    const searchResults = await mockSearch(query, sources, maxResults)
+    // 注意：实际实现需要集成搜索 API（如 SerpAPI、Google Custom Search）
+    // 这里使用 LLM 生成模拟搜索结果
+    const researchPrompt: LLMMessage[] = [
+      {
+        role: 'system',
+        content: `你是一个研究助手。基于用户的查询，提供相关的研究信息和资料。以结构化格式返回结果。`
+      },
+      {
+        role: 'user',
+        content: `研究主题：${query}\n\n请提供以下信息：\n1. 核心概念解释\n2. 相关技术和方法\n3. 最新进展（如有）\n4. 推荐的学习资源\n\n请以 Markdown 格式返回：`}
+    ]
 
-    // 总结搜索结果
-    const summary = await summarizeResults(searchResults)
+    const result = await callLLM(researchPrompt)
+
+    // 解析结果
+    const sections = result.content.split('\n## ').filter(Boolean)
+    const findings = sections.map(s => {
+      const lines = s.trim().split('\n')
+      return {
+        title: lines[0].replace(/^#+\s*/, ''),
+        content: lines.slice(1).join('\n').trim()
+      }
+    })
 
     return {
       success: true,
       data: {
-        message: `找到 ${searchResults.length} 条相关结果`,
+        message: `研究完成，找到 ${findings.length} 个相关主题`,
         query,
-        results: searchResults,
-        summary: summary.data
+        findings,
+        summary: findings[0]?.content || ''
       },
-      tokensUsed: summary.tokens + 200,
-      cost: summary.cost + 0.005,
-      nextSteps: ['基于搜索结果写文章', '保存到知识库', '深入某个主题']
+      tokensUsed: result.tokens,
+      cost: result.cost,
+      nextSteps: ['基于研究结果写文章', '深入研究某个子主题', '保存到知识库']
     }
   }
 }
@@ -213,10 +299,22 @@ export const UpdateGraphSkill: Skill = {
     // 提取实体
     const entities = await ctx.memory.extractEntitiesFromContent(content, targetPath)
 
-    // 如果发现新链接建议
+    // 使用 LLM 发现潜在的知识关联
     let suggestions: string[] = []
-    if (discoverNew) {
-      suggestions = await discoverMissingLinks(content, entities)
+    if (discoverNew && entities.length > 0) {
+      const discoveryPrompt: LLMMessage[] = [
+        {
+          role: 'system',
+          content: `你是一个知识图谱专家。基于提取的实体，建议可能的知识关联和缺失的链接。`
+        },
+        {
+          role: 'user',
+          content: `已提取的实体：\n${entities.map(e => `- ${e.name} (${e.type})`).join('\n')}\n\n请建议：\n1. 可能的知识关联\n2. 缺失的内部链接\n3. 建议创建的新文章\n\n以列表格式返回：`
+        }
+      ]
+
+      const result = await callLLM(discoveryPrompt)
+      suggestions = result.content.split('\n').filter(s => s.trim().startsWith('-') || s.trim().startsWith('*'))
     }
 
     return {
@@ -224,10 +322,10 @@ export const UpdateGraphSkill: Skill = {
       data: {
         message: `知识图谱已更新，提取了 ${entities.length} 个实体`,
         entities: entities.map(e => ({ name: e.name, type: e.type })),
-        suggestions
+        suggestions: suggestions.slice(0, 5)
       },
-      tokensUsed: 100,
-      cost: 0.002
+      tokensUsed: discoverNew ? 200 : 0, // 估算值
+      cost: discoverNew ? 0.004 : 0
     }
   }
 }
@@ -245,16 +343,23 @@ export const CodeExplainSkill: Skill = {
   handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
     const { code, language = 'python', targetPath, detailLevel = 'detailed' } = params
 
-    // 分析代码结构
-    const analysis = analyzeCode(code, language)
+    const explainPrompt: LLMMessage[] = [
+      {
+        role: 'system',
+        content: `你是一个专业的代码解释专家。为给定的代码生成清晰的教学文档。使用 ${detailLevel} 详细程度。`
+      },
+      {
+        role: 'user',
+        content: `语言：${language}\n\n代码：\n\`\`\`${language}\n${code}\n\`\`\`\n\n请生成包含以下内容的技术文档：\n1. 代码功能概述\n2. 关键函数/类解释\n3. 算法或逻辑说明\n4. 使用示例\n5. 与相关知识点的联系\n\n使用 Markdown 格式：`
+      }
+    ]
 
-    // 生成解释文档
-    const explanation = await generateCodeExplanation(code, language, analysis, detailLevel)
+    const result = await callLLM(explainPrompt)
 
     // 如果提供了目标路径，保存文档
     let savedPath: string | null = null
     if (targetPath) {
-      const docContent = formatCodeDocumentation(code, language, explanation.data)
+      const docContent = `# 代码解释\n\n${result.content}\n\n## 源代码\n\n\`\`\`${language}\n${code}\n\`\`\``
       const saveResult = await saveFile(targetPath, docContent)
       if (saveResult.success) {
         savedPath = targetPath
@@ -267,12 +372,11 @@ export const CodeExplainSkill: Skill = {
         message: savedPath 
           ? `已生成代码解释文档，保存至 ${savedPath}`
           : '代码解释生成完成',
-        explanation: explanation.data,
-        analysis,
+        explanation: result.content,
         savedPath
       },
-      tokensUsed: explanation.tokens,
-      cost: explanation.cost
+      tokensUsed: result.tokens,
+      cost: result.cost
     }
   }
 }
@@ -292,19 +396,30 @@ export const AnswerQuestionSkill: Skill = {
 
     // 构建 RAG 上下文
     const ragContext = await ctx.memory.buildContext(question, ctx.currentFile)
+    const contextText = ragContext.map(r => r.content).join('\n\n---\n\n')
 
-    // 生成答案（模拟）
-    const answer = await generateAnswer(question, ragContext)
+    const answerPrompt: LLMMessage[] = [
+      {
+        role: 'system',
+        content: `你是一个知识助手。基于提供的上下文回答问题。如果上下文中没有相关信息，请明确说明。`
+      },
+      {
+        role: 'user',
+        content: `${contextText ? `相关上下文：\n\n${contextText}\n\n---\n\n` : ''}问题：${question}\n\n请回答：`
+      }
+    ]
+
+    const result = await callLLM(answerPrompt)
 
     return {
       success: true,
       data: {
-        message: answer.data,
+        message: result.content,
         sources: ragContext.map(r => r.source),
         confidence: ragContext.length > 0 ? Math.max(...ragContext.map(r => r.score)) : 0.5
       },
-      tokensUsed: answer.tokens,
-      cost: answer.cost
+      tokensUsed: result.tokens,
+      cost: result.cost
     }
   }
 }
@@ -341,162 +456,42 @@ export const SummarizeSkill: Skill = {
       }
     }
 
-    const summary = await generateSummary(content, maxLength, style)
+    const styleMap: Record<string, string> = {
+      concise: '简洁版，一句话概括核心内容',
+      detailed: '详细版，包含主要观点和结论',
+      bullet: '要点版，使用 bullet points 列出关键信息',
+      tweet: 'Twitter 风格，限制在 280 字符内'
+    }
+
+    const summarizePrompt: LLMMessage[] = [
+      {
+        role: 'system',
+        content: `你是一个专业的内容摘要专家。为给定的文章生成摘要。${styleMap[style] || styleMap.concise}`
+      },
+      {
+        role: 'user',
+        content: `文章内容：\n\n${content.substring(0, 8000)}${content.length > 8000 ? '\n...(内容已截断)' : ''}\n\n请生成${styleMap[style] || '摘要'}（约 ${maxLength} 字）：`
+      }
+    ]
+
+    const result = await callLLM(summarizePrompt)
 
     return {
       success: true,
       data: {
         message: '摘要生成完成',
-        summary: summary.data,
+        summary: result.content,
         originalLength: content.length,
-        summaryLength: summary.data.length
+        summaryLength: result.content.length
       },
-      tokensUsed: summary.tokens,
-      cost: summary.cost
+      tokensUsed: result.tokens,
+      cost: result.cost
     }
   }
 }
 
 // ============================================
-// 辅助函数（模拟 LLM 调用）
-// ============================================
-
-async function generateOutline(topic: string, style: string, context: any[]): Promise<any> {
-  // 模拟 LLM 生成大纲
-  await delay(500)
-  return {
-    data: {
-      title: topic,
-      sections: [
-        '引言',
-        '核心概念',
-        '实现原理',
-        '应用场景',
-        '总结'
-      ]
-    },
-    tokens: 200,
-    cost: 0.004
-  }
-}
-
-async function generateContent(topic: string, outline: any, style: string): Promise<any> {
-  // 模拟 LLM 生成内容
-  await delay(1000)
-  const content = `# ${topic}\n\n## 引言\n\n这是关于 ${topic} 的文章...\n\n## 核心概念\n\n详细介绍核心概念...\n`
-  return {
-    data: content,
-    tokens: 1500,
-    cost: 0.03
-  }
-}
-
-function generateFrontmatter(title: string, related: string[]): string {
-  const date = new Date().toISOString().split('T')[0]
-  return `---\ntitle: ${title}\ndate: ${date}\nwikiLinks:\n${related.map(r => `  - ${r}`).join('\n')}\n---`
-}
-
-async function improveContent(content: string): Promise<string> {
-  await delay(500)
-  return content + '\n\n<!-- 已优化 -->'
-}
-
-async function expandContent(content: string, selectedText?: string): Promise<string> {
-  await delay(500)
-  if (selectedText) {
-    return content.replace(selectedText, selectedText + '\n\n[扩展内容...]')
-  }
-  return content + '\n\n[扩展内容...]'
-}
-
-async function simplifyContent(content: string): Promise<string> {
-  await delay(500)
-  return content.replace(/复杂/g, '简单')
-}
-
-async function rewriteContent(content: string, instruction?: string): Promise<string> {
-  await delay(500)
-  return `<!-- 根据指令重写: ${instruction} -->\n${content}`
-}
-
-async function mockSearch(query: string, sources: string[], maxResults: number): Promise<any[]> {
-  await delay(800)
-  return sources.flatMap((source, i) => [
-    {
-      title: `${query} - ${source} Result 1`,
-      url: `https://${source}.com/result1`,
-      snippet: `关于 ${query} 的相关信息...`,
-      source
-    },
-    {
-      title: `${query} - ${source} Result 2`,
-      url: `https://${source}.com/result2`,
-      snippet: `更多关于 ${query} 的资料...`,
-      source
-    }
-  ]).slice(0, maxResults)
-}
-
-async function summarizeResults(results: any[]): Promise<any> {
-  await delay(300)
-  return {
-    data: `搜索到 ${results.length} 条结果，主要关于...`,
-    tokens: 150,
-    cost: 0.003
-  }
-}
-
-async function discoverMissingLinks(content: string, entities: any[]): Promise<string[]> {
-  return [
-    `建议添加与 "${entities[0]?.name || '相关主题'}" 的链接`,
-    '可以补充更多参考资料'
-  ]
-}
-
-function analyzeCode(code: string, language: string): any {
-  return {
-    functions: (code.match(/function|def/g) || []).length,
-    classes: (code.match(/class/g) || []).length,
-    lines: code.split('\n').length
-  }
-}
-
-async function generateCodeExplanation(code: string, language: string, analysis: any, detailLevel: string): Promise<any> {
-  await delay(600)
-  return {
-    data: {
-      overview: `这段 ${language} 代码包含 ${analysis.functions} 个函数和 ${analysis.classes} 个类`,
-      details: '详细解释...'
-    },
-    tokens: 800,
-    cost: 0.016
-  }
-}
-
-function formatCodeDocumentation(code: string, language: string, explanation: any): string {
-  return `# 代码解释\n\n## 概述\n${explanation.overview}\n\n## 详细解释\n${explanation.details}\n\n## 源代码\n\`\`\`${language}\n${code}\n\`\`\``
-}
-
-async function generateAnswer(question: string, context: any[]): Promise<any> {
-  await delay(400)
-  return {
-    data: `基于知识库，${question} 的答案是...`,
-    tokens: 300,
-    cost: 0.006
-  }
-}
-
-async function generateSummary(content: string, maxLength: number, style: string): Promise<any> {
-  await delay(400)
-  return {
-    data: content.substring(0, maxLength) + '...',
-    tokens: 250,
-    cost: 0.005
-  }
-}
-
-// ============================================
-// 文件和 Git 操作（与现有 BFF API 集成）
+// 文件和 Git 操作
 // ============================================
 
 async function readFile(path: string): Promise<string | null> {
@@ -528,14 +523,8 @@ async function saveFile(path: string, content: string): Promise<{ success: boole
 }
 
 async function gitCommit(path: string, message: string): Promise<void> {
-  // 现有的 BFF API 已经会在 save 时自动 commit
-  // 这里可以添加额外的 Agent 特定标记
   console.log(`[Git] ${message}: ${path}`)
 }
-
-// ============================================
-// 工具函数
-// ============================================
 
 function slugify(text: string): string {
   return text
@@ -543,10 +532,6 @@ function slugify(text: string): string {
     .replace(/[^\w\s-]/g, '')
     .replace(/\s+/g, '-')
     .substring(0, 50)
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 // 导出所有内置技能

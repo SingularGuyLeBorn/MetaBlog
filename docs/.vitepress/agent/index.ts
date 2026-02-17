@@ -28,6 +28,10 @@ export { LoggerImpl } from './runtime/Logger'
 export { CostTrackerImpl, CostTracker } from './runtime/CostTracker'
 export { CostTracker as CostTrackerClass } from './runtime/CostTracker'
 
+// LLM
+export * from './llm'
+export { loadEnvConfig, createLLMConfigFromEnv, getEnabledProviders, isProviderConfigured } from './config/env'
+
 // Vue Components
 // import AIChatOrb from '../theme/components/agent/AIChatOrb.vue'
 // import GlobalPageEditorAGI from '../theme/components/agent/GlobalPageEditorAGI.vue'

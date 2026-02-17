@@ -22,6 +22,7 @@ import { StateMachine } from './StateMachine'
 import { MemoryManagerImpl } from '../memory/MemoryManager'
 import { LoggerImpl } from '../runtime/Logger'
 import { CostTrackerImpl } from '../runtime/CostTracker'
+import { createLLMManager, createLLMConfigFromEnv } from '../llm'
 
 export interface AgentRuntimeConfig {
   mode: EditorMode
@@ -84,6 +85,18 @@ export class AgentRuntime {
   
   async initialize(): Promise<void> {
     this.logger.info('Agent Runtime initializing...', { sessionId: this.sessionId })
+    
+    // 初始化 LLM Manager
+    try {
+      const llmConfig = createLLMConfigFromEnv()
+      createLLMManager(llmConfig)
+      this.logger.info('LLM Manager initialized', { 
+        defaultProvider: llmConfig.defaultProvider,
+        availableProviders: Object.keys(llmConfig.providers)
+      })
+    } catch (e) {
+      this.logger.warn('LLM Manager initialization failed, some features may not work', { error: String(e) })
+    }
     
     // 初始化记忆系统
     await this.memory.initialize?.()
