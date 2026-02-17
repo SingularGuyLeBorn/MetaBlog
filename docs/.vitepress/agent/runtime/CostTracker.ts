@@ -279,3 +279,6 @@ export class CostTrackerImpl implements ICostTracker {
     }
   }
 }
+
+// 导出别名，方便组件导入
+export { CostTrackerImpl as CostTracker }

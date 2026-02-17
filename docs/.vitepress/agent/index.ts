@@ -26,6 +26,7 @@ export { MemoryManagerImpl } from './memory/MemoryManager'
 // Runtime
 export { LoggerImpl } from './runtime/Logger'
 export { CostTrackerImpl, CostTracker } from './runtime/CostTracker'
+export { CostTracker as CostTrackerClass } from './runtime/CostTracker'
 
 // Vue Components
 // import AIChatOrb from '../theme/components/agent/AIChatOrb.vue'
