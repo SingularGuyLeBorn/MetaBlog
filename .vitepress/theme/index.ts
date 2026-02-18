@@ -30,6 +30,8 @@ import GlobalPageEditorAGI from './components/agent/GlobalPageEditorAGI.vue'
 import AgentModeToggle from './components/agent/AgentModeToggle.vue'
 import InlineSuggestion from './components/agent/InlineSuggestion.vue'
 import ContextIndicator from './components/agent/ContextIndicator.vue'
+import ControlCenter from './components/ControlCenter.vue'
+import FullScreenPanel from './components/FullScreenPanel.vue'
 
 export default {
   extends: DefaultTheme,
@@ -65,6 +67,8 @@ export default {
     app.component('AgentModeToggle', AgentModeToggle)
     app.component('InlineSuggestion', InlineSuggestion)
     app.component('ContextIndicator', ContextIndicator)
+    app.component('ControlCenter', ControlCenter)
+    app.component('FullScreenPanel', FullScreenPanel)
   }
 } satisfies Theme
 

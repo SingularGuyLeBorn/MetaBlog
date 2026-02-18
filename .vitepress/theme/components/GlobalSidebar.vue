@@ -29,34 +29,6 @@
         </button>
       </div>
     </div>
-    
-    <!-- Agent Mode Actions -->
-    <div class="sidebar-agent-actions">
-      <button 
-        class="agent-action-btn"
-        :class="{ active: showDashboard }"
-        @click="toggleDashboard"
-      >
-        <span class="action-icon">🤖</span>
-        <span class="action-label">Agent 面板</span>
-      </button>
-      <button 
-        class="agent-action-btn"
-        :class="{ active: showArticleManager }"
-        @click="toggleArticleManager"
-      >
-        <span class="action-icon">📝</span>
-        <span class="action-label">文章管理</span>
-      </button>
-      <button 
-        class="agent-action-btn"
-        :class="{ active: showLogViewer }"
-        @click="toggleLogViewer"
-      >
-        <span class="action-icon">📋</span>
-        <span class="action-label">日志查看</span>
-      </button>
-    </div>
 
     <!-- Search -->
     <div class="sidebar-search">
@@ -77,7 +49,6 @@
 
     <!-- Tree Navigation -->
     <div 
-      v-if="!showArticleManager && !showLogViewer && !showDashboard"
       class="nav-tree" 
       ref="treeRef"
       tabindex="0"
@@ -95,47 +66,9 @@
           :expanded-ids="expandedIds"
           @navigate="navigate"
           @toggle="toggleExpand"
+          @refresh="handleRefresh"
         />
       </template>
-    </div>
-    
-    <!-- Dashboard Panel -->
-    <div v-else-if="showDashboard" class="article-manager-panel">
-      <div class="panel-header">
-        <button class="btn-back" @click="showDashboard = false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
-          返回导航
-        </button>
-      </div>
-      <AgentDashboard />
-    </div>
-    
-    <!-- Article Manager Panel -->
-    <div v-else-if="showArticleManager" class="article-manager-panel">
-      <div class="panel-header">
-        <button class="btn-back" @click="showArticleManager = false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
-          返回导航
-        </button>
-      </div>
-      <ArticleManager />
-    </div>
-    
-    <!-- Log Viewer Panel -->
-    <div v-else-if="showLogViewer" class="article-manager-panel">
-      <div class="panel-header">
-        <button class="btn-back" @click="showLogViewer = false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
-          返回导航
-        </button>
-      </div>
-      <LogViewer />
     </div>
   </aside>
 </template>
@@ -145,9 +78,6 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter, useData } from 'vitepress'
 import { useSidebar } from 'vitepress/theme'
 import TreeNode from './TreeNode.vue'
-import ArticleManager from './agent/ArticleManager.vue'
-import LogViewer from './agent/LogViewer.vue'
-import AgentDashboard from './agent/AgentDashboard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -158,9 +88,8 @@ const ALL_COLLAPSED_KEY = 'sidebar-all-collapsed'
 const expandedIds = ref<Set<string>>(new Set())
 const searchKey = ref('')
 const treeRef = ref<HTMLElement | null>(null)
-const showArticleManager = ref(false)
-const showLogViewer = ref(false)
-const showDashboard = ref(false)
+
+
 
 const sidebarData = computed(() => sidebar.value || [])
 
@@ -253,28 +182,31 @@ const navigate = (link?: string) => {
   if (link) router.go(link)
 }
 
-const toggleDashboard = () => {
-  showDashboard.value = !showDashboard.value
-  if (showDashboard.value) {
-    showArticleManager.value = false
-    showLogViewer.value = false
-  }
-}
-
-const toggleArticleManager = () => {
-  showArticleManager.value = !showArticleManager.value
-  if (showArticleManager.value) {
-    showDashboard.value = false
-    showLogViewer.value = false
-  }
-}
-
-const toggleLogViewer = () => {
-  showLogViewer.value = !showLogViewer.value
-  if (showLogViewer.value) {
-    showDashboard.value = false
-    showArticleManager.value = false
-  }
+// 刷新侧边栏 - 重新加载页面以获取最新数据
+const handleRefresh = () => {
+  // 显示一个提示
+  const toast = document.createElement('div')
+  toast.className = 'refresh-toast'
+  toast.textContent = '刷新中...'
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 20px;
+    background: #475569;
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+  `
+  document.body.appendChild(toast)
+  
+  // 延迟刷新以显示提示
+  setTimeout(() => {
+    location.reload()
+  }, 500)
 }
 
 const autoExpandCurrentPath = () => {
@@ -613,87 +545,5 @@ const handleTreeKeydown = (e: KeyboardEvent) => {
 
 .nav-tree::-webkit-scrollbar-thumb:hover {
   background: var(--vp-c-text-3, #bfbfbf);
-}
-
-/* Agent Actions */
-.sidebar-agent-actions {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--vp-c-divider, #e8e8e8);
-  background: var(--vp-c-bg, #ffffff);
-  flex-shrink: 0;
-}
-
-.agent-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--vp-c-divider, #e8e8e8);
-  border-radius: 8px;
-  background: var(--vp-c-bg-soft, #f5f5f5);
-  color: var(--vp-c-text-1, #262626);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.agent-action-btn:hover {
-  background: var(--vp-c-brand-soft, rgba(22, 119, 255, 0.1));
-  border-color: var(--vp-c-brand, #1677ff);
-}
-
-.agent-action-btn.active {
-  background: var(--vp-c-brand, #1677ff);
-  color: white;
-  border-color: var(--vp-c-brand, #1677ff);
-}
-
-.action-icon {
-  font-size: 16px;
-}
-
-.action-label {
-  flex: 1;
-}
-
-/* Article Manager Panel */
-.article-manager-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.panel-header {
-  padding: 12px;
-  border-bottom: 1px solid var(--vp-c-divider, #e8e8e8);
-  background: var(--vp-c-bg, #ffffff);
-  flex-shrink: 0;
-}
-
-.btn-back {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--vp-c-text-2, #595959);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-back:hover {
-  background: var(--vp-c-bg-soft, #f5f5f5);
-  color: var(--vp-c-text-1, #262626);
-}
-
-.btn-back svg {
-  width: 14px;
-  height: 14px;
 }
 </style>

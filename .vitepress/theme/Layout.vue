@@ -8,12 +8,30 @@ import TocFab from './components/TocFab.vue'
 import EditFab from './components/EditFab.vue'
 import Breadcrumb from './components/Breadcrumb.vue'
 import AIChatOrb from './components/agent/AIChatOrb.vue'
+import ControlCenter from './components/ControlCenter.vue'
+import FullScreenPanel from './components/FullScreenPanel.vue'
+import AgentDashboard from './components/agent/AgentDashboard.vue'
+import ArticleManager from './components/agent/ArticleManager.vue'
+import LogViewer from './components/agent/LogViewer.vue'
 import { useAppStore } from './stores/app'
 
 const { Layout } = DefaultTheme
 const { frontmatter, page } = useData()
 const store = useAppStore()
 const route = useRoute()
+
+// Control center panel state
+const activePanel = ref<'dashboard' | 'articles' | 'logs' | null>(null)
+
+const handleControlOpen = (panel: 'dashboard' | 'articles' | 'logs') => {
+  activePanel.value = panel
+}
+
+const createNewArticle = () => {
+  // Trigger article creation in ArticleManager
+  // This will be handled by the ArticleManager component internally
+  window.dispatchEvent(new CustomEvent('article-manager:create'))
+}
 
 // Agent refs
 const aiChatOrb = ref()
@@ -211,6 +229,10 @@ watch(() => route.path, () => {
       <!-- Main Content Area -->
       <main class="main-content">
         <Layout>
+          <template #nav-bar-content-after>
+            <ControlCenter @open="handleControlOpen" />
+          </template>
+          
           <template #doc-before>
             <Breadcrumb />
           </template>
@@ -256,6 +278,44 @@ watch(() => route.path, () => {
     
     <!-- AI Chat Orb (Global Agent Interface) -->
     <AIChatOrb ref="aiChatOrb" />
+    
+    <!-- Full Screen Panels -->
+    <!-- Agent Dashboard Panel -->
+    <FullScreenPanel
+      :visible="activePanel === 'dashboard'"
+      title="🤖 Agent 面板"
+      @close="activePanel = null"
+    >
+      <template #actions>
+        <button class="panel-action-btn" @click="activePanel = null">
+          <span>关闭</span>
+        </button>
+      </template>
+      <AgentDashboard />
+    </FullScreenPanel>
+    
+    <!-- Article Manager Panel -->
+    <FullScreenPanel
+      :visible="activePanel === 'articles'"
+      title="📝 文章管理"
+      @close="activePanel = null"
+    >
+      <template #actions>
+        <button class="panel-action-btn primary" @click="createNewArticle">
+          <span>+ 新建文章</span>
+        </button>
+      </template>
+      <ArticleManager />
+    </FullScreenPanel>
+    
+    <!-- Log Viewer Panel -->
+    <FullScreenPanel
+      :visible="activePanel === 'logs'"
+      title="📋 日志查看"
+      @close="activePanel = null"
+    >
+      <LogViewer />
+    </FullScreenPanel>
   </div>
 </template>
 
@@ -409,6 +469,35 @@ body.inline-editing {
 
 body.inline-editing .VPNav {
   z-index: 1000;
+}
+
+/* Panel Action Buttons */
+.panel-action-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--vp-c-divider, #e8e8e8);
+  border-radius: 8px;
+  background: var(--vp-c-bg, #ffffff);
+  color: var(--vp-c-text-1, #262626);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-action-btn:hover {
+  background: var(--vp-c-brand-soft, rgba(22, 119, 255, 0.1));
+  border-color: var(--vp-c-brand, #1677ff);
+}
+
+.panel-action-btn.primary {
+  background: var(--vp-c-brand, #1677ff);
+  color: white;
+  border-color: var(--vp-c-brand, #1677ff);
+}
+
+.panel-action-btn.primary:hover {
+  background: var(--vp-c-brand-dark, #125ec8);
+  border-color: var(--vp-c-brand-dark, #125ec8);
 }
 
 /* Responsive Design */

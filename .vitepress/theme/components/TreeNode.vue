@@ -101,11 +101,11 @@
                 <span class="menu-icon">📤</span>
                 <span class="menu-label">移出目录</span>
               </div>
-              <div class="menu-item" @click="showCopyModal">
+              <div class="menu-item" @click="openCopyModal">
                 <span class="menu-icon">📋</span>
                 <span class="menu-label">复制...</span>
               </div>
-              <div class="menu-item" @click="showMoveModal">
+              <div class="menu-item" @click="openMoveModal">
                 <span class="menu-icon">📁</span>
                 <span class="menu-label">移动...</span>
               </div>
@@ -389,20 +389,35 @@ const renameItem = () => {
   closeMenu()
 }
 
+// Helper: Convert link to MD path
+const linkToMdPath = (link: string): string => {
+  // Remove trailing slash and add .md
+  return link.replace(/\/$/, '') + '.md'
+}
+
 const doRename = async () => {
   if (!newName.value.trim()) return
   
   try {
     // 读取现有文件
-    const mdPath = props.item.link.replace('.html', '.md')
+    const mdPath = linkToMdPath(props.item.link)
     const readRes = await fetch(`/api/files/read?path=${encodeURIComponent(mdPath)}`)
     if (!readRes.ok) throw new Error('读取文件失败')
     
     let content = await readRes.text()
     
-    // 更新 frontmatter 中的 title
+    // 更新 frontmatter 中的 title，如果没有 frontmatter 则添加
     if (content.startsWith('---')) {
-      content = content.replace(/title:\s*.+/, `title: ${newName.value}`)
+      // 更新现有的 title
+      if (content.match(/title:\s*.+/)) {
+        content = content.replace(/title:\s*.+/, `title: ${newName.value}`)
+      } else {
+        // 在 frontmatter 中添加 title
+        content = content.replace(/---\n/, `---\ntitle: ${newName.value}\n`)
+      }
+    } else {
+      // 没有 frontmatter，添加一个新的
+      content = `---\ntitle: ${newName.value}\n---\n\n${content}`
     }
     
     // 保存
@@ -426,7 +441,7 @@ const doRename = async () => {
 
 // Edit
 const editItem = () => {
-  window.open(props.item.link.replace('.html', '.md'), '_blank')
+  window.open(linkToMdPath(props.item.link), '_blank')
   closeMenu()
 }
 
@@ -447,7 +462,7 @@ const openInNewTab = () => {
 // Move to Root
 const moveToRoot = async () => {
   try {
-    const fromPath = props.item.link.replace('.html', '.md')
+    const fromPath = linkToMdPath(props.item.link)
     const fileName = fromPath.split('/').pop()
     const toPath = `posts/${fileName}`
     
@@ -470,13 +485,13 @@ const moveToRoot = async () => {
 }
 
 // Copy
-const showCopyModal = () => {
+const openCopyModal = () => {
   showToast('info', '复制功能开发中...')
   closeMenu()
 }
 
 // Move
-const showMoveModal = () => {
+const openMoveModal = () => {
   targetDir.value = ''
   showMoveModal.value = true
   closeMenu()
@@ -486,7 +501,7 @@ const doMove = async () => {
   if (!targetDir.value) return
   
   try {
-    const fromPath = props.item.link.replace('.html', '.md')
+    const fromPath = linkToMdPath(props.item.link)
     const fileName = fromPath.split('/').pop()
     const toPath = `${targetDir.value}/${fileName}`
     
@@ -511,7 +526,7 @@ const doMove = async () => {
 // Toggle Pinned
 const togglePinned = async () => {
   try {
-    const mdPath = props.item.link.replace('.html', '.md')
+    const mdPath = linkToMdPath(props.item.link)
     const readRes = await fetch(`/api/files/read?path=${encodeURIComponent(mdPath)}`)
     if (!readRes.ok) throw new Error('读取文件失败')
     
@@ -554,7 +569,7 @@ const confirmDelete = () => {
 
 const doDelete = async () => {
   try {
-    const mdPath = props.item.link.replace('.html', '.md')
+    const mdPath = linkToMdPath(props.item.link)
     const res = await fetch('/api/files/delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -116,7 +116,9 @@ function scanNode(dirPath: string, nodeName: string, rootDocPath: string, level:
 
 function createLeafNode(filePath: string, fileName: string, rootDocPath: string, level: number = 0): SidebarNode | null {
   const baseName = fileName.replace(/\.md$/i, '')
-  const title = formatDisplayName(baseName)
+  // 优先从文件 frontmatter 或 H1 提取标题
+  const extractedTitle = extractTitle(filePath)
+  const title = extractedTitle || formatDisplayName(baseName)
   const relativePath = relative(rootDocPath, filePath)
   const link = '/' + relativePath.replace(/\\/g, '/').replace(/\.md$/, '')
   

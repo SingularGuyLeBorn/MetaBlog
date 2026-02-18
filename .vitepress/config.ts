@@ -222,6 +222,76 @@ export default defineConfig({
              } else next()
           })
 
+          // Move file
+          server.middlewares.use('/api/files/move', (req, res, next) => {
+             if (req.method === 'POST') {
+                const chunks: Buffer[] = []
+                req.on('data', chunk => chunks.push(chunk))
+                req.on('end', () => {
+                   try {
+                      const body = JSON.parse(Buffer.concat(chunks).toString())
+                      const { from: fromPath, to: toPath } = body
+                      const fullFromPath = path.resolve(process.cwd(), 'docs', fromPath.replace(/^\//, ''))
+                      const fullToPath = path.resolve(process.cwd(), 'docs', toPath.replace(/^\//, ''))
+                      
+                      // Ensure target directory exists
+                      fs.mkdirSync(path.dirname(fullToPath), { recursive: true })
+                      
+                      // Move file
+                      fs.renameSync(fullFromPath, fullToPath)
+                      
+                      // Git operations
+                      try {
+                         execSync(`git mv "${fullFromPath}" "${fullToPath}"`)
+                         execSync(`git commit -m "content: 移动 ${path.basename(fromPath)} -> ${path.basename(toPath)}"`)
+                      } catch (e) {
+                         // If git mv fails, try regular add
+                         try {
+                            execSync(`git add "${fullFromPath}" "${fullToPath}"`)
+                            execSync(`git commit -m "content: 移动 ${path.basename(fromPath)} -> ${path.basename(toPath)}"`)
+                         } catch (e2) {}
+                      }
+                      
+                      res.setHeader('Content-Type', 'application/json')
+                      res.end(JSON.stringify({ success: true }))
+                   } catch (e) {
+                      res.statusCode = 500
+                      res.end(JSON.stringify({ error: String(e) }))
+                   }
+                })
+             } else next()
+          })
+
+          // Delete file
+          server.middlewares.use('/api/files/delete', (req, res, next) => {
+             if (req.method === 'POST') {
+                const chunks: Buffer[] = []
+                req.on('data', chunk => chunks.push(chunk))
+                req.on('end', () => {
+                   try {
+                      const body = JSON.parse(Buffer.concat(chunks).toString())
+                      const { path: filePath } = body
+                      const fullPath = path.resolve(process.cwd(), 'docs', filePath.replace(/^\//, ''))
+                      
+                      // Delete file
+                      fs.unlinkSync(fullPath)
+                      
+                      // Git operations
+                      try {
+                         execSync(`git rm "${fullPath}"`)
+                         execSync(`git commit -m "content: 删除 ${path.basename(filePath)}"`)
+                      } catch (e) {}
+                      
+                      res.setHeader('Content-Type', 'application/json')
+                      res.end(JSON.stringify({ success: true }))
+                   } catch (e) {
+                      res.statusCode = 500
+                      res.end(JSON.stringify({ error: String(e) }))
+                   }
+                })
+             } else next()
+          })
+
           // ============================================
           // Agent API Routes - AI-Native Operations
           // ============================================
