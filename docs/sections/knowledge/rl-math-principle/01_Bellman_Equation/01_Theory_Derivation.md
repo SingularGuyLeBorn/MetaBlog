@@ -1,5 +1,5 @@
 ---
-title: 01 Theory Derivationnew
+title: 01 Theory Derivation222
 ---
 
 # 第1章：贝尔曼方程与马尔可夫决策过程
