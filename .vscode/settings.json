@@ -1,0 +1,10 @@
+{
+    "python.defaultInterpreterPath": "D:\\python-envs\\foundation-py310\\Scripts\\python.exe",
+    "python.analysis.extraPaths": [
+        "D:\\python-envs\\foundation-py310\\Lib\\site-packages"
+    ],
+    "jupyter.askForKernelRestart": false,
+    "notebook.defaultKernel": "foundation-py310",
+    "python.terminal.useEnvFile": true,
+    "python-envs.pythonProjects": []
+}
