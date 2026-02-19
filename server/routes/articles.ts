@@ -162,7 +162,7 @@ router.get('/detail', async (req, res) => {
 
 // 创建新文章
 router.post('/create', async (req, res) => {
-  const { title, content = '', section = 'posts', tags = [] } = req.body
+  const { title, content = '', section = 'posts', tags = [], isChildDoc = false, parentPath = '' } = req.body
   
   if (!title) {
     return res.status(400).json({ success: false, error: 'Title required' })
@@ -200,11 +200,52 @@ router.post('/create', async (req, res) => {
     
     const date = new Date().toISOString().split('T')[0]
     const filename = `${slug}.md`
-    const dirPath = join(SECTIONS_PATH, section)
-    const filePath = join(dirPath, filename)
     
-    // 确保目录存在
-    await fs.mkdir(dirPath, { recursive: true })
+    let filePath: string
+    let resultPath: string
+    
+    if (isChildDoc && parentPath) {
+      // 子文档创建模式：A/1.MD -> A/1.MD/1-SON.MD
+      const parentFullPath = join(SECTIONS_PATH, parentPath.replace('.html', '.md'))
+      const parentDir = dirname(parentFullPath)
+      const parentName = basename(parentFullPath, '.md')
+      
+      // 新的子目录路径（和原文件同名）
+      const newDirPath = join(parentDir, parentName)
+      
+      // 新文件路径
+      filePath = join(newDirPath, filename)
+      resultPath = `${section}/${parentName}/${filename}`
+      
+      // 检查原文件是否存在
+      try {
+        await fs.access(parentFullPath)
+        
+        // 1. 创建新目录
+        await fs.mkdir(newDirPath, { recursive: true })
+        
+        // 2. 读取原文件内容
+        const parentContent = await fs.readFile(parentFullPath, 'utf-8')
+        
+        // 3. 将原文件移动到新目录下（保持同名）
+        const newParentPath = join(newDirPath, `${parentName}.md`)
+        await fs.writeFile(newParentPath, parentContent, 'utf-8')
+        
+        // 4. 删除原文件
+        await fs.unlink(parentFullPath)
+      } catch (e) {
+        // 原文件可能不存在，直接在新目录下创建
+        await fs.mkdir(newDirPath, { recursive: true })
+      }
+    } else {
+      // 普通创建模式
+      const dirPath = join(SECTIONS_PATH, section)
+      filePath = join(dirPath, filename)
+      resultPath = `${section}/${filename}`
+      
+      // 确保目录存在
+      await fs.mkdir(dirPath, { recursive: true })
+    }
     
     // 构建 frontmatter
     const frontmatter = `---
@@ -222,12 +263,13 @@ ${content}`
     res.json({
       success: true,
       data: {
-        path: `${section}/${filename}`,
+        path: resultPath,
         title,
         date
       }
     })
   } catch (error) {
+    console.error('Create article error:', error)
     res.status(500).json({ success: false, error: 'Failed to create article' })
   }
 })

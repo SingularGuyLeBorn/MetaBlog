@@ -111,6 +111,35 @@
           </div>
         </div>
         
+        <!-- Custom Actor Dropdown -->
+        <div class="filter-group">
+          <div class="custom-dropdown" :class="{ open: showActorDropdown }" v-click-outside="() => showActorDropdown = false">
+            <button class="dropdown-trigger" @click="showActorDropdown = !showActorDropdown">
+              <span class="trigger-text">{{ actorLabel }}</span>
+              <svg class="trigger-arrow" :class="{ open: showActorDropdown }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <Transition name="dropdown">
+              <div v-if="showActorDropdown" class="dropdown-menu">
+                <div 
+                  v-for="option in actorOptions" 
+                  :key="option.value"
+                  class="dropdown-item"
+                  :class="{ active: filters.actor === option.value }"
+                  @click="selectActor(option.value)"
+                >
+                  <span class="item-actor-icon">{{ option.label.split(' ')[0] }}</span>
+                  <span class="item-label">{{ option.label.split(' ')[1] || option.label }}</span>
+                  <svg v-if="filters.actor === option.value" class="item-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+              </div>
+            </Transition>
+          </div>
+        </div>
+        
         <!-- Custom Event Dropdown -->
         <div class="filter-group">
           <div class="custom-dropdown" :class="{ open: showEventDropdown }" v-click-outside="() => showEventDropdown = false">
@@ -200,6 +229,11 @@
               <span class="log-timestamp">{{ formatTime(log.timestamp) }}</span>
               <span class="log-level-badge" :class="`level-${log.level}`">
                 {{ log.level }}
+              </span>
+              <!-- Actor Badge -->
+              <span class="log-actor-badge" :class="`actor-${log.actor}`" :title="`Actor: ${log.actor}`">
+                <span class="actor-icon">{{ log.actor === 'human' ? '👤' : log.actor === 'ai' ? '🤖' : '⚙️' }}</span>
+                <span class="actor-label">{{ log.actor }}</span>
               </span>
               <span class="log-event-tag">{{ log.event }}</span>
               <span class="log-message" :title="log.message">{{ log.message }}</span>
@@ -325,6 +359,11 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { getEnhancedLogger, type EnhancedLogEntry, type LogStats } from '../../../agent/runtime/EnhancedLogger'
 
+// Extended log entry with actor field from server
+interface ServerLogEntry extends EnhancedLogEntry {
+  actor?: 'human' | 'ai' | 'system'
+}
+
 // ==================== Constants ====================
 const LEVEL_COLORS = {
   debug: '#6B7280',
@@ -342,7 +381,7 @@ const LEVEL_LABELS = {
 
 // ==================== State ====================
 const logger = getEnhancedLogger()
-const logs = ref<EnhancedLogEntry[]>([])
+const logs = ref<ServerLogEntry[]>([])
 const stats = ref<LogStats>({
   total: 0,
   byLevel: { debug: 0, info: 0, warn: 0, error: 0 },
@@ -356,7 +395,8 @@ const filters = ref({
   search: '',
   level: '',
   event: '',
-  skillName: ''
+  skillName: '',
+  actor: ''
 })
 
 const expandedLog = ref<string | null>(null)
@@ -370,6 +410,14 @@ const newLogIds = ref<Set<string>>(new Set())
 // Custom Dropdown State
 const showLevelDropdown = ref(false)
 const showEventDropdown = ref(false)
+const showActorDropdown = ref(false)
+
+const actorOptions = [
+  { value: '', label: '所有操作者' },
+  { value: 'human', label: '👤 人类' },
+  { value: 'ai', label: '🤖 AI' },
+  { value: 'system', label: '⚙️ 系统' }
+]
 
 const levelOptions = [
   { value: '', label: '所有级别' },
@@ -382,6 +430,11 @@ const levelOptions = [
 const levelLabel = computed(() => {
   const option = levelOptions.find(o => o.value === filters.value.level)
   return option?.label || '所有级别'
+})
+
+const actorLabel = computed(() => {
+  const option = actorOptions.find(o => o.value === filters.value.actor)
+  return option?.label || '所有操作者'
 })
 
 const eventLabel = computed(() => {
@@ -410,6 +463,12 @@ function selectLevel(value: string) {
   currentPage.value = 1
 }
 
+function selectActor(value: string) {
+  filters.value.actor = value
+  showActorDropdown.value = false
+  currentPage.value = 1
+}
+
 function selectEvent(value: string) {
   filters.value.event = value
   showEventDropdown.value = false
@@ -420,12 +479,38 @@ let refreshInterval: number | null = null
 
 // ==================== Computed ====================
 const filteredLogs = computed(() => {
-  return logger.getLogs({
-    level: filters.value.level as any,
-    event: filters.value.event || undefined,
-    skillName: filters.value.skillName || undefined,
-    search: filters.value.search || undefined
-  })
+  let result = logs.value
+  
+  // Filter by level
+  if (filters.value.level && filters.value.level !== 'all') {
+    result = result.filter(l => l.level === filters.value.level)
+  }
+  
+  // Filter by event
+  if (filters.value.event) {
+    result = result.filter(l => l.event === filters.value.event)
+  }
+  
+  // Filter by skill name
+  if (filters.value.skillName) {
+    result = result.filter(l => l.skillName === filters.value.skillName)
+  }
+  
+  // Filter by actor
+  if (filters.value.actor && filters.value.actor !== 'all') {
+    result = result.filter(l => l.actor === filters.value.actor)
+  }
+  
+  // Search in message and event
+  if (filters.value.search) {
+    const search = filters.value.search.toLowerCase()
+    result = result.filter(l => 
+      l.message?.toLowerCase().includes(search) ||
+      l.event?.toLowerCase().includes(search)
+    )
+  }
+  
+  return result
 })
 
 const displayLogs = computed(() => {
@@ -476,10 +561,61 @@ function toggleExpand(logId: string) {
   expandedLog.value = expandedLog.value === logId ? null : logId
 }
 
-function refreshLogs() {
+async function refreshLogs() {
   const previousIds = new Set(logs.value.map(l => l.id))
-  logs.value = logger.getLogs()
-  stats.value = logger.getStats()
+  
+  // Fetch from API
+  try {
+    const [logsRes, statsRes] = await Promise.all([
+      fetch('/api/logs/recent?count=100'),
+      fetch('/api/logs/stats')
+    ])
+    
+    const logsResult = await logsRes.json()
+    const statsResult = await statsRes.json()
+    
+    if (logsResult.success) {
+      // Transform server logs to match our format
+      logs.value = logsResult.data.map((log: any) => ({
+        id: log.id,
+        timestamp: new Date(log.timestamp).getTime(),
+        level: log.level,
+        event: log.event,
+        message: log.message,
+        data: log.metadata || {},
+        actor: log.actor,
+        sessionId: log.sessionId || '',
+        traceId: log.traceId || '',
+        taskId: log.taskId,
+        skillName: log.skillName,
+        duration: log.duration,
+        source: log.source
+      }))
+    }
+    
+    if (statsResult.success) {
+      stats.value = {
+        total: statsResult.data.total,
+        byLevel: statsResult.data.byLevel,
+        byEvent: statsResult.data.byEvent,
+        byTask: {},
+        byDay: {},
+        recentErrors: (statsResult.data.recentErrors || []).map((log: any) => ({
+          id: log.id,
+          timestamp: new Date(log.timestamp).getTime(),
+          level: log.level,
+          event: log.event,
+          message: log.message,
+          data: log.metadata || {}
+        }))
+      }
+    }
+  } catch (e) {
+    console.error('Failed to fetch logs from server:', e)
+    // Fallback to local logs
+    logs.value = logger.getLogs(100)
+    stats.value = logger.getStats()
+  }
   
   // Track new logs for animation
   const currentIds = new Set(logs.value.map(l => l.id))
@@ -498,26 +634,38 @@ function isNewLog(logId: string): boolean {
   return newLogIds.value.has(logId)
 }
 
-function exportLogs() {
-  const json = logger.exportLogs('json')
-  const blob = new Blob([json], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `logs-${new Date().toISOString().split('T')[0]}.json`
-  a.click()
-  URL.revokeObjectURL(url)
+async function exportLogs() {
+  try {
+    const response = await fetch('/api/logs/export?format=json')
+    const result = await response.json()
+    if (result.success) {
+      const json = JSON.stringify(result.data, null, 2)
+      const blob = new Blob([json], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `logs-${new Date().toISOString().split('T')[0]}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+  } catch (e) {
+    console.error('Failed to export logs:', e)
+  }
 }
 
 function confirmClear() {
   showClearModal.value = true
 }
 
-function clearLogs() {
-  logger.clear()
-  refreshLogs()
-  showClearModal.value = false
-  expandedLog.value = null
+async function clearLogs() {
+  try {
+    await fetch('/api/logs/cleanup', { method: 'POST', body: JSON.stringify({ days: 0 }) })
+    await refreshLogs()
+    showClearModal.value = false
+    expandedLog.value = null
+  } catch (e) {
+    console.error('Failed to clear logs:', e)
+  }
 }
 
 // ==================== Lifecycle ====================
@@ -958,6 +1106,12 @@ watch(() => logs.value.length, (newLen, oldLen) => {
 .item-dot.warn { background: #D97706; }
 .item-dot.error { background: #DC2626; }
 
+.item-actor-icon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+}
+
 .item-label {
   flex: 1;
   color: var(--text-primary);
@@ -1226,6 +1380,60 @@ watch(() => logs.value.length, (newLen, oldLen) => {
 .log-level-badge.level-error {
   background: rgba(220, 38, 38, 0.12);
   color: var(--color-error);
+}
+
+/* Actor Badge Styles */
+.log-actor-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.log-actor-badge .actor-icon {
+  font-size: 12px;
+}
+
+.log-actor-badge .actor-label {
+  font-size: 9px;
+}
+
+.log-actor-badge.actor-human {
+  background: rgba(37, 99, 235, 0.15);
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.log-actor-badge.actor-ai {
+  background: rgba(147, 51, 234, 0.15);
+  color: #9333ea;
+  border: 1px solid rgba(147, 51, 234, 0.2);
+}
+
+.log-actor-badge.actor-system {
+  background: rgba(107, 114, 128, 0.15);
+  color: #6b7280;
+  border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.log-capsule:hover .log-actor-badge.actor-human {
+  background: rgba(37, 99, 235, 0.25);
+}
+
+.log-capsule:hover .log-actor-badge.actor-ai {
+  background: rgba(147, 51, 234, 0.25);
+}
+
+.log-capsule:hover .log-actor-badge.actor-system {
+  background: rgba(107, 114, 128, 0.25);
 }
 
 .log-event-tag {

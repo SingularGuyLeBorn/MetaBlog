@@ -7,13 +7,6 @@
         <h3>文章管理</h3>
         <span class="article-count" v-if="articles.length">{{ articles.length }}</span>
       </div>
-      <button class="btn-create" @click="showCreateModal = true">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        <span>新建文章</span>
-      </button>
     </div>
 
     <!-- Search & Filter -->
@@ -331,58 +324,16 @@
                 <span class="tree-label">sections/</span>
               </div>
               
-              <div v-for="item in directoryTree" :key="item.path">
-                <!-- Directory -->
-                <div 
-                  v-if="item.type === 'directory'"
-                  class="path-tree-item"
-                  :class="{ selected: selectedPath === item.path && !isChildDoc }"
-                  @click="selectPath(item.path)"
-                >
-                  <svg class="tree-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  <span class="tree-label">{{ item.name }}/</span>
-                </div>
-                
-                <!-- Article with child creation option -->
-                <div 
-                  v-else
-                  class="path-tree-item is-article"
-                  :class="{ selected: selectedPath === item.path && !isChildDoc }"
-                >
-                  <svg class="tree-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                  </svg>
-                  <span class="tree-label">{{ item.title }}</span>
-                  <span class="tree-action" @click.stop="selectAsParent(item)">创建子文档</span>
-                </div>
-                
-                <!-- Children -->
-                <div v-if="item.children && item.children.length > 0" class="path-tree-children">
-                  <div 
-                    v-for="child in item.children" 
-                    :key="child.path"
-                    class="path-tree-item"
-                    :class="{ 
-                      'is-article': child.type === 'article',
-                      selected: selectedPath === child.path && !isChildDoc
-                    }"
-                    @click="child.type === 'directory' ? selectPath(child.path) : null"
-                  >
-                    <svg class="tree-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path v-if="child.type === 'directory'" d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                      <template v-else>
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                      </template>
-                    </svg>
-                    <span class="tree-label">{{ child.name || child.title }}</span>
-                    <span v-if="child.type === 'article'" class="tree-action" @click.stop="selectAsParent(child)">创建子文档</span>
-                  </div>
-                </div>
-              </div>
+              <!-- 递归渲染树节点 -->
+              <TreeNode 
+                v-for="item in directoryTree" 
+                :key="item.path"
+                :node="item"
+                :selected-path="selectedPath"
+                :is-child-doc="isChildDoc"
+                @select="selectPath"
+                @select-as-parent="selectAsParent"
+              />
             </div>
             
             <div class="modal-footer">
@@ -424,9 +375,98 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, defineComponent, h } from 'vue'
 import { useData } from 'vitepress'
 import { logger, logFileOperation } from '../../composables/useLogger'
+import { notifyFileSystemChange } from '../../composables/useDynamicSidebar'
+
+// 递归树节点组件
+const TreeNode = defineComponent({
+  name: 'TreeNode',
+  props: {
+    node: { type: Object, required: true },
+    selectedPath: { type: String, default: '' },
+    isChildDoc: { type: Boolean, default: false },
+    level: { type: Number, default: 0 }
+  },
+  emits: ['select', 'selectAsParent'],
+  setup(props, { emit }) {
+    const isSelected = computed(() => {
+      return props.selectedPath === props.node.path && !props.isChildDoc
+    })
+    
+    const indentStyle = computed(() => ({
+      paddingLeft: `${16 + props.level * 16}px`
+    }))
+    
+    return () => {
+      const node = props.node
+      
+      // 目录节点
+      if (node.type === 'directory') {
+        return h('div', {}, [
+          h('div', {
+            class: ['path-tree-item', { selected: isSelected.value }],
+            style: indentStyle.value,
+            onClick: () => emit('select', node.path)
+          }, [
+            h('svg', { 
+              class: 'tree-icon',
+              viewBox: '0 0 24 24', 
+              fill: 'none', 
+              stroke: 'currentColor', 
+              'stroke-width': '2'
+            }, [
+              h('path', { d: 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z' })
+            ]),
+            h('span', { class: 'tree-label' }, node.displayName || node.name)
+          ]),
+          // 递归渲染子节点
+          node.children?.length > 0 
+            ? h('div', { class: 'path-tree-children' },
+                node.children.map((child: any) => 
+                  h(TreeNode, {
+                    key: child.path,
+                    node: child,
+                    selectedPath: props.selectedPath,
+                    isChildDoc: props.isChildDoc,
+                    level: props.level + 1,
+                    onSelect: (path: string) => emit('select', path),
+                    onSelectAsParent: (item: any) => emit('selectAsParent', item)
+                  })
+                )
+              )
+            : null
+        ])
+      }
+      
+      // 文章节点
+      return h('div', {
+        class: ['path-tree-item', 'is-article', { selected: isSelected.value }],
+        style: indentStyle.value
+      }, [
+        h('svg', { 
+          class: 'tree-icon',
+          viewBox: '0 0 24 24', 
+          fill: 'none', 
+          stroke: 'currentColor', 
+          'stroke-width': '2'
+        }, [
+          h('path', { d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' }),
+          h('polyline', { points: '14 2 14 8 20 8' })
+        ]),
+        h('span', { class: 'tree-label' }, node.displayName || node.title || node.name),
+        h('span', { 
+          class: 'tree-action',
+          onClick: (e: Event) => {
+            e.stopPropagation()
+            emit('selectAsParent', node)
+          }
+        }, '创建子文档')
+      ])
+    }
+  }
+})
 
 // ==================== Types ====================
 interface Article {
@@ -466,7 +506,8 @@ const articleToDelete = ref<Article | null>(null)
 
 // Directory tree for path selection
 const directoryTree = ref<any[]>([])
-const selectedPath = ref<string>('sections/posts')
+// 注意：selectedPath 存储的是相对于 sections/ 的路径（如 'posts' 或 'knowledge/rl-math-principle'）
+const selectedPath = ref<string>('posts')
 const isChildDoc = ref(false)  // 是否作为子文档创建
 const parentArticle = ref<Article | null>(null)  // 父文档
 
@@ -497,11 +538,12 @@ const hasActiveFilters = computed(() => {
   return searchQuery.value || currentFilter.value !== 'all'
 })
 
+// 显示用的路径标签（加上 sections/ 前缀）
 const selectedPathLabel = computed(() => {
   if (isChildDoc.value && parentArticle.value) {
     return `${parentArticle.value.path} (作为子文档)`
   }
-  return selectedPath.value + '/'
+  return `sections/${selectedPath.value}/`
 })
 
 const filteredArticles = computed(() => {
@@ -608,41 +650,24 @@ function showToast(type: Toast['type'], message: string) {
 async function loadArticles() {
   isLoading.value = true
   try {
-    // Get articles from sidebar config
-    const sidebar = vpData.theme.value.sidebar || {}
-    const allArticles: Article[] = []
-
-    function processSidebarItems(items: any[], basePath = '') {
-      items.forEach((item: any) => {
-        if (item.link && !item.link.match(/^https?:\/\//)) {
-          allArticles.push({
-            path: item.link,
-            title: item.text || item.title || '未命名文章',
-            date: item.frontmatter?.date || item.date,
-            category: item.frontmatter?.category,
-            tags: item.frontmatter?.tags,
-            wordCount: item.frontmatter?.wordCount,
-            isPublished: item.frontmatter?.published !== false
-          })
-        }
-        if (item.items && Array.isArray(item.items)) {
-          processSidebarItems(item.items, basePath)
-        }
-      })
+    // 从后端 API 获取文章列表
+    const response = await fetch('/api/articles/list')
+    if (!response.ok) throw new Error('Failed to fetch articles')
+    
+    const result = await response.json()
+    if (result.success && result.data) {
+      articles.value = result.data.map((item: any) => ({
+        path: `/sections/${item.path}`,
+        title: item.title || '未命名文章',
+        isLeaf: item.isLeaf !== false
+      }))
+    } else {
+      articles.value = []
     }
-
-    Object.values(sidebar).forEach((section: any) => {
-      if (Array.isArray(section)) {
-        processSidebarItems(section)
-      } else if (section?.items) {
-        processSidebarItems(section.items)
-      }
-    })
-
-    articles.value = allArticles
   } catch (error) {
     showToast('error', '加载文章失败')
     console.error('Failed to load articles:', error)
+    articles.value = []
   } finally {
     isLoading.value = false
   }
@@ -689,9 +714,11 @@ async function createArticle() {
       newArticle.value = { title: '', section: 'posts', tags: '', content: '' }
       isChildDoc.value = false
       parentArticle.value = null
-      selectedPath.value = 'sections/posts'
+      selectedPath.value = 'posts'
       // Reload list
       await loadArticles()
+      // 通知 sidebar 刷新
+      notifyFileSystemChange('posts')
     } else {
       throw new Error(result.error || 'Create failed')
     }
@@ -737,6 +764,8 @@ async function deleteArticle() {
     showDeleteModal.value = false
     articleToDelete.value = null
     await loadArticles()
+    // 通知 sidebar 刷新
+    notifyFileSystemChange('posts')
   } catch (error) {
     showToast('error', '删除失败: ' + (error as Error).message)
   } finally {
@@ -745,49 +774,38 @@ async function deleteArticle() {
 }
 
 // ==================== Directory Tree ====================
-function buildDirectoryTree() {
-  const sidebar = vpData.theme.value.sidebar || {}
-  const tree: any[] = []
-  
-  function processItems(items: any[], parentPath = '') {
-    items.forEach((item: any) => {
-      if (!item.link || item.link.match(/^https?:\/\//)) {
-        // Directory
-        if (item.items && item.items.length > 0) {
-          const dirPath = parentPath || item.text
-          const children: any[] = []
-          
-          item.items.forEach((child: any) => {
-            if (child.link && !child.link.match(/^https?:\/\//)) {
-              children.push({
-                type: 'article',
-                path: child.link,
-                title: child.text || '未命名',
-                name: child.text
-              })
-            }
-          })
-          
-          tree.push({
-            type: 'directory',
-            path: dirPath,
-            name: item.text || '未命名',
-            children
-          })
-        }
-      }
-    })
-  }
-  
-  Object.values(sidebar).forEach((section: any) => {
-    if (Array.isArray(section)) {
-      processItems(section)
-    } else if (section?.items) {
-      processItems(section.items)
+async function buildDirectoryTree() {
+  // 从后端 API 获取规范化的目录树
+  try {
+    const response = await fetch('/api/directory-tree?section=posts')
+    if (!response.ok) throw new Error('Failed to fetch directory tree')
+    
+    const result = await response.json()
+    if (result.success && result.data) {
+      directoryTree.value = result.data
+    } else {
+      directoryTree.value = []
     }
-  })
-  
-  directoryTree.value = tree
+  } catch (e) {
+    console.error('[ArticleManager] Failed to build directory tree:', e)
+    directoryTree.value = []
+  }
+}
+
+// 格式化目录名称（如 node-L1 → Node L1 Hub，leaf-1-1 → Leaf 1-1）
+function formatDirName(name: string): string {
+  // node-L1 → Node L1 Hub
+  if (name.startsWith('node-')) {
+    const num = name.replace('node-', '')
+    return `Node ${num} Hub`
+  }
+  // leaf-1-1 → Leaf 1-1
+  if (name.startsWith('leaf-')) {
+    const parts = name.replace('leaf-', '').split('-')
+    return `Leaf ${parts.join('-')}`
+  }
+  // 默认：首字母大写
+  return name.charAt(0).toUpperCase() + name.slice(1)
 }
 
 function selectPath(path: string) {
@@ -797,13 +815,34 @@ function selectPath(path: string) {
 }
 
 function selectAsParent(article: Article) {
-  selectedPath.value = article.path.replace('.html', '')
+  // 提取文章的相对路径（去掉 sections/ 前缀，保留文件名用于后端识别父文档）
+  const cleanPath = article.path.startsWith('/') ? article.path.slice(1) : article.path
+  const pathParts = cleanPath.split('/')
+  
+  // 去掉 'sections/' 前缀，但保留文件名
+  if (pathParts[0] === 'sections') {
+    pathParts.shift()
+  }
+  
+  // 保存完整路径（如 posts/ai-paper-reading-2024.html）供后端识别父文档
+  const articlePathWithExt = pathParts.join('/')
+  // 去掉 .html 后缀，因为后端会添加 .md
+  selectedPath.value = articlePathWithExt.replace('.html', '')
   isChildDoc.value = true
   parentArticle.value = article
 }
 
 function confirmPathSelection() {
-  newArticle.value.section = selectedPath.value
+  // 如果不是创建子文档，selectedPath 是 section 路径
+  // 如果是创建子文档，selectedPath 是父文档路径，section 应该从父文档路径中提取
+  if (isChildDoc.value && parentArticle.value) {
+    // 从父文档路径提取 section（如 posts/ai-paper-reading-2024 -> posts）
+    const pathParts = selectedPath.value.split('/')
+    newArticle.value.section = pathParts[0] || 'posts'
+  } else {
+    // 普通路径选择，selectedPath 就是 section
+    newArticle.value.section = selectedPath.value
+  }
   showPathSelector.value = false
 }
 
@@ -811,6 +850,12 @@ function confirmPathSelection() {
 onMounted(() => {
   loadArticles()
   buildDirectoryTree()
+  
+  // Listen for create article event from parent
+  const handleCreateArticle = () => {
+    showCreateModal.value = true
+  }
+  window.addEventListener('article-manager:create', handleCreateArticle)
   
   // Placeholder animation
   const placeholders = ['搜索文章...', '输入标题、标签...', '查找内容...']
@@ -821,6 +866,11 @@ onMounted(() => {
       searchPlaceholder.value = placeholders[index]
     }
   }, 4000)
+  
+  // Cleanup
+  return () => {
+    window.removeEventListener('article-manager:create', handleCreateArticle)
+  }
 })
 </script>
 

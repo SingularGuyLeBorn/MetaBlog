@@ -300,7 +300,12 @@ import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { marked } from 'marked'
 import { useData } from 'vitepress'
 import { useChatService } from '../../../agent/chat-service'
+import { useLogger } from '../../composables/useLogger'
 import LiquidCoreAvatar from './LiquidCoreAvatar.vue'
+
+// ==================== Logger ====================
+const logger = useLogger('human')
+const aiLogger = useLogger('ai')
 
 // ==================== Types ====================
 interface Message {
@@ -815,10 +820,22 @@ function selectSkill(skill: SkillData) {
   // Remove the / trigger
   deleteTextBeforeCursor(1)
   showPopover.value = false
+  
+  // Log skill selection
+  logger.logInfo('chat.skill.select', `选择技能: ${skill.name}`, {
+    skillId: skill.id,
+    skillName: skill.name
+  })
 }
 
 function removeSkill() {
+  const skillName = activeSkill.value?.name
   activeSkill.value = null
+  
+  // Log skill removal
+  if (skillName) {
+    logger.logInfo('chat.skill.remove', `移除技能: ${skillName}`)
+  }
 }
 
 function selectArticle(article: ArticleData) {
@@ -964,6 +981,13 @@ async function sendMessage() {
     attachedArticles: articlesWithContent.length > 0 ? articlesWithContent : undefined,
   })
   
+  // Log human message
+  logger.logInfo('chat.message', '用户发送消息', {
+    contentLength: text?.length || 0,
+    articleCount: articles.length,
+    model: isThinkingMode.value ? 'deepseek-reasoner' : 'deepseek-chat'
+  })
+  
   // Clear input
   if (inputRef.value) {
     inputRef.value.innerHTML = ''
@@ -988,7 +1012,15 @@ async function sendMessage() {
     }
     const msgIndex = messages.value.push(assistantMsg) - 1
     
-    // Stream response with full content (including articles)
+    // Log AI request
+  const startTime = Date.now()
+  aiLogger.logInfo('chat.request', 'AI请求开始', {
+    model,
+    contentLength: fullContent.length,
+    hasArticles: articlesWithContent.length > 0
+  })
+  
+  // Stream response with full content (including articles)
     await chatService.sendMessageStream(
       fullContent,
       (chunk) => {
@@ -1004,7 +1036,25 @@ async function sendMessage() {
       },
       { model, temperature: 0.7 }
     )
+    
+    // Log AI response success
+    const duration = Date.now() - startTime
+    const responseContent = messages.value[msgIndex].content
+    aiLogger.logSuccess('chat.response', 'AI响应完成', {
+      model,
+      duration,
+      contentLength: responseContent.length,
+      hasReasoning: !!messages.value[msgIndex].reasoning
+    })
   } catch (err) {
+    // Log AI error
+    const duration = Date.now() - startTime
+    aiLogger.logError('chat.error', 'AI请求失败', {
+      model,
+      duration,
+      error: err instanceof Error ? err.message : String(err)
+    })
+    
     // Remove placeholder and show error
     messages.value.pop()
     messages.value.push({

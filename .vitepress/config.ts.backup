@@ -255,39 +255,16 @@ export default defineConfig({
              if (req.method === 'POST') {
                 const chunks: Buffer[] = []
                 req.on('data', chunk => chunks.push(chunk))
-                req.on('end', async () => {
+                req.on('end', () => {
+                   const body = JSON.parse(Buffer.concat(chunks).toString())
+                   const { path: filePath, content } = body
+                   const fullPath = path.resolve(process.cwd(), 'docs', filePath.replace(/^\//, ''))
+                   fs.writeFileSync(fullPath, content)
                    try {
-                      const body = JSON.parse(Buffer.concat(chunks).toString())
-                      const { path: filePath, content } = body
-                      
-                      if (!filePath) {
-                         res.statusCode = 400
-                         res.end(JSON.stringify({ success: false, error: 'Path required' }))
-                         return
-                      }
-                      
-                      const fullPath = path.resolve(process.cwd(), 'docs', filePath.replace(/^\//, ''))
-                      
-                      // 确保目录存在
-                      const dir = path.dirname(fullPath)
-                      await fs.promises.mkdir(dir, { recursive: true })
-                      
-                      // 写入文件
-                      await fs.promises.writeFile(fullPath, content, 'utf-8')
-                      
-                      // Git 操作（非阻塞）
-                      try {
-                         execSync(`git add "${fullPath}"`)
-                         execSync(`git commit -m "content: 更新 ${path.basename(fullPath)}"`)
-                      } catch (e) {}
-                      
-                      res.setHeader('Content-Type', 'application/json')
-                      res.end(JSON.stringify({ success: true, message: 'Saved' }))
-                   } catch (error) {
-                      console.error('[API] Save file error:', error)
-                      res.statusCode = 500
-                      res.end(JSON.stringify({ success: false, error: (error as Error).message }))
-                   }
+                      execSync(`git add "${fullPath}"`)
+                      execSync(`git commit -m "content: 更新 ${path.basename(fullPath)}"`)
+                   } catch (e) {}
+                   res.end('Saved')
                 })
              } else next()
           })
@@ -653,173 +630,39 @@ export default defineConfig({
           function generateSlug(title: string): string {
             if (!title || !title.trim()) return 'untitled'
             
-            // 对中文进行简单拼音化处理（使用常见的多音字映射）
+            // 简单的拼音映射（常见汉字）
             const pinyinMap: Record<string, string> = {
-              '的': 'de', '是': 'shi', '了': 'le', '在': 'zai', '我': 'wo',
-              '有': 'you', '和': 'he', '就': 'jiu', '不': 'bu', '人': 'ren',
-              '都': 'dou', '一': 'yi', '一个': 'yige', '上': 'shang', '也': 'ye',
-              '来': 'lai', '到': 'dao', '时': 'shi', '大': 'da', '地': 'di',
-              '为': 'wei', '中': 'zhong', '你': 'ni', '说': 'shuo', '生': 'sheng',
-              '国': 'guo', '年': 'nian', '着': 'zhe', '就': 'jiu', '那': 'na',
-              '要': 'yao', '出': 'chu', '也': 'ye', '得': 'de', '里': 'li',
-              '后': 'hou', '自': 'zi', '以': 'yi', '会': 'hui', '家': 'jia',
-              '可': 'ke', '下': 'xia', '而': 'er', '过': 'guo', '天': 'tian',
-              '去': 'qu', '能': 'neng', '对': 'dui', '小': 'xiao', '多': 'duo',
-              '然': 'ran', '于': 'yu', '心': 'xin', '学': 'xue', '之': 'zhi',
-              '看': 'kan', '发': 'fa', '把': 'ba', '只': 'zhi', '如': 'ru',
-              '样': 'yang', '文': 'wen', '章': 'zhang', '标': 'biao', '题': 'ti',
-              '测': 'ce', '试': 'shi', '内': 'nei', '容': 'rong', '创': 'chuang',
-              '建': 'jian', '父': 'fu', '子': 'zi', '档': 'dang', '案': 'an',
-              '英': 'ying', '问': 'wen', '读': 'du', '笔': 'bi', '记': 'ji',
-              '中': 'zhong', '文': 'wen', '分': 'fen', '享': 'xiang', '技': 'ji',
-              '术': 'shu', '日': 'ri', '常': 'chang', '生': 'sheng', '活': 'huo',
-              '工': 'gong', '作': 'zuo', '学': 'xue', '习': 'xi', '心': 'xin',
-              '得': 'de', '开': 'kai', '发': 'fa', '程': 'cheng', '序': 'xu',
-              '设': 'she', '计': 'ji', '模': 'mo', '式': 'shi', '架': 'jia',
-              '构': 'gou', '优': 'you', '化': 'hua', '性': 'xing', '能': 'neng',
-              '安': 'an', '全': 'quan', '网': 'wang', '络': 'luo', '数': 'shu',
-              '据': 'ju', '库': 'ku', '服': 'fu', '务': 'wu', '器': 'qi',
-              '端': 'duan', '前': 'qian', '页': 'ye', '面': 'mian', '组': 'zu',
-              '件': 'jian', '框': 'kuang', '应': 'ying', '用': 'yong', '系': 'xi',
-              '统': 'tong', '平': 'ping', '台': 'tai', '工': 'gong', '具': 'ju',
-              '配': 'pei', '置': 'zhi', '环': 'huan', '境': 'jing', '变': 'bian',
-              '量': 'liang', '版': 'ban', '本': 'ben', '控': 'kong', '制': 'zhi',
-              '源': 'yuan', '码': 'ma', '码': 'ma', '编': 'bian', '译': 'yi',
-              '构': 'gou', '建': 'jian', '部': 'bu', '署': 'shu', '发': 'fa',
-              '布': 'bu', '版': 'ban', '本': 'ben', '更': 'geng', '新': 'xin',
-              '维': 'wei', '护': 'hu', '文': 'wen', '档': 'dang', '说': 'shuo',
-              '明': 'ming', '介': 'jie', '绍': 'shao', '教': 'jiao', '程': 'cheng',
-              '指': 'zhi', '南': 'nan', '参': 'can', '考': 'kao', '手': 'shou',
-              '册': 'ce', '常': 'chang', '见': 'jian', '问': 'wen', '题': 'ti',
-              '解': 'jie', '答': 'da', '排': 'pai', '错': 'cuo', '调': 'tiao',
-              '试': 'shi', '测': 'ce', '试': 'shi', '验': 'yan', '证': 'zheng',
-              '验': 'yan', '结': 'jie', '果': 'guo', '报': 'bao', '告': 'gao',
-              '分': 'fen', '析': 'xi', '总': 'zong', '结': 'jie', '评': 'ping',
-              '估': 'gu', '预': 'yu', '测': 'ce', '规': 'gui', '划': 'hua',
-              '计': 'ji', '划': 'hua', '实': 'shi', '施': 'shi', '执': 'zhi',
-              '行': 'xing', '操': 'cao', '作': 'zuo', '方': 'fang', '法': 'fa',
-              '步': 'bu', '骤': 'zhou', '流': 'liu', '程': 'cheng', '图': 'tu',
-              '表': 'biao', '单': 'dan', '列': 'lie', '清': 'qing', '项': 'xiang',
-              '目': 'mu', '任': 'ren', '务': 'wu', '计': 'ji', '时': 'shi',
-              '间': 'jian', '日': 'ri', '期': 'qi', '周': 'zhou', '月': 'yue',
-              '年': 'nian', '代': 'dai', '纪': 'ji', '元': 'yuan', '第': 'di',
-              '二': 'er', '三': 'san', '四': 'si', '五': 'wu', '六': 'liu',
-              '七': 'qi', '八': 'ba', '九': 'jiu', '十': 'shi', '百': 'bai',
-              '千': 'qian', '万': 'wan', '亿': 'yi', '零': 'ling', '半': 'ban',
-              '双': 'shuang', '整': 'zheng', '正': 'zheng', '负': 'fu', '加': 'jia',
-              '减': 'jian', '乘': 'cheng', '除': 'chu', '等': 'deng', '于': 'yu',
-              '大': 'da', '小': 'xiao', '多': 'duo', '少': 'shao', '高': 'gao',
-              '低': 'di', '长': 'chang', '短': 'duan', '快': 'kuai', '慢': 'man',
-              '好': 'hao', '坏': 'huai', '新': 'xin', '旧': 'jiu', '老': 'lao',
-              '始': 'shi', '终': 'zhong', '开': 'kai', '关': 'guan', '入': 'ru',
-              '出': 'chu', '进': 'jin', '退': 'tui', '上': 'shang', '下': 'xia',
-              '左': 'zuo', '右': 'you', '东': 'dong', '西': 'xi', '南': 'nan',
-              '北': 'bei', '中': 'zhong', '外': 'wai', '内': 'nei', '里': 'li',
-              '间': 'jian', '旁': 'pang', '边': 'bian', '面': 'mian', '方': 'fang',
-              '角': 'jiao', '圆': 'yuan', '点': 'dian', '线': 'xian', '条': 'tiao',
-              '块': 'kuai', '片': 'pian', '段': 'duan', '层': 'ceng', '级': 'ji',
-              '等': 'deng', '类': 'lei', '种': 'zhong', '样': 'yang', '式': 'shi',
-              '型': 'xing', '号': 'hao', '类': 'lei', '别': 'bie', '属': 'shu',
-              '性': 'xing', '质': 'zhi', '特': 'te', '征': 'zheng', '形': 'xing',
-              '状': 'zhuang', '态': 'tai', '情': 'qing', '况': 'kuang', '景': 'jing',
-              '象': 'xiang', '现': 'xian', '实': 'shi', '真': 'zhen', '假': 'jia',
-              '虚': 'xu', '幻': 'huan', '空': 'kong', '实': 'shi', '体': 'ti',
-              '物': 'wu', '品': 'pin', '事': 'shi', '件': 'jian', '故': 'gu',
-              '障': 'zhang', '问': 'wen', '题': 'ti', '难': 'nan', '点': 'dian',
-              '重': 'zhong', '点': 'dian', '关': 'guan', '键': 'jian', '核': 'he',
-              '心': 'xin', '基': 'ji', '础': 'chu', '本': 'ben', '根': 'gen',
-              '源': 'yuan', '起': 'qi', '因': 'yin', '由': 'you', '缘': 'yuan',
-              '故': 'gu', '理': 'li', '由': 'you', '道': 'dao', '路': 'lu',
-              '途': 'tu', '径': 'jing', '线': 'xian', '道': 'dao', '方': 'fang',
-              '向': 'xiang', '目': 'mu', '的': 'de', '标': 'biao', '指': 'zhi',
-              '导': 'dao', '引': 'yin', '领': 'ling', '导': 'dao', '向': 'xiang',
-              '趋': 'qu', '势': 'shi', '动': 'dong', '向': 'xiang', '态': 'tai',
-              '势': 'shi', '格': 'ge', '局': 'ju', '面': 'mian', '貌': 'mao',
-              '相': 'xiang', '貌': 'mao', '外': 'wai', '观': 'guan', '表': 'biao',
-              '现': 'xian', '示': 'shi', '显': 'xian', '露': 'lu', '展': 'zhan',
-              '示': 'shi', '呈': 'cheng', '现': 'xian', '出': 'chu', '产': 'chan',
-              '生': 'sheng', '成': 'cheng', '形': 'xing', '造': 'zao', '制': 'zhi',
-              '造': 'zao', '建': 'jian', '设': 'she', '立': 'li', '确': 'que',
-              '定': 'ding', '决': 'jue', '定': 'ding', '定': 'ding', '义': 'yi',
-              '规': 'gui', '定': 'ding', '约': 'yue', '定': 'ding', '协': 'xie',
-              '议': 'yi', '合': 'he', '同': 'tong', '契': 'qi', '约': 'yue',
-              '条': 'tiao', '款': 'kuan', '条': 'tiao', '件': 'jian', '规': 'gui',
-              '则': 'ze', '原': 'yuan', '则': 'ze', '准': 'zhun', '标': 'biao',
-              '准': 'zhun', '规': 'gui', '范': 'fan', '要': 'yao', '求': 'qiu',
-              '需': 'xu', '求': 'qiu', '需': 'xu', '要': 'yao', '必': 'bi',
-              '须': 'xu', '必': 'bi', '需': 'xu', '必': 'bi', '定': 'ding',
-              '肯': 'ken', '定': 'ding', '否': 'fou', '定': 'ding', '或': 'huo',
-              '与': 'yu', '及': 'ji', '以': 'yi', '及': 'ji', '或': 'huo',
-              '者': 'zhe', '但': 'dan', '是': 'shi', '而': 'er', '且': 'qie',
-              '因': 'yin', '为': 'wei', '所': 'suo', '以': 'yi', '因': 'yin',
-              '此': 'ci', '如': 'ru', '果': 'guo', '假': 'jia', '设': 'she',
-              '即': 'ji', '使': 'shi', '虽': 'sui', '然': 'ran', '尽': 'jin',
-              '管': 'guan', '不': 'bu', '管': 'guan', '不': 'bu', '论': 'lun',
-              '无': 'wu', '论': 'lun', '只': 'zhi', '要': 'yao', '除': 'chu',
-              '非': 'fei', '除': 'chu', '了': 'le', '之': 'zhi', '外': 'wai',
-              '除': 'chu', '此': 'ci', '以': 'yi', '外': 'wai', '另': 'ling',
-              '外': 'wai', '还': 'huan', '有': 'you', '并': 'bing', '且': 'qie',
-              '而': 'er', '且': 'qie', '况': 'kuang', '且': 'qie', '何': 'he',
-              '况': 'kuang', '更': 'geng', '不': 'bu', '用': 'yong', '说': 'shuo',
-              '了': 'le', '总': 'zong', '之': 'zhi', '综': 'zong', '上': 'shang',
-              '所': 'suo', '述': 'shu', '由': 'you', '此': 'ci', '可': 'ke',
-              '见': 'jian', '可': 'ke', '见': 'jian', '可': 'ke', '知': 'zhi',
-              '足': 'zu', '见': 'jian', '显': 'xian', '而': 'er', '易': 'yi',
-              '见': 'jian', '显': 'xian', '然': 'ran', '明': 'ming', '显': 'xian',
-              '明': 'ming', '白': 'bai', '清': 'qing', '楚': 'chu', '明': 'ming',
-              '了': 'liao', '清': 'qing', '晰': 'xi', '明': 'ming', '确': 'que',
-              '准': 'zhun', '确': 'que', '精': 'jing', '确': 'que', '正': 'zheng',
-              '确': 'que', '准': 'zhun', '确': 'que', '正': 'zheng', '当': 'dang',
-              '合': 'he', '适': 'shi', '适': 'shi', '当': 'dang', '恰': 'qia',
-              '当': 'dang', '妥': 'tuo', '当': 'dang', '恰': 'qia', '好': 'hao',
-              '正': 'zheng', '好': 'hao', '刚': 'gang', '好': 'hao', '适': 'shi',
-              '逢': 'feng', '正': 'zheng', '巧': 'qiao', '恰': 'qia', '巧': 'qiao',
-              '偶': 'ou', '然': 'ran', '偶': 'ou', '尔': 'er', '间': 'jian',
-              '或': 'huo', '时': 'shi', '常': 'chang', '经': 'jing', '常': 'chang',
-              '常': 'chang', '常': 'chang', '通': 'tong', '常': 'chang', '平': 'ping',
-              '常': 'chang', '普': 'pu', '通': 'tong', '一': 'yi', '般': 'ban',
-              '普': 'pu', '遍': 'bian', '广': 'guang', '泛': 'fan', '大': 'da',
-              '量': 'liang', '多': 'duo', '数': 'shu', '大': 'da', '部': 'bu',
-              '分': 'fen', '主': 'zhu', '要': 'yao', '重': 'zhong', '要': 'yao',
-              '关': 'guan', '键': 'jian', '紧': 'jin', '要': 'yao', '紧': 'jin',
-              '迫': 'po', '急': 'ji', '迫': 'po', '紧': 'jin', '急': 'ji',
-              '危': 'wei', '急': 'ji', '紧': 'jin', '张': 'zhang', '严': 'yan',
-              '重': 'zhong', '危': 'wei', '重': 'zhong', '严': 'yan', '峻': 'jun',
-              '严': 'yan', '厉': 'li', '严': 'yan', '格': 'ge', '严': 'yan',
-              '密': 'mi', '严': 'yan', '谨': 'jin', '严': 'yan', '肃': 'su',
-              '庄': 'zhuang', '重': 'zhong', '郑': 'zheng', '重': 'zhong', '慎': 'shen',
-              '重': 'zhong', '谨': 'jin', '慎': 'shen', '小': 'xiao', '心': 'xin',
-              '仔': 'zi', '细': 'xi', '细': 'xi', '致': 'zhi', '详': 'xiang',
-              '细': 'xi', '详': 'xiang', '尽': 'jin', '周': 'zhou', '详': 'xiang',
-              '周': 'zhou', '密': 'mi', '严': 'yan', '密': 'mi', '全': 'quan',
-              '面': 'mian', '完': 'wan', '整': 'zheng', '完': 'wan', '备': 'bei',
-              '齐': 'qi', '全': 'quan', '完': 'wan', '善': 'shan', '美': 'mei',
-              '完': 'wan', '美': 'mei', '完': 'wan', '好': 'hao', '良': 'liang',
-              '好': 'hao', '优': 'you', '良': 'liang', '优': 'you', '秀': 'xiu',
-              '出': 'chu', '色': 'se', '杰': 'jie', '出': 'chu', '卓': 'zhuo',
-              '越': 'yue', '卓': 'zhuo', '著': 'zhu', '显': 'xian', '著': 'zhu',
-              '明': 'ming', '显': 'xian', '突': 'tu', '出': 'chu', '重': 'zhong',
-              '点': 'dian', '核': 'he', '心': 'xin', '关': 'guan', '键': 'jian'
+              '子': 'zi', '文': 'wen', '档': 'dang', '测': 'ce', '试': 'shi',
+              '最': 'zui', '终': 'zhong', '版': 'ban', '章': 'zhang',
+              '中': 'zhong', '英': 'ying', '录': 'lu', '目': 'mu', '笔': 'bi',
+              '记': 'ji', '本': 'ben', '分': 'fen', '类': 'lei', '标': 'biao',
+              '签': 'qian', '时': 'shi', '间': 'jian'
             }
             
-            // 将中文转换为拼音
-            let result = title
-              .split('')
-              .map(char => pinyinMap[char] || char)
-              .join('')
-            
-            // 清理特殊字符，保留字母数字和空格
-            result = result
+            let slug = title
               .toLowerCase()
-              .replace(/[^a-z0-9\s-]/gi, '')
+              .replace(/[^\w\s\u4e00-\u9fa5-]/g, '')  // 保留中文
               .trim()
             
-            if (!result) return 'untitled'
+            // 将中文转换为拼音（简单替换）
+            let result = ''
+            for (const char of slug) {
+              if (/[\u4e00-\u9fa5]/.test(char)) {
+                // 中文字符，尝试映射为拼音
+                result += pinyinMap[char] || char
+              } else if (/\s/.test(char)) {
+                // 空格替换为连字符
+                result += '-'
+              } else {
+                result += char
+              }
+            }
             
-            result = result.replace(/\s+/g, '-')
-            result = result.replace(/-+/g, '-')
-            result = result.replace(/^-|-$/g, '')
-            result = result.substring(0, 50)
+            // 清理多余连字符
+            result = result
+              .replace(/-+/g, '-')      // 多个连字符合并为一个
+              .replace(/^-|-$/g, '')    // 移除首尾连字符
+              .substring(0, 50)         // 限制长度
             
             return result || 'untitled'
           }
@@ -967,30 +810,17 @@ export default defineConfig({
           })
           
           // 创建文章
-          server.middlewares.use('/api/articles/create', (req, res, next) => {
+          server.middlewares.use('/api/articles/create', async (req, res, next) => {
             if (req.method === 'POST') {
               const chunks: Buffer[] = []
               req.on('data', chunk => chunks.push(chunk))
-              req.on('end', () => {
-                (async () => {
-                  try {
-                    const bodyText = Buffer.concat(chunks).toString()
-                    console.log('[API] Raw body:', bodyText.substring(0, 200))
-                    
-                    let body
-                    try {
-                      body = JSON.parse(bodyText)
-                    } catch (parseErr) {
-                      console.error('[API] JSON parse error:', parseErr)
-                      res.statusCode = 400
-                      res.end(JSON.stringify({ success: false, error: 'Invalid JSON' }))
-                      return
-                    }
-                    
-                    const { title, content = '', section = 'posts', tags = [], parentPath, isChildDoc } = body
-                    console.log('[API] Creating article:', { title, section, isChildDoc, parentPath })
-                    
-                    if (!title) {
+              req.on('end', async () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString())
+                  const { title, content = '', section = 'posts', tags = [], parentPath, isChildDoc } = body
+                  console.log('[API] Creating article:', { title, section, isChildDoc, parentPath, cwd: process.cwd(), SECTIONS_PATH })
+                  
+                  if (!title) {
                     res.statusCode = 400
                     res.end(JSON.stringify({ success: false, error: 'Title required' }))
                     return
@@ -1008,14 +838,11 @@ export default defineConfig({
                   // 处理子文档创建
                   if (isChildDoc && parentPath) {
                     // 解析父文档路径
-                    // 处理可能的 .html 或 .md 后缀，以及开头的 /
-                    let cleanParentPath = parentPath.replace(/\.(html|md)$/i, '').replace(/^\//, '')
+                    let cleanParentPath = parentPath.replace('.html', '').replace(/^\//, '')
                     // 如果路径以 sections/ 开头，去掉它（因为 SECTIONS_PATH 已经包含）
                     if (cleanParentPath.startsWith('sections/')) {
                       cleanParentPath = cleanParentPath.substring('sections/'.length)
                     }
-                    // 确保路径不包含 .md 后缀（前面已处理，这里再次确认）
-                    cleanParentPath = cleanParentPath.replace(/\.md$/i, '')
                     const parentFullPath = path.join(SECTIONS_PATH, cleanParentPath) + '.md'
                     const parentDir = path.dirname(parentFullPath)
                     const parentName = path.basename(parentFullPath, '.md')
@@ -1091,13 +918,9 @@ ${content}`
                   res.statusCode = 500
                   res.end(JSON.stringify({ success: false, error: 'Failed to create article: ' + (e as Error).message }))
                 }
-              })()
-            })
-          }
-          else {
-            next()
-          }
-        })
+              })
+            } else next()
+          })
           
           // 更新文章
           server.middlewares.use('/api/articles/update', async (req, res, next) => {

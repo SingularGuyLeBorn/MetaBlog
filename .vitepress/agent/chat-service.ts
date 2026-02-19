@@ -31,6 +31,22 @@ import { ref, computed } from 'vue'
 import { getLLMManager, createLLMManager } from './llm'
 import { loadEnvConfig, createLLMConfigFromEnv } from './config/env'
 import type { LLMMessage } from './llm/types'
+// 浏览器环境使用API发送日志
+const aiLogger = {
+  log: (level: 'info' | 'error' | 'debug', event: string, message: string, metadata?: any) => {
+    fetch('/api/logs/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        level,
+        event,
+        message,
+        actor: 'ai',
+        metadata
+      })
+    }).catch(() => {}) // 忽略日志发送错误
+  }
+}
 
 export interface ChatMessage {
   id: string
@@ -96,6 +112,12 @@ export function useChatService() {
     
     isLoading.value = true
     error.value = null
+    const startTime = Date.now()
+    
+    aiLogger.log('info', 'chat.request', 'AI请求开始', { 
+      contentLength: content.length,
+      model: options.model || env.DEEPSEEK_MODEL || 'deepseek-chat'
+    })
     
     try {
       // 添加用户消息
@@ -149,10 +171,19 @@ export function useChatService() {
       }
       messages.value.push(assistantMessage)
       
+      const duration = Date.now() - startTime
+      aiLogger.log('info', 'chat.response', 'AI响应完成', {
+        duration,
+        tokens: response.usage.totalTokens,
+        cost: response.cost,
+        model: response.model
+      })
+      
       return assistantMessage
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
       error.value = errorMsg
+      aiLogger.log('error', 'chat.error', 'AI请求失败', { error: errorMsg })
       throw err
     } finally {
       isLoading.value = false
@@ -175,9 +206,16 @@ export function useChatService() {
     isLoading.value = true
     isStreaming.value = true
     error.value = null
+    const startTime = Date.now()
     
     // 判断是否是深度思考模式
     const isReasonerModel = (options.model || env.DEEPSEEK_MODEL || 'deepseek-chat').includes('reasoner')
+    
+    aiLogger.log('info', 'chat.stream.request', 'AI流式请求开始', { 
+      contentLength: content.length,
+      model: options.model || env.DEEPSEEK_MODEL || 'deepseek-chat',
+      isReasoner: isReasonerModel
+    })
     
     try {
       // 添加用户消息
@@ -227,6 +265,14 @@ export function useChatService() {
           stream: true
         },
         (chunk) => {
+          // 记录第一个chunk到达
+          if (!hasReceivedContent && !hasReceivedReasoning && (chunk.content || chunk.reasoning)) {
+            const timeToFirstToken = Date.now() - startTime
+            aiLogger.log('debug', 'chat.stream.first_token', '首Token到达', { 
+              timeToFirstToken,
+              hasReasoning: !!chunk.reasoning 
+            })
+          }
           const content = chunk.content || ''
           const reasoning = chunk.reasoning || ''
           
@@ -261,10 +307,23 @@ export function useChatService() {
       }
       messages.value.push(assistantMessage)
       
+      const duration = Date.now() - startTime
+      aiLogger.log('info', 'chat.stream.complete', 'AI流式响应完成', {
+        duration,
+        tokens: usage.totalTokens,
+        cost,
+        hasReasoning: !!fullReasoning,
+        contentLength: fullContent.length
+      })
+      
       return assistantMessage
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
       error.value = errorMsg
+      aiLogger.log('error', 'chat.stream.error', 'AI流式请求失败', { 
+        error: errorMsg,
+        duration: Date.now() - startTime 
+      })
       throw err
     } finally {
       isLoading.value = false

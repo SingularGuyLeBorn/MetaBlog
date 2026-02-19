@@ -11,10 +11,17 @@ interface SidebarNode {
 }
 
 const manifestCache = new Map<string, Record<string, any>>()
+const sidebarCache = new Map<string, { data: any[], timestamp: number }>()
+const CACHE_TTL = 5000 // 5秒缓存，开发模式下短缓存确保实时性
 
 function getManifest(dir: string): Record<string, any> {
   const manifestPath = join(dir, 'manifest.json')
-  if (manifestCache.has(manifestPath)) return manifestCache.get(manifestPath)!
+  
+  // 开发模式下检查缓存是否过期
+  const cached = manifestCache.get(manifestPath)
+  if (cached && process.env.NODE_ENV !== 'development') {
+    return cached
+  }
   
   if (existsSync(manifestPath)) {
     try {
@@ -26,7 +33,27 @@ function getManifest(dir: string): Record<string, any> {
   return {}
 }
 
-export function generateSectionSidebar(sectionsPath: string, sectionName: string): SidebarNode[] {
+// 清除 sidebar 缓存（文件变动时调用）
+export function clearSidebarCache(section?: string) {
+  if (section) {
+    sidebarCache.delete(section)
+    console.log(`[Sidebar] Cache cleared for section: ${section}`)
+  } else {
+    sidebarCache.clear()
+    manifestCache.clear()
+    console.log('[Sidebar] All cache cleared')
+  }
+}
+
+export function generateSectionSidebar(sectionsPath: string, sectionName: string, useCache: boolean = false): SidebarNode[] {
+  // 检查缓存（仅在非开发模式或明确指定使用缓存时）
+  if (useCache && process.env.NODE_ENV !== 'development') {
+    const cached = sidebarCache.get(sectionName)
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.data
+    }
+  }
+  
   const sectionDir = join(sectionsPath, sectionName)
   const root = resolve(process.cwd(), 'docs')
   
@@ -49,7 +76,14 @@ export function generateSectionSidebar(sectionsPath: string, sectionName: string
     }
   }
   
-  return nodes.sort((a, b) => sortNodes(a, b))
+  const sorted = nodes.sort((a, b) => sortNodes(a, b))
+  
+  // 更新缓存
+  if (useCache) {
+    sidebarCache.set(sectionName, { data: sorted, timestamp: Date.now() })
+  }
+  
+  return sorted
 }
 
 function scanNode(dirPath: string, nodeName: string, rootDocPath: string, level: number): SidebarNode | null {

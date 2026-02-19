@@ -1,5 +1,5 @@
 ---
-title: 01 Theory Derivation NEW NAME
+title: Theory Derivation 2
 ---
 
 # 第0章：测度论与概率空间基础
