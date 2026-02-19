@@ -169,12 +169,34 @@ router.post('/create', async (req, res) => {
   }
   
   try {
-    // 生成文件名
-    const slug = title
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .substring(0, 50)
+    // 生成文件名 - 支持中文和特殊字符
+    let slug = title.trim()
+    
+    // 如果是纯中文或混合内容，转换为拼音风格的 slug 或直接使用中文字符
+    const isMostlyChinese = (str: string) => {
+      const chineseChars = str.match(/[\u4e00-\u9fa5]/g) || []
+      return chineseChars.length / str.length > 0.5
+    }
+    
+    if (isMostlyChinese(title)) {
+      // 中文标题：使用中文字符作为文件名（保留前20个字符）
+      slug = title
+        .replace(/[\/\\:*?"<>|]/g, '') // 移除 Windows 不允许的文件名字符
+        .replace(/\s+/g, '-')
+        .substring(0, 20)
+    } else {
+      // 英文/混合标题：使用传统 slug 生成
+      slug = title
+        .toLowerCase()
+        .replace(/[^\w\s\u4e00-\u9fa5-]/g, '') // 保留中文
+        .replace(/\s+/g, '-')
+        .substring(0, 50)
+    }
+    
+    // 如果 slug 为空（标题全是特殊字符），使用时间戳
+    if (!slug || slug === '-') {
+      slug = `article-${Date.now()}`
+    }
     
     const date = new Date().toISOString().split('T')[0]
     const filename = `${slug}.md`

@@ -197,6 +197,38 @@
       </Transition>
     </Teleport>
     
+    <!-- Copy Modal -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showCopyModal" class="modal-overlay" @click="showCopyModal = false">
+          <div class="modal-content" @click.stop>
+            <div class="modal-header">
+              <h4>复制文档</h4>
+              <button class="btn-close" @click="showCopyModal = false">×</button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label>目标目录 <span class="required">*</span></label>
+                <select v-model="copyTargetDir" class="form-select">
+                  <option value="">选择目录...</option>
+                  <option value="posts">posts/</option>
+                  <option value="sections/posts">sections/posts/</option>
+                  <option value="sections/knowledge">sections/knowledge/</option>
+                  <option value="sections/resources">sections/resources/</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-secondary" @click="showCopyModal = false">取消</button>
+              <button class="btn-primary" @click="doCopy" :disabled="!copyTargetDir">
+                复制
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- Move Modal -->
     <Teleport to="body">
       <Transition name="modal">
@@ -214,6 +246,7 @@
                   <option value="posts">posts/</option>
                   <option value="sections/posts">sections/posts/</option>
                   <option value="sections/knowledge">sections/knowledge/</option>
+                  <option value="sections/resources">sections/resources/</option>
                 </select>
               </div>
             </div>
@@ -263,6 +296,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { logger, logFileOperation } from '../composables/useLogger'
 
 const props = defineProps<{
   item: any
@@ -277,11 +311,13 @@ const emit = defineEmits(['navigate', 'toggle', 'refresh'])
 const showMenu = ref(false)
 const showCreateModal = ref(false)
 const showRenameModal = ref(false)
+const showCopyModal = ref(false)
 const showMoveModal = ref(false)
 const showDeleteModal = ref(false)
 const newDocTitle = ref('')
 const newName = ref('')
 const targetDir = ref('')
+const copyTargetDir = ref('')
 const isPinned = ref(props.item.pinned || false)
 
 const toast = ref({
@@ -346,7 +382,7 @@ const showToast = (type: 'success' | 'error' | 'info', message: string) => {
   setTimeout(() => toast.value.visible = false, 3000)
 }
 
-// Create Child
+// Create Child - 创建子文档
 const showCreateChildModal = () => {
   newDocTitle.value = ''
   showCreateModal.value = true
@@ -357,12 +393,28 @@ const createChild = async () => {
   if (!newDocTitle.value.trim()) return
   
   try {
-    // Determine parent path
-    const parentPath = props.item.link.replace('.html', '')
-    const fileName = `${newDocTitle.value.toLowerCase().replace(/\s+/g, '-')}.md`
-    const newPath = `${parentPath}/${fileName}`
+    // 获取父目录路径（基于当前 item 的 link）
+    const parentLink = props.item.link || ''
+    const parentDir = parentLink.replace(/\/$/, '')
     
-    const content = `# ${newDocTitle.value}\n\n`
+    // 生成文件名（将标题转换为合法的文件名）
+    const baseName = newDocTitle.value.trim()
+    const fileName = baseName.toLowerCase()
+      .replace(/[^\w\s-]/g, '')  // 移除非字母数字字符
+      .replace(/\s+/g, '_')       // 空格转下划线
+      .substring(0, 50)           // 限制长度
+    
+    const newPath = `${parentDir}/${fileName}.md`
+    
+    // 构建内容（包含 frontmatter）
+    const content = `---
+title: ${baseName}
+date: ${new Date().toISOString().split('T')[0]}
+---
+
+# ${baseName}
+
+`
     
     const res = await fetch('/api/files/save', {
       method: 'POST',
@@ -373,13 +425,31 @@ const createChild = async () => {
     if (res.ok) {
       showToast('success', '子文档创建成功')
       showCreateModal.value = false
+      // 记录日志
+      logFileOperation('create', newPath)
+      // 展开当前目录
+      if (itemId.value && !isExpanded.value) {
+        emit('toggle', itemId.value)
+      }
       emit('refresh')
     } else {
       throw new Error('创建失败')
     }
   } catch (e) {
     showToast('error', '创建失败: ' + (e as Error).message)
+    logger.error('file.create', `创建文件失败: ${e}`)
   }
+}
+
+// Helper: Convert link to MD path
+const linkToMdPath = (link: string): string => {
+  // Remove trailing slash and add .md
+  return link.replace(/\/$/, '') + '.md'
+}
+
+// Helper: Convert link to relative path (for API)
+const linkToRelativePath = (link: string): string => {
+  return linkToMdPath(link).replace(/^\//, '')
 }
 
 // Rename
@@ -389,53 +459,81 @@ const renameItem = () => {
   closeMenu()
 }
 
-// Helper: Convert link to MD path
-const linkToMdPath = (link: string): string => {
-  // Remove trailing slash and add .md
-  return link.replace(/\/$/, '') + '.md'
-}
-
+// 重命名核心逻辑：修改实际文件名 + 前后端校验
 const doRename = async () => {
   if (!newName.value.trim()) return
   
+  const originalName = props.item.text
+  const desiredName = newName.value.trim()
+  
   try {
-    // 读取现有文件
-    const mdPath = linkToMdPath(props.item.link)
-    const readRes = await fetch(`/api/files/read?path=${encodeURIComponent(mdPath)}`)
-    if (!readRes.ok) throw new Error('读取文件失败')
+    // Step 1: 调用后端重命名 API（修改实际文件名）
+    const relativePath = linkToRelativePath(props.item.link)
     
-    let content = await readRes.text()
-    
-    // 更新 frontmatter 中的 title，如果没有 frontmatter 则添加
-    if (content.startsWith('---')) {
-      // 更新现有的 title
-      if (content.match(/title:\s*.+/)) {
-        content = content.replace(/title:\s*.+/, `title: ${newName.value}`)
-      } else {
-        // 在 frontmatter 中添加 title
-        content = content.replace(/---\n/, `---\ntitle: ${newName.value}\n`)
-      }
-    } else {
-      // 没有 frontmatter，添加一个新的
-      content = `---\ntitle: ${newName.value}\n---\n\n${content}`
-    }
-    
-    // 保存
-    const saveRes = await fetch('/api/files/save', {
+    const renameRes = await fetch('/api/files/rename', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: mdPath, content })
+      body: JSON.stringify({ 
+        path: relativePath, 
+        newName: desiredName,
+        updateFrontmatter: true
+      })
     })
     
-    if (saveRes.ok) {
-      showToast('success', '重命名成功')
-      showRenameModal.value = false
-      emit('refresh')
-    } else {
-      throw new Error('保存失败')
+    if (!renameRes.ok) {
+      const error = await renameRes.json().catch(() => ({ error: '重命名失败' }))
+      throw new Error(error.error || `重命名失败 (${renameRes.status})`)
     }
+    
+    const result = await renameRes.json()
+    
+    if (!result.success) {
+      throw new Error(result.error || '重命名失败')
+    }
+    
+    // Step 2: 前后端校验 - 确认后端返回的文件名与期望一致
+    const backendName = result.data.displayName
+    const backendNewPath = result.data.newPath
+    
+    // 校验逻辑：如果后端返回的名字与前端期望的不一样，使用后端的（作为标准）
+    const finalName = (backendName && backendName !== desiredName) ? backendName : desiredName
+    const finalPath = backendNewPath || relativePath
+    
+    // 校验警告（仅调试用，实际使用时会静默处理后端的规范化结果）
+    if (backendName && backendName !== desiredName) {
+      console.log(`[Rename] 名称已规范化: "${desiredName}" -> "${backendName}"`)
+    }
+    
+    // Step 3: 记录日志
+    logFileOperation('rename', finalPath, { oldPath: relativePath, newName: finalName })
+    
+    // Step 4: 通知父组件更新 - 传递新的路径和名字
+    showToast('success', `已重命名为 "${finalName}"`)
+    showRenameModal.value = false
+    
+    // 触发刷新，让父组件重新加载侧边栏数据
+    emit('refresh', {
+      oldPath: props.item.link,
+      newPath: '/' + finalPath.replace(/\.md$/, ''),
+      newName: finalName,
+      oldName: originalName
+    })
+    
+    // Step 5: 如果当前页面是被重命名的页面，自动导航到新路径
+    const currentPath = window.location.pathname.replace(/\/$/, '')
+    const oldPath = props.item.link.replace(/\/$/, '')
+    
+    if (currentPath === oldPath) {
+      const newLink = '/' + finalPath.replace(/\.md$/, '') + '/'
+      setTimeout(() => {
+        window.location.href = newLink
+      }, 500)
+    }
+    
   } catch (e) {
+    console.error('[Rename Error]', e)
     showToast('error', '重命名失败: ' + (e as Error).message)
+    logger.error('file.rename', `重命名失败: ${e}`)
   }
 }
 
@@ -484,10 +582,44 @@ const moveToRoot = async () => {
   closeMenu()
 }
 
-// Copy
+// Copy - 复制文档到指定目录
 const openCopyModal = () => {
-  showToast('info', '复制功能开发中...')
+  copyTargetDir.value = ''
+  showCopyModal.value = true
   closeMenu()
+}
+
+const doCopy = async () => {
+  if (!copyTargetDir.value) return
+  
+  try {
+    const sourcePath = linkToRelativePath(props.item.link)
+    const fileName = sourcePath.split('/').pop()
+    const targetPath = `${copyTargetDir.value}/${fileName}`
+    
+    // 读取源文件内容
+    const readRes = await fetch(`/api/files/read?path=${encodeURIComponent(sourcePath)}`)
+    if (!readRes.ok) throw new Error('读取源文件失败')
+    
+    const content = await readRes.text()
+    
+    // 保存到目标路径
+    const saveRes = await fetch('/api/files/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: targetPath, content })
+    })
+    
+    if (saveRes.ok) {
+      showToast('success', '复制成功')
+      showCopyModal.value = false
+      emit('refresh')
+    } else {
+      throw new Error('复制失败')
+    }
+  } catch (e) {
+    showToast('error', '复制失败: ' + (e as Error).message)
+  }
 }
 
 // Move

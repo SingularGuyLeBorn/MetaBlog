@@ -130,7 +130,7 @@
               <!-- Avatar -->
               <div class="message-avatar">
                 <span v-if="msg.role === 'user'">👤</span>
-                <span v-else>🤖</span>
+                <LiquidCoreAvatar v-else :size="36" :is-thinking="isLoading && index === messages.length - 1 && msg.role === 'assistant'" />
               </div>
               
               <!-- Content -->
@@ -300,6 +300,7 @@ import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { marked } from 'marked'
 import { useData } from 'vitepress'
 import { useChatService } from '../../../agent/chat-service'
+import LiquidCoreAvatar from './LiquidCoreAvatar.vue'
 
 // ==================== Types ====================
 interface Message {

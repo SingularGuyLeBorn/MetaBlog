@@ -222,6 +222,83 @@ export default defineConfig({
              } else next()
           })
 
+          // Rename file - 真正的文件重命名（修改文件名本身）
+          server.middlewares.use('/api/files/rename', (req, res, next) => {
+             if (req.method === 'POST') {
+                const chunks: Buffer[] = []
+                req.on('data', chunk => chunks.push(chunk))
+                req.on('end', () => {
+                   try {
+                      const body = JSON.parse(Buffer.concat(chunks).toString())
+                      const { path: filePath, newName, updateFrontmatter = true } = body
+                      
+                      const dir = path.dirname(filePath)
+                      const ext = path.extname(filePath)
+                      const newFileName = newName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '_') + ext
+                      const newPath = path.join(dir, newFileName)
+                      
+                      const fullOldPath = path.resolve(process.cwd(), 'docs', filePath.replace(/^\//, ''))
+                      const fullNewPath = path.resolve(process.cwd(), 'docs', newPath.replace(/^\//, ''))
+                      
+                      // Check if file exists
+                      if (!fs.existsSync(fullOldPath)) {
+                         res.statusCode = 404
+                         res.end(JSON.stringify({ success: false, error: 'File not found' }))
+                         return
+                      }
+                      
+                      // Check if target already exists
+                      if (fs.existsSync(fullNewPath)) {
+                         res.statusCode = 409
+                         res.end(JSON.stringify({ success: false, error: 'Target file already exists' }))
+                         return
+                      }
+                      
+                      let content = fs.readFileSync(fullOldPath, 'utf-8')
+                      
+                      // Update frontmatter title if requested
+                      if (updateFrontmatter) {
+                         if (content.startsWith('---')) {
+                            if (content.match(/title:\s*.+/)) {
+                               content = content.replace(/title:\s*.+/, `title: ${newName}`)
+                            } else {
+                               content = content.replace(/---\n/, `---\ntitle: ${newName}\n`)
+                            }
+                         } else {
+                            content = `---\ntitle: ${newName}\n---\n\n${content}`
+                         }
+                      }
+                      
+                      // Write to new file
+                      fs.writeFileSync(fullNewPath, content)
+                      
+                      // Delete old file
+                      fs.unlinkSync(fullOldPath)
+                      
+                      // Git operations
+                      try {
+                         execSync(`git add "${fullOldPath}" "${fullNewPath}"`)
+                         execSync(`git commit -m "content: 重命名 ${path.basename(filePath)} -> ${newFileName}"`)
+                      } catch (e) {}
+                      
+                      res.setHeader('Content-Type', 'application/json')
+                      res.end(JSON.stringify({ 
+                         success: true, 
+                         data: { 
+                            oldPath: filePath,
+                            newPath: newPath.replace(/\\/g, '/'),
+                            newName: newFileName,
+                            displayName: newName
+                         }
+                      }))
+                   } catch (e) {
+                      res.statusCode = 500
+                      res.end(JSON.stringify({ success: false, error: String(e) }))
+                   }
+                })
+             } else next()
+          })
+
           // Move file
           server.middlewares.use('/api/files/move', (req, res, next) => {
              if (req.method === 'POST') {
@@ -639,6 +716,112 @@ ${content}`
                   res.end(JSON.stringify({ success: false, error: 'Failed to publish article' }))
                 }
               })
+            } else next()
+          })
+          
+          // ============================================
+          // Logs API - 日志系统
+          // ============================================
+          const logs: any[] = []
+          
+          // 添加日志
+          server.middlewares.use('/api/logs/add', (req, res, next) => {
+            if (req.method === 'POST') {
+              const chunks: Buffer[] = []
+              req.on('data', chunk => chunks.push(chunk))
+              req.on('end', () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString())
+                  const logEntry = {
+                    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    timestamp: new Date().toISOString(),
+                    level: body.level || 'info',
+                    event: body.event || 'system',
+                    message: body.message,
+                    source: body.source || 'system',
+                    taskId: body.taskId,
+                    skillName: body.skillName,
+                    duration: body.duration,
+                    metadata: body.metadata
+                  }
+                  logs.unshift(logEntry)
+                  // 限制日志数量
+                  if (logs.length > 1000) logs.pop()
+                  res.setHeader('Content-Type', 'application/json')
+                  res.end(JSON.stringify({ success: true, data: logEntry }))
+                } catch (e) {
+                  res.statusCode = 500
+                  res.end(JSON.stringify({ success: false, error: String(e) }))
+                }
+              })
+            } else next()
+          })
+          
+          // 获取日志
+          server.middlewares.use('/api/logs/recent', (req, res, next) => {
+            if (req.method === 'GET') {
+              const url = new URL(req.url || '', `http://${req.headers.host}`)
+              const limit = parseInt(url.searchParams.get('limit') || '50')
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: true, data: logs.slice(0, limit) }))
+            } else next()
+          })
+          
+          // 获取日志统计
+          server.middlewares.use('/api/logs/stats', (req, res, next) => {
+            if (req.method === 'GET') {
+              const stats = {
+                total: logs.length,
+                byLevel: { debug: 0, info: 0, warn: 0, error: 0, success: 0 },
+                byEvent: {} as Record<string, number>,
+                recentErrors: logs.filter((l: any) => l.level === 'error').slice(0, 10)
+              }
+              logs.forEach((log: any) => {
+                stats.byLevel[log.level] = (stats.byLevel[log.level] || 0) + 1
+                stats.byEvent[log.event] = (stats.byEvent[log.event] || 0) + 1
+              })
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: true, data: stats }))
+            } else next()
+          })
+          
+          // ============================================
+          // Health & System API
+          // ============================================
+          server.middlewares.use('/api/health', (req, res, next) => {
+            if (req.method === 'GET') {
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({
+                success: true,
+                data: {
+                  llm: true,
+                  memory: true,
+                  files: true,
+                  git: false
+                }
+              }))
+            } else next()
+          })
+          
+          server.middlewares.use('/api/system/resources', (req, res, next) => {
+            if (req.method === 'GET') {
+              // 模拟资源使用数据
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({
+                success: true,
+                data: {
+                  memory: Math.floor(35 + Math.random() * 30),
+                  cpu: Math.floor(20 + Math.random() * 40),
+                  latency: Math.floor(30 + Math.random() * 50)
+                }
+              }))
+            } else next()
+          })
+          
+          server.middlewares.use('/api/agent/tasks', (req, res, next) => {
+            if (req.method === 'GET') {
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: true, data: [] }))
             } else next()
           })
         }

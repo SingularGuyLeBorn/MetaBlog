@@ -1,171 +1,314 @@
 <template>
-  <div class="log-viewer">
+  <div class="cyber-log-viewer">
     <!-- Header -->
-    <div class="viewer-header">
-      <h3 class="viewer-title">
-        <span class="title-icon">📋</span>
-        日志查看器
-      </h3>
+    <header class="cyber-header">
+      <div class="header-title">
+        <span class="terminal-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+            <polyline points="6 8 9 11 6 14"/>
+            <line x1="12" y1="11" x2="18" y2="11"/>
+          </svg>
+        </span>
+        <h3 class="title-text">TERMINAL_LOGS</h3>
+        <span class="status-indicator" :class="{ active: autoRefresh }">
+          <span class="status-dot"></span>
+          {{ autoRefresh ? 'LIVE' : 'PAUSED' }}
+        </span>
+      </div>
       <div class="header-actions">
-        <button class="btn-action" @click="refreshLogs" title="刷新">
-          🔄
+        <button class="cyber-btn" @click="refreshLogs" title="刷新">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
         </button>
-        <button class="btn-action" @click="exportLogs" title="导出">
-          📥
+        <button class="cyber-btn" @click="exportLogs" title="导出">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
         </button>
-        <button class="btn-action danger" @click="confirmClear" title="清空">
-          🗑️
+        <button class="cyber-btn danger" @click="confirmClear" title="清空">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
         </button>
       </div>
-    </div>
+    </header>
 
-    <!-- Stats Cards -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-value">{{ stats.total }}</div>
-        <div class="stat-label">总日志数</div>
+    <!-- Stats Bar -->
+    <div class="stats-container">
+      <div class="stats-bar">
+        <div
+          v-for="(stat, key) in levelStats"
+          :key="key"
+          class="stat-segment"
+          :class="[`level-${stat.level}`, { pulse: stat.level === 'error' && stat.count > 0 }]"
+          :style="{ width: stat.percentage + '%' }"
+          :title="`${stat.label}: ${stat.count} (${stat.percentage.toFixed(1)}%)`"
+        >
+          <span v-if="stat.percentage > 8" class="segment-label">{{ stat.count }}</span>
+        </div>
       </div>
-      <div class="stat-card info">
-        <div class="stat-value">{{ stats.byLevel.info || 0 }}</div>
-        <div class="stat-label">信息</div>
-      </div>
-      <div class="stat-card warn">
-        <div class="stat-value">{{ stats.byLevel.warn || 0 }}</div>
-        <div class="stat-label">警告</div>
-      </div>
-      <div class="stat-card error">
-        <div class="stat-value">{{ stats.byLevel.error || 0 }}</div>
-        <div class="stat-label">错误</div>
+      <div class="stats-legend">
+        <div v-for="(stat, key) in levelStats" :key="key" class="legend-item">
+          <span class="legend-dot" :class="`level-${stat.level}`"></span>
+          <span class="legend-label">{{ stat.label }}</span>
+          <span class="legend-count">{{ stat.count }}</span>
+        </div>
       </div>
     </div>
 
     <!-- Filters -->
-    <div class="filter-bar">
-      <div class="filter-group">
-        <input
-          v-model="filters.search"
-          type="text"
-          placeholder="搜索日志..."
-          class="filter-input"
-        />
-      </div>
-      <div class="filter-group">
-        <select v-model="filters.level" class="filter-select">
-          <option value="">所有级别</option>
-          <option value="debug">Debug</option>
-          <option value="info">Info</option>
-          <option value="warn">Warn</option>
-          <option value="error">Error</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <select v-model="filters.event" class="filter-select">
-          <option value="">所有事件</option>
-          <option v-for="event in uniqueEvents" :key="event" :value="event">
-            {{ event }}
-          </option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <button 
-          class="btn-toggle" 
-          :class="{ active: autoRefresh }"
-          @click="autoRefresh = !autoRefresh"
-        >
-          {{ autoRefresh ? '⏸️' : '▶️' }} 自动刷新
-        </button>
+    <div class="filter-panel">
+      <div class="filter-row">
+        <div class="filter-group search-group">
+          <span class="filter-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <input
+            v-model="filters.search"
+            type="text"
+            placeholder="搜索日志内容..."
+            class="cyber-input"
+          />
+        </div>
+        
+        <!-- Custom Level Dropdown -->
+        <div class="filter-group">
+          <div class="custom-dropdown" :class="{ open: showLevelDropdown }" v-click-outside="() => showLevelDropdown = false">
+            <button class="dropdown-trigger" @click="showLevelDropdown = !showLevelDropdown">
+              <span class="trigger-text" :class="filters.level">{{ levelLabel }}</span>
+              <svg class="trigger-arrow" :class="{ open: showLevelDropdown }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <Transition name="dropdown">
+              <div v-if="showLevelDropdown" class="dropdown-menu">
+                <div 
+                  v-for="option in levelOptions" 
+                  :key="option.value"
+                  class="dropdown-item"
+                  :class="{ active: filters.level === option.value, [option.value]: true }"
+                  @click="selectLevel(option.value)"
+                >
+                  <span class="item-dot" :class="option.value"></span>
+                  <span class="item-label">{{ option.label }}</span>
+                  <svg v-if="filters.level === option.value" class="item-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+              </div>
+            </Transition>
+          </div>
+        </div>
+        
+        <!-- Custom Event Dropdown -->
+        <div class="filter-group">
+          <div class="custom-dropdown" :class="{ open: showEventDropdown }" v-click-outside="() => showEventDropdown = false">
+            <button class="dropdown-trigger" @click="showEventDropdown = !showEventDropdown">
+              <span class="trigger-text">{{ eventLabel }}</span>
+              <svg class="trigger-arrow" :class="{ open: showEventDropdown }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyine points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <Transition name="dropdown">
+              <div v-if="showEventDropdown" class="dropdown-menu event-menu">
+                <div 
+                  class="dropdown-item"
+                  :class="{ active: filters.event === '' }"
+                  @click="selectEvent('')"
+                >
+                  <span class="item-label">所有事件</span>
+                  <svg v-if="filters.event === ''" class="item-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <div v-if="uniqueEvents.length > 0" class="dropdown-divider"></div>
+                <div 
+                  v-for="event in uniqueEvents" 
+                  :key="event"
+                  class="dropdown-item"
+                  :class="{ active: filters.event === event }"
+                  @click="selectEvent(event)"
+                >
+                  <span class="item-label">{{ event }}</span>
+                  <svg v-if="filters.event === event" class="item-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+              </div>
+            </Transition>
+          </div>
+        </div>
+        
+        <div class="filter-group">
+          <button 
+            class="cyber-toggle" 
+            :class="{ active: autoRefresh }"
+            @click="autoRefresh = !autoRefresh"
+          >
+            <span class="toggle-track">
+              <span class="toggle-thumb"></span>
+            </span>
+            <span class="toggle-label">自动刷新</span>
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- Log List -->
-    <div class="log-list" ref="logListRef">
+    <div class="log-container" ref="logContainerRef">
+      <!-- Empty State -->
       <div v-if="filteredLogs.length === 0" class="empty-state">
-        <div class="empty-icon">📭</div>
-        <div class="empty-text">暂无日志</div>
-      </div>
-      
-      <div
-        v-for="log in filteredLogs"
-        :key="log.id"
-        class="log-item"
-        :class="[`level-${log.level}`, { expanded: expandedLog === log.id }]"
-        @click="toggleExpand(log.id)"
-      >
-        <div class="log-header">
-          <span class="log-time">{{ formatTime(log.timestamp) }}</span>
-          <span class="log-level" :class="log.level">{{ log.level.toUpperCase() }}</span>
-          <span class="log-event">{{ log.event }}</span>
-          <span class="log-message">{{ log.message }}</span>
-          <span v-if="log.taskId" class="log-task">📋 {{ log.taskId.slice(-6) }}</span>
+        <div class="silence-wave">
+          <svg viewBox="0 0 400 60" preserveAspectRatio="none">
+            <path class="wave-path" d="M0,30 Q50,10 100,30 T200,30 T300,30 T400,30" />
+          </svg>
         </div>
-        
-        <div v-if="expandedLog === log.id" class="log-details">
-          <div class="detail-row">
-            <span class="detail-label">ID:</span>
-            <span class="detail-value">{{ log.id }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Session:</span>
-            <span class="detail-value">{{ log.sessionId }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Trace:</span>
-            <span class="detail-value">{{ log.traceId }}</span>
-          </div>
-          <div v-if="log.taskId" class="detail-row">
-            <span class="detail-label">Task:</span>
-            <span class="detail-value">{{ log.taskId }}</span>
-          </div>
-          <div v-if="log.skillName" class="detail-row">
-            <span class="detail-label">Skill:</span>
-            <span class="detail-value">{{ log.skillName }}</span>
-          </div>
-          <div v-if="log.duration" class="detail-row">
-            <span class="detail-label">Duration:</span>
-            <span class="detail-value">{{ log.duration }}ms</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Source:</span>
-            <span class="detail-value">{{ log.source }}</span>
-          </div>
-          <div v-if="Object.keys(log.data).length > 0" class="detail-row">
-            <span class="detail-label">Data:</span>
-            <pre class="detail-code">{{ JSON.stringify(log.data, null, 2) }}</pre>
-          </div>
-        </div>
+        <p class="empty-text">系统静默中，等待事件触发...</p>
+        <p class="empty-subtext">NO SIGNAL DETECTED</p>
       </div>
-    </div>
 
-    <!-- Pagination -->
-    <div class="pagination" v-if="totalPages > 1">
-      <button 
-        class="page-btn" 
-        :disabled="currentPage === 1"
-        @click="currentPage--"
-      >
-        ←
-      </button>
-      <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-      <button 
-        class="page-btn" 
-        :disabled="currentPage === totalPages"
-        @click="currentPage++"
-      >
-        →
-      </button>
+      <!-- Virtual Log List -->
+      <div v-else class="log-list-wrapper">
+        <div
+          v-for="log in displayLogs"
+          :key="log.id"
+          class="log-capsule"
+          :class="[
+            `level-${log.level}`,
+            { expanded: expandedLog === log.id, pulse: log.level === 'error' && isNewLog(log.id) }
+          ]"
+          @click="toggleExpand(log.id)"
+        >
+          <!-- Left Color Bar -->
+          <div class="capsule-indicator" :class="`level-${log.level}`"></div>
+          
+          <!-- Main Content -->
+          <div class="capsule-content">
+            <!-- Header Row -->
+            <div class="capsule-header">
+              <span class="log-timestamp">{{ formatTime(log.timestamp) }}</span>
+              <span class="log-level-badge" :class="`level-${log.level}`">
+                {{ log.level }}
+              </span>
+              <span class="log-event-tag">{{ log.event }}</span>
+              <span class="log-message" :title="log.message">{{ log.message }}</span>
+              <span v-if="log.taskId" class="log-task-id">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="9" y1="9" x2="15" y2="9"/>
+                  <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+                {{ log.taskId.slice(-6) }}
+              </span>
+            </div>
+            
+            <!-- Expanded Details -->
+            <Transition name="expand">
+              <div v-if="expandedLog === log.id" class="capsule-details">
+                <div class="details-grid">
+                  <div class="detail-item">
+                    <span class="detail-key">ID</span>
+                    <span class="detail-value mono">{{ log.id }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-key">Session</span>
+                    <span class="detail-value mono">{{ log.sessionId }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-key">Trace</span>
+                    <span class="detail-value mono">{{ log.traceId }}</span>
+                  </div>
+                  <div v-if="log.taskId" class="detail-item">
+                    <span class="detail-key">Task</span>
+                    <span class="detail-value mono">{{ log.taskId }}</span>
+                  </div>
+                  <div v-if="log.skillName" class="detail-item">
+                    <span class="detail-key">Skill</span>
+                    <span class="detail-value">{{ log.skillName }}</span>
+                  </div>
+                  <div v-if="log.duration" class="detail-item">
+                    <span class="detail-key">Duration</span>
+                    <span class="detail-value mono">{{ log.duration }}ms</span>
+                  </div>
+                  <div class="detail-item full-width">
+                    <span class="detail-key">Source</span>
+                    <span class="detail-value">{{ log.source }}</span>
+                  </div>
+                  <div v-if="Object.keys(log.data).length > 0" class="detail-item full-width">
+                    <span class="detail-key">Data</span>
+                    <pre class="detail-code">{{ JSON.stringify(log.data, null, 2) }}</pre>
+                  </div>
+                </div>
+              </div>
+            </Transition>
+          </div>
+          
+          <!-- Expand Indicator -->
+          <div class="expand-hint" :class="{ expanded: expandedLog === log.id }">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="pagination-bar">
+        <button 
+          class="page-btn" 
+          :disabled="currentPage === 1"
+          @click="currentPage--"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <span class="page-indicator">
+          <span class="current-page">{{ currentPage }}</span>
+          <span class="page-separator">/</span>
+          <span class="total-pages">{{ totalPages }}</span>
+        </span>
+        <button 
+          class="page-btn" 
+          :disabled="currentPage === totalPages"
+          @click="currentPage++"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Clear Confirm Modal -->
     <Teleport to="body">
       <Transition name="modal">
         <div v-if="showClearModal" class="modal-overlay" @click="showClearModal = false">
-          <div class="modal-content modal-small" @click.stop>
+          <div class="modal-content" @click.stop>
             <div class="modal-header">
-              <h4>⚠️ 确认清空</h4>
+              <div class="warning-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+              <h4>确认清空日志</h4>
             </div>
             <div class="modal-body">
-              <p>确定要清空所有日志吗？</p>
-              <p class="warning-text">此操作不可恢复！</p>
+              <p>此操作将永久删除所有日志记录</p>
+              <p class="warning-code">WARNING: DATA_IRREVERSIBLE</p>
             </div>
             <div class="modal-footer">
               <button class="btn-secondary" @click="showClearModal = false">取消</button>
@@ -179,8 +322,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { getEnhancedLogger, type EnhancedLogEntry, type LogStats } from '../../../agent/runtime/EnhancedLogger'
+
+// ==================== Constants ====================
+const LEVEL_COLORS = {
+  debug: '#6B7280',
+  info: '#2563EB',
+  warn: '#D97706',
+  error: '#DC2626'
+}
+
+const LEVEL_LABELS = {
+  debug: 'Debug',
+  info: 'Info',
+  warn: 'Warning',
+  error: 'Error'
+}
 
 // ==================== State ====================
 const logger = getEnhancedLogger()
@@ -206,34 +364,78 @@ const currentPage = ref(1)
 const pageSize = 50
 const autoRefresh = ref(true)
 const showClearModal = ref(false)
-const logListRef = ref<HTMLElement>()
+const logContainerRef = ref<HTMLElement>()
+const newLogIds = ref<Set<string>>(new Set())
+
+// Custom Dropdown State
+const showLevelDropdown = ref(false)
+const showEventDropdown = ref(false)
+
+const levelOptions = [
+  { value: '', label: '所有级别' },
+  { value: 'debug', label: 'DEBUG' },
+  { value: 'info', label: 'INFO' },
+  { value: 'warn', label: 'WARN' },
+  { value: 'error', label: 'ERROR' }
+]
+
+const levelLabel = computed(() => {
+  const option = levelOptions.find(o => o.value === filters.value.level)
+  return option?.label || '所有级别'
+})
+
+const eventLabel = computed(() => {
+  if (!filters.value.event) return '所有事件'
+  return filters.value.event
+})
+
+// Click Outside Directive
+const vClickOutside = {
+  mounted(el: HTMLElement, binding: any) {
+    el._clickOutside = (event: Event) => {
+      if (!(el === event.target || el.contains(event.target as Node))) {
+        binding.value()
+      }
+    }
+    document.addEventListener('click', el._clickOutside, true)
+  },
+  unmounted(el: HTMLElement) {
+    document.removeEventListener('click', (el as any)._clickOutside, true)
+  }
+}
+
+function selectLevel(value: string) {
+  filters.value.level = value
+  showLevelDropdown.value = false
+  currentPage.value = 1
+}
+
+function selectEvent(value: string) {
+  filters.value.event = value
+  showEventDropdown.value = false
+  currentPage.value = 1
+}
 
 let refreshInterval: number | null = null
 
 // ==================== Computed ====================
 const filteredLogs = computed(() => {
-  let result = logger.getLogs({
+  return logger.getLogs({
     level: filters.value.level as any,
     event: filters.value.event || undefined,
     skillName: filters.value.skillName || undefined,
     search: filters.value.search || undefined
   })
-  
-  // Pagination
+})
+
+const displayLogs = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   const end = start + pageSize
-  return result.slice(start, end)
+  return filteredLogs.value.slice(start, end)
 })
 
 const totalPages = computed(() => {
-  const filter = {
-    level: filters.value.level as any,
-    event: filters.value.event || undefined,
-    skillName: filters.value.skillName || undefined,
-    search: filters.value.search || undefined
-  }
-  const total = logger.getLogs(filter).length
-  return Math.ceil(total / pageSize)
+  return Math.ceil(filteredLogs.value.length / pageSize)
 })
 
 const uniqueEvents = computed(() => {
@@ -242,14 +444,32 @@ const uniqueEvents = computed(() => {
   return Array.from(events).sort()
 })
 
+const levelStats = computed(() => {
+  const total = stats.value.total || 1 // Prevent division by zero
+  const levels = ['info', 'warn', 'error', 'debug'] as const
+  
+  return levels.map(level => {
+    const count = stats.value.byLevel[level] || 0
+    return {
+      level,
+      label: LEVEL_LABELS[level],
+      count,
+      percentage: total > 0 ? (count / total) * 100 : 0
+    }
+  }).filter(s => s.count > 0)
+})
+
 // ==================== Methods ====================
 function formatTime(timestamp: number): string {
   const date = new Date(timestamp)
-  return date.toLocaleTimeString('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  })
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  const ms = String(date.getMilliseconds()).padStart(3, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${ms}`
 }
 
 function toggleExpand(logId: string) {
@@ -257,8 +477,25 @@ function toggleExpand(logId: string) {
 }
 
 function refreshLogs() {
+  const previousIds = new Set(logs.value.map(l => l.id))
   logs.value = logger.getLogs()
   stats.value = logger.getStats()
+  
+  // Track new logs for animation
+  const currentIds = new Set(logs.value.map(l => l.id))
+  const newIds = [...currentIds].filter(id => !previousIds.has(id))
+  
+  if (newIds.length > 0) {
+    newLogIds.value = new Set(newIds)
+    // Clear new log status after animation
+    setTimeout(() => {
+      newLogIds.value.clear()
+    }, 2000)
+  }
+}
+
+function isNewLog(logId: string): boolean {
+  return newLogIds.value.has(logId)
 }
 
 function exportLogs() {
@@ -267,7 +504,7 @@ function exportLogs() {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `metablog-logs-${new Date().toISOString().split('T')[0]}.json`
+  a.download = `logs-${new Date().toISOString().split('T')[0]}.json`
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -280,6 +517,7 @@ function clearLogs() {
   logger.clear()
   refreshLogs()
   showClearModal.value = false
+  expandedLog.value = null
 }
 
 // ==================== Lifecycle ====================
@@ -303,39 +541,129 @@ onUnmounted(() => {
 // Reset page when filters change
 watch(filters, () => {
   currentPage.value = 1
+  expandedLog.value = null
 }, { deep: true })
+
+// Auto scroll to top on new logs when on first page
+watch(() => logs.value.length, (newLen, oldLen) => {
+  if (newLen > oldLen && currentPage.value === 1 && logContainerRef.value) {
+    nextTick(() => {
+      logContainerRef.value!.scrollTop = 0
+    })
+  }
+})
 </script>
 
 <style scoped>
-.log-viewer {
+/* ========== CSS Variables ========== */
+.cyber-log-viewer {
+  --bg-primary: #FAFAFA;
+  --bg-secondary: #F5F5F5;
+  --bg-tertiary: #FFFFFF;
+  --bg-hover: rgba(37, 99, 235, 0.06);
+  
+  --text-primary: #1F2937;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  
+  --color-info: #2563EB;
+  --color-warn: #D97706;
+  --color-error: #DC2626;
+  --color-debug: #6B7280;
+  
+  --border-color: #E5E7EB;
+  --border-subtle: #F3F4F6;
+  
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.15);
+  
+  --mono-font: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+  
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fafaf9;
+  background: var(--bg-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
 }
 
-/* Header */
-.viewer-header {
+/* ========== Header ========== */
+.cyber-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e7e5e4;
-  background: white;
+  padding: 14px 20px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
-.viewer-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #292524;
-  margin: 0;
+.header-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
-.title-icon {
-  font-size: 18px;
+.terminal-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--color-info);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.terminal-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.title-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+  margin: 0;
+  font-family: var(--mono-font);
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: var(--mono-font);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.3s ease;
+}
+
+.status-indicator.active {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--color-info);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 .header-actions {
@@ -343,76 +671,147 @@ watch(filters, () => {
   gap: 8px;
 }
 
-.btn-action {
-  width: 32px;
-  height: 32px;
+.cyber-btn {
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  background: #f5f5f4;
-  border-radius: 8px;
-  font-size: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
 }
 
-.btn-action:hover {
-  background: #e7e5e4;
+.cyber-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
-.btn-action.danger:hover {
-  background: #fee2e2;
+.cyber-btn:hover {
+  border-color: var(--color-info);
+  color: var(--color-info);
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
-/* Stats */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+.cyber-btn.danger:hover {
+  border-color: var(--color-error);
+  color: var(--color-error);
+  background: rgba(220, 38, 38, 0.06);
+}
+
+/* ========== Stats Bar ========== */
+.stats-container {
   padding: 16px 20px;
-  background: white;
-  border-bottom: 1px solid #f5f5f4;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.stat-card {
-  padding: 12px;
-  background: #f5f5f4;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.stat-card.info {
-  background: #dbeafe;
-}
-
-.stat-card.warn {
-  background: #fef3c7;
-}
-
-.stat-card.error {
-  background: #fee2e2;
-}
-
-.stat-value {
-  font-size: 20px;
-  font-weight: 600;
-  color: #292524;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #78716c;
-  margin-top: 4px;
-}
-
-/* Filters */
-.filter-bar {
+.stats-bar {
   display: flex;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-secondary);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.stat-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.stat-segment:hover {
+  filter: brightness(1.1);
+}
+
+.segment-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  font-family: var(--mono-font);
+}
+
+.stat-segment.level-info { background: var(--color-info); }
+.stat-segment.level-warn { background: var(--color-warn); }
+.stat-segment.level-error { background: var(--color-error); }
+.stat-segment.level-debug { background: var(--color-debug); }
+
+/* Pulse animation for error segments */
+.stat-segment.level-error.pulse {
+  animation: segment-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes segment-pulse {
+  0%, 100% { 
+    opacity: 1;
+    box-shadow: none;
+  }
+  50% { 
+    opacity: 0.85;
+    box-shadow: 0 0 8px var(--color-error);
+  }
+}
+
+.stats-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-dot.level-info { background: var(--color-info); }
+.legend-dot.level-warn { background: var(--color-warn); }
+.legend-dot.level-error { background: var(--color-error); }
+.legend-dot.level-debug { background: var(--color-debug); }
+
+.legend-label {
+  color: var(--text-secondary);
+}
+
+.legend-count {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--mono-font);
+  padding: 1px 6px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+/* ========== Filters ========== */
+.filter-panel {
+  padding: 14px 20px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  padding: 12px 20px;
-  background: white;
-  border-bottom: 1px solid #f5f5f4;
   flex-wrap: wrap;
 }
 
@@ -421,199 +820,561 @@ watch(filters, () => {
   align-items: center;
 }
 
-.filter-input,
-.filter-select {
-  padding: 8px 12px;
-  border: 1px solid #e7e5e4;
-  border-radius: 6px;
-  font-size: 13px;
-  background: #fafaf9;
-  min-width: 150px;
+.filter-group.search-group {
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+  position: relative;
 }
 
-.filter-input:focus,
-.filter-select:focus {
+.filter-icon {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.cyber-input {
+  width: 100%;
+  padding: 8px 12px 8px 38px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.cyber-input:focus {
   outline: none;
-  border-color: #94a3b8;
-  background: white;
+  border-color: var(--color-info);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-.btn-toggle {
+.cyber-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Custom Dropdown Styles */
+.custom-dropdown {
+  position: relative;
+  min-width: 120px;
+}
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
   padding: 8px 12px;
-  border: 1px solid #e7e5e4;
-  border-radius: 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
   font-size: 13px;
-  background: white;
+  color: var(--text-primary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
-.btn-toggle.active {
-  background: #dcfce7;
-  border-color: #86efac;
-  color: #166534;
+.dropdown-trigger:hover {
+  border-color: var(--color-info);
+  background: var(--bg-secondary);
+}
+
+.custom-dropdown.open .dropdown-trigger {
+  border-color: var(--color-info);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.trigger-text {
+  font-weight: 500;
+}
+
+.trigger-text.debug { color: #6B7280; }
+.trigger-text.info { color: #2563EB; }
+.trigger-text.warn { color: #D97706; }
+.trigger-text.error { color: #DC2626; }
+
+.trigger-arrow {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+  color: var(--text-secondary);
+}
+
+.trigger-arrow.open {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  overflow: hidden;
+  min-width: 140px;
+}
+
+.dropdown-menu.event-menu {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 13px;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.dropdown-item.active {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.item-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+}
+
+.item-dot.debug { background: #6B7280; }
+.item-dot.info { background: #2563EB; }
+.item-dot.warn { background: #D97706; }
+.item-dot.error { background: #DC2626; }
+
+.item-label {
+  flex: 1;
+  color: var(--text-primary);
+}
+
+.item-check {
+  width: 14px;
+  height: 14px;
+  color: var(--color-info);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+/* Dropdown Animation */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* Cyber Toggle Switch */
+.cyber-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.cyber-toggle.active {
+  color: var(--color-info);
+}
+
+.toggle-track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  background: var(--bg-secondary);
+  border-radius: 11px;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.cyber-toggle.active .toggle-track {
+  background: rgba(37, 99, 235, 0.15);
+  border-color: var(--color-info);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--bg-tertiary);
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cyber-toggle.active .toggle-thumb {
+  transform: translateX(18px);
+  background: var(--color-info);
+}
+
+.toggle-label {
+  font-weight: 500;
+}
+
+/* ========== Log Container ========== */
+.log-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg-primary);
+  position: relative;
+}
+
+/* Empty State - Silence Wave */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 300px;
+  padding: 40px;
+}
+
+.silence-wave {
+  width: 300px;
+  height: 60px;
+  margin-bottom: 24px;
+  opacity: 0.4;
+}
+
+.silence-wave svg {
+  width: 100%;
+  height: 100%;
+}
+
+.wave-path {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  animation: wave-flow 3s ease-in-out infinite;
+}
+
+@keyframes wave-flow {
+  0%, 100% {
+    d: path('M0,30 Q50,10 100,30 T200,30 T300,30 T400,30');
+  }
+  25% {
+    d: path('M0,30 Q50,50 100,30 T200,30 T300,30 T400,30');
+  }
+  50% {
+    d: path('M0,30 Q50,25 100,30 T200,30 T300,30 T400,30');
+  }
+  75% {
+    d: path('M0,30 Q50,35 100,30 T200,30 T300,30 T400,30');
+  }
+}
+
+.empty-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 8px 0;
+}
+
+.empty-subtext {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--mono-font);
+  letter-spacing: 2px;
+  margin: 0;
 }
 
 /* Log List */
-.log-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px;
+.log-list-wrapper {
+  padding: 8px 16px 16px;
 }
 
-.log-item {
-  background: white;
-  border-radius: 8px;
-  margin-bottom: 4px;
-  overflow: hidden;
+/* Log Capsule */
+.log-capsule {
+  display: flex;
+  align-items: stretch;
+  margin-bottom: 6px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
   cursor: pointer;
-  transition: all 0.15s;
-  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+  animation: slide-in 0.3s ease-out;
+  overflow: hidden;
 }
 
-.log-item:hover {
-  background: #f5f5f4;
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.log-item.level-debug {
-  border-left-color: #9ca3af;
+.log-capsule:hover {
+  background: var(--bg-hover);
+  border-color: rgba(37, 99, 235, 0.2);
+  box-shadow: var(--shadow-glow);
 }
 
-.log-item.level-info {
-  border-left-color: #3b82f6;
+.log-capsule.level-error.pulse {
+  animation: slide-in 0.3s ease-out, error-pulse 1.5s ease-in-out;
 }
 
-.log-item.level-warn {
-  border-left-color: #f59e0b;
+@keyframes error-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+  }
 }
 
-.log-item.level-error {
-  border-left-color: #dc2626;
+/* Level Indicator Bar */
+.capsule-indicator {
+  width: 3px;
+  flex-shrink: 0;
+  transition: width 0.2s ease;
 }
 
-.log-header {
+.log-capsule:hover .capsule-indicator {
+  width: 4px;
+}
+
+.capsule-indicator.level-debug { background: var(--color-debug); }
+.capsule-indicator.level-info { background: var(--color-info); }
+.capsule-indicator.level-warn { background: var(--color-warn); }
+.capsule-indicator.level-error { background: var(--color-error); }
+
+/* Capsule Content */
+.capsule-content {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.capsule-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: 10px;
   font-size: 13px;
 }
 
-.log-time {
-  color: #a8a29e;
-  font-family: monospace;
+.log-timestamp {
+  font-family: var(--mono-font);
   font-size: 12px;
-  min-width: 70px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.log-level {
-  padding: 2px 6px;
-  border-radius: 4px;
+.log-level-badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
   font-size: 10px;
   font-weight: 600;
-  min-width: 45px;
-  text-align: center;
+  text-transform: lowercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.log-level.debug {
-  background: #f3f4f6;
-  color: #6b7280;
+.log-level-badge.level-debug {
+  background: rgba(107, 114, 128, 0.12);
+  color: var(--color-debug);
 }
 
-.log-level.info {
-  background: #dbeafe;
-  color: #1e40af;
+.log-level-badge.level-info {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--color-info);
 }
 
-.log-level.warn {
-  background: #fef3c7;
-  color: #92400e;
+.log-level-badge.level-warn {
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--color-warn);
 }
 
-.log-level.error {
-  background: #fee2e2;
-  color: #991b1b;
+.log-level-badge.level-error {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--color-error);
 }
 
-.log-event {
+.log-event-tag {
   padding: 2px 8px;
-  background: #f1f5f9;
-  border-radius: 4px;
-  color: #475569;
+  background: var(--bg-secondary);
+  border-radius: 20px;
   font-size: 11px;
   font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .log-message {
   flex: 1;
-  color: #292524;
+  min-width: 0;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.log-task {
-  font-size: 11px;
-  color: #64748b;
-  background: #f1f5f9;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-/* Log Details */
-.log-details {
-  padding: 12px 16px;
-  background: #fafaf9;
-  border-top: 1px solid #f5f5f4;
-  font-size: 12px;
-}
-
-.detail-row {
+.log-task-id {
   display: flex;
-  margin-bottom: 8px;
-}
-
-.detail-label {
-  width: 80px;
-  color: #78716c;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-family: var(--mono-font);
+  color: var(--text-secondary);
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
+.log-task-id svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Expand Hint */
+.expand-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.expand-hint svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.expand-hint.expanded svg {
+  transform: rotate(180deg);
+}
+
+.log-capsule:hover .expand-hint {
+  color: var(--color-info);
+}
+
+/* Capsule Details */
+.capsule-details {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px 20px;
+}
+
+.detail-item {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.detail-key {
+  width: 70px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
 .detail-value {
-  color: #292524;
-  font-family: monospace;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.detail-value.mono {
+  font-family: var(--mono-font);
 }
 
 .detail-code {
-  background: #f5f5f4;
-  padding: 8px;
-  border-radius: 6px;
-  overflow-x: auto;
-  font-size: 11px;
-  margin: 8px 0 0 0;
-}
-
-/* Empty State */
-.empty-state {
-  padding: 60px 20px;
-  text-align: center;
-  color: #a8a29e;
-}
-
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
-/* Pagination */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
+  grid-column: 1 / -1;
+  margin: 4px 0 0 0;
   padding: 12px;
-  border-top: 1px solid #f5f5f4;
-  background: white;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-family: var(--mono-font);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Expand Transition */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.expand-enter-to,
+.expand-leave-from {
+  opacity: 1;
+  max-height: 500px;
+}
+
+/* ========== Pagination ========== */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 20px;
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .page-btn {
@@ -622,32 +1383,57 @@ watch(filters, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #e7e5e4;
-  background: white;
-  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+}
+
+.page-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .page-btn:hover:not(:disabled) {
-  background: #f5f5f4;
+  border-color: var(--color-info);
+  color: var(--color-info);
+  background: var(--bg-hover);
 }
 
 .page-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-.page-info {
+.page-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono-font);
   font-size: 13px;
-  color: #57534e;
 }
 
-/* Modal */
+.current-page {
+  font-weight: 600;
+  color: var(--color-info);
+}
+
+.page-separator {
+  color: var(--text-muted);
+}
+
+.total-pages {
+  color: var(--text-secondary);
+}
+
+/* ========== Modal ========== */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -655,28 +1441,40 @@ watch(filters, () => {
 }
 
 .modal-content {
-  background: white;
-  border-radius: 16px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
   width: 90%;
-  max-width: 400px;
+  max-width: 360px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-}
-
-.modal-small {
-  max-width: 320px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
 }
 
 .modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 16px 20px;
-  border-bottom: 1px solid #f5f5f4;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.warning-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--color-warn);
+  flex-shrink: 0;
+}
+
+.warning-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .modal-header h4 {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: #292524;
+  color: var(--text-primary);
 }
 
 .modal-body {
@@ -685,56 +1483,64 @@ watch(filters, () => {
 
 .modal-body p {
   margin: 0 0 8px 0;
-  color: #57534e;
+  color: var(--text-secondary);
+  font-size: 13px;
 }
 
-.warning-text {
-  color: #dc2626;
-  font-size: 13px;
+.warning-code {
+  font-family: var(--mono-font);
+  font-size: 11px !important;
+  color: var(--color-warn) !important;
+  letter-spacing: 1px;
+  margin-top: 8px;
 }
 
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
   padding: 16px 20px;
-  border-top: 1px solid #f5f5f4;
-  background: #fafaf9;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .btn-secondary,
 .btn-danger {
   padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .btn-secondary {
-  background: #f5f5f4;
-  color: #57534e;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
 }
 
 .btn-secondary:hover {
-  background: #e7e5e4;
+  border-color: var(--color-info);
+  color: var(--color-info);
+  background: var(--bg-hover);
 }
 
 .btn-danger {
-  background: #dc2626;
+  background: var(--color-error);
+  border-color: var(--color-error);
   color: white;
 }
 
 .btn-danger:hover {
-  background: #b91c1c;
+  background: #B91C1C;
+  border-color: #B91C1C;
 }
 
-/* Transitions */
+/* Modal Transitions */
 .modal-enter-active,
 .modal-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .modal-enter-from,
@@ -744,6 +1550,76 @@ watch(filters, () => {
 
 .modal-enter-from .modal-content,
 .modal-leave-to .modal-content {
+  opacity: 0;
   transform: scale(0.95);
+}
+
+/* ========== Scrollbar Styling ========== */
+.log-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.log-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+  .cyber-header {
+    padding: 12px 16px;
+  }
+  
+  .header-title {
+    gap: 8px;
+  }
+  
+  .title-text {
+    font-size: 13px;
+  }
+  
+  .stats-container {
+    padding: 12px 16px;
+  }
+  
+  .stats-legend {
+    gap: 12px;
+  }
+  
+  .filter-panel {
+    padding: 12px 16px;
+  }
+  
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-group.search-group {
+    max-width: none;
+  }
+  
+  .capsule-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  
+  .log-message {
+    width: 100%;
+    order: 99;
+    margin-top: 4px;
+  }
+  
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
