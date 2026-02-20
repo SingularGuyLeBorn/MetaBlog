@@ -8,7 +8,8 @@ import type {
   LLMStreamChunk,
   LLMProviderConfig 
 } from '../types'
-import { LLMProvider, getModelPricing } from '../types'
+import { LLMProvider } from '../types'
+import { readSSEStream } from '../utils/stream'
 
 export class AnthropicProvider extends LLMProvider {
   name = 'anthropic'
@@ -20,7 +21,6 @@ export class AnthropicProvider extends LLMProvider {
   }
 
   async chat(request: LLMRequest): Promise<LLMResponse> {
-    // 提取 system 消息
     const systemMessage = request.messages.find(m => m.role === 'system')?.content || ''
     const messages = request.messages.filter(m => m.role !== 'system')
 
@@ -66,11 +66,6 @@ export class AnthropicProvider extends LLMProvider {
     request: LLMRequest,
     onChunk: (chunk: LLMStreamChunk) => void
   ): Promise<void> {
-    // P0-3: 检查 signal 是否已被中止
-    if (request.signal?.aborted) {
-      throw new Error('Request aborted')
-    }
-
     const systemMessage = request.messages.find(m => m.role === 'system')?.content || ''
     const messages = request.messages.filter(m => m.role !== 'system')
 
@@ -92,7 +87,7 @@ export class AnthropicProvider extends LLMProvider {
         })),
         stream: true
       }),
-      signal: request.signal  // P0-3: 传递 AbortSignal
+      signal: request.signal
     })
 
     if (!response.ok) {
@@ -100,73 +95,24 @@ export class AnthropicProvider extends LLMProvider {
       throw new Error(`Anthropic API error: ${error}`)
     }
 
-    const reader = response.body?.getReader()
-    if (!reader) throw new Error('No response body')
-
-    const decoder = new TextDecoder()
-
-    // P0-3: 监听 abort 事件来取消 reader
-    const abortHandler = () => {
-      reader.cancel('Request aborted').catch(() => {})
-    }
-    request.signal?.addEventListener('abort', abortHandler)
-
-    try {
-      while (true) {
-        // P0-3: 检查 signal 状态
-        if (request.signal?.aborted) {
-          throw new Error('Request aborted')
+    await readSSEStream(response, request.signal, (data) => {
+      try {
+        const parsed = JSON.parse(data)
+        
+        if (parsed.type === 'content_block_delta') {
+          onChunk({
+            content: parsed.delta.text || ''
+          })
+        } else if (parsed.type === 'message_stop') {
+          onChunk({
+            content: '',
+            finishReason: 'stop'
+          })
         }
-
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6)
-            if (data === '[DONE]') continue
-
-            try {
-              const parsed = JSON.parse(data)
-              
-              if (parsed.type === 'content_block_delta') {
-                onChunk({
-                  content: parsed.delta.text || ''
-                })
-              } else if (parsed.type === 'message_stop') {
-                onChunk({
-                  content: '',
-                  finishReason: 'stop'
-                })
-              }
-            } catch {
-              // 忽略解析错误
-            }
-          }
-        }
+      } catch {
+        // 忽略解析错误
       }
-    } finally {
-      request.signal?.removeEventListener('abort', abortHandler)
-      reader.releaseLock()
-    }
-  }
-
-  estimateTokens(text: string): number {
-    // Claude 使用类似的 tokenizer
-    let tokens = 0
-    for (const char of text) {
-      if (/[\u4e00-\u9fa5]/.test(char)) {
-        tokens += 2.5
-      } else if (/[a-zA-Z]/.test(char)) {
-        tokens += 0.25
-      } else {
-        tokens += 0.5
-      }
-    }
-    return Math.ceil(tokens)
+    })
   }
 
   getAvailableModels(): string[] {
@@ -176,12 +122,5 @@ export class AnthropicProvider extends LLMProvider {
       'claude-3-sonnet-20240229',
       'claude-3-haiku-20240307'
     ]
-  }
-
-  calculateCost(usage: LLMResponse['usage']): number {
-    const pricing = getModelPricing(this.config.model)
-    const inputCost = (usage.promptTokens / 1000) * pricing.input
-    const outputCost = (usage.completionTokens / 1000) * pricing.output
-    return inputCost + outputCost
   }
 }

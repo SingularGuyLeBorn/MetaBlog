@@ -82,19 +82,40 @@ export abstract class LLMProvider {
   ): Promise<void>
 
   /**
-   * 计算 Token 数量（估算）
-   */
-  abstract estimateTokens(text: string): number
-
-  /**
    * 获取提供商特定的模型列表
    */
   abstract getAvailableModels(): string[]
 
   /**
-   * 计算成本
+   * 计算 Token 数量（估算）
+   * 默认实现：中文 2.5 tokens/字符，英文 0.25 tokens/字母
+   * 子类可覆盖提供更精确的估算
    */
-  abstract calculateCost(usage: LLMResponse['usage']): number
+  estimateTokens(text: string): number {
+    let tokens = 0
+    for (const char of text) {
+      if (/[\u4e00-\u9fa5]/.test(char)) {
+        tokens += 2.5
+      } else if (/[a-zA-Z]/.test(char)) {
+        tokens += 0.25
+      } else {
+        tokens += 0.5
+      }
+    }
+    return Math.ceil(tokens)
+  }
+
+  /**
+   * 计算成本
+   * 默认实现基于 MODEL_PRICING
+   * 子类可覆盖提供特殊定价
+   */
+  calculateCost(usage: LLMResponse['usage']): number {
+    const pricing = getModelPricing(this.config.model)
+    const inputCost = (usage.promptTokens / 1000) * pricing.input
+    const outputCost = (usage.completionTokens / 1000) * pricing.output
+    return inputCost + outputCost
+  }
 }
 
 // 支持的厂商类型

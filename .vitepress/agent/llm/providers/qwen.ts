@@ -8,7 +8,8 @@ import type {
   LLMStreamChunk,
   LLMProviderConfig 
 } from '../types'
-import { LLMProvider, getModelPricing } from '../types'
+import { LLMProvider } from '../types'
+import { readSSEStream } from '../utils/stream'
 
 export class QwenProvider extends LLMProvider {
   name = 'qwen'
@@ -38,7 +39,7 @@ export class QwenProvider extends LLMProvider {
           result_format: 'message'
         }
       }),
-      signal: request.signal  // P0-3: 传递 AbortSignal
+      signal: request.signal
     })
 
     if (!response.ok) {
@@ -64,11 +65,6 @@ export class QwenProvider extends LLMProvider {
     request: LLMRequest,
     onChunk: (chunk: LLMStreamChunk) => void
   ): Promise<void> {
-    // P0-3: 检查 signal 是否已被中止
-    if (request.signal?.aborted) {
-      throw new Error('Request aborted')
-    }
-
     const response = await fetch(`${this.baseURL}/services/aigc/text-generation/generation`, {
       method: 'POST',
       headers: {
@@ -96,67 +92,20 @@ export class QwenProvider extends LLMProvider {
       throw new Error(`Qwen API error: ${error}`)
     }
 
-    const reader = response.body?.getReader()
-    if (!reader) throw new Error('No response body')
+    await readSSEStream(response, request.signal, (data) => {
+      try {
+        const parsed = JSON.parse(data)
+        const text = parsed.output?.choices[0]?.message?.content || ''
+        const finishReason = parsed.output?.choices[0]?.finish_reason
 
-    const decoder = new TextDecoder()
-
-    // P0-3: 监听 abort 事件来取消 reader
-    const abortHandler = () => {
-      reader.cancel('Request aborted').catch(() => {})
-    }
-    request.signal?.addEventListener('abort', abortHandler)
-
-    try {
-      while (true) {
-        // P0-3: 检查 signal 状态
-        if (request.signal?.aborted) {
-          throw new Error('Request aborted')
-        }
-
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6)
-            
-            try {
-              const parsed = JSON.parse(data)
-              const text = parsed.output?.choices[0]?.message?.content || ''
-              const finishReason = parsed.output?.choices[0]?.finish_reason
-
-              onChunk({
-                content: text,
-                finishReason
-              })
-            } catch {
-              // 忽略解析错误
-            }
-          }
-        }
+        onChunk({
+          content: text,
+          finishReason
+        })
+      } catch {
+        // 忽略解析错误
       }
-    } finally {
-      request.signal?.removeEventListener('abort', abortHandler)
-      reader.releaseLock()
-    }
-  }
-
-  estimateTokens(text: string): number {
-    let tokens = 0
-    for (const char of text) {
-      if (/[\u4e00-\u9fa5]/.test(char)) {
-        tokens += 2.5
-      } else if (/[a-zA-Z]/.test(char)) {
-        tokens += 0.25
-      } else {
-        tokens += 0.5
-      }
-    }
-    return Math.ceil(tokens)
+    })
   }
 
   getAvailableModels(): string[] {
@@ -169,12 +118,5 @@ export class QwenProvider extends LLMProvider {
       'qwen-turbo-latest',
       'qwen-long'
     ]
-  }
-
-  calculateCost(usage: LLMResponse['usage']): number {
-    const pricing = getModelPricing(this.config.model)
-    const inputCost = (usage.promptTokens / 1000) * pricing.input
-    const outputCost = (usage.completionTokens / 1000) * pricing.output
-    return inputCost + outputCost
   }
 }

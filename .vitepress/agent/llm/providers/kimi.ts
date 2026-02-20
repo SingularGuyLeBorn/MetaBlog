@@ -8,7 +8,8 @@ import type {
   LLMStreamChunk,
   LLMProviderConfig 
 } from '../types'
-import { LLMProvider, getModelPricing } from '../types'
+import { LLMProvider } from '../types'
+import { readSSEStream } from '../utils/stream'
 
 export class KimiProvider extends LLMProvider {
   name = 'kimi'
@@ -59,11 +60,6 @@ export class KimiProvider extends LLMProvider {
     request: LLMRequest,
     onChunk: (chunk: LLMStreamChunk) => void
   ): Promise<void> {
-    // P0-3: 检查 signal 是否已被中止
-    if (request.signal?.aborted) {
-      throw new Error('Request aborted')
-    }
-
     const response = await fetch(`${this.baseURL}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -78,7 +74,7 @@ export class KimiProvider extends LLMProvider {
         top_p: request.topP ?? 1,
         stream: true
       }),
-      signal: request.signal  // P0-3: 传递 AbortSignal
+      signal: request.signal
     })
 
     if (!response.ok) {
@@ -86,71 +82,20 @@ export class KimiProvider extends LLMProvider {
       throw new Error(`Kimi API error: ${error}`)
     }
 
-    const reader = response.body?.getReader()
-    if (!reader) throw new Error('No response body')
+    await readSSEStream(response, request.signal, (data) => {
+      try {
+        const chunk = JSON.parse(data)
+        const delta = chunk.choices[0]?.delta?.content || ''
+        const finishReason = chunk.choices[0]?.finish_reason
 
-    const decoder = new TextDecoder()
-    let buffer = ''
-
-    // P0-3: 监听 abort 事件来取消 reader
-    const abortHandler = () => {
-      reader.cancel('Request aborted').catch(() => {})
-    }
-    request.signal?.addEventListener('abort', abortHandler)
-
-    try {
-      while (true) {
-        // P0-3: 检查 signal 状态
-        if (request.signal?.aborted) {
-          throw new Error('Request aborted')
-        }
-
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
-
-        for (const line of lines) {
-          if (line.trim() === '') continue
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6)
-            if (data === '[DONE]') continue
-
-            try {
-              const chunk = JSON.parse(data)
-              const delta = chunk.choices[0]?.delta?.content || ''
-              const finishReason = chunk.choices[0]?.finish_reason
-
-              onChunk({
-                content: delta,
-                finishReason
-              })
-            } catch {
-              // 忽略解析错误
-            }
-          }
-        }
+        onChunk({
+          content: delta,
+          finishReason
+        })
+      } catch {
+        // 忽略解析错误
       }
-    } finally {
-      request.signal?.removeEventListener('abort', abortHandler)
-      reader.releaseLock()
-    }
-  }
-
-  estimateTokens(text: string): number {
-    let tokens = 0
-    for (const char of text) {
-      if (/[\u4e00-\u9fa5]/.test(char)) {
-        tokens += 2.5
-      } else if (/[a-zA-Z]/.test(char)) {
-        tokens += 0.25
-      } else {
-        tokens += 0.5
-      }
-    }
-    return Math.ceil(tokens)
+    })
   }
 
   getAvailableModels(): string[] {
@@ -163,12 +108,5 @@ export class KimiProvider extends LLMProvider {
       'moonshot-v1-8k-vision-preview',
       'moonshot-v1-32k-vision-preview'
     ]
-  }
-
-  calculateCost(usage: LLMResponse['usage']): number {
-    const pricing = getModelPricing(this.config.model)
-    const inputCost = (usage.promptTokens / 1000) * pricing.input
-    const outputCost = (usage.completionTokens / 1000) * pricing.output
-    return inputCost + outputCost
   }
 }

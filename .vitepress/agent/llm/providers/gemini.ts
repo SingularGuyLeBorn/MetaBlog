@@ -8,7 +8,8 @@ import type {
   LLMStreamChunk,
   LLMProviderConfig 
 } from '../types'
-import { LLMProvider, getModelPricing } from '../types'
+import { LLMProvider } from '../types'
+import { readSSEStream } from '../utils/stream'
 
 export class GeminiProvider extends LLMProvider {
   name = 'gemini'
@@ -21,8 +22,6 @@ export class GeminiProvider extends LLMProvider {
 
   async chat(request: LLMRequest): Promise<LLMResponse> {
     const model = request.model || this.config.model
-    
-    // 转换消息格式为 Gemini 格式
     const contents = this.convertMessages(request.messages)
     
     const response = await fetch(
@@ -40,7 +39,7 @@ export class GeminiProvider extends LLMProvider {
             topP: request.topP ?? 1
           }
         }),
-        signal: request.signal  // P0-3: 传递 AbortSignal
+        signal: request.signal
       }
     )
 
@@ -51,7 +50,6 @@ export class GeminiProvider extends LLMProvider {
 
     const data = await response.json()
     
-    // 计算 token 使用量（Gemini 返回 usageMetadata）
     const usage = data.usageMetadata || {
       promptTokenCount: 0,
       candidatesTokenCount: 0,
@@ -74,11 +72,6 @@ export class GeminiProvider extends LLMProvider {
     request: LLMRequest,
     onChunk: (chunk: LLMStreamChunk) => void
   ): Promise<void> {
-    // P0-3: 检查 signal 是否已被中止
-    if (request.signal?.aborted) {
-      throw new Error('Request aborted')
-    }
-
     const model = request.model || this.config.model
     const contents = this.convertMessages(request.messages)
 
@@ -105,69 +98,20 @@ export class GeminiProvider extends LLMProvider {
       throw new Error(`Gemini API error: ${error}`)
     }
 
-    const reader = response.body?.getReader()
-    if (!reader) throw new Error('No response body')
+    await readSSEStream(response, request.signal, (data) => {
+      try {
+        const parsed = JSON.parse(data)
+        const text = parsed.candidates[0]?.content?.parts[0]?.text || ''
+        const finishReason = parsed.candidates[0]?.finishReason
 
-    const decoder = new TextDecoder()
-
-    // P0-3: 监听 abort 事件来取消 reader
-    const abortHandler = () => {
-      reader.cancel('Request aborted').catch(() => {})
-    }
-    request.signal?.addEventListener('abort', abortHandler)
-
-    try {
-      while (true) {
-        // P0-3: 检查 signal 状态
-        if (request.signal?.aborted) {
-          throw new Error('Request aborted')
-        }
-
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6)
-            if (data === '[DONE]') continue
-
-            try {
-              const parsed = JSON.parse(data)
-              const text = parsed.candidates[0]?.content?.parts[0]?.text || ''
-              const finishReason = parsed.candidates[0]?.finishReason
-
-              onChunk({
-                content: text,
-                finishReason
-              })
-            } catch {
-              // 忽略解析错误
-            }
-          }
-        }
+        onChunk({
+          content: text,
+          finishReason
+        })
+      } catch {
+        // 忽略解析错误
       }
-    } finally {
-      request.signal?.removeEventListener('abort', abortHandler)
-      reader.releaseLock()
-    }
-  }
-
-  estimateTokens(text: string): number {
-    // Gemini 使用类似的 tokenizer
-    let tokens = 0
-    for (const char of text) {
-      if (/[\u4e00-\u9fa5]/.test(char)) {
-        tokens += 2.5
-      } else if (/[a-zA-Z]/.test(char)) {
-        tokens += 0.25
-      } else {
-        tokens += 0.5
-      }
-    }
-    return Math.ceil(tokens)
+    })
   }
 
   getAvailableModels(): string[] {
@@ -180,23 +124,12 @@ export class GeminiProvider extends LLMProvider {
     ]
   }
 
-  calculateCost(usage: LLMResponse['usage']): number {
-    const pricing = getModelPricing(this.config.model)
-    const inputCost = (usage.promptTokens / 1000) * pricing.input
-    const outputCost = (usage.completionTokens / 1000) * pricing.output
-    return inputCost + outputCost
-  }
-
-  /**
-   * 转换标准消息格式为 Gemini 格式
-   */
   private convertMessages(messages: LLMRequest['messages']): any[] {
     const contents = []
     let currentRole = ''
     let currentParts: { text: string }[] = []
 
     for (const msg of messages) {
-      // Gemini 使用 'user' 和 'model' 角色
       const role = msg.role === 'assistant' ? 'model' : 'user'
 
       if (role !== currentRole && currentParts.length > 0) {
