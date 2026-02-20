@@ -26,6 +26,7 @@ import { createLLMManager } from '../llm'
 import { createLLMConfigFromEnv } from '../config/env'
 import { eventBus, AgentEvents } from './EventBus'
 import { fileLockManager } from './FileLockManager'
+import { FileStorage } from '../memory/FileStorage'
 
 export interface AgentRuntimeConfig {
   mode: EditorMode
@@ -610,9 +611,37 @@ export class AgentRuntime {
     return false
   }
   
+  // P1-CHK: checkpoint 文件存储
+  private checkpointStorage = new FileStorage<{ tasks: TaskState[] }>({
+    name: 'agent-checkpoints',
+    defaultData: { tasks: [] }
+  })
+
   private async loadCheckpoints(): Promise<void> {
-    // 加载断点续作的状态
-    // TODO: 从 memory/tasks/ 加载未完成的任务
+    // P1-CHK: 从文件加载未完成的任务
+    try {
+      await this.checkpointStorage.load()
+      const data = this.checkpointStorage.getData()
+      const now = Date.now()
+      const maxAge = 24 * 60 * 60 * 1000 // 24小时过期
+      
+      // 只恢复 24 小时内未完成的任务
+      const validTasks = data.tasks.filter((task: TaskState) => {
+        const isRecent = (now - task.startedAt) < maxAge
+        const isIncomplete = task.state !== 'COMPLETED' && task.state !== 'ERROR' && task.state !== 'CANCELLED'
+        return isRecent && isIncomplete
+      })
+      
+      if (validTasks.length > 0) {
+        this.logger.info('Loaded checkpoints', { count: validTasks.length })
+        // 恢复到 activeTasks（可选：自动恢复或手动恢复）
+        for (const task of validTasks) {
+          this.activeTasks.set(task.id, task)
+        }
+      }
+    } catch (error) {
+      this.logger.warn('Failed to load checkpoints', { error: String(error) })
+    }
   }
   
   private async saveTaskHistory(
@@ -655,8 +684,24 @@ export class AgentRuntime {
   }
   
   private async saveCheckpoint(task: TaskState): Promise<void> {
-    // 保存任务检查点
-    // TODO: 实现检查点保存逻辑
+    // P1-CHK: 保存任务检查点到文件
+    try {
+      await this.checkpointStorage.load() // 确保已加载
+      this.checkpointStorage.updateData(data => {
+        // 移除旧的同任务检查点
+        data.tasks = data.tasks.filter((t: TaskState) => t.id !== task.id)
+        // 添加新检查点
+        data.tasks.push({ ...task, updatedAt: Date.now() })
+        // 只保留最近 50 个检查点
+        if (data.tasks.length > 50) {
+          data.tasks = data.tasks.slice(-50)
+        }
+      })
+      await this.checkpointStorage.save()
+      this.logger.debug('Checkpoint saved', { taskId: task.id, state: task.state })
+    } catch (error) {
+      this.logger.error('Failed to save checkpoint', { error: String(error), taskId: task.id })
+    }
   }
   
   // ============================================

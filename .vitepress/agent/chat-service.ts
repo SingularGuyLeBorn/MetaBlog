@@ -31,6 +31,7 @@ import { ref, computed } from 'vue'
 import { getLLMManager, createLLMManager } from './llm'
 import { loadEnvConfig, createLLMConfigFromEnv } from './config/env'
 import type { LLMMessage } from './llm/types'
+import { AgentRuntime } from './core/AgentRuntime'
 // 浏览器环境使用API发送日志
 const aiLogger = {
   log: (level: 'info' | 'error' | 'debug', event: string, message: string, metadata?: any) => {
@@ -90,6 +91,14 @@ export function useChatService() {
     if (currentAbortController) {
       currentAbortController.abort()
       currentAbortController = null
+    }
+    
+    // P1-STOP: 同时取消 AgentRuntime 中的技能任务
+    try {
+      const agentRuntime = AgentRuntime.getInstance()
+      agentRuntime.abort() // 取消当前正在执行的任务
+    } catch {
+      // AgentRuntime 可能未初始化，忽略错误
     }
   }
   
