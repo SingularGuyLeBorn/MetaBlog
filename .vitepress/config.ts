@@ -17,6 +17,7 @@ import {
   DocNode,
 } from "./utils/doc-structure";
 import { getStructuredLogger } from "./agent/runtime/StructuredLogger";
+import { logSystem } from "./agent/runtime/LogSystemAdapter";
 import { bootLogger } from "./agent/runtime/boot-logger";
 
 // 获取结构化日志实例

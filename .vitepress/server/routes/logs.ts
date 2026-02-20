@@ -1,10 +1,12 @@
 /**
  * Logs API Routes
  * 提供日志查询和统计接口
+ * 
+ * v6 修复：使用 LogSystemAdapter 替代已删除的 LogSystem
  */
 import type { ServerResponse } from '../types'
-import { logSystem } from '../../agent/runtime/LogSystem'
-import type { LogFilter } from '../../agent/runtime/LogSystem'
+import { logSystem } from '../../agent/runtime/LogSystemAdapter'
+import type { LogFilter } from '../../agent/runtime/LogSystemAdapter'
 
 export async function handleLogsAPI(url: URL, method: string, body?: any): Promise<ServerResponse> {
   const path = url.pathname
