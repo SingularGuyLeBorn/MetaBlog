@@ -39,8 +39,8 @@ export class StateMachine {
     { from: 'PAUSED', to: 'COMPLETED' },
     { from: 'ERROR', to: 'EXECUTING' },
     { from: 'ERROR', to: 'IDLE' },
-    // P0-SM: 添加 CANCELLED 状态转换规则
-    { from: ['UNDERSTANDING', 'PLANNING', 'EXECUTING', 'WAITING_INPUT'], to: 'CANCELLED' },
+    // P0-SM: 添加 CANCELLED 状态转换规则（P1-SM-PAUSED: 包含 PAUSED）
+    { from: ['UNDERSTANDING', 'PLANNING', 'EXECUTING', 'WAITING_INPUT', 'PAUSED'], to: 'CANCELLED' },
     { from: 'CANCELLED', to: 'IDLE' },
     { from: ['UNDERSTANDING', 'PLANNING', 'EXECUTING', 'WAITING_INPUT', 'PAUSED', 'ERROR', 'CANCELLED'], to: 'IDLE' }
   ]

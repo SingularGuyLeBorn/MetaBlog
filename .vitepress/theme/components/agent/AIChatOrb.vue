@@ -302,6 +302,7 @@ import { useData } from 'vitepress'
 import { useChatService } from '../../../agent/chat-service'
 import { AgentRuntime } from '../../../agent/core/AgentRuntime'
 import { eventBus } from '../../../agent/core/EventBus'
+import { builtinSkills } from '../../../agent/skills/builtin'  // P1-SKL-REG: 导入内置技能
 import { useLogger } from '../../composables/useLogger'
 import LiquidCoreAvatar from './LiquidCoreAvatar.vue'
 
@@ -370,6 +371,13 @@ let agentRuntimeReady = false
 async function initAgentRuntime() {
   try {
     agentRuntime = AgentRuntime.getInstance()
+    
+    // P1-SKL-REG: 注册内置技能（确保技能在 AgentRuntime 中可用）
+    for (const skill of builtinSkills) {
+      agentRuntime.registerSkill(skill)
+    }
+    console.log('[AIChatOrb] 已注册', builtinSkills.length, '个内置技能')
+    
     await agentRuntime.initialize()  // 必须调用以加载 checkpoints
     agentRuntimeReady = true
     console.log('[AIChatOrb] AgentRuntime 初始化完成')

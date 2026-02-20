@@ -55,6 +55,7 @@ export class AgentRuntime {
   private sessionId: string
   private skills: Map<string, Skill> = new Map()
   private listeners: Map<string, Set<(data: any) => void>> = new Map()
+  private initialized = false  // P1-INIT-X2: 幂等守卫标志
   
   // 编辑器相关
   private editorMode: EditorMode = 'MANUAL'
@@ -91,6 +92,12 @@ export class AgentRuntime {
   // ============================================
   
   async initialize(): Promise<void> {
+    // P1-INIT-X2: 幂等守卫，防止重复初始化
+    if (this.initialized) {
+      this.logger.debug('Agent Runtime already initialized, skipping')
+      return
+    }
+    
     this.logger.info('Agent Runtime initializing...', { sessionId: this.sessionId })
     
     // 初始化 LLM Manager
@@ -111,6 +118,7 @@ export class AgentRuntime {
     // 加载已保存的任务状态（断点续作）
     await this.loadCheckpoints()
     
+    this.initialized = true  // P1-INIT-X2: 标记已初始化
     this.logger.info('Agent Runtime initialized', { mode: this.config.mode })
     this.emit('initialized', { sessionId: this.sessionId, mode: this.config.mode })
   }

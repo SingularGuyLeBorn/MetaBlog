@@ -172,6 +172,11 @@ export const EditContentSkill: Skill = {
   handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
     const { action, targetPath = ctx.currentFile, selectedText, instruction } = params
 
+    // P1-SIG-EC: 检查取消信号
+    if (ctx.signal?.aborted) {
+      return { success: false, error: 'Task cancelled by user', tokensUsed: 0, cost: 0 }
+    }
+
     if (!targetPath) {
       return {
         success: false,
@@ -215,9 +220,14 @@ export const EditContentSkill: Skill = {
       }
     ]
 
+    // P1-SIG-EC: 检查取消信号
+    if (ctx.signal?.aborted) {
+      return { success: false, error: 'Task cancelled by user', tokensUsed: 0, cost: 0 }
+    }
+
     let result
     try {
-      result = await callLLM(editPrompt)
+      result = await callLLM(editPrompt, { signal: ctx.signal })  // P1-SIG-EC: 传递 signal
       ctx.logger.info('Content edited via LLM', { tokensUsed: result.tokens })
     } catch (e) {
       return {
@@ -288,6 +298,11 @@ export const ResearchWebSkill: Skill = {
   handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
     const { query, sources = ['arxiv', 'google'], maxResults = 5 } = params
 
+    // P1-SIG-RS: 检查取消信号
+    if (ctx.signal?.aborted) {
+      return { success: false, error: 'Task cancelled by user', tokensUsed: 0, cost: 0 }
+    }
+
     ctx.logger.info('Starting web research', { query, sources })
 
     // 注意：实际实现需要集成搜索 API（如 SerpAPI、Google Custom Search）
@@ -302,7 +317,7 @@ export const ResearchWebSkill: Skill = {
         content: `研究主题：${query}\n\n请提供以下信息：\n1. 核心概念解释\n2. 相关技术和方法\n3. 最新进展（如有）\n4. 推荐的学习资源\n\n请以 Markdown 格式返回：`}
     ]
 
-    const result = await callLLM(researchPrompt)
+    const result = await callLLM(researchPrompt, { signal: ctx.signal })  // P1-SIG-RS: 传递 signal
 
     // 解析结果
     const sections = result.content.split('\n## ').filter(Boolean)
@@ -409,6 +424,11 @@ export const CodeExplainSkill: Skill = {
   handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
     const { code, language = 'python', targetPath, detailLevel = 'detailed' } = params
 
+    // P1-SIG-RS: 检查取消信号
+    if (ctx.signal?.aborted) {
+      return { success: false, error: 'Task cancelled by user', tokensUsed: 0, cost: 0 }
+    }
+
     const explainPrompt: LLMMessage[] = [
       {
         role: 'system',
@@ -420,7 +440,7 @@ export const CodeExplainSkill: Skill = {
       }
     ]
 
-    const result = await callLLM(explainPrompt)
+    const result = await callLLM(explainPrompt, { signal: ctx.signal })  // P1-SIG-RS: 传递 signal
 
     // 如果提供了目标路径，保存文档
     let savedPath: string | null = null
@@ -462,9 +482,19 @@ export const AnswerQuestionSkill: Skill = {
   handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
     const { question, context } = params
 
+    // P1-SIG-RS: 检查取消信号
+    if (ctx.signal?.aborted) {
+      return { success: false, error: 'Task cancelled by user', tokensUsed: 0, cost: 0 }
+    }
+
     // 构建 RAG 上下文
     const ragContext = await ctx.memory.buildContext(question, ctx.currentFile)
     const contextText = ragContext.map(r => r.content).join('\n\n---\n\n')
+
+    // P1-SIG-RS: 检查取消信号
+    if (ctx.signal?.aborted) {
+      return { success: false, error: 'Task cancelled by user', tokensUsed: 0, cost: 0 }
+    }
 
     const answerPrompt: LLMMessage[] = [
       {
@@ -477,7 +507,7 @@ export const AnswerQuestionSkill: Skill = {
       }
     ]
 
-    const result = await callLLM(answerPrompt)
+    const result = await callLLM(answerPrompt, { signal: ctx.signal })  // P1-SIG-RS: 传递 signal
 
     return {
       success: true,
@@ -504,6 +534,11 @@ export const SummarizeSkill: Skill = {
   optionalParams: ['targetPath', 'maxLength', 'style'],
   handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
     const { targetPath = ctx.currentFile, maxLength = 200, style = 'concise' } = params
+
+    // P1-SIG-RS: 检查取消信号
+    if (ctx.signal?.aborted) {
+      return { success: false, error: 'Task cancelled by user', tokensUsed: 0, cost: 0 }
+    }
 
     if (!targetPath) {
       return {
@@ -542,7 +577,7 @@ export const SummarizeSkill: Skill = {
       }
     ]
 
-    const result = await callLLM(summarizePrompt)
+    const result = await callLLM(summarizePrompt, { signal: ctx.signal })  // P1-SIG-RS: 传递 signal
 
     return {
       success: true,
