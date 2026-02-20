@@ -399,7 +399,7 @@ export const UpdateGraphSkill: Skill = {
         }
       ]
 
-      const result = await callLLM(discoveryPrompt)
+      const result = await callLLM(discoveryPrompt, { signal: ctx.signal })  // P1-UG: 真正修复，传递 signal
       suggestions = result.content.split('\n').filter(s => s.trim().startsWith('-') || s.trim().startsWith('*'))
     }
 
