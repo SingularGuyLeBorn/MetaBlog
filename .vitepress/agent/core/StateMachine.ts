@@ -252,6 +252,7 @@ export class StateMachine {
       'WAITING_INPUT': '等待输入',
       'PAUSED': '任务暂停',
       'COMPLETED': '任务完成',
+      'CANCELLED': '已取消',  // P1-AG
       'ERROR': '发生错误'
     }
 
@@ -270,6 +271,7 @@ export class StateMachine {
       'WAITING_INPUT': '⏳',
       'PAUSED': '⏸️',
       'COMPLETED': '✅',
+      'CANCELLED': '🚫',  // P1-AG
       'ERROR': '❌'
     }
 

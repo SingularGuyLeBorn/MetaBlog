@@ -50,6 +50,7 @@ export class AgentRuntime {
   private config: AgentRuntimeConfig
   private currentTask: TaskState | null = null
   private activeTasks: Map<string, TaskState> = new Map()
+  private activeControllers: Map<string, AbortController> = new Map()  // P1-AG: 任务取消控制器
   private sessionId: string
   private skills: Map<string, Skill> = new Map()
   private listeners: Map<string, Set<(data: any) => void>> = new Map()
@@ -298,6 +299,10 @@ export class AgentRuntime {
     // 执行技能
     this.setState('EXECUTING', task)
     
+    // P1-AG: 创建 AbortController 支持任务取消
+    const abortController = new AbortController()
+    this.activeControllers.set(taskId, abortController)
+    
     const skillContext: SkillContext = {
       taskId,
       memory: this.memory,
@@ -305,11 +310,20 @@ export class AgentRuntime {
       costTracker: this.costTracker,
       currentFile: this.currentFile,
       sessionId: this.sessionId,
-      fileLock: fileLockManager
+      fileLock: fileLockManager,
+      signal: abortController.signal
     }
     
     try {
+      // P1-AG: 检查是否已取消
+      if (abortController.signal.aborted) {
+        throw new Error('Task cancelled by user')
+      }
+      
       const result = await skill.handler(skillContext, intent.parameters)
+      
+      // 清理控制器
+      this.activeControllers.delete(taskId)
       
       task.totalSteps = 1
       task.currentStep = 1
@@ -355,6 +369,24 @@ export class AgentRuntime {
       )
       
     } catch (error) {
+      // P1-AG: 清理控制器
+      this.activeControllers.delete(taskId)
+      
+      // 检查是否是取消错误
+      const isCancelled = error instanceof Error && 
+        (error.message === 'Task cancelled by user' || error.name === 'AbortError')
+      
+      if (isCancelled) {
+        this.setState('CANCELLED', task)
+        this.activeTasks.delete(taskId)
+        fileLockManager.releaseTaskLocks(taskId)
+        
+        return this.createAssistantMessage(
+          messageId,
+          '任务已取消。'
+        )
+      }
+      
       this.setState('ERROR', task)
       this.activeTasks.delete(taskId)
       
@@ -630,6 +662,23 @@ export class AgentRuntime {
   // ============================================
   // 公共 API
   // ============================================
+  
+  /**
+   * 取消正在执行的任务 (P1-AG)
+   * @param taskId 任务ID，如果不传则取消当前任务
+   */
+  abort(taskId?: string): boolean {
+    const targetTaskId = taskId || this.currentTask?.id
+    if (!targetTaskId) return false
+    
+    const controller = this.activeControllers.get(targetTaskId)
+    if (controller) {
+      controller.abort()
+      this.logger.info('Task abort requested', { taskId: targetTaskId })
+      return true
+    }
+    return false
+  }
   
   getMemory(): MemoryManager {
     return this.memory

@@ -87,6 +87,7 @@ export interface SkillContext {
   currentFile?: string
   sessionId: string
   fileLock: FileLockManager
+  signal?: AbortSignal  // P1-AG: 支持取消操作
 }
 
 /** 技能执行结果 */
@@ -106,6 +107,7 @@ export type AgentState =
   | 'PLANNING'         // 规划步骤
   | 'EXECUTING'        // 执行技能
   | 'WAITING_INPUT'    // 等待用户输入
+  | 'CANCELLED'        // 任务已取消 (P1-AG)
   | 'PAUSED'           // 暂停（断点续作）
   | 'COMPLETED'
   | 'ERROR'
