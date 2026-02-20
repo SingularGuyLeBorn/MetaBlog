@@ -364,10 +364,18 @@ const chatService = useChatService()
 
 // Agent Runtime（技能执行通道）
 let agentRuntime: AgentRuntime | null = null
-try {
-  agentRuntime = AgentRuntime.getInstance()
-} catch {
-  console.warn('[AIChatOrb] AgentRuntime 未初始化，技能执行将不可用')
+let agentRuntimeReady = false
+
+// P1-INIT: 初始化 AgentRuntime（含 checkpoint 加载）
+async function initAgentRuntime() {
+  try {
+    agentRuntime = AgentRuntime.getInstance()
+    await agentRuntime.initialize()  // 必须调用以加载 checkpoints
+    agentRuntimeReady = true
+    console.log('[AIChatOrb] AgentRuntime 初始化完成')
+  } catch (e) {
+    console.warn('[AIChatOrb] AgentRuntime 初始化失败，技能执行将不可用:', e)
+  }
 }
 
 // 意图关键词检测（与 IntentRouter 保持一致）
@@ -1223,7 +1231,10 @@ function handleOutsideClick(e: MouseEvent) {
 }
 
 // ==================== Lifecycle ====================
-onMounted(() => {
+onMounted(async () => {
+  // P1-INIT: 初始化 AgentRuntime
+  await initAgentRuntime()
+  
   document.addEventListener('click', handleOutsideClick)
   window.addEventListener('resize', adjustInitialPosition)
   // Add scroll listener for smart scrolling

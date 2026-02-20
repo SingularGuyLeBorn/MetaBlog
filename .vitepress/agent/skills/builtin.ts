@@ -14,14 +14,23 @@ import { saveFile } from '../api/files'
 
 async function callLLM(
   messages: LLMMessage[],
-  options?: { stream?: boolean; onChunk?: (chunk: string) => void }
+  options?: { 
+    stream?: boolean; 
+    onChunk?: (chunk: string) => void;
+    signal?: AbortSignal  // P1-SIG: 支持取消
+  }
 ): Promise<{ content: string; tokens: number; cost: number }> {
   const llm = getLLMManager()
+  
+  // P1-SIG: 检查是否已取消
+  if (options?.signal?.aborted) {
+    throw new Error('Task cancelled by user')
+  }
   
   if (options?.stream && options.onChunk) {
     let fullContent = ''
     const { usage, cost } = await llm.chatStream(
-      { messages, stream: true },
+      { messages, stream: true, signal: options.signal },  // P1-SIG: 传递 signal
       (chunk) => {
         fullContent += chunk.content
         options.onChunk?.(chunk.content)
@@ -30,7 +39,7 @@ async function callLLM(
     return { content: fullContent, tokens: usage.totalTokens, cost }
   }
   
-  const response = await llm.chat({ messages })
+  const response = await llm.chat({ messages, signal: options?.signal })  // P1-SIG: 传递 signal
   return { 
     content: response.content, 
     tokens: response.usage.totalTokens, 
@@ -53,9 +62,19 @@ export const WriteArticleSkill: Skill = {
     
     ctx.logger.info('Starting article writing', { topic, style, length })
 
+    // P1-SIG: 检查取消信号
+    if (ctx.signal?.aborted) {
+      return { success: false, error: 'Task cancelled by user', tokensUsed: 0, cost: 0 }
+    }
+
     // 1. 构建上下文
     const context = await ctx.memory.buildContext(topic)
     const relatedArticles = context.map(c => c.metadata.title || c.source).slice(0, 3)
+
+    // P1-SIG: 检查取消信号
+    if (ctx.signal?.aborted) {
+      return { success: false, error: 'Task cancelled by user', tokensUsed: 0, cost: 0 }
+    }
 
     // 2. 生成大纲
     const outlinePrompt: LLMMessage[] = [
@@ -69,8 +88,13 @@ export const WriteArticleSkill: Skill = {
       }
     ]
 
-    const outline = await callLLM(outlinePrompt)
+    const outline = await callLLM(outlinePrompt, { signal: ctx.signal })  // P1-SIG: 传递 signal
     ctx.logger.info('Outline generated', { tokens: outline.tokens })
+
+    // P1-SIG: 检查取消信号
+    if (ctx.signal?.aborted) {
+      return { success: false, error: 'Task cancelled by user', tokensUsed: outline.tokens, cost: outline.cost }
+    }
 
     // 3. 生成内容
     const contentPrompt: LLMMessage[] = [
@@ -84,8 +108,18 @@ export const WriteArticleSkill: Skill = {
       }
     ]
 
-    const content = await callLLM(contentPrompt)
+    const content = await callLLM(contentPrompt, { signal: ctx.signal })  // P1-SIG: 传递 signal
     ctx.logger.info('Content generated', { tokens: content.tokens })
+
+    // P1-SIG: 检查取消信号
+    if (ctx.signal?.aborted) {
+      return { 
+        success: false, 
+        error: 'Task cancelled by user', 
+        tokensUsed: outline.tokens + content.tokens, 
+        cost: outline.cost + content.cost 
+      }
+    }
 
     // 4. 生成 frontmatter
     const date = new Date().toISOString().split('T')[0]

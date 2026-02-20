@@ -39,7 +39,10 @@ export class StateMachine {
     { from: 'PAUSED', to: 'COMPLETED' },
     { from: 'ERROR', to: 'EXECUTING' },
     { from: 'ERROR', to: 'IDLE' },
-    { from: ['UNDERSTANDING', 'PLANNING', 'EXECUTING', 'WAITING_INPUT', 'PAUSED', 'ERROR'], to: 'IDLE' }
+    // P0-SM: 添加 CANCELLED 状态转换规则
+    { from: ['UNDERSTANDING', 'PLANNING', 'EXECUTING', 'WAITING_INPUT'], to: 'CANCELLED' },
+    { from: 'CANCELLED', to: 'IDLE' },
+    { from: ['UNDERSTANDING', 'PLANNING', 'EXECUTING', 'WAITING_INPUT', 'PAUSED', 'ERROR', 'CANCELLED'], to: 'IDLE' }
   ]
 
   /**
@@ -100,24 +103,21 @@ export class StateMachine {
    * P0-6: Watchdog 超时处理
    */
   private forceTimeout(): void {
-    console.error(`[StateMachine] Watchdog 超时！状态 '${this.currentState}' 超过 ${this.WATCHDOG_TIMEOUT_MS / 1000} 秒，强制转换为 ERROR`)
+    const previousState = this.currentState
+    console.error(`[StateMachine] Watchdog 超时！状态 '${previousState}' 超过 ${this.WATCHDOG_TIMEOUT_MS / 1000} 秒，强制转换为 ERROR`)
     
-    // 触发超时错误事件
-    this.emit('ERROR', { 
-      reason: 'WATCHDOG_TIMEOUT',
-      message: `状态 '${this.currentState}' 执行超时，系统强制终止`,
-      timeoutMs: this.WATCHDOG_TIMEOUT_MS,
-      timestamp: Date.now()
-    })
-    
-    // 强制转换到 ERROR 状态
+    // 强制转换到 ERROR 状态（先改状态，再触发一次事件）
     this.currentState = 'ERROR'
     this.lastStateChangeTime = Date.now()
     
-    // 触发 ERROR 监听器
+    // 触发 ERROR 监听器（只触发一次）
     this.emit('ERROR', { 
+      reason: 'WATCHDOG_TIMEOUT',
+      message: `状态 '${previousState}' 执行超时，系统强制终止`,
+      timeoutMs: this.WATCHDOG_TIMEOUT_MS,
+      timestamp: Date.now(),
       forced: true,
-      previousState: 'EXECUTING'
+      previousState
     })
   }
 

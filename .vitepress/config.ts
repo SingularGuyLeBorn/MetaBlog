@@ -473,9 +473,11 @@ export default defineConfig({
                   const filePath = url.searchParams.get("path");
                   if (!filePath) return next();
 
+                  // P0-CK: 支持 .vitepress/agent/ 路径（checkpoint 存储）
+                  const isAgentPath = filePath.startsWith('.vitepress/') || filePath.startsWith('.vitepress\\')
+                  const basePath = isAgentPath ? process.cwd() : path.join(process.cwd(), 'docs')
                   const fullPath = path.resolve(
-                    process.cwd(),
-                    "docs",
+                    basePath,
                     filePath.replace(/^\//, ""),
                   );
                   if (fs.existsSync(fullPath)) {
