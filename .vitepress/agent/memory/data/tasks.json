@@ -59,8 +59,38 @@
       "cost": 0.00507236,
       "startedAt": 1771616409389,
       "completedAt": 1771616491935
+    },
+    {
+      "id": "1771616606239_ziomnftse_cbab",
+      "type": "WRITE_ARTICLE",
+      "description": "/写文章 请写一篇关于Docker容器化的入门指南",
+      "steps": [
+        {
+          "index": 1,
+          "skill": "WriteArticle",
+          "input": {
+            "topic": "Docker容器化",
+            "rawInput": "/写文章 请写一篇关于Docker容器化的入门指南"
+          },
+          "output": {
+            "message": "已创建文章「Docker容器化」，保存至 sections/posts/docker.md",
+            "path": "sections/posts/docker.md",
+            "outline": "# Docker容器化：现代应用部署的核心技术\n\n## 一、引言\n- 容器化技术的兴起背景\n- Docker在容器化革命中的关键作用\n- 本文主要内容概览\n\n## 二、Docker基础概念解析\n### 2.1 什么是容器化？\n- 容器与传统虚拟机的区别\n- 容器化的核心优势\n\n### 2.2 Docker核心组件\n- Docker引擎架构\n- 镜像(Image)与容器(Container)\n- 仓库(Registry)的作用\n\n## 三、Docker实战入门\n### 3.1 环境搭建与安装\n- 主流操作系统下的Docker安装\n- 验证安装与基本配置\n\n### 3.2 第一个Docker容器\n- 从Docker Hub拉取镜像\n- 运行和管理容器\n- 常用Docker命令速览\n\n## 四、Docker镜像深度解析\n### 4.1 Dockerfile编写指南\n- 基础指令详解(FROM, RUN, COPY等)\n- 最佳实践与优化技巧\n- 多阶段构建的应用\n\n### 4.2 镜像管理与优化\n- 镜像分层机制\n- 减小镜像体积的策略\n- 私有镜像仓库的搭建\n\n## 五、容器编排与Docker生态\n### 5.1 Docker Compose入门\n- 多容器应用的定义与管理\n- docker-compose.yml文件详解\n- 开发环境中的应用场景\n\n### 5.2 容器编排简介\n- Kubernetes与Docker的协同\n- Docker Swarm基础概念\n- 生产环境中的容器编排选择\n\n## 六、Docker在生产环境中的应用\n### 6.1 持续集成/持续部署(CI/CD)\n- Docker在CI/CD流水线中的角色\n- 自动化构建与部署实践\n\n### 6.2 监控与日志管理\n- 容器监控方案\n- 日志收集与分析的实现\n- 安全最佳实践\n\n## 七、常见问题与解决方案\n- 性能调优技巧\n- 网络配置常见问题\n- 存储管理的挑战与对策\n\n## 八、未来展望与总结\n- 容器技术的发展趋势\n- Serverless与容器的融合\n- 总结：Docker在现代开发中的核心价值",
+            "wordCount": 10302
+          },
+          "tokens": 5159,
+          "cost": 0.00519018,
+          "startedAt": 1771616606239,
+          "completedAt": 1771616689778
+        }
+      ],
+      "result": "success",
+      "tokensUsed": 5159,
+      "cost": 0.00519018,
+      "startedAt": 1771616606239,
+      "completedAt": 1771616689778
     }
   ],
   "version": 1,
-  "lastUpdated": "2026-02-20T19:41:31.935Z"
+  "lastUpdated": "2026-02-20T19:44:49.778Z"
 }
