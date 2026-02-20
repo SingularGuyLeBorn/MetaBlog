@@ -179,7 +179,7 @@ export interface LogEntry {
   id: string
   timestamp: string
   level: LogLevel
-  source: string
+  source?: string
   message: string
   metadata?: any
   taskId?: string

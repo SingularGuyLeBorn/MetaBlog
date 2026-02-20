@@ -357,7 +357,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { getStructuredLogger, type StructuredLogEntry, type LogStats } from '../../../agent/runtime/StructuredLogger'
+import { getStructuredLogger, type StructuredLogEntry, type LogStats, type LogLevel } from '../../../agent/runtime/StructuredLogger'
 
 // Extended log entry with actor field from server
 type ServerLogEntry = StructuredLogEntry & {
@@ -534,7 +534,7 @@ const uniqueEvents = computed(() => {
 
 const levelStats = computed(() => {
   const total = stats.value.total || 1 // Prevent division by zero
-  const levels = ['info', 'warn', 'error', 'debug'] as const
+  const levels: LogLevel[] = ['INFO', 'WARN', 'ERROR', 'DEBUG', 'SUCCESS']
   
   return levels.map(level => {
     const count = stats.value.byLevel[level] || 0
@@ -610,7 +610,8 @@ async function refreshLogs() {
           event: log.event,
           message: log.message,
           data: log.metadata || {}
-        }))
+        })),
+        avgDurationByComponent: statsResult.data.avgDurationByComponent || {}
       }
     }
   } catch (e) {

@@ -99,11 +99,12 @@ export class LoggerImpl implements ILogger {
    */
   formatLogEntry(entry: LogEntry): string {
     const time = new Date(entry.timestamp).toLocaleTimeString()
-    const levelEmoji = {
-      debug: '🔍',
-      info: 'ℹ️',
-      warn: '⚠️',
-      error: '❌'
+    const levelEmoji: Record<LogLevel, string> = {
+      DEBUG: '🔍',
+      INFO: 'ℹ️',
+      WARN: '⚠️',
+      ERROR: '❌',
+      SUCCESS: '✅'
     }
 
     return `[${time}] ${levelEmoji[entry.level]} [${entry.source}] ${entry.message}`
@@ -170,10 +171,11 @@ export class LoggerImpl implements ILogger {
 
   private consoleOutput(entry: LogEntry): void {
     const styles: Record<LogLevel, string> = {
-      debug: 'color: #888',
-      info: 'color: #1677ff',
-      warn: 'color: #faad14',
-      error: 'color: #f5222d; font-weight: bold'
+      DEBUG: 'color: #888',
+      INFO: 'color: #1677ff',
+      WARN: 'color: #faad14',
+      ERROR: 'color: #f5222d; font-weight: bold',
+      SUCCESS: 'color: #52c41a; font-weight: bold'
     }
 
     const prefix = `[Agent] ${entry.level.toUpperCase()}`
