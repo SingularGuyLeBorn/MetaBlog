@@ -1,7 +1,7 @@
 /**
  * TaskManager.ts - 任务历史管理
  * 
- * 负责任务历史的存储、查询、统计
+ * 负责任务历史的存储、查询、统�?
  * **已文件化**: 任务数据持久化到文件系统
  */
 import type { TaskHistory } from '../../core/types'
@@ -25,14 +25,14 @@ const storage = createStorage<TaskStorage>({
 })
 
 /**
- * 任务管理器
+ * 任务管理�?
  */
 export class TaskManager {
   private cacheLoaded: boolean = false
   private maxTasks: number = 1000 // 最大保留任务数
 
   /**
-   * 初始化：从文件加载数据
+   * 初始化：从文件加载数�?
    */
   async initialize(): Promise<void> {
     if (this.cacheLoaded) return
@@ -45,14 +45,14 @@ export class TaskManager {
   }
 
   /**
-   * 从服务器加载（兼容旧接口）
+   * 从服务器加载（兼容旧接口�?
    */
   async loadFromServer(): Promise<void> {
     return this.initialize()
   }
 
   /**
-   * 保存到文件
+   * 保存到文�?
    */
   private async persist(): Promise<void> {
     storage.updateData(data => {
@@ -186,20 +186,20 @@ export class TaskManager {
       data.tasks = data.tasks.filter(t => t.id !== taskId)
     })
     
-    await this.save()
+    await this.persist()
     console.log(`[TaskManager] 删除任务: ${taskId}`)
   }
 
   /**
-   * 清空所有任务
+   * 清空所有任�?
    */
   async clear(): Promise<void> {
     await storage.clear()
-    console.log('[TaskManager] 清空所有任务')
+    console.log('[TaskManager] 清空所有任�?)
   }
 
   /**
-   * 导出所有任务
+   * 导出所有任�?
    */
   async export(): Promise<string> {
     await this.initialize()
@@ -223,7 +223,7 @@ export class TaskManager {
       }
     })
     
-    await this.save()
+    await this.persist()
     console.log(`[TaskManager] 导入 ${tasks.length} 个任务`)
   }
 }

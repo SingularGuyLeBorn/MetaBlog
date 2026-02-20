@@ -1,5 +1,5 @@
 /**
- * FileAdapter - 文件操作适配器
+ * FileAdapter - 文件操作适配�?
  * 
  * 在浏览器环境中通过 API 访问文件系统
  * 存储路径基于 docs/ 目录
@@ -13,7 +13,7 @@ const MEMORY_BASE = '.vitepress/agent/memory/data'
  */
 export async function getFileContent(path: string): Promise<string | null> {
   try {
-    // 转换为 API 路径
+    // 转换�?API 路径
     const fullPath = path.startsWith('.vitepress') 
       ? path 
       : `${MEMORY_BASE}/${path}`
@@ -40,7 +40,7 @@ export async function getFileContent(path: string): Promise<string | null> {
  */
 export async function saveFileContent(path: string, content: string): Promise<void> {
   try {
-    // 转换为 API 路径
+    // 转换�?API 路径
     const fullPath = path.startsWith('.vitepress') 
       ? path 
       : `${MEMORY_BASE}/${path}`
@@ -85,7 +85,7 @@ export async function deleteFile(path: string): Promise<void> {
 }
 
 /**
- * 检查文件是否存在
+ * 检查文件是否存�?
  */
 export async function fileExists(path: string): Promise<boolean> {
   try {

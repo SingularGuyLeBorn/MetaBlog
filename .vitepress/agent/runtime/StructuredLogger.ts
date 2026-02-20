@@ -131,6 +131,7 @@ class BrowserLogger {
   logSkillExecution(skillName: any, taskId: any, params: any, result: any): void {}
   getRecentLogs(count?: number): StructuredLogEntry[] { return [] }
   queryLogs(filter?: LogQueryFilter): StructuredLogEntry[] { return [] }
+  getLogs(): StructuredLogEntry[] { return [] }
   getStats(): LogStats { 
     return { 
       total: 0, 

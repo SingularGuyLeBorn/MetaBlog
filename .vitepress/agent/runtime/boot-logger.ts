@@ -32,14 +32,13 @@ class BootLogger {
     // 立即写入日志系统
     const duration = Date.now() - this.startTime
     const logger = getStructuredLogger()
-    const level = phase === 'error' ? 'error' : 'info'
     const eventName = `boot.${phase}`
     const msg = `[+${duration}ms] ${message}`
     const data = { ...metadata, bootTime: duration }
     
-    if (level === 'error') {
+    if (phase === 'error') {
       logger.error(eventName, msg, data)
-    } else if (level === 'warn') {
+    } else if (phase === 'warn') {
       logger.warn(eventName, msg, data)
     } else {
       logger.info(eventName, msg, data)

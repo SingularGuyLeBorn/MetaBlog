@@ -26,7 +26,8 @@ const system = {
   info: (event: string, message: string, data?: any) => structuredLogger.info(event, message, data),
   debug: (event: string, message: string, data?: any) => structuredLogger.debug(event, message, data),
   warn: (event: string, message: string, data?: any) => structuredLogger.warn(event, message, data),
-  error: (event: string, message: string, data?: any) => structuredLogger.error(event, message, data)
+  error: (event: string, message: string, data?: any) => structuredLogger.error(event, message, data),
+  success: (event: string, message: string, data?: any) => structuredLogger.success(event, message, data)
 };
 
 // 记录配置加载
@@ -391,7 +392,6 @@ export default defineConfig({
         name: "meta-blog-bff",
         configureServer(server) {
           // 记录系统启动
-          recordSystemStartup();
           bootLogger.logServerStart(5193, "localhost");
           system.info("server.init", "BFF API Server 初始化完成");
           bootLogger.logReady();

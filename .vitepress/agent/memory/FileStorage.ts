@@ -1,20 +1,20 @@
 /**
- * FileStorage - 文件系统存储适配器
+ * FileStorage - 文件系统存储适配�?
  * 
- * 为 Memory 模块提供文件级持久化能力
+ * �?Memory 模块提供文件级持久化能力
  * 存储位置: .vitepress/agent/memory/data/
  * 
  * 特性：
  * - JSON 格式存储
  * - 自动创建目录
- * - 写入后验证
+ * - 写入后验�?
  * - 备份机制（写入失败时保留旧文件）
  */
 
 import { getFileContent, saveFileContent } from './utils/fileAdapter'
 
 export interface StorageOptions {
-  /** 存储名称（决定文件名） */
+  /** 存储名称（决定文件名�?*/
   name: string
   /** 默认数据 */
   defaultData?: any
@@ -52,7 +52,7 @@ export class FileStorage<T> {
         console.log(`[FileStorage] 加载成功: ${this.name}`)
       }
     } catch (error) {
-      console.warn(`[FileStorage] 加载失败，使用默认值: ${this.name}`, error)
+      console.warn(`[FileStorage] 加载失败，使用默认�? ${this.name}`, error)
       // 使用默认数据
     }
 
@@ -105,7 +105,7 @@ export class FileStorage<T> {
   }
 
   /**
-   * 是否已加载
+   * 是否已加�?
    */
   isLoaded(): boolean {
     return this.loaded
@@ -116,7 +116,7 @@ export class FileStorage<T> {
    */
   async clear(): Promise<void> {
     this.data = {} as T
-    await this.save()
+    await this.persist()
   }
 }
 

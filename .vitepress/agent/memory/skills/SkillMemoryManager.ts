@@ -1,12 +1,12 @@
 /**
- * SkillMemoryManager.ts - 技能记忆管理
- * 负责技能执行历史、偏好学习、技能效果追踪
+ * SkillMemoryManager.ts - 技能记忆管�?
+ * 负责技能执行历史、偏好学习、技能效果追�?
  */
 import type { TaskHistory } from '../../core/types'
 import { saveSkillExecution as saveSkillExecutionApi } from '../../api/memory'
 
 /**
- * 技能执行记录
+ * 技能执行记�?
  */
 export interface SkillExecutionRecord {
   id: string
@@ -21,7 +21,7 @@ export interface SkillExecutionRecord {
 }
 
 /**
- * 技能偏好配置
+ * 技能偏好配�?
  */
 export interface SkillPreference {
   skillName: string
@@ -40,7 +40,7 @@ const preferenceCache = new Map<string, SkillPreference>()
  */
 export class SkillMemoryManager {
   /**
-   * 记录技能执行
+   * 记录技能执�?
    */
   async recordExecution(record: Omit<SkillExecutionRecord, 'id' | 'executedAt'>): Promise<void> {
     const fullRecord: SkillExecutionRecord = {
@@ -61,7 +61,7 @@ export class SkillMemoryManager {
   }
 
   /**
-   * 获取技能执行历史
+   * 获取技能执行历�?
    * @todo 将在技能分析面板中启用
    */
   async getExecutionHistory(skillName?: string, limit: number = 20): Promise<SkillExecutionRecord[]> {
@@ -75,14 +75,14 @@ export class SkillMemoryManager {
   }
 
   /**
-   * 获取技能偏好
+   * 获取技能偏�?
    */
   async getPreference(skillName: string): Promise<SkillPreference | null> {
     return preferenceCache.get(skillName) || null
   }
 
   /**
-   * 获取所有技能偏好
+   * 获取所有技能偏�?
    * @todo 将在技能管理面板中启用
    */
   async getAllPreferences(): Promise<SkillPreference[]> {
@@ -90,8 +90,8 @@ export class SkillMemoryManager {
   }
 
   /**
-   * 获取推荐参数（基于历史成功率）
-   * @todo 将在智能参数推荐功能中启用
+   * 获取推荐参数（基于历史成功率�?
+   * @todo 将在智能参数推荐功能中启�?
    */
   async getRecommendedParams(skillName: string, input: Record<string, any>): Promise<Record<string, any> | null> {
     const pref = await this.getPreference(skillName)
@@ -128,13 +128,13 @@ export class SkillMemoryManager {
   }
 
   /**
-   * 从任务历史学习偏好
-   * @todo 将在自动学习功能中启用
+   * 从任务历史学习偏�?
+   * @todo 将在自动学习功能中启�?
    */
   async learnFromTask(task: TaskHistory): Promise<void> {
     if (!task.steps || task.steps.length === 0) return
 
-    // 从任务步骤中提取技能执行记录
+    // 从任务步骤中提取技能执行记�?
     for (const step of task.steps) {
       await this.recordExecution({
         skillName: step.skill,
@@ -149,7 +149,7 @@ export class SkillMemoryManager {
   }
 
   /**
-   * 获取最常用技能
+   * 获取最常用技�?
    * @todo 将在技能热度排行中启用
    */
   async getMostUsedSkills(limit: number = 5): Promise<{ skillName: string; count: number }[]> {
@@ -165,7 +165,7 @@ export class SkillMemoryManager {
   }
 
   /**
-   * 获取技能使用建议
+   * 获取技能使用建�?
    * @todo 将在技能助手功能中启用
    */
   async getUsageAdvice(skillName: string): Promise<string[]> {
@@ -173,7 +173,7 @@ export class SkillMemoryManager {
     const pref = await this.getPreference(skillName)
     
     if (!pref) {
-      advice.push(`技能 "${skillName}" 暂无使用记录`)
+      advice.push(`技�?"${skillName}" 暂无使用记录`)
       return advice
     }
 

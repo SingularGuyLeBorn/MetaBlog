@@ -118,6 +118,12 @@ export interface LLMManagerConfig {
   dailyBudget?: number
   // 是否启用自动跟进/重试
   followup?: boolean
+  // 故障转移配置
+  failover?: {
+    enabled: boolean
+    maxRetries: number
+    retryDelay: number
+  }
 }
 
 // 模型定价（每 1K tokens，美元）

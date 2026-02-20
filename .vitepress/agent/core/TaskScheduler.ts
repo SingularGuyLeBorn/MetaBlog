@@ -215,7 +215,7 @@ export class TaskScheduler {
       {
         scheduled: true,
         timezone: config?.timezone || 'Asia/Shanghai'
-      }
+      } as any
     )
 
     this.cronTasks.set(taskType, scheduledTask)
@@ -483,7 +483,7 @@ export class TaskScheduler {
 
   private getNextRunTime(cronExpression: string): number {
     // 使用 node-cron 获取下次执行时间
-    const task = cron.schedule(cronExpression, () => {}, { scheduled: false })
+    const task = cron.schedule(cronExpression, () => {}, { scheduled: false } as any)
     // node-cron 不直接提供下次执行时间，这里估算
     // 实际实现可能需要更复杂的计算
     return Date.now() + 60000 // 简化处理
