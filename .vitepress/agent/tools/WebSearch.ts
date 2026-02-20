@@ -2,6 +2,7 @@
  * WebSearch Tool - 网络搜索工具
  * 支持多源搜索：SerpAPI、Arxiv、模拟搜索
  */
+import { getStructuredLogger } from '../runtime/StructuredLogger'
 
 export interface SearchOptions {
   sources?: ('google' | 'arxiv' | 'github' | 'wiki')[]
@@ -32,6 +33,7 @@ export interface Paper {
 export class WebSearchTool {
   private serpApiKey: string | null = null
   private useSimulation: boolean = false
+  private logger = getStructuredLogger()
 
   constructor(config?: { serpApiKey?: string; useSimulation?: boolean }) {
     this.serpApiKey = config?.serpApiKey || null
@@ -44,6 +46,8 @@ export class WebSearchTool {
 
   async search(query: string, options: SearchOptions = {}): Promise<SearchResult[]> {
     const { sources = ['google'], maxResults = 5 } = options
+    
+    this.logger.info('websearch.start', `Starting web search for query: ${query}`, { query, sources, maxResults })
     
     if (this.useSimulation) {
       return this.simulateSearch(query, maxResults)
@@ -67,7 +71,7 @@ export class WebSearchTool {
             break
         }
       } catch (e) {
-        console.warn(`[WebSearch] ${source} search failed:`, e)
+        this.logger.warn('websearch.error', `${source} search failed: ${String(e)}`, { source, error: String(e) })
       }
     }
 
@@ -127,13 +131,17 @@ export class WebSearchTool {
 
   async fetchContent(url: string): Promise<string> {
     // 通过 BFF 代理抓取（避免 CORS）
+    this.logger.debug('websearch.fetch', `Fetching content from ${url}`)
     const response = await fetch('/api/proxy/fetch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url })
     })
     
-    if (!response.ok) throw new Error('Failed to fetch content')
+    if (!response.ok) {
+      this.logger.error('websearch.fetch.error', `Failed to fetch content from ${url}`)
+      throw new Error('Failed to fetch content')
+    }
     return response.text()
   }
 
@@ -188,7 +196,7 @@ export class WebSearchTool {
         return JSON.parse(jsonMatch[0])
       }
     } catch (e) {
-      console.warn('[WebSearch] Simulation failed:', e)
+      this.logger.warn('websearch.simulation.error', `Simulation failed: ${String(e)}`, { error: String(e) })
     }
 
     // 返回空结果

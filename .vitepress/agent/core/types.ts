@@ -30,6 +30,7 @@ export interface ChatMessage {
     basedOn?: string
     tokens?: number
     cost?: number
+    path?: string
   }
 }
 

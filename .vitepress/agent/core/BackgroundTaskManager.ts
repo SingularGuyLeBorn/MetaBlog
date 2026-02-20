@@ -157,13 +157,22 @@ export const TASK_TEMPLATES: TaskTemplate[] = new Proxy([] as TaskTemplate[], {
 })
 
 class BackgroundTaskManager {
+  private static readonly STORAGE_KEY = 'metablog_background_tasks'
+  private static readonly MAX_HISTORY = 50
+  
   private tasks: Map<string, BackgroundTask> = new Map()
   private runningTasks: Set<string> = new Set()
+  private abortControllers: Map<string, AbortController> = new Map()
   private maxConcurrent: number = 2
   private logger = getStructuredLogger()
   
   // 监听器
   private listeners: Map<string, Set<(task: BackgroundTask) => void>> = new Map()
+  private isProcessingQueue: boolean = false
+  
+  constructor() {
+    this.loadTasks()
+  }
   
   // ============================================
   // 任务创建与触发
@@ -211,6 +220,7 @@ class BackgroundTaskManager {
     this.processQueue()
     
     this.emit('taskCreated', task)
+    this.saveTasks()
     
     return task
   }
@@ -244,19 +254,31 @@ class BackgroundTaskManager {
   // ============================================
   
   private async processQueue(): Promise<void> {
-    if (this.runningTasks.size >= this.maxConcurrent) {
-      return
-    }
+    // 调度锁，防止并发调用导致同一任务被启动两次
+    if (this.isProcessingQueue) return
+    this.isProcessingQueue = true
     
-    // 找到待执行的任务
-    const pending = Array.from(this.tasks.values())
-      .filter(t => t.status === 'pending')
-      .sort((a, b) => a.createdAt - b.createdAt)
-    
-    for (const task of pending) {
-      if (this.runningTasks.size >= this.maxConcurrent) break
+    try {
+      if (this.runningTasks.size >= this.maxConcurrent) {
+        return
+      }
       
-      this.executeTask(task.id)
+      // 找到待执行的任务
+      const pending = Array.from(this.tasks.values())
+        .filter(t => t.status === 'pending')
+        .sort((a, b) => a.createdAt - b.createdAt)
+      
+      for (const task of pending) {
+        if (this.runningTasks.size >= this.maxConcurrent) break
+        
+        // 先标记为 running，再 fire-and-forget，防止重复启动
+        task.status = 'running'
+        task.startedAt = Date.now()
+        this.runningTasks.add(task.id)
+        this.executeTask(task.id)
+      }
+    } finally {
+      this.isProcessingQueue = false
     }
   }
   
@@ -264,10 +286,11 @@ class BackgroundTaskManager {
     const task = this.tasks.get(taskId)
     if (!task) return
     
-    task.status = 'running'
-    task.startedAt = Date.now()
-    this.runningTasks.add(taskId)
+    // 创建 AbortController 用于真正中断任务
+    const controller = new AbortController()
+    this.abortControllers.set(taskId, controller)
     
+    // 状态已在 processQueue 中设置，此处只记录日志
     this.logger.info('task.started', `Task ${taskId} started`, { taskId, type: task.type })
     this.emit('taskStarted', task)
     
@@ -303,22 +326,30 @@ class BackgroundTaskManager {
       this.emit('taskCompleted', task)
       
     } catch (error) {
-      task.status = 'failed'
-      task.result = {
-        success: false,
-        message: `任务执行失败`,
-        error: error instanceof Error ? error.message : String(error)
+      // 区分取消和真正的失败
+      if (error instanceof Error && error.name === 'AbortError') {
+        // 已在 cancelTask 中处理了状态
+        this.logger.info('task.aborted', `Task ${taskId} was aborted`, { taskId })
+      } else {
+        task.status = 'failed'
+        task.result = {
+          success: false,
+          message: `任务执行失败`,
+          error: error instanceof Error ? error.message : String(error)
+        }
+        
+        this.logger.error('task.failed', `Task ${taskId} failed`, { 
+          taskId, 
+          error: task.result.error 
+        })
+        this.emit('taskFailed', task)
       }
-      
-      this.logger.error('task.failed', `Task ${taskId} failed`, { 
-        taskId, 
-        error: task.result.error 
-      })
-      this.emit('taskFailed', task)
     } finally {
       task.completedAt = Date.now()
       task.progress = 100
       this.runningTasks.delete(taskId)
+      this.abortControllers.delete(taskId)
+      this.saveTasks()
       
       // 继续处理队列
       this.processQueue()
@@ -330,92 +361,201 @@ class BackgroundTaskManager {
   // ============================================
   
   private async executeArxivDigest(task: BackgroundTask): Promise<void> {
-    this.updateTaskProgress(task.id, 10, '正在连接 Arxiv...')
+    this.updateTaskProgress(task.id, 10, '初始化工具...')
     
-    // 模拟 API 调用延迟
-    await this.delay(1000)
-    this.updateTaskProgress(task.id, 30, '获取论文列表...')
+    const { WebSearchTool } = await import('../tools/WebSearch')
+    const { getLLMManager } = await import('../llm')
+    const { saveFile } = await import('../api/files')
     
-    await this.delay(1500)
-    this.updateTaskProgress(task.id, 60, '生成摘要...')
+    this.updateTaskProgress(task.id, 30, '搜索 Arxiv 最新论文...')
+    const searcher = new WebSearchTool()
+    const categories: string[] = task.params.categories || ['cs.AI']
+    const query = categories.map(c => `cat:${c}`).join(' OR ')
+    const maxPapers = task.params.maxPapers || 5
     
-    await this.delay(2000)
-    this.updateTaskProgress(task.id, 90, '保存到文件...')
+    const results = await searcher.searchArxiv(query, maxPapers)
+    if (results.length === 0) {
+      this.addTaskLog(task.id, 'warn', '未找到匹配的论文')
+      return
+    }
     
-    await this.delay(500)
+    this.updateTaskProgress(task.id, 60, '提取内容并生成摘要...')
+    const llm = getLLMManager()
+    const prompt = `你是一个专业的 AI 领域研究员。请为以下 ${results.length} 篇 Arxiv 论文生成一份Markdown格式的中文摘要简报。
+结构要求：
+1. 简要开场白介绍本次收录的内容概况。
+2. 逐篇详细列出核心亮点（包括原文链接、一句话总结）。
+请只输出符合格式的 Markdown 内容。
+
+论文数据：
+${JSON.stringify(results.map(r => ({ title: r.title, url: r.link, summary: r.snippet })), null, 2)}`
+
+    const aiRes = await llm.chat({ messages: [{ role: 'user', content: prompt }] })
     
-    // 实际实现时，这里会:
-    // 1. 调用 Arxiv API 获取论文
-    // 2. 使用 LLM 生成摘要
-    // 3. 保存 Markdown 文件
+    this.updateTaskProgress(task.id, 80, '保存报告文件...')
+    const dateStr = new Date().toISOString().split('T')[0]
+    const basePath = task.params.targetPath || 'posts/ai-digest/'
+    const filePath = `docs/sections/${basePath}arxiv-${dateStr}.md`
     
-    this.addTaskLog(task.id, 'success', '成功生成 3 篇论文摘要', {
-      papers: [
-        { title: 'Mixture of Experts for LLMs', id: '2401.001' },
-        { title: 'Attention Mechanism Improvements', id: '2401.002' },
-        { title: 'Scaling Laws for Neural Models', id: '2401.003' }
-      ]
-    })
+    let content = `---\ntitle: Arxiv AI 论文速递 (${dateStr})\ndate: ${dateStr}\ncategories: [AI, Papers]\n---\n\n# Arxiv AI 论文速递 (${dateStr})\n\n${aiRes.content}`
+    
+    try {
+      await saveFile(filePath, content)
+      this.addTaskLog(task.id, 'success', `成功聚合 ${results.length} 篇论文并保存到 ${filePath}`, { papers: results.map(r => ({ title: r.title, url: r.link })) })
+    } catch (e) {
+      this.addTaskLog(task.id, 'error', `保存文件失败: ${String(e)}`)
+      throw e
+    }
   }
-  
+
   private async executeRSSAggregator(task: BackgroundTask): Promise<void> {
-    this.updateTaskProgress(task.id, 20, '抓取 RSS 源...')
+    this.updateTaskProgress(task.id, 10, '初始化工具...')
+    const { WebSearchTool } = await import('../tools/WebSearch')
+    const { getLLMManager } = await import('../llm')
+    const { saveFile } = await import('../api/files')
     
-    await this.delay(1000)
-    this.updateTaskProgress(task.id, 50, '筛选相关内容...')
+    const searcher = new WebSearchTool()
+    const feeds: any[] = task.params.feeds || []
+    const enabledFeeds = feeds.filter(f => f.enabled)
     
-    await this.delay(1500)
-    this.updateTaskProgress(task.id, 80, '生成聚合文章...')
+    if (enabledFeeds.length === 0) {
+      this.addTaskLog(task.id, 'warn', '没有启用的 RSS 源')
+      return
+    }
+
+    this.updateTaskProgress(task.id, 30, '抓取 RSS 源...')
+    let feedContents = ''
+    for (const feed of enabledFeeds) {
+      try {
+        const xml = await searcher.fetchContent(feed.url)
+        feedContents += `\n>> 来源: ${feed.name}\n${xml.substring(0, 3000)}\n`
+      } catch (e) {
+        this.addTaskLog(task.id, 'warn', `无法抓取 ${feed.name}: ${String(e)}`)
+      }
+    }
     
-    await this.delay(1000)
+    if (!feedContents) throw new Error('所有 RSS 源抓取失败')
+
+    this.updateTaskProgress(task.id, 60, '利用 LLM 提取技术新闻...')
+    const llm = getLLMManager()
+    const keywords: string[] = task.params.keywords || ['AI', 'Tech']
+    const prompt = `你是一个技术编辑。根据以下的 RSS 内容提取出与 ${keywords.join(', ')} 相关的最有价值的技术资讯。整理为Markdown新闻简报：
+- 每条资讯有简明标题、来源链接、摘要。
+
+RSS 源内容：
+${feedContents}`
+
+    const aiRes = await llm.chat({ messages: [{ role: 'user', content: prompt }] })
     
-    this.addTaskLog(task.id, 'success', '成功聚合 5 条技术资讯', {
-      articles: 5,
-      sources: ['Hacker News', 'Dev.to']
-    })
+    this.updateTaskProgress(task.id, 80, '保存聚合文章...')
+    const dateStr = new Date().toISOString().split('T')[0]
+    const basePath = task.params.targetPath || 'posts/news/'
+    const filePath = `docs/sections/${basePath}tech-news-${dateStr}.md`
+    
+    let content = `---\ntitle: 科技资讯简报 (${dateStr})\ndate: ${dateStr}\ncategories: [News, Tech]\n---\n\n# 科技资讯简报 (${dateStr})\n\n${aiRes.content}`
+    
+    try {
+      await saveFile(filePath, content)
+      this.addTaskLog(task.id, 'success', `成功聚合技术资讯并保存到 ${filePath}`)
+    } catch (e) {
+      this.addTaskLog(task.id, 'error', `保存文件失败: ${String(e)}`)
+      throw e
+    }
   }
-  
+
   private async executeCodeDocs(task: BackgroundTask): Promise<void> {
     this.updateTaskProgress(task.id, 10, '扫描代码文件...')
+    const { listDirectory, readFile, saveFile } = await import('../api/files')
+    const { getLLMManager } = await import('../llm')
     
-    await this.delay(800)
-    this.updateTaskProgress(task.id, 40, '分析代码结构...')
+    const sourcePath = task.params.sourcePath || './code/'
+    const targetPath = task.params.targetPath || 'knowledge/code-docs/'
     
-    await this.delay(1500)
-    this.updateTaskProgress(task.id, 70, '生成文档...')
+    let files
+    try {
+      files = await listDirectory(`docs/${sourcePath}`)
+    } catch (e) {
+      throw new Error(`无法读取目录 docs/${sourcePath}: ${String(e)}`)
+    }
+
+    const targetFiles = files.filter(f => f.type === 'file' && (f.name.endsWith('.ts') || f.name.endsWith('.js') || f.name.endsWith('.py')))
+    if (targetFiles.length === 0) {
+      this.addTaskLog(task.id, 'warn', '没有找到需要生成文档的代码文件')
+      return
+    }
+
+    const llm = getLLMManager()
+    let processed = 0
     
-    await this.delay(1200)
+    for (const file of targetFiles) {
+      if (this.abortControllers.get(task.id)?.signal.aborted) throw new Error('AbortError')
+      
+      this.updateTaskProgress(task.id, 40 + Math.floor((processed / targetFiles.length) * 40), `分析文件 ${file.name}...`)
+      try {
+        const fileContent = await readFile(file.path)
+        const prompt = `为以下代码生成针对开发者的技术文档（Markdown）：\n文件名：${file.name}\n\n代码内容：\n\`\`\`\n${fileContent.substring(0, 5000)}\n\`\`\`\n\n描述此文件的职责、导出的主要函数及其参数说明。`
+
+        const docRes = await llm.chat({ messages: [{ role: 'user', content: prompt }] })
+        const outPath = `docs/sections/${targetPath}${file.name}.md`
+        let fullDoc = `---\ntitle: ${file.name} 代码说明\n---\n\n${docRes.content}`
+        
+        await saveFile(outPath, fullDoc)
+        processed++
+      } catch (e) {
+        this.addTaskLog(task.id, 'warn', `文件 ${file.name} 处理失败: ${String(e)}`)
+      }
+    }
     
-    this.addTaskLog(task.id, 'success', '已为 3 个文件生成文档', {
-      files: ['utils.py', 'parser.py', 'api.ts']
-    })
+    this.addTaskLog(task.id, 'success', `成功为 ${processed} 个文件生成了代码文档`)
   }
-  
+
   private async executeContentCleanup(task: BackgroundTask): Promise<void> {
     this.updateTaskProgress(task.id, 30, '检查孤立链接...')
+    const { listDirectory, readFile } = await import('../api/files')
     
-    await this.delay(1000)
-    this.updateTaskProgress(task.id, 60, '检查空文件夹...')
+    const sections = ['posts', 'knowledge', 'resources']
+    let issueCount = 0
     
-    await this.delay(1000)
+    for (const sec of sections) {
+      try {
+        const items = await listDirectory(`docs/sections/${sec}`)
+        for (const item of items) {
+          if (item.type === 'file' && item.name.endsWith('.md')) {
+            const content = await readFile(item.path)
+            if (content.includes('TODO:') || content.includes('[]()')) {
+               issueCount++
+               this.addTaskLog(task.id, 'warn', `找到待完善内容的文件`, { file: item.path })
+            }
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    
     this.updateTaskProgress(task.id, 90, '生成报告...')
-    
-    await this.delay(500)
-    
-    this.addTaskLog(task.id, 'success', '内容检查完成', {
-      orphanLinks: 2,
-      emptyFolders: 1
-    })
+    this.addTaskLog(task.id, 'success', '内容检查完成', { potentialIssues: issueCount })
   }
-  
+
   private async executeCustomTask(task: BackgroundTask): Promise<void> {
     const instruction = task.params.instruction || ''
+    if (!instruction) throw new Error('未提供自定义任务指令')
     
-    this.updateTaskProgress(task.id, 50, `执行: ${instruction}...`)
+    this.updateTaskProgress(task.id, 10, `执行: ${instruction}...`)
     
-    await this.delay(2000)
+    const { getLLMManager } = await import('../llm')
+    const llm = getLLMManager()
+    const prompt = `您正在执行后台自动任务。用户的任务指令如下：\n---\n${instruction}\n---\n请立刻输出你处理后的结果代码或文本摘要。`
     
-    this.addTaskLog(task.id, 'success', '自定义任务执行完成')
+    this.updateTaskProgress(task.id, 50, `执行 LLM 生成...`)
+    const res = await llm.chat({ messages: [{ role: 'user', content: prompt }] })
+    
+    this.updateTaskProgress(task.id, 90, `记录结果...`)
+    this.addTaskLog(task.id, 'success', '自定义任务执行完成', { output: res.content.substring(0, 200) + '...' })
+    
+    if (task.result) {
+      task.result.output = res.content
+    }
   }
   
   // ============================================
@@ -427,7 +567,7 @@ class BackgroundTaskManager {
    */
   async cancelTask(taskId: string): Promise<boolean> {
     const task = this.tasks.get(taskId)
-    if (!task || task.status !== 'running') {
+    if (!task || (task.status !== 'running' && task.status !== 'pending')) {
       return false
     }
     
@@ -435,8 +575,16 @@ class BackgroundTaskManager {
     task.completedAt = Date.now()
     this.runningTasks.delete(taskId)
     
+    // 通过 AbortController 真正中断正在运行的异步操作
+    const controller = this.abortControllers.get(taskId)
+    if (controller) {
+      controller.abort()
+      this.abortControllers.delete(taskId)
+    }
+    
     this.logger.warn('task.cancelled', `Task ${taskId} cancelled`, { taskId })
     this.emit('taskCancelled', task)
+    this.saveTasks()
     
     this.processQueue()
     return true
@@ -468,12 +616,14 @@ class BackgroundTaskManager {
    */
   deleteTask(taskId: string): boolean {
     const task = this.tasks.get(taskId)
-    if (task?.status === 'running') {
+    if (!task) return false
+    if (task.status === 'running') {
       return false // 不能删除运行中的任务
     }
     
     this.tasks.delete(taskId)
-    this.emit('taskDeleted', { id: taskId })
+    this.emit('taskDeleted', task)
+    this.saveTasks()
     return true
   }
   
@@ -583,6 +733,75 @@ class BackgroundTaskManager {
   
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
+  }
+  
+  /**
+   * 可中断的延迟 — 配合 AbortController 实现真正取消
+   */
+  private abortableDelay(ms: number, taskId: string): Promise<void> {
+    const controller = this.abortControllers.get(taskId)
+    if (!controller) return this.delay(ms)
+    
+    return new Promise((resolve, reject) => {
+      if (controller.signal.aborted) {
+        reject(new DOMException('Task cancelled', 'AbortError'))
+        return
+      }
+      const timer = setTimeout(resolve, ms)
+      controller.signal.addEventListener('abort', () => {
+        clearTimeout(timer)
+        reject(new DOMException('Task cancelled', 'AbortError'))
+      }, { once: true })
+    })
+  }
+  
+  // ============================================
+  // 任务持久化
+  // ============================================
+  
+  /**
+   * 保存任务状态到 localStorage
+   * 只保存已终结的任务（completed/failed/cancelled）
+   */
+  private saveTasks(): void {
+    try {
+      if (typeof localStorage === 'undefined') return
+      
+      const terminalStates = ['completed', 'failed', 'cancelled']
+      const tasksToSave = Array.from(this.tasks.values())
+        .filter(t => terminalStates.includes(t.status))
+        .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0))
+        .slice(0, BackgroundTaskManager.MAX_HISTORY)
+      
+      localStorage.setItem(
+        BackgroundTaskManager.STORAGE_KEY,
+        JSON.stringify(tasksToSave)
+      )
+    } catch {
+      // localStorage 不可用或已满，静默失败
+    }
+  }
+  
+  /**
+   * 从 localStorage 恢复任务历史
+   * running/pending 状态的任务不恢复（避免僵尸任务）
+   */
+  private loadTasks(): void {
+    try {
+      if (typeof localStorage === 'undefined') return
+      
+      const saved = localStorage.getItem(BackgroundTaskManager.STORAGE_KEY)
+      if (!saved) return
+      
+      const tasks: BackgroundTask[] = JSON.parse(saved)
+      for (const task of tasks) {
+        this.tasks.set(task.id, task)
+      }
+      
+      this.logger.info('tasks.loaded', `Loaded ${tasks.length} tasks from storage`)
+    } catch {
+      // 解析失败，重新开始
+    }
   }
 }
 

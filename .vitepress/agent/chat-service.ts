@@ -122,7 +122,7 @@ export function useChatService() {
     try {
       // 添加用户消息
       const userMessage: ChatMessage = {
-        id: `user_${Date.now()}`,
+        id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
         role: 'user',
         content,
         timestamp: Date.now()
@@ -159,7 +159,7 @@ export function useChatService() {
       
       // 添加助手回复
       const assistantMessage: ChatMessage = {
-        id: `assistant_${Date.now()}`,
+        id: `assistant_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
         role: 'assistant',
         content: response.content,
         timestamp: Date.now(),
@@ -220,7 +220,7 @@ export function useChatService() {
     try {
       // 添加用户消息
       const userMessage: ChatMessage = {
-        id: `user_${Date.now()}`,
+        id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
         role: 'user',
         content,
         timestamp: Date.now()
@@ -249,7 +249,7 @@ export function useChatService() {
       chatMessages.push({ role: 'user', content })
       
       // 创建助手消息占位
-      const assistantMessageId = `assistant_${Date.now()}`
+      const assistantMessageId = `assistant_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
       let fullContent = ''
       let fullReasoning = ''
       let hasReceivedContent = false

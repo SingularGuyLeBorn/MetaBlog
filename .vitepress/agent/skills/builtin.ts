@@ -90,7 +90,7 @@ export const WriteArticleSkill: Skill = {
 
     // 5. 保存文件
     const fullContent = `${frontmatter}\n\n${content.content}`
-    const filePath = targetPath || `posts/${slugify(topic)}.md`
+    const filePath = targetPath || `posts/${await slugifyAsync(topic)}.md`
 
     const saveResult = await saveFile(filePath, fullContent)
     
@@ -143,6 +143,8 @@ export const EditContentSkill: Skill = {
       }
     }
 
+    ctx.logger.info('Starting content edit', { action, targetPath, hasSelectedText: !!selectedText })
+
     // 读取现有内容
     const existingContent = await readFile(targetPath)
     if (!existingContent) {
@@ -162,6 +164,8 @@ export const EditContentSkill: Skill = {
       rewrite: instruction || '重写内容'
     }
 
+    ctx.logger.info('Preparing LLM edit prompt', { editAction: actionMap[action] || action })
+
     const editPrompt: LLMMessage[] = [
       {
         role: 'system',
@@ -173,11 +177,30 @@ export const EditContentSkill: Skill = {
       }
     ]
 
-    const result = await callLLM(editPrompt)
+    let result
+    try {
+      result = await callLLM(editPrompt)
+      ctx.logger.info('Content edited via LLM', { tokensUsed: result.tokens })
+    } catch (e) {
+      return {
+        success: false,
+        error: `LLM 调用失败: ${String(e)}`,
+        tokensUsed: 0,
+        cost: 0
+      }
+    }
     
     // 应用编辑
     let editedContent: string
     if (selectedText) {
+      if (!existingContent.includes(selectedText)) {
+        return {
+          success: false,
+          error: '无法在原文中找到需替换的段落',
+          tokensUsed: result.tokens,
+          cost: result.cost
+        }
+      }
       editedContent = existingContent.replace(selectedText, result.content)
     } else {
       editedContent = result.content
@@ -194,7 +217,10 @@ export const EditContentSkill: Skill = {
       }
     }
 
+    ctx.logger.info('Saved edited content to file', { path: targetPath })
+
     // 创建 Git 提交
+    ctx.logger.info('Committing changes to git', { path: targetPath })
     await gitCommit(targetPath, `agent(${ctx.taskId}): ${actionMap[action] || action}`)
 
     return {
@@ -523,10 +549,36 @@ async function saveFile(path: string, content: string): Promise<{ success: boole
 }
 
 async function gitCommit(path: string, message: string): Promise<void> {
-  console.log(`[Git] ${message}: ${path}`)
+  try {
+    const res = await fetch('/api/git/commit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: path, message })
+    })
+    if (!res.ok) {
+      console.warn(`[Git] Commit failed: ${await res.text()}`)
+    } else {
+      console.log(`[Git] ${message}: ${path}`)
+    }
+  } catch (e) {
+    console.warn(`[Git] Fetch failed: ${String(e)}`)
+  }
 }
 
-function slugify(text: string): string {
+async function slugifyAsync(text: string): Promise<string> {
+  try {
+    const res = await fetch('/api/utils/slugify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      if (data.slug) return data.slug
+    }
+  } catch (e) {
+    // silently fallback
+  }
   return text
     .toLowerCase()
     .replace(/[^\w\s-]/g, '')

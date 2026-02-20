@@ -48,6 +48,7 @@ export class AgentRuntime {
   // 状态
   private config: AgentRuntimeConfig
   private currentTask: TaskState | null = null
+  private activeTasks: Map<string, TaskState> = new Map()
   private sessionId: string
   private skills: Map<string, Skill> = new Map()
   private listeners: Map<string, Set<(data: any) => void>> = new Map()
@@ -168,31 +169,42 @@ export class AgentRuntime {
   }): Promise<ChatMessage> {
     const messageId = this.generateId()
     
-    this.logger.info('Processing user input', { 
-      input: input.substring(0, 100),
-      context 
-    })
-    
-    // 1. 意图解析
-    this.setState('UNDERSTANDING')
-    const intent = await this.intentRouter.parse(input, context)
-    
-    this.logger.info('Intent parsed', { 
-      type: intent.type, 
-      confidence: intent.confidence,
-      entities: intent.entities 
-    })
-    
-    // 2. 如果是低置信度，询问用户确认
-    if (intent.confidence < 0.6) {
+    try {
+      this.logger.info('Processing user input', { 
+        input: input.substring(0, 100),
+        context 
+      })
+      
+      // 1. 意图解析
+      this.setState('UNDERSTANDING')
+      const intent = await this.intentRouter.parse(input, context)
+      
+      this.logger.info('Intent parsed', { 
+        type: intent.type, 
+        confidence: intent.confidence,
+        entities: intent.entities 
+      })
+      
+      // 2. 如果是低置信度，询问用户确认
+      if (intent.confidence < 0.6) {
+        return this.createAssistantMessage(
+          messageId,
+          `我不太确定您的意图。您是想要：\n${this.formatIntentOptions(intent)}\n\n请告诉我更具体的指令。`
+        )
+      }
+      
+      // 3. 执行任务
+      return this.executeIntent(intent, input, messageId)
+    } catch (error) {
+      this.logger.error('processInput failed', {
+        error: error instanceof Error ? error.message : String(error)
+      })
+      this.setState('ERROR')
       return this.createAssistantMessage(
         messageId,
-        `我不太确定您的意图。您是想要：\n${this.formatIntentOptions(intent)}\n\n请告诉我更具体的指令。`
+        `处理请求时出现内部错误：${error instanceof Error ? error.message : '未知错误'}。请重试或换一种方式描述。`
       )
     }
-    
-    // 3. 执行任务
-    return this.executeIntent(intent, input, messageId)
   }
   
   /**
@@ -253,9 +265,9 @@ export class AgentRuntime {
     rawInput: string,
     messageId: string
   ): Promise<ChatMessage> {
-    // 创建任务
+    // 创建任务（支持并发，不覆盖前一个 task）
     const taskId = this.generateId()
-    this.currentTask = {
+    const task: TaskState = {
       id: taskId,
       state: 'PLANNING',
       currentStep: 0,
@@ -265,14 +277,16 @@ export class AgentRuntime {
       startedAt: Date.now(),
       updatedAt: Date.now()
     }
+    this.activeTasks.set(taskId, task)
+    this.currentTask = task
     
-    this.setState('PLANNING')
+    this.setState('PLANNING', task)
     
     // 查找匹配的技能
     const skill = this.intentRouter.findSkill(intent)
     
     if (!skill) {
-      this.setState('ERROR')
+      this.setState('ERROR', task)
       return this.createAssistantMessage(
         messageId,
         `抱歉，我暂时无法处理这个请求（${intent.type}）。您可以尝试更具体的描述。`
@@ -280,7 +294,7 @@ export class AgentRuntime {
     }
     
     // 执行技能
-    this.setState('EXECUTING')
+    this.setState('EXECUTING', task)
     
     const skillContext: SkillContext = {
       taskId,
@@ -294,9 +308,9 @@ export class AgentRuntime {
     try {
       const result = await skill.handler(skillContext, intent.parameters)
       
-      this.currentTask.totalSteps = 1
-      this.currentTask.currentStep = 1
-      this.setState('COMPLETED')
+      task.totalSteps = 1
+      task.currentStep = 1
+      this.setState('COMPLETED', task)
       
       // 记录成本
       if (this.config.enableCostTracking) {
@@ -312,6 +326,7 @@ export class AgentRuntime {
       
       // 保存任务历史
       await this.saveTaskHistory(taskId, skill.name, intent, result)
+      this.activeTasks.delete(taskId)
       
       this.emit('taskCompleted', { taskId, skill: skill.name, result })
       
@@ -334,7 +349,8 @@ export class AgentRuntime {
       )
       
     } catch (error) {
-      this.setState('ERROR')
+      this.setState('ERROR', task)
+      this.activeTasks.delete(taskId)
       this.logger.error('Skill execution failed', { 
         skill: skill.name, 
         error: error instanceof Error ? error.message : String(error) 
@@ -351,13 +367,14 @@ export class AgentRuntime {
   // 状态管理
   // ============================================
   
-  private setState(state: AgentState): void {
-    if (this.currentTask) {
-      this.currentTask.state = state
-      this.currentTask.updatedAt = Date.now()
+  private setState(state: AgentState, task?: TaskState): void {
+    const target = task || this.currentTask
+    if (target) {
+      target.state = state
+      target.updatedAt = Date.now()
     }
     this.stateMachine.transition(state)
-    this.emit('stateChanged', { state, task: this.currentTask })
+    this.emit('stateChanged', { state, task: target })
   }
   
   getCurrentState(): AgentState {
@@ -424,7 +441,7 @@ export class AgentRuntime {
   }
   
   private generateId(): string {
-    return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${Math.random().toString(36).substr(2, 4)}`
   }
   
   private createAssistantMessage(
@@ -452,6 +469,11 @@ export class AgentRuntime {
     }
     
     let message = result.data?.message || '任务已完成'
+    
+    // 展示降级提示（例如部分引用获取失败时）
+    if (result.data?.fallback && result.data?.note) {
+      message += `\n\n⚠️ ${result.data.note}`
+    }
     
     if (result.nextSteps && result.nextSteps.length > 0) {
       message += '\n\n建议的下一步：\n' + result.nextSteps.map((s, i) => `${i + 1}. ${s}`).join('\n')
@@ -525,9 +547,24 @@ export class AgentRuntime {
   }
   
   private async checkArticleExists(linkText: string): Promise<boolean> {
-    // 转换为 URL 格式检查
+    // 将 WikiLink 文本转换为可能的路径
     const normalizedPath = linkText.toLowerCase().replace(/\s+/g, '-')
-    // TODO: 实际检查文件是否存在
+    const candidates = [
+      `${normalizedPath}.md`,
+      `sections/posts/${normalizedPath}.md`,
+      `sections/knowledge/${normalizedPath}.md`,
+      `${normalizedPath}/${normalizedPath}.md`,
+      `sections/posts/${normalizedPath}/${normalizedPath}.md`
+    ]
+    
+    for (const path of candidates) {
+      try {
+        const response = await fetch(`/api/files/read?path=${encodeURIComponent(path)}`)
+        if (response.ok) return true
+      } catch {
+        // 继续尝试下一个路径
+      }
+    }
     return false
   }
   

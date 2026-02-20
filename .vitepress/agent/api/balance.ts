@@ -35,24 +35,22 @@ export interface BalanceResponse {
  */
 export async function queryDeepSeekBalance(): Promise<BalanceResponse> {
   try {
-    // 获取 LLM Manager 配置
-    const llmManager = getLLMManager()
-    const config = llmManager.getConfig()
-    
-    // 获取 DeepSeek provider 的配置
-    const deepseekConfig = config.providers?.deepseek
-    if (!deepseekConfig?.apiKey) {
+    // 从环境变量获取 API key
+    const apiKey = (import.meta as any).env?.VITE_DEEPSEEK_API_KEY
+      || (typeof process !== 'undefined' ? process.env?.VITE_DEEPSEEK_API_KEY : undefined)
+
+    if (!apiKey) {
       return {
         success: false,
         error: 'DeepSeek API key not configured'
       }
     }
-    
+
     const response = await fetch('https://api.deepseek.com/user/balance', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Authorization': `Bearer ${deepseekConfig.apiKey}`
+        'Authorization': `Bearer ${apiKey}`
       }
     })
     

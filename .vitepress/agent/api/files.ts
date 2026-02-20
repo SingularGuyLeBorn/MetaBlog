@@ -129,7 +129,19 @@ export function getFileNameWithoutExt(filename: string): string {
   return lastDot > 0 ? filename.slice(0, lastDot) : filename
 }
 
-export function slugify(text: string): string {
+export async function slugifyAsync(text: string): Promise<string> {
+  try {
+    const res = await fetch('/api/utils/slugify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      if (data.slug) return data.slug
+    }
+  } catch (e) {}
+  
   return text
     .toString()
     .toLowerCase()
@@ -139,7 +151,7 @@ export function slugify(text: string): string {
     .replace(/\-\-+/g, '-')
 }
 
-export function generateFileName(title: string, date?: Date): string {
+export async function generateFileNameAsync(title: string, date?: Date): Promise<string> {
   const dateStr = date ? date.toISOString().split('T')[0] + '-' : ''
-  return `${dateStr}${slugify(title)}.md`
+  return `${dateStr}${await slugifyAsync(title)}.md`
 }

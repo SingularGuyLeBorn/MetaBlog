@@ -120,7 +120,7 @@ export class SessionManager {
     if (!session) return
 
     const message: SessionMessage = {
-      id: `msg_${Date.now()}`,
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
       role,
       content,
       timestamp: Date.now(),

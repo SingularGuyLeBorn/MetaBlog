@@ -156,10 +156,12 @@ const recentTasks = computed(() =>
 )
 
 const taskStats = computed(() => {
-  const stats = { total: 0, pending: 0, running: 0, completed: 0, failed: 0 }
+  const stats = { total: 0, pending: 0, running: 0, completed: 0, failed: 0, cancelled: 0 }
   tasks.value.forEach(t => {
     stats.total++
-    stats[t.status]++
+    if (t.status in stats) {
+      stats[t.status as keyof Omit<typeof stats, 'total'>]++
+    }
   })
   return stats
 })

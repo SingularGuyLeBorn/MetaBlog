@@ -93,7 +93,7 @@ export interface LogStats {
 
 // 浏览器端空实现
 class BrowserLogger {
-  private sessionId = `browser_${Date.now()}`
+  private sessionId = `browser_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
   private currentRequestId: string | null = null
 
   debug(event: string, message: string, data?: Record<string, any>): void {
@@ -117,7 +117,7 @@ class BrowserLogger {
   }
   
   startRequest(requestId?: string, actor?: LogActor): string {
-    const reqId = requestId || `req_${Date.now()}`
+    const reqId = requestId || `req_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
     this.currentRequestId = reqId
     return reqId
   }

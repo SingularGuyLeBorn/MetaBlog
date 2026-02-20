@@ -75,7 +75,7 @@ async function fetchLocalArticle(
 ): Promise<ReferenceResult> {
   const cleanPath = path.replace(/^\//, '').replace(/\.html$/, '.md')
   
-  logger.debug('Fetching local article', { path: cleanPath, taskId: ctx.taskId })
+  logger.debug('skill.research', 'Fetching local article', { path: cleanPath, taskId: ctx.taskId })
   
   try {
     // 尝试多种路径变体
@@ -105,7 +105,7 @@ async function fetchLocalArticle(
     }
     
     // 所有路径都失败
-    logger.warn('Local article not found, using fallback', { 
+    logger.warn('skill.research', 'Local article not found, using fallback', { 
       path: cleanPath, 
       taskId: ctx.taskId 
     })
@@ -121,7 +121,7 @@ async function fetchLocalArticle(
     }
     
   } catch (error) {
-    logger.error('Error fetching local article', { 
+    logger.error('skill.research', 'Error fetching local article', { 
       path: cleanPath, 
       error: String(error),
       taskId: ctx.taskId 
@@ -146,7 +146,7 @@ async function fetchWebContent(
   url: string,
   timeout: number = 10000
 ): Promise<ReferenceResult> {
-  logger.debug('Fetching web content', { url })
+  logger.debug('skill.research', 'Fetching web content', { url })
   
   try {
     const controller = new AbortController()
@@ -198,7 +198,7 @@ async function fetchWebContent(
       ? '请求超时 - 网站响应时间过长'
       : error instanceof Error ? error.message : String(error)
     
-    logger.warn('Web fetch failed, using fallback', { 
+    logger.warn('skill.research', 'Web fetch failed, using fallback', { 
       url, 
       error: errorMsg,
       isTimeout 
@@ -325,7 +325,7 @@ export const ResearchWithFallbackSkill: Skill = {
   handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
     const { topic, rawInput = '' } = params
     
-    logger.info('Starting research with fallback', { 
+    logger.info('skill.research', 'Starting research with fallback', { 
       topic, 
       taskId: ctx.taskId 
     })
@@ -335,7 +335,7 @@ export const ResearchWithFallbackSkill: Skill = {
     
     if (references.length === 0) {
       // 没有引用，退化为普通问答
-      logger.info('No references found, falling back to general QA', { taskId: ctx.taskId })
+      logger.info('skill.research', 'No references found, falling back to general QA', { taskId: ctx.taskId })
       
       const llm = getLLMManager()
       const response = await llm.chat({
@@ -404,7 +404,7 @@ export const ResearchWithFallbackSkill: Skill = {
                         context.webContent.filter(r => r.exists).length
     const failCount = context.failedReferences.length
     
-    logger.info('Reference fetch completed', {
+    logger.info('skill.research', 'Reference fetch completed', {
       total: references.length,
       success: successCount,
       failed: failCount,
@@ -467,14 +467,14 @@ export const FetchContentWithRetrySkill: Skill = {
   handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
     const { url, timeout = 10000, retries = 2 } = params
     
-    logger.info('Fetching content with retry', { url, timeout, retries, taskId: ctx.taskId })
+    logger.info('skill.fetch', 'Fetching content with retry', { url, timeout, retries, taskId: ctx.taskId })
     
     let lastError: string = ''
     
     // 重试逻辑
     for (let attempt = 0; attempt <= retries; attempt++) {
       if (attempt > 0) {
-        logger.info(`Retry attempt ${attempt}/${retries}`, { url, taskId: ctx.taskId })
+        logger.info('skill.fetch', `Retry attempt ${attempt}/${retries}`, { url, taskId: ctx.taskId })
         await new Promise(r => setTimeout(r, 1000 * attempt)) // 指数退避
       }
       
@@ -503,7 +503,7 @@ export const FetchContentWithRetrySkill: Skill = {
     }
     
     // 所有尝试都失败，优雅降级
-    logger.warn('All fetch attempts failed, returning fallback', { 
+    logger.warn('skill.fetch', 'All fetch attempts failed, returning fallback', { 
       url, 
       error: lastError,
       taskId: ctx.taskId 

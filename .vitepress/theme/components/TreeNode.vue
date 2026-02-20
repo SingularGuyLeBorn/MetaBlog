@@ -340,16 +340,18 @@ const isExactActive = computed(() => {
 
 // Click outside directive
 const vClickOutside = {
-  mounted(el: HTMLElement, binding: any) {
+  mounted(el: HTMLElement & { _clickOutside?: (event: Event) => void }, binding: any) {
     el._clickOutside = (event: Event) => {
       if (!(el === event.target || el.contains(event.target as Node))) {
         binding.value()
       }
     }
-    document.addEventListener('click', el._clickOutside, true)
+    document.addEventListener('click', el._clickOutside as EventListener, true)
   },
-  unmounted(el: HTMLElement) {
-    document.removeEventListener('click', el._clickOutside, true)
+  unmounted(el: HTMLElement & { _clickOutside?: (event: Event) => void }) {
+    if (el._clickOutside) {
+      document.removeEventListener('click', el._clickOutside as EventListener, true)
+    }
   }
 }
 

@@ -126,7 +126,7 @@ class ServerLogger {
 
   constructor() {
     this.winston = createWinstonLogger()
-    this.sessionId = `sess_${Date.now()}`
+    this.sessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
     this.info('system.startup', 'StructuredLogger initialized', { 
       sessionId: this.sessionId,
       logsDir: LOGS_DIR,
@@ -168,7 +168,7 @@ class ServerLogger {
   }
 
   startRequest(requestId?: string, actor: LogActor = 'system'): string {
-    const reqId = requestId || `req_${Date.now()}`
+    const reqId = requestId || `req_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
     this.currentRequestId = reqId
     this.performanceTimers.set(reqId, Date.now())
     this.info('request.started', `Request ${reqId} started`, { requestId: reqId, actor })

@@ -3,6 +3,7 @@ import { fileURLToPath, URL } from "node:url";
 import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
+// @ts-ignore - markdown-it 类型声明可能缺失
 import MarkdownIt from "markdown-it";
 import mathjax3 from "markdown-it-mathjax3";
 import {
@@ -216,15 +217,15 @@ export default defineConfig({
 
       const defaultRender =
         md.renderer.rules.text ||
-        function (tokens, idx, options, env, self) {
+        function (tokens: any, idx: any, options: any, env: any, self: any) {
           return self.renderToken(tokens, idx, options);
         };
 
-      md.renderer.rules.text = function (tokens, idx, options, env, self) {
+      md.renderer.rules.text = function (tokens: any, idx: any, options: any, env: any, self: any) {
         let content = tokens[idx].content;
         const wikiLinkRegex = /\[\[(.*?)\]\]/g;
         if (wikiLinkRegex.test(content)) {
-          return content.replace(wikiLinkRegex, (match, p1) => {
+          return content.replace(wikiLinkRegex, (match: any, p1: any) => {
             const [link, text] = p1.split("|");
             const displayText = text || link;
             const url = `/sections/posts/${link.trim().replace(/\s+/g, "-").toLowerCase()}/`;
@@ -377,6 +378,15 @@ export default defineConfig({
           system.info("server.init", "BFF API Server 初始化完成");
           bootLogger.logReady();
 
+          // 启动后台任务调度器
+          try {
+            const { getTaskScheduler } = require("./agent/core/TaskScheduler");
+            const scheduler = getTaskScheduler();
+            scheduler.start();
+          } catch (e) {
+            system.error("server.tasks", "后台调度器启动失败: " + String(e));
+          }
+
           // 热更新辅助函数
           const triggerReload = () => {
             console.log(
@@ -438,24 +448,29 @@ export default defineConfig({
             "/api/files/read",
             (req: any, res: any, next: any) => {
               if (req.method === "GET") {
-                const url = new URL(
-                  req.url || "",
-                  `http://${req.headers.host}`,
-                );
-                const filePath = url.searchParams.get("path");
-                if (!filePath) return next();
+                try {
+                  const url = new URL(
+                    req.url || "",
+                    `http://${req.headers.host}`,
+                  );
+                  const filePath = url.searchParams.get("path");
+                  if (!filePath) return next();
 
-                const fullPath = path.resolve(
-                  process.cwd(),
-                  "docs",
-                  filePath.replace(/^\//, ""),
-                );
-                if (fs.existsSync(fullPath)) {
-                  res.setHeader("Content-Type", "text/plain");
-                  res.end(fs.readFileSync(fullPath, "utf-8"));
-                } else {
-                  res.statusCode = 404;
-                  res.end("File not found");
+                  const fullPath = path.resolve(
+                    process.cwd(),
+                    "docs",
+                    filePath.replace(/^\//, ""),
+                  );
+                  if (fs.existsSync(fullPath)) {
+                    res.setHeader("Content-Type", "text/plain");
+                    res.end(fs.readFileSync(fullPath, "utf-8"));
+                  } else {
+                    res.statusCode = 404;
+                    res.end("File not found");
+                  }
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(String(e));
                 }
               } else next();
             },
@@ -1009,6 +1024,61 @@ export default defineConfig({
                 res.statusCode = 404;
                 res.end(JSON.stringify({ error: "Task not found" }));
               }
+            } else next();
+          });
+
+          // Git 提交 API（用于 Agent 等场景真实提交日志）
+          server.middlewares.use("/api/git/commit", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { files, message } = body;
+                  gitCommit(files, message);
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+
+          // Slugify API（支持中文转换）
+          server.middlewares.use("/api/utils/slugify", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { text } = body;
+                  
+                  let slug = text;
+                  try {
+                    const pinyinFn = require('pinyin');
+                    slug = (typeof pinyinFn === 'function' ? pinyinFn(text, { style: 'normal' }) : 
+                            (pinyinFn.default ? pinyinFn.default(text, { style: 'normal' }) : text)).flat().join('-');
+                  } catch (e) {
+                    // Fallback if pinyin fails
+                  }
+                  
+                  slug = slug
+                    .toLowerCase()
+                    .replace(/[^\w\s-]/g, "")
+                    .replace(/\s+/g, "-")
+                    .substring(0, 50);
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ slug }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
             } else next();
           });
 
@@ -2029,7 +2099,7 @@ ${content}`;
                     res.end(
                       JSON.stringify({
                         success: true,
-                        data: created.map((task) => ({
+                        data: created.map((task: any) => ({
                           id: task.id,
                           type: task.type,
                           name: task.name,

@@ -3,6 +3,8 @@
  * 将自然语言输入映射到具体的技能和参数
  */
 import type { IntentType, ParsedIntent, Skill } from './types'
+import { getLLMManager } from '../llm'
+import { getStructuredLogger } from '../runtime/StructuredLogger'
 
 interface IntentPattern {
   type: IntentType
@@ -13,6 +15,7 @@ interface IntentPattern {
 
 export class IntentRouter {
   private skills: Map<string, Skill> = new Map()
+  private logger = getStructuredLogger()
   private intentPatterns: IntentPattern[] = [
     {
       type: 'WRITE_ARTICLE',
@@ -107,6 +110,7 @@ export class IntentRouter {
    */
   async parse(input: string, context?: any): Promise<ParsedIntent> {
     const normalizedInput = input.toLowerCase().trim()
+    this.logger.debug('router.parse', `Parsing intent for: "${input}"`)
     
     // 1. 基于规则匹配
     for (const intentPattern of this.intentPatterns) {
@@ -124,6 +128,8 @@ export class IntentRouter {
         }
       }
     }
+    
+    this.logger.debug('router.parse', `No rule matched, falling back to skills and LLM`)
 
     // 2. 基于技能的意图匹配
     for (const [name, skill] of this.skills) {
@@ -152,7 +158,19 @@ export class IntentRouter {
       }
     }
 
-    // 3. 默认意图
+    // 3. LLM 兜底意图分类（当 regex 和 skill 都不匹配时）
+    try {
+      const llmIntent = await this.classifyWithLLM(input)
+      if (llmIntent) {
+        this.logger.info('router.llm', `LLM classified intent as ${llmIntent.type}`)
+        return llmIntent
+      }
+    } catch (e) {
+      // LLM 不可用，回退到默认意图
+      this.logger.warn('router.error', `LLM classification failed: ${String(e)}`)
+    }
+    
+    // 4. 最终默认意图
     return {
       type: 'ANSWER_QUESTION',
       confidence: 0.4,
@@ -160,6 +178,46 @@ export class IntentRouter {
       parameters: { question: input },
       raw: input
     }
+  }
+  
+  /**
+   * 使用 LLM 做意图分类（few-shot）
+   */
+  private async classifyWithLLM(input: string): Promise<ParsedIntent | null> {
+    const llm = getLLMManager()
+    
+    const intentList = this.intentPatterns.map(p => `- ${p.type}: ${p.description}`).join('\n')
+    
+    const response = await llm.chat({
+      messages: [
+        {
+          role: 'system',
+          content: `你是一个意图分类器。根据用户输入，返回最匹配的意图类型。只返回意图类型名称，不要其他内容。\n\n可用意图：\n${intentList}`
+        },
+        { role: 'user', content: '帮我把这段笔记整理成一篇 post' },
+        { role: 'assistant', content: 'WRITE_ARTICLE' },
+        { role: 'user', content: '最近 Transformer 有什么新进展？' },
+        { role: 'assistant', content: 'RESEARCH_WEB' },
+        { role: 'user', content: input }
+      ],
+      temperature: 0,
+      maxTokens: 20
+    })
+    
+    const predicted = response.content.trim().toUpperCase() as IntentType
+    const validTypes = this.intentPatterns.map(p => p.type)
+    
+    if (validTypes.includes(predicted)) {
+      return {
+        type: predicted,
+        confidence: 0.7,
+        entities: this.extractEntities(input),
+        parameters: { rawInput: input },
+        raw: input
+      }
+    }
+    
+    return null
   }
 
   /**

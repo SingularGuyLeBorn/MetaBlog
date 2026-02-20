@@ -300,6 +300,8 @@ import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { marked } from 'marked'
 import { useData } from 'vitepress'
 import { useChatService } from '../../../agent/chat-service'
+import { AgentRuntime } from '../../../agent/core/AgentRuntime'
+import { eventBus } from '../../../agent/core/EventBus'
 import { useLogger } from '../../composables/useLogger'
 import LiquidCoreAvatar from './LiquidCoreAvatar.vue'
 
@@ -360,9 +362,35 @@ const lastInputTrigger = ref<{ type: '/' | '@' | null, position: number }>({ typ
 // Chat Service
 const chatService = useChatService()
 
+// Agent Runtime（技能执行通道）
+let agentRuntime: AgentRuntime | null = null
+try {
+  agentRuntime = AgentRuntime.getInstance()
+} catch {
+  console.warn('[AIChatOrb] AgentRuntime 未初始化，技能执行将不可用')
+}
+
+// 意图关键词检测（与 IntentRouter 保持一致）
+const INTENT_KEYWORDS = [
+  /(?:写|创作|生成|创建).{0,5}(?:文章|博客|内容|文档)/i,
+  /(?:编辑|修改|调整|优化|重写).{0,10}(?:内容|文章|段落|这部分)/i,
+  /(?:搜索|查找|调研|研究).{0,5}(?:关于|资料|信息|最新)/i,
+  /(?:总结|概括|摘要|TL;DR)/i,
+  /(?:解释|说明|讲解).{0,5}(?:代码|这段|函数|类)/i,
+  /(?:更新|完善|补充).{0,5}(?:知识图谱|图谱|链接|关系)/i,
+  /(?:删除|移除|清理).{0,5}(?:文章|文件)/i,
+  /(?:列出|查看|显示).{0,5}(?:文章|文件列表)/i,
+]
+
+function shouldUseAgentRuntime(text: string): boolean {
+  if (activeSkill.value) return true
+  return INTENT_KEYWORDS.some(pattern => pattern.test(text))
+}
+
 // Data
 const messages = ref<Message[]>([])
 const isLoading = chatService.isLoading
+const isAgentExecuting = ref(false)
 const activeSkill = ref<SkillData | null>(null)
 const attachedArticles = ref<ArticleData[]>([])
 
@@ -944,7 +972,7 @@ async function fetchArticleContent(path: string): Promise<string> {
   }
 }
 
-// Messaging
+// Messaging — 双通道路由
 async function sendMessage() {
   if (!canSend.value) return
   
@@ -982,10 +1010,13 @@ async function sendMessage() {
   })
   
   // Log human message
+  const skillName = activeSkill.value?.name || null
   logger.logInfo('chat.message', '用户发送消息', {
     contentLength: text?.length || 0,
     articleCount: articles.length,
-    model: isThinkingMode.value ? 'deepseek-reasoner' : 'deepseek-chat'
+    model: isThinkingMode.value ? 'deepseek-reasoner' : 'deepseek-chat',
+    activeSkill: skillName,
+    routeMode: shouldUseAgentRuntime(text || '') ? 'agent' : 'chat'
   })
   
   // Clear input
@@ -999,7 +1030,99 @@ async function sendMessage() {
     attachedArticles.value = [...attachedArticles.value, ...articlesWithContent]
   }
   
-  // Call real LLM
+  // ========================================
+  // 双通道路由决策
+  // ========================================
+  const useAgent = shouldUseAgentRuntime(text || '') && agentRuntime
+  
+  if (useAgent) {
+    await sendViaAgent(fullContent, text || '', articlesWithContent)
+  } else {
+    await sendViaChat(fullContent, articlesWithContent)
+  }
+}
+
+/**
+ * 技能执行通道 — 通过 AgentRuntime 路由
+ * 用于意图匹配的操作：写文章、编辑、研究、总结等
+ */
+async function sendViaAgent(
+  fullContent: string,
+  rawText: string,
+  articles: ArticleData[]
+) {
+  const startTime = Date.now()
+  isAgentExecuting.value = true
+  
+  // Create placeholder
+  const assistantMsg: Message = {
+    role: 'assistant',
+    content: '⏳ 正在执行技能...',
+    timestamp: new Date(),
+  }
+  const msgIndex = messages.value.push(assistantMsg) - 1
+  
+  aiLogger.logInfo('agent.execute', 'Agent 技能执行开始', {
+    skill: activeSkill.value?.name || 'auto-detect',
+    contentLength: fullContent.length,
+    articleCount: articles.length
+  })
+  
+  try {
+    if (!agentRuntime) throw new Error('AgentRuntime 未初始化')
+    
+    // 构建上下文
+    const context: { currentFile?: string; selectedText?: string } = {}
+    if (articles.length > 0) {
+      context.currentFile = articles[0].path
+    }
+    
+    // 通过 AgentRuntime 处理（走完整 IntentRouter → SkillEngine 链路）
+    const result = await agentRuntime.processInput(fullContent, context)
+    
+    // 更新消息内容
+    const resultContent = result.content || '技能执行完成'
+    messages.value[msgIndex].content = resultContent
+    
+    // 如果返回了文件路径，添加跳转提示
+    if (result.metadata?.path) {
+      messages.value[msgIndex].content += `\n\n📄 文件已保存：\`${result.metadata.path}\``
+    }
+    
+    const duration = Date.now() - startTime
+    aiLogger.logSuccess('agent.complete', 'Agent 技能执行成功', {
+      skill: activeSkill.value?.name || 'auto-detect',
+      duration,
+      path: result.metadata?.path,
+      tokens: result.metadata?.tokens,
+      cost: result.metadata?.cost
+    })
+    
+  } catch (err) {
+    const duration = Date.now() - startTime
+    aiLogger.logError('agent.error', 'Agent 技能执行失败', {
+      skill: activeSkill.value?.name || 'auto-detect',
+      duration,
+      error: err instanceof Error ? err.message : String(err)
+    })
+    
+    messages.value[msgIndex].content = 
+      `❌ 技能执行失败：${err instanceof Error ? err.message : String(err)}\n\n💡 您可以尝试换一种方式描述，或直接进行对话。`
+  } finally {
+    isAgentExecuting.value = false
+    // 清除已使用的技能
+    activeSkill.value = null
+  }
+}
+
+/**
+ * 纯聊天通道 — 通过 chatService 直连 LLM
+ * 用于日常对话、问答等无副作用操作
+ */
+async function sendViaChat(
+  fullContent: string,
+  articles: ArticleData[]
+) {
   let startTime = 0
   let model = ''
   let msgIndex = 0
@@ -1016,19 +1139,17 @@ async function sendMessage() {
     }
     msgIndex = messages.value.push(assistantMsg) - 1
     
-    // Log AI request
     startTime = Date.now()
-  aiLogger.logInfo('chat.request', 'AI请求开始', {
-    model,
-    contentLength: fullContent.length,
-    hasArticles: articlesWithContent.length > 0
-  })
-  
-  // Stream response with full content (including articles)
+    aiLogger.logInfo('chat.request', 'AI请求开始', {
+      model,
+      contentLength: fullContent.length,
+      hasArticles: articles.length > 0
+    })
+    
+    // Stream response
     await chatService.sendMessageStream(
       fullContent,
       (chunk) => {
-        // Use Vue's reactive update
         if (chunk.reasoning) {
           messages.value[msgIndex].reasoning = 
             (messages.value[msgIndex].reasoning || '') + chunk.reasoning
@@ -1036,12 +1157,10 @@ async function sendMessage() {
         if (chunk.content) {
           messages.value[msgIndex].content += chunk.content
         }
-        // Note: Removed auto-scroll - user can freely scroll while AI is generating
       },
       { model, temperature: 0.7 }
     )
     
-    // Log AI response success
     const duration = Date.now() - startTime
     const responseContent = messages.value[msgIndex].content
     aiLogger.logSuccess('chat.response', 'AI响应完成', {
@@ -1051,7 +1170,6 @@ async function sendMessage() {
       hasReasoning: !!messages.value[msgIndex].reasoning
     })
   } catch (err) {
-    // Log AI error
     const duration = Date.now() - startTime
     aiLogger.logError('chat.error', 'AI请求失败', {
       model,
@@ -1059,7 +1177,6 @@ async function sendMessage() {
       error: err instanceof Error ? err.message : String(err)
     })
     
-    // Remove placeholder and show error
     messages.value.pop()
     messages.value.push({
       role: 'assistant',

@@ -80,7 +80,20 @@ async function listFiles(path: string = ''): Promise<{ success: boolean; files?:
   }
 }
 
-function slugify(text: string): string {
+async function slugifyAsync(text: string): Promise<string> {
+  try {
+    const res = await fetch('/api/utils/slugify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      if (data.slug) return data.slug
+    }
+  } catch (e) {
+    // fallback
+  }
   return text
     .toLowerCase()
     .replace(/[^\w\s-]/g, '')
@@ -88,9 +101,9 @@ function slugify(text: string): string {
     .substring(0, 50)
 }
 
-function generateFileName(title: string): string {
+async function generateFileNameAsync(title: string): Promise<string> {
   const dateStr = new Date().toISOString().split('T')[0]
-  return `${dateStr}-${slugify(title)}.md`
+  return `${dateStr}-${await slugifyAsync(title)}.md`
 }
 
 // ============================================
@@ -165,7 +178,7 @@ ${relatedArticles.map(r => `  - ${r}`).join('\n')}
     
     // 5. 保存文件
     const fullContent = `${frontmatter}\n\n${content.content}`
-    const fileName = generateFileName(topic)
+    const fileName = await generateFileNameAsync(topic)
     const filePath = targetPath || `${section}/${fileName}`
     
     ctx.logger.info('Saving file', { path: filePath })
