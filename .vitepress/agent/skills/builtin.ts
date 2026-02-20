@@ -357,6 +357,11 @@ export const UpdateGraphSkill: Skill = {
   handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
     const { targetPath = ctx.currentFile, discoverNew = true } = params
 
+    // NEW-P1-UG: 检查取消信号
+    if (ctx.signal?.aborted) {
+      return { success: false, error: 'Task cancelled by user', tokensUsed: 0, cost: 0 }
+    }
+
     if (!targetPath) {
       return {
         success: false,
