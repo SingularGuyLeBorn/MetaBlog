@@ -2,11 +2,12 @@
  * Logs API Routes
  * 提供日志查询和统计接口
  * 
- * v6 修复：使用 LogSystemAdapter 替代已删除的 LogSystem
+ * v7 修复：改用 StructuredLogger.server，消除跨边界 import
  */
 import type { ServerResponse } from '../types'
-import { logSystem } from '../../agent/runtime/LogSystemAdapter'
-import type { LogFilter } from '../../agent/runtime/LogSystemAdapter'
+import { getStructuredLogger, type LogQueryFilter, type LogLevel } from '../../agent/runtime/StructuredLogger.server'
+
+const logger = getStructuredLogger()
 
 export async function handleLogsAPI(url: URL, method: string, body?: any): Promise<ServerResponse> {
   const path = url.pathname
@@ -14,9 +15,9 @@ export async function handleLogsAPI(url: URL, method: string, body?: any): Promi
   // GET /api/logs/recent - 获取最近日志
   if (path === '/api/logs/recent' && method === 'GET') {
     const count = parseInt(url.searchParams.get('count') || '100')
-    const level = url.searchParams.get('level') as any
+    const level = url.searchParams.get('level') as LogLevel | undefined
     
-    const logs = await logSystem.getRecent(count, level)
+    const logs = await logger.getRecentLogs(count, level)
     return { 
       success: true, 
       data: logs,
@@ -26,7 +27,7 @@ export async function handleLogsAPI(url: URL, method: string, body?: any): Promi
   
   // GET /api/logs/stats - 获取日志统计
   if (path === '/api/logs/stats' && method === 'GET') {
-    const stats = await logSystem.getStats()
+    const stats = await logger.getStats()
     return { success: true, data: stats }
   }
   
@@ -41,21 +42,34 @@ export async function handleLogsAPI(url: URL, method: string, body?: any): Promi
       }
     }
     
-    await logSystem.add(
-      level || 'info',
-      event,
-      message,
-      actor || 'human',
-      metadata
-    )
+    // 根据级别调用对应方法
+    const upperLevel = (level || 'info').toUpperCase() as LogLevel
+    switch (upperLevel) {
+      case 'DEBUG':
+        logger.debug(event, message, metadata)
+        break
+      case 'WARN':
+        logger.warn(event, message, metadata)
+        break
+      case 'ERROR':
+        logger.error(event, message, metadata)
+        break
+      case 'SUCCESS':
+        logger.success(event, message, metadata)
+        break
+      case 'INFO':
+      default:
+        logger.info(event, message, metadata)
+        break
+    }
     
     return { success: true }
   }
   
   // POST /api/logs/query - 查询日志
   if (path === '/api/logs/query' && method === 'POST') {
-    const filter: LogFilter = body?.filter || {}
-    const logs = await logSystem.query(filter)
+    const filter: LogQueryFilter = body?.filter || {}
+    const logs = await logger.queryLogs(filter)
     return { 
       success: true, 
       data: logs,
@@ -65,19 +79,19 @@ export async function handleLogsAPI(url: URL, method: string, body?: any): Promi
   
   // POST /api/logs/cleanup - 清理旧日志
   if (path === '/api/logs/cleanup' && method === 'POST') {
-    const days = body?.days || 30
-    const deleted = await logSystem.cleanup(days)
+    // Winston 自动处理日志轮转和清理
+    logger.info('log.cleanup', 'Log cleanup requested (handled by winston rotation)')
     return { 
       success: true, 
-      data: { deleted },
-      message: `Cleaned up ${deleted} old log entries`
+      data: { deleted: 0 },
+      message: 'Log cleanup handled by winston rotation'
     }
   }
   
   // GET /api/logs/export - 导出日志
   if (path === '/api/logs/export' && method === 'GET') {
     const format = url.searchParams.get('format') || 'json'
-    const logs = await logSystem.getRecent(10000) // 最多导出10000条
+    const logs = await logger.getRecentLogs(10000) // 最多导出10000条
     
     if (format === 'json') {
       return {
@@ -91,7 +105,7 @@ export async function handleLogsAPI(url: URL, method: string, body?: any): Promi
       const text = logs.map(log => {
         const actorEmoji = log.actor === 'human' ? '👤' : 
                           log.actor === 'ai' ? '🤖' : '⚙️'
-        return `[${log.timestamp}] ${actorEmoji} [${log.actor}] ${log.level.toUpperCase()} | ${log.event} | ${log.message}`
+        return `[${log.timestamp}] ${actorEmoji} [${log.actor}] ${log.level} | ${log.event} | ${log.message}`
       }).join('\n')
       
       return {

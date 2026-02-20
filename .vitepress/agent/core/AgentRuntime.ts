@@ -71,7 +71,7 @@ export class AgentRuntime {
     this.stateMachine = new StateMachine()
     this.memory = getMemoryManager()
     // P1-R1 修复：统一使用 StructuredLogger
-    this.logger = getStructuredLogger()
+    this.logger = getStructuredLogger();
     this.costTracker = new CostTrackerImpl()
     
     this.setupEventListeners()

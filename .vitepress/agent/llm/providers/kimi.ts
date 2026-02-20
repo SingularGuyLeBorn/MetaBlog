@@ -59,6 +59,11 @@ export class KimiProvider extends LLMProvider {
     request: LLMRequest,
     onChunk: (chunk: LLMStreamChunk) => void
   ): Promise<void> {
+    // P0-3: 检查 signal 是否已被中止
+    if (request.signal?.aborted) {
+      throw new Error('Request aborted')
+    }
+
     const response = await fetch(`${this.baseURL}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -72,7 +77,8 @@ export class KimiProvider extends LLMProvider {
         max_tokens: request.maxTokens ?? this.config.maxTokens,
         top_p: request.topP ?? 1,
         stream: true
-      })
+      }),
+      signal: request.signal  // P0-3: 传递 AbortSignal
     })
 
     if (!response.ok) {
@@ -86,8 +92,19 @@ export class KimiProvider extends LLMProvider {
     const decoder = new TextDecoder()
     let buffer = ''
 
+    // P0-3: 监听 abort 事件来取消 reader
+    const abortHandler = () => {
+      reader.cancel('Request aborted').catch(() => {})
+    }
+    request.signal?.addEventListener('abort', abortHandler)
+
     try {
       while (true) {
+        // P0-3: 检查 signal 状态
+        if (request.signal?.aborted) {
+          throw new Error('Request aborted')
+        }
+
         const { done, value } = await reader.read()
         if (done) break
 
@@ -117,6 +134,7 @@ export class KimiProvider extends LLMProvider {
         }
       }
     } finally {
+      request.signal?.removeEventListener('abort', abortHandler)
       reader.releaseLock()
     }
   }

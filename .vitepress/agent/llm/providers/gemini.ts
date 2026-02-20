@@ -39,7 +39,8 @@ export class GeminiProvider extends LLMProvider {
             maxOutputTokens: request.maxTokens ?? this.config.maxTokens,
             topP: request.topP ?? 1
           }
-        })
+        }),
+        signal: request.signal  // P0-3: 传递 AbortSignal
       }
     )
 
@@ -73,6 +74,11 @@ export class GeminiProvider extends LLMProvider {
     request: LLMRequest,
     onChunk: (chunk: LLMStreamChunk) => void
   ): Promise<void> {
+    // P0-3: 检查 signal 是否已被中止
+    if (request.signal?.aborted) {
+      throw new Error('Request aborted')
+    }
+
     const model = request.model || this.config.model
     const contents = this.convertMessages(request.messages)
 
@@ -104,8 +110,19 @@ export class GeminiProvider extends LLMProvider {
 
     const decoder = new TextDecoder()
 
+    // P0-3: 监听 abort 事件来取消 reader
+    const abortHandler = () => {
+      reader.cancel('Request aborted').catch(() => {})
+    }
+    request.signal?.addEventListener('abort', abortHandler)
+
     try {
       while (true) {
+        // P0-3: 检查 signal 状态
+        if (request.signal?.aborted) {
+          throw new Error('Request aborted')
+        }
+
         const { done, value } = await reader.read()
         if (done) break
 
@@ -133,6 +150,7 @@ export class GeminiProvider extends LLMProvider {
         }
       }
     } finally {
+      request.signal?.removeEventListener('abort', abortHandler)
       reader.releaseLock()
     }
   }
