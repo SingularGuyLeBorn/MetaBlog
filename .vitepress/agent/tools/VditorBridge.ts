@@ -24,6 +24,8 @@ export interface Suggestion {
 export class VditorBridge {
   private vditor: any = null
   private listeners: Map<string, Function[]> = new Map()
+  private documentListeners: Array<{ event: string; handler: EventListener }> = []
+  private vditorListeners: Array<{ element: Element; event: string; handler: EventListener }> = []
 
   constructor(vditorInstance?: any) {
     if (vditorInstance) {
@@ -47,6 +49,18 @@ export class VditorBridge {
    * 分离编辑器
    */
   detach(): void {
+    // 清理 document 上的事件监听器
+    this.documentListeners.forEach(({ event, handler }) => {
+      document.removeEventListener(event, handler)
+    })
+    this.documentListeners = []
+    
+    // 清理 vditor 元素上的事件监听器
+    this.vditorListeners.forEach(({ element, event, handler }) => {
+      element.removeEventListener(event, handler)
+    })
+    this.vditorListeners = []
+    
     this.vditor = null
     this.listeners.clear()
   }
@@ -357,24 +371,30 @@ export class VditorBridge {
     if (!this.vditor) return
 
     // 监听 Vditor 的 change 事件
-    const originalInput = this.vditor.vditor.ir?.element?.addEventListener
-    if (originalInput) {
-      this.vditor.vditor.ir.element.addEventListener('input', () => {
+    const vditorElement = this.vditor.vditor.ir?.element
+    if (vditorElement) {
+      const inputHandler = () => {
         this.emit('change', this.getContent())
-      })
+      }
+      vditorElement.addEventListener('input', inputHandler)
+      this.vditorListeners.push({ element: vditorElement, event: 'input', handler: inputHandler })
     }
 
     // 监听键盘事件
-    document.addEventListener('keydown', (e) => {
+    const keydownHandler = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 's') {
         this.emit('save')
       }
-    })
+    }
+    document.addEventListener('keydown', keydownHandler)
+    this.documentListeners.push({ event: 'keydown', handler: keydownHandler as EventListener })
 
     // 监听选区变化
-    document.addEventListener('selectionchange', () => {
+    const selectionHandler = () => {
       this.emit('selectionchange')
-    })
+    }
+    document.addEventListener('selectionchange', selectionHandler)
+    this.documentListeners.push({ event: 'selectionchange', handler: selectionHandler })
   }
 
   private emit(event: string, ...args: any[]): void {

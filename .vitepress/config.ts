@@ -1,37 +1,84 @@
-import { defineConfig } from 'vitepress'
-import { fileURLToPath, URL } from 'node:url'
-import path from 'path'
-import fs from 'fs'
-import { execSync } from 'child_process'
-import MarkdownIt from 'markdown-it'
-import mathjax3 from 'markdown-it-mathjax3'
-import { generateSectionSidebar, clearSidebarCache } from './utils/global-sidebar'
-import { scanDocStructure, toSidebarFormat, toDirectoryTree, DocNode } from './utils/doc-structure'
-import { logSystem } from './agent/runtime/LogSystem'
-import { bootLogger } from './agent/runtime/boot-logger'
+import { defineConfig } from "vitepress";
+import { fileURLToPath, URL } from "node:url";
+import path from "path";
+import fs from "fs";
+import { execSync } from "child_process";
+import MarkdownIt from "markdown-it";
+import mathjax3 from "markdown-it-mathjax3";
+import {
+  generateSectionSidebar,
+  clearSidebarCache,
+} from "./utils/global-sidebar";
+import {
+  scanDocStructure,
+  toSidebarFormat,
+  toDirectoryTree,
+  DocNode,
+} from "./utils/doc-structure";
+import { logSystem } from "./agent/runtime/LogSystem";
+import { bootLogger } from "./agent/runtime/boot-logger";
 
 // 解构日志方法
-const { human, ai, system, recordSystemStartup } = logSystem
+const { system, recordSystemStartup } = logSystem;
 
 // 记录配置加载
-bootLogger.logConfigLoad('config.ts')
+bootLogger.logConfigLoad("config.ts");
+
+// 简化的日志对象（避免缓存问题）
+const structuredLog = {
+  info: (event: string, message: string, data?: any) =>
+    system.info(event, message, { metadata: data }),
+  debug: (event: string, message: string, data?: any) =>
+    system.debug(event, message, { metadata: data }),
+  warn: (event: string, message: string, data?: any) =>
+    system.warn(event, message, { metadata: data }),
+  error: (event: string, message: string, data?: any) =>
+    system.error(event, message, { metadata: data }),
+  success: (event: string, message: string, data?: any) =>
+    system.success(event, message, { metadata: data }),
+  startRequest: () => {},
+  endRequest: () => {},
+  logAPIRequest: () => {},
+  logFileEvent: () => {},
+  logFileOperation: () => {},
+  logSkillExecution: () => {},
+  startLLMChain: () => {},
+  endLLMChain: () => {},
+};
 
 // Helper to calculate word count
 const getWordCount = (content: string) => {
-  return content.split(/\s+/g).length
+  return content.split(/\s+/g).length;
+};
+
+/**
+ * Git operations helper
+ */
+function gitCommit(files: string | string[], message: string) {
+  try {
+    const fileList = Array.isArray(files) ? files : [files];
+    execSync(`git add ${fileList.map((f) => `"${f}"`).join(" ")}`);
+    execSync(`git commit -m "${message}"`);
+  } catch (e) {
+    // Git操作失败不阻断主流程
+  }
 }
 
 /**
  * Format a name for breadcrumb display
  */
 function formatBreadcrumbName(name: string): string {
-  let formatted = name.replace(/[_-]/g, ' ')
-  formatted = formatted.replace(/^(\d+)\s*/, '$1 ')
-  return formatted.split(' ').map(word => {
-    if (!word) return ''
-    if (/^\d+$/.test(word)) return word
-    return word.charAt(0).toUpperCase() + word.slice(1)
-  }).join(' ').trim()
+  let formatted = name.replace(/[_-]/g, " ");
+  formatted = formatted.replace(/^(\d+)\s*/, "$1 ");
+  return formatted
+    .split(" ")
+    .map((word) => {
+      if (!word) return "";
+      if (/^\d+$/.test(word)) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ")
+    .trim();
 }
 
 /**
@@ -39,1323 +86,2274 @@ function formatBreadcrumbName(name: string): string {
  * This handles the "pair rule": folder-name/folder-name.md -> folder-name/index.md
  */
 function generateRewrites(): Record<string, string> {
-  const rewrites: Record<string, string> = {}
-  const sectionsPath = path.resolve(process.cwd(), 'docs/sections')
-  
-  if (!fs.existsSync(sectionsPath)) return rewrites
-  
+  const rewrites: Record<string, string> = {};
+  const sectionsPath = path.resolve(process.cwd(), "docs/sections");
+
+  if (!fs.existsSync(sectionsPath)) return rewrites;
+
   // Scan all sections
-  const sections = fs.readdirSync(sectionsPath, { withFileTypes: true })
-    .filter(d => d.isDirectory())
-  
+  const sections = fs
+    .readdirSync(sectionsPath, { withFileTypes: true })
+    .filter((d) => d.isDirectory());
+
   for (const section of sections) {
-    const sectionPath = path.join(sectionsPath, section.name)
-    scanForRewrites(sectionPath, `sections/${section.name}`, rewrites)
+    const sectionPath = path.join(sectionsPath, section.name);
+    scanForRewrites(sectionPath, `sections/${section.name}`, rewrites);
   }
-  
-  return rewrites
+
+  return rewrites;
 }
 
 /**
  * Recursively scan directory for rewrites
  */
-function scanForRewrites(dirPath: string, relativePath: string, rewrites: Record<string, string>): void {
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true })
-  const dirName = path.basename(dirPath)
-  
+function scanForRewrites(
+  dirPath: string,
+  relativePath: string,
+  rewrites: Record<string, string>,
+): void {
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+  const dirName = path.basename(dirPath);
+
   // Check for same-name.md (pair rule)
-  const sameNameMd = path.join(dirPath, `${dirName}.md`)
-  const indexMd = path.join(dirPath, 'index.md')
-  
+  const sameNameMd = path.join(dirPath, `${dirName}.md`);
+  const indexMd = path.join(dirPath, "index.md");
+
   if (fs.existsSync(sameNameMd)) {
     // Rewrite: folder-name/folder-name.md -> folder-name/index.md
     // This makes /folder-name/ work correctly
-    const source = `${relativePath}/${dirName}.md`
-    const target = `${relativePath}/index.md`
-    rewrites[source] = target
+    const source = `${relativePath}/${dirName}.md`;
+    const target = `${relativePath}/index.md`;
+    rewrites[source] = target;
   }
-  
+
   // Recurse into subdirectories
   for (const entry of entries) {
-    if (entry.isDirectory() && !entry.name.startsWith('.')) {
+    if (entry.isDirectory() && !entry.name.startsWith(".")) {
       scanForRewrites(
         path.join(dirPath, entry.name),
         `${relativePath}/${entry.name}`,
-        rewrites
-      )
+        rewrites,
+      );
     }
   }
 }
 
 export default defineConfig({
   // Source directory for content files
-  srcDir: './docs',
-  
-  lang: 'zh-CN',
+  srcDir: "./docs",
+
+  lang: "zh-CN",
   title: "MetaUniverse Blog",
   description: "数字孪生级知识管理系统",
-  base: '/',
+  base: "/",
   cleanUrls: true,
 
   // Generate rewrites dynamically
   rewrites: generateRewrites(),
-  
+
   themeConfig: {
     nav: [
-      { text: '首页', link: '/' },
-      { text: '文章列表', link: '/sections/posts/', activeMatch: '/sections/posts/' },
-      { text: '知识库', link: '/sections/knowledge/', activeMatch: '/sections/knowledge/' },
-      { text: '公开资源', link: '/sections/resources/', activeMatch: '/sections/resources/' },
-      { text: '关于我', link: '/sections/about/', activeMatch: '/sections/about/' }
+      { text: "首页", link: "/" },
+      {
+        text: "文章列表",
+        link: "/sections/posts/",
+        activeMatch: "/sections/posts/",
+      },
+      {
+        text: "知识库",
+        link: "/sections/knowledge/",
+        activeMatch: "/sections/knowledge/",
+      },
+      {
+        text: "公开资源",
+        link: "/sections/resources/",
+        activeMatch: "/sections/resources/",
+      },
+      {
+        text: "关于我",
+        link: "/sections/about/",
+        activeMatch: "/sections/about/",
+      },
     ],
     sidebar: {
-      '/sections/knowledge/': toSidebarFormat(scanDocStructure(path.resolve(process.cwd(), 'docs/sections/knowledge'))),
-      '/sections/posts/': toSidebarFormat(scanDocStructure(path.resolve(process.cwd(), 'docs/sections/posts'))),
-      '/sections/resources/': toSidebarFormat(scanDocStructure(path.resolve(process.cwd(), 'docs/sections/resources'))),
-      '/sections/about/': toSidebarFormat(scanDocStructure(path.resolve(process.cwd(), 'docs/sections/about')))
+      "/sections/knowledge/": toSidebarFormat(
+        scanDocStructure(
+          path.resolve(process.cwd(), "docs/sections/knowledge"),
+        ),
+      ),
+      "/sections/posts/": toSidebarFormat(
+        scanDocStructure(path.resolve(process.cwd(), "docs/sections/posts")),
+      ),
+      "/sections/resources/": toSidebarFormat(
+        scanDocStructure(
+          path.resolve(process.cwd(), "docs/sections/resources"),
+        ),
+      ),
+      "/sections/about/": toSidebarFormat(
+        scanDocStructure(path.resolve(process.cwd(), "docs/sections/about")),
+      ),
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
+      { icon: "github", link: "https://github.com/vuejs/vitepress" },
     ],
     docFooter: { prev: false, next: false },
-    outline: { 
-      label: '页面导航',
-      level: [2, 4] // Show headers from h2 to h4
+    outline: {
+      label: "页面导航",
+      level: [2, 4], // Show headers from h2 to h4
     },
-    lastUpdated: { text: '最后更新于' },
-    returnToTopLabel: '回到顶部',
-    sidebarMenuLabel: '菜单',
-    darkModeSwitchLabel: '主题',
-    lightModeSwitchTitle: '切换到浅色模式',
-    darkModeSwitchTitle: '切换到深色模式'
+    lastUpdated: { text: "最后更新于" },
+    returnToTopLabel: "回到顶部",
+    sidebarMenuLabel: "菜单",
+    darkModeSwitchLabel: "主题",
+    lightModeSwitchTitle: "切换到浅色模式",
+    darkModeSwitchTitle: "切换到深色模式",
   },
 
   markdown: {
     config: (md: MarkdownIt) => {
-      md.use(mathjax3)
+      md.use(mathjax3);
 
-      const defaultRender = md.renderer.rules.text || function(tokens, idx, options, env, self) {
-        return self.renderToken(tokens, idx, options);
-      };
-      
-      md.renderer.rules.text = function(tokens, idx, options, env, self) {
+      const defaultRender =
+        md.renderer.rules.text ||
+        function (tokens, idx, options, env, self) {
+          return self.renderToken(tokens, idx, options);
+        };
+
+      md.renderer.rules.text = function (tokens, idx, options, env, self) {
         let content = tokens[idx].content;
         const wikiLinkRegex = /\[\[(.*?)\]\]/g;
         if (wikiLinkRegex.test(content)) {
-            return content.replace(wikiLinkRegex, (match, p1) => {
-                const [link, text] = p1.split('|');
-                const displayText = text || link;
-                const url = `/sections/posts/${link.trim().replace(/\s+/g, '-').toLowerCase()}/`;
-                return `<a href="${url}">${displayText}</a>`;
-            });
+          return content.replace(wikiLinkRegex, (match, p1) => {
+            const [link, text] = p1.split("|");
+            const displayText = text || link;
+            const url = `/sections/posts/${link.trim().replace(/\s+/g, "-").toLowerCase()}/`;
+            return `<a href="${url}">${displayText}</a>`;
+          });
         }
         return defaultRender(tokens, idx, options, env, self);
       };
-    }
+    },
   },
   vue: {
     template: {
       compilerOptions: {
-        isCustomElement: (tag: string) => tag.startsWith('mjx-')
-      }
-    }
+        isCustomElement: (tag: string) => tag.startsWith("mjx-"),
+      },
+    },
   },
   vite: {
-    envPrefix: ['VITE_', 'LLM_'],
+    envPrefix: ["VITE_", "LLM_"],
     resolve: {
       alias: [
-        { find: '@', replacement: fileURLToPath(new URL('./theme', import.meta.url)) }
-      ]
+        {
+          find: "@",
+          replacement: fileURLToPath(new URL("./theme", import.meta.url)),
+        },
+      ],
     },
     plugins: [
       {
-        name: 'meta-blog-routing',
+        name: "meta-blog-routing",
         configureServer(server) {
+          /**
+           * Bug Fix: Task 1 - 叶子文档变文件夹后的路由处理
+           *
+           * 问题：当 A.md 变成 A/A.md 后，访问 /sections/posts/A/ 报 404
+           * 原因：VitePress 的 rewrites 在启动时生成，运行时不会更新
+           * 解决：在请求到达 VitePress 之前，动态检测 folder-note 模式，
+           *      将请求重写到 VitePress 的 @fs 路径，让其直接渲染文件
+           */
+
+          // 辅助函数：检查路径是否是 folder-note 模式，返回实际文件路径
+          function getFolderNoteInfo(
+            urlPath: string,
+          ): { filePath: string; folderName: string } | null {
+            if (!urlPath.startsWith("/sections/")) return null;
+
+            const pathParts = urlPath
+              .replace(/\/$/, "")
+              .split("/")
+              .filter(Boolean);
+            if (pathParts.length < 3) return null;
+
+            const section = pathParts[1];
+            const folderPath = pathParts.slice(2).join("/");
+            const targetDir = path.resolve(
+              process.cwd(),
+              "docs/sections",
+              section,
+              folderPath,
+            );
+            const folderName = path.basename(targetDir);
+            const folderNoteFile = path.join(targetDir, `${folderName}.md`);
+            const indexFile = path.join(targetDir, "index.md");
+
+            // 如果是 folder-note 模式（有同名 md 文件但没有 index.md）
+            if (
+              fs.existsSync(targetDir) &&
+              fs.statSync(targetDir).isDirectory()
+            ) {
+              if (fs.existsSync(folderNoteFile) && !fs.existsSync(indexFile)) {
+                return { filePath: folderNoteFile, folderName };
+              }
+            }
+            return null;
+          }
+
           server.middlewares.use((req, res, next) => {
-            const url = req.url || ''
-            
-            // Skip asset requests
-            if (url.includes('_assets') || url.includes('@fs') || url.includes('?') || url.includes('.')) {
-              next()
-              return
+            const url = req.url || "";
+
+            // Skip API and asset requests
+            if (
+              url.startsWith("/api/") ||
+              url.includes("_assets") ||
+              url.includes("@fs") ||
+              url.includes("?") ||
+              url.match(
+                /\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico|json)$/,
+              )
+            ) {
+              next();
+              return;
             }
-            
-            // Redirect paths without trailing slash to have trailing slash
-            // This is crucial for the pair rule to work correctly
-            if (url.startsWith('/sections/') && !url.endsWith('/')) {
-              res.statusCode = 301
-              res.setHeader('Location', url + '/')
-              res.end()
-              return
+
+            // 处理 sections 路径的动态路由
+            if (url.startsWith("/sections/")) {
+              console.log("[Routing] Processing:", url);
+
+              // Redirect paths without trailing slash to have trailing slash
+              if (!url.endsWith("/") && !url.endsWith(".md")) {
+                res.statusCode = 301;
+                res.setHeader("Location", url + "/");
+                res.end();
+                return;
+              }
+
+              // 运行时 folder-note 热更新处理
+              const folderInfo = getFolderNoteInfo(url);
+              if (folderInfo) {
+                // 重写为 VitePress 路由路径（不用 @fs，因为 @fs 绕过了 Markdown 渲染管线）
+                // VitePress 能识别 /sections/posts/.../folder/folder 并找到 folder/folder.md 渲染
+                const urlWithoutSlash = url.replace(/\/$/, "");
+                const folderName = urlWithoutSlash.split("/").pop();
+                const newUrl = `${urlWithoutSlash}/${folderName}`;
+
+                console.log("[Routing] Folder-note detected:", {
+                  original: url,
+                  rewriteTo: newUrl,
+                  filePath: folderInfo.filePath,
+                  exists: fs.existsSync(folderInfo.filePath),
+                });
+
+                req.url = newUrl;
+
+                system.debug(
+                  "routing.rewrite",
+                  `Runtime folder-note rewrite: ${url} -> ${newUrl}`,
+                  {
+                    metadata: {
+                      originalUrl: url,
+                      newUrl,
+                      filePath: folderInfo.filePath,
+                    },
+                  },
+                );
+              } else {
+                console.log("[Routing] Not a folder-note:", url);
+              }
             }
-            
-            next()
-          })
-        }
+
+            next();
+          });
+        },
       },
       {
-        name: 'meta-blog-bff',
+        name: "meta-blog-bff",
         configureServer(server) {
           // 记录系统启动
-          recordSystemStartup()
-          bootLogger.logServerStart(5193, 'localhost')
-          system.info('server.init', 'BFF API Server 初始化完成')
-          bootLogger.logReady()
-          
-          // API请求日志中间件
-          server.middlewares.use('/api/', (req, res, next) => {
-            const startTime = Date.now()
-            const url = req.url || ''
-            
+          recordSystemStartup();
+          bootLogger.logServerStart(5193, "localhost");
+          system.info("server.init", "BFF API Server 初始化完成");
+          bootLogger.logReady();
+
+          // 热更新辅助函数
+          const triggerReload = () => {
+            console.log(
+              "[HMR] Trigger reload called, server.ws exists:",
+              !!server.ws,
+            );
+            setTimeout(() => {
+              if (server.ws) {
+                try {
+                  server.ws.send({ type: "full-reload" });
+                  console.log("[HMR] Triggered full reload successfully");
+                } catch (e) {
+                  console.error("[HMR] Failed to send reload:", e);
+                }
+              } else {
+                console.log(
+                  "[HMR] WebSocket not available, falling back to file watcher",
+                );
+              }
+            }, 500); // 延迟500ms确保文件系统操作完成并稳定
+          };
+
+          // API请求日志中间件 - 使用 system 日志（版本2 - 绕过缓存问题）
+          server.middlewares.use("/api/", (req, res, next) => {
+            const startTime = Date.now();
+            const url = req.url || "";
+
             // 记录请求开始
-            system.debug('api.request', `${req.method} ${url}`, {
-              metadata: { method: req.method, url, headers: req.headers }
-            })
-            
+            system.debug("api.request", `${req.method} ${url}`, {
+              metadata: { method: req.method, url },
+            });
+
             // 监听响应完成
-            const originalEnd = res.end.bind(res)
-            res.end = function(...args: any[]) {
-              const duration = Date.now() - startTime
-              const status = res.statusCode || 200
-              
+            const originalEnd = res.end.bind(res);
+            res.end = function (...args: any[]) {
+              const duration = Date.now() - startTime;
+              const status = res.statusCode || 200;
+
+              // 记录响应
               if (status >= 400) {
-                system.error('api.response', `${req.method} ${url} - ${status} (${duration}ms)`, {
-                  metadata: { method: req.method, url, status, duration }
-                })
+                system.error(
+                  "api.response",
+                  `${req.method} ${url} - ${status} (${duration}ms)`,
+                );
               } else {
-                system.success('api.response', `${req.method} ${url} - ${status} (${duration}ms)`, {
-                  metadata: { method: req.method, url, status, duration }
-                })
+                system.success(
+                  "api.response",
+                  `${req.method} ${url} - ${status} (${duration}ms)`,
+                );
               }
-              
-              return originalEnd(...args)
-            }
-            
-            next()
-          })
-          
-          server.middlewares.use('/api/files/read', (req: any, res: any, next: any) => {
-            if (req.method === 'GET') {
-              const url = new URL(req.url || '', `http://${req.headers.host}`)
-              const filePath = url.searchParams.get('path')
-              if (!filePath) return next()
 
-              const fullPath = path.resolve(process.cwd(), 'docs', filePath.replace(/^\//, ''))
-              if (fs.existsSync(fullPath)) {
-                res.setHeader('Content-Type', 'text/plain')
-                res.end(fs.readFileSync(fullPath, 'utf-8'))
-              } else {
-                res.statusCode = 404
-                res.end('File not found')
-              }
-            } else next()
-          })
+              return originalEnd(...args);
+            };
 
-          server.middlewares.use('/api/files/save', (req, res, next) => {
-             if (req.method === 'POST') {
-                const chunks: Buffer[] = []
-                req.on('data', chunk => chunks.push(chunk))
-                req.on('end', async () => {
-                   try {
-                      const body = JSON.parse(Buffer.concat(chunks).toString())
-                      const { path: filePath, content } = body
-                      
-                      if (!filePath) {
-                         res.statusCode = 400
-                         res.end(JSON.stringify({ success: false, error: 'Path required' }))
-                         return
-                      }
-                      
-                      const fullPath = path.resolve(process.cwd(), 'docs', filePath.replace(/^\//, ''))
-                      
-                      // 确保目录存在
-                      const dir = path.dirname(fullPath)
-                      await fs.promises.mkdir(dir, { recursive: true })
-                      
-                      // 写入文件
-                      await fs.promises.writeFile(fullPath, content, 'utf-8')
-                      
-                      // Git 操作（非阻塞）
-                      try {
-                         execSync(`git add "${fullPath}"`)
-                         execSync(`git commit -m "content: 更新 ${path.basename(fullPath)}"`)
-                      } catch (e) {}
-                      
-                      res.setHeader('Content-Type', 'application/json')
-                      res.end(JSON.stringify({ success: true, message: 'Saved' }))
-                   } catch (error) {
-                      console.error('[API] Save file error:', error)
-                      res.statusCode = 500
-                      res.end(JSON.stringify({ success: false, error: (error as Error).message }))
-                   }
-                })
-             } else next()
-          })
+            next();
+          });
+
+          server.middlewares.use(
+            "/api/files/read",
+            (req: any, res: any, next: any) => {
+              if (req.method === "GET") {
+                const url = new URL(
+                  req.url || "",
+                  `http://${req.headers.host}`,
+                );
+                const filePath = url.searchParams.get("path");
+                if (!filePath) return next();
+
+                const fullPath = path.resolve(
+                  process.cwd(),
+                  "docs",
+                  filePath.replace(/^\//, ""),
+                );
+                if (fs.existsSync(fullPath)) {
+                  res.setHeader("Content-Type", "text/plain");
+                  res.end(fs.readFileSync(fullPath, "utf-8"));
+                } else {
+                  res.statusCode = 404;
+                  res.end("File not found");
+                }
+              } else next();
+            },
+          );
+
+          server.middlewares.use("/api/files/save", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", async () => {
+                const startTime = Date.now();
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { path: filePath, content } = body;
+
+                  if (!filePath) {
+                    res.statusCode = 400;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: "Path required",
+                      }),
+                    );
+                    return;
+                  }
+
+                  const fullPath = path.resolve(
+                    process.cwd(),
+                    "docs",
+                    filePath.replace(/^\//, ""),
+                  );
+
+                  // 确保目录存在
+                  const dir = path.dirname(fullPath);
+                  await fs.promises.mkdir(dir, { recursive: true });
+
+                  // 写入文件
+                  await fs.promises.writeFile(fullPath, content, "utf-8");
+
+                  const duration = Date.now() - startTime;
+
+                  // 记录文件系统事件（暂时使用 system 日志）
+                  system.debug("file.saved", `File saved: ${filePath}`, {
+                    metadata: {
+                      path: filePath,
+                      size: content.length,
+                      duration,
+                    },
+                  });
+
+                  // Git 操作
+                  gitCommit(
+                    fullPath,
+                    `content: 更新 ${path.basename(fullPath)}`,
+                  );
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, message: "Saved" }));
+
+                  // 触发热更新
+                  triggerReload();
+                } catch (error) {
+                  console.error("[API] Save file error:", error);
+                  res.statusCode = 500;
+                  res.end(
+                    JSON.stringify({
+                      success: false,
+                      error: (error as Error).message,
+                    }),
+                  );
+                }
+              });
+            } else next();
+          });
 
           // Rename file - 真正的文件重命名（修改文件名本身）
-          server.middlewares.use('/api/files/rename', (req, res, next) => {
-             if (req.method === 'POST') {
-                const chunks: Buffer[] = []
-                req.on('data', chunk => chunks.push(chunk))
-                req.on('end', () => {
-                   try {
-                      const body = JSON.parse(Buffer.concat(chunks).toString())
-                      const { path: filePath, newName, updateFrontmatter = true } = body
-                      
-                      const dir = path.dirname(filePath)
-                      const ext = path.extname(filePath)
-                      const newFileName = newName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '_') + ext
-                      const newPath = path.join(dir, newFileName)
-                      
-                      const fullOldPath = path.resolve(process.cwd(), 'docs', filePath.replace(/^\//, ''))
-                      const fullNewPath = path.resolve(process.cwd(), 'docs', newPath.replace(/^\//, ''))
-                      
-                      // Check if file exists
-                      if (!fs.existsSync(fullOldPath)) {
-                         res.statusCode = 404
-                         res.end(JSON.stringify({ success: false, error: 'File not found' }))
-                         return
+          server.middlewares.use("/api/files/rename", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const {
+                    path: filePath,
+                    newName,
+                    updateFrontmatter = true,
+                  } = body;
+
+                  const dir = path.dirname(filePath);
+                  const ext = path.extname(filePath);
+                  const newFileName =
+                    newName
+                      .toLowerCase()
+                      .replace(/[^\w\s-]/g, "")
+                      .replace(/\s+/g, "_") + ext;
+                  const newPath = path.join(dir, newFileName);
+
+                  const fullOldPath = path.resolve(
+                    process.cwd(),
+                    "docs",
+                    filePath.replace(/^\//, ""),
+                  );
+                  const fullNewPath = path.resolve(
+                    process.cwd(),
+                    "docs",
+                    newPath.replace(/^\//, ""),
+                  );
+
+                  // Check if file exists
+                  if (!fs.existsSync(fullOldPath)) {
+                    res.statusCode = 404;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: "File not found",
+                      }),
+                    );
+                    return;
+                  }
+
+                  // Check if target already exists
+                  if (fs.existsSync(fullNewPath)) {
+                    res.statusCode = 409;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: "Target file already exists",
+                      }),
+                    );
+                    return;
+                  }
+
+                  let content = fs.readFileSync(fullOldPath, "utf-8");
+
+                  // Update frontmatter title if requested
+                  if (updateFrontmatter) {
+                    if (content.startsWith("---")) {
+                      if (content.match(/title:\s*.+/)) {
+                        content = content.replace(
+                          /title:\s*.+/,
+                          `title: ${newName}`,
+                        );
+                      } else {
+                        content = content.replace(
+                          /---\n/,
+                          `---\ntitle: ${newName}\n`,
+                        );
                       }
-                      
-                      // Check if target already exists
-                      if (fs.existsSync(fullNewPath)) {
-                         res.statusCode = 409
-                         res.end(JSON.stringify({ success: false, error: 'Target file already exists' }))
-                         return
-                      }
-                      
-                      let content = fs.readFileSync(fullOldPath, 'utf-8')
-                      
-                      // Update frontmatter title if requested
-                      if (updateFrontmatter) {
-                         if (content.startsWith('---')) {
-                            if (content.match(/title:\s*.+/)) {
-                               content = content.replace(/title:\s*.+/, `title: ${newName}`)
-                            } else {
-                               content = content.replace(/---\n/, `---\ntitle: ${newName}\n`)
-                            }
-                         } else {
-                            content = `---\ntitle: ${newName}\n---\n\n${content}`
-                         }
-                      }
-                      
-                      // Write to new file
-                      fs.writeFileSync(fullNewPath, content)
-                      
-                      // Delete old file
-                      fs.unlinkSync(fullOldPath)
-                      
-                      // Git operations
-                      try {
-                         execSync(`git add "${fullOldPath}" "${fullNewPath}"`)
-                         execSync(`git commit -m "content: 重命名 ${path.basename(filePath)} -> ${newFileName}"`)
-                      } catch (e) {}
-                      
-                      res.setHeader('Content-Type', 'application/json')
-                      res.end(JSON.stringify({ 
-                         success: true, 
-                         data: { 
-                            oldPath: filePath,
-                            newPath: newPath.replace(/\\/g, '/'),
-                            newName: newFileName,
-                            displayName: newName
-                         }
-                      }))
-                   } catch (e) {
-                      res.statusCode = 500
-                      res.end(JSON.stringify({ success: false, error: String(e) }))
-                   }
-                })
-             } else next()
-          })
+                    } else {
+                      content = `---\ntitle: ${newName}\n---\n\n${content}`;
+                    }
+                  }
+
+                  // Write to new file
+                  fs.writeFileSync(fullNewPath, content);
+
+                  // Delete old file
+                  fs.unlinkSync(fullOldPath);
+
+                  // Git operations
+                  gitCommit(
+                    [fullOldPath, fullNewPath],
+                    `content: 重命名 ${path.basename(filePath)} -> ${newFileName}`,
+                  );
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(
+                    JSON.stringify({
+                      success: true,
+                      data: {
+                        oldPath: filePath,
+                        newPath: newPath.replace(/\\/g, "/"),
+                        newName: newFileName,
+                        displayName: newName,
+                      },
+                    }),
+                  );
+
+                  // 触发热更新
+                  triggerReload();
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
 
           // Move file
-          server.middlewares.use('/api/files/move', (req, res, next) => {
-             if (req.method === 'POST') {
-                const chunks: Buffer[] = []
-                req.on('data', chunk => chunks.push(chunk))
-                req.on('end', () => {
-                   try {
-                      const body = JSON.parse(Buffer.concat(chunks).toString())
-                      const { from: fromPath, to: toPath } = body
-                      const fullFromPath = path.resolve(process.cwd(), 'docs', fromPath.replace(/^\//, ''))
-                      const fullToPath = path.resolve(process.cwd(), 'docs', toPath.replace(/^\//, ''))
-                      
-                      // Ensure target directory exists
-                      fs.mkdirSync(path.dirname(fullToPath), { recursive: true })
-                      
-                      // Move file
-                      fs.renameSync(fullFromPath, fullToPath)
-                      
-                      // Git operations
-                      try {
-                         execSync(`git mv "${fullFromPath}" "${fullToPath}"`)
-                         execSync(`git commit -m "content: 移动 ${path.basename(fromPath)} -> ${path.basename(toPath)}"`)
-                      } catch (e) {
-                         // If git mv fails, try regular add
-                         try {
-                            execSync(`git add "${fullFromPath}" "${fullToPath}"`)
-                            execSync(`git commit -m "content: 移动 ${path.basename(fromPath)} -> ${path.basename(toPath)}"`)
-                         } catch (e2) {}
-                      }
-                      
-                      res.setHeader('Content-Type', 'application/json')
-                      res.end(JSON.stringify({ success: true }))
-                   } catch (e) {
-                      res.statusCode = 500
-                      res.end(JSON.stringify({ error: String(e) }))
-                   }
-                })
-             } else next()
-          })
+          server.middlewares.use("/api/files/move", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { from: fromPath, to: toPath } = body;
+                  const fullFromPath = path.resolve(
+                    process.cwd(),
+                    "docs",
+                    fromPath.replace(/^\//, ""),
+                  );
+                  const fullToPath = path.resolve(
+                    process.cwd(),
+                    "docs",
+                    toPath.replace(/^\//, ""),
+                  );
+
+                  // Ensure target directory exists
+                  fs.mkdirSync(path.dirname(fullToPath), { recursive: true });
+
+                  // Move file
+                  fs.renameSync(fullFromPath, fullToPath);
+
+                  // Git operations
+                  gitCommit(
+                    [fullFromPath, fullToPath],
+                    `content: 移动 ${path.basename(fromPath)} -> ${path.basename(toPath)}`,
+                  );
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true }));
+
+                  // 触发热更新
+                  triggerReload();
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ error: String(e) }));
+                }
+              });
+            } else next();
+          });
 
           // Delete file
-          server.middlewares.use('/api/files/delete', (req, res, next) => {
-             if (req.method === 'POST') {
-                const chunks: Buffer[] = []
-                req.on('data', chunk => chunks.push(chunk))
-                req.on('end', () => {
-                   try {
-                      const body = JSON.parse(Buffer.concat(chunks).toString())
-                      const { path: filePath } = body
-                      const fullPath = path.resolve(process.cwd(), 'docs', filePath.replace(/^\//, ''))
-                      
-                      // Delete file
-                      fs.unlinkSync(fullPath)
-                      
-                      // Git operations
+          server.middlewares.use("/api/files/delete", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { path: filePath } = body;
+                  const fullPath = path.resolve(
+                    process.cwd(),
+                    "docs",
+                    filePath.replace(/^\//, ""),
+                  );
+
+                  // Delete file
+                  fs.unlinkSync(fullPath);
+
+                  // Git operations
+                  gitCommit(
+                    fullPath,
+                    `content: 删除 ${path.basename(filePath)}`,
+                  );
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true }));
+
+                  // 触发热更新
+                  triggerReload();
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ error: String(e) }));
+                }
+              });
+            } else next();
+          });
+
+          // Get file content (for export)
+          server.middlewares.use("/api/files/content", (req, res, next) => {
+            if (req.method === "GET") {
+              try {
+                const url = new URL(
+                  req.url || "",
+                  `http://${req.headers.host}`,
+                );
+                const filePath = url.searchParams.get("path");
+
+                if (!filePath) {
+                  res.statusCode = 400;
+                  res.end(
+                    JSON.stringify({ success: false, error: "Path required" }),
+                  );
+                  return;
+                }
+
+                // Security: prevent directory traversal
+                const cleanPath = filePath
+                  .replace(/\.\./g, "")
+                  .replace(/^\//, "");
+                const fullPath = path.resolve(process.cwd(), "docs", cleanPath);
+
+                if (!fs.existsSync(fullPath)) {
+                  res.statusCode = 404;
+                  res.end(
+                    JSON.stringify({ success: false, error: "File not found" }),
+                  );
+                  return;
+                }
+
+                const content = fs.readFileSync(fullPath, "utf-8");
+                res.setHeader("Content-Type", "text/plain; charset=utf-8");
+                res.end(content);
+              } catch (error) {
+                console.error("[API] Get content error:", error);
+                res.statusCode = 500;
+                res.end(
+                  JSON.stringify({
+                    success: false,
+                    error: (error as Error).message,
+                  }),
+                );
+              }
+            } else next();
+          });
+
+          // Batch export articles
+          server.middlewares.use(
+            "/api/articles/batch-export",
+            (req, res, next) => {
+              if (req.method === "POST") {
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const { paths, format = "md" } = body;
+
+                    if (!paths || !Array.isArray(paths) || paths.length === 0) {
+                      res.statusCode = 400;
+                      res.end(
+                        JSON.stringify({
+                          success: false,
+                          error: "Paths array required",
+                        }),
+                      );
+                      return;
+                    }
+
+                    const JSZip = await import("jszip").then((m) => m.default);
+                    const zip = new JSZip();
+
+                    // Add each file to zip
+                    for (const filePath of paths) {
                       try {
-                         execSync(`git rm "${fullPath}"`)
-                         execSync(`git commit -m "content: 删除 ${path.basename(filePath)}"`)
-                      } catch (e) {}
-                      
-                      res.setHeader('Content-Type', 'application/json')
-                      res.end(JSON.stringify({ success: true }))
-                   } catch (e) {
-                      res.statusCode = 500
-                      res.end(JSON.stringify({ error: String(e) }))
-                   }
-                })
-             } else next()
-          })
+                        const cleanPath = filePath
+                          .replace(/\.html$/, ".md")
+                          .replace(/^\//, "");
+                        const fullPath = path.resolve(
+                          process.cwd(),
+                          "docs",
+                          cleanPath,
+                        );
+
+                        if (fs.existsSync(fullPath)) {
+                          const content = fs.readFileSync(fullPath, "utf-8");
+                          const fileName = path.basename(cleanPath);
+                          zip.file(fileName, content);
+                        }
+                      } catch (e) {
+                        console.error(
+                          `[API] Failed to add file ${filePath}:`,
+                          e,
+                        );
+                      }
+                    }
+
+                    // Generate zip
+                    const zipContent = await zip.generateAsync({
+                      type: "nodebuffer",
+                    });
+
+                    res.setHeader("Content-Type", "application/zip");
+                    res.setHeader(
+                      "Content-Disposition",
+                      `attachment; filename="articles-export-${Date.now()}.zip"`,
+                    );
+                    res.end(zipContent);
+                  } catch (error) {
+                    console.error("[API] Batch export error:", error);
+                    res.statusCode = 500;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: (error as Error).message,
+                      }),
+                    );
+                  }
+                });
+              } else next();
+            },
+          );
 
           // ============================================
           // Agent API Routes - AI-Native Operations
           // ============================================
 
           // Agent 任务提交（区分人工操作）
-          server.middlewares.use('/api/agent/task', (req, res, next) => {
-            if (req.method === 'POST') {
-              const chunks: Buffer[] = []
-              req.on('data', chunk => chunks.push(chunk))
-              req.on('end', () => {
+          server.middlewares.use("/api/agent/task", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", () => {
                 try {
-                  const body = JSON.parse(Buffer.concat(chunks).toString())
-                  const { taskId, content: fileContent, path: filePath, metadata } = body
-                  
-                  const fullPath = path.resolve(process.cwd(), 'docs', filePath.replace(/^\//, ''))
-                  fs.writeFileSync(fullPath, fileContent)
-                  
-                  // Agent 特定的 Git 提交格式
-                  const commitMessage = `agent(${taskId}): ${metadata?.description || 'Auto update'}${metadata?.skill ? ` [${metadata.skill}]` : ''}
->
-> Author: agent
-> Model: ${metadata?.model || 'unknown'}
-> Skill: ${metadata?.skill || 'unknown'}
-> Tokens: ${metadata?.tokens || 0}
-> Cost: $${metadata?.cost || 0}
-> Parent-Task: ${taskId}`
-
-                  try {
-                    execSync(`git add "${fullPath}"`)
-                    execSync(`git commit -m "${commitMessage}"`)
-                  } catch (e) {
-                    console.error('Git commit failed:', e)
-                  }
-                  
-                  // 保存任务状态到 .vitepress/agent/memory/tasks/
-                  const taskDir = path.resolve(process.cwd(), '.vitepress/agent/memory/tasks')
-                  if (!fs.existsSync(taskDir)) {
-                    fs.mkdirSync(taskDir, { recursive: true })
-                  }
-                  const taskFile = path.join(taskDir, `${taskId}.json`)
-                  fs.writeFileSync(taskFile, JSON.stringify({
-                    id: taskId,
-                    status: 'completed',
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const {
+                    taskId,
+                    content: fileContent,
                     path: filePath,
                     metadata,
-                    timestamp: new Date().toISOString()
-                  }, null, 2))
-                  
-                  res.setHeader('Content-Type', 'application/json')
-                  res.end(JSON.stringify({ success: true, taskId }))
+                  } = body;
+
+                  const fullPath = path.resolve(
+                    process.cwd(),
+                    "docs",
+                    filePath.replace(/^\//, ""),
+                  );
+                  fs.writeFileSync(fullPath, fileContent);
+
+                  // Agent 特定的 Git 提交格式
+                  const commitMessage = `agent(${taskId}): ${metadata?.description || "Auto update"}${metadata?.skill ? ` [${metadata.skill}]` : ""}
+>
+> Author: agent
+> Model: ${metadata?.model || "unknown"}
+> Skill: ${metadata?.skill || "unknown"}
+> Tokens: ${metadata?.tokens || 0}
+> Cost: $${metadata?.cost || 0}
+> Parent-Task: ${taskId}`;
+
+                  try {
+                    execSync(`git add "${fullPath}"`);
+                    execSync(`git commit -m "${commitMessage}"`);
+                  } catch (e) {
+                    console.error("Git commit failed:", e);
+                  }
+
+                  // 保存任务状态到 .vitepress/agent/memory/tasks/
+                  const taskDir = path.resolve(
+                    process.cwd(),
+                    ".vitepress/agent/memory/tasks",
+                  );
+                  if (!fs.existsSync(taskDir)) {
+                    fs.mkdirSync(taskDir, { recursive: true });
+                  }
+                  const taskFile = path.join(taskDir, `${taskId}.json`);
+                  fs.writeFileSync(
+                    taskFile,
+                    JSON.stringify(
+                      {
+                        id: taskId,
+                        status: "completed",
+                        path: filePath,
+                        metadata,
+                        timestamp: new Date().toISOString(),
+                      },
+                      null,
+                      2,
+                    ),
+                  );
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, taskId }));
                 } catch (e) {
-                  res.statusCode = 500
-                  res.end(JSON.stringify({ error: String(e) }))
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ error: String(e) }));
                 }
-              })
-            } else next()
-          })
+              });
+            } else next();
+          });
 
           // Agent 上下文初始化
-          server.middlewares.use('/api/agent/context/init', (req, res, next) => {
-            if (req.method === 'POST') {
-              const chunks: Buffer[] = []
-              req.on('data', chunk => chunks.push(chunk))
-              req.on('end', () => {
-                try {
-                  const body = JSON.parse(Buffer.concat(chunks).toString())
-                  const { path: filePath } = body
-                  
-                  // 读取文件历史和相关实体
-                  const contextDir = path.resolve(process.cwd(), '.vitepress/agent/memory')
-                  let entities: any[] = []
-                  let history: any[] = []
-                  
-                  // 尝试读取实体
-                  const entitiesPath = path.join(contextDir, 'entities/concepts.json')
-                  if (fs.existsSync(entitiesPath)) {
-                    const entitiesData = JSON.parse(fs.readFileSync(entitiesPath, 'utf-8'))
-                    entities = Object.values(entitiesData).filter((e: any) => 
-                      e.sources?.includes(filePath)
-                    )
-                  }
-                  
-                  res.setHeader('Content-Type', 'application/json')
-                  res.end(JSON.stringify({
-                    success: true,
-                    context: {
-                      path: filePath,
-                      entities: entities.slice(0, 5),
-                      relatedArticles: entities.length
+          server.middlewares.use(
+            "/api/agent/context/init",
+            (req, res, next) => {
+              if (req.method === "POST") {
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const { path: filePath } = body;
+
+                    // 读取文件历史和相关实体
+                    const contextDir = path.resolve(
+                      process.cwd(),
+                      ".vitepress/agent/memory",
+                    );
+                    let entities: any[] = [];
+                    let history: any[] = [];
+
+                    // 尝试读取实体
+                    const entitiesPath = path.join(
+                      contextDir,
+                      "entities/concepts.json",
+                    );
+                    if (fs.existsSync(entitiesPath)) {
+                      const entitiesData = JSON.parse(
+                        fs.readFileSync(entitiesPath, "utf-8"),
+                      );
+                      entities = Object.values(entitiesData).filter((e: any) =>
+                        e.sources?.includes(filePath),
+                      );
                     }
-                  }))
-                } catch (e) {
-                  res.statusCode = 500
-                  res.end(JSON.stringify({ error: String(e) }))
-                }
-              })
-            } else next()
-          })
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({
+                        success: true,
+                        context: {
+                          path: filePath,
+                          entities: entities.slice(0, 5),
+                          relatedArticles: entities.length,
+                        },
+                      }),
+                    );
+                  } catch (e) {
+                    res.statusCode = 500;
+                    res.end(JSON.stringify({ error: String(e) }));
+                  }
+                });
+              } else next();
+            },
+          );
 
           // Agent 任务状态查询
-          server.middlewares.use('/api/agent/task/status', (req, res, next) => {
-            if (req.method === 'GET') {
-              const url = new URL(req.url || '', `http://${req.headers.host}`)
-              const taskId = url.searchParams.get('id')
-              
+          server.middlewares.use("/api/agent/task/status", (req, res, next) => {
+            if (req.method === "GET") {
+              const url = new URL(req.url || "", `http://${req.headers.host}`);
+              const taskId = url.searchParams.get("id");
+
               if (!taskId) {
-                res.statusCode = 400
-                res.end(JSON.stringify({ error: 'Missing task ID' }))
-                return
+                res.statusCode = 400;
+                res.end(JSON.stringify({ error: "Missing task ID" }));
+                return;
               }
-              
-              const taskFile = path.resolve(process.cwd(), '.vitepress/agent/memory/tasks', `${taskId}.json`)
-              
+
+              const taskFile = path.resolve(
+                process.cwd(),
+                ".vitepress/agent/memory/tasks",
+                `${taskId}.json`,
+              );
+
               if (fs.existsSync(taskFile)) {
-                const taskData = JSON.parse(fs.readFileSync(taskFile, 'utf-8'))
-                res.setHeader('Content-Type', 'application/json')
-                res.end(JSON.stringify(taskData))
+                const taskData = JSON.parse(fs.readFileSync(taskFile, "utf-8"));
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify(taskData));
               } else {
-                res.statusCode = 404
-                res.end(JSON.stringify({ error: 'Task not found' }))
+                res.statusCode = 404;
+                res.end(JSON.stringify({ error: "Task not found" }));
               }
-            } else next()
-          })
+            } else next();
+          });
 
           // Git 日志 API（区分人工和 Agent）
-          server.middlewares.use('/api/git/log', (req, res, next) => {
-            if (req.method === 'GET') {
+          server.middlewares.use("/api/git/log", (req, res, next) => {
+            if (req.method === "GET") {
               try {
-                const logOutput = execSync('git log --pretty=format:\'{"hash":"%H","message":"%s","date":"%ai","author":"%an"}\' -20', 
-                  { encoding: 'utf-8', cwd: process.cwd() }
-                )
-                const logs = logOutput.split('\n')
-                  .filter(line => line.trim())
-                  .map(line => {
+                const logOutput = execSync(
+                  'git log --pretty=format:\'{"hash":"%H","message":"%s","date":"%ai","author":"%an"}\' -20',
+                  { encoding: "utf-8", cwd: process.cwd() },
+                );
+                const logs = logOutput
+                  .split("\n")
+                  .filter((line) => line.trim())
+                  .map((line) => {
                     try {
-                      return JSON.parse(line)
+                      return JSON.parse(line);
                     } catch {
-                      return null
+                      return null;
                     }
                   })
-                  .filter(Boolean)
-                
-                res.setHeader('Content-Type', 'application/json')
-                res.end(JSON.stringify(logs))
+                  .filter(Boolean);
+
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify(logs));
               } catch (e) {
-                res.statusCode = 500
-                res.end(JSON.stringify({ error: 'Failed to get git log' }))
+                res.statusCode = 500;
+                res.end(JSON.stringify({ error: "Failed to get git log" }));
               }
-            } else next()
-          })
+            } else next();
+          });
 
           // ============================================
           // Dynamic Sidebar API - 动态侧边栏
           // ============================================
-          
+
           // 动态 Sidebar API - 返回实时的文件结构
-          server.middlewares.use('/api/sidebar', async (req, res, next) => {
-            if (req.method === 'GET') {
+          server.middlewares.use("/api/sidebar", async (req, res, next) => {
+            if (req.method === "GET") {
               try {
-                const url = new URL(req.url || '', `http://${req.headers.host}`)
-                const section = url.searchParams.get('section') || 'posts'
-                
+                const url = new URL(
+                  req.url || "",
+                  `http://${req.headers.host}`,
+                );
+                const section = url.searchParams.get("section") || "posts";
+
                 // 使用新的文档结构扫描
-                const nodes = scanDocStructure(path.resolve(process.cwd(), 'docs/sections', section))
-                const sidebarData = toSidebarFormat(nodes)
-                
-                res.setHeader('Content-Type', 'application/json')
-                res.setHeader('Cache-Control', 'no-cache')
-                res.end(JSON.stringify({
-                  success: true,
-                  data: sidebarData,
-                  timestamp: Date.now()
-                }))
+                const nodes = scanDocStructure(
+                  path.resolve(process.cwd(), "docs/sections", section),
+                );
+                const sidebarData = toSidebarFormat(nodes);
+
+                res.setHeader("Content-Type", "application/json");
+                res.setHeader("Cache-Control", "no-cache");
+                res.end(
+                  JSON.stringify({
+                    success: true,
+                    data: sidebarData,
+                    timestamp: Date.now(),
+                  }),
+                );
               } catch (e) {
-                console.error('[API] Sidebar error:', e)
-                res.statusCode = 500
-                res.end(JSON.stringify({ success: false, error: 'Failed to generate sidebar' }))
+                console.error("[API] Sidebar error:", e);
+                res.statusCode = 500;
+                res.end(
+                  JSON.stringify({
+                    success: false,
+                    error: "Failed to generate sidebar",
+                  }),
+                );
               }
-            } else next()
-          })
-          
+            } else next();
+          });
+
           // 目录树 API - 返回前端选择器需要的格式
-          server.middlewares.use('/api/directory-tree', async (req, res, next) => {
-            if (req.method === 'GET') {
-              try {
-                const url = new URL(req.url || '', `http://${req.headers.host}`)
-                const section = url.searchParams.get('section') || 'posts'
-                
-                const nodes = scanDocStructure(path.resolve(process.cwd(), 'docs/sections', section))
-                const treeData = toDirectoryTree(nodes)
-                
-                res.setHeader('Content-Type', 'application/json')
-                res.end(JSON.stringify({
-                  success: true,
-                  data: treeData
-                }))
-              } catch (e) {
-                console.error('[API] Directory tree error:', e)
-                res.statusCode = 500
-                res.end(JSON.stringify({ success: false, error: 'Failed to generate directory tree' }))
-              }
-            } else next()
-          })
-          
+          server.middlewares.use(
+            "/api/directory-tree",
+            async (req, res, next) => {
+              if (req.method === "GET") {
+                try {
+                  const url = new URL(
+                    req.url || "",
+                    `http://${req.headers.host}`,
+                  );
+                  const section = url.searchParams.get("section") || "posts";
+
+                  const nodes = scanDocStructure(
+                    path.resolve(process.cwd(), "docs/sections", section),
+                  );
+                  const treeData = toDirectoryTree(nodes);
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(
+                    JSON.stringify({
+                      success: true,
+                      data: treeData,
+                    }),
+                  );
+                } catch (e) {
+                  console.error("[API] Directory tree error:", e);
+                  res.statusCode = 500;
+                  res.end(
+                    JSON.stringify({
+                      success: false,
+                      error: "Failed to generate directory tree",
+                    }),
+                  );
+                }
+              } else next();
+            },
+          );
+
           // ============================================
           // Articles API - 文章管理
           // ============================================
-          
-          const SECTIONS_PATH = path.join(process.cwd(), 'docs/sections')
-          
-          // 生成 URL 友好的 slug
+
+          const SECTIONS_PATH = path.join(process.cwd(), "docs/sections");
+
+          // 生成 URL 友好的 slug（保留中文）
           function generateSlug(title: string): string {
-            if (!title || !title.trim()) return 'untitled'
-            
-            // 对中文进行简单拼音化处理（使用常见的多音字映射）
-            const pinyinMap: Record<string, string> = {
-              '的': 'de', '是': 'shi', '了': 'le', '在': 'zai', '我': 'wo',
-              '有': 'you', '和': 'he', '就': 'jiu', '不': 'bu', '人': 'ren',
-              '都': 'dou', '一': 'yi', '一个': 'yige', '上': 'shang', '也': 'ye',
-              '来': 'lai', '到': 'dao', '时': 'shi', '大': 'da', '地': 'di',
-              '为': 'wei', '中': 'zhong', '你': 'ni', '说': 'shuo', '生': 'sheng',
-              '国': 'guo', '年': 'nian', '着': 'zhe', '就': 'jiu', '那': 'na',
-              '要': 'yao', '出': 'chu', '也': 'ye', '得': 'de', '里': 'li',
-              '后': 'hou', '自': 'zi', '以': 'yi', '会': 'hui', '家': 'jia',
-              '可': 'ke', '下': 'xia', '而': 'er', '过': 'guo', '天': 'tian',
-              '去': 'qu', '能': 'neng', '对': 'dui', '小': 'xiao', '多': 'duo',
-              '然': 'ran', '于': 'yu', '心': 'xin', '学': 'xue', '之': 'zhi',
-              '看': 'kan', '发': 'fa', '把': 'ba', '只': 'zhi', '如': 'ru',
-              '样': 'yang', '文': 'wen', '章': 'zhang', '标': 'biao', '题': 'ti',
-              '测': 'ce', '试': 'shi', '内': 'nei', '容': 'rong', '创': 'chuang',
-              '建': 'jian', '父': 'fu', '子': 'zi', '档': 'dang', '案': 'an',
-              '英': 'ying', '问': 'wen', '读': 'du', '笔': 'bi', '记': 'ji',
-              '中': 'zhong', '文': 'wen', '分': 'fen', '享': 'xiang', '技': 'ji',
-              '术': 'shu', '日': 'ri', '常': 'chang', '生': 'sheng', '活': 'huo',
-              '工': 'gong', '作': 'zuo', '学': 'xue', '习': 'xi', '心': 'xin',
-              '得': 'de', '开': 'kai', '发': 'fa', '程': 'cheng', '序': 'xu',
-              '设': 'she', '计': 'ji', '模': 'mo', '式': 'shi', '架': 'jia',
-              '构': 'gou', '优': 'you', '化': 'hua', '性': 'xing', '能': 'neng',
-              '安': 'an', '全': 'quan', '网': 'wang', '络': 'luo', '数': 'shu',
-              '据': 'ju', '库': 'ku', '服': 'fu', '务': 'wu', '器': 'qi',
-              '端': 'duan', '前': 'qian', '页': 'ye', '面': 'mian', '组': 'zu',
-              '件': 'jian', '框': 'kuang', '应': 'ying', '用': 'yong', '系': 'xi',
-              '统': 'tong', '平': 'ping', '台': 'tai', '工': 'gong', '具': 'ju',
-              '配': 'pei', '置': 'zhi', '环': 'huan', '境': 'jing', '变': 'bian',
-              '量': 'liang', '版': 'ban', '本': 'ben', '控': 'kong', '制': 'zhi',
-              '源': 'yuan', '码': 'ma', '码': 'ma', '编': 'bian', '译': 'yi',
-              '构': 'gou', '建': 'jian', '部': 'bu', '署': 'shu', '发': 'fa',
-              '布': 'bu', '版': 'ban', '本': 'ben', '更': 'geng', '新': 'xin',
-              '维': 'wei', '护': 'hu', '文': 'wen', '档': 'dang', '说': 'shuo',
-              '明': 'ming', '介': 'jie', '绍': 'shao', '教': 'jiao', '程': 'cheng',
-              '指': 'zhi', '南': 'nan', '参': 'can', '考': 'kao', '手': 'shou',
-              '册': 'ce', '常': 'chang', '见': 'jian', '问': 'wen', '题': 'ti',
-              '解': 'jie', '答': 'da', '排': 'pai', '错': 'cuo', '调': 'tiao',
-              '试': 'shi', '测': 'ce', '试': 'shi', '验': 'yan', '证': 'zheng',
-              '验': 'yan', '结': 'jie', '果': 'guo', '报': 'bao', '告': 'gao',
-              '分': 'fen', '析': 'xi', '总': 'zong', '结': 'jie', '评': 'ping',
-              '估': 'gu', '预': 'yu', '测': 'ce', '规': 'gui', '划': 'hua',
-              '计': 'ji', '划': 'hua', '实': 'shi', '施': 'shi', '执': 'zhi',
-              '行': 'xing', '操': 'cao', '作': 'zuo', '方': 'fang', '法': 'fa',
-              '步': 'bu', '骤': 'zhou', '流': 'liu', '程': 'cheng', '图': 'tu',
-              '表': 'biao', '单': 'dan', '列': 'lie', '清': 'qing', '项': 'xiang',
-              '目': 'mu', '任': 'ren', '务': 'wu', '计': 'ji', '时': 'shi',
-              '间': 'jian', '日': 'ri', '期': 'qi', '周': 'zhou', '月': 'yue',
-              '年': 'nian', '代': 'dai', '纪': 'ji', '元': 'yuan', '第': 'di',
-              '二': 'er', '三': 'san', '四': 'si', '五': 'wu', '六': 'liu',
-              '七': 'qi', '八': 'ba', '九': 'jiu', '十': 'shi', '百': 'bai',
-              '千': 'qian', '万': 'wan', '亿': 'yi', '零': 'ling', '半': 'ban',
-              '双': 'shuang', '整': 'zheng', '正': 'zheng', '负': 'fu', '加': 'jia',
-              '减': 'jian', '乘': 'cheng', '除': 'chu', '等': 'deng', '于': 'yu',
-              '大': 'da', '小': 'xiao', '多': 'duo', '少': 'shao', '高': 'gao',
-              '低': 'di', '长': 'chang', '短': 'duan', '快': 'kuai', '慢': 'man',
-              '好': 'hao', '坏': 'huai', '新': 'xin', '旧': 'jiu', '老': 'lao',
-              '始': 'shi', '终': 'zhong', '开': 'kai', '关': 'guan', '入': 'ru',
-              '出': 'chu', '进': 'jin', '退': 'tui', '上': 'shang', '下': 'xia',
-              '左': 'zuo', '右': 'you', '东': 'dong', '西': 'xi', '南': 'nan',
-              '北': 'bei', '中': 'zhong', '外': 'wai', '内': 'nei', '里': 'li',
-              '间': 'jian', '旁': 'pang', '边': 'bian', '面': 'mian', '方': 'fang',
-              '角': 'jiao', '圆': 'yuan', '点': 'dian', '线': 'xian', '条': 'tiao',
-              '块': 'kuai', '片': 'pian', '段': 'duan', '层': 'ceng', '级': 'ji',
-              '等': 'deng', '类': 'lei', '种': 'zhong', '样': 'yang', '式': 'shi',
-              '型': 'xing', '号': 'hao', '类': 'lei', '别': 'bie', '属': 'shu',
-              '性': 'xing', '质': 'zhi', '特': 'te', '征': 'zheng', '形': 'xing',
-              '状': 'zhuang', '态': 'tai', '情': 'qing', '况': 'kuang', '景': 'jing',
-              '象': 'xiang', '现': 'xian', '实': 'shi', '真': 'zhen', '假': 'jia',
-              '虚': 'xu', '幻': 'huan', '空': 'kong', '实': 'shi', '体': 'ti',
-              '物': 'wu', '品': 'pin', '事': 'shi', '件': 'jian', '故': 'gu',
-              '障': 'zhang', '问': 'wen', '题': 'ti', '难': 'nan', '点': 'dian',
-              '重': 'zhong', '点': 'dian', '关': 'guan', '键': 'jian', '核': 'he',
-              '心': 'xin', '基': 'ji', '础': 'chu', '本': 'ben', '根': 'gen',
-              '源': 'yuan', '起': 'qi', '因': 'yin', '由': 'you', '缘': 'yuan',
-              '故': 'gu', '理': 'li', '由': 'you', '道': 'dao', '路': 'lu',
-              '途': 'tu', '径': 'jing', '线': 'xian', '道': 'dao', '方': 'fang',
-              '向': 'xiang', '目': 'mu', '的': 'de', '标': 'biao', '指': 'zhi',
-              '导': 'dao', '引': 'yin', '领': 'ling', '导': 'dao', '向': 'xiang',
-              '趋': 'qu', '势': 'shi', '动': 'dong', '向': 'xiang', '态': 'tai',
-              '势': 'shi', '格': 'ge', '局': 'ju', '面': 'mian', '貌': 'mao',
-              '相': 'xiang', '貌': 'mao', '外': 'wai', '观': 'guan', '表': 'biao',
-              '现': 'xian', '示': 'shi', '显': 'xian', '露': 'lu', '展': 'zhan',
-              '示': 'shi', '呈': 'cheng', '现': 'xian', '出': 'chu', '产': 'chan',
-              '生': 'sheng', '成': 'cheng', '形': 'xing', '造': 'zao', '制': 'zhi',
-              '造': 'zao', '建': 'jian', '设': 'she', '立': 'li', '确': 'que',
-              '定': 'ding', '决': 'jue', '定': 'ding', '定': 'ding', '义': 'yi',
-              '规': 'gui', '定': 'ding', '约': 'yue', '定': 'ding', '协': 'xie',
-              '议': 'yi', '合': 'he', '同': 'tong', '契': 'qi', '约': 'yue',
-              '条': 'tiao', '款': 'kuan', '条': 'tiao', '件': 'jian', '规': 'gui',
-              '则': 'ze', '原': 'yuan', '则': 'ze', '准': 'zhun', '标': 'biao',
-              '准': 'zhun', '规': 'gui', '范': 'fan', '要': 'yao', '求': 'qiu',
-              '需': 'xu', '求': 'qiu', '需': 'xu', '要': 'yao', '必': 'bi',
-              '须': 'xu', '必': 'bi', '需': 'xu', '必': 'bi', '定': 'ding',
-              '肯': 'ken', '定': 'ding', '否': 'fou', '定': 'ding', '或': 'huo',
-              '与': 'yu', '及': 'ji', '以': 'yi', '及': 'ji', '或': 'huo',
-              '者': 'zhe', '但': 'dan', '是': 'shi', '而': 'er', '且': 'qie',
-              '因': 'yin', '为': 'wei', '所': 'suo', '以': 'yi', '因': 'yin',
-              '此': 'ci', '如': 'ru', '果': 'guo', '假': 'jia', '设': 'she',
-              '即': 'ji', '使': 'shi', '虽': 'sui', '然': 'ran', '尽': 'jin',
-              '管': 'guan', '不': 'bu', '管': 'guan', '不': 'bu', '论': 'lun',
-              '无': 'wu', '论': 'lun', '只': 'zhi', '要': 'yao', '除': 'chu',
-              '非': 'fei', '除': 'chu', '了': 'le', '之': 'zhi', '外': 'wai',
-              '除': 'chu', '此': 'ci', '以': 'yi', '外': 'wai', '另': 'ling',
-              '外': 'wai', '还': 'huan', '有': 'you', '并': 'bing', '且': 'qie',
-              '而': 'er', '且': 'qie', '况': 'kuang', '且': 'qie', '何': 'he',
-              '况': 'kuang', '更': 'geng', '不': 'bu', '用': 'yong', '说': 'shuo',
-              '了': 'le', '总': 'zong', '之': 'zhi', '综': 'zong', '上': 'shang',
-              '所': 'suo', '述': 'shu', '由': 'you', '此': 'ci', '可': 'ke',
-              '见': 'jian', '可': 'ke', '见': 'jian', '可': 'ke', '知': 'zhi',
-              '足': 'zu', '见': 'jian', '显': 'xian', '而': 'er', '易': 'yi',
-              '见': 'jian', '显': 'xian', '然': 'ran', '明': 'ming', '显': 'xian',
-              '明': 'ming', '白': 'bai', '清': 'qing', '楚': 'chu', '明': 'ming',
-              '了': 'liao', '清': 'qing', '晰': 'xi', '明': 'ming', '确': 'que',
-              '准': 'zhun', '确': 'que', '精': 'jing', '确': 'que', '正': 'zheng',
-              '确': 'que', '准': 'zhun', '确': 'que', '正': 'zheng', '当': 'dang',
-              '合': 'he', '适': 'shi', '适': 'shi', '当': 'dang', '恰': 'qia',
-              '当': 'dang', '妥': 'tuo', '当': 'dang', '恰': 'qia', '好': 'hao',
-              '正': 'zheng', '好': 'hao', '刚': 'gang', '好': 'hao', '适': 'shi',
-              '逢': 'feng', '正': 'zheng', '巧': 'qiao', '恰': 'qia', '巧': 'qiao',
-              '偶': 'ou', '然': 'ran', '偶': 'ou', '尔': 'er', '间': 'jian',
-              '或': 'huo', '时': 'shi', '常': 'chang', '经': 'jing', '常': 'chang',
-              '常': 'chang', '常': 'chang', '通': 'tong', '常': 'chang', '平': 'ping',
-              '常': 'chang', '普': 'pu', '通': 'tong', '一': 'yi', '般': 'ban',
-              '普': 'pu', '遍': 'bian', '广': 'guang', '泛': 'fan', '大': 'da',
-              '量': 'liang', '多': 'duo', '数': 'shu', '大': 'da', '部': 'bu',
-              '分': 'fen', '主': 'zhu', '要': 'yao', '重': 'zhong', '要': 'yao',
-              '关': 'guan', '键': 'jian', '紧': 'jin', '要': 'yao', '紧': 'jin',
-              '迫': 'po', '急': 'ji', '迫': 'po', '紧': 'jin', '急': 'ji',
-              '危': 'wei', '急': 'ji', '紧': 'jin', '张': 'zhang', '严': 'yan',
-              '重': 'zhong', '危': 'wei', '重': 'zhong', '严': 'yan', '峻': 'jun',
-              '严': 'yan', '厉': 'li', '严': 'yan', '格': 'ge', '严': 'yan',
-              '密': 'mi', '严': 'yan', '谨': 'jin', '严': 'yan', '肃': 'su',
-              '庄': 'zhuang', '重': 'zhong', '郑': 'zheng', '重': 'zhong', '慎': 'shen',
-              '重': 'zhong', '谨': 'jin', '慎': 'shen', '小': 'xiao', '心': 'xin',
-              '仔': 'zi', '细': 'xi', '细': 'xi', '致': 'zhi', '详': 'xiang',
-              '细': 'xi', '详': 'xiang', '尽': 'jin', '周': 'zhou', '详': 'xiang',
-              '周': 'zhou', '密': 'mi', '严': 'yan', '密': 'mi', '全': 'quan',
-              '面': 'mian', '完': 'wan', '整': 'zheng', '完': 'wan', '备': 'bei',
-              '齐': 'qi', '全': 'quan', '完': 'wan', '善': 'shan', '美': 'mei',
-              '完': 'wan', '美': 'mei', '完': 'wan', '好': 'hao', '良': 'liang',
-              '好': 'hao', '优': 'you', '良': 'liang', '优': 'you', '秀': 'xiu',
-              '出': 'chu', '色': 'se', '杰': 'jie', '出': 'chu', '卓': 'zhuo',
-              '越': 'yue', '卓': 'zhuo', '著': 'zhu', '显': 'xian', '著': 'zhu',
-              '明': 'ming', '显': 'xian', '突': 'tu', '出': 'chu', '重': 'zhong',
-              '点': 'dian', '核': 'he', '心': 'xin', '关': 'guan', '键': 'jian'
-            }
-            
-            // 将中文转换为拼音
+            if (!title || !title.trim()) return "untitled";
+
+            // 只替换不安全的文件系统字符，保留中文
+            // 替换: / \ : * ? " < > | 为 -
             let result = title
-              .split('')
-              .map(char => pinyinMap[char] || char)
-              .join('')
-            
-            // 清理特殊字符，保留字母数字和空格
-            result = result
-              .toLowerCase()
-              .replace(/[^a-z0-9\s-]/gi, '')
               .trim()
-            
-            if (!result) return 'untitled'
-            
-            result = result.replace(/\s+/g, '-')
-            result = result.replace(/-+/g, '-')
-            result = result.replace(/^-|-$/g, '')
-            result = result.substring(0, 50)
-            
-            return result || 'untitled'
+              .replace(/[\\/*?:"<>|]/g, "-") // 替换非法字符为连字符
+              .replace(/\s+/g, "-") // 空格转连字符
+              .replace(/-+/g, "-") // 多个连字符合并
+              .replace(/^-|-$/g, "") // 去除首尾连字符
+              .substring(0, 100); // 限制长度
+
+            return result || "untitled";
           }
-          
+
           // 递归扫描文章
-          async function scanArticles(dir: string, basePath: string = ''): Promise<any[]> {
-            const articles: any[] = []
+          async function scanArticles(
+            dir: string,
+            basePath: string = "",
+          ): Promise<any[]> {
+            const articles: any[] = [];
             try {
-              const entries = await fs.promises.readdir(dir, { withFileTypes: true })
+              const entries = await fs.promises.readdir(dir, {
+                withFileTypes: true,
+              });
               for (const entry of entries) {
-                const fullPath = path.join(dir, entry.name)
-                const relativePath = path.join(basePath, entry.name)
-                if (entry.isDirectory() && !entry.name.startsWith('.')) {
-                  const subArticles = await scanArticles(fullPath, relativePath)
-                  articles.push(...subArticles)
-                } else if (entry.isFile() && entry.name.endsWith('.md') && entry.name !== 'index.md') {
-                  const content = await fs.promises.readFile(fullPath, 'utf-8')
-                  const meta = extractArticleMeta(content, relativePath)
-                  articles.push(meta)
+                const fullPath = path.join(dir, entry.name);
+                const relativePath = path.join(basePath, entry.name);
+                if (entry.isDirectory() && !entry.name.startsWith(".")) {
+                  const subArticles = await scanArticles(
+                    fullPath,
+                    relativePath,
+                  );
+                  articles.push(...subArticles);
+                } else if (
+                  entry.isFile() &&
+                  entry.name.endsWith(".md") &&
+                  entry.name !== "index.md"
+                ) {
+                  const content = await fs.promises.readFile(fullPath, "utf-8");
+                  const meta = extractArticleMeta(content, relativePath);
+                  articles.push(meta);
                 }
               }
             } catch (e) {}
-            return articles
+            return articles;
           }
-          
+
           // 提取文章元数据
           function extractArticleMeta(content: string, relativePath: string) {
-            const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/)
-            const meta: any = {}
+            const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+            const meta: any = {};
             if (frontmatterMatch) {
-              frontmatterMatch[1].split('\n').forEach((line: string) => {
-                const match = line.match(/^(\w+):\s*(.+)$/)
-                if (match) meta[match[1]] = match[2].replace(/^["']|["']$/g, '')
-              })
+              frontmatterMatch[1].split("\n").forEach((line: string) => {
+                const match = line.match(/^(\w+):\s*(.+)$/);
+                if (match)
+                  meta[match[1]] = match[2].replace(/^["']|["']$/g, "");
+              });
             }
-            const titleMatch = content.match(/^#\s+(.+)$/m)
-            const title = meta.title || titleMatch?.[1] || path.basename(relativePath, '.md')
+            const titleMatch = content.match(/^#\s+(.+)$/m);
+            const title =
+              meta.title ||
+              titleMatch?.[1] ||
+              path.basename(relativePath, ".md");
             return {
-              path: relativePath.replace(/\\/g, '/'),
+              path: relativePath.replace(/\\/g, "/"),
               title,
               description: meta.description,
-              tags: meta.tags ? meta.tags.split(',').map((t: string) => t.trim()) : [],
+              tags: meta.tags
+                ? meta.tags.split(",").map((t: string) => t.trim())
+                : [],
               date: meta.date,
               updatedAt: meta.updatedAt,
-              wordCount: content.replace(/\s+/g, '').length,
-              isPublished: !relativePath.includes('/drafts/')
-            }
+              wordCount: content.replace(/\s+/g, "").length,
+              isPublished: !relativePath.includes("/drafts/"),
+            };
           }
-          
+
           // 辅助函数：从 DocNode 树扁平化为文章列表
           function flattenArticles(nodes: DocNode[]): any[] {
-            const articles: any[] = []
-            
+            const articles: any[] = [];
+
             for (const node of nodes) {
-              if (node.type === 'file') {
+              if (node.type === "file") {
                 // 叶子文件
                 articles.push({
                   path: node.path,
                   title: node.title,
-                  isLeaf: true
-                })
-              } else if (node.type === 'folder' && node.children) {
+                  isLeaf: true,
+                });
+              } else if (node.type === "folder" && node.children) {
                 // 递归处理子项
-                articles.push(...flattenArticles(node.children))
+                articles.push(...flattenArticles(node.children));
               }
             }
-            
-            return articles
+
+            return articles;
           }
-          
+
           // 文章列表
-          server.middlewares.use('/api/articles/list', async (req, res, next) => {
-            if (req.method === 'GET') {
-              try {
-                // 扫描所有 section
-                const allArticles: any[] = []
-                const sections = ['posts', 'knowledge', 'resources', 'about']
-                
-                for (const section of sections) {
-                  const sectionPath = path.join(SECTIONS_PATH, section)
-                  if (fs.existsSync(sectionPath)) {
-                    const nodes = scanDocStructure(sectionPath)
-                    const articles = flattenArticles(nodes).map(a => ({
-                      ...a,
-                      path: `${section}/${a.path}`
-                    }))
-                    allArticles.push(...articles)
+          server.middlewares.use(
+            "/api/articles/list",
+            async (req, res, next) => {
+              if (req.method === "GET") {
+                try {
+                  // 扫描所有 section
+                  const allArticles: any[] = [];
+                  const sections = ["posts", "knowledge", "resources", "about"];
+
+                  for (const section of sections) {
+                    const sectionPath = path.join(SECTIONS_PATH, section);
+                    if (fs.existsSync(sectionPath)) {
+                      const nodes = scanDocStructure(sectionPath);
+                      const articles = flattenArticles(nodes).map((a) => ({
+                        ...a,
+                        path: `${section}/${a.path}`,
+                      }));
+                      allArticles.push(...articles);
+                    }
                   }
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(
+                    JSON.stringify({
+                      success: true,
+                      data: allArticles,
+                    }),
+                  );
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(
+                    JSON.stringify({
+                      success: false,
+                      error: "Failed to list articles",
+                    }),
+                  );
                 }
-                
-                res.setHeader('Content-Type', 'application/json')
-                res.end(JSON.stringify({
-                  success: true,
-                  data: allArticles
-                }))
-              } catch (e) {
-                res.statusCode = 500
-                res.end(JSON.stringify({ success: false, error: 'Failed to list articles' }))
-              }
-            } else next()
-          })
-          
+              } else next();
+            },
+          );
+
           // 搜索文章
-          server.middlewares.use('/api/articles/search', async (req, res, next) => {
-            if (req.method === 'GET') {
-              const url = new URL(req.url || '', `http://${req.headers.host}`)
-              const q = url.searchParams.get('q')
-              try {
-                const articles = await scanArticles(SECTIONS_PATH)
-                const query = (q || '').toLowerCase()
-                const results = articles.filter(a => 
-                  a.title.toLowerCase().includes(query) ||
-                  a.description?.toLowerCase().includes(query)
-                )
-                res.setHeader('Content-Type', 'application/json')
-                res.end(JSON.stringify({ success: true, data: results }))
-              } catch (e) {
-                res.statusCode = 500
-                res.end(JSON.stringify({ success: false, error: 'Failed to search articles' }))
-              }
-            } else next()
-          })
-          
+          server.middlewares.use(
+            "/api/articles/search",
+            async (req, res, next) => {
+              if (req.method === "GET") {
+                const url = new URL(
+                  req.url || "",
+                  `http://${req.headers.host}`,
+                );
+                const q = url.searchParams.get("q");
+                try {
+                  const articles = await scanArticles(SECTIONS_PATH);
+                  const query = (q || "").toLowerCase();
+                  const results = articles.filter(
+                    (a) =>
+                      a.title.toLowerCase().includes(query) ||
+                      a.description?.toLowerCase().includes(query),
+                  );
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: results }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(
+                    JSON.stringify({
+                      success: false,
+                      error: "Failed to search articles",
+                    }),
+                  );
+                }
+              } else next();
+            },
+          );
+
           // 获取文章详情
-          server.middlewares.use('/api/articles/detail', async (req, res, next) => {
-            if (req.method === 'GET') {
-              const url = new URL(req.url || '', `http://${req.headers.host}`)
-              const articlePath = url.searchParams.get('path')
-              if (!articlePath) {
-                res.statusCode = 400
-                res.end(JSON.stringify({ success: false, error: 'Path required' }))
-                return
-              }
-              try {
-                const fullPath = path.join(SECTIONS_PATH, articlePath)
-                const content = fs.readFileSync(fullPath, 'utf-8')
-                const meta = extractArticleMeta(content, articlePath)
-                res.setHeader('Content-Type', 'application/json')
-                res.end(JSON.stringify({ success: true, data: { ...meta, content } }))
-              } catch (e) {
-                res.statusCode = 404
-                res.end(JSON.stringify({ success: false, error: 'Article not found' }))
-              }
-            } else next()
-          })
-          
+          server.middlewares.use(
+            "/api/articles/detail",
+            async (req, res, next) => {
+              if (req.method === "GET") {
+                const url = new URL(
+                  req.url || "",
+                  `http://${req.headers.host}`,
+                );
+                const articlePath = url.searchParams.get("path");
+                if (!articlePath) {
+                  res.statusCode = 400;
+                  res.end(
+                    JSON.stringify({ success: false, error: "Path required" }),
+                  );
+                  return;
+                }
+                try {
+                  const fullPath = path.join(SECTIONS_PATH, articlePath);
+                  const content = fs.readFileSync(fullPath, "utf-8");
+                  const meta = extractArticleMeta(content, articlePath);
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(
+                    JSON.stringify({
+                      success: true,
+                      data: { ...meta, content },
+                    }),
+                  );
+                } catch (e) {
+                  res.statusCode = 404;
+                  res.end(
+                    JSON.stringify({
+                      success: false,
+                      error: "Article not found",
+                    }),
+                  );
+                }
+              } else next();
+            },
+          );
+
           // 创建文章
-          server.middlewares.use('/api/articles/create', (req, res, next) => {
-            if (req.method === 'POST') {
-              const chunks: Buffer[] = []
-              req.on('data', chunk => chunks.push(chunk))
-              req.on('end', () => {
+          server.middlewares.use("/api/articles/create", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", () => {
                 (async () => {
                   try {
-                    const bodyText = Buffer.concat(chunks).toString()
-                    console.log('[API] Raw body:', bodyText.substring(0, 200))
-                    
-                    let body
+                    const bodyText = Buffer.concat(chunks).toString();
+                    console.log("[API] Raw body:", bodyText.substring(0, 200));
+
+                    let body;
                     try {
-                      body = JSON.parse(bodyText)
+                      body = JSON.parse(bodyText);
                     } catch (parseErr) {
-                      console.error('[API] JSON parse error:', parseErr)
-                      res.statusCode = 400
-                      res.end(JSON.stringify({ success: false, error: 'Invalid JSON' }))
-                      return
+                      console.error("[API] JSON parse error:", parseErr);
+                      res.statusCode = 400;
+                      res.end(
+                        JSON.stringify({
+                          success: false,
+                          error: "Invalid JSON",
+                        }),
+                      );
+                      return;
                     }
-                    
-                    const { title, content = '', section = 'posts', tags = [], parentPath, isChildDoc } = body
-                    console.log('[API] Creating article:', { title, section, isChildDoc, parentPath })
-                    
+
+                    const {
+                      title,
+                      content = "",
+                      section = "posts",
+                      tags = [],
+                      parentPath,
+                      isChildDoc,
+                    } = body;
+                    console.log("[API] Creating article:", {
+                      title,
+                      section,
+                      isChildDoc,
+                      parentPath,
+                    });
+
                     if (!title) {
-                    res.statusCode = 400
-                    res.end(JSON.stringify({ success: false, error: 'Title required' }))
-                    return
-                  }
-                  
-                  // 生成 slug
-                  const slug = generateSlug(title)
-                  
-                  const date = new Date().toISOString().split('T')[0]
-                  const filename = `${slug}.md`
-                  
-                  let targetDir: string
-                  let filePath: string
-                  
-                  // 处理子文档创建
-                  if (isChildDoc && parentPath) {
-                    // 解析父文档路径
-                    // 处理可能的 .html 或 .md 后缀，以及开头的 /
-                    let cleanParentPath = parentPath.replace(/\.(html|md)$/i, '').replace(/^\//, '')
-                    // 如果路径以 sections/ 开头，去掉它（因为 SECTIONS_PATH 已经包含）
-                    if (cleanParentPath.startsWith('sections/')) {
-                      cleanParentPath = cleanParentPath.substring('sections/'.length)
+                      res.statusCode = 400;
+                      res.end(
+                        JSON.stringify({
+                          success: false,
+                          error: "Title required",
+                        }),
+                      );
+                      return;
                     }
-                    // 确保路径不包含 .md 后缀（前面已处理，这里再次确认）
-                    cleanParentPath = cleanParentPath.replace(/\.md$/i, '')
-                    const parentFullPath = path.join(SECTIONS_PATH, cleanParentPath) + '.md'
-                    const parentDir = path.dirname(parentFullPath)
-                    const parentName = path.basename(parentFullPath, '.md')
-                    const parentFolderPath = path.join(parentDir, parentName)
-                    
-                    console.log('[API] Parent info:', { parentFullPath, parentDir, parentName, parentFolderPath })
-                    
-                    // 检查父文档是否为叶子文档（即是否存在同名文件夹）
-                    const isLeafDoc = !fs.existsSync(parentFolderPath)
-                    
-                    if (isLeafDoc) {
-                      // 叶子文档：需要创建同名文件夹并移动原文档
-                      console.log('[API] Parent is leaf document, creating folder and moving...')
-                      
-                      // 1. 创建同名文件夹
-                      await fs.promises.mkdir(parentFolderPath, { recursive: true })
-                      
-                      // 2. 将原文档移动到文件夹内（作为 index.md 或保持原名）
-                      const targetParentPath = path.join(parentFolderPath, `${parentName}.md`)
-                      if (fs.existsSync(parentFullPath)) {
-                        await fs.promises.rename(parentFullPath, targetParentPath)
-                        console.log('[API] Moved parent doc to:', targetParentPath)
+
+                    // 生成 slug
+                    const slug = generateSlug(title);
+
+                    const date = new Date().toISOString().split("T")[0];
+                    const filename = `${slug}.md`;
+
+                    let targetDir: string;
+                    let filePath: string;
+
+                    // 处理子文档创建
+                    if (isChildDoc && parentPath) {
+                      // 解析父文档路径
+                      // 处理可能的 .html 或 .md 后缀，以及开头的 / 和末尾的 /
+                      let cleanParentPath = parentPath
+                        .replace(/\.(html|md)$/i, "")
+                        .replace(/^\//, "")
+                        .replace(/\/$/, "");
+                      // 如果路径以 sections/ 开头，去掉它（因为 SECTIONS_PATH 已经包含）
+                      if (cleanParentPath.startsWith("sections/")) {
+                        cleanParentPath = cleanParentPath.substring(
+                          "sections/".length,
+                        );
                       }
-                      
-                      // 3. 在文件夹内创建子文档
-                      targetDir = parentFolderPath
+                      // 确保路径不包含 .md 后缀（前面已处理，这里再次确认）
+                      cleanParentPath = cleanParentPath.replace(/\.md$/i, "");
+
+                      // 提取父文档名称（路径的最后一部分）
+                      const parentName = path.basename(cleanParentPath);
+                      // 父文档的完整文件路径
+                      const parentFullPath =
+                        path.join(SECTIONS_PATH, cleanParentPath) + ".md";
+                      // 父文档所在目录
+                      const parentDir = path.dirname(parentFullPath);
+                      // 父文档对应的文件夹路径（用于存放子文档）
+                      const parentFolderPath = path.join(parentDir, parentName);
+
+                      console.log("[API] Parent info:", {
+                        parentFullPath,
+                        parentDir,
+                        parentName,
+                        parentFolderPath,
+                      });
+
+                      // 检查父文档是否为叶子文档（即是否存在同名文件夹）
+                      const isLeafDoc = !fs.existsSync(parentFolderPath);
+
+                      if (isLeafDoc) {
+                        // 叶子文档：需要创建同名文件夹并移动原文档
+                        console.log(
+                          "[API] Parent is leaf document, creating folder and moving...",
+                        );
+
+                        // 1. 创建同名文件夹
+                        await fs.promises.mkdir(parentFolderPath, {
+                          recursive: true,
+                        });
+
+                        // 2. 将原文档移动到文件夹内（使用 index.md，VitePress 原生支持 /folder/ → folder/index.md）
+                        const targetParentPath = path.join(
+                          parentFolderPath,
+                          'index.md',
+                        );
+                        if (fs.existsSync(parentFullPath)) {
+                          await fs.promises.rename(
+                            parentFullPath,
+                            targetParentPath,
+                          );
+                          console.log(
+                            "[API] Moved parent doc to:",
+                            targetParentPath,
+                          );
+                        }
+
+                        // 3. 在文件夹内创建子文档
+                        targetDir = parentFolderPath;
+                      } else {
+                        // 非叶子文档：直接在已有文件夹内创建
+                        console.log(
+                          "[API] Parent already has folder, creating inside...",
+                        );
+                        targetDir = parentFolderPath;
+                      }
+
+                      filePath = path.join(targetDir, filename);
                     } else {
-                      // 非叶子文档：直接在已有文件夹内创建
-                      console.log('[API] Parent already has folder, creating inside...')
-                      targetDir = parentFolderPath
+                      // 普通文档创建
+                      targetDir = path.join(SECTIONS_PATH, section);
+                      filePath = path.join(targetDir, filename);
                     }
-                    
-                    filePath = path.join(targetDir, filename)
-                  } else {
-                    // 普通文档创建
-                    targetDir = path.join(SECTIONS_PATH, section)
-                    filePath = path.join(targetDir, filename)
-                  }
-                  
-                  console.log('[API] Target path:', { targetDir, filePath })
-                  
-                  // 确保目录存在
-                  await fs.promises.mkdir(targetDir, { recursive: true })
-                  
-                  // 创建文章
-                  const frontmatter = `---
+
+                    console.log("[API] Target path:", { targetDir, filePath });
+
+                    // 确保目录存在
+                    await fs.promises.mkdir(targetDir, { recursive: true });
+
+                    // 创建文章
+                    const frontmatter = `---
 title: ${title}
 date: ${date}
 tags:
-${tags.map((t: string) => `  - ${t}`).join('\n')}
+${tags.map((t: string) => `  - ${t}`).join("\n")}
 ---
 
-${content}`
-                  
-                  await fs.promises.writeFile(filePath, frontmatter, 'utf-8')
-                  console.log('[API] File written successfully:', filePath)
-                  
-                  // 清除 sidebar 缓存
-                  clearSidebarCache(section)
-                  
-                  res.setHeader('Content-Type', 'application/json')
-                  res.end(JSON.stringify({
-                    success: true,
-                    data: { 
-                      path: path.relative(SECTIONS_PATH, filePath).replace(/\\/g, '/'), 
-                      title, 
-                      date, 
-                      fullPath: filePath 
-                    }
-                  }))
-                } catch (e) {
-                  console.error('[API] Create article error:', e)
-                  res.statusCode = 500
-                  res.end(JSON.stringify({ success: false, error: 'Failed to create article: ' + (e as Error).message }))
-                }
-              })()
-            })
-          }
-          else {
-            next()
-          }
-        })
-          
-          // 更新文章
-          server.middlewares.use('/api/articles/update', async (req, res, next) => {
-            if (req.method === 'PUT') {
-              const chunks: Buffer[] = []
-              req.on('data', chunk => chunks.push(chunk))
-              req.on('end', async () => {
-                try {
-                  const body = JSON.parse(Buffer.concat(chunks).toString())
-                  const { path: articlePath, content } = body
-                  const fullPath = path.join(SECTIONS_PATH, articlePath)
-                  await fs.promises.writeFile(fullPath, content, 'utf-8')
-                  res.setHeader('Content-Type', 'application/json')
-                  res.end(JSON.stringify({ success: true, message: 'Article updated' }))
-                } catch (e) {
-                  res.statusCode = 500
-                  res.end(JSON.stringify({ success: false, error: 'Failed to update article' }))
-                }
-              })
-            } else next()
-          })
-          
-          // 发布文章
-          server.middlewares.use('/api/articles/publish', async (req, res, next) => {
-            if (req.method === 'POST') {
-              const chunks: Buffer[] = []
-              req.on('data', chunk => chunks.push(chunk))
-              req.on('end', async () => {
-                try {
-                  const body = JSON.parse(Buffer.concat(chunks).toString())
-                  const { path: articlePath } = body
-                  const sourcePath = path.join(SECTIONS_PATH, articlePath)
-                  const targetPath = articlePath.replace('/drafts/', '/posts/')
-                  const destPath = path.join(SECTIONS_PATH, targetPath)
-                  await fs.promises.mkdir(path.dirname(destPath), { recursive: true })
-                  await fs.promises.rename(sourcePath, destPath)
-                  
-                  // 清除相关 section 的缓存
-                  clearSidebarCache('drafts')
-                  clearSidebarCache('posts')
-                  
-                  res.setHeader('Content-Type', 'application/json')
-                  res.end(JSON.stringify({ success: true, data: { newPath: targetPath } }))
-                } catch (e) {
-                  res.statusCode = 500
-                  res.end(JSON.stringify({ success: false, error: 'Failed to publish article' }))
-                }
-              })
-            } else next()
-          })
-          
-          // 删除文章
-          server.middlewares.use('/api/articles/delete', async (req, res, next) => {
-            if (req.method === 'POST') {
-              const chunks: Buffer[] = []
-              req.on('data', chunk => chunks.push(chunk))
-              req.on('end', async () => {
-                try {
-                  const body = JSON.parse(Buffer.concat(chunks).toString())
-                  const { path: articlePath } = body
-                  const fullPath = path.join(SECTIONS_PATH, articlePath)
-                  
-                  // 获取 section 名称用于清除缓存
-                  const section = articlePath.split('/')[0]
-                  
-                  await fs.promises.unlink(fullPath)
-                  
-                  // 清除 sidebar 缓存
-                  clearSidebarCache(section)
-                  
-                  res.setHeader('Content-Type', 'application/json')
-                  res.end(JSON.stringify({ success: true, message: 'Article deleted' }))
-                } catch (e) {
-                  res.statusCode = 500
-                  res.end(JSON.stringify({ success: false, error: 'Failed to delete article' }))
-                }
-              })
-            } else next()
-          })
-          
-          // 移动/重命名文章
-          server.middlewares.use('/api/articles/move', async (req, res, next) => {
-            if (req.method === 'POST') {
-              const chunks: Buffer[] = []
-              req.on('data', chunk => chunks.push(chunk))
-              req.on('end', async () => {
-                try {
-                  const body = JSON.parse(Buffer.concat(chunks).toString())
-                  const { from, to } = body
-                  const sourcePath = path.join(SECTIONS_PATH, from)
-                  const destPath = path.join(SECTIONS_PATH, to)
-                  
-                  // 获取 section 名称用于清除缓存
-                  const fromSection = from.split('/')[0]
-                  const toSection = to.split('/')[0]
-                  
-                  await fs.promises.mkdir(path.dirname(destPath), { recursive: true })
-                  await fs.promises.rename(sourcePath, destPath)
-                  
-                  // 清除相关 section 的缓存
-                  clearSidebarCache(fromSection)
-                  if (fromSection !== toSection) {
-                    clearSidebarCache(toSection)
+${content}`;
+
+                    await fs.promises.writeFile(filePath, frontmatter, "utf-8");
+                    console.log("[API] File written successfully:", filePath);
+
+                    // 清除 sidebar 缓存
+                    clearSidebarCache(section);
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({
+                        success: true,
+                        data: {
+                          path: path
+                            .relative(SECTIONS_PATH, filePath)
+                            .replace(/\\/g, "/"),
+                          title,
+                          date,
+                          fullPath: filePath,
+                        },
+                      }),
+                    );
+
+                    // 触发热更新
+                    triggerReload();
+                  } catch (e) {
+                    console.error("[API] Create article error:", e);
+                    res.statusCode = 500;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error:
+                          "Failed to create article: " + (e as Error).message,
+                      }),
+                    );
                   }
-                  
-                  res.setHeader('Content-Type', 'application/json')
-                  res.end(JSON.stringify({ success: true, data: { newPath: to } }))
-                } catch (e) {
-                  res.statusCode = 500
-                  res.end(JSON.stringify({ success: false, error: 'Failed to move article' }))
-                }
-              })
-            } else next()
-          })
-          
+                })();
+              });
+            } else {
+              next();
+            }
+          });
+
+          // 更新文章
+          server.middlewares.use(
+            "/api/articles/update",
+            async (req, res, next) => {
+              if (req.method === "PUT") {
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const { path: articlePath, content } = body;
+                    const fullPath = path.join(SECTIONS_PATH, articlePath);
+                    await fs.promises.writeFile(fullPath, content, "utf-8");
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({
+                        success: true,
+                        message: "Article updated",
+                      }),
+                    );
+
+                    // 触发热更新
+                    triggerReload();
+                  } catch (e) {
+                    res.statusCode = 500;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: "Failed to update article",
+                      }),
+                    );
+                  }
+                });
+              } else next();
+            },
+          );
+
+          // 发布文章
+          server.middlewares.use(
+            "/api/articles/publish",
+            async (req, res, next) => {
+              if (req.method === "POST") {
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const { path: articlePath } = body;
+                    const sourcePath = path.join(SECTIONS_PATH, articlePath);
+                    const targetPath = articlePath.replace(
+                      "/drafts/",
+                      "/posts/",
+                    );
+                    const destPath = path.join(SECTIONS_PATH, targetPath);
+                    await fs.promises.mkdir(path.dirname(destPath), {
+                      recursive: true,
+                    });
+                    await fs.promises.rename(sourcePath, destPath);
+
+                    // 清除相关 section 的缓存
+                    clearSidebarCache("drafts");
+                    clearSidebarCache("posts");
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({
+                        success: true,
+                        data: { newPath: targetPath },
+                      }),
+                    );
+
+                    // 触发热更新
+                    triggerReload();
+                  } catch (e) {
+                    res.statusCode = 500;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: "Failed to publish article",
+                      }),
+                    );
+                  }
+                });
+              } else next();
+            },
+          );
+
+          // 删除文章
+          server.middlewares.use(
+            "/api/articles/delete",
+            async (req, res, next) => {
+              if (req.method === "POST") {
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const { path: articlePath } = body;
+                    const fullPath = path.join(SECTIONS_PATH, articlePath);
+
+                    // 获取 section 名称用于清除缓存
+                    const section = articlePath.split("/")[0];
+
+                    await fs.promises.unlink(fullPath);
+
+                    // 清除 sidebar 缓存
+                    clearSidebarCache(section);
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({
+                        success: true,
+                        message: "Article deleted",
+                      }),
+                    );
+
+                    // 触发热更新
+                    triggerReload();
+                  } catch (e) {
+                    res.statusCode = 500;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: "Failed to delete article",
+                      }),
+                    );
+                  }
+                });
+              } else next();
+            },
+          );
+
+          // 移动/重命名文章
+          server.middlewares.use(
+            "/api/articles/move",
+            async (req, res, next) => {
+              if (req.method === "POST") {
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const { from, to } = body;
+                    const sourcePath = path.join(SECTIONS_PATH, from);
+                    const destPath = path.join(SECTIONS_PATH, to);
+
+                    // 获取 section 名称用于清除缓存
+                    const fromSection = from.split("/")[0];
+                    const toSection = to.split("/")[0];
+
+                    await fs.promises.mkdir(path.dirname(destPath), {
+                      recursive: true,
+                    });
+                    await fs.promises.rename(sourcePath, destPath);
+
+                    // 清除相关 section 的缓存
+                    clearSidebarCache(fromSection);
+                    if (fromSection !== toSection) {
+                      clearSidebarCache(toSection);
+                    }
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({ success: true, data: { newPath: to } }),
+                    );
+
+                    // 触发热更新
+                    triggerReload();
+                  } catch (e) {
+                    res.statusCode = 500;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: "Failed to move article",
+                      }),
+                    );
+                  }
+                });
+              } else next();
+            },
+          );
+
           // ============================================
           // Logs API - 日志系统（使用LogSystem）
           // ============================================
-          
+
           // 添加日志
-          server.middlewares.use('/api/logs/add', (req, res, next) => {
-            if (req.method === 'POST') {
-              const chunks: Buffer[] = []
-              req.on('data', chunk => chunks.push(chunk))
-              req.on('end', async () => {
+          server.middlewares.use("/api/logs/add", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", async () => {
                 try {
-                  const body = JSON.parse(Buffer.concat(chunks).toString())
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
                   // 使用LogSystem持久化日志
                   await logSystem.add(
-                    body.level || 'info',
-                    body.event || 'system',
+                    body.level || "info",
+                    body.event || "system",
                     body.message,
-                    body.actor || 'system',
+                    body.actor || "system",
                     {
                       source: body.source,
                       taskId: body.taskId,
                       skillName: body.skillName,
                       duration: body.duration,
-                      ...body.metadata
-                    }
-                  )
-                  res.setHeader('Content-Type', 'application/json')
-                  res.end(JSON.stringify({ success: true }))
+                      ...body.metadata,
+                    },
+                  );
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true }));
                 } catch (e) {
-                  res.statusCode = 500
-                  res.end(JSON.stringify({ success: false, error: String(e) }))
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
                 }
-              })
-            } else next()
-          })
-          
+              });
+            } else next();
+          });
+
           // 获取日志
-          server.middlewares.use('/api/logs/recent', async (req, res, next) => {
-            if (req.method === 'GET') {
-              const url = new URL(req.url || '', `http://${req.headers.host}`)
-              const count = parseInt(url.searchParams.get('count') || '100')
-              const level = url.searchParams.get('level') as any
-              const logs = await logSystem.getRecent(count, level)
-              res.setHeader('Content-Type', 'application/json')
-              res.end(JSON.stringify({ success: true, data: logs }))
-            } else next()
-          })
-          
+          server.middlewares.use("/api/logs/recent", async (req, res, next) => {
+            if (req.method === "GET") {
+              const url = new URL(req.url || "", `http://${req.headers.host}`);
+              const count = parseInt(url.searchParams.get("count") || "100");
+              const level = url.searchParams.get("level") as any;
+              const logs = await logSystem.getRecent(count, level);
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ success: true, data: logs }));
+            } else next();
+          });
+
           // 获取日志统计
-          server.middlewares.use('/api/logs/stats', async (req, res, next) => {
-            if (req.method === 'GET') {
-              const stats = await logSystem.getStats()
-              res.setHeader('Content-Type', 'application/json')
-              res.end(JSON.stringify({ success: true, data: stats }))
-            } else next()
-          })
-          
+          server.middlewares.use("/api/logs/stats", async (req, res, next) => {
+            if (req.method === "GET") {
+              const stats = await logSystem.getStats();
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ success: true, data: stats }));
+            } else next();
+          });
+
+          // ============================================
+          // Proxy API - 网络抓取代理
+          // ============================================
+
+          server.middlewares.use("/api/proxy/fetch", async (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", async () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { url, timeout = 10000 } = body;
+
+                  if (!url) {
+                    res.statusCode = 400;
+                    res.end(
+                      JSON.stringify({ success: false, error: "URL required" }),
+                    );
+                    return;
+                  }
+
+                  // 验证 URL 格式
+                  let targetUrl: URL;
+                  try {
+                    targetUrl = new URL(url);
+                  } catch {
+                    res.statusCode = 400;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: "Invalid URL format",
+                      }),
+                    );
+                    return;
+                  }
+
+                  // 只允许 http/https
+                  if (!["http:", "https:"].includes(targetUrl.protocol)) {
+                    res.statusCode = 400;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: "Only HTTP/HTTPS allowed",
+                      }),
+                    );
+                    return;
+                  }
+
+                  structuredLog.info("proxy.fetch.started", `Fetching ${url}`, {
+                    url,
+                    timeout,
+                  });
+
+                  // 使用 AbortController 实现超时
+                  const controller = new AbortController();
+                  const timeoutId = setTimeout(
+                    () => controller.abort(),
+                    timeout,
+                  );
+
+                  try {
+                    const response = await fetch(url, {
+                      signal: controller.signal,
+                      headers: {
+                        "User-Agent":
+                          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                      },
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                      structuredLog.warn(
+                        "proxy.fetch.failed",
+                        `Failed to fetch ${url}`,
+                        {
+                          url,
+                          status: response.status,
+                        },
+                      );
+                      res.statusCode = response.status;
+                      res.end(
+                        JSON.stringify({
+                          success: false,
+                          error: `HTTP ${response.status}: ${response.statusText}`,
+                        }),
+                      );
+                      return;
+                    }
+
+                    const content = await response.text();
+
+                    structuredLog.success(
+                      "proxy.fetch.completed",
+                      `Fetched ${url}`,
+                      {
+                        url,
+                        size: content.length,
+                      },
+                    );
+
+                    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+                    res.end(content);
+                  } catch (fetchError) {
+                    clearTimeout(timeoutId);
+
+                    const isTimeout =
+                      fetchError instanceof Error &&
+                      fetchError.name === "AbortError";
+                    const errorMsg = isTimeout
+                      ? "Request timeout"
+                      : String(fetchError);
+
+                    structuredLog.error(
+                      "proxy.fetch.error",
+                      `Error fetching ${url}`,
+                      {
+                        url,
+                        error: errorMsg,
+                        isTimeout,
+                      },
+                    );
+
+                    res.statusCode = isTimeout ? 504 : 500;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: errorMsg,
+                      }),
+                    );
+                  }
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+
+          // ============================================
+          // Background Tasks API - 手动触发的后台任务
+          // ============================================
+
+          // 获取任务模板列表
+          server.middlewares.use(
+            "/api/agent/tasks/templates",
+            (req, res, next) => {
+              if (req.method === "GET") {
+                try {
+                  const {
+                    TASK_TEMPLATES,
+                  } = require("./agent/core/BackgroundTaskManager");
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(
+                    JSON.stringify({
+                      success: true,
+                      data: TASK_TEMPLATES,
+                    }),
+                  );
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              } else next();
+            },
+          );
+
+          // 触发任务
+          server.middlewares.use(
+            "/api/agent/tasks/trigger",
+            (req, res, next) => {
+              if (req.method === "POST") {
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const {
+                      getBackgroundTaskManager,
+                    } = require("./agent/core/BackgroundTaskManager");
+                    const taskManager = getBackgroundTaskManager();
+
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const { type, params, name, description } = body;
+
+                    const task = await taskManager.triggerTask(type, params, {
+                      name,
+                      description,
+                      triggeredBy: "human",
+                    });
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({
+                        success: true,
+                        data: {
+                          id: task.id,
+                          type: task.type,
+                          name: task.name,
+                          status: task.status,
+                          createdAt: task.createdAt,
+                        },
+                      }),
+                    );
+
+                    // 记录到结构化日志
+                    structuredLog.info(
+                      "task.triggered",
+                      `Background task ${task.id} triggered`,
+                      {
+                        taskId: task.id,
+                        type,
+                        name: task.name,
+                      },
+                    );
+                  } catch (e) {
+                    res.statusCode = 500;
+                    res.end(
+                      JSON.stringify({ success: false, error: String(e) }),
+                    );
+                  }
+                });
+              } else next();
+            },
+          );
+
+          // 批量触发任务
+          server.middlewares.use(
+            "/api/agent/tasks/trigger-batch",
+            (req, res, next) => {
+              if (req.method === "POST") {
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const {
+                      getBackgroundTaskManager,
+                    } = require("./agent/core/BackgroundTaskManager");
+                    const taskManager = getBackgroundTaskManager();
+
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const { tasks } = body;
+
+                    const created = await taskManager.triggerBatch(tasks);
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({
+                        success: true,
+                        data: created.map((task) => ({
+                          id: task.id,
+                          type: task.type,
+                          name: task.name,
+                          status: task.status,
+                        })),
+                      }),
+                    );
+                  } catch (e) {
+                    res.statusCode = 500;
+                    res.end(
+                      JSON.stringify({ success: false, error: String(e) }),
+                    );
+                  }
+                });
+              } else next();
+            },
+          );
+
+          // 获取任务列表
+          server.middlewares.use("/api/agent/tasks", (req, res, next) => {
+            if (req.method === "GET") {
+              try {
+                const {
+                  getBackgroundTaskManager,
+                } = require("./agent/core/BackgroundTaskManager");
+                const taskManager = getBackgroundTaskManager();
+
+                const url = new URL(
+                  req.url || "",
+                  `http://${req.headers.host}`,
+                );
+                const status = url.searchParams.get("status");
+
+                let tasks;
+                if (status) {
+                  tasks = taskManager.getTasksByStatus(status);
+                } else {
+                  tasks = taskManager.getAllTasks();
+                }
+
+                res.setHeader("Content-Type", "application/json");
+                res.end(
+                  JSON.stringify({
+                    success: true,
+                    data: tasks,
+                    stats: taskManager.getTaskStats(),
+                  }),
+                );
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+
+          // 获取单个任务详情
+          server.middlewares.use(
+            "/api/agent/tasks/detail",
+            (req, res, next) => {
+              if (req.method === "GET") {
+                try {
+                  const {
+                    getBackgroundTaskManager,
+                  } = require("./agent/core/BackgroundTaskManager");
+                  const taskManager = getBackgroundTaskManager();
+
+                  const url = new URL(
+                    req.url || "",
+                    `http://${req.headers.host}`,
+                  );
+                  const taskId = url.searchParams.get("id");
+
+                  if (!taskId) {
+                    res.statusCode = 400;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: "Task ID required",
+                      }),
+                    );
+                    return;
+                  }
+
+                  const task = taskManager.getTask(taskId);
+                  if (!task) {
+                    res.statusCode = 404;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: "Task not found",
+                      }),
+                    );
+                    return;
+                  }
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: task }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              } else next();
+            },
+          );
+
+          // 取消任务
+          server.middlewares.use(
+            "/api/agent/tasks/cancel",
+            (req, res, next) => {
+              if (req.method === "POST") {
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const {
+                      getBackgroundTaskManager,
+                    } = require("./agent/core/BackgroundTaskManager");
+                    const taskManager = getBackgroundTaskManager();
+
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const { taskId } = body;
+
+                    const success = await taskManager.cancelTask(taskId);
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({
+                        success,
+                        message: success
+                          ? "Task cancelled"
+                          : "Cannot cancel task",
+                      }),
+                    );
+                  } catch (e) {
+                    res.statusCode = 500;
+                    res.end(
+                      JSON.stringify({ success: false, error: String(e) }),
+                    );
+                  }
+                });
+              } else next();
+            },
+          );
+
+          // 重试任务
+          server.middlewares.use("/api/agent/tasks/retry", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", async () => {
+                try {
+                  const {
+                    getBackgroundTaskManager,
+                  } = require("./agent/core/BackgroundTaskManager");
+                  const taskManager = getBackgroundTaskManager();
+
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { taskId } = body;
+
+                  const newTask = await taskManager.retryTask(taskId);
+
+                  if (!newTask) {
+                    res.statusCode = 400;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        error: "Cannot retry task",
+                      }),
+                    );
+                    return;
+                  }
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(
+                    JSON.stringify({
+                      success: true,
+                      data: {
+                        id: newTask.id,
+                        name: newTask.name,
+                        status: newTask.status,
+                      },
+                    }),
+                  );
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+
+          // 删除任务
+          server.middlewares.use(
+            "/api/agent/tasks/delete",
+            (req, res, next) => {
+              if (req.method === "POST") {
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const {
+                      getBackgroundTaskManager,
+                    } = require("./agent/core/BackgroundTaskManager");
+                    const taskManager = getBackgroundTaskManager();
+
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const { taskId } = body;
+
+                    const success = taskManager.deleteTask(taskId);
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({
+                        success,
+                        message: success
+                          ? "Task deleted"
+                          : "Cannot delete running task",
+                      }),
+                    );
+                  } catch (e) {
+                    res.statusCode = 500;
+                    res.end(
+                      JSON.stringify({ success: false, error: String(e) }),
+                    );
+                  }
+                });
+              } else next();
+            },
+          );
+
           // ============================================
           // Health & System API
           // ============================================
-          server.middlewares.use('/api/health', (req, res, next) => {
-            if (req.method === 'GET') {
-              res.setHeader('Content-Type', 'application/json')
-              res.end(JSON.stringify({
-                success: true,
-                data: {
-                  llm: true,
-                  memory: true,
-                  files: true,
-                  git: false
-                }
-              }))
-            } else next()
-          })
-          
-          server.middlewares.use('/api/system/resources', (req, res, next) => {
-            if (req.method === 'GET') {
+          server.middlewares.use("/api/health", (req, res, next) => {
+            if (req.method === "GET") {
+              res.setHeader("Content-Type", "application/json");
+              res.end(
+                JSON.stringify({
+                  success: true,
+                  data: {
+                    llm: true,
+                    memory: true,
+                    files: true,
+                    git: false,
+                  },
+                }),
+              );
+            } else next();
+          });
+
+          server.middlewares.use("/api/system/resources", (req, res, next) => {
+            if (req.method === "GET") {
               // 模拟资源使用数据
-              res.setHeader('Content-Type', 'application/json')
-              res.end(JSON.stringify({
-                success: true,
-                data: {
-                  memory: Math.floor(35 + Math.random() * 30),
-                  cpu: Math.floor(20 + Math.random() * 40),
-                  latency: Math.floor(30 + Math.random() * 50)
-                }
-              }))
-            } else next()
-          })
-          
-          server.middlewares.use('/api/agent/tasks', (req, res, next) => {
-            if (req.method === 'GET') {
-              res.setHeader('Content-Type', 'application/json')
-              res.end(JSON.stringify({ success: true, data: [] }))
-            } else next()
-          })
-        }
-      }
+              res.setHeader("Content-Type", "application/json");
+              res.end(
+                JSON.stringify({
+                  success: true,
+                  data: {
+                    memory: Math.floor(35 + Math.random() * 30),
+                    cpu: Math.floor(20 + Math.random() * 40),
+                    latency: Math.floor(30 + Math.random() * 50),
+                  },
+                }),
+              );
+            } else next();
+          });
+
+          server.middlewares.use("/api/agent/tasks", (req, res, next) => {
+            if (req.method === "GET") {
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ success: true, data: [] }));
+            } else next();
+          });
+        },
+      },
     ],
     define: {
-      VDITOR_VERSION: JSON.stringify('3.11.2')
-    }
+      VDITOR_VERSION: JSON.stringify("3.11.2"),
+    },
   },
-  
+
   async transformPageData(pageData: any) {
-    pageData.frontmatter.wordCount = getWordCount(pageData.content || '')
-    
+    pageData.frontmatter.wordCount = getWordCount(pageData.content || "");
+
     // Generate breadcrumbs from the actual file path
-    const relativePath = pageData.relativePath
-    const parts = relativePath.split('/')
-    const breadcrumbs: { title: string, link?: string }[] = []
-    
-    let accumulatedPath = ''
+    const relativePath = pageData.relativePath;
+    const parts = relativePath.split("/");
+    const breadcrumbs: { title: string; link?: string }[] = [];
+
+    let accumulatedPath = "";
     for (let i = 0; i < parts.length; i++) {
-      let part = parts[i]
-      if (!part) continue
-      
+      let part = parts[i];
+      if (!part) continue;
+
       // Remove .md extension
-      if (part.endsWith('.md')) {
-        part = part.replace('.md', '')
+      if (part.endsWith(".md")) {
+        part = part.replace(".md", "");
       }
-      
+
       // Skip index files in breadcrumb (they represent the folder itself)
-      if (part === 'index') {
-        continue
+      if (part === "index") {
+        continue;
       }
-      
-      accumulatedPath += '/' + part
-      
+
+      accumulatedPath += "/" + part;
+
       // Format the breadcrumb name
-      const title = formatBreadcrumbName(part)
-      
+      const title = formatBreadcrumbName(part);
+
       // Check if this is the last meaningful part
-      const remainingParts = parts.slice(i + 1).filter((p: string) => p && p !== 'index.md' && !p.endsWith('.md'))
-      const isLastItem = remainingParts.length === 0
-      
+      const remainingParts = parts
+        .slice(i + 1)
+        .filter((p: string) => p && p !== "index.md" && !p.endsWith(".md"));
+      const isLastItem = remainingParts.length === 0;
+
       breadcrumbs.push({
         title,
-        link: isLastItem ? undefined : accumulatedPath + '/'
-      })
+        link: isLastItem ? undefined : accumulatedPath + "/",
+      });
     }
-    
-    pageData.frontmatter.breadcrumb = breadcrumbs
-    pageData.title = pageData.frontmatter.title || (breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].title : '')
-  }
-})
+
+    pageData.frontmatter.breadcrumb = breadcrumbs;
+    pageData.title =
+      pageData.frontmatter.title ||
+      (breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].title : "");
+  },
+});

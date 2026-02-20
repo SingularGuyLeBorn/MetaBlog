@@ -1000,9 +1000,13 @@ async function sendMessage() {
   }
   
   // Call real LLM
+  let startTime = 0
+  let model = ''
+  let msgIndex = 0
+  
   try {
     const config = chatService.getConfig()
-    const model = isThinkingMode.value ? 'deepseek-reasoner' : (config.deepseekModel || 'deepseek-chat')
+    model = isThinkingMode.value ? 'deepseek-reasoner' : (config.deepseekModel || 'deepseek-chat')
     
     // Create placeholder for streaming response
     const assistantMsg: Message = {
@@ -1010,10 +1014,10 @@ async function sendMessage() {
       content: '',
       timestamp: new Date(),
     }
-    const msgIndex = messages.value.push(assistantMsg) - 1
+    msgIndex = messages.value.push(assistantMsg) - 1
     
     // Log AI request
-  const startTime = Date.now()
+    startTime = Date.now()
   aiLogger.logInfo('chat.request', 'AI请求开始', {
     model,
     contentLength: fullContent.length,

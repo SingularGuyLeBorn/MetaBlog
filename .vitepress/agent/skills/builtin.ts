@@ -543,6 +543,12 @@ import {
   UpdateArticleMetadataSkill 
 } from './articleSkills'
 
+// 导入降级技能
+import { 
+  ResearchWithFallbackSkill,
+  FetchContentWithRetrySkill
+} from './ResearchWithFallbackSkill'
+
 // 导出所有内置技能
 export const builtinSkills = [
   WriteArticleSkill,
@@ -557,5 +563,8 @@ export const builtinSkills = [
   DeleteArticleSkill,
   ListArticlesSkill,
   MoveArticleSkill,
-  UpdateArticleMetadataSkill
+  UpdateArticleMetadataSkill,
+  // 降级技能（带优雅错误处理）
+  ResearchWithFallbackSkill,
+  FetchContentWithRetrySkill
 ]

@@ -74,10 +74,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick, provide, readonly } from 'vue'
 import { useRoute, useRouter, useData } from 'vitepress'
 import { useSidebar } from 'vitepress/theme'
 import TreeNode from './TreeNode.vue'
+import { eventBus } from '../../agent/core/EventBus'
 
 const route = useRoute()
 const router = useRouter()
@@ -89,9 +90,51 @@ const expandedIds = ref<Set<string>>(new Set())
 const searchKey = ref('')
 const treeRef = ref<HTMLElement | null>(null)
 
+// 动态侧边栏数据 - 支持从 API 刷新
+const dynamicSidebarData = ref<any[]>([])
+const isLoading = ref(false)
+const currentSection = ref('posts')
 
+// 从路由路径提取当前 section
+const extractSectionFromRoute = (path: string): string => {
+  // 路径格式: /sections/xxx/... 或 /xxx/...
+  const match = path.match(/\/sections\/([^\/]+)/)
+  if (match) return match[1]
+  // 尝试从路径开头提取
+  const parts = path.split('/').filter(Boolean)
+  if (parts.length > 0 && ['posts', 'knowledge-base', 'resources'].includes(parts[0])) {
+    return parts[0]
+  }
+  return 'posts' // 默认
+}
 
-const sidebarData = computed(() => sidebar.value || [])
+// 从 API 获取最新侧边栏数据
+const refreshSidebarData = async () => {
+  isLoading.value = true
+  try {
+    const section = extractSectionFromRoute(route.path)
+    currentSection.value = section
+    const res = await fetch(`/api/sidebar?section=${section}&_t=${Date.now()}`)
+    const result = await res.json()
+    if (result.success && result.data) {
+      dynamicSidebarData.value = result.data
+      console.log('[Sidebar] Data refreshed from API, section:', section)
+    }
+  } catch (e) {
+    console.error('[Sidebar] Failed to refresh:', e)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 提供刷新函数给子组件
+provide('refreshSidebar', refreshSidebarData)
+
+// 合并静态和动态数据 - 优先使用动态数据
+const sidebarData = computed(() => {
+  // 如果动态数据已加载，使用动态数据；否则使用静态数据
+  return dynamicSidebarData.value.length > 0 ? dynamicSidebarData.value : (sidebar.value || [])
+})
 
 const sectionTitle = computed(() => {
   if (sidebarData.value.length > 0 && sidebarData.value[0].text) {
@@ -182,31 +225,42 @@ const navigate = (link?: string) => {
   if (link) router.go(link)
 }
 
-// 刷新侧边栏 - 重新加载页面以获取最新数据
-const handleRefresh = () => {
-  // 显示一个提示
+// 刷新侧边栏 - 从 API 重新获取数据，无需整页刷新
+const handleRefresh = async () => {
+  // 显示刷新提示
   const toast = document.createElement('div')
   toast.className = 'refresh-toast'
-  toast.textContent = '刷新中...'
+  toast.textContent = '更新目录...'
   toast.style.cssText = `
     position: fixed;
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 12px 20px;
-    background: #475569;
+    padding: 8px 16px;
+    background: var(--vp-c-brand, #1677ff);
     color: white;
-    border-radius: 8px;
-    font-size: 14px;
+    border-radius: 6px;
+    font-size: 13px;
     z-index: 10000;
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.2s ease;
   `
   document.body.appendChild(toast)
   
-  // 延迟刷新以显示提示
+  // 清空动态数据强制重新加载
+  dynamicSidebarData.value = []
+  
+  // 从 API 刷新数据
+  await refreshSidebarData()
+  
+  // 刷新后自动展开当前路径（处理叶子文档变文件夹的情况）
+  nextTick(() => {
+    autoExpandCurrentPath()
+  })
+  
+  // 移除提示
   setTimeout(() => {
-    location.reload()
-  }, 500)
+    toast.remove()
+  }, 800)
 }
 
 const autoExpandCurrentPath = () => {
@@ -235,6 +289,9 @@ const autoExpandCurrentPath = () => {
 }
 
 onMounted(() => {
+  // 初始加载动态侧边栏数据
+  refreshSidebarData()
+  
   // Load all-collapsed state first
   const allCollapsed = localStorage.getItem(ALL_COLLAPSED_KEY)
   let isAllCollapsed = false
@@ -261,7 +318,10 @@ onMounted(() => {
       }
     }
     // 展开当前路径（为了 UX，让用户知道当前位置）
-    autoExpandCurrentPath()
+    // 使用 nextTick 确保动态数据已加载
+    nextTick(() => {
+      autoExpandCurrentPath()
+    })
   }
   
   // Auto locate current on mount（延迟执行，确保 DOM 更新）
@@ -270,7 +330,18 @@ onMounted(() => {
   })
 })
 
-watch(() => route.path, () => {
+watch(() => route.path, (newPath, oldPath) => {
+  // 检查 section 是否变化
+  const newSection = extractSectionFromRoute(newPath)
+  const oldSection = oldPath ? extractSectionFromRoute(oldPath) : ''
+  
+  // 如果 section 变化了，清空动态数据并重新加载
+  if (newSection !== oldSection && newSection !== currentSection.value) {
+    console.log('[Sidebar] Section changed from', oldSection, 'to', newSection)
+    dynamicSidebarData.value = [] // 清空旧数据避免闪烁
+    refreshSidebarData()
+  }
+  
   // 路由切换时，如果不是全部折叠状态，则自动展开当前路径
   const allCollapsed = localStorage.getItem(ALL_COLLAPSED_KEY)
   let isAllCollapsed = false
@@ -324,6 +395,71 @@ onMounted(() => {
     }
   }
   document.addEventListener('keydown', handleKeydown)
+})
+
+// Agent 系统事件监听 - 展开指定路径并刷新侧边栏
+let unsubscribeExpand: (() => void) | null = null
+let unsubscribeRefresh: (() => void) | null = null
+
+onMounted(() => {
+  // 监听侧边栏展开事件（Agent 创建文章后自动展开目录）
+  unsubscribeExpand = eventBus.on('sidebar:expand', (data) => {
+    const filePath = data.path
+    
+    // 找到包含该文件的所有父目录并展开
+    const findAndExpandPath = (items: any[], parentIds: string[] = []): boolean => {
+      for (const item of items) {
+        const itemId = item.id || item.link
+        const currentPath = [...parentIds, itemId].filter(Boolean)
+        
+        // 检查是否是目标文件或其父目录
+        const isTargetFile = item.link && filePath.includes(item.link.replace(/\.html$/, '.md'))
+        const isParentOfTarget = item.items?.some((child: any) => {
+          const childPath = child.link || child.id
+          return childPath && filePath.includes(childPath.replace(/\.html$/, '.md'))
+        })
+        
+        if (isTargetFile || isParentOfTarget) {
+          // 展开所有父目录
+          currentPath.forEach(id => expandedIds.value.add(id))
+          saveState()
+          
+          // 如果找到目标文件，滚动到视图
+          if (isTargetFile) {
+            nextTick(() => {
+              locateCurrent()
+            })
+          }
+          return true
+        }
+        
+        if (item.items?.length) {
+          const found = findAndExpandPath(item.items, currentPath)
+          if (found) return true
+        }
+      }
+      return false
+    }
+    
+    findAndExpandPath(sidebarData.value)
+  })
+  
+  // 监听侧边栏刷新事件（Agent 创建文章后刷新目录）
+  unsubscribeRefresh = eventBus.on('sidebar:refresh', (data) => {
+    const section = data.section
+    const currentSectionName = extractSectionFromRoute(route.path)
+    
+    // 只有当当前显示的栏目与 Agent 创建的文章栏目一致时才刷新
+    if (section === currentSectionName || section === 'unknown') {
+      console.log('[Sidebar] Refreshing due to agent task completion, section:', section)
+      refreshSidebarData()
+    }
+  })
+})
+
+onUnmounted(() => {
+  unsubscribeExpand?.()
+  unsubscribeRefresh?.()
 })
 
 // Tree keyboard navigation

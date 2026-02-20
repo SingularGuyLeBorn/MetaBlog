@@ -206,7 +206,12 @@ export function toSidebarFormat(nodes: DocNode[]): any[] {
       isLeaf: node.isLeaf
     }
     
-    if (node.link) result.link = node.link
+    // 确保链接格式一致性：文件夹以 / 结尾，文件不以 / 结尾
+    if (node.link) {
+      result.link = node.type === 'folder' 
+        ? (node.link.endsWith('/') ? node.link : `${node.link}/`)
+        : node.link.replace(/\/$/, '')
+    }
     if (node.children) result.items = toSidebarFormat(node.children)
     
     return result

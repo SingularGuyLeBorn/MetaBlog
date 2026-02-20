@@ -69,8 +69,8 @@ export function useDynamicSidebar() {
    * 监听文件变动事件，自动刷新
    */
   function setupAutoRefresh() {
-    // 监听自定义事件
-    window.addEventListener('file-system-change', (e: Event) => {
+    // 事件处理器引用，用于后续清理
+    const fileChangeHandler = (e: Event) => {
       const customEvent = e as CustomEvent
       const { section } = customEvent.detail || {}
       if (section) {
@@ -79,13 +79,25 @@ export function useDynamicSidebar() {
         // 刷新所有已缓存的 section
         Object.keys(dynamicSidebarCache.value).forEach(sec => refreshSidebar(sec))
       }
-    })
+    }
+    
+    // 监听自定义事件
+    window.addEventListener('file-system-change', fileChangeHandler)
 
     // 定时刷新（开发模式下每 30 秒）
+    let refreshTimer: ReturnType<typeof setInterval> | null = null
     if (import.meta.env.DEV) {
-      setInterval(() => {
+      refreshTimer = setInterval(() => {
         Object.keys(dynamicSidebarCache.value).forEach(sec => refreshSidebar(sec))
       }, 30000)
+    }
+    
+    // 返回清理函数
+    return () => {
+      window.removeEventListener('file-system-change', fileChangeHandler)
+      if (refreshTimer) {
+        clearInterval(refreshTimer)
+      }
     }
   }
 

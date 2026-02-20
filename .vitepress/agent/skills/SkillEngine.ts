@@ -108,11 +108,12 @@ export class SkillEngine {
       const mapping: Record<string, string[]> = {
         'WRITE_ARTICLE': ['WriteArticle'],
         'EDIT_CONTENT': ['EditContent'],
-        'RESEARCH_WEB': ['ResearchWeb'],
+        'RESEARCH_WEB': ['ResearchWeb', 'ResearchWithFallback'],
         'UPDATE_GRAPH': ['UpdateGraph'],
         'CODE_EXPLAIN': ['CodeExplain'],
         'ANSWER_QUESTION': ['AnswerQuestion'],
-        'SUMMARIZE': ['Summarize']
+        'SUMMARIZE': ['Summarize'],
+        'FETCH_CONTENT': ['FetchContentWithRetry']
       }
 
       const compatibleSkills = mapping[intentType] || []

@@ -374,6 +374,24 @@ export function recordSystemStartup(): void {
   })
 }
 
+// 过滤日志
+function filterLogs(filter: LogFilter): LogEntry[] {
+  return memoryLogs.filter(log => {
+    if (filter.level && log.level !== filter.level) return false
+    if (filter.event && log.event !== filter.event) return false
+    if (filter.actor && log.actor !== filter.actor) return false
+    if (filter.actorId && log.actorId !== filter.actorId) return false
+    if (filter.startTime && new Date(log.timestamp) < filter.startTime) return false
+    if (filter.endTime && new Date(log.timestamp) > filter.endTime) return false
+    if (filter.search) {
+      const searchLower = filter.search.toLowerCase()
+      const text = `${log.message} ${log.event}`.toLowerCase()
+      if (!text.includes(searchLower)) return false
+    }
+    return true
+  })
+}
+
 // 获取最近日志（异步版本）
 async function getRecent(count: number = 100, level?: LogLevel): Promise<LogEntry[]> {
   let logs = [...memoryLogs]

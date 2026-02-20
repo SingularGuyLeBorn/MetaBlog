@@ -7,6 +7,7 @@ import TocSidebar from './components/TocSidebar.vue'
 import TocFab from './components/TocFab.vue'
 import EditFab from './components/EditFab.vue'
 import Breadcrumb from './components/Breadcrumb.vue'
+import DocTitleBar from './components/DocTitleBar.vue'
 import AIChatOrb from './components/agent/AIChatOrb.vue'
 import ControlCenter from './components/ControlCenter.vue'
 import FullScreenPanel from './components/FullScreenPanel.vue'
@@ -235,6 +236,7 @@ watch(() => route.path, () => {
           
           <template #doc-before>
             <Breadcrumb />
+            <DocTitleBar />
           </template>
           
           <template #doc-after>

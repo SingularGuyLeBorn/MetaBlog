@@ -187,7 +187,16 @@ export const logger = {
 export function logFileOperation(
   operation: 'create' | 'rename' | 'move' | 'copy' | 'delete',
   filePath: string,
-  details?: { oldPath?: string; newName?: string; actor?: LogActor }
+  details?: { 
+    oldPath?: string; 
+    newName?: string; 
+    actor?: LogActor;
+    title?: string;
+    section?: string;
+    isChildDoc?: boolean;
+    parentPath?: string;
+    [key: string]: any;
+  }
 ): void {
   const messages: Record<string, string> = {
     create: `创建文件: ${filePath}`,

@@ -393,47 +393,40 @@ const createChild = async () => {
   if (!newDocTitle.value.trim()) return
   
   try {
-    // 获取父目录路径（基于当前 item 的 link）
-    const parentLink = props.item.link || ''
-    const parentDir = parentLink.replace(/\/$/, '')
-    
-    // 生成文件名（将标题转换为合法的文件名）
+    // 使用 /api/articles/create 端点，它会自动处理叶子文档转换
     const baseName = newDocTitle.value.trim()
-    const fileName = baseName.toLowerCase()
-      .replace(/[^\w\s-]/g, '')  // 移除非字母数字字符
-      .replace(/\s+/g, '_')       // 空格转下划线
-      .substring(0, 50)           // 限制长度
     
-    const newPath = `${parentDir}/${fileName}.md`
+    // 从 parent link 提取 section
+    const parentLink = props.item.link || ''
+    const pathParts = parentLink.split('/').filter(Boolean)
+    const section = pathParts[1] || 'posts' // sections/posts/xxx -> posts
     
-    // 构建内容（包含 frontmatter）
-    const content = `---
-title: ${baseName}
-date: ${new Date().toISOString().split('T')[0]}
----
-
-# ${baseName}
-
-`
-    
-    const res = await fetch('/api/files/save', {
+    const res = await fetch('/api/articles/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: newPath, content })
+      body: JSON.stringify({
+        title: baseName,
+        content: `# ${baseName}\n\n`,
+        section: section,
+        isChildDoc: true,
+        parentPath: parentLink
+      })
     })
     
-    if (res.ok) {
+    const result = await res.json()
+    
+    if (result.success) {
       showToast('success', '子文档创建成功')
       showCreateModal.value = false
       // 记录日志
-      logFileOperation('create', newPath)
+      logFileOperation('create', result.data.path, { title: baseName })
       // 展开当前目录
       if (itemId.value && !isExpanded.value) {
         emit('toggle', itemId.value)
       }
       emit('refresh')
     } else {
-      throw new Error('创建失败')
+      throw new Error(result.error || '创建失败')
     }
   } catch (e) {
     showToast('error', '创建失败: ' + (e as Error).message)

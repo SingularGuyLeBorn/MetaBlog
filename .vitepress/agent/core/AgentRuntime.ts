@@ -24,6 +24,7 @@ import { LoggerImpl } from '../runtime/Logger'
 import { CostTrackerImpl } from '../runtime/CostTracker'
 import { createLLMManager } from '../llm'
 import { createLLMConfigFromEnv } from '../config/env'
+import { eventBus, AgentEvents } from './EventBus'
 
 export interface AgentRuntimeConfig {
   mode: EditorMode
@@ -314,6 +315,18 @@ export class AgentRuntime {
       
       this.emit('taskCompleted', { taskId, skill: skill.name, result })
       
+      // 触发 UI 事件通知（如果技能产生了文件）
+      if (result.data?.path) {
+        eventBus.emit('agent:taskCompleted', {
+          path: result.data.path,
+          title: result.data.title || this.extractFilename(result.data.path),
+          section: this.extractSection(result.data.path),
+          timestamp: Date.now(),
+          tokensUsed: result.tokensUsed,
+          cost: result.cost
+        })
+      }
+      
       return this.createAssistantMessage(
         messageId,
         this.formatResult(result, skill.name),
@@ -445,6 +458,32 @@ export class AgentRuntime {
     }
     
     return message
+  }
+  
+  /**
+   * 从文件路径提取文件名（不含扩展名）
+   */
+  private extractFilename(filePath: string): string {
+    const basename = filePath.split(/[/\\]/).pop() || ''
+    return basename.replace(/\.md$/, '')
+  }
+  
+  /**
+   * 从文件路径提取所属栏目
+   * 例如：docs/sections/posts/article.md → posts
+   */
+  private extractSection(filePath: string): string {
+    // 尝试匹配 sections/xxx 模式
+    const match = filePath.match(/sections[/\\]([^/\\]+)/)
+    if (match) {
+      return match[1]
+    }
+    // 尝试匹配 docs/xxx 模式
+    const docsMatch = filePath.match(/docs[/\\]([^/\\]+)/)
+    if (docsMatch) {
+      return docsMatch[1]
+    }
+    return 'unknown'
   }
   
   private async detectWikiLinkSuggestions(

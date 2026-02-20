@@ -64,6 +64,7 @@ export class EnhancedLogger {
   private listeners: Map<LogLevel, Set<(entry: EnhancedLogEntry) => void>> = new Map()
   private sessionId: string
   private traceId: string = ''
+  private cleanupTimer: ReturnType<typeof setInterval> | null = null
   
   constructor(maxLogs: number = 5000) {
     this.maxLogs = maxLogs
@@ -72,6 +73,16 @@ export class EnhancedLogger {
     
     // 定期清理旧日志（每天）
     this.scheduleCleanup()
+  }
+  
+  /**
+   * 清理资源（用于测试或服务关闭时）
+   */
+  destroy(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer)
+      this.cleanupTimer = null
+    }
   }
   
   // ============================================
@@ -438,7 +449,7 @@ export class EnhancedLogger {
     const ONE_DAY = 24 * 60 * 60 * 1000
     const THIRTY_DAYS = 30 * ONE_DAY
     
-    setInterval(() => {
+    this.cleanupTimer = setInterval(() => {
       const cutoff = Date.now() - THIRTY_DAYS
       const originalCount = this.logs.length
       this.logs = this.logs.filter(l => l.timestamp > cutoff)

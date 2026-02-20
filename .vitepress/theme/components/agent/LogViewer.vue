@@ -613,7 +613,7 @@ async function refreshLogs() {
   } catch (e) {
     console.error('Failed to fetch logs from server:', e)
     // Fallback to local logs
-    logs.value = logger.getLogs(100)
+    logs.value = logger.getLogs()
     stats.value = logger.getStats()
   }
   

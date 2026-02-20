@@ -375,10 +375,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, defineComponent, h } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, defineComponent, h } from 'vue'
 import { useData } from 'vitepress'
 import { logger, logFileOperation } from '../../composables/useLogger'
 import { notifyFileSystemChange } from '../../composables/useDynamicSidebar'
+import { eventBus } from '../../../agent/core/EventBus'
 
 // 递归树节点组件
 const TreeNode = defineComponent({
@@ -650,8 +651,8 @@ function showToast(type: Toast['type'], message: string) {
 async function loadArticles() {
   isLoading.value = true
   try {
-    // 从后端 API 获取文章列表
-    const response = await fetch('/api/articles/list')
+    // 从后端 API 获取文章列表（添加时间戳避免缓存）
+    const response = await fetch(`/api/articles/list?t=${Date.now()}`)
     if (!response.ok) throw new Error('Failed to fetch articles')
     
     const result = await response.json()
@@ -715,8 +716,9 @@ async function createArticle() {
       isChildDoc.value = false
       parentArticle.value = null
       selectedPath.value = 'posts'
-      // Reload list
+      // Reload list and directory tree
       await loadArticles()
+      await buildDirectoryTree()
       // 通知 sidebar 刷新
       notifyFileSystemChange('posts')
     } else {
@@ -777,7 +779,7 @@ async function deleteArticle() {
 async function buildDirectoryTree() {
   // 从后端 API 获取规范化的目录树
   try {
-    const response = await fetch('/api/directory-tree?section=posts')
+    const response = await fetch(`/api/directory-tree?section=posts&t=${Date.now()}`)
     if (!response.ok) throw new Error('Failed to fetch directory tree')
     
     const result = await response.json()
@@ -847,6 +849,8 @@ function confirmPathSelection() {
 }
 
 // ==================== Lifecycle ====================
+let unsubscribeAgentComplete: (() => void) | null = null
+
 onMounted(() => {
   loadArticles()
   buildDirectoryTree()
@@ -857,10 +861,25 @@ onMounted(() => {
   }
   window.addEventListener('article-manager:create', handleCreateArticle)
   
+  // 监听 Agent 任务完成事件，刷新文章列表
+  unsubscribeAgentComplete = eventBus.on('agent:taskCompleted', (data) => {
+    // 检查当前是否显示的是 Agent 创建的文章所属栏目
+    const currentSection = vpData.page.value?.filePath?.match(/sections\/([^\/]+)/)?.[1]
+    const articleSection = data.section
+    
+    // 如果当前栏目匹配，则刷新列表
+    if (!currentSection || currentSection === articleSection) {
+      console.log('[ArticleManager] Agent completed task, refreshing article list:', data.path)
+      loadArticles()
+      buildDirectoryTree()
+      showToast('success', `新文章已添加: ${data.title}`)
+    }
+  })
+  
   // Placeholder animation
   const placeholders = ['搜索文章...', '输入标题、标签...', '查找内容...']
   let index = 0
-  setInterval(() => {
+  const placeholderTimer = setInterval(() => {
     if (!isSearchFocused.value && !searchQuery.value) {
       index = (index + 1) % placeholders.length
       searchPlaceholder.value = placeholders[index]
@@ -870,7 +889,12 @@ onMounted(() => {
   // Cleanup
   return () => {
     window.removeEventListener('article-manager:create', handleCreateArticle)
+    clearInterval(placeholderTimer)
   }
+})
+
+onUnmounted(() => {
+  unsubscribeAgentComplete?.()
 })
 </script>
 
