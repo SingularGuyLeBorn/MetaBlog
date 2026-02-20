@@ -2,20 +2,20 @@
  * Memory Module - 记忆管理模块
  * 统一导出所有记忆管理子模块
  * 
- * **已文件化**: 所有数据持久化到文件系�?
+ * **已文件化**: 所有数据持久化到文件系�?
  * 
- * 目录结构�?
+ * 目录结构�?
  * - entities/EntityManager.ts    知识实体管理（文件存储）
  * - tasks/TaskManager.ts         任务历史管理（文件存储）
- * - context/SessionManager.ts    会话上下文管理（文件存储�?
- * - skills/SkillMemoryManager.ts 技能记忆管�?
+ * - context/SessionManager.ts    会话上下文管理（文件存储�?
+ * - skills/SkillMemoryManager.ts 技能记忆管�?
  * - data/                        数据存储目录
  *   - entities.json              实体数据
  *   - tasks.json                 任务历史
  *   - sessions.json              会话数据
  */
 
-// 子模块导�?
+// 子模块导�?
 export { EntityManager, getEntityManager } from './entities/EntityManager'
 export { TaskManager, getTaskManager } from './tasks/TaskManager'
 export { SessionManager, getSessionManager } from './context/SessionManager'
@@ -29,7 +29,7 @@ export type { KnowledgeEntity, EntityType, TaskHistory, SessionMemory } from '..
 export type { ContextOptions } from './context/SessionManager'
 export type { SkillExecutionRecord, SkillPreference } from './skills/SkillMemoryManager'
 
-// 统一记忆管理�?- 实现 MemoryManager 接口
+// 统一记忆管理�?- 实现 MemoryManager 接口
 import { getEntityManager } from './entities/EntityManager'
 import { getTaskManager } from './tasks/TaskManager'
 import { getSessionManager } from './context/SessionManager'
@@ -43,16 +43,16 @@ import type {
 } from '../core/types'
 
 /**
- * 统一记忆管理�?
+ * 统一记忆管理�?
  * 提供子模块实例，开发者可直接访问
  * 
  * 数据持久化：
- * - 实体�?vitepress/agent/memory/data/entities.json
- * - 任务�?vitepress/agent/memory/data/tasks.json
- * - 会话�?vitepress/agent/memory/data/sessions.json
+ * - 实体�?vitepress/agent/memory/data/entities.json
+ * - 任务�?vitepress/agent/memory/data/tasks.json
+ * - 会话�?vitepress/agent/memory/data/sessions.json
  */
 export class MemoryManager {
-  // 子模块实�?- 直接访问
+  // 子模块实�?- 直接访问
   entities = getEntityManager()
   tasks = getTaskManager()
   sessions = getSessionManager()
@@ -60,10 +60,10 @@ export class MemoryManager {
 
   private initialized: boolean = false
 
-  // ============ 初始�?============
+  // ============ 初始�?============
 
   /**
-   * 初始化所有记忆模�?
+   * 初始化所有记忆模�?
    * 从文件加载数据到内存
    */
   async initialize(): Promise<void> {
@@ -81,21 +81,21 @@ export class MemoryManager {
     await this.sessions.cleanupExpired()
     
     this.initialized = true
-    console.log('[MemoryManager] 初始化完�?)
+    console.log('[MemoryManager] 初始化完成')
   }
 
   /**
-   * 检查是否已初始�?
+   * 检查是否已初始�?
    */
   isInitialized(): boolean {
     return this.initialized
   }
 
-  // ============ RAG 上下文构�?============
+  // ============ RAG 上下文构�?============
 
   /**
-   * 构建 RAG 上下�?
-   * 从实体和任务历史中搜索相关内�?
+   * 构建 RAG 上下�?
+   * 从实体和任务历史中搜索相关内�?
    */
   async buildContext(query: string, currentFile?: string): Promise<RAGResult[]> {
     // 确保已初始化
@@ -119,7 +119,7 @@ export class MemoryManager {
   // ============ 数据导出/导入 ============
 
   /**
-   * 导出所有记忆数�?
+   * 导出所有记忆数�?
    */
   async exportAll(): Promise<{
     entities: KnowledgeEntity[]
@@ -161,7 +161,7 @@ export class MemoryManager {
       this.tasks.clear(),
       this.sessions.clear()
     ])
-    console.log('[MemoryManager] 已清空所有数�?)
+    console.log('[MemoryManager] 已清空所有数据')
   }
 }
 

@@ -38,8 +38,6 @@ class BootLogger {
     
     if (phase === 'error') {
       logger.error(eventName, msg, data)
-    } else if (phase === 'warn') {
-      logger.warn(eventName, msg, data)
     } else {
       logger.info(eventName, msg, data)
     }

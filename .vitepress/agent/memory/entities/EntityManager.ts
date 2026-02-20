@@ -1,7 +1,7 @@
 /**
  * EntityManager.ts - 知识实体管理
  * 
- * 负责实体�?CRUD、搜索、关联管�?
+ * 负责实体�?CRUD、搜索、关联管�?
  * **已文件化**: 实体数据持久化到文件系统
  */
 import type { KnowledgeEntity, EntityType, RAGResult } from '../../core/types'
@@ -25,13 +25,13 @@ const storage = createStorage<EntityStorage>({
 })
 
 /**
- * 实体管理�?
+ * 实体管理�?
  */
 export class EntityManager {
   private cacheLoaded: boolean = false
 
   /**
-   * 初始化：从文件加载数�?
+   * 初始化：从文件加载数�?
    */
   async initialize(): Promise<void> {
     if (this.cacheLoaded) return
@@ -44,14 +44,14 @@ export class EntityManager {
   }
 
   /**
-   * 从服务器加载（兼容旧接口，实际从文件加载�?
+   * 从服务器加载（兼容旧接口，实际从文件加载�?
    */
   async loadFromServer(): Promise<void> {
     return this.initialize()
   }
 
   /**
-   * 保存到文件（内部方法�?
+   * 保存到文件（内部方法�?
    */
   private async persist(): Promise<void> {
     storage.updateData(data => {
@@ -85,7 +85,7 @@ export class EntityManager {
   }
 
   /**
-   * 按类型查找实�?
+   * 按类型查找实�?
    */
   async findByType(type: EntityType): Promise<KnowledgeEntity[]> {
     await this.initialize()
@@ -94,7 +94,7 @@ export class EntityManager {
   }
 
   /**
-   * 按名称查找实体（支持别名�?
+   * 按名称查找实体（支持别名�?
    */
   async findByName(name: string): Promise<KnowledgeEntity[]> {
     await this.initialize()
@@ -123,7 +123,7 @@ export class EntityManager {
   }
 
   /**
-   * 搜索实体（用�?RAG�?
+   * 搜索实体（用�?RAG�?
    */
   async search(query: string): Promise<RAGResult[]> {
     await this.initialize()
@@ -197,7 +197,7 @@ export class EntityManager {
         id,
         name,
         type: 'concept',
-        description: `�?${source} 提取的实体`,
+        description: `�?${source} 提取的实体`,
         aliases: [],
         related: [],
         sources: [source],
@@ -213,12 +213,12 @@ export class EntityManager {
       }
     }
     
-    console.log(`[EntityManager] �?${source} 提取 ${entities.length} 个实体`)
+    console.log(`[EntityManager] �?${source} 提取 ${entities.length} 个实体`)
     return entities
   }
 
   /**
-   * 获取所有实�?
+   * 获取所有实�?
    */
   async getAll(): Promise<KnowledgeEntity[]> {
     await this.initialize()
@@ -239,11 +239,11 @@ export class EntityManager {
   }
 
   /**
-   * 清空所有实�?
+   * 清空所有实�?
    */
   async clear(): Promise<void> {
     await storage.clear()
-    console.log('[EntityManager] 清空所有实�?)
+    console.log('[EntityManager] 清空所有实体')
   }
 }
 

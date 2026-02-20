@@ -1,7 +1,7 @@
 /**
- * SessionManager.ts - 会话上下文管�?
+ * SessionManager.ts - 会话上下文管�?
  * 
- * 负责会话的创建、存储、查�?
+ * 负责会话的创建、存储、查�?
  * **已文件化**: 会话数据持久化到文件系统
  */
 import type { SessionMemory, ChatMessage } from '../../core/types'
@@ -33,14 +33,14 @@ const storage = createStorage<SessionStorage>({
 })
 
 /**
- * 会话管理�?
+ * 会话管理�?
  */
 export class SessionManager {
   private cacheLoaded: boolean = false
   private maxSessions: number = 50 // 最大保留会话数
 
   /**
-   * 初始化：从文件加载数�?
+   * 初始化：从文件加载数�?
    */
   async initialize(): Promise<void> {
     if (this.cacheLoaded) return
@@ -54,14 +54,14 @@ export class SessionManager {
   }
 
   /**
-   * 从服务器加载（兼容旧接口�?
+   * 从服务器加载（兼容旧接口�?
    */
   async loadFromServer(): Promise<void> {
     return this.initialize()
   }
 
   /**
-   * 保存到文�?
+   * 保存到文�?
    */
   private async persist(): Promise<void> {
     storage.updateData(data => {
@@ -110,7 +110,7 @@ export class SessionManager {
   }
 
   /**
-   * 创建新会�?
+   * 创建新会�?
    */
   async create(context?: ContextOptions): Promise<SessionMemory> {
     await this.initialize()
@@ -159,7 +159,7 @@ export class SessionManager {
   }
 
   /**
-   * 添加消息到会�?
+   * 添加消息到会�?
    */
   async addMessage(sessionId: string, message: ChatMessage): Promise<void> {
     const session = await this.get(sessionId)
@@ -189,7 +189,7 @@ export class SessionManager {
   }
 
   /**
-   * 更新会话上下�?
+   * 更新会话上下�?
    */
   async updateContext(sessionId: string, context: Partial<ContextOptions>): Promise<void> {
     const session = await this.get(sessionId)
@@ -212,7 +212,7 @@ export class SessionManager {
     storage.updateData(data => {
       delete data.sessions[sessionId]
       
-      // 如果删除的是活跃会话，清空活跃会�?
+      // 如果删除的是活跃会话，清空活跃会�?
       if (data.activeSessionId === sessionId) {
         data.activeSessionId = null
       }
@@ -223,7 +223,7 @@ export class SessionManager {
   }
 
   /**
-   * 列出所有会�?
+   * 列出所有会�?
    */
   async list(): Promise<SessionMemory[]> {
     await this.initialize()
@@ -234,7 +234,7 @@ export class SessionManager {
   }
 
   /**
-   * 清理过期会话（超�?7 天未活跃�?
+   * 清理过期会话（超�?7 天未活跃�?
    */
   async cleanupExpired(): Promise<number> {
     await this.initialize()
@@ -264,11 +264,11 @@ export class SessionManager {
   }
 
   /**
-   * 清空所有会�?
+   * 清空所有会�?
    */
   async clear(): Promise<void> {
     await storage.clear()
-    console.log('[SessionManager] 清空所有会�?)
+    console.log('[SessionManager] 清空所有会话')
   }
 }
 
