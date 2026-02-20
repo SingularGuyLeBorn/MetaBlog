@@ -312,6 +312,25 @@ export class AgentRuntime {
     const abortController = new AbortController()
     this.activeControllers.set(taskId, abortController)
     
+    // P2-AG-2: 进度回调
+    const updateProgress = (progress: { step: number; totalSteps: number; message: string; detail?: string }) => {
+      task.currentStep = progress.step
+      task.totalSteps = progress.totalSteps
+      task.updatedAt = Date.now()
+      
+      this.emit('progress', {
+        taskId,
+        ...progress,
+        percent: Math.round((progress.step / progress.totalSteps) * 100)
+      })
+      
+      this.logger.debug('task.progress', progress.message, {
+        taskId,
+        step: progress.step,
+        total: progress.totalSteps
+      })
+    }
+    
     const skillContext: SkillContext = {
       taskId,
       memory: this.memory,
@@ -320,7 +339,8 @@ export class AgentRuntime {
       currentFile: this.currentFile,
       sessionId: this.sessionId,
       fileLock: fileLockManager,
-      signal: abortController.signal
+      signal: abortController.signal,
+      onProgress: updateProgress  // P2-AG-2: 注入进度回调
     }
     
     try {
@@ -626,7 +646,7 @@ export class AgentRuntime {
   })
 
   private async loadCheckpoints(): Promise<void> {
-    // P1-CHK: 从文件加载未完成的任务
+    // P2-CHK-3: 从文件加载未完成的任务
     try {
       await this.checkpointStorage.load()
       const data = this.checkpointStorage.getData()
@@ -642,14 +662,105 @@ export class AgentRuntime {
       
       if (validTasks.length > 0) {
         this.logger.info('Loaded checkpoints', { count: validTasks.length })
-        // 恢复到 activeTasks（可选：自动恢复或手动恢复）
+        // P2-CHK-3: 恢复到 activeTasks，并标记为 PAUSED 等待恢复
         for (const task of validTasks) {
+          task.state = 'PAUSED'  // 标记为暂停状态，等待用户恢复
           this.activeTasks.set(task.id, task)
         }
+        
+        // 发出事件通知 UI 有可恢复的任务
+        this.emit('checkpointsLoaded', { 
+          tasks: validTasks.map(t => ({ 
+            id: t.id, 
+            state: t.state, 
+            startedAt: t.startedAt,
+            description: t.context?.intent?.raw || '未知任务'
+          }))
+        })
       }
     } catch (error) {
       this.logger.warn('Failed to load checkpoints', { error: String(error) })
     }
+  }
+  
+  /**
+   * P2-CHK-3: 获取所有可恢复的任务（断点续作）
+   */
+  getResumableTasks(): Array<{ id: string; state: AgentState; startedAt: number; description: string }> {
+    const now = Date.now()
+    const maxAge = 24 * 60 * 60 * 1000
+    
+    return Array.from(this.activeTasks.values())
+      .filter(task => {
+        const isRecent = (now - task.startedAt) < maxAge
+        const isPaused = task.state === 'PAUSED'
+        return isRecent && isPaused
+      })
+      .map(task => ({
+        id: task.id,
+        state: task.state,
+        startedAt: task.startedAt,
+        description: task.context?.intent?.raw || '未知任务'
+      }))
+  }
+  
+  /**
+   * P2-CHK-3: 恢复指定任务（断点续作）
+   */
+  async resumeTask(taskId: string): Promise<ChatMessage | null> {
+    const task = this.activeTasks.get(taskId)
+    if (!task) {
+      this.logger.warn('Task not found for resume', { taskId })
+      return null
+    }
+    
+    if (task.state !== 'PAUSED') {
+      this.logger.warn('Task is not in PAUSED state', { taskId, state: task.state })
+      return null
+    }
+    
+    const intent = task.context?.intent as ParsedIntent
+    const rawInput = task.context?.rawInput as string
+    
+    if (!intent || !rawInput) {
+      this.logger.error('Task context incomplete', { taskId })
+      return null
+    }
+    
+    this.logger.info('Resuming task from checkpoint', { taskId, intent: intent.type })
+    
+    // 更新任务状态
+    task.state = 'PLANNING'
+    task.updatedAt = Date.now()
+    
+    // 执行意图
+    return this.executeIntent(intent, rawInput, `resume_${Date.now()}`)
+  }
+  
+  /**
+   * P2-CHK-3: 放弃指定任务（删除 checkpoint）
+   */
+  async abandonTask(taskId: string): Promise<boolean> {
+    const task = this.activeTasks.get(taskId)
+    if (!task) return false
+    
+    // 删除任务
+    this.activeTasks.delete(taskId)
+    
+    // 从 checkpoint 存储中移除
+    try {
+      await this.checkpointStorage.load()
+      this.checkpointStorage.updateData(data => {
+        data.tasks = data.tasks.filter((t: TaskState) => t.id !== taskId)
+      })
+      await this.checkpointStorage.save()
+    } catch (error) {
+      this.logger.warn('Failed to remove checkpoint', { taskId, error: String(error) })
+    }
+    
+    this.logger.info('Task abandoned', { taskId })
+    this.emit('taskAbandoned', { taskId })
+    return true
   }
   
   private async saveTaskHistory(

@@ -78,6 +78,15 @@ export interface FileLockManager {
   acquireLocks(filePaths: string[], taskId: string): { success: boolean; failed: string[] }
 }
 
+/** 进度信息 */
+export interface ProgressInfo {
+  step: number              // 当前步骤
+  totalSteps: number        // 总步骤
+  message: string           // 进度描述
+  detail?: string           // 详细描述
+  percent?: number          // 百分比 (0-100)
+}
+
 /** 技能上下文 */
 export interface SkillContext {
   taskId: string
@@ -87,7 +96,8 @@ export interface SkillContext {
   currentFile?: string
   sessionId: string
   fileLock: FileLockManager
-  signal?: AbortSignal  // P1-AG: 支持取消操作
+  signal?: AbortSignal      // P1-AG: 支持取消操作
+  onProgress?: (progress: ProgressInfo) => void  // P2-AG-2: 进度回调
 }
 
 /** 技能执行结果 */

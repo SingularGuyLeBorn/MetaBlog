@@ -9,9 +9,28 @@
       :style="orbPositionStyle"
     >
       <div class="orb-inner">
-        <svg class="orb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 16v-4M12 8h.01"/>
+        <!-- P4-Icon: 可爱小机器人图标 -->
+        <svg class="orb-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- 身体 -->
+          <circle cx="32" cy="34" r="22" fill="url(#bodyGradient)" stroke="white" stroke-width="2"/>
+          <!-- 左眼 -->
+          <circle cx="25" cy="30" r="5" fill="white"/>
+          <circle cx="25" cy="30" r="2.5" fill="#1E40AF"/>
+          <!-- 右眼 -->
+          <circle cx="39" cy="30" r="5" fill="white"/>
+          <circle cx="39" cy="30" r="2.5" fill="#1E40AF"/>
+          <!-- 小嘴巴 -->
+          <path d="M28 40 Q32 44 36 40" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <!-- 天线 -->
+          <line x1="32" y1="12" x2="32" y2="4" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="32" cy="4" r="3" fill="#FBBF24" stroke="white" stroke-width="1.5"/>
+          <!-- 渐变定义 -->
+          <defs>
+            <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#60A5FA"/>
+              <stop offset="100%" style="stop-color:#3B82F6"/>
+            </linearGradient>
+          </defs>
         </svg>
       </div>
       <div class="orb-glow"></div>
@@ -48,9 +67,44 @@
         <!-- Header -->
         <div class="console-header" @mousedown.prevent="startDrag">
           <div class="header-left">
+            <!-- P4-Session: 历史按钮 -->
+            <button 
+              class="history-btn"
+              @click="showSessionSidebar = !showSessionSidebar"
+              title="会话历史"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span class="session-count" v-if="sessions.length > 1">{{ sessions.length }}</span>
+            </button>
             <span class="header-title">MetaUniverse</span>
           </div>
           <div class="header-right">
+            <!-- P4-Quote: 引用当前文章按钮 -->
+            <button 
+              v-if="isArticlePage"
+              class="quote-current-btn"
+              @click="quoteCurrentArticle"
+              title="引用当前文章"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+              <span>引用当前</span>
+            </button>
+            
+            <!-- P4-Session: 新建会话按钮 -->
+            <button 
+              class="new-session-btn"
+              @click="createSession"
+              title="新建会话"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 4v16m8-8H4"/>
+              </svg>
+            </button>
+            
             <!-- Model Selector -->
             <div class="model-selector" ref="modelSelectorRef">
               <button 
@@ -106,8 +160,59 @@
           </div>
         </div>
 
+        <!-- P4-Session: Session Sidebar -->
+        <Transition name="session-sidebar">
+          <div v-if="showSessionSidebar" class="session-sidebar">
+            <div class="session-sidebar-header">
+              <span class="sidebar-title">会话历史</span>
+              <button class="sidebar-close" @click="showSessionSidebar = false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+            
+            <div class="session-sidebar-content">
+              <button class="new-session-large" @click="createSession">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 4v16m8-8H4"/>
+                </svg>
+                <span>新建会话</span>
+              </button>
+              
+              <div v-for="group in groupedSessions" :key="group.label" class="session-group">
+                <div class="session-group-label">{{ group.label }}</div>
+                <div 
+                  v-for="session in group.sessions" 
+                  :key="session.id"
+                  class="session-item"
+                  :class="{ active: session.id === currentSessionId }"
+                  @click="switchSession(session.id)"
+                >
+                  <div class="session-info">
+                    <div class="session-title">{{ getSessionTitle(session) }}</div>
+                    <div class="session-meta">
+                      {{ session.messages.length }} 条消息 · 
+                      {{ new Date(session.updatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) }}
+                    </div>
+                  </div>
+                  <button 
+                    class="session-delete"
+                    @click="deleteSession(session.id, $event)"
+                    title="删除会话"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Transition>
+
         <!-- Message Area -->
-        <div ref="messageAreaRef" class="message-area">
+        <div ref="messageAreaRef" class="message-area" :class="{ 'with-sidebar': showSessionSidebar }">
           <!-- Empty State -->
           <div v-if="messages.length === 0" class="empty-state">
             <div class="empty-icon">🌌</div>
@@ -117,6 +222,12 @@
               <div class="tip-item"><kbd>/</kbd> 使用技能</div>
               <div class="tip-item"><kbd>@</kbd> 引用文章</div>
             </div>
+          </div>
+          
+          <!-- P3-Persist: 恢复提示 -->
+          <div v-else-if="messages.length > 0 && !hasShownRestoreNotice" class="restore-notice">
+            <span>💾 已恢复之前的对话</span>
+            <button class="restore-close" @click="hasShownRestoreNotice = true">×</button>
           </div>
 
           <!-- Messages -->
@@ -219,35 +330,76 @@
                 </div>
               </div>
               
-              <!-- Article List -->
-              <div v-else-if="popoverMode === 'article'" class="popover-list">
-                <div class="popover-header">
+              <!-- P4-Article: 重构文章选择器 - 目录树+预览面板 -->
+              <div v-else-if="popoverMode === 'article'" class="article-picker">
+                <!-- Header with search -->
+                <div class="article-picker-header">
                   <input 
                     ref="articleSearchRef"
                     v-model="articleSearch"
                     type="text" 
                     placeholder="搜索文章..."
-                    class="popover-search"
+                    class="article-picker-search"
                     @keydown="handleArticleSearchKeydown"
                   >
                 </div>
-                <div class="popover-scroll">
-                  <div
-                    v-for="(article, idx) in filteredArticles"
-                    :key="article.path"
-                    class="popover-item article-item"
-                    :class="{ active: selectedPopoverIndex === idx }"
-                    @click="selectArticle(article)"
-                    @mouseenter="selectedPopoverIndex = idx"
-                  >
-                    <div class="article-thumb">{{ article.title.charAt(0) }}</div>
-                    <div class="popover-info">
-                      <div class="popover-name">{{ article.title }}</div>
-                      <div class="popover-date">{{ formatDate(article.date) }}</div>
+                
+                <!-- Two panel layout -->
+                <div class="article-picker-body">
+                  <!-- Left: Directory Tree -->
+                  <div class="article-tree">
+                    <div v-if="articleSearch" class="article-search-results">
+                      <div
+                        v-for="article in filteredArticles"
+                        :key="article.path"
+                        class="article-tree-item"
+                        :class="{ active: previewArticle?.path === article.path }"
+                        @click="previewArticle = article; loadArticlePreview(article)"
+                        @mouseenter="previewArticle = article; loadArticlePreview(article)"
+                      >
+                        <span class="tree-icon">📄</span>
+                        <span class="tree-label">{{ article.title }}</span>
+                      </div>
+                      <div v-if="filteredArticles.length === 0" class="article-tree-empty">
+                        未找到匹配文章
+                      </div>
+                    </div>
+                    <div v-else class="article-tree-content">
+                      <TreeItem 
+                        v-for="item in articleTree" 
+                        :key="item.path || item.name"
+                        :item="item"
+                        :active-path="previewArticle?.path"
+                        @select="onTreeItemSelect"
+                        @hover="onTreeItemHover"
+                      />
                     </div>
                   </div>
-                  <div v-if="filteredArticles.length === 0" class="popover-empty">
-                    未找到匹配文章
+                  
+                  <!-- Right: Preview Panel -->
+                  <div class="article-preview" v-if="previewArticle">
+                    <div class="preview-header">
+                      <h4 class="preview-title">{{ previewArticle.title }}</h4>
+                      <div class="preview-actions">
+                        <button class="preview-btn" @click="quoteFullArticle">
+                          <span>📄</span> 引用全文
+                        </button>
+                      </div>
+                    </div>
+                    <div class="preview-content" ref="previewContentRef">
+                      <div v-if="previewLoading" class="preview-loading">
+                        <div class="preview-spinner"></div>
+                        <span>加载中...</span>
+                      </div>
+                      <div v-else-if="previewError" class="preview-error">
+                        {{ previewError }}
+                      </div>
+                      <div v-else class="preview-markdown markdown-body" v-html="renderMarkdown(previewContent)"></div>
+                    </div>
+                  </div>
+                  <div v-else class="article-preview-empty">
+                    <div class="empty-preview-icon">📖</div>
+                    <div class="empty-preview-text">选择左侧文章预览</div>
                   </div>
                 </div>
               </div>
@@ -290,6 +442,24 @@
             </span>
           </div>
         </div>
+      </div>
+    </Transition>
+    
+    <!-- P4-Select: Selection Toolbar -->
+    <Transition name="toolbar-fade">
+      <div
+        v-if="showSelectionToolbar"
+        class="selection-toolbar"
+        :style="{ left: `${selectionToolbarPos.x}px`, top: `${selectionToolbarPos.y}px` }"
+      >
+        <button class="toolbar-btn primary" @click="askSelectedText">
+          <span>🤖</span>
+          <span>询问AI</span>
+        </button>
+        <button class="toolbar-btn" @click="copySelectedText">
+          <span>📋</span>
+          <span>复制</span>
+        </button>
       </div>
     </Transition>
   </Teleport>
@@ -340,8 +510,9 @@ const showModelDropdown = ref(false)
 const dropdownDirection = ref<'down' | 'up'>('down')
 
 // Console Position & Size
-const consolePos = ref({ x: window.innerWidth - 420, y: 100 })
-const consoleSize = ref({ width: 380, height: 600 })
+// P3-UI: 增大初始窗口尺寸 - 宽度 3 倍 (380->1140)，高度 1.2 倍 (600->720)
+const consolePos = ref({ x: window.innerWidth - 1180, y: 80 })
+const consoleSize = ref({ width: 1140, height: 720 })
 const isDragging = ref(false)
 const isResizing = ref(false)
 const resizeDirection = ref('')
@@ -362,6 +533,159 @@ const lastInputTrigger = ref<{ type: '/' | '@' | null, position: number }>({ typ
 
 // Chat Service
 const chatService = useChatService()
+
+// P3-Persist: 恢复提示显示状态
+const hasShownRestoreNotice = ref(false)
+
+// P4-Article: 文章预览相关状态
+const previewArticle = ref<ArticleData | null>(null)
+const previewContent = ref('')
+const previewLoading = ref(false)
+const previewError = ref('')
+const previewContentRef = ref<HTMLElement>()
+
+// P4-Article: 文章目录树
+interface TreeNode {
+  name: string
+  path?: string
+  title?: string
+  children?: TreeNode[]
+  isDirectory?: boolean
+}
+
+const articleTree = computed<TreeNode[]>(() => {
+  const tree: TreeNode[] = []
+  const articles = allArticles.value
+  
+  // Group by directory structure
+  const groups: Record<string, ArticleData[]> = {}
+  articles.forEach(article => {
+    const parts = article.path.split('/').filter(Boolean)
+    const dir = parts.length > 1 ? parts[0] : '根目录'
+    if (!groups[dir]) groups[dir] = []
+    groups[dir].push(article)
+  })
+  
+  Object.entries(groups).forEach(([dir, items]) => {
+    if (items.length === 1 && items[0].path.split('/').filter(Boolean)[0] === dir) {
+      // Single item, flatten
+      tree.push({
+        name: items[0].title,
+        path: items[0].path,
+        title: items[0].title,
+        isDirectory: false
+      })
+    } else {
+      // Group
+      tree.push({
+        name: dir,
+        isDirectory: true,
+        children: items.map(a => ({
+          name: a.title,
+          path: a.path,
+          title: a.title,
+          isDirectory: false
+        }))
+      })
+    }
+  })
+  
+  return tree
+})
+
+// P4-Article: 加载文章预览
+async function loadArticlePreview(article: ArticleData) {
+  if (!article.path) return
+  previewLoading.value = true
+  previewError.value = ''
+  previewContent.value = ''
+  
+  try {
+    const content = await fetchArticleContent(article.path)
+    // Truncate if too long
+    previewContent.value = content.slice(0, 10000) + (content.length > 10000 ? '\n\n...(内容已截断)' : '')
+  } catch (e) {
+    previewError.value = '加载失败: ' + String(e)
+  } finally {
+    previewLoading.value = false
+  }
+}
+
+// P4-Article: 树节点选择
+function onTreeItemSelect(item: TreeNode) {
+  if (item.path && item.title) {
+    previewArticle.value = { path: item.path, title: item.title }
+    loadArticlePreview(previewArticle.value)
+  }
+}
+
+function onTreeItemHover(item: TreeNode) {
+  if (item.path && item.title) {
+    previewArticle.value = { path: item.path, title: item.title }
+    loadArticlePreview(previewArticle.value)
+  }
+}
+
+// P4-Article: 引用全文
+function quoteFullArticle() {
+  if (!previewArticle.value) return
+  selectArticle(previewArticle.value)
+  showPopover.value = false
+  previewArticle.value = null
+}
+
+// P4-Article: TreeItem 渲染组件
+const TreeItem = {
+  name: 'TreeItem',
+  props: ['item', 'activePath'],
+  emits: ['select', 'hover'],
+  setup(props: { item: TreeNode; activePath?: string }, { emit }: any) {
+    const isOpen = ref(true)
+    const isActive = computed(() => props.item.path === props.activePath)
+    
+    function onClick() {
+      if (props.item.isDirectory) {
+        isOpen.value = !isOpen.value
+      } else {
+        emit('select', props.item)
+      }
+    }
+    
+    function onMouseEnter() {
+      if (!props.item.isDirectory) {
+        emit('hover', props.item)
+      }
+    }
+    
+    return { isOpen, isActive, onClick, onMouseEnter }
+  },
+  template: `
+    <div class="tree-node">
+      <div 
+        class="tree-item" 
+        :class="{ 'tree-directory': item.isDirectory, 'tree-file': !item.isDirectory, 'active': isActive }"
+        @click="onClick"
+        @mouseenter="onMouseEnter"
+      >
+        <span v-if="item.isDirectory" class="tree-toggle">
+          {{ isOpen ? '▼' : '▶' }}
+        </span>
+        <span v-else class="tree-icon">📄</span>
+        <span class="tree-label">{{ item.name }}</span>
+      </div>
+      <div v-if="item.isDirectory && isOpen && item.children" class="tree-children">
+        <TreeItem 
+          v-for="child in item.children" 
+          :key="child.path || child.name"
+          :item="child"
+          :active-path="activePath"
+          @select="$emit('select', $event)"
+          @hover="$emit('hover', $event)"
+        />
+      </div>
+    </div>
+  `
+}
 
 // Agent Runtime（技能执行通道）
 let agentRuntime: AgentRuntime | null = null
@@ -403,12 +727,239 @@ function shouldUseAgentRuntime(text: string): boolean {
   return INTENT_KEYWORDS.some(pattern => pattern.test(text))
 }
 
+// ==================== Multi-Session Management ====================
+// P4-Session: 多会话管理
+const SESSIONS_KEY = 'metablog-chat-sessions'
+const CURRENT_SESSION_KEY = 'metablog-current-session'
+
+interface ChatSession {
+  id: string
+  title: string
+  messages: Message[]
+  createdAt: number
+  updatedAt: number
+}
+
+const sessions = ref<ChatSession[]>(loadSessions())
+const currentSessionId = ref<string>(loadCurrentSessionId())
+const showSessionSidebar = ref(false)
+
+// 获取当前会话
+const currentSession = computed(() => {
+  return sessions.value.find(s => s.id === currentSessionId.value)
+})
+
+// 获取当前会话的消息
+const messages = computed({
+  get: () => currentSession.value?.messages || [],
+  set: (newMessages: Message[]) => {
+    const session = currentSession.value
+    if (session) {
+      session.messages = newMessages
+      session.updatedAt = Date.now()
+    }
+  }
+})
+
+// 加载会话列表
+function loadSessions(): ChatSession[] {
+  try {
+    const stored = localStorage.getItem(SESSIONS_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      return parsed.map((s: any) => ({
+        ...s,
+        messages: s.messages.map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp)
+        })),
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt
+      }))
+    }
+  } catch (e) {
+    console.warn('[AIChatOrb] 加载会话列表失败:', e)
+  }
+  // 默认创建一个会话
+  return [createNewSession()]
+}
+
+// 加载当前会话ID
+function loadCurrentSessionId(): string {
+  try {
+    const stored = localStorage.getItem(CURRENT_SESSION_KEY)
+    if (stored) {
+      // 检查会话是否存在
+      const sessions = loadSessions()
+      if (sessions.find(s => s.id === stored)) {
+        return stored
+      }
+    }
+  } catch (e) {
+    console.warn('[AIChatOrb] 加载当前会话失败:', e)
+  }
+  // 返回第一个会话
+  const sessions = loadSessions()
+  return sessions[0]?.id || createNewSession().id
+}
+
+// 保存会话列表
+function saveSessions() {
+  try {
+    // 每个会话最多保存 50 条消息
+    const toSave = sessions.value.map(s => ({
+      ...s,
+      messages: s.messages.slice(-50)
+    }))
+    localStorage.setItem(SESSIONS_KEY, JSON.stringify(toSave))
+    localStorage.setItem(CURRENT_SESSION_KEY, currentSessionId.value)
+  } catch (e) {
+    console.warn('[AIChatOrb] 保存会话失败:', e)
+  }
+}
+
+// 创建新会话
+function createNewSession(): ChatSession {
+  const now = Date.now()
+  return {
+    id: `session_${now}_${Math.random().toString(36).substr(2, 9)}`,
+    title: '新对话',
+    messages: [],
+    createdAt: now,
+    updatedAt: now
+  }
+}
+
+// 切换会话
+function switchSession(sessionId: string) {
+  currentSessionId.value = sessionId
+  saveSessions()
+  nextTick(() => {
+    scrollToBottom()
+    inputRef.value?.focus()
+  })
+}
+
+// 新建会话
+function createSession() {
+  const newSession = createNewSession()
+  sessions.value.unshift(newSession)
+  currentSessionId.value = newSession.id
+  saveSessions()
+  showSessionSidebar.value = false
+  nextTick(() => {
+    inputRef.value?.focus()
+  })
+}
+
+// 删除会话
+function deleteSession(sessionId: string, event: Event) {
+  event.stopPropagation()
+  if (sessions.value.length <= 1) {
+    alert('至少保留一个会话')
+    return
+  }
+  if (confirm('确定要删除这个会话吗？')) {
+    sessions.value = sessions.value.filter(s => s.id !== sessionId)
+    if (currentSessionId.value === sessionId) {
+      currentSessionId.value = sessions.value[0]?.id
+    }
+    saveSessions()
+  }
+}
+
+// 获取会话标题（从第一条用户消息或默认）
+function getSessionTitle(session: ChatSession): string {
+  if (session.title && session.title !== '新对话') {
+    return session.title
+  }
+  const firstUserMessage = session.messages.find(m => m.role === 'user')
+  if (firstUserMessage) {
+    const preview = firstUserMessage.content.slice(0, 20)
+    return preview + (firstUserMessage.content.length > 20 ? '...' : '')
+  }
+  return '新对话'
+}
+
+// 按时间分组会话
+const groupedSessions = computed(() => {
+  const now = Date.now()
+  const oneDay = 24 * 60 * 60 * 1000
+  
+  const groups: { label: string; sessions: ChatSession[] }[] = [
+    { label: '今天', sessions: [] },
+    { label: '昨天', sessions: [] },
+    { label: '最近7天', sessions: [] },
+    { label: '更早', sessions: [] }
+  ]
+  
+  sessions.value.forEach(session => {
+    const daysAgo = (now - session.updatedAt) / oneDay
+    if (daysAgo < 1) {
+      groups[0].sessions.push(session)
+    } else if (daysAgo < 2) {
+      groups[1].sessions.push(session)
+    } else if (daysAgo < 8) {
+      groups[2].sessions.push(session)
+    } else {
+      groups[3].sessions.push(session)
+    }
+  })
+  
+  // 只返回非空组
+  return groups.filter(g => g.sessions.length > 0)
+})
+
 // Data
-const messages = ref<Message[]>([])
 const isLoading = chatService.isLoading
 const isAgentExecuting = ref(false)
 const activeSkill = ref<SkillData | null>(null)
 const attachedArticles = ref<ArticleData[]>([])
+
+// P4-Quote: 当前文章引用
+const vpData = useData()
+const currentPagePath = computed(() => vpData.page.value.relativePath)
+const isArticlePage = computed(() => {
+  const path = currentPagePath.value
+  return path && (path.endsWith('.md') || path.includes('/'))
+})
+const currentArticleData = computed<ArticleData | null>(() => {
+  if (!isArticlePage.value) return null
+  const path = currentPagePath.value
+  // Convert relative path to URL path
+  const urlPath = '/' + path.replace(/\.md$/, '.html')
+  // Find in allArticles or create new
+  const existing = allArticles.value.find(a => a.path === urlPath || a.path === path)
+  if (existing) return existing
+  return {
+    path: urlPath,
+    title: vpData.page.value.title || '当前文章'
+  }
+})
+
+// 引用当前文章
+async function quoteCurrentArticle() {
+  if (!currentArticleData.value) return
+  const article = currentArticleData.value
+  
+  // Fetch content
+  const content = await fetchArticleContent(article.path)
+  const articleWithContent = { ...article, content }
+  
+  // Add to attached articles
+  if (!attachedArticles.value.find(a => a.path === article.path)) {
+    attachedArticles.value.push(articleWithContent)
+  }
+  
+  // Add to input
+  const capsuleHtml = `<span class="inline-capsule" contenteditable="false" data-path="${article.path}"><span class="capsule-text">📄 ${article.title}</span><button class="capsule-remove" title="删除" onclick="this.parentElement.remove()">×</button></span>&nbsp;`
+  if (inputRef.value) {
+    inputRef.value.innerHTML += capsuleHtml
+    inputVersion.value++
+  }
+  
+  logger.logInfo('chat.article.quote', `引用当前文章: ${article.title}`, { path: article.path })
+}
 
 // Refs
 const consoleRef = ref<HTMLElement>()
@@ -422,10 +973,45 @@ const isUserNearBottom = ref(true)
 const SCROLL_THRESHOLD = 100  // 距离底部多少像素视为"在底部"
 
 // ==================== Constants ====================
-const MIN_WIDTH = 320
-const MIN_HEIGHT = 400
-const MAX_WIDTH = Math.min(window.innerWidth * 0.9, 1200)
-const MAX_HEIGHT = Math.min(window.innerHeight * 0.9, 900)
+// P3-UI: 调整最小尺寸以适应更大的初始窗口
+const MIN_WIDTH = 480
+const MIN_HEIGHT = 480
+const MAX_WIDTH = Math.min(window.innerWidth * 0.95, 1600)
+const MAX_HEIGHT = Math.min(window.innerHeight * 0.95, 1080)
+
+// ==================== Persistence Helpers ====================
+// P3-Persist: 加载对话历史
+function loadChatHistory(): Message[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      // 转换日期字符串回 Date 对象
+      return parsed.map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      }))
+    }
+  } catch (e) {
+    console.warn('[AIChatOrb] 加载对话历史失败:', e)
+  }
+  return []
+}
+
+// P4-Session: 保存所有会话
+function saveChatHistory() {
+  saveSessions()
+}
+
+// P4-Session: 清空当前会话
+function clearChatHistory() {
+  const session = currentSession.value
+  if (session) {
+    session.messages = []
+    session.updatedAt = Date.now()
+    saveSessions()
+  }
+}
 
 const availableSkills: SkillData[] = [
   { id: 'research', name: '深度研究', icon: '🔍', description: '联网搜索并生成深度报告' },
@@ -596,14 +1182,28 @@ function openConsole() {
   nextTick(() => {
     adjustInitialPosition()
     inputRef.value?.focus()
+    scrollToBottom()
   })
 }
 
+// P3-Close: 关闭确认 - 如果有对话内容，显示确认对话框
 function closeConsole() {
+  // 如果有消息且不是正在加载，询问是否确认关闭
+  if (messages.value.length > 0 && !isLoading.value) {
+    const hasUserMessages = messages.value.some(m => m.role === 'user')
+    if (hasUserMessages) {
+      const confirmed = confirm('确定要关闭对话窗口吗？\n\n您的对话历史已自动保存，下次打开时可继续查看。')
+      if (!confirmed) return
+    }
+  }
+  
   isOpen.value = false
   // Reset state
   showModelDropdown.value = false
   showPopover.value = false
+  
+  // P3-Persist: 关闭时保存对话历史
+  saveChatHistory()
 }
 
 function bringToFront() {
@@ -913,6 +1513,17 @@ function selectArticle(article: ArticleData) {
 
 function removeArticle(article: ArticleData) {
   attachedArticles.value = attachedArticles.value.filter(a => a.path !== article.path)
+}
+
+// P3-Persist: 处理清空历史
+function handleClearHistory() {
+  if (messages.value.length === 0) return
+  
+  const confirmed = confirm('确定要清空所有对话历史吗？\n\n此操作不可恢复。')
+  if (confirmed) {
+    clearChatHistory()
+    hasShownRestoreNotice.value = false
+  }
 }
 
 // Extract inline capsules and text from input
@@ -1238,6 +1849,75 @@ function handleOutsideClick(e: MouseEvent) {
   }
 }
 
+// P4-Select: 页面文本选中相关状态
+const showSelectionToolbar = ref(false)
+const selectionToolbarPos = ref({ x: 0, y: 0 })
+const selectedText = ref('')
+let selectionToolbarTimeout: number | null = null
+
+// P4-Select: 监听页面文本选中
+function handlePageSelection() {
+  // 清除之前的定时器
+  if (selectionToolbarTimeout) {
+    clearTimeout(selectionToolbarTimeout)
+  }
+  
+  const selection = window.getSelection()
+  const text = selection?.toString().trim() || ''
+  
+  if (text.length > 0 && text.length < 2000) {
+    // 获取选区位置
+    const range = selection!.getRangeAt(0)
+    const rect = range.getBoundingClientRect()
+    
+    selectedText.value = text
+    selectionToolbarPos.value = {
+      x: rect.left + rect.width / 2 - 60, // 居中
+      y: rect.top - 45 // 在选区上方
+    }
+    showSelectionToolbar.value = true
+    
+    // 3秒后自动隐藏
+    selectionToolbarTimeout = window.setTimeout(() => {
+      showSelectionToolbar.value = false
+    }, 3000)
+  } else {
+    showSelectionToolbar.value = false
+    selectedText.value = ''
+  }
+}
+
+// P4-Select: 询问选中的文本
+function askSelectedText() {
+  if (!selectedText.value) return
+  
+  // 打开悬浮球
+  openConsole()
+  
+  // 将选中文本填入输入框
+  nextTick(() => {
+    if (inputRef.value) {
+      const quoteText = `> ${selectedText.value}\n\n请解释以上内容：`
+      inputRef.value.textContent = quoteText
+      inputVersion.value++
+      inputRef.value.focus()
+    }
+  })
+  
+  // 隐藏工具条
+  showSelectionToolbar.value = false
+  selectedText.value = ''
+  
+  logger.logInfo('chat.selection.ask', '询问选中文本', { textLength: selectedText.value.length })
+}
+
+// P4-Select: 复制选中的文本
+function copySelectedText() {
+  if (!selectedText.value) return
+  navigator.clipboard.writeText(selectedText.value)
+  showSelectionToolbar.value = false
+}
+
 // ==================== Lifecycle ====================
 onMounted(async () => {
   // P1-INIT: 初始化 AgentRuntime
@@ -1247,11 +1927,18 @@ onMounted(async () => {
   window.addEventListener('resize', adjustInitialPosition)
   // Add scroll listener for smart scrolling
   messageAreaRef.value?.addEventListener('scroll', checkScrollPosition)
+  
+  // P4-Select: 监听页面文本选中
+  document.addEventListener('mouseup', handlePageSelection)
+  document.addEventListener('keyup', handlePageSelection)
 })
 
 onUnmounted(() => {
   // P0-3: 取消正在进行的流式请求
   chatService.abort()
+  
+  // P4-Session: 卸载时保存所有会话
+  saveSessions()
   
   document.removeEventListener('click', handleOutsideClick)
   window.removeEventListener('resize', adjustInitialPosition)
@@ -1260,7 +1947,20 @@ onUnmounted(() => {
   document.removeEventListener('mousemove', onResize)
   document.removeEventListener('mouseup', stopResize)
   messageAreaRef.value?.removeEventListener('scroll', checkScrollPosition)
+  
+  // P4-Select: 移除文本选中监听
+  document.removeEventListener('mouseup', handlePageSelection)
+  document.removeEventListener('keyup', handlePageSelection)
+  
+  if (selectionToolbarTimeout) {
+    clearTimeout(selectionToolbarTimeout)
+  }
 })
+
+// P4-Session: 监听会话变化，自动保存
+watch(sessions, () => {
+  saveSessions()
+}, { deep: true })
 
 // Watch for console open to set initial position
 watch(isOpen, (open) => {
@@ -1298,9 +1998,19 @@ watch(isOpen, (open) => {
 }
 
 .orb-icon {
-  width: 28px;
-  height: 28px;
-  color: white;
+  width: 44px;
+  height: 44px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+/* 天线动画 */
+.ai-orb:hover .orb-icon circle[fill="#FBBF24"] {
+  animation: antenna-glow 1s ease-in-out infinite alternate;
+}
+
+@keyframes antenna-glow {
+  from { fill: #FBBF24; }
+  to { fill: #FCD34D; }
 }
 
 .orb-glow {
@@ -1417,6 +2127,105 @@ watch(isOpen, (open) => {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* P4-Session: History Button */
+.history-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #6B7280;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.history-btn:hover {
+  background: #E5E7EB;
+  color: #1F2937;
+}
+
+.history-btn.active {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.history-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.session-count {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: #EF4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* P4-Session: New Session Button */
+.new-session-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #6B7280;
+  transition: all 0.2s;
+}
+
+.new-session-btn:hover {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.new-session-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* P4-Quote: Quote Current Button */
+.quote-current-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  background: #FEF3C7;
+  border: 1px solid #FCD34D;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #92400E;
+  transition: all 0.2s;
+}
+
+.quote-current-btn:hover {
+  background: #FDE68A;
+  border-color: #F59E0B;
+}
+
+.quote-current-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .header-title {
@@ -1610,6 +2419,215 @@ watch(isOpen, (open) => {
   height: 18px;
 }
 
+/* P3-Persist: Clear History Button */
+.clear-history-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #6B7280;
+  transition: all 0.2s;
+}
+
+.clear-history-btn:hover {
+  background: #FEF3C7;
+  color: #D97706;
+}
+
+.clear-history-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ==================== Session Sidebar ==================== */
+.session-sidebar {
+  position: absolute;
+  left: 0;
+  top: 52px;
+  bottom: 0;
+  width: 280px;
+  background: #FFFFFF;
+  border-right: 1px solid #E5E7EB;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.session-sidebar-header {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.sidebar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.sidebar-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #6B7280;
+  transition: all 0.2s;
+}
+
+.sidebar-close:hover {
+  background: #F3F4F6;
+  color: #1F2937;
+}
+
+.sidebar-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.session-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.new-session-large {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  background: #EFF6FF;
+  border: 1px dashed #93C5FD;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #1E40AF;
+  transition: all 0.2s;
+}
+
+.new-session-large:hover {
+  background: #DBEAFE;
+  border-color: #60A5FA;
+}
+
+.new-session-large svg {
+  width: 16px;
+  height: 16px;
+}
+
+.session-group {
+  margin-bottom: 16px;
+}
+
+.session-group-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 2px;
+}
+
+.session-item:hover {
+  background: #F9FAFB;
+}
+
+.session-item.active {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+}
+
+.session-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.session-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1F2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-meta {
+  font-size: 11px;
+  color: #9CA3AF;
+  margin-top: 2px;
+}
+
+.session-delete {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #9CA3AF;
+  opacity: 0;
+  transition: all 0.2s;
+}
+
+.session-item:hover .session-delete {
+  opacity: 1;
+}
+
+.session-delete:hover {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.session-delete svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Sidebar transition */
+.session-sidebar-enter-active,
+.session-sidebar-leave-active {
+  transition: transform 0.2s ease;
+}
+
+.session-sidebar-enter-from,
+.session-sidebar-leave-to {
+  transform: translateX(-100%);
+}
+
+/* Message area with sidebar */
+.message-area.with-sidebar {
+  margin-left: 280px;
+}
+
 /* ==================== Message Area ==================== */
 .message-area {
   flex: 1;
@@ -1669,6 +2687,53 @@ watch(isOpen, (open) => {
   font-family: inherit;
   font-size: 12px;
   color: #57534E;
+}
+
+/* P3-Persist: Restore Notice */
+.restore-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin: 8px 16px;
+  background: #DBEAFE;
+  border: 1px solid #93C5FD;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1E40AF;
+  animation: fade-in-down 0.3s ease;
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.restore-close {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: rgba(30, 64, 175, 0.1);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1E40AF;
+  line-height: 1;
+  transition: all 0.2s;
+}
+
+.restore-close:hover {
+  background: rgba(30, 64, 175, 0.2);
 }
 
 /* Messages */
@@ -2147,6 +3212,259 @@ watch(isOpen, (open) => {
   font-size: 14px;
 }
 
+/* P4-Article: Article Picker */
+.article-picker {
+  width: 700px;
+  height: 450px;
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.article-picker-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #F3F4F6;
+  flex-shrink: 0;
+}
+
+.article-picker-search {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.article-picker-search:focus {
+  border-color: #94A3B8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
+}
+
+.article-picker-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Tree Panel */
+.article-tree {
+  width: 240px;
+  border-right: 1px solid #F3F4F6;
+  overflow-y: auto;
+  padding: 8px;
+  background: #FAFAFA;
+}
+
+.article-tree-content,
+.article-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tree-node {
+  display: flex;
+  flex-direction: column;
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+
+.tree-item:hover {
+  background: #F3F4F6;
+}
+
+.tree-item.active {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.tree-directory {
+  font-weight: 500;
+  color: #374151;
+}
+
+.tree-file {
+  color: #4B5563;
+  padding-left: 20px;
+}
+
+.tree-toggle {
+  font-size: 10px;
+  color: #9CA3AF;
+  width: 14px;
+  text-align: center;
+}
+
+.tree-icon {
+  font-size: 14px;
+}
+
+.tree-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-children {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 8px;
+}
+
+.article-tree-empty {
+  padding: 24px;
+  text-align: center;
+  color: #9CA3AF;
+  font-size: 13px;
+}
+
+/* Preview Panel */
+.article-preview {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #F3F4F6;
+  flex-shrink: 0;
+}
+
+.preview-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1F2937;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.preview-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #1E40AF;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preview-btn:hover {
+  background: #DBEAFE;
+}
+
+.preview-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  color: #9CA3AF;
+  font-size: 14px;
+}
+
+.preview-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #E5E7EB;
+  border-top-color: #3B82F6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.preview-error {
+  padding: 24px;
+  text-align: center;
+  color: #DC2626;
+  font-size: 14px;
+}
+
+.preview-markdown {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.preview-markdown :deep(h1),
+.preview-markdown :deep(h2),
+.preview-markdown :deep(h3) {
+  font-size: 14px;
+  margin: 12px 0 8px;
+}
+
+.preview-markdown :deep(p) {
+  margin: 8px 0;
+}
+
+.preview-markdown :deep(code) {
+  font-size: 12px;
+}
+
+.preview-markdown :deep(pre) {
+  font-size: 12px;
+}
+
+.article-preview-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #9CA3AF;
+  gap: 12px;
+}
+
+.empty-preview-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.empty-preview-text {
+  font-size: 14px;
+}
+
 /* Input Box */
 .input-box {
   display: flex;
@@ -2372,5 +3690,56 @@ watch(isOpen, (open) => {
 .popover-leave-to {
   opacity: 0;
   transform: scale(0.95);
+}
+
+/* P4-Select: Selection Toolbar */
+.selection-toolbar {
+  position: fixed;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #FFFFFF;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 9999;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #4B5563;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.toolbar-btn:hover {
+  background: #F3F4F6;
+}
+
+.toolbar-btn.primary {
+  background: #EFF6FF;
+  color: #1E40AF;
+}
+
+.toolbar-btn.primary:hover {
+  background: #DBEAFE;
+}
+
+.toolbar-fade-enter-active,
+.toolbar-fade-leave-active {
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.toolbar-fade-enter-from,
+.toolbar-fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>

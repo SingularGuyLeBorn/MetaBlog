@@ -61,6 +61,9 @@ export const WriteArticleSkill: Skill = {
     const { topic, style = '技术博客', length = 'medium', targetPath } = params
     
     ctx.logger.info('Starting article writing', { topic, style, length })
+    
+    // P2-AG-2: 报告进度 - 开始
+    ctx.onProgress?.({ step: 1, totalSteps: 6, message: '正在构建上下文...' })
 
     // P1-SIG: 检查取消信号
     if (ctx.signal?.aborted) {
@@ -75,6 +78,9 @@ export const WriteArticleSkill: Skill = {
     if (ctx.signal?.aborted) {
       return { success: false, error: 'Task cancelled by user', tokensUsed: 0, cost: 0 }
     }
+
+    // P2-AG-2: 报告进度 - 生成大纲
+    ctx.onProgress?.({ step: 2, totalSteps: 6, message: '正在生成文章大纲...' })
 
     // 2. 生成大纲
     const outlinePrompt: LLMMessage[] = [
@@ -95,6 +101,9 @@ export const WriteArticleSkill: Skill = {
     if (ctx.signal?.aborted) {
       return { success: false, error: 'Task cancelled by user', tokensUsed: outline.tokens, cost: outline.cost }
     }
+
+    // P2-AG-2: 报告进度 - 生成内容
+    ctx.onProgress?.({ step: 3, totalSteps: 6, message: '正在撰写文章内容...' })
 
     // 3. 生成内容
     const contentPrompt: LLMMessage[] = [
@@ -121,6 +130,9 @@ export const WriteArticleSkill: Skill = {
       }
     }
 
+    // P2-AG-2: 报告进度 - 组装文件
+    ctx.onProgress?.({ step: 4, totalSteps: 6, message: '正在组装文件...' })
+
     // 4. 生成 frontmatter
     const date = new Date().toISOString().split('T')[0]
     const frontmatter = `---\ntitle: ${topic}\ndate: ${date}\nwikiLinks:\n${relatedArticles.map(r => `  - ${r}`).join('\n')}\n---`
@@ -128,6 +140,9 @@ export const WriteArticleSkill: Skill = {
     // 5. 保存文件
     const fullContent = `${frontmatter}\n\n${content.content}`
     const filePath = targetPath || `posts/${await slugifyAsync(topic)}.md`
+
+    // P2-AG-2: 报告进度 - 保存文件
+    ctx.onProgress?.({ step: 5, totalSteps: 6, message: '正在保存文件...', detail: filePath })
 
     try {
       await saveFile(filePath, fullContent, ctx.taskId)
@@ -140,6 +155,9 @@ export const WriteArticleSkill: Skill = {
         cost: outline.cost + content.cost
       }
     }
+
+    // P2-AG-2: 报告进度 - 更新知识图谱
+    ctx.onProgress?.({ step: 6, totalSteps: 6, message: '正在更新知识图谱...' })
 
     // 6. 提取实体并更新知识图谱
     await ctx.memory.entities.extractFromContent(fullContent, filePath)
@@ -172,6 +190,9 @@ export const EditContentSkill: Skill = {
   handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
     const { action, targetPath = ctx.currentFile, selectedText, instruction } = params
 
+    // P2-AG-2: 报告进度
+    ctx.onProgress?.({ step: 1, totalSteps: 4, message: '准备编辑内容...' })
+
     // P1-SIG-EC: 检查取消信号
     if (ctx.signal?.aborted) {
       return { success: false, error: 'Task cancelled by user', tokensUsed: 0, cost: 0 }
@@ -198,6 +219,9 @@ export const EditContentSkill: Skill = {
         cost: 0
       }
     }
+
+    // P2-AG-2: 报告进度
+    ctx.onProgress?.({ step: 2, totalSteps: 4, message: '正在使用 LLM 编辑内容...' })
 
     // 构建编辑提示
     const actionMap: Record<string, string> = {
@@ -238,6 +262,9 @@ export const EditContentSkill: Skill = {
       }
     }
     
+    // P2-AG-2: 报告进度
+    ctx.onProgress?.({ step: 3, totalSteps: 4, message: '应用编辑并保存...' })
+
     // 应用编辑
     let editedContent: string
     if (selectedText) {
@@ -268,6 +295,9 @@ export const EditContentSkill: Skill = {
     }
 
     ctx.logger.info('Saved edited content to file', { path: targetPath })
+
+    // P2-AG-2: 报告进度
+    ctx.onProgress?.({ step: 4, totalSteps: 4, message: '提交 Git 更改...' })
 
     // 创建 Git 提交
     ctx.logger.info('Committing changes to git', { path: targetPath })
@@ -357,6 +387,9 @@ export const UpdateGraphSkill: Skill = {
   handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
     const { targetPath = ctx.currentFile, discoverNew = true } = params
 
+    // P2-AG-2: 报告进度
+    ctx.onProgress?.({ step: 1, totalSteps: 4, message: '正在读取文件...' })
+
     // NEW-P1-UG: 检查取消信号
     if (ctx.signal?.aborted) {
       return { success: false, error: 'Task cancelled by user', tokensUsed: 0, cost: 0 }
@@ -382,8 +415,14 @@ export const UpdateGraphSkill: Skill = {
       }
     }
 
+    // P2-AG-2: 报告进度
+    ctx.onProgress?.({ step: 2, totalSteps: 4, message: '正在提取实体...' })
+
     // 提取实体
     const entities = await ctx.memory.entities.extractFromContent(content, targetPath)
+
+    // P2-AG-2: 报告进度
+    ctx.onProgress?.({ step: 3, totalSteps: 4, message: '正在发现知识关联...' })
 
     // 使用 LLM 发现潜在的知识关联
     let suggestions: string[] = []
@@ -402,6 +441,9 @@ export const UpdateGraphSkill: Skill = {
       const result = await callLLM(discoveryPrompt, { signal: ctx.signal })  // P1-UG: 真正修复，传递 signal
       suggestions = result.content.split('\n').filter(s => s.trim().startsWith('-') || s.trim().startsWith('*'))
     }
+
+    // P2-AG-2: 报告进度
+    ctx.onProgress?.({ step: 4, totalSteps: 4, message: '正在保存更新...' })
 
     return {
       success: true,

@@ -1,6 +1,8 @@
 /**
  * Intent Router - 意图解析与路由
  * 将自然语言输入映射到具体的技能和参数
+ * 
+ * P2-IR-1 修复：添加 LRU 缓存，避免重复解析相同输入
  */
 import type { IntentType, ParsedIntent, Skill } from './types'
 import { getLLMManager } from '../llm'
@@ -13,9 +15,62 @@ interface IntentPattern {
   parameterExtractors: Record<string, (match: RegExpMatchArray) => any>
 }
 
+/**
+ * LRU 缓存实现
+ */
+class LRUCache<K, V> {
+  private cache: Map<K, { value: V; timestamp: number }> = new Map()
+  private maxSize: number
+  private ttlMs: number
+
+  constructor(maxSize: number, ttlMs: number) {
+    this.maxSize = maxSize
+    this.ttlMs = ttlMs
+  }
+
+  get(key: K): V | undefined {
+    const entry = this.cache.get(key)
+    if (!entry) return undefined
+
+    // 检查是否过期
+    if (Date.now() - entry.timestamp > this.ttlMs) {
+      this.cache.delete(key)
+      return undefined
+    }
+
+    // 更新访问时间
+    entry.timestamp = Date.now()
+    return entry.value
+  }
+
+  set(key: K, value: V): void {
+    // 如果已满，删除最旧的条目
+    if (this.cache.size >= this.maxSize) {
+      const oldest = this.cache.entries().next().value
+      if (oldest) {
+        this.cache.delete(oldest[0])
+      }
+    }
+
+    this.cache.set(key, { value, timestamp: Date.now() })
+  }
+
+  clear(): void {
+    this.cache.clear()
+  }
+
+  get size(): number {
+    return this.cache.size
+  }
+}
+
 export class IntentRouter {
   private skills: Map<string, Skill> = new Map()
   private logger = getStructuredLogger()
+  
+  // P2-IR-1: LRU 缓存 - 缓存 50 条，TTL 10 分钟
+  private intentCache = new LRUCache<string, ParsedIntent>(50, 10 * 60 * 1000)
+  
   private intentPatterns: IntentPattern[] = [
     {
       type: 'WRITE_ARTICLE',
@@ -140,10 +195,22 @@ export class IntentRouter {
 
   /**
    * 解析用户输入，识别意图
+   * P2-IR-1: 添加 LRU 缓存支持
    */
   async parse(input: string, context?: any): Promise<ParsedIntent> {
     const normalizedInput = input.toLowerCase().trim()
+    
+    // P2-IR-1: 检查缓存
+    const cacheKey = `${normalizedInput}:${JSON.stringify(context)}`
+    const cached = this.intentCache.get(cacheKey)
+    if (cached) {
+      this.logger.debug('router.cache.hit', `Cache hit for intent parsing`, { input: input.substring(0, 50) })
+      return cached
+    }
+    
     this.logger.debug('router.parse', `Parsing intent for: "${input}"`)
+    
+    let result: ParsedIntent
     
     // 1. 基于规则匹配
     for (const intentPattern of this.intentPatterns) {
@@ -156,7 +223,7 @@ export class IntentRouter {
           if (this.isNegationNearKeyword(input, matchedText)) {
             this.logger.info('router.negation', `Detected negation near keyword "${matchedText}"`)
             // 否定意图，降低置信度或询问确认
-            return {
+            result = {
               type: 'ANSWER_QUESTION', // 降级为问答意图
               confidence: 0.3,
               entities: this.extractEntities(input),
@@ -168,16 +235,20 @@ export class IntentRouter {
               },
               raw: input
             }
+            this.intentCache.set(cacheKey, result)
+            return result
           }
           
           const parameters = this.extractParameters(intentPattern, match, input, context)
-          return {
+          result = {
             type: intentPattern.type,
             confidence: this.calculateConfidence(match, input, intentPattern.type),
             entities: this.extractEntities(input),
             parameters,
             raw: input
           }
+          this.intentCache.set(cacheKey, result)
+          return result
         }
       }
     }
@@ -188,24 +259,28 @@ export class IntentRouter {
     for (const [name, skill] of this.skills) {
       if (typeof skill.intentPattern === 'object' && skill.intentPattern instanceof RegExp) {
         if (skill.intentPattern.test(input)) {
-          return {
+          result = {
             type: this.inferIntentType(skill.name),
             confidence: 0.7,
             entities: this.extractEntities(input),
             parameters: this.extractSkillParameters(skill, input),
             raw: input
           }
+          this.intentCache.set(cacheKey, result)
+          return result
         }
       } else if (Array.isArray(skill.intentPattern)) {
         for (const pattern of skill.intentPattern) {
           if (input.toLowerCase().includes(pattern.toLowerCase())) {
-            return {
+            result = {
               type: this.inferIntentType(skill.name),
               confidence: 0.75,
               entities: this.extractEntities(input),
               parameters: this.extractSkillParameters(skill, input),
               raw: input
             }
+            this.intentCache.set(cacheKey, result)
+            return result
           }
         }
       }
@@ -216,6 +291,7 @@ export class IntentRouter {
       const llmIntent = await this.classifyWithLLM(input)
       if (llmIntent) {
         this.logger.info('router.llm', `LLM classified intent as ${llmIntent.type}`)
+        this.intentCache.set(cacheKey, llmIntent)
         return llmIntent
       }
     } catch (e) {
@@ -224,13 +300,15 @@ export class IntentRouter {
     }
     
     // 4. 最终默认意图
-    return {
+    result = {
       type: 'ANSWER_QUESTION',
       confidence: 0.4,
       entities: this.extractEntities(input),
       parameters: { question: input },
       raw: input
     }
+    this.intentCache.set(cacheKey, result)
+    return result
   }
   
   /**
