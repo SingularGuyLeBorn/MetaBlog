@@ -48,7 +48,7 @@
           v-for="(stat, key) in levelStats"
           :key="key"
           class="stat-segment"
-          :class="[`level-${stat.level}`, { pulse: stat.level === 'error' && stat.count > 0 }]"
+          :class="[`level-${stat.level}`, { pulse: stat.level === 'ERROR' && stat.count > 0 }]"
           :style="{ width: stat.percentage + '%' }"
           :title="`${stat.label}: ${stat.count} (${stat.percentage.toFixed(1)}%)`"
         >
