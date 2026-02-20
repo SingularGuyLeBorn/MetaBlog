@@ -29,6 +29,7 @@ export interface GitCommitOptions {
 }
 
 export interface GitStatus {
+  current?: string  // 当前分支名
   modified: string[]
   staged: string[]
   untracked: string[]
@@ -114,9 +115,11 @@ export class GitOperator {
         }
 
         // 执行提交
-        const result = await this.git.commit(fullMessage, {
-          '--author': options.author ? `${options.author.name} <${options.author.email}>` : undefined
-        })
+        const commitOptions: any = {}
+        if (options.author) {
+          commitOptions['--author'] = `${options.author.name} <${options.author.email}>`
+        }
+        const result = await this.git.commit(fullMessage, commitOptions)
 
         this.lastCommitTime = Date.now()
         
@@ -170,6 +173,7 @@ export class GitOperator {
     return this.mutex.runExclusive(async () => {
       const status = await this.git.status()
       return {
+        current: status.current,
         modified: status.modified,
         staged: status.staged,
         untracked: status.not_added,

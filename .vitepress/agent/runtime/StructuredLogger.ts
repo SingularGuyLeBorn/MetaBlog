@@ -46,6 +46,7 @@ export interface StructuredLogEntry {
   level: LogLevel
   event: string
   message: string
+  source?: string  // 兼容 LogEntry 接口
   requestId?: string
   sessionId: string
   traceId: string

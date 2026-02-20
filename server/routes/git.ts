@@ -172,7 +172,11 @@ router.post('/revert', async (req, res) => {
 
 import { FileStorage } from '../../.vitepress/agent/memory/FileStorage'
 
-const checkpointStorage = new FileStorage({
+interface CheckpointData {
+  checkpoints: Record<string, Checkpoint>
+}
+
+const checkpointStorage = new FileStorage<CheckpointData>({
   name: 'checkpoints',
   defaultData: { checkpoints: {} }
 })
