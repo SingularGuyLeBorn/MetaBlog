@@ -1,89 +1,114 @@
 /**
  * EntityManager.ts - 知识实体管理
+ * 
  * 负责实体的 CRUD、搜索、关联管理
+ * **已文件化**: 实体数据持久化到文件系统
  */
 import type { KnowledgeEntity, EntityType, RAGResult } from '../../core/types'
-import { 
-  getAllEntities, 
-  getEntity as getEntityApi, 
-  saveEntity as saveEntityApi 
-} from '../../api/memory'
+import { createStorage } from '../FileStorage'
 
-// 内存缓存
-const entityCache = new Map<string, KnowledgeEntity>()
+// 存储结构
+interface EntityStorage {
+  entities: Record<string, KnowledgeEntity>
+  version: number
+  lastUpdated: string
+}
+
+// 创建文件存储实例
+const storage = createStorage<EntityStorage>({
+  name: 'entities',
+  defaultData: {
+    entities: {},
+    version: 1,
+    lastUpdated: new Date().toISOString()
+  }
+})
 
 /**
  * 实体管理器
  */
 export class EntityManager {
+  private cacheLoaded: boolean = false
+
   /**
-   * 从服务器加载所有实体到缓存
+   * 初始化：从文件加载数据
+   */
+  async initialize(): Promise<void> {
+    if (this.cacheLoaded) return
+    
+    await storage.load()
+    this.cacheLoaded = true
+    
+    const data = storage.getData()
+    console.log(`[EntityManager] 初始化完成，加载 ${Object.keys(data.entities).length} 个实体`)
+  }
+
+  /**
+   * 从服务器加载（兼容旧接口，实际从文件加载）
    */
   async loadFromServer(): Promise<void> {
-    try {
-      const entities = await getAllEntities()
-      for (const e of entities) {
-        entityCache.set(e.id, e)
-      }
-      console.log(`[EntityManager] Loaded ${entities.length} entities`)
-    } catch (e) {
-      console.warn('[EntityManager] Failed to load from server:', e)
-    }
+    return this.initialize()
+  }
+
+  /**
+   * 保存到文件（内部方法）
+   */
+  private async persist(): Promise<void> {
+    storage.updateData(data => {
+      data.lastUpdated = new Date().toISOString()
+    })
+    await storage.save()
   }
 
   /**
    * 获取单个实体
    */
   async get(id: string): Promise<KnowledgeEntity | null> {
-    // 优先从缓存获取
-    const cached = entityCache.get(id)
-    if (cached) return cached
-    
-    // 从服务器获取
-    try {
-      const entity = await getEntityApi(id)
-      if (entity) {
-        entityCache.set(id, entity)
-        return entity
-      }
-    } catch (e) {
-      console.error('[EntityManager] Failed to get entity:', e)
-    }
-    
-    return null
+    await this.initialize()
+    const data = storage.getData()
+    return data.entities[id] || null
   }
 
   /**
    * 保存实体
    */
   async save(entity: KnowledgeEntity): Promise<void> {
+    await this.initialize()
+    
     entity.updatedAt = Date.now()
-    entityCache.set(entity.id, entity)
-    await saveEntityApi(entity)
+    storage.updateData(data => {
+      data.entities[entity.id] = entity
+    })
+    
+    await this.persist()
+    console.log(`[EntityManager] 保存实体: ${entity.name} (${entity.id})`)
   }
 
   /**
    * 按类型查找实体
    */
   async findByType(type: EntityType): Promise<KnowledgeEntity[]> {
-    return Array.from(entityCache.values()).filter(e => e.type === type)
+    await this.initialize()
+    const data = storage.getData()
+    return Object.values(data.entities).filter(e => e.type === type)
   }
 
   /**
    * 按名称查找实体（支持别名）
    */
   async findByName(name: string): Promise<KnowledgeEntity[]> {
+    await this.initialize()
+    const data = storage.getData()
     const lowerName = name.toLowerCase()
-    return Array.from(entityCache.values())
-      .filter(e => 
-        e.name.toLowerCase().includes(lowerName) ||
-        e.aliases?.some(alias => alias.toLowerCase().includes(lowerName))
-      )
+    
+    return Object.values(data.entities).filter(e => 
+      e.name.toLowerCase().includes(lowerName) ||
+      e.aliases?.some(alias => alias.toLowerCase().includes(lowerName))
+    )
   }
 
   /**
    * 查找相关实体
-   * @todo 将在知识图谱功能中启用
    */
   async findRelated(entityId: string): Promise<KnowledgeEntity[]> {
     const entity = await this.get(entityId)
@@ -98,102 +123,133 @@ export class EntityManager {
   }
 
   /**
-   * 从内容中提取实体（WikiLinks）
-   */
-  async extractFromContent(content: string, source: string): Promise<KnowledgeEntity[]> {
-    const wikiLinkRegex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g
-    const entities: KnowledgeEntity[] = []
-    
-    let match
-    while ((match = wikiLinkRegex.exec(content)) !== null) {
-      const name = match[1].trim()
-      const existing = await this.findByName(name)
-      
-      if (existing.length === 0) {
-        // 创建新实体
-        const entity: KnowledgeEntity = {
-          id: `entity_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
-          name,
-          type: this.inferType(name, content),
-          description: '',
-          aliases: [],
-          related: [],
-          sources: [source],
-          createdAt: Date.now(),
-          updatedAt: Date.now()
-        }
-        await this.save(entity)
-        entities.push(entity)
-      } else {
-        // 更新现有实体
-        const entity = existing[0]
-        if (!entity.sources.includes(source)) {
-          entity.sources.push(source)
-          entity.updatedAt = Date.now()
-          await this.save(entity)
-        }
-        entities.push(entity)
-      }
-    }
-
-    return entities
-  }
-
-  /**
-   * 关键词搜索
+   * 搜索实体（用于 RAG）
    */
   async search(query: string): Promise<RAGResult[]> {
-    const keywords = query.toLowerCase().split(/\s+/)
+    await this.initialize()
+    const data = storage.getData()
+    const lowerQuery = query.toLowerCase()
+    
     const results: RAGResult[] = []
-
-    for (const entity of entityCache.values()) {
-      const score = this.calculateScore(keywords, entity.name + ' ' + entity.description)
+    
+    for (const entity of Object.values(data.entities)) {
+      const score = this.calculateSearchScore(entity, lowerQuery)
       if (score > 0) {
         results.push({
-          content: `${entity.name}: ${entity.description || ''}`,
-          source: entity.sources[0] || 'memory',
+          content: `${entity.name}: ${entity.description}`,
+          source: entity.sources[0] || 'unknown',
           score,
-          metadata: { 
+          metadata: {
             title: entity.name,
-            path: entity.sources?.[0] || ''
+            type: entity.type
           }
         })
       }
     }
-
+    
     return results.sort((a, b) => b.score - a.score)
+  }
+
+  /**
+   * 计算搜索匹配分数
+   */
+  private calculateSearchScore(entity: KnowledgeEntity, query: string): number {
+    let score = 0
+    
+    // 名称匹配
+    if (entity.name.toLowerCase().includes(query)) {
+      score += 0.5
+    }
+    
+    // 描述匹配
+    if (entity.description?.toLowerCase().includes(query)) {
+      score += 0.3
+    }
+    
+    // 别名匹配
+    if (entity.aliases?.some(a => a.toLowerCase().includes(query))) {
+      score += 0.4
+    }
+    
+    // 来源匹配
+    if (entity.sources?.some(s => s.toLowerCase().includes(query))) {
+      score += 0.2
+    }
+    
+    return Math.min(score, 1)
+  }
+
+  /**
+   * 从内容中提取实体
+   */
+  async extractFromContent(content: string, source: string): Promise<KnowledgeEntity[]> {
+    // 简单的实体提取：识别标题、专有名词等
+    const entities: KnowledgeEntity[] = []
+    
+    // 提取 [[WikiLinks]]
+    const wikiLinkRegex = /\[\[([^\]]+)\]\]/g
+    let match
+    while ((match = wikiLinkRegex.exec(content)) !== null) {
+      const name = match[1].split('|')[0].trim()
+      const id = `entity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      
+      const entity: KnowledgeEntity = {
+        id,
+        name,
+        type: 'concept',
+        description: `从 ${source} 提取的实体`,
+        aliases: [],
+        related: [],
+        sources: [source],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      }
+      
+      // 检查是否已存在同名实体
+      const existing = await this.findByName(name)
+      if (existing.length === 0) {
+        await this.save(entity)
+        entities.push(entity)
+      }
+    }
+    
+    console.log(`[EntityManager] 从 ${source} 提取 ${entities.length} 个实体`)
+    return entities
   }
 
   /**
    * 获取所有实体
    */
-  getAll(): KnowledgeEntity[] {
-    return Array.from(entityCache.values())
+  async getAll(): Promise<KnowledgeEntity[]> {
+    await this.initialize()
+    const data = storage.getData()
+    return Object.values(data.entities)
   }
 
-  // ============ 私有方法 ============
-
-  private calculateScore(keywords: string[], text: string): number {
-    const lowerText = text.toLowerCase()
-    let matches = 0
-    for (const kw of keywords) {
-      if (lowerText.includes(kw)) matches++
-    }
-    return matches / keywords.length
+  /**
+   * 删除实体
+   */
+  async delete(id: string): Promise<void> {
+    await this.initialize()
+    storage.updateData(data => {
+      delete data.entities[id]
+    })
+    await this.save()
+    console.log(`[EntityManager] 删除实体: ${id}`)
   }
 
-  private inferType(_name: string, context: string): EntityType {
-    const lower = context.toLowerCase()
-    if (lower.includes('技术') || lower.includes('框架') || lower.includes('工具')) return 'technology'
-    if (lower.includes('概念') || lower.includes('理论')) return 'concept'
-    if (lower.includes('人物') || lower.includes('作者')) return 'person'
-    if (lower.includes('代码') || lower.includes('程序')) return 'code'
-    return 'paper'
+  /**
+   * 清空所有实体
+   */
+  async clear(): Promise<void> {
+    await storage.clear()
+    console.log('[EntityManager] 清空所有实体')
   }
 }
 
-// 导出单例
+// 单例实例
 let instance: EntityManager | null = null
+
 export function getEntityManager(): EntityManager {
   if (!instance) {
     instance = new EntityManager()
@@ -201,5 +257,4 @@ export function getEntityManager(): EntityManager {
   return instance
 }
 
-// 类型导出
-export type { KnowledgeEntity, EntityType } from '../../core/types'
+export default EntityManager

@@ -357,10 +357,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { getEnhancedLogger, type EnhancedLogEntry, type LogStats } from '../../../agent/runtime/EnhancedLogger'
+import { getStructuredLogger, type StructuredLogEntry, type LogStats } from '../../../agent/runtime/StructuredLogger'
 
 // Extended log entry with actor field from server
-interface ServerLogEntry extends EnhancedLogEntry {
+interface ServerLogEntry extends StructuredLogEntry {
   actor?: 'human' | 'ai' | 'system'
 }
 
@@ -380,15 +380,16 @@ const LEVEL_LABELS = {
 }
 
 // ==================== State ====================
-const logger = getEnhancedLogger()
+const logger = getStructuredLogger()
 const logs = ref<ServerLogEntry[]>([])
 const stats = ref<LogStats>({
   total: 0,
-  byLevel: { debug: 0, info: 0, warn: 0, error: 0 },
+  byLevel: { DEBUG: 0, INFO: 0, WARN: 0, ERROR: 0, SUCCESS: 0 },
   byEvent: {},
-  byTask: {},
-  byDay: {},
-  recentErrors: []
+  byActor: { human: 0, ai: 0, system: 0 },
+  byComponent: {},
+  recentErrors: [],
+  avgDurationByComponent: {}
 })
 
 const filters = ref({

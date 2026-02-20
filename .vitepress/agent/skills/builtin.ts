@@ -1,9 +1,12 @@
 /**
  * Built-in Skills - 内置技能集
  * 核心技能实现，使用真实 LLM 调用
+ * 
+ * P0-R2 修复：统一使用 api/files.ts 封装
  */
 import type { Skill, SkillContext, SkillResult } from '../core/types'
 import { getLLMManager, type LLMMessage } from '../llm'
+import { saveFile } from '../api/files'
 
 // ============================================
 // 辅助函数：调用 LLM
@@ -92,12 +95,13 @@ export const WriteArticleSkill: Skill = {
     const fullContent = `${frontmatter}\n\n${content.content}`
     const filePath = targetPath || `posts/${await slugifyAsync(topic)}.md`
 
-    const saveResult = await saveFile(filePath, fullContent)
-    
-    if (!saveResult.success) {
+    try {
+      await saveFile(filePath, fullContent, ctx.taskId)
+    } catch (saveError) {
+      const errorMsg = saveError instanceof Error ? saveError.message : String(saveError)
       return {
         success: false,
-        error: saveResult.error,
+        error: errorMsg,
         tokensUsed: outline.tokens + content.tokens,
         cost: outline.cost + content.cost
       }
@@ -207,11 +211,13 @@ export const EditContentSkill: Skill = {
     }
 
     // 保存修改
-    const saveResult = await saveFile(targetPath, editedContent)
-    if (!saveResult.success) {
+    try {
+      await saveFile(targetPath, editedContent, ctx.taskId)
+    } catch (saveError) {
+      const errorMsg = saveError instanceof Error ? saveError.message : String(saveError)
       return {
         success: false,
-        error: saveResult.error,
+        error: errorMsg,
         tokensUsed: result.tokens,
         cost: result.cost
       }
@@ -386,9 +392,11 @@ export const CodeExplainSkill: Skill = {
     let savedPath: string | null = null
     if (targetPath) {
       const docContent = `# 代码解释\n\n${result.content}\n\n## 源代码\n\n\`\`\`${language}\n${code}\n\`\`\``
-      const saveResult = await saveFile(targetPath, docContent)
-      if (saveResult.success) {
+      try {
+        await saveFile(targetPath, docContent, ctx.taskId)
         savedPath = targetPath
+      } catch {
+        // 保存失败不影响返回结果
       }
     }
 
@@ -530,22 +538,6 @@ async function readFile(path: string): Promise<string | null> {
     console.error('Failed to read file:', e)
   }
   return null
-}
-
-async function saveFile(path: string, content: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const res = await fetch('/api/files/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path, content })
-    })
-    if (res.ok) {
-      return { success: true }
-    }
-    return { success: false, error: await res.text() }
-  } catch (e) {
-    return { success: false, error: String(e) }
-  }
 }
 
 async function gitCommit(path: string, message: string): Promise<void> {

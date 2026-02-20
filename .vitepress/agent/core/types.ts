@@ -68,6 +68,16 @@ export interface Skill {
   handler: (ctx: SkillContext, params: any) => Promise<SkillResult>
 }
 
+/** 文件锁管理器接口 */
+export interface FileLockManager {
+  acquireLock(filePath: string, taskId: string): boolean
+  releaseLock(filePath: string, taskId: string): boolean
+  releaseTaskLocks(taskId: string): number
+  isLocked(filePath: string): boolean
+  getLockInfo(filePath: string): { filePath: string; taskId: string; acquiredAt: number } | null
+  acquireLocks(filePaths: string[], taskId: string): { success: boolean; failed: string[] }
+}
+
 /** 技能上下文 */
 export interface SkillContext {
   taskId: string
@@ -76,6 +86,7 @@ export interface SkillContext {
   costTracker: CostTracker
   currentFile?: string
   sessionId: string
+  fileLock: FileLockManager
 }
 
 /** 技能执行结果 */

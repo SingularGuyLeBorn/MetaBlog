@@ -364,7 +364,7 @@ export const ResearchWithFallbackSkill: Skill = {
       }
     }
     
-    // 2. 并行获取所有引用（带降级）
+    // 2. 并行获取所有引用（带降级，限制并发）
     const context: ResearchContext = {
       localReferences: [],
       webContent: [],
@@ -373,7 +373,10 @@ export const ResearchWithFallbackSkill: Skill = {
     
     ctx.logger.info(`Fetching ${references.length} references`, { taskId: ctx.taskId })
     
-    const fetchPromises = references.map(async ref => {
+    // P1 修复：限制并发数，避免同时发起过多请求
+    const CONCURRENCY_LIMIT = 3
+    
+    async function fetchWithLimit(ref: { type: 'local' | 'web'; path: string }): Promise<void> {
       if (ref.type === 'local') {
         const result = await fetchLocalArticle(ref.path, ctx)
         context.localReferences.push(result)
@@ -395,9 +398,13 @@ export const ResearchWithFallbackSkill: Skill = {
           })
         }
       }
-    })
+    }
     
-    await Promise.all(fetchPromises)
+    // 使用分批处理限制并发
+    for (let i = 0; i < references.length; i += CONCURRENCY_LIMIT) {
+      const batch = references.slice(i, i + CONCURRENCY_LIMIT)
+      await Promise.all(batch.map(fetchWithLimit))
+    }
     
     // 3. 记录获取结果
     const successCount = context.localReferences.filter(r => r.exists).length +

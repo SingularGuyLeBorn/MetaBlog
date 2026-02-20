@@ -2,7 +2,7 @@
  * Boot Logger - 系统启动日志记录
  * 在VitePress启动时记录关键系统事件
  */
-import { logSystem } from './LogSystem'
+import { getStructuredLogger } from './StructuredLogger'
 
 export interface BootEvent {
   phase: 'init' | 'config' | 'server' | 'ready' | 'error'
@@ -31,13 +31,19 @@ class BootLogger {
     
     // 立即写入日志系统
     const duration = Date.now() - this.startTime
-    logSystem.add(
-      phase === 'error' ? 'error' : 'info',
-      `boot.${phase}`,
-      `[+${duration}ms] ${message}`,
-      'system',
-      { ...metadata, bootTime: duration }
-    ).catch(console.error)
+    const logger = getStructuredLogger()
+    const level = phase === 'error' ? 'error' : 'info'
+    const event = `boot.${phase}`
+    const msg = `[+${duration}ms] ${message}`
+    const data = { ...metadata, bootTime: duration }
+    
+    if (level === 'error') {
+      logger.error(event, msg, data)
+    } else if (level === 'warn') {
+      logger.warn(event, msg, data)
+    } else {
+      logger.info(event, msg, data)
+    }
   }
 
   // VitePress配置加载

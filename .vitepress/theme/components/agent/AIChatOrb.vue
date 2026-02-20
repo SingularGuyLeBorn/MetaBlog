@@ -1085,17 +1085,18 @@ async function sendViaAgent(
     messages.value[msgIndex].content = resultContent
     
     // 如果返回了文件路径，添加跳转提示
-    if (result.metadata?.path) {
-      messages.value[msgIndex].content += `\n\n📄 文件已保存：\`${result.metadata.path}\``
+    const metadata = result.metadata as { path?: string, tokens?: number, cost?: number } | undefined
+    if (metadata?.path) {
+      messages.value[msgIndex].content += `\n\n📄 文件已保存：\`${metadata.path}\``
     }
     
     const duration = Date.now() - startTime
     aiLogger.logSuccess('agent.complete', 'Agent 技能执行成功', {
       skill: activeSkill.value?.name || 'auto-detect',
       duration,
-      path: result.metadata?.path,
-      tokens: result.metadata?.tokens,
-      cost: result.metadata?.cost
+      path: metadata?.path,
+      tokens: metadata?.tokens,
+      cost: metadata?.cost
     })
     
   } catch (err) {
@@ -1230,6 +1231,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  // P0-3: 取消正在进行的流式请求
+  chatService.abort()
+  
   document.removeEventListener('click', handleOutsideClick)
   window.removeEventListener('resize', adjustInitialPosition)
   document.removeEventListener('mousemove', onDrag)

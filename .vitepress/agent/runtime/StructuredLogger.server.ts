@@ -1,15 +1,20 @@
 /**
- * StructuredLogger - 服务端 Winston 实现
+ * StructuredLogger - 服务端 Winston 实现 (完整版)
  * 
- * 该文件仅在服务端 (Node.js) 环境使用
- * 浏览器端请使用 StructuredLogger.ts（空实现）
+ * 新增:
+ * - 从文件读取日志功能
+ * - 日志查询与筛选
+ * - 日志统计分析
  */
 
 import { createLogger, format, transports, Logger as WinstonLogger } from 'winston'
 import DailyRotateFile from 'winston-daily-rotate-file'
 import { join } from 'path'
+import { promises as fs } from 'fs'
+import { createReadStream } from 'fs'
+import { createInterface } from 'readline'
 
-// 类型定义（复制以保持独立）
+// 类型定义
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS'
 export type LogActor = 'human' | 'ai' | 'system'
 export type FileEventType = 'add' | 'change' | 'unlink' | 'rename'
@@ -35,6 +40,10 @@ export interface LogQueryFilter {
   requestId?: string
   taskId?: string
   component?: string
+  actor?: LogActor
+  startTime?: Date
+  endTime?: Date
+  search?: string
 }
 
 export interface LogStats {
@@ -45,6 +54,7 @@ export interface LogStats {
   byComponent: Record<string, number>
   recentErrors: StructuredLogEntry[]
   avgDurationByComponent: Record<string, number>
+  hourlyDistribution: Record<string, number>
 }
 
 // 配置
@@ -237,25 +247,265 @@ class ServerLogger {
     })
   }
 
-  getRecentLogs(count: number = 100): StructuredLogEntry[] {
-    // 从文件读取最近日志的逻辑
-    return []
+  // ============================================
+  // 日志查询功能 (新增)
+  // ============================================
+
+  /**
+   * 获取最近日志
+   */
+  async getRecentLogs(count: number = 100, level?: LogLevel): Promise<StructuredLogEntry[]> {
+    const logs: StructuredLogEntry[] = []
+    
+    try {
+      // 获取最新的日志文件
+      const files = await fs.readdir(LOGS_DIR)
+      const logFiles = files
+        .filter(f => f.startsWith('app-') && f.endsWith('.log'))
+        .sort()
+        .reverse()
+        .slice(0, 3) // 最近3天的日志
+      
+      for (const file of logFiles) {
+        if (logs.length >= count) break
+        
+        const filePath = join(LOGS_DIR, file)
+        const fileLogs = await this.readLogFile(filePath, count - logs.length, level)
+        logs.push(...fileLogs)
+      }
+      
+      return logs.slice(0, count)
+    } catch (error) {
+      this.error('logger.query-failed', 'Failed to get recent logs', { error: String(error) })
+      return []
+    }
   }
 
-  queryLogs(filter?: LogQueryFilter): StructuredLogEntry[] {
-    // 查询日志的逻辑
-    return []
+  /**
+   * 查询日志 (支持筛选)
+   */
+  async queryLogs(filter: LogQueryFilter = {}): Promise<StructuredLogEntry[]> {
+    const logs: StructuredLogEntry[] = []
+    
+    try {
+      // 确定要读取的文件范围
+      const files = await fs.readdir(LOGS_DIR)
+      const logFiles = files
+        .filter(f => f.startsWith('app-') && f.endsWith('.log'))
+        .sort()
+      
+      // 根据时间筛选优化文件选择
+      let targetFiles = logFiles
+      if (filter.startTime) {
+        const startDate = filter.startTime.toISOString().split('T')[0]
+        targetFiles = logFiles.filter(f => {
+          const fileDate = f.replace('app-', '').replace('.log', '')
+          return fileDate >= startDate
+        })
+      }
+      
+      // 读取并筛选日志
+      for (const file of targetFiles) {
+        const filePath = join(LOGS_DIR, file)
+        const fileLogs = await this.readLogFileWithFilter(filePath, filter)
+        logs.push(...fileLogs)
+      }
+      
+      // 排序并限制数量
+      return logs
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 1000) // 最多返回1000条
+        
+    } catch (error) {
+      this.error('logger.query-failed', 'Failed to query logs', { error: String(error) })
+      return []
+    }
   }
 
-  getStats(): LogStats {
-    return {
-      total: 0,
+  /**
+   * 获取日志统计
+   */
+  async getStats(timeRange?: { start: Date; end: Date }): Promise<LogStats> {
+    const logs = await this.queryLogs({
+      startTime: timeRange?.start,
+      endTime: timeRange?.end
+    })
+    
+    const stats: LogStats = {
+      total: logs.length,
       byLevel: {},
       byEvent: {},
       byActor: { human: 0, ai: 0, system: 0 },
       byComponent: {},
       recentErrors: [],
-      avgDurationByComponent: {}
+      avgDurationByComponent: {},
+      hourlyDistribution: {}
+    }
+    
+    const durationsByComponent: Record<string, number[]> = {}
+    
+    for (const log of logs) {
+      // 按级别统计
+      stats.byLevel[log.level] = (stats.byLevel[log.level] || 0) + 1
+      
+      // 按事件统计
+      stats.byEvent[log.event] = (stats.byEvent[log.event] || 0) + 1
+      
+      // 按操作者统计
+      if (log.actor) {
+        stats.byActor[log.actor] = (stats.byActor[log.actor] || 0) + 1
+      }
+      
+      // 按组件统计
+      if (log.component) {
+        stats.byComponent[log.component] = (stats.byComponent[log.component] || 0) + 1
+      }
+      
+      // 收集错误
+      if (log.level === 'ERROR' && stats.recentErrors.length < 10) {
+        stats.recentErrors.push(log)
+      }
+      
+      // 计算耗时
+      if (log.data?.durationMs && log.component) {
+        if (!durationsByComponent[log.component]) {
+          durationsByComponent[log.component] = []
+        }
+        durationsByComponent[log.component].push(log.data.durationMs)
+      }
+      
+      // 按小时分布
+      const hour = new Date(log.timestamp).getHours().toString()
+      stats.hourlyDistribution[hour] = (stats.hourlyDistribution[hour] || 0) + 1
+    }
+    
+    // 计算平均耗时
+    for (const [component, durations] of Object.entries(durationsByComponent)) {
+      const avg = durations.reduce((a, b) => a + b, 0) / durations.length
+      stats.avgDurationByComponent[component] = Math.round(avg)
+    }
+    
+    return stats
+  }
+
+  /**
+   * 搜索日志
+   */
+  async searchLogs(query: string, limit: number = 100): Promise<StructuredLogEntry[]> {
+    const logs = await this.queryLogs()
+    const searchLower = query.toLowerCase()
+    
+    return logs
+      .filter(log => 
+        log.message.toLowerCase().includes(searchLower) ||
+        log.event.toLowerCase().includes(searchLower) ||
+        JSON.stringify(log.data).toLowerCase().includes(searchLower)
+      )
+      .slice(0, limit)
+  }
+
+  // ============================================
+  // 私有辅助方法
+  // ============================================
+
+  private async readLogFile(
+    filePath: string, 
+    limit: number, 
+    level?: LogLevel
+  ): Promise<StructuredLogEntry[]> {
+    const logs: StructuredLogEntry[] = []
+    
+    try {
+      const fileStream = createReadStream(filePath)
+      const rl = createInterface({
+        input: fileStream,
+        crlfDelay: Infinity
+      })
+      
+      for await (const line of rl) {
+        if (logs.length >= limit) break
+        
+        try {
+          const entry = JSON.parse(line)
+          
+          // 级别筛选
+          if (level && entry.level?.toUpperCase() !== level) {
+            continue
+          }
+          
+          logs.push(this.normalizeLogEntry(entry))
+        } catch {
+          // 忽略解析失败的行
+        }
+      }
+      
+      return logs
+    } catch {
+      return []
+    }
+  }
+
+  private async readLogFileWithFilter(
+    filePath: string,
+    filter: LogQueryFilter
+  ): Promise<StructuredLogEntry[]> {
+    const logs: StructuredLogEntry[] = []
+    
+    try {
+      const fileStream = createReadStream(filePath)
+      const rl = createInterface({
+        input: fileStream,
+        crlfDelay: Infinity
+      })
+      
+      for await (const line of rl) {
+        try {
+          const entry = JSON.parse(line)
+          
+          // 应用筛选条件
+          if (filter.level && entry.level?.toUpperCase() !== filter.level) continue
+          if (filter.event && entry.event !== filter.event) continue
+          if (filter.requestId && entry.requestId !== filter.requestId) continue
+          if (filter.taskId && entry.taskId !== filter.taskId) continue
+          if (filter.component && entry.component !== filter.component) continue
+          if (filter.actor && entry.actor !== filter.actor) continue
+          
+          // 时间筛选
+          if (filter.startTime && new Date(entry.timestamp) < filter.startTime) continue
+          if (filter.endTime && new Date(entry.timestamp) > filter.endTime) continue
+          
+          // 文本搜索
+          if (filter.search) {
+            const searchText = `${entry.message} ${entry.event} ${JSON.stringify(entry)}`.toLowerCase()
+            if (!searchText.includes(filter.search.toLowerCase())) continue
+          }
+          
+          logs.push(this.normalizeLogEntry(entry))
+        } catch {
+          // 忽略解析失败的行
+        }
+      }
+      
+      return logs
+    } catch {
+      return []
+    }
+  }
+
+  private normalizeLogEntry(entry: any): StructuredLogEntry {
+    return {
+      id: entry.id || `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: entry.timestamp || new Date().toISOString(),
+      level: (entry.level?.toUpperCase() || 'INFO') as LogLevel,
+      event: entry.event || 'unknown',
+      message: entry.message || '',
+      requestId: entry.requestId,
+      sessionId: entry.sessionId || this.sessionId,
+      traceId: entry.traceId || `trace_${Date.now()}`,
+      taskId: entry.taskId,
+      actor: entry.actor || 'system',
+      component: entry.component || 'unknown',
+      data: entry.data || entry.metadata || {}
     }
   }
 

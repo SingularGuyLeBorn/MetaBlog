@@ -82,6 +82,17 @@ export function useChatService() {
   const isStreaming = ref(false)
   const error = ref<string | null>(null)
   
+  // P0-3: AbortController 用于取消请求
+  let currentAbortController: AbortController | null = null
+  
+  // P0-3: 取消当前请求
+  function abortCurrentRequest() {
+    if (currentAbortController) {
+      currentAbortController.abort()
+      currentAbortController = null
+    }
+  }
+  
   // 当前对话的 token 和成本统计
   const totalTokens = computed(() => 
     messages.value.reduce((sum, m) => sum + (m.metadata?.tokens || 0), 0)
@@ -194,6 +205,8 @@ export function useChatService() {
    * 发送消息（流式）
    * 
    * 对于 deepseek-reasoner 模型，会返回 reasoning_content（推理过程）
+   * 
+   * P0-3: 支持通过 AbortController 取消请求
    */
   async function sendMessageStream(
     content: string,
@@ -203,10 +216,19 @@ export function useChatService() {
     const llm = ensureLLMManager()
     const env = loadEnvConfig()
     
+    // P0-3: 取消之前的请求（如果有）
+    abortCurrentRequest()
+    currentAbortController = new AbortController()
+    
     isLoading.value = true
     isStreaming.value = true
     error.value = null
     const startTime = Date.now()
+    
+    // 根因 D 修复：在函数作用域顶部声明变量，避免 catch 块访问不到
+    let assistantMessageId = ''
+    let fullContent = ''
+    let fullReasoning = ''
     
     // 判断是否是深度思考模式
     const isReasonerModel = (options.model || env.DEEPSEEK_MODEL || 'deepseek-chat').includes('reasoner')
@@ -249,20 +271,20 @@ export function useChatService() {
       chatMessages.push({ role: 'user', content })
       
       // 创建助手消息占位
-      const assistantMessageId = `assistant_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
-      let fullContent = ''
-      let fullReasoning = ''
+      assistantMessageId = `assistant_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
       let hasReceivedContent = false
       let hasReceivedReasoning = false
       
       // 流式调用
+      // P0-3: 传递 signal 以支持取消
       const { usage, cost } = await llm.chatStream(
         {
           messages: chatMessages,
           model: options.model || env.DEEPSEEK_MODEL || 'deepseek-chat',
           temperature: options.temperature ?? 0.7,
           maxTokens: options.maxTokens ?? 2048,
-          stream: true
+          stream: true,
+          signal: currentAbortController?.signal
         },
         (chunk) => {
           // 记录第一个chunk到达
@@ -318,6 +340,28 @@ export function useChatService() {
       
       return assistantMessage
     } catch (err) {
+      // P0-3: 如果是用户取消，不记录为错误
+      if (err instanceof Error && err.message === 'Request aborted') {
+        aiLogger.log('info', 'chat.stream.aborted', '用户取消流式请求', {
+          duration: Date.now() - startTime
+        })
+        // 返回一个空消息表示已取消
+        const cancelledMessage: ChatMessage = {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: fullContent || '[已取消]',
+          reasoning: fullReasoning || undefined,
+          timestamp: Date.now(),
+          metadata: {
+            tokens: 0,
+            cost: 0,
+            model: options.model || env.DEEPSEEK_MODEL || 'deepseek-chat',
+            isCancelled: true
+          }
+        }
+        return cancelledMessage
+      }
+      
       const errorMsg = err instanceof Error ? err.message : String(err)
       error.value = errorMsg
       aiLogger.log('error', 'chat.stream.error', 'AI流式请求失败', { 
@@ -328,6 +372,7 @@ export function useChatService() {
     } finally {
       isLoading.value = false
       isStreaming.value = false
+      currentAbortController = null
     }
   }
   
@@ -364,7 +409,9 @@ export function useChatService() {
     sendMessage,
     sendMessageStream,
     clearMessages,
-    getConfig
+    getConfig,
+    // P0-3: 暴露 abort 方法供组件使用
+    abort: abortCurrentRequest
   }
 }
 

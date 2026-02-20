@@ -342,7 +342,6 @@ WriteArticleSkill.handler()
 | 流式生成 | ✅ 完成 | LLM stream |
 | 文件保存 | ✅ 完成 | 通过 API |
 | **Git 提交** | ❌ 待实现 | GitOperator |
-| 实体提取 | ✅ 完成 | WikiLinks 提取 |
 
 ## 待实现项
 

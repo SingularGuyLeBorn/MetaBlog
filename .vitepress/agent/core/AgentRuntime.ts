@@ -20,11 +20,12 @@ import type {
 import { IntentRouter } from './IntentRouter'
 import { StateMachine } from './StateMachine'
 import { getMemoryManager } from '../memory'
-import { LoggerImpl } from '../runtime/Logger'
+import { getStructuredLogger } from '../runtime/StructuredLogger'
 import { CostTrackerImpl } from '../runtime/CostTracker'
 import { createLLMManager } from '../llm'
 import { createLLMConfigFromEnv } from '../config/env'
 import { eventBus, AgentEvents } from './EventBus'
+import { fileLockManager } from './FileLockManager'
 
 export interface AgentRuntimeConfig {
   mode: EditorMode
@@ -69,7 +70,8 @@ export class AgentRuntime {
     this.intentRouter = new IntentRouter()
     this.stateMachine = new StateMachine()
     this.memory = getMemoryManager()
-    this.logger = new LoggerImpl()
+    // P1-R1 修复：统一使用 StructuredLogger
+    this.logger = getStructuredLogger()
     this.costTracker = new CostTrackerImpl()
     
     this.setupEventListeners()
@@ -302,7 +304,8 @@ export class AgentRuntime {
       logger: this.logger,
       costTracker: this.costTracker,
       currentFile: this.currentFile,
-      sessionId: this.sessionId
+      sessionId: this.sessionId,
+      fileLock: fileLockManager
     }
     
     try {
@@ -328,6 +331,9 @@ export class AgentRuntime {
       await this.saveTaskHistory(taskId, skill.name, intent, result)
       this.activeTasks.delete(taskId)
       
+      // 释放任务关联的所有文件锁
+      fileLockManager.releaseTaskLocks(taskId)
+      
       this.emit('taskCompleted', { taskId, skill: skill.name, result })
       
       // 触发 UI 事件通知（如果技能产生了文件）
@@ -351,6 +357,10 @@ export class AgentRuntime {
     } catch (error) {
       this.setState('ERROR', task)
       this.activeTasks.delete(taskId)
+      
+      // 出错时也要释放文件锁
+      fileLockManager.releaseTaskLocks(taskId)
+      
       this.logger.error('Skill execution failed', { 
         skill: skill.name, 
         error: error instanceof Error ? error.message : String(error) 

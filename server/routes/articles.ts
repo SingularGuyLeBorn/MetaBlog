@@ -10,16 +10,38 @@ const router = Router()
 const DOCS_PATH = join(process.cwd(), 'docs')
 const SECTIONS_PATH = join(DOCS_PATH, 'sections')
 
+// 统一响应类型
+interface ApiResponse<T = unknown> {
+  success: boolean
+  data?: T
+  error?: string
+  meta?: {
+    count?: number
+    page?: number
+    total?: number
+  }
+}
+
 // 文章元数据接口
 interface ArticleMeta {
   path: string
   title: string
   description?: string
-  tags?: string[]
+  tags: string[]
   date?: string
   updatedAt?: string
-  wordCount?: number
+  wordCount: number
   isPublished: boolean
+}
+
+// Frontmatter 接口
+interface FrontmatterData {
+  title?: string
+  description?: string
+  date?: string
+  updatedAt?: string
+  tags?: string | string[]
+  [key: string]: string | string[] | undefined
 }
 
 // 递归扫描文章
@@ -59,7 +81,7 @@ async function scanArticles(dir: string, basePath: string = ''): Promise<Article
 function extractMeta(content: string, relativePath: string): ArticleMeta {
   // 解析 frontmatter
   const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/)
-  const meta: any = {}
+  const meta: FrontmatterData = {}
   
   if (frontmatterMatch) {
     const frontmatter = frontmatterMatch[1]
@@ -67,7 +89,15 @@ function extractMeta(content: string, relativePath: string): ArticleMeta {
       const match = line.match(/^(\w+):\s*(.+)$/)
       if (match) {
         const [, key, value] = match
-        meta[key] = value.replace(/^["']|["']$/g, '')
+        // 处理数组类型 (简化版)
+        if (value.startsWith('[') && value.endsWith(']')) {
+          meta[key] = value
+            .slice(1, -1)
+            .split(',')
+            .map(v => v.trim().replace(/^["']|["']$/g, ''))
+        } else {
+          meta[key] = value.replace(/^["']|["']$/g, '')
+        }
       }
     })
   }
@@ -76,6 +106,16 @@ function extractMeta(content: string, relativePath: string): ArticleMeta {
   const titleMatch = content.match(/^#\s+(.+)$/m)
   const title = meta.title || titleMatch?.[1] || basename(relativePath, '.md')
   
+  // 处理 tags
+  let tags: string[] = []
+  if (meta.tags) {
+    if (Array.isArray(meta.tags)) {
+      tags = meta.tags
+    } else if (typeof meta.tags === 'string') {
+      tags = meta.tags.split(',').map(t => t.trim())
+    }
+  }
+  
   // 计算字数
   const wordCount = content.replace(/\s+/g, '').length
   
@@ -83,7 +123,7 @@ function extractMeta(content: string, relativePath: string): ArticleMeta {
     path: relativePath.replace(/\\/g, '/'),
     title,
     description: meta.description,
-    tags: meta.tags ? meta.tags.split(',').map((t: string) => t.trim()) : [],
+    tags,
     date: meta.date,
     updatedAt: meta.updatedAt,
     wordCount,
@@ -99,73 +139,126 @@ function extractMeta(content: string, relativePath: string): ArticleMeta {
 router.get('/list', async (req, res) => {
   try {
     const articles = await scanArticles(SECTIONS_PATH)
-    res.json({
+    const response: ApiResponse<ArticleMeta[]> = {
       success: true,
       data: articles.sort((a, b) => {
         // 按更新日期排序
         const dateA = a.updatedAt || a.date || ''
         const dateB = b.updatedAt || b.date || ''
         return dateB.localeCompare(dateA)
-      })
-    })
+      }),
+      meta: { count: articles.length }
+    }
+    res.json(response)
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Failed to list articles' })
+    const response: ApiResponse = {
+      success: false,
+      error: 'Failed to list articles'
+    }
+    res.status(500).json(response)
   }
 })
 
 // 搜索文章
 router.get('/search', async (req, res) => {
   const { q } = req.query
-  if (!q) {
-    return res.json({ success: true, data: [] })
+  if (!q || typeof q !== 'string') {
+    const response: ApiResponse<ArticleMeta[]> = {
+      success: true,
+      data: []
+    }
+    return res.json(response)
   }
   
   try {
     const articles = await scanArticles(SECTIONS_PATH)
-    const query = (q as string).toLowerCase()
+    const query = q.toLowerCase()
     
     const results = articles.filter(article => 
       article.title.toLowerCase().includes(query) ||
-      article.description?.toLowerCase().includes(query) ||
-      article.tags?.some(tag => tag.toLowerCase().includes(query))
+      (article.description?.toLowerCase().includes(query) ?? false) ||
+      article.tags.some(tag => tag.toLowerCase().includes(query))
     )
     
-    res.json({ success: true, data: results })
+    const response: ApiResponse<ArticleMeta[]> = {
+      success: true,
+      data: results,
+      meta: { count: results.length }
+    }
+    res.json(response)
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Failed to search articles' })
+    const response: ApiResponse = {
+      success: false,
+      error: 'Failed to search articles'
+    }
+    res.status(500).json(response)
   }
 })
 
 // 获取文章详情
 router.get('/detail', async (req, res) => {
   const { path: articlePath } = req.query
-  if (!articlePath) {
-    return res.status(400).json({ success: false, error: 'Path required' })
+  if (!articlePath || typeof articlePath !== 'string') {
+    const response: ApiResponse = {
+      success: false,
+      error: 'Path required'
+    }
+    return res.status(400).json(response)
   }
   
   try {
-    const fullPath = join(SECTIONS_PATH, articlePath as string)
+    const fullPath = join(SECTIONS_PATH, articlePath)
     const content = await fs.readFile(fullPath, 'utf-8')
-    const meta = extractMeta(content, articlePath as string)
+    const meta = extractMeta(content, articlePath)
     
-    res.json({
+    interface ArticleDetail extends ArticleMeta {
+      content: string
+    }
+    
+    const response: ApiResponse<ArticleDetail> = {
       success: true,
       data: {
         ...meta,
         content
       }
-    })
+    }
+    res.json(response)
   } catch (error) {
-    res.status(404).json({ success: false, error: 'Article not found' })
+    const response: ApiResponse = {
+      success: false,
+      error: 'Article not found'
+    }
+    res.status(404).json(response)
   }
 })
 
+// 创建文章请求体接口
+interface CreateArticleBody {
+  title: string
+  content?: string
+  section?: string
+  tags?: string[]
+  isChildDoc?: boolean
+  parentPath?: string
+}
+
 // 创建新文章
 router.post('/create', async (req, res) => {
-  const { title, content = '', section = 'posts', tags = [], isChildDoc = false, parentPath = '' } = req.body
+  const { 
+    title, 
+    content = '', 
+    section = 'posts', 
+    tags = [], 
+    isChildDoc = false, 
+    parentPath = '' 
+  } = req.body as CreateArticleBody
   
   if (!title) {
-    return res.status(400).json({ success: false, error: 'Title required' })
+    const response: ApiResponse = {
+      success: false,
+      error: 'Title required'
+    }
+    return res.status(400).json(response)
   }
   
   try {
@@ -173,7 +266,7 @@ router.post('/create', async (req, res) => {
     let slug = title.trim()
     
     // 如果是纯中文或混合内容，转换为拼音风格的 slug 或直接使用中文字符
-    const isMostlyChinese = (str: string) => {
+    const isMostlyChinese = (str: string): boolean => {
       const chineseChars = str.match(/[\u4e00-\u9fa5]/g) || []
       return chineseChars.length / str.length > 0.5
     }
@@ -248,11 +341,13 @@ router.post('/create', async (req, res) => {
     }
     
     // 构建 frontmatter
+    const tagsYaml = tags.length > 0 
+      ? `\ntags:\n${tags.map(t => `  - ${t}`).join('\n')}` 
+      : ''
+    
     const frontmatter = `---
 title: ${title}
-date: ${date}
-tags:
-${tags.map((t: string) => `  - ${t}`).join('\n')}
+date: ${date}${tagsYaml}
 ---
 
 ${content}`
@@ -260,44 +355,77 @@ ${content}`
     // 写入文件
     await fs.writeFile(filePath, frontmatter, 'utf-8')
     
-    res.json({
+    interface CreateResult {
+      path: string
+      title: string
+      date: string
+    }
+    
+    const response: ApiResponse<CreateResult> = {
       success: true,
       data: {
         path: resultPath,
         title,
         date
       }
-    })
+    }
+    res.json(response)
   } catch (error) {
     console.error('Create article error:', error)
-    res.status(500).json({ success: false, error: 'Failed to create article' })
+    const response: ApiResponse = {
+      success: false,
+      error: 'Failed to create article'
+    }
+    res.status(500).json(response)
   }
 })
 
+// 更新文章请求体接口
+interface UpdateArticleBody {
+  path: string
+  content: string
+}
+
 // 更新文章
 router.put('/update', async (req, res) => {
-  const { path: articlePath, content } = req.body
+  const { path: articlePath, content } = req.body as UpdateArticleBody
   
   if (!articlePath || !content) {
-    return res.status(400).json({ success: false, error: 'Path and content required' })
+    const response: ApiResponse = {
+      success: false,
+      error: 'Path and content required'
+    }
+    return res.status(400).json(response)
   }
   
   try {
     const fullPath = join(SECTIONS_PATH, articlePath)
     await fs.writeFile(fullPath, content, 'utf-8')
     
-    res.json({ success: true, message: 'Article updated' })
+    const response: ApiResponse = {
+      success: true,
+      data: { message: 'Article updated' }
+    }
+    res.json(response)
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Failed to update article' })
+    const response: ApiResponse = {
+      success: false,
+      error: 'Failed to update article'
+    }
+    res.status(500).json(response)
   }
 })
 
 // 发布文章（移动到正式目录）
 router.post('/publish', async (req, res) => {
-  const { path: articlePath } = req.body
+  const { path: articlePath } = req.body as { path: string }
   
   if (!articlePath) {
-    return res.status(400).json({ success: false, error: 'Path required' })
+    const response: ApiResponse = {
+      success: false,
+      error: 'Path required'
+    }
+    return res.status(400).json(response)
   }
   
   try {
@@ -311,12 +439,21 @@ router.post('/publish', async (req, res) => {
     // 移动文件
     await fs.rename(sourcePath, destPath)
     
-    res.json({
+    interface PublishResult {
+      newPath: string
+    }
+    
+    const response: ApiResponse<PublishResult> = {
       success: true,
       data: { newPath: targetPath }
-    })
+    }
+    res.json(response)
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Failed to publish article' })
+    const response: ApiResponse = {
+      success: false,
+      error: 'Failed to publish article'
+    }
+    res.status(500).json(response)
   }
 })
 

@@ -1,6 +1,8 @@
 /**
  * State Machine - 状态机
  * 管理 Agent 的状态转换和断点续作
+ * 
+ * **P0-6 修复**: 添加 Watchdog TTL，防止 EXECUTING 状态永久锁死
  */
 import type { AgentState, TaskState } from './types'
 
@@ -15,6 +17,11 @@ export class StateMachine {
   private currentState: AgentState = 'IDLE'
   private listeners: Map<AgentState, Set<(data: any) => void>> = new Map()
   private transitionListeners: Set<(from: AgentState, to: AgentState, data: any) => void> = new Set()
+
+  // P0-6: Watchdog 相关
+  private watchdogTimer: ReturnType<typeof setTimeout> | null = null
+  private readonly WATCHDOG_TIMEOUT_MS = 5 * 60 * 1000 // 5分钟超时
+  private lastStateChangeTime: number = Date.now()
 
   // 有效的状态转换规则
   private transitions: StateTransition[] = [
@@ -47,6 +54,10 @@ export class StateMachine {
     }
 
     this.currentState = to
+    this.lastStateChangeTime = Date.now()
+    
+    // P0-6 加强：管理 Watchdog（扩展到 UNDERSTANDING/PLANNING/EXECUTING）
+    this.manageWatchdog(to)
     
     // 触发状态监听器
     this.emit(to, data)
@@ -64,6 +75,53 @@ export class StateMachine {
   }
 
   /**
+   * P0-6: 管理 Watchdog 定时器
+   * 
+   * 当进入 UNDERSTANDING/PLANNING/EXECUTING 状态时启动 Watchdog，
+   * 如果超过5分钟没有状态变更，强制转换到 ERROR
+   */
+  private manageWatchdog(state: AgentState): void {
+    // 清除现有 Watchdog
+    if (this.watchdogTimer) {
+      clearTimeout(this.watchdogTimer)
+      this.watchdogTimer = null
+    }
+
+    // P0-6 加强：保护 UNDERSTANDING/PLANNING/EXECUTING 三个状态
+    if (['UNDERSTANDING', 'PLANNING', 'EXECUTING'].includes(state)) {
+      console.log(`[StateMachine] 启动 Watchdog (${state})，${this.WATCHDOG_TIMEOUT_MS / 1000}秒后超时`)
+      this.watchdogTimer = setTimeout(() => {
+        this.forceTimeout()
+      }, this.WATCHDOG_TIMEOUT_MS)
+    }
+  }
+
+  /**
+   * P0-6: Watchdog 超时处理
+   */
+  private forceTimeout(): void {
+    console.error(`[StateMachine] Watchdog 超时！状态 '${this.currentState}' 超过 ${this.WATCHDOG_TIMEOUT_MS / 1000} 秒，强制转换为 ERROR`)
+    
+    // 触发超时错误事件
+    this.emit('ERROR', { 
+      reason: 'WATCHDOG_TIMEOUT',
+      message: `状态 '${this.currentState}' 执行超时，系统强制终止`,
+      timeoutMs: this.WATCHDOG_TIMEOUT_MS,
+      timestamp: Date.now()
+    })
+    
+    // 强制转换到 ERROR 状态
+    this.currentState = 'ERROR'
+    this.lastStateChangeTime = Date.now()
+    
+    // 触发 ERROR 监听器
+    this.emit('ERROR', { 
+      forced: true,
+      previousState: 'EXECUTING'
+    })
+  }
+
+  /**
    * 获取当前状态
    */
   getState(): AgentState {
@@ -75,6 +133,32 @@ export class StateMachine {
    */
   is(state: AgentState): boolean {
     return this.currentState === state
+  }
+
+  /**
+   * 获取当前状态持续时间（毫秒）
+   */
+  getStateDuration(): number {
+    return Date.now() - this.lastStateChangeTime
+  }
+
+  /**
+   * 检查当前状态是否即将超时
+   */
+  isNearTimeout(): boolean {
+    if (this.currentState !== 'EXECUTING') return false
+    const remaining = this.WATCHDOG_TIMEOUT_MS - this.getStateDuration()
+    return remaining < 30000 // 剩余30秒认为即将超时
+  }
+
+  /**
+   * 获取 Watchdog 剩余时间
+   */
+  getWatchdogRemainingTime(): number | null {
+    if (this.currentState !== 'EXECUTING' || !this.watchdogTimer) {
+      return null
+    }
+    return Math.max(0, this.WATCHDOG_TIMEOUT_MS - this.getStateDuration())
   }
 
   /**
@@ -119,7 +203,8 @@ export class StateMachine {
     return {
       state: this.currentState,
       taskState,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      watchdogRemaining: this.getWatchdogRemainingTime()
     }
   }
 
@@ -132,11 +217,27 @@ export class StateMachine {
     }
 
     this.currentState = checkpoint.state
+    this.lastStateChangeTime = Date.now()
+    
+    // 恢复 Watchdog
+    this.manageWatchdog(this.currentState)
     
     // 触发恢复事件
     this.emit('IDLE', { restored: true, checkpoint })
     
     return true
+  }
+
+  /**
+   * 销毁状态机（清理资源）
+   */
+  destroy(): void {
+    if (this.watchdogTimer) {
+      clearTimeout(this.watchdogTimer)
+      this.watchdogTimer = null
+    }
+    this.listeners.clear()
+    this.transitionListeners.clear()
   }
 
   /**
@@ -185,3 +286,5 @@ export class StateMachine {
     })
   }
 }
+
+export default StateMachine

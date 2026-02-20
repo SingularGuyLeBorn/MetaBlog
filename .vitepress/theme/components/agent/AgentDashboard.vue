@@ -1,5 +1,13 @@
 <template>
-  <div class="agent-dashboard-scifi">
+  <!-- P0-5 修复：生产环境显示简化视图 -->
+  <div v-if="isProduction" class="agent-dashboard-prod">
+    <div class="prod-warning">
+      <span class="warning-icon">⚠️</span>
+      <h2>Agent Dashboard 仅在开发环境可用</h2>
+      <p>生产环境中已禁用敏感信息展示</p>
+    </div>
+  </div>
+  <div v-else class="agent-dashboard-scifi">
     <!-- 顶部状态栏 -->
     <header class="control-tower-header">
       <div class="header-left">
@@ -311,6 +319,11 @@ let refreshInterval: number | null = null
 let timeInterval: number | null = null
 
 // ==================== Computed ====================
+// P0-5 修复：生产环境检测
+const isProduction = computed(() => {
+  return import.meta.env.PROD
+})
+
 const systemStatus = computed(() => {
   const allHealthy = Object.values(health.value).every(h => h)
   return allHealthy ? 'healthy' : 'warning'

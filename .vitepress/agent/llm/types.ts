@@ -16,6 +16,7 @@ export interface LLMRequest {
   topP?: number
   stream?: boolean
   tools?: LLMTool[]
+  signal?: AbortSignal  // P0-3: 支持请求取消
 }
 
 export interface LLMResponse {
@@ -73,6 +74,7 @@ export abstract class LLMProvider {
 
   /**
    * 流式聊天请求
+   * P0-3: 当 signal 触发 abort 时，应停止流式读取
    */
   abstract chatStream(
     request: LLMRequest,
@@ -104,6 +106,7 @@ export type ProviderType =
   | 'deepseek'
   | 'qwen'
   | 'kimi'
+  | 'fallback'  // 故障降级专用
 
 // LLM Manager 配置
 export interface LLMManagerConfig {
@@ -113,6 +116,8 @@ export interface LLMManagerConfig {
   providers: Partial<Record<ProviderType, LLMProviderConfig>>
   // 每日预算限制（美元）
   dailyBudget?: number
+  // 是否启用自动跟进/重试
+  followup?: boolean
 }
 
 // 模型定价（每 1K tokens，美元）

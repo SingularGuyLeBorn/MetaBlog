@@ -1,9 +1,146 @@
 /**
  * Article Skills - AI 可执行的文章操作技能
  * 让 Agent 能够创建、删除、移动、更新文章
+ * 
+ * 类型安全：所有技能参数都有严格的 TypeScript 接口定义
+ * 
+ * P0-R2 修复：统一使用 api/files.ts 封装，确保文件锁机制生效
  */
 import type { Skill, SkillContext, SkillResult } from '../core/types'
 import { getLLMManager, type LLMMessage } from '../llm'
+import { saveFile, deleteFile, checkFileExists, generateFileNameAsync, listDirectory, type FileInfo } from '../api/files'
+
+// ============================================
+// 类型定义
+// ============================================
+
+/**
+ * 创建文章技能参数
+ */
+interface CreateArticleParams {
+  /** 文章主题/标题 */
+  topic: string
+  /** 目标栏目 */
+  section?: string
+  /** 标签列表 */
+  tags?: string[]
+  /** 写作风格 */
+  style?: string
+  /** 文章长度 */
+  length?: 'short' | 'medium' | 'long'
+  /** 指定目标路径 */
+  targetPath?: string
+  /** 参考文章路径 */
+  referenceArticles?: string[]
+  /** 是否确认覆盖已存在的文件 */
+  confirmOverwrite?: boolean
+}
+
+/**
+ * 删除文章技能参数
+ */
+interface DeleteArticleParams {
+  /** 要删除的文件路径 */
+  path: string
+  /** 是否已确认删除 */
+  confirm?: boolean
+  /** 是否永久删除（否则软删除到回收站） */
+  permanent?: boolean
+}
+
+/**
+ * 列出文章技能参数
+ */
+interface ListArticlesParams {
+  /** 目录路径 */
+  path?: string
+  /** 过滤关键词 */
+  filter?: string
+}
+
+/**
+ * 移动文章技能参数
+ */
+interface MoveArticleParams {
+  /** 源路径 */
+  from: string
+  /** 目标路径 */
+  to: string
+}
+
+/**
+ * 更新元数据技能参数
+ */
+interface UpdateMetadataParams {
+  /** 文件路径 */
+  path: string
+  /** 新标题 */
+  title?: string
+  /** 新标签 */
+  tags?: string[]
+  /** 新分类 */
+  category?: string
+  /** 新日期 */
+  date?: string
+  /** 新描述 */
+  description?: string
+  /** 其他元数据 */
+  [key: string]: any
+}
+
+/**
+ * 编辑文章内容技能参数
+ */
+interface EditContentParams {
+  /** 文件路径 */
+  path: string
+  /** 编辑指令 */
+  instruction: string
+  /** 选中的文本 */
+  selectedText?: string
+}
+
+// ============================================
+// 参数校验辅助函数
+// ============================================
+
+/**
+ * 校验必需参数
+ */
+function validateRequiredParams<T extends Record<string, any>>(
+  params: T,
+  required: string[],
+  skillName: string
+): { valid: boolean; error?: string } {
+  for (const key of required) {
+    if (params[key] === undefined || params[key] === null || params[key] === '') {
+      return {
+        valid: false,
+        error: `[${skillName}] 缺少必需参数: ${key}`
+      }
+    }
+  }
+  return { valid: true }
+}
+
+/**
+ * 安全获取字符串参数
+ */
+function safeString(value: unknown, defaultValue: string = ''): string {
+  if (typeof value === 'string') return value
+  if (value === null || value === undefined) return defaultValue
+  return String(value)
+}
+
+/**
+ * 安全获取字符串数组
+ */
+function safeStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === 'string')
+  }
+  return []
+}
 
 // ============================================
 // 辅助函数
@@ -35,77 +172,6 @@ async function callLLM(
   }
 }
 
-async function saveFile(path: string, content: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const res = await fetch('/api/files/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path, content })
-    })
-    if (res.ok) {
-      return { success: true }
-    }
-    return { success: false, error: await res.text() }
-  } catch (e) {
-    return { success: false, error: String(e) }
-  }
-}
-
-async function deleteFile(path: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const res = await fetch('/api/files/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path })
-    })
-    if (res.ok) {
-      return { success: true }
-    }
-    return { success: false, error: await res.text() }
-  } catch (e) {
-    return { success: false, error: String(e) }
-  }
-}
-
-async function listFiles(path: string = ''): Promise<{ success: boolean; files?: any[]; error?: string }> {
-  try {
-    const res = await fetch(`/api/files/list?path=${encodeURIComponent(path)}`)
-    if (res.ok) {
-      const files = await res.json()
-      return { success: true, files }
-    }
-    return { success: false, error: await res.text() }
-  } catch (e) {
-    return { success: false, error: String(e) }
-  }
-}
-
-async function slugifyAsync(text: string): Promise<string> {
-  try {
-    const res = await fetch('/api/utils/slugify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text })
-    })
-    if (res.ok) {
-      const data = await res.json()
-      if (data.slug) return data.slug
-    }
-  } catch (e) {
-    // fallback
-  }
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .substring(0, 50)
-}
-
-async function generateFileNameAsync(title: string): Promise<string> {
-  const dateStr = new Date().toISOString().split('T')[0]
-  return `${dateStr}-${await slugifyAsync(title)}.md`
-}
-
 // ============================================
 // Skill 1: CreateArticleSkill
 // ============================================
@@ -115,17 +181,33 @@ export const CreateArticleSkill: Skill = {
   description: '创建新文章或博客内容',
   intentPattern: /(?:创建|新建|写|生成).{0,5}(?:文章|博客|文档|内容)/i,
   requiredParams: ['topic'],
-  optionalParams: ['section', 'tags', 'style', 'length', 'targetPath'],
+  optionalParams: ['section', 'tags', 'style', 'length', 'targetPath', 'referenceArticles'],
   
-  handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
-    const { 
-      topic, 
-      section = 'posts', 
-      tags = [], 
-      style = '技术博客', 
-      length = 'medium',
-      targetPath 
-    } = params
+  handler: async (ctx: SkillContext, rawParams: unknown): Promise<SkillResult> => {
+    // 参数类型转换和默认值
+    const params: CreateArticleParams = {
+      topic: safeString((rawParams as Record<string, unknown>)?.topic),
+      section: safeString((rawParams as Record<string, unknown>)?.section, 'posts'),
+      tags: safeStringArray((rawParams as Record<string, unknown>)?.tags),
+      style: safeString((rawParams as Record<string, unknown>)?.style, '技术博客'),
+      length: ((rawParams as Record<string, unknown>)?.length as 'short' | 'medium' | 'long') || 'medium',
+      targetPath: safeString((rawParams as Record<string, unknown>)?.targetPath),
+      referenceArticles: safeStringArray((rawParams as Record<string, unknown>)?.referenceArticles),
+      confirmOverwrite: (rawParams as Record<string, unknown>)?.confirmOverwrite === true
+    }
+    
+    // 参数校验
+    const validation = validateRequiredParams(params, ['topic'], 'CreateArticle')
+    if (!validation.valid) {
+      return {
+        success: false,
+        error: validation.error,
+        tokensUsed: 0,
+        cost: 0
+      }
+    }
+    
+    const { topic, section, tags, style, targetPath, referenceArticles } = params
     
     ctx.logger.info('Starting article creation', { topic, section, style })
     
@@ -142,7 +224,7 @@ export const CreateArticleSkill: Skill = {
       },
       {
         role: 'user',
-        content: `主题为："${topic}"\n风格：${style}\n长度：${length}\n\n${context.length > 0 ? `相关文章：\n${context.map(c => `- ${c.metadata.title || c.source}`).join('\n')}` : ''}\n\n请生成文章大纲：`
+        content: `主题为："${topic}"\n风格：${style}\n长度：${params.length}\n\n${context.length > 0 ? `相关文章：\n${context.map(c => `- ${c.metadata.title || c.source}`).join('\n')}` : ''}\n\n请生成文章大纲：`
       }
     ]
     
@@ -171,7 +253,7 @@ export const CreateArticleSkill: Skill = {
 title: ${topic}
 date: ${date}
 tags:
-${tags.map((t: string) => `  - ${t}`).join('\n')}
+${(tags || []).map((t: string) => `  - ${t}`).join('\n')}
 wikiLinks:
 ${relatedArticles.map(r => `  - ${r}`).join('\n')}
 ---`
@@ -181,20 +263,48 @@ ${relatedArticles.map(r => `  - ${r}`).join('\n')}
     const fileName = await generateFileNameAsync(topic)
     const filePath = targetPath || `${section}/${fileName}`
     
-    ctx.logger.info('Saving file', { path: filePath })
-    const saveResult = await saveFile(filePath, fullContent)
-    
-    if (!saveResult.success) {
+    // P1-2: 检查文件是否已存在
+    const fileExists = await checkFileExists(filePath)
+    if (fileExists && !params.confirmOverwrite) {
       return {
-        success: false,
-        error: saveResult.error,
+        success: true, // 返回成功但要求确认
+        data: {
+          message: `文件 ${filePath} 已存在。是否覆盖？`,
+          requiresConfirmation: true,
+          confirmAction: 'overwrite',
+          filePath
+        },
         tokensUsed: outline.tokens + content.tokens,
         cost: outline.cost + content.cost
       }
     }
     
-    // 6. 提取实体并更新知识图谱
-    await ctx.memory.entities.extractFromContent(fullContent, filePath)
+    // P0-R2 修复：使用 api/files.ts 的 saveFile，支持 taskId 和文件锁
+    ctx.logger.info('Saving file', { path: filePath, overwrite: params.confirmOverwrite })
+    try {
+      await saveFile(filePath, fullContent, ctx.taskId, params.confirmOverwrite)
+    } catch (saveError) {
+      const errorMsg = saveError instanceof Error ? saveError.message : String(saveError)
+      return {
+        success: false,
+        error: errorMsg,
+        tokensUsed: outline.tokens + content.tokens,
+        cost: outline.cost + content.cost
+      }
+    }
+    
+    // 6. 文件保存成功后，提取实体并更新知识图谱
+    // P0-4 修复：实体提取移至保存成功后
+    try {
+      await ctx.memory.entities.extractFromContent(fullContent, filePath)
+      ctx.logger.info('Entities extracted', { path: filePath })
+    } catch (entityError) {
+      // 实体提取失败不影响主流程，仅记录警告
+      ctx.logger.warn('Failed to extract entities', { 
+        path: filePath, 
+        error: String(entityError) 
+      })
+    }
     
     return {
       success: true,
@@ -217,13 +327,31 @@ ${relatedArticles.map(r => `  - ${r}`).join('\n')}
 
 export const DeleteArticleSkill: Skill = {
   name: 'DeleteArticle',
-  description: '删除指定文章',
+  description: '删除指定文章（支持软删除和永久删除）',
   intentPattern: /(?:删除|移除).{0,5}(?:文章|文档|文件)/i,
   requiredParams: ['path'],
-  optionalParams: ['confirm'],
+  optionalParams: ['confirm', 'permanent'],
   
-  handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
-    const { path, confirm = false } = params
+  handler: async (ctx: SkillContext, rawParams: unknown): Promise<SkillResult> => {
+    // 参数类型转换和默认值
+    const params: DeleteArticleParams = {
+      path: safeString((rawParams as Record<string, unknown>)?.path),
+      confirm: Boolean((rawParams as Record<string, unknown>)?.confirm),
+      permanent: Boolean((rawParams as Record<string, unknown>)?.permanent)
+    }
+    
+    // 参数校验
+    const validation = validateRequiredParams(params, ['path'], 'DeleteArticle')
+    if (!validation.valid) {
+      return {
+        success: false,
+        error: validation.error,
+        tokensUsed: 0,
+        cost: 0
+      }
+    }
+    
+    const { path, confirm, permanent } = params
     
     if (!path) {
       return {
@@ -237,14 +365,15 @@ export const DeleteArticleSkill: Skill = {
     // 转换路径
     const mdPath = path.replace(/\.html$/, '.md')
     
-    ctx.logger.info('Attempting to delete article', { path: mdPath })
+    ctx.logger.info('Attempting to delete article', { path: mdPath, permanent })
     
     // 如果没有确认，先询问
     if (!confirm) {
+      const actionText = permanent ? '永久删除' : '删除（移至回收站）'
       return {
         success: true,
         data: {
-          message: `确定要删除文章 ${mdPath} 吗？此操作不可恢复。`,
+          message: `确定要${actionText}文章 ${mdPath} 吗？${permanent ? '此操作不可恢复。' : '可在 30 天内从回收站恢复。'}`,
           requiresConfirmation: true,
           path: mdPath
         },
@@ -253,25 +382,37 @@ export const DeleteArticleSkill: Skill = {
       }
     }
     
-    // 执行删除
-    const deleteResult = await deleteFile(mdPath)
-    
-    if (!deleteResult.success) {
+    // P0-R2 修复：使用 api/files.ts 的 deleteFile
+    let trashId: string | undefined
+    try {
+      const result = await deleteFile(mdPath, permanent)
+      trashId = result.trashId
+    } catch (deleteError) {
+      const errorMsg = deleteError instanceof Error ? deleteError.message : String(deleteError)
       return {
         success: false,
-        error: deleteResult.error,
+        error: errorMsg,
         tokensUsed: 0,
         cost: 0
       }
     }
     
-    ctx.logger.info('Article deleted successfully', { path: mdPath })
+    ctx.logger.info('Article deleted successfully', { 
+      path: mdPath, 
+      permanent, 
+      trashId 
+    })
+    
+    const successMessage = permanent 
+      ? `文章 ${mdPath} 已永久删除`
+      : `文章 ${mdPath} 已删除并移至回收站（ID: ${trashId}）`
     
     return {
       success: true,
       data: {
-        message: `文章 ${mdPath} 已删除`,
-        path: mdPath
+        message: successMessage,
+        path: mdPath,
+        trashId
       },
       tokensUsed: 0,
       cost: 0
@@ -290,31 +431,38 @@ export const ListArticlesSkill: Skill = {
   requiredParams: [],
   optionalParams: ['path', 'filter'],
   
-  handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
-    const { path = '', filter } = params
+  handler: async (ctx: SkillContext, rawParams: unknown): Promise<SkillResult> => {
+    // 参数类型转换和默认值
+    const params: ListArticlesParams = {
+      path: safeString((rawParams as Record<string, unknown>)?.path, ''),
+      filter: safeString((rawParams as Record<string, unknown>)?.filter)
+    }
+    
+    const { path, filter } = params
     
     ctx.logger.info('Listing articles', { path, filter })
     
-    const listResult = await listFiles(path)
-    
-    if (!listResult.success) {
+    let files: FileInfo[]
+    try {
+      files = await listDirectory(path)
+    } catch (listError) {
       return {
         success: false,
-        error: listResult.error,
+        error: listError instanceof Error ? listError.message : String(listError),
         tokensUsed: 0,
         cost: 0
       }
     }
     
     // 只返回 Markdown 文件
-    let files = listResult.files?.filter(f => 
+    let markdownFiles = files.filter((f: FileInfo) => 
       f.type === 'file' && f.name.endsWith('.md')
-    ) || []
+    )
     
     // 应用过滤器
     if (filter) {
       const filterLower = filter.toLowerCase()
-      files = files.filter(f => 
+      markdownFiles = markdownFiles.filter((f: FileInfo) => 
         f.name.toLowerCase().includes(filterLower)
       )
     }
@@ -322,13 +470,13 @@ export const ListArticlesSkill: Skill = {
     return {
       success: true,
       data: {
-        message: `找到 ${files.length} 篇文章`,
-        articles: files.map(f => ({
+        message: `找到 ${markdownFiles.length} 篇文章`,
+        articles: markdownFiles.map((f: FileInfo) => ({
           name: f.name,
           path: f.path,
           modifiedAt: f.modifiedAt
         })),
-        count: files.length
+        count: markdownFiles.length
       },
       tokensUsed: 0,
       cost: 0
@@ -347,17 +495,25 @@ export const MoveArticleSkill: Skill = {
   requiredParams: ['from', 'to'],
   optionalParams: [],
   
-  handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
-    const { from, to } = params
+  handler: async (ctx: SkillContext, rawParams: unknown): Promise<SkillResult> => {
+    // 参数类型转换
+    const params: MoveArticleParams = {
+      from: safeString((rawParams as Record<string, unknown>)?.from),
+      to: safeString((rawParams as Record<string, unknown>)?.to)
+    }
     
-    if (!from || !to) {
+    // 参数校验
+    const validation = validateRequiredParams(params, ['from', 'to'], 'MoveArticle')
+    if (!validation.valid) {
       return {
         success: false,
-        error: '需要指定源路径和目标路径',
+        error: validation.error,
         tokensUsed: 0,
         cost: 0
       }
     }
+    
+    const { from, to } = params
     
     ctx.logger.info('Moving article', { from, to })
     
@@ -404,19 +560,48 @@ export const UpdateArticleMetadataSkill: Skill = {
   requiredParams: ['path'],
   optionalParams: ['title', 'tags', 'category', 'date', 'description'],
   
-  handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
-    const { path, ...metadata } = params
+  handler: async (ctx: SkillContext, rawParams: unknown): Promise<SkillResult> => {
+    // 参数类型转换
+    const params: UpdateMetadataParams = {
+      path: safeString((rawParams as Record<string, unknown>)?.path),
+      title: safeString((rawParams as Record<string, unknown>)?.title),
+      tags: safeStringArray((rawParams as Record<string, unknown>)?.tags),
+      category: safeString((rawParams as Record<string, unknown>)?.category),
+      date: safeString((rawParams as Record<string, unknown>)?.date),
+      description: safeString((rawParams as Record<string, unknown>)?.description)
+    }
     
-    if (!path) {
+    // 参数校验
+    const validation = validateRequiredParams(params, ['path'], 'UpdateArticleMetadata')
+    if (!validation.valid) {
       return {
         success: false,
-        error: '未指定文件路径',
+        error: validation.error,
         tokensUsed: 0,
         cost: 0
       }
     }
     
-    ctx.logger.info('Updating article metadata', { path, metadata })
+    const { path, ...metadata } = params
+    
+    // 过滤掉 undefined 的值
+    const filteredMetadata: Record<string, any> = {}
+    for (const [key, value] of Object.entries(metadata)) {
+      if (value !== undefined && value !== '') {
+        filteredMetadata[key] = value
+      }
+    }
+    
+    if (Object.keys(filteredMetadata).length === 0) {
+      return {
+        success: false,
+        error: '没有提供要更新的元数据字段',
+        tokensUsed: 0,
+        cost: 0
+      }
+    }
+    
+    ctx.logger.info('Updating article metadata', { path, metadata: filteredMetadata })
     
     try {
       // 1. 读取现有内容
@@ -445,7 +630,7 @@ export const UpdateArticleMetadataSkill: Skill = {
       }
       
       // 3. 合并元数据
-      const newMeta = { ...existingMeta, ...metadata }
+      const newMeta = { ...existingMeta, ...filteredMetadata }
       
       // 4. 构建新的 frontmatter
       const newFrontmatter = `---\n${Object.entries(newMeta)
@@ -459,11 +644,7 @@ export const UpdateArticleMetadataSkill: Skill = {
       
       // 5. 保存
       const fullContent = newFrontmatter + content
-      const saveResult = await saveFile(path, fullContent)
-      
-      if (!saveResult.success) {
-        throw new Error(saveResult.error)
-      }
+      await saveFile(path, fullContent, ctx.taskId)
       
       return {
         success: true,
@@ -497,3 +678,12 @@ export const articleSkills = [
   MoveArticleSkill,
   UpdateArticleMetadataSkill
 ]
+
+// 导出类型（供外部使用）
+export type {
+  CreateArticleParams,
+  DeleteArticleParams,
+  ListArticlesParams,
+  MoveArticleParams,
+  UpdateMetadataParams
+}

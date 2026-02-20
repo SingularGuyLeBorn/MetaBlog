@@ -105,6 +105,39 @@ export class IntentRouter {
     this.skills.set(skill.name, skill)
   }
 
+  // 否定词列表
+  private readonly NEGATION_WORDS = [
+    '不', '别', '不要', '不能', '别要', '无需', '不用', '不必',
+    'no', 'not', 'don\'t', 'cannot', 'donot', 'no need to'
+  ]
+
+  /**
+   * 检测输入是否包含否定词
+   */
+  private hasNegation(input: string): boolean {
+    const normalizedInput = input.toLowerCase()
+    return this.NEGATION_WORDS.some(word => normalizedInput.includes(word.toLowerCase()))
+  }
+
+  /**
+   * 检测否定词是否在关键动词附近（2个词内）
+   */
+  private isNegationNearKeyword(input: string, matchText: string): boolean {
+    const normalizedInput = input.toLowerCase()
+    const normalizedMatch = matchText.toLowerCase()
+    
+    // 找到匹配位置
+    const matchIndex = normalizedInput.indexOf(normalizedMatch)
+    if (matchIndex === -1) return false
+    
+    // 检查匹配位置前后 10 个字符内是否有否定词
+    const contextStart = Math.max(0, matchIndex - 10)
+    const contextEnd = Math.min(normalizedInput.length, matchIndex + normalizedMatch.length + 10)
+    const context = normalizedInput.substring(contextStart, contextEnd)
+    
+    return this.NEGATION_WORDS.some(word => context.includes(word.toLowerCase()))
+  }
+
   /**
    * 解析用户输入，识别意图
    */
@@ -117,6 +150,26 @@ export class IntentRouter {
       for (const pattern of intentPattern.patterns) {
         const match = normalizedInput.match(pattern) || input.match(pattern)
         if (match) {
+          const matchedText = match[0]
+          
+          // 检测否定词
+          if (this.isNegationNearKeyword(input, matchedText)) {
+            this.logger.info('router.negation', `Detected negation near keyword "${matchedText}"`)
+            // 否定意图，降低置信度或询问确认
+            return {
+              type: 'ANSWER_QUESTION', // 降级为问答意图
+              confidence: 0.3,
+              entities: this.extractEntities(input),
+              parameters: { 
+                question: input,
+                negationDetected: true,
+                originalMatch: matchedText,
+                suggestedIntent: intentPattern.type
+              },
+              raw: input
+            }
+          }
+          
           const parameters = this.extractParameters(intentPattern, match, input, context)
           return {
             type: intentPattern.type,

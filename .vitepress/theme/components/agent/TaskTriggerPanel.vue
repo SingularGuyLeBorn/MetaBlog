@@ -23,10 +23,10 @@
           :disabled="isTriggering"
         >
           <span class="template-icon">{{ template.icon }}</span>
-          <div class="template-info">
+          <span class="template-info">
             <span class="template-name">{{ template.name }}</span>
             <span class="template-desc">{{ template.description }}</span>
-          </div>
+          </span>
           <span class="trigger-icon">▶</span>
         </button>
       </div>
@@ -344,7 +344,7 @@ onUnmounted(() => {
   font-weight: 600;
   color: var(--vp-c-text-2);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   margin: 16px 0 8px;
 }
 
@@ -369,7 +369,7 @@ onUnmounted(() => {
 
 .template-card:hover:not(.disabled) {
   border-color: var(--vp-c-brand);
-  box-shadow: 0 0 0 2px var(--vp-c-brand-dimm);
+  box-shadow: 0 0 0 2px var(--vp-c-brand-dimm, rgba(66, 184, 131, 0.16));
 }
 
 .template-card.disabled {
@@ -433,15 +433,17 @@ onUnmounted(() => {
 
 .task-item.running {
   border-color: var(--vp-c-brand);
-  background: var(--vp-c-brand-dimm);
+  background: var(--vp-c-brand-dimm, rgba(66, 184, 131, 0.16));
 }
 
 .task-item.completed {
-  border-left: 3px solid var(--vp-c-green);
+  /* noinspection CssUnusedSymbol */
+  border-left: 3px solid var(--vp-c-green, #10b981);
 }
 
 .task-item.failed {
-  border-left: 3px solid var(--vp-c-red);
+  /* noinspection CssUnusedSymbol */
+  border-left: 3px solid var(--vp-c-red, #ef4444);
 }
 
 .task-progress-ring {
@@ -493,13 +495,13 @@ onUnmounted(() => {
 }
 
 .task-item.completed .status-icon {
-  background: var(--vp-c-green-dimm);
-  color: var(--vp-c-green);
+  background: var(--vp-c-green-dimm, rgba(16, 185, 129, 0.16));
+  color: var(--vp-c-green, #10b981);
 }
 
 .task-item.failed .status-icon {
-  background: var(--vp-c-red-dimm);
-  color: var(--vp-c-red);
+  background: var(--vp-c-red-dimm, rgba(239, 68, 68, 0.16));
+  color: var(--vp-c-red, #ef4444);
 }
 
 .task-info {
@@ -538,8 +540,8 @@ onUnmounted(() => {
 }
 
 .cancel-btn:hover {
-  background: var(--vp-c-red-dimm);
-  color: var(--vp-c-red);
+  background: var(--vp-c-red-dimm, rgba(239, 68, 68, 0.16));
+  color: var(--vp-c-red, #ef4444);
 }
 
 .retry-btn {
@@ -559,8 +561,8 @@ onUnmounted(() => {
 }
 
 .delete-btn:hover {
-  background: var(--vp-c-red-dimm);
-  color: var(--vp-c-red);
+  background: var(--vp-c-red-dimm, rgba(239, 68, 68, 0.16));
+  color: var(--vp-c-red, #ef4444);
 }
 
 .task-actions {
@@ -590,11 +592,11 @@ onUnmounted(() => {
 }
 
 .stat-value.success {
-  color: var(--vp-c-green);
+  color: var(--vp-c-green, #10b981);
 }
 
 .stat-value.error {
-  color: var(--vp-c-red);
+  color: var(--vp-c-red, #ef4444);
 }
 
 .stat-label {
@@ -605,8 +607,8 @@ onUnmounted(() => {
 .error-message {
   margin-top: 12px;
   padding: 8px 12px;
-  background: var(--vp-c-red-dimm);
-  color: var(--vp-c-red);
+  background: var(--vp-c-red-dimm, rgba(239, 68, 68, 0.16));
+  color: var(--vp-c-red, #ef4444);
   border-radius: 6px;
   font-size: 12px;
 }

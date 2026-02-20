@@ -16,11 +16,17 @@ import {
   toDirectoryTree,
   DocNode,
 } from "./utils/doc-structure";
-import { logSystem } from "./agent/runtime/LogSystem";
+import { getStructuredLogger } from "./agent/runtime/StructuredLogger";
 import { bootLogger } from "./agent/runtime/boot-logger";
 
-// 解构日志方法
-const { system, recordSystemStartup } = logSystem;
+// 获取结构化日志实例
+const structuredLogger = getStructuredLogger();
+const system = {
+  info: (event: string, message: string, data?: any) => structuredLogger.info(event, message, data),
+  debug: (event: string, message: string, data?: any) => structuredLogger.debug(event, message, data),
+  warn: (event: string, message: string, data?: any) => structuredLogger.warn(event, message, data),
+  error: (event: string, message: string, data?: any) => structuredLogger.error(event, message, data)
+};
 
 // 记录配置加载
 bootLogger.logConfigLoad("config.ts");
@@ -252,6 +258,17 @@ export default defineConfig({
           replacement: fileURLToPath(new URL("./theme", import.meta.url)),
         },
       ],
+    },
+    // P1-8 修复：排除 Agent 数据目录和日志目录，避免 Vite HMR OOM
+    server: {
+      watch: {
+        ignored: [
+          '**/.vitepress/agent/memory/data/**',
+          '**/.vitepress/agent/logs/**',
+          '**/logs/**',
+          '**/.trash/**'
+        ]
+      }
     },
     plugins: [
       {
@@ -1904,12 +1921,20 @@ ${content}`;
                     timeout,
                   });
 
-                  // 使用 AbortController 实现超时
+                  // 使用 AbortController 实现超时和客户端断开检测
                   const controller = new AbortController();
                   const timeoutId = setTimeout(
                     () => controller.abort(),
                     timeout,
                   );
+
+                  // P0-3 修复：监听客户端断开连接
+                  const abortOnClose = () => {
+                    controller.abort();
+                    clearTimeout(timeoutId);
+                    structuredLog.info("proxy.fetch.aborted", `Client disconnected, aborted fetch ${url}`, { url });
+                  };
+                  req.on("close", abortOnClose);
 
                   try {
                     const response = await fetch(url, {
@@ -1921,6 +1946,7 @@ ${content}`;
                     });
 
                     clearTimeout(timeoutId);
+                    req.removeListener("close", abortOnClose);
 
                     if (!response.ok) {
                       structuredLog.warn(

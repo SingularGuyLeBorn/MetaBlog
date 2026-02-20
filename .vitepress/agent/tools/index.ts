@@ -9,7 +9,7 @@ export { VditorBridge, getVditorBridge, createVditorBridge } from './VditorBridg
 
 // 工具类型导出
 export type { SearchOptions, SearchResult, Paper } from './WebSearch'
-export type { CommitOptions, AgentCommitParams, Checkpoint } from './GitOperator'
+export type { GitCommitOptions, Checkpoint, GitStatus } from '../core/git.types'
 export type { Position, Range, Suggestion } from './VditorBridge'
 
 // 工具集合

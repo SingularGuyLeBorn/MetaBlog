@@ -1,223 +1,285 @@
 /**
  * SessionManager.ts - 会话上下文管理
- * 负责聊天会话的创建、保存、上下文维护
+ * 
+ * 负责会话的创建、存储、查询
+ * **已文件化**: 会话数据持久化到文件系统
  */
 import type { SessionMemory, ChatMessage } from '../../core/types'
-import { 
-  getAllSessions, 
-  getSession as getSessionApi, 
-  saveSession as saveSessionApi 
-} from '../../api/memory'
+import { createStorage } from '../FileStorage'
 
-// 内存缓存
-const sessionCache = new Map<string, SessionMemory>()
-
-/**
- * 会话消息（扩展 ChatMessage，metadata 可包含任意字段）
- */
-interface SessionMessage extends ChatMessage {
-  metadata?: Record<string, any>
-}
-
-/**
- * 会话上下文选项
- */
 export interface ContextOptions {
-  maxMessages?: number
-  contextWindow?: number
-  preserveSystemPrompt?: boolean
+  currentFile?: string
+  selectedText?: string
+  wikiLinks?: string[]
 }
+
+// 存储结构
+interface SessionStorage {
+  sessions: Record<string, SessionMemory>
+  activeSessionId: string | null
+  version: number
+  lastUpdated: string
+}
+
+// 创建文件存储实例
+const storage = createStorage<SessionStorage>({
+  name: 'sessions',
+  defaultData: {
+    sessions: {},
+    activeSessionId: null,
+    version: 1,
+    lastUpdated: new Date().toISOString()
+  }
+})
 
 /**
  * 会话管理器
  */
 export class SessionManager {
-  private options: ContextOptions
+  private cacheLoaded: boolean = false
+  private maxSessions: number = 50 // 最大保留会话数
 
-  constructor(options: ContextOptions = {}) {
-    this.options = {
-      maxMessages: 100,
-      contextWindow: 10,
-      preserveSystemPrompt: true,
-      ...options
-    }
+  /**
+   * 初始化：从文件加载数据
+   */
+  async initialize(): Promise<void> {
+    if (this.cacheLoaded) return
+    
+    await storage.load()
+    this.cacheLoaded = true
+    
+    const data = storage.getData()
+    const sessionCount = Object.keys(data.sessions).length
+    console.log(`[SessionManager] 初始化完成，加载 ${sessionCount} 个会话`)
   }
 
   /**
-   * 从服务器加载会话
+   * 从服务器加载（兼容旧接口）
    */
   async loadFromServer(): Promise<void> {
-    try {
-      const sessions = await getAllSessions()
-      for (const s of sessions) {
-        sessionCache.set(s.id, s)
-      }
-      console.log(`[SessionManager] Loaded ${sessions.length} sessions`)
-    } catch (e) {
-      console.warn('[SessionManager] Failed to load from server:', e)
-    }
+    return this.initialize()
   }
 
   /**
-   * 创建新会话
+   * 保存到文件
    */
-  async create(metadata?: Record<string, any>): Promise<SessionMemory> {
-    const session: SessionMemory = {
-      id: `sess_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
-      messages: [],
-      context: metadata || {},
-      createdAt: Date.now(),
-      lastActive: Date.now()
-    }
-    sessionCache.set(session.id, session)
-    await saveSessionApi(session)
-    return session
+  private async persist(): Promise<void> {
+    storage.updateData(data => {
+      data.lastUpdated = new Date().toISOString()
+      
+      // 限制会话数量
+      const sessionIds = Object.keys(data.sessions)
+      if (sessionIds.length > this.maxSessions) {
+        // 按最后活跃时间排序，保留最新的
+        const sorted = sessionIds
+          .map(id => data.sessions[id])
+          .sort((a, b) => b.lastActive - a.lastActive)
+          .slice(0, this.maxSessions)
+        
+        data.sessions = {}
+        for (const session of sorted) {
+          data.sessions[session.id] = session
+        }
+      }
+    })
+    await storage.save()
   }
 
   /**
    * 获取会话
    */
   async get(sessionId: string): Promise<SessionMemory | null> {
-    const cached = sessionCache.get(sessionId)
-    if (cached) {
-      cached.lastActive = Date.now()
-      return cached
-    }
-
-    try {
-      const session = await getSessionApi(sessionId)
-      if (session) {
-        session.lastActive = Date.now()
-        sessionCache.set(sessionId, session)
-        return session
-      }
-    } catch (e) {
-      console.error('[SessionManager] Failed to get session:', e)
-    }
-    return null
+    await this.initialize()
+    const data = storage.getData()
+    return data.sessions[sessionId] || null
   }
 
   /**
    * 保存会话
    */
   async save(session: SessionMemory): Promise<void> {
+    await this.initialize()
+    
     session.lastActive = Date.now()
-    sessionCache.set(session.id, session)
-    await saveSessionApi(session)
+    storage.updateData(data => {
+      data.sessions[session.id] = session
+      data.activeSessionId = session.id
+    })
+    
+    await this.persist()
+  }
+
+  /**
+   * 创建新会话
+   */
+  async create(context?: ContextOptions): Promise<SessionMemory> {
+    await this.initialize()
+    
+    const session: SessionMemory = {
+      id: `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      messages: [],
+      context: {
+        currentFile: context?.currentFile,
+        selectedText: context?.selectedText,
+        wikiLinks: context?.wikiLinks
+      },
+      createdAt: Date.now(),
+      lastActive: Date.now()
+    }
+    
+    await this.save(session)
+    console.log(`[SessionManager] 创建会话: ${session.id}`)
+    return session
+  }
+
+  /**
+   * 获取活跃会话
+   */
+  async getActiveSession(): Promise<SessionMemory | null> {
+    await this.initialize()
+    const data = storage.getData()
+    
+    if (data.activeSessionId) {
+      return this.get(data.activeSessionId)
+    }
+    return null
+  }
+
+  /**
+   * 设置活跃会话
+   */
+  async setActiveSession(sessionId: string): Promise<void> {
+    await this.initialize()
+    
+    storage.updateData(data => {
+      data.activeSessionId = sessionId
+    })
+    
+    await this.save()
   }
 
   /**
    * 添加消息到会话
-   * @todo 将在多轮对话功能中启用
    */
-  async addMessage(
-    sessionId: string, 
-    role: 'system' | 'user' | 'assistant', 
-    content: string,
-    metadata?: Record<string, any>
-  ): Promise<void> {
+  async addMessage(sessionId: string, message: ChatMessage): Promise<void> {
     const session = await this.get(sessionId)
-    if (!session) return
-
-    const message: SessionMessage = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-      role,
-      content,
-      timestamp: Date.now(),
-      ...metadata
+    if (!session) {
+      throw new Error(`Session not found: ${sessionId}`)
     }
-
+    
     session.messages.push(message)
-
-    // 裁剪消息数量
-    if (session.messages.length > this.options.maxMessages!) {
-      if (this.options.preserveSystemPrompt && session.messages[0]?.role === 'system') {
-        session.messages.splice(1, session.messages.length - this.options.maxMessages!)
-      } else {
-        session.messages = session.messages.slice(-this.options.maxMessages!)
-      }
-    }
-
+    session.lastActive = Date.now()
+    
     await this.save(session)
   }
 
   /**
-   * 获取最近的消息（用于上下文窗口）
-   * @todo 将在上下文记忆功能中启用
+   * 清空会话消息
    */
-  async getRecentMessages(sessionId: string, count?: number): Promise<ChatMessage[]> {
+  async clearMessages(sessionId: string): Promise<void> {
     const session = await this.get(sessionId)
-    if (!session) return []
-
-    const limit = count || this.options.contextWindow!
-    const messages = session.messages
-
-    if (this.options.preserveSystemPrompt && messages[0]?.role === 'system') {
-      return [messages[0], ...messages.slice(-limit)]
+    if (!session) {
+      throw new Error(`Session not found: ${sessionId}`)
     }
-    return messages.slice(-limit)
-  }
-
-  /**
-   * 获取完整对话历史
-   * @todo 将在对话导出功能中启用
-   */
-  async getFullHistory(sessionId: string): Promise<ChatMessage[]> {
-    const session = await this.get(sessionId)
-    return session?.messages || []
+    
+    session.messages = []
+    session.lastActive = Date.now()
+    
+    await this.save(session)
   }
 
   /**
    * 更新会话上下文
-   * @todo 将在上下文编辑功能中启用
    */
-  async updateContext(sessionId: string, context: Record<string, any>): Promise<void> {
+  async updateContext(sessionId: string, context: Partial<ContextOptions>): Promise<void> {
     const session = await this.get(sessionId)
-    if (!session) return
-
+    if (!session) {
+      throw new Error(`Session not found: ${sessionId}`)
+    }
+    
     session.context = { ...session.context, ...context }
+    session.lastActive = Date.now()
+    
     await this.save(session)
-  }
-
-  /**
-   * 列出所有会话（按最后活动时间倒序）
-   */
-  async list(): Promise<SessionMemory[]> {
-    return Array.from(sessionCache.values())
-      .sort((a, b) => b.lastActive - a.lastActive)
   }
 
   /**
    * 删除会话
    */
   async delete(sessionId: string): Promise<void> {
-    sessionCache.delete(sessionId)
+    await this.initialize()
+    
+    storage.updateData(data => {
+      delete data.sessions[sessionId]
+      
+      // 如果删除的是活跃会话，清空活跃会话
+      if (data.activeSessionId === sessionId) {
+        data.activeSessionId = null
+      }
+    })
+    
+    await this.save()
+    console.log(`[SessionManager] 删除会话: ${sessionId}`)
   }
 
   /**
-   * 清空会话消息
-   * @todo 将在清空对话功能中启用
+   * 列出所有会话
    */
-  async clearMessages(sessionId: string, keepSystemPrompt: boolean = true): Promise<void> {
-    const session = await this.get(sessionId)
-    if (!session) return
+  async list(): Promise<SessionMemory[]> {
+    await this.initialize()
+    const data = storage.getData()
+    
+    return Object.values(data.sessions)
+      .sort((a, b) => b.lastActive - a.lastActive)
+  }
 
-    if (keepSystemPrompt && session.messages[0]?.role === 'system') {
-      session.messages = [session.messages[0]]
-    } else {
-      session.messages = []
+  /**
+   * 清理过期会话（超过 7 天未活跃）
+   */
+  async cleanupExpired(): Promise<number> {
+    await this.initialize()
+    const data = storage.getData()
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+    
+    let count = 0
+    const sessionsToDelete: string[] = []
+    
+    for (const [id, session] of Object.entries(data.sessions)) {
+      if (session.lastActive < sevenDaysAgo) {
+        sessionsToDelete.push(id)
+        count++
+      }
     }
-    await this.save(session)
+    
+    for (const id of sessionsToDelete) {
+      delete data.sessions[id]
+    }
+    
+    if (count > 0) {
+      await this.save()
+      console.log(`[SessionManager] 清理 ${count} 个过期会话`)
+    }
+    
+    return count
+  }
+
+  /**
+   * 清空所有会话
+   */
+  async clear(): Promise<void> {
+    await storage.clear()
+    console.log('[SessionManager] 清空所有会话')
   }
 }
 
-// 导出单例
+// 单例实例
 let instance: SessionManager | null = null
-export function getSessionManager(options?: ContextOptions): SessionManager {
+
+export function getSessionManager(): SessionManager {
   if (!instance) {
-    instance = new SessionManager(options)
+    instance = new SessionManager()
   }
   return instance
 }
 
-// 类型导出（ContextOptions 已在上面导出）
+export default SessionManager
