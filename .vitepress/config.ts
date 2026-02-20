@@ -16,8 +16,7 @@ import {
   toDirectoryTree,
   DocNode,
 } from "./utils/doc-structure";
-import { getStructuredLogger } from "./agent/runtime/StructuredLogger";
-import { logSystem } from "./agent/runtime/LogSystemAdapter";
+import { getStructuredLogger } from "./agent/runtime/StructuredLogger.server";
 import { bootLogger } from "./agent/runtime/boot-logger";
 
 // 获取结构化日志实例
@@ -1824,20 +1823,35 @@ ${content}`;
               req.on("end", async () => {
                 try {
                   const body = JSON.parse(Buffer.concat(chunks).toString());
-                  // 使用LogSystem持久化日志
-                  await logSystem.add(
-                    body.level || "info",
-                    body.event || "system",
-                    body.message,
-                    body.actor || "system",
-                    {
-                      source: body.source,
-                      taskId: body.taskId,
-                      skillName: body.skillName,
-                      duration: body.duration,
-                      ...body.metadata,
-                    },
-                  );
+                  // 使用 StructuredLogger 持久化日志
+                  const level = (body.level || "info").toLowerCase();
+                  const event = body.event || "system";
+                  const message = body.message;
+                  const metadata = {
+                    actor: body.actor || "system",
+                    source: body.source,
+                    taskId: body.taskId,
+                    skillName: body.skillName,
+                    duration: body.duration,
+                    ...body.metadata,
+                  };
+                  switch (level) {
+                    case "debug":
+                      structuredLogger.debug(event, message, metadata);
+                      break;
+                    case "warn":
+                    case "warning":
+                      structuredLogger.warn(event, message, metadata);
+                      break;
+                    case "error":
+                      structuredLogger.error(event, message, metadata);
+                      break;
+                    case "success":
+                      structuredLogger.success(event, message, metadata);
+                      break;
+                    default:
+                      structuredLogger.info(event, message, metadata);
+                  }
                   res.setHeader("Content-Type", "application/json");
                   res.end(JSON.stringify({ success: true }));
                 } catch (e) {
@@ -1854,7 +1868,7 @@ ${content}`;
               const url = new URL(req.url || "", `http://${req.headers.host}`);
               const count = parseInt(url.searchParams.get("count") || "100");
               const level = url.searchParams.get("level") as any;
-              const logs = await logSystem.getRecent(count, level);
+              const logs = await structuredLogger.getRecentLogs(count, level);
               res.setHeader("Content-Type", "application/json");
               res.end(JSON.stringify({ success: true, data: logs }));
             } else next();
@@ -1863,7 +1877,7 @@ ${content}`;
           // 获取日志统计
           server.middlewares.use("/api/logs/stats", async (req, res, next) => {
             if (req.method === "GET") {
-              const stats = await logSystem.getStats();
+              const stats = await structuredLogger.getStats();
               res.setHeader("Content-Type", "application/json");
               res.end(JSON.stringify({ success: true, data: stats }));
             } else next();

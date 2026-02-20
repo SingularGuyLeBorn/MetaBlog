@@ -52,7 +52,7 @@ export class TaskScheduler {
   private taskManager = getBackgroundTaskManager()
   
   // 定时检查器
-  private checkTimer: number | null = null
+  private checkTimer: ReturnType<typeof setInterval> | null = null
   
   // 已注册的 Cron 任务
   private cronTasks = new Map<TaskType, cron.ScheduledTask>()
@@ -112,7 +112,7 @@ export class TaskScheduler {
     this.registerTasksFromConfig()
 
     // 启动定时检查 (用于状态持久化和成本控制检查)
-    this.checkTimer = window.setInterval(() => {
+    this.checkTimer = setInterval(() => {
       this.performMaintenance()
     }, this.config.checkIntervalMs)
 
@@ -134,7 +134,7 @@ export class TaskScheduler {
 
     // 停止检查定时器
     if (this.checkTimer) {
-      window.clearInterval(this.checkTimer)
+      clearInterval(this.checkTimer)
       this.checkTimer = null
     }
 
