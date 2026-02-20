@@ -29,8 +29,38 @@
       "cost": 0.0034380900000000004,
       "startedAt": 1771615825088,
       "completedAt": 1771615886563
+    },
+    {
+      "id": "1771616409389_r2taaoom1_quuh",
+      "type": "WRITE_ARTICLE",
+      "description": "/写文章 请写一篇关于TypeScript泛型的教程，适合前端开发者",
+      "steps": [
+        {
+          "index": 1,
+          "skill": "WriteArticle",
+          "input": {
+            "topic": "TypeScript泛型",
+            "rawInput": "/写文章 请写一篇关于TypeScript泛型的教程，适合前端开发者"
+          },
+          "output": {
+            "message": "已创建文章「TypeScript泛型」，保存至 posts/typescript.md",
+            "path": "posts/typescript.md",
+            "outline": "# TypeScript泛型：提升代码复用性与类型安全\n\n## 一、引言\n- TypeScript泛型的重要性：为什么需要泛型？\n- 泛型在类型安全与代码复用中的核心作用\n- 本文目标：从基础到实践全面掌握TypeScript泛型\n\n## 二、泛型基础概念\n- 什么是泛型？——参数化类型的理念\n- 泛型与any类型的本质区别\n- 第一个泛型示例：理解类型参数\n\n## 三、泛型函数详解\n- 泛型函数的基本语法与声明\n- 类型推断：编译器如何推断泛型类型\n- 多个类型参数的使用场景\n- 泛型约束：使用extends限制类型范围\n\n## 四、泛型接口与泛型类\n- 泛型接口的定义与应用\n- 泛型类的实现与实例化\n- 静态成员与泛型的注意事项\n- 实际案例：构建可复用的数据容器\n\n## 五、高级泛型技巧\n- 泛型约束与条件类型\n- 使用keyof进行类型映射\n- 泛型默认值：提升API友好度\n- 泛型与联合类型、交叉类型的结合使用\n\n## 六、泛型在实战中的应用\n- 泛型在React组件中的应用\n- API请求层的泛型封装\n- 工具类型（Utility Types）中的泛型实现\n- 常见设计模式中的泛型应用\n\n## 七、常见陷阱与最佳实践\n- 过度使用泛型的反模式\n- 类型推断失败时的处理策略\n- 性能考量：泛型对编译的影响\n- 代码可读性与维护性的平衡\n\n## 八、总结与展望\n- 泛型在TypeScript生态中的核心地位\n- 如何系统性地提升泛型使用能力\n- 进一步学习资源推荐",
+            "wordCount": 13054
+          },
+          "tokens": 4987,
+          "cost": 0.00507236,
+          "startedAt": 1771616409389,
+          "completedAt": 1771616491935
+        }
+      ],
+      "result": "success",
+      "tokensUsed": 4987,
+      "cost": 0.00507236,
+      "startedAt": 1771616409389,
+      "completedAt": 1771616491935
     }
   ],
   "version": 1,
-  "lastUpdated": "2026-02-20T19:31:26.563Z"
+  "lastUpdated": "2026-02-20T19:41:31.935Z"
 }
