@@ -33,16 +33,16 @@ class BootLogger {
     const duration = Date.now() - this.startTime
     const logger = getStructuredLogger()
     const level = phase === 'error' ? 'error' : 'info'
-    const event = `boot.${phase}`
+    const eventName = `boot.${phase}`
     const msg = `[+${duration}ms] ${message}`
     const data = { ...metadata, bootTime: duration }
     
     if (level === 'error') {
-      logger.error(event, msg, data)
+      logger.error(eventName, msg, data)
     } else if (level === 'warn') {
-      logger.warn(event, msg, data)
+      logger.warn(eventName, msg, data)
     } else {
-      logger.info(event, msg, data)
+      logger.info(eventName, msg, data)
     }
   }
 
