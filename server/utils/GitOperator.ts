@@ -173,7 +173,7 @@ export class GitOperator {
     return this.mutex.runExclusive(async () => {
       const status = await this.git.status()
       return {
-        current: status.current,
+        current: status.current || undefined,
         modified: status.modified,
         staged: status.staged,
         untracked: status.not_added,

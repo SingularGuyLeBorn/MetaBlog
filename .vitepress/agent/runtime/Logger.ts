@@ -15,25 +15,25 @@ export class LoggerImpl implements ILogger {
   }
 
   debug(message: string, metadata?: any): void {
-    this.log('debug', message, metadata)
+    this.log('DEBUG', message, metadata)
   }
 
   info(message: string, metadata?: any): void {
-    this.log('info', message, metadata)
+    this.log('INFO', message, metadata)
   }
 
   warn(message: string, metadata?: any): void {
-    this.log('warn', message, metadata)
+    this.log('WARN', message, metadata)
   }
 
   error(message: string, metadata?: any): void {
-    this.log('error', message, metadata)
+    this.log('ERROR', message, metadata)
   }
 
   private log(level: LogLevel, message: string, metadata?: any): void {
     const entry: LogEntry = {
       id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: Date.now(),
+      timestamp: new Date().toISOString(),
       level,
       source: this.getCallerInfo(),
       message,
@@ -68,7 +68,7 @@ export class LoggerImpl implements ILogger {
     let filtered = this.logs
 
     if (level) {
-      const levels: LogLevel[] = ['debug', 'info', 'warn', 'error']
+      const levels: LogLevel[] = ['DEBUG', 'INFO', 'WARN', 'ERROR']
       const minLevel = levels.indexOf(level)
       filtered = filtered.filter(l => levels.indexOf(l.level) >= minLevel)
     }
@@ -130,7 +130,7 @@ export class LoggerImpl implements ILogger {
   getTaskTimeline(taskId: string): LogEntry[] {
     return this.logs
       .filter(l => l.taskId === taskId)
-      .sort((a, b) => a.timestamp - b.timestamp)
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
   }
 
   /**

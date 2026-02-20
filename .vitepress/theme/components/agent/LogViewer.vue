@@ -215,7 +215,7 @@
           class="log-capsule"
           :class="[
             `level-${log.level}`,
-            { expanded: expandedLog === log.id, pulse: log.level === 'error' && isNewLog(log.id) }
+            { expanded: expandedLog === log.id, pulse: log.level === 'ERROR' && isNewLog(log.id) }
           ]"
           @click="toggleExpand(log.id)"
         >
@@ -267,19 +267,19 @@
                     <span class="detail-key">Task</span>
                     <span class="detail-value mono">{{ log.taskId }}</span>
                   </div>
-                  <div v-if="log.skillName" class="detail-item">
+                  <div v-if="log.data?.skillName" class="detail-item">
                     <span class="detail-key">Skill</span>
-                    <span class="detail-value">{{ log.skillName }}</span>
+                    <span class="detail-value">{{ log.data.skillName }}</span>
                   </div>
-                  <div v-if="log.duration" class="detail-item">
+                  <div v-if="log.durationMs" class="detail-item">
                     <span class="detail-key">Duration</span>
-                    <span class="detail-value mono">{{ log.duration }}ms</span>
+                    <span class="detail-value mono">{{ log.durationMs }}ms</span>
                   </div>
                   <div class="detail-item full-width">
                     <span class="detail-key">Source</span>
                     <span class="detail-value">{{ log.source }}</span>
                   </div>
-                  <div v-if="Object.keys(log.data).length > 0" class="detail-item full-width">
+                  <div v-if="log.data && Object.keys(log.data).length > 0" class="detail-item full-width">
                     <span class="detail-key">Data</span>
                     <pre class="detail-code">{{ JSON.stringify(log.data, null, 2) }}</pre>
                   </div>
@@ -360,23 +360,25 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { getStructuredLogger, type StructuredLogEntry, type LogStats } from '../../../agent/runtime/StructuredLogger'
 
 // Extended log entry with actor field from server
-interface ServerLogEntry extends StructuredLogEntry {
+type ServerLogEntry = StructuredLogEntry & {
   actor?: 'human' | 'ai' | 'system'
 }
 
 // ==================== Constants ====================
 const LEVEL_COLORS = {
-  debug: '#6B7280',
-  info: '#2563EB',
-  warn: '#D97706',
-  error: '#DC2626'
+  DEBUG: '#6B7280',
+  INFO: '#2563EB',
+  WARN: '#D97706',
+  ERROR: '#DC2626',
+  SUCCESS: '#10B981'
 }
 
 const LEVEL_LABELS = {
-  debug: 'Debug',
-  info: 'Info',
-  warn: 'Warning',
-  error: 'Error'
+  DEBUG: 'Debug',
+  INFO: 'Info',
+  WARN: 'Warning',
+  ERROR: 'Error',
+  SUCCESS: 'Success'
 }
 
 // ==================== State ====================
@@ -494,7 +496,7 @@ const filteredLogs = computed(() => {
   
   // Filter by skill name
   if (filters.value.skillName) {
-    result = result.filter(l => l.skillName === filters.value.skillName)
+    result = result.filter(l => l.data?.skillName === filters.value.skillName)
   }
   
   // Filter by actor
@@ -546,7 +548,7 @@ const levelStats = computed(() => {
 })
 
 // ==================== Methods ====================
-function formatTime(timestamp: number): string {
+function formatTime(timestamp: string | number): string {
   const date = new Date(timestamp)
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -599,8 +601,8 @@ async function refreshLogs() {
         total: statsResult.data.total,
         byLevel: statsResult.data.byLevel,
         byEvent: statsResult.data.byEvent,
-        byTask: {},
-        byDay: {},
+        byActor: statsResult.data.byActor,
+        byComponent: statsResult.data.byComponent,
         recentErrors: (statsResult.data.recentErrors || []).map((log: any) => ({
           id: log.id,
           timestamp: new Date(log.timestamp).getTime(),

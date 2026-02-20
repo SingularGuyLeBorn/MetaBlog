@@ -172,12 +172,12 @@ export interface GitCommitInfo {
 // ============================================
 
 /** 日志级别 */
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS'
 
 /** 日志条目 */
 export interface LogEntry {
   id: string
-  timestamp: number
+  timestamp: string
   level: LogLevel
   source: string
   message: string
