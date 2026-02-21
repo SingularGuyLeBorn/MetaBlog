@@ -136,6 +136,56 @@ registerTool('get_current_time', {
   return new Date().toISOString()
 })
 
+// 4. 【测试工具】回声测试 - 验证工具调用链路的专用工具
+registerTool('test_echo', {
+  type: 'function',
+  function: {
+    name: 'test_echo',
+    description: '【测试专用】回声工具，用于验证工具调用是否正常工作。调用后会返回你发送的内容和调用时间戳。当用户说"测试工具"、"调用测试工具"或"echo测试"时使用此工具。',
+    parameters: {
+      type: 'object',
+      properties: {
+        message: { 
+          type: 'string', 
+          description: '要回显的消息内容' 
+        },
+        repeat_count: {
+          type: 'number',
+          description: '重复次数（可选，默认1）'
+        }
+      },
+      required: ['message']
+    }
+  }
+}, async (args) => {
+  const timestamp = new Date().toLocaleString('zh-CN')
+  const message = args.message || '空消息'
+  const repeat = args.repeat_count || 1
+  
+  // 构建回显内容
+  const lines = []
+  lines.push('🎯 【工具调用成功】')
+  lines.push(`📅 调用时间: ${timestamp}`)
+  lines.push(`📨 收到消息: "${message}"`)
+  lines.push(`🔢 重复次数: ${repeat}`)
+  lines.push('')
+  lines.push('✅ 工具调用链路完整：')
+  lines.push('   1. AI 识别到需要调用工具 ✓')
+  lines.push('   2. 系统执行 test_echo 函数 ✓')
+  lines.push('   3. 函数返回结果 ✓')
+  lines.push('   4. 结果发送给 AI ✓')
+  
+  if (repeat > 1) {
+    lines.push('')
+    lines.push('🔄 重复内容:')
+    for (let i = 0; i < repeat; i++) {
+      lines.push(`   ${i + 1}. ${message}`)
+    }
+  }
+  
+  return lines.join('\n')
+})
+
 /** 准备发送给 API 的消息 */
 function prepareMessages(messages: ChatMessage[]): any[] {
   const result: any[] = []
