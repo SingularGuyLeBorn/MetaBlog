@@ -12,6 +12,12 @@
       "timestamp": 1771668000018,
       "success": true,
       "cost": 0
+    },
+    {
+      "taskType": "rss-aggregator",
+      "timestamp": 1771689600031,
+      "success": true,
+      "cost": 0
     }
   ],
   "totalCost": 0

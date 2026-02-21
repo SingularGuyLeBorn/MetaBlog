@@ -3,6 +3,7 @@ import DefaultTheme from 'vitepress/theme'
 import Layout from './Layout.vue'
 import './style.css'
 import './styles/animations.css'
+import './components/ai-chat/styles/index.css'
 import HomePortal from './components/HomePortal.vue'
 import SectionHub from './components/SectionHub.vue'
 import SectionHero from './components/SectionHero.vue'
@@ -12,6 +13,7 @@ import KnowledgePage from './components/pages/KnowledgePage.vue'
 import ResourcesPage from './components/pages/ResourcesPage.vue'
 import AboutPage from './components/pages/AboutPage.vue'
 import ChatPage from './components/pages/ChatPage.vue'
+import { ChatLayout } from './components/ai-chat'
 import Breadcrumb from './components/Breadcrumb.vue'
 import GlobalSidebar from './components/GlobalSidebar.vue'
 import TocSidebar from './components/TocSidebar.vue'
@@ -57,6 +59,7 @@ export default {
     app.component('ResourcesPage', ResourcesPage)
     app.component('AboutPage', AboutPage)
     app.component('ChatPage', ChatPage)
+    app.component('ChatLayout', ChatLayout)
     app.component('InlineMarkdownEditor', InlineMarkdownEditor)
     app.component('AboutProfile', AboutProfile)
     app.component('KnowledgeGraph', KnowledgeGraph)

@@ -12,9 +12,9 @@
     {
       "taskType": "rss-aggregator",
       "cronExpression": "0 */6 * * *",
-      "lastRun": 1771668000018,
-      "nextRun": 1771668060020,
-      "runCount": 3,
+      "lastRun": 1771689600031,
+      "nextRun": 1771689660033,
+      "runCount": 4,
       "failCount": 0,
       "enabled": true
     },
@@ -37,5 +37,5 @@
       "enabled": true
     }
   ],
-  "lastSave": 1771674077126
+  "lastSave": 1771689627034
 }
