@@ -10,6 +10,7 @@ import { ref, computed } from 'vue'
 import type { ChatSession, ChatMessage, SessionConfig, MessageGroup } from '../types'
 import { storage, convertGroupsToMessages } from '../services/storage'
 import { aiService } from '../services/aiService'
+import { logger, useChatTracer, addLog } from '../services/logger'
 
 const DEFAULT_CONFIG: SessionConfig = {
   model: 'deepseek-chat',
@@ -186,6 +187,17 @@ export function useAIChat() {
     
     isStreaming.value = true
     
+    // 创建对话追踪
+    addLog({
+      level: 'info',
+      category: 'chat',
+      event: 'message_start',
+      message: '用户发送消息',
+      sessionId,
+      messageId: userMsg.id,
+      data: { content: content.slice(0, 100), skill: skillInfo?.name }
+    })
+    
     try {
       // 构建历史记录（使用当前激活版本的消息）
       const history = buildHistoryFromGroups(groups)
@@ -214,6 +226,20 @@ export function useAIChat() {
             }
             isStreaming.value = false
             storage.saveMessageGroups(sessionId, groups)
+            
+            // 记录完成日志
+            addLog({
+              level: 'info',
+              category: 'chat',
+              event: 'message_complete',
+              message: 'AI 回复完成',
+              sessionId,
+              messageId: targetMsg.id,
+              data: { 
+                contentLength: targetMsg.content.length,
+                hasToolCalls: (toolRecords?.length || 0) > 0
+              }
+            })
           },
           onError: (err) => {
             const targetMsg = groups[groups.length - 1].aiVersions[0]
@@ -222,6 +248,17 @@ export function useAIChat() {
             targetMsg.updatedAt = Date.now()
             isStreaming.value = false
             storage.saveMessageGroups(sessionId, groups)
+            
+            // 记录错误日志
+            addLog({
+              level: 'error',
+              category: 'error',
+              event: 'message_error',
+              message: 'AI 回复失败',
+              sessionId,
+              messageId: targetMsg.id,
+              data: { error: err.message }
+            })
           },
           onToolRecord: (record) => {
             // 实时更新工具调用记录

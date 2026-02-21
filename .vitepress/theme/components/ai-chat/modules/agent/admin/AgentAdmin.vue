@@ -41,6 +41,10 @@
                 <span class="btn-icon">📊</span>
                 <span>统计</span>
               </button>
+              <button class="header-btn logs" @click="showLogs = true">
+                <span class="btn-icon">📋</span>
+                <span>日志</span>
+              </button>
               <button class="header-btn create" @click="openCreateForm">
                 <span class="btn-icon">+</span>
                 <span>新建 Agent</span>
@@ -206,6 +210,12 @@
       @close="showStats = false"
     />
 
+    <!-- 日志监控面板 -->
+    <LogDashboard
+      :visible="showLogs"
+      @close="showLogs = false"
+    />
+
     <!-- 记忆管理弹窗 -->
     <MemoryManager
       :visible="showMemory"
@@ -244,6 +254,7 @@ import AgentCard from './AgentCard.vue'
 import AgentDetail from './AgentDetail.vue'
 import AgentForm from './AgentForm.vue'
 import AgentStats from './AgentStats.vue'
+import LogDashboard from './LogDashboard.vue'
 import { MemoryManager } from '../memory'
 import { ToolsManager } from '../tools'
 
@@ -273,6 +284,7 @@ const selectedLevel = ref<AgentLevel | null>(null)
 const showDetail = ref(false)
 const showForm = ref(false)
 const showStats = ref(false)
+const showLogs = ref(false)
 const showMemory = ref(false)
 const showTools = ref(false)
 const showCreateForm = ref(false)
