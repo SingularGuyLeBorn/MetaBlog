@@ -23,33 +23,36 @@
       <span class="btn-glow"></span>
     </button>
 
-    <!-- Dropdown Menu -->
+    <!-- 右侧滑出面板 -->
     <Teleport to="body">
-      <Transition name="dropdown">
-        <div v-if="isOpen" class="control-dropdown-overlay" @click="close">
-          <div class="control-dropdown" @click.stop>
-            <!-- 装饰边角 -->
-            <span class="corner corner-tl"></span>
-            <span class="corner corner-tr"></span>
-            <span class="corner corner-bl"></span>
-            <span class="corner corner-br"></span>
-            
-            <div class="dropdown-header">
-              <span class="header-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="4" y="4" width="6" height="6" rx="1"/>
-                  <rect x="14" y="4" width="6" height="6" rx="1"/>
-                  <rect x="4" y="14" width="6" height="6" rx="1"/>
-                  <rect x="14" y="14" width="6" height="6" rx="1"/>
+      <Transition name="slide">
+        <div v-if="isOpen" class="control-panel-overlay" @click="close">
+          <div class="control-panel" @click.stop>
+            <!-- 面板头部 -->
+            <div class="panel-header">
+              <div class="panel-title">
+                <span class="title-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="4" y="4" width="6" height="6" rx="1"/>
+                    <rect x="14" y="4" width="6" height="6" rx="1"/>
+                    <rect x="4" y="14" width="6" height="6" rx="1"/>
+                    <rect x="14" y="14" width="6" height="6" rx="1"/>
+                  </svg>
+                </span>
+                <span class="title-text">控制中心</span>
+              </div>
+              <button class="btn-close" @click="close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
-              </span>
-              <span class="header-title">控制中心</span>
-              <span class="header-id">SYS-01</span>
+              </button>
             </div>
             
-            <div class="dropdown-content">
+            <!-- 面板内容 -->
+            <div class="panel-content">
               <!-- Agent Panel -->
-              <button class="menu-item" @click="openPanel('dashboard')">
+              <button class="panel-item" @click="openPanel('dashboard')">
                 <span class="item-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <circle cx="12" cy="12" r="3"/>
@@ -68,7 +71,7 @@
               </button>
 
               <!-- Article Manager -->
-              <button class="menu-item" @click="openPanel('articles')">
+              <button class="panel-item" @click="openPanel('articles')">
                 <span class="item-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -89,7 +92,7 @@
               </button>
 
               <!-- Log Viewer -->
-              <button class="menu-item" @click="openPanel('logs')">
+              <button class="panel-item" @click="openPanel('logs')">
                 <span class="item-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -109,12 +112,6 @@
                   </svg>
                 </span>
               </button>
-            </div>
-
-            <div class="dropdown-footer">
-              <span class="footer-line"></span>
-              <span class="footer-hint">点击展开相应面板</span>
-              <span class="footer-line"></span>
             </div>
           </div>
         </div>
@@ -269,132 +266,105 @@ onUnmounted(() => {
   50% { opacity: 0.6; }
 }
 
-/* ===== 下拉菜单 - 科幻面板风格 ===== */
-.control-dropdown-overlay {
+/* ===== 右侧滑出面板 ===== */
+.control-panel-overlay {
   position: fixed;
   inset: 0;
+  background: rgba(0, 0, 0, 0.3);
   z-index: 9998;
 }
 
-.control-dropdown {
+.control-panel {
   position: fixed;
-  top: calc(var(--vp-nav-height, 64px) + 8px);
-  right: 16px;
-  width: 300px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 16px;
-  box-shadow: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.5) inset,
-    0 0 30px rgba(59, 130, 246, 0.1);
-  overflow: hidden;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100vh;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-left: 1px solid rgba(59, 130, 246, 0.15);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.1);
   z-index: 9999;
-  backdrop-filter: blur(20px);
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-@media (min-width: 768px) {
-  .control-dropdown {
-    right: 24px;
-  }
-}
-
-/* 装饰边角 */
-.corner {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border-color: #3b82f6;
-  border-style: solid;
-  opacity: 0.5;
-  transition: all 0.3s ease;
-}
-
-.corner-tl {
-  top: 8px;
-  left: 8px;
-  border-width: 1px 0 0 1px;
-}
-
-.corner-tr {
-  top: 8px;
-  right: 8px;
-  border-width: 1px 1px 0 0;
-}
-
-.corner-bl {
-  bottom: 8px;
-  left: 8px;
-  border-width: 0 0 1px 1px;
-}
-
-.corner-br {
-  bottom: 8px;
-  right: 8px;
-  border-width: 0 1px 1px 0;
-}
-
-.control-dropdown:hover .corner {
-  opacity: 1;
-  width: 12px;
-  height: 12px;
-}
-
-.dropdown-header {
+/* 面板头部 */
+.panel-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 16px 20px;
+  justify-content: space-between;
+  padding: 20px 24px;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 100%);
-  position: relative;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.03) 0%, rgba(147, 51, 234, 0.03) 100%);
 }
 
-.header-icon {
-  width: 22px;
-  height: 22px;
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-icon {
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #3b82f6;
 }
 
-.header-icon svg {
+.title-icon svg {
   width: 100%;
   height: 100%;
 }
 
-.header-title {
-  font-size: 15px;
+.title-text {
+  font-size: 18px;
   font-weight: 600;
   color: var(--vp-c-text-1, #262626);
-  flex: 1;
 }
 
-.header-id {
-  font-size: 10px;
-  font-weight: 600;
-  color: #3b82f6;
-  padding: 2px 8px;
+.btn-close {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-close:hover {
   background: rgba(59, 130, 246, 0.1);
-  border-radius: 4px;
-  font-family: 'SF Mono', monospace;
+  color: #3b82f6;
 }
 
-.dropdown-content {
-  padding: 12px;
+.btn-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* 面板内容 */
+.panel-content {
+  flex: 1;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  overflow-y: auto;
 }
 
-.menu-item {
+.panel-item {
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 12px;
+  padding: 14px 16px;
   border: none;
   border-radius: 12px;
   background: transparent;
@@ -405,7 +375,7 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.menu-item::before {
+.panel-item::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -414,20 +384,20 @@ onUnmounted(() => {
   transition: opacity 0.3s ease;
 }
 
-.menu-item:hover {
+.panel-item:hover {
   transform: translateX(4px);
 }
 
-.menu-item:hover::before {
+.panel-item:hover::before {
   opacity: 1;
 }
 
-.menu-item:hover .item-icon {
+.panel-item:hover .item-icon {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%);
   transform: scale(1.05);
 }
 
-.menu-item:hover .item-arrow {
+.panel-item:hover .item-arrow {
   opacity: 1;
   transform: translateX(0);
 }
@@ -487,72 +457,48 @@ onUnmounted(() => {
   height: 100%;
 }
 
-.dropdown-footer {
-  padding: 12px 16px;
-  border-top: 1px solid rgba(59, 130, 246, 0.1);
-  background: rgba(248, 250, 252, 0.5);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.footer-line {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
-}
-
-.footer-hint {
-  font-size: 11px;
-  color: var(--vp-c-text-3, #8c8c8c);
-  white-space: nowrap;
-}
-
-/* ===== 动画效果 ===== */
-.dropdown-enter-active,
-.dropdown-leave-active {
+/* ===== 滑出动画 ===== */
+.slide-enter-active,
+.slide-leave-active {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.dropdown-enter-from,
-.dropdown-leave-to {
+.slide-enter-from,
+.slide-leave-to {
   opacity: 0;
 }
 
-.dropdown-enter-from .control-dropdown,
-.dropdown-leave-to .control-dropdown {
-  opacity: 0;
-  transform: translateY(-10px) scale(0.98);
+.slide-enter-from .control-panel,
+.slide-leave-to .control-panel {
+  transform: translateX(100%);
 }
 
-.dropdown-enter-active .control-dropdown {
-  animation: dropdownIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.slide-enter-active .control-panel {
+  animation: slideInPanel 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes dropdownIn {
+@keyframes slideInPanel {
   0% {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.98);
+    transform: translateX(100%);
   }
   100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateX(0);
   }
 }
 
-/* 菜单项依次进入动画 */
-.dropdown-enter-active .menu-item {
-  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+/* 面板项依次进入动画 */
+.slide-enter-active .panel-item {
+  animation: slideInItem 0.3s cubic-bezier(0.4, 0, 0.2, 1) backwards;
 }
 
-.dropdown-enter-active .menu-item:nth-child(1) { animation-delay: 0.05s; }
-.dropdown-enter-active .menu-item:nth-child(2) { animation-delay: 0.1s; }
-.dropdown-enter-active .menu-item:nth-child(3) { animation-delay: 0.15s; }
+.slide-enter-active .panel-item:nth-child(1) { animation-delay: 0.08s; }
+.slide-enter-active .panel-item:nth-child(2) { animation-delay: 0.16s; }
+.slide-enter-active .panel-item:nth-child(3) { animation-delay: 0.24s; }
 
-@keyframes slideInRight {
+@keyframes slideInItem {
   0% {
     opacity: 0;
-    transform: translateX(-20px);
+    transform: translateX(20px);
   }
   100% {
     opacity: 1;
