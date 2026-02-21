@@ -26,7 +26,7 @@ async function sendLog(
   options: LogOptions = {}
 ): Promise<void> {
   try {
-    await fetch('/api/logs/add', {
+    const response = await fetch('/api/logs/add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -43,8 +43,16 @@ async function sendLog(
         timestamp: new Date().toISOString()
       })
     })
+    
+    // FIX: 检查响应状态
+    if (!response.ok) {
+      console.error(`[Logger] Failed to send log: HTTP ${response.status}`, { event, level })
+    } else {
+      // DEBUG: 记录成功发送的日志（开发调试用）
+      console.debug(`[Logger] Log sent: ${event} [${level}]`)
+    }
   } catch (e) {
-    console.error('Failed to send log:', e)
+    console.error('[Logger] Failed to send log:', e)
   }
 }
 

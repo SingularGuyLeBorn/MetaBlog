@@ -1,11 +1,17 @@
-import { defineConfig } from "vitepress";
+import { defineConfig, loadEnv } from "vitepress";
 import { fileURLToPath, URL } from "node:url";
 import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
-// @ts-ignore - markdown-it 类型声明可能缺失
 import MarkdownIt from "markdown-it";
 import mathjax3 from "markdown-it-mathjax3";
+
+// 加载 .env 文件
+const env = loadEnv('', process.cwd(), 'VITE_');
+const serverEnv = loadEnv('', process.cwd(), 'LLM_');
+
+// 合并环境变量到 process.env
+Object.assign(process.env, env, serverEnv);
 import {
   generateSectionSidebar,
   clearSidebarCache,
@@ -164,6 +170,11 @@ export default defineConfig({
     nav: [
       { text: "首页", link: "/" },
       {
+        text: "AI 助手",
+        link: "/chat",
+        activeMatch: "/chat",
+      },
+      {
         text: "文章列表",
         link: "/sections/posts/",
         activeMatch: "/sections/posts/",
@@ -321,16 +332,26 @@ export default defineConfig({
           }
 
           server.middlewares.use((req, res, next) => {
-            const url = req.url || "";
+            const rawUrl = req.url || "";
+            
+            // FIX: Remove query string for routing logic
+            const urlWithoutQuery = rawUrl.split('?')[0];
+            
+            // FIX: Decode URL to handle Chinese characters
+            let url = urlWithoutQuery;
+            try {
+              url = decodeURIComponent(urlWithoutQuery);
+            } catch (e) {
+              // If decoding fails, use original URL
+            }
 
-            // Skip API and asset requests
+            // Skip API and asset requests (use original rawUrl to check query params)
             if (
-              url.startsWith("/api/") ||
-              url.includes("_assets") ||
-              url.includes("@fs") ||
-              url.includes("?") ||
-              url.match(
-                /\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico|json)$/,
+              rawUrl.startsWith("/api/") ||
+              rawUrl.includes("_assets") ||
+              rawUrl.includes("@fs") ||
+              rawUrl.match(
+                /\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico|json)(\?|$)/,
               )
             ) {
               next();
@@ -342,10 +363,19 @@ export default defineConfig({
               console.log("[Routing] Processing:", url);
 
               // Redirect paths without trailing slash to have trailing slash
+              // FIX: Encode the URL to handle Chinese characters
               if (!url.endsWith("/") && !url.endsWith(".md")) {
                 res.statusCode = 301;
-                res.setHeader("Location", url + "/");
+                // Re-encode the URL and preserve query string
+                const queryString = rawUrl.includes('?') ? '?' + rawUrl.split('?')[1] : '';
+                res.setHeader("Location", encodeURI(url + "/") + queryString);
                 res.end();
+                return;
+              }
+
+              // Skip .md files with query params (Vite internal requests)
+              if (url.endsWith(".md")) {
+                next();
                 return;
               }
 
@@ -394,6 +424,105 @@ export default defineConfig({
           bootLogger.logServerStart(5193, "localhost");
           system.info("server.init", "BFF API Server 初始化完成");
           bootLogger.logReady();
+
+          // 初始化 LLM Manager
+          try {
+            const { createLLMManager } = require("./agent/llm");
+            const defaultProvider = process.env.LLM_DEFAULT_PROVIDER || 'deepseek';
+            const dailyBudget = parseFloat(process.env.LLM_DAILY_BUDGET || '10');
+            
+            // 辅助函数：去除引号并清理
+            const clean = (v: string | undefined) => v?.trim().replace(/^["']|["']$/g, '');
+            
+            // 构建 providers 配置
+            const providers: Record<string, any> = {};
+            
+            // DeepSeek
+            const deepseekKey = clean(process.env.VITE_DEEPSEEK_API_KEY);
+            if (deepseekKey && !deepseekKey.includes('your-api-key')) {
+              providers.deepseek = {
+                apiKey: deepseekKey,
+                model: clean(process.env.VITE_DEEPSEEK_MODEL) || 'deepseek-chat',
+                baseURL: clean(process.env.VITE_DEEPSEEK_BASE_URL)
+              };
+            }
+            
+            // OpenAI
+            const openaiKey = clean(process.env.VITE_OPENAI_API_KEY);
+            if (openaiKey && !openaiKey.includes('your-api-key')) {
+              providers.openai = {
+                apiKey: openaiKey,
+                model: clean(process.env.VITE_OPENAI_MODEL) || 'gpt-4o',
+                baseURL: clean(process.env.VITE_OPENAI_BASE_URL)
+              };
+            }
+            
+            // Anthropic
+            const anthropicKey = clean(process.env.VITE_ANTHROPIC_API_KEY);
+            if (anthropicKey && !anthropicKey.includes('your-api-key')) {
+              providers.anthropic = {
+                apiKey: anthropicKey,
+                model: clean(process.env.VITE_ANTHROPIC_MODEL) || 'claude-3-5-sonnet',
+                baseURL: clean(process.env.VITE_ANTHROPIC_BASE_URL)
+              };
+            }
+            
+            // Gemini
+            const geminiKey = clean(process.env.VITE_GEMINI_API_KEY);
+            if (geminiKey && !geminiKey.includes('your-api-key')) {
+              providers.gemini = {
+                apiKey: geminiKey,
+                model: clean(process.env.VITE_GEMINI_MODEL) || 'gemini-1.5-pro',
+                baseURL: clean(process.env.VITE_GEMINI_BASE_URL)
+              };
+            }
+            
+            // Zhipu
+            const zhipuKey = clean(process.env.VITE_ZHIPU_API_KEY);
+            if (zhipuKey && !zhipuKey.includes('your-api-key')) {
+              providers.zhipu = {
+                apiKey: zhipuKey,
+                model: clean(process.env.VITE_ZHIPU_MODEL) || 'glm-4',
+                baseURL: clean(process.env.VITE_ZHIPU_BASE_URL)
+              };
+            }
+            
+            // Qwen
+            const qwenKey = clean(process.env.VITE_QWEN_API_KEY);
+            if (qwenKey && !qwenKey.includes('your-api-key')) {
+              providers.qwen = {
+                apiKey: qwenKey,
+                model: clean(process.env.VITE_QWEN_MODEL) || 'qwen-plus',
+                baseURL: clean(process.env.VITE_QWEN_BASE_URL)
+              };
+            }
+            
+            // Kimi
+            const kimiKey = clean(process.env.VITE_KIMI_API_KEY);
+            if (kimiKey && !kimiKey.includes('your-api-key')) {
+              providers.kimi = {
+                apiKey: kimiKey,
+                model: clean(process.env.VITE_KIMI_MODEL) || 'kimi-k2.5',
+                baseURL: clean(process.env.VITE_KIMI_BASE_URL)
+              };
+            }
+            
+            console.log('[LLM] Providers config:', Object.keys(providers));
+            
+            if (Object.keys(providers).length === 0) {
+              system.warn("server.llm", "没有配置任何 LLM Provider");
+            } else {
+              createLLMManager({
+                dailyBudget,
+                defaultProvider,
+                providers
+              });
+              
+              system.info("server.llm", `LLM Manager 初始化完成，Provider: ${Object.keys(providers).join(', ')}, 默认: ${defaultProvider}`);
+            }
+          } catch (e) {
+            system.error("server.llm", "LLM Manager 初始化失败: " + String(e));
+          }
 
           // 启动后台任务调度器
           try {
@@ -470,8 +599,12 @@ export default defineConfig({
                     req.url || "",
                     `http://${req.headers.host}`,
                   );
-                  const filePath = url.searchParams.get("path");
+                  // FIX: URL decode the path to handle Chinese characters
+                  let filePath = url.searchParams.get("path");
                   if (!filePath) return next();
+                  
+                  // Decode URI components to handle Chinese characters
+                  filePath = decodeURIComponent(filePath);
 
                   // P0-CK: 支持 .vitepress/agent/ 路径（checkpoint 存储）
                   const isAgentPath = filePath.startsWith('.vitepress/') || filePath.startsWith('.vitepress\\')
@@ -726,7 +859,7 @@ export default defineConfig({
             } else next();
           });
 
-          // Delete file
+          // Delete file (支持软删除)
           server.middlewares.use("/api/files/delete", (req, res, next) => {
             if (req.method === "POST") {
               const chunks: Buffer[] = [];
@@ -734,21 +867,61 @@ export default defineConfig({
               req.on("end", () => {
                 try {
                   const body = JSON.parse(Buffer.concat(chunks).toString());
-                  const { path: filePath } = body;
+                  const { path: filePath, permanent = false } = body;
+                  
+                  // FIX: URL decode the path
+                  let decodedPath = filePath;
+                  try {
+                    decodedPath = decodeURIComponent(filePath);
+                  } catch (e) {}
+                  
                   const fullPath = path.resolve(
                     process.cwd(),
                     "docs",
-                    filePath.replace(/^\//, ""),
+                    decodedPath.replace(/^\//, ""),
                   );
 
-                  // Delete file
-                  fs.unlinkSync(fullPath);
+                  if (!fs.existsSync(fullPath)) {
+                    res.statusCode = 404;
+                    res.end(JSON.stringify({ success: false, error: "File not found" }));
+                    return;
+                  }
 
-                  // Git operations
-                  gitCommit(
-                    fullPath,
-                    `content: 删除 ${path.basename(filePath)}`,
-                  );
+                  if (permanent) {
+                    // 永久删除
+                    fs.unlinkSync(fullPath);
+                    gitCommit(fullPath, `content: 永久删除 ${path.basename(decodedPath)}`);
+                  } else {
+                    // 软删除：移动到 .trash 文件夹
+                    const trashDir = path.join(process.cwd(), "docs", ".trash");
+                    if (!fs.existsSync(trashDir)) {
+                      fs.mkdirSync(trashDir, { recursive: true });
+                    }
+                    
+                    // 生成 trash 文件名：原文件名_时间戳
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+                    const originalName = path.basename(decodedPath);
+                    const trashFileName = `${originalName}.${timestamp}.trash`;
+                    const trashPath = path.join(trashDir, trashFileName);
+                    
+                    // 移动文件
+                    fs.renameSync(fullPath, trashPath);
+                    
+                    // 保存元数据
+                    const metaPath = `${trashPath}.meta.json`;
+                    const metaData = {
+                      originalPath: decodedPath,
+                      deletedAt: new Date().toISOString(),
+                      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30天后过期
+                      originalName
+                    };
+                    fs.writeFileSync(metaPath, JSON.stringify(metaData, null, 2));
+                    
+                    gitCommit(
+                      [fullPath, trashPath, metaPath].filter(p => fs.existsSync(p)),
+                      `content: 删除(回收站) ${originalName}`
+                    );
+                  }
 
                   res.setHeader("Content-Type", "application/json");
                   res.end(JSON.stringify({ success: true }));
@@ -756,8 +929,126 @@ export default defineConfig({
                   // 触发热更新
                   triggerReload();
                 } catch (e) {
+                  console.error("[API] Delete error:", e);
                   res.statusCode = 500;
                   res.end(JSON.stringify({ error: String(e) }));
+                }
+              });
+            } else next();
+          });
+
+          // 获取回收站列表
+          server.middlewares.use("/api/files/trash", (req, res, next) => {
+            if (req.method === "GET") {
+              try {
+                const trashDir = path.join(process.cwd(), "docs", ".trash");
+                if (!fs.existsSync(trashDir)) {
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: [] }));
+                  return;
+                }
+
+                const files = fs.readdirSync(trashDir);
+                const trashItems = [];
+                
+                for (const file of files) {
+                  if (file.endsWith('.meta.json')) continue;
+                  
+                  const metaPath = path.join(trashDir, `${file}.meta.json`);
+                  const fullPath = path.join(trashDir, file);
+                  const stats = fs.statSync(fullPath);
+                  
+                  let meta: any = {};
+                  if (fs.existsSync(metaPath)) {
+                    try {
+                      meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
+                    } catch (e) {}
+                  }
+                  
+                  trashItems.push({
+                    id: file,
+                    name: file.replace(/\.\d{4}-\d{2}-\d{2}T.*$/, ''),
+                    deletedAt: meta.deletedAt || stats.mtime.toISOString(),
+                    expiresAt: meta.expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                    originalPath: meta.originalPath || 'unknown',
+                    size: stats.size
+                  });
+                }
+
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: trashItems }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+
+          // 恢复文件
+          server.middlewares.use("/api/files/restore", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { trashId } = body;
+                  
+                  const trashDir = path.join(process.cwd(), "docs", ".trash");
+                  const trashPath = path.join(trashDir, trashId);
+                  const metaPath = `${trashPath}.meta.json`;
+                  
+                  if (!fs.existsSync(trashPath)) {
+                    res.statusCode = 404;
+                    res.end(JSON.stringify({ success: false, error: "Trash item not found" }));
+                    return;
+                  }
+
+                  // 读取元数据
+                  let originalPath = '';
+                  if (fs.existsSync(metaPath)) {
+                    try {
+                      const meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
+                      originalPath = meta.originalPath;
+                    } catch (e) {}
+                  }
+                  
+                  // 如果没有元数据，尝试从文件名解析
+                  if (!originalPath) {
+                    originalPath = trashId.replace(/\.\d{4}-\d{2}-\d{2}T.*\.trash$/, '');
+                  }
+
+                  const restoredPath = path.resolve(
+                    process.cwd(),
+                    "docs",
+                    originalPath.replace(/^\//, "")
+                  );
+
+                  // 确保目标目录存在
+                  fs.mkdirSync(path.dirname(restoredPath), { recursive: true });
+                  
+                  // 移动文件回原位置
+                  fs.renameSync(trashPath, restoredPath);
+                  
+                  // 删除元数据文件
+                  if (fs.existsSync(metaPath)) {
+                    fs.unlinkSync(metaPath);
+                  }
+
+                  gitCommit(
+                    [restoredPath],
+                    `content: 恢复文件 ${path.basename(originalPath)}`
+                  );
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: { restoredPath: originalPath } }));
+
+                  // 触发热更新
+                  triggerReload();
+                } catch (e) {
+                  console.error("[API] Restore error:", e);
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
                 }
               });
             } else next();
@@ -771,7 +1062,7 @@ export default defineConfig({
                   req.url || "",
                   `http://${req.headers.host}`,
                 );
-                const filePath = url.searchParams.get("path");
+                let filePath = url.searchParams.get("path");
 
                 if (!filePath) {
                   res.statusCode = 400;
@@ -780,17 +1071,26 @@ export default defineConfig({
                   );
                   return;
                 }
+                
+                // FIX: URL decode the path to handle Chinese characters
+                try {
+                  filePath = decodeURIComponent(filePath);
+                } catch (e) {
+                  // If decoding fails, use original path
+                }
 
                 // Security: prevent directory traversal
                 const cleanPath = filePath
                   .replace(/\.\./g, "")
                   .replace(/^\//, "");
                 const fullPath = path.resolve(process.cwd(), "docs", cleanPath);
+                
+                console.log('[API] Export content:', { cleanPath, fullPath, exists: fs.existsSync(fullPath) });
 
                 if (!fs.existsSync(fullPath)) {
                   res.statusCode = 404;
                   res.end(
-                    JSON.stringify({ success: false, error: "File not found" }),
+                    JSON.stringify({ success: false, error: "File not found: " + cleanPath }),
                   );
                   return;
                 }
@@ -1325,18 +1625,19 @@ export default defineConfig({
             async (req, res, next) => {
               if (req.method === "GET") {
                 try {
-                  // 扫描所有 section
+                  // 扫描所有 section，包含完整元数据
                   const allArticles: any[] = [];
                   const sections = ["posts", "knowledge", "resources", "about"];
 
                   for (const section of sections) {
                     const sectionPath = path.join(SECTIONS_PATH, section);
                     if (fs.existsSync(sectionPath)) {
-                      const nodes = scanDocStructure(sectionPath);
-                      const articles = flattenArticles(nodes).map((a) => ({
-                        ...a,
-                        path: `${section}/${a.path}`,
-                      }));
+                      // 使用 scanArticles 获取完整元数据（包括日期）
+                      const articles = await scanArticles(sectionPath);
+                      // 添加 section 前缀到 path
+                      articles.forEach((a) => {
+                        a.path = `${section}/${a.path}`;
+                      });
                       allArticles.push(...articles);
                     }
                   }
@@ -1887,6 +2188,63 @@ ${content}`;
             } else next();
           });
 
+          // 清理日志
+          server.middlewares.use("/api/logs/cleanup", async (req, res, next) => {
+            if (req.method === "POST") {
+              try {
+                const chunks: Buffer[] = [];
+                req.on("data", chunk => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const days = body.days ?? 7;  // 默认保留7天，days=0表示清空所有
+                    
+                    // 获取日志目录
+                    const LOGS_DIR = path.join(process.cwd(), '.vitepress', 'agent', 'logs');
+                    
+                    if (!fs.existsSync(LOGS_DIR)) {
+                      res.setHeader("Content-Type", "application/json");
+                      res.end(JSON.stringify({ success: true, message: 'No logs to cleanup' }));
+                      return;
+                    }
+                    
+                    const files = fs.readdirSync(LOGS_DIR);
+                    const now = Date.now();
+                    const cutoffTime = days > 0 ? now - (days * 24 * 60 * 60 * 1000) : now;
+                    
+                    let deletedCount = 0;
+                    for (const file of files) {
+                      // 跳过审计文件和隐藏文件
+                      if (file.startsWith('.') || !file.endsWith('.log')) continue;
+                      
+                      const filePath = path.join(LOGS_DIR, file);
+                      const stats = fs.statSync(filePath);
+                      
+                      // 如果 days=0 或文件修改时间早于 cutoffTime，则删除
+                      if (days === 0 || stats.mtime.getTime() < cutoffTime) {
+                        fs.unlinkSync(filePath);
+                        deletedCount++;
+                      }
+                    }
+                    
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(JSON.stringify({ 
+                      success: true, 
+                      message: days === 0 ? 'All logs cleared' : `Logs older than ${days} days cleaned up`,
+                      deletedCount 
+                    }));
+                  } catch (e) {
+                    res.statusCode = 500;
+                    res.end(JSON.stringify({ success: false, error: String(e) }));
+                  }
+                });
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+
           // ============================================
           // Proxy API - 网络抓取代理
           // ============================================
@@ -2374,6 +2732,299 @@ ${content}`;
               } else next();
             },
           );
+
+          // ============================================
+          // Chat Session API - 对话会话持久化
+          // ============================================
+
+          const SESSIONS_DIR = path.join(process.cwd(), '.vitepress/agent/sessions');
+          
+          // 确保会话目录存在
+          if (!fs.existsSync(SESSIONS_DIR)) {
+            fs.mkdirSync(SESSIONS_DIR, { recursive: true });
+          }
+
+          // 获取会话列表 / 保存会话
+          // FIX: 使用精确路径匹配，避免匹配到 /api/chat/sessions/delete 等子路径
+          server.middlewares.use('/api/chat/sessions', (req, res, next) => {
+            // 只处理精确路径 /api/chat/sessions，不匹配子路径
+            const url = req.url || '';
+            const basePath = '/api/chat/sessions';
+            const remainder = url.slice(basePath.length);
+            
+            // 如果路径后面还有内容（如 /delete, /detail），交给后续中间件
+            if (remainder && remainder !== '/' && !remainder.startsWith('?')) {
+              return next();
+            }
+            
+            if (req.method === 'GET') {
+              try {
+                if (!fs.existsSync(SESSIONS_DIR)) {
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ success: true, data: [] }));
+                  return;
+                }
+                
+                const files = fs.readdirSync(SESSIONS_DIR)
+                  .filter(f => f.endsWith('.json'))
+                  .map(f => {
+                    const filePath = path.join(SESSIONS_DIR, f);
+                    const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+                    // 返回摘要（不包含完整消息）
+                    return {
+                      id: data.id,
+                      title: data.title,
+                      createdAt: data.createdAt,
+                      updatedAt: data.updatedAt,
+                      messageCount: data.messages?.length || 0
+                    };
+                  })
+                  .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+                
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ success: true, data: files }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else if (req.method === 'POST') {
+              // 创建/保存会话
+              const chunks: Buffer[] = [];
+              req.on('data', chunk => chunks.push(chunk));
+              req.on('end', () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { id, title, messages } = body;
+                  
+                  if (!id) {
+                    res.statusCode = 400;
+                    res.end(JSON.stringify({ success: false, error: 'Session ID required', received: body }));
+                    return;
+                  }
+                  
+                  // FIX: 确保 messages 是数组
+                  if (messages && !Array.isArray(messages)) {
+                    res.statusCode = 400;
+                    res.end(JSON.stringify({ success: false, error: 'Messages must be an array' }));
+                    return;
+                  }
+                  
+                  const sessionData = {
+                    id,
+                    title: title || '新会话',
+                    messages: messages || [],
+                    createdAt: body.createdAt || new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                  };
+                  
+                  const filePath = path.join(SESSIONS_DIR, `${id}.json`);
+                  fs.writeFileSync(filePath, JSON.stringify(sessionData, null, 2), 'utf-8');
+                  
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ success: true, data: sessionData }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+
+          // 获取单个会话详情
+          server.middlewares.use('/api/chat/sessions/detail', (req, res, next) => {
+            if (req.method === 'GET') {
+              try {
+                const url = new URL(req.url || '', `http://${req.headers.host}`);
+                const sessionId = url.searchParams.get('id');
+                
+                if (!sessionId) {
+                  res.statusCode = 400;
+                  res.end(JSON.stringify({ success: false, error: 'Session ID required' }));
+                  return;
+                }
+                
+                const filePath = path.join(SESSIONS_DIR, `${sessionId}.json`);
+                if (!fs.existsSync(filePath)) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ success: false, error: 'Session not found' }));
+                  return;
+                }
+                
+                const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+                // FIX: 确保返回的数据格式正确
+                const safeData = {
+                  id: data.id || sessionId,
+                  title: data.title || '未命名会话',
+                  messages: Array.isArray(data.messages) ? data.messages : [],
+                  createdAt: data.createdAt || new Date().toISOString(),
+                  updatedAt: data.updatedAt || new Date().toISOString()
+                };
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ success: true, data: safeData }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+
+          // 删除会话
+          server.middlewares.use('/api/chat/sessions/delete', (req, res, next) => {
+            if (req.method === 'POST') {
+              const chunks: Buffer[] = [];
+              req.on('data', chunk => chunks.push(chunk));
+              req.on('end', () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { id } = body;
+                  
+                  if (!id) {
+                    res.statusCode = 400;
+                    res.end(JSON.stringify({ success: false, error: 'Session ID required' }));
+                    return;
+                  }
+                  
+                  const filePath = path.join(SESSIONS_DIR, `${id}.json`);
+                  if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                  }
+                  
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ success: true, message: 'Session deleted' }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+
+          // ============================================
+          // Chat API - 流式消息发送
+          // ============================================
+          server.middlewares.use('/api/chat', async (req, res, next) => {
+            if (req.method !== 'POST') return next();
+            
+            const chunks: Buffer[] = [];
+            req.on('data', chunk => chunks.push(chunk));
+            req.on('end', async () => {
+              try {
+                const body = JSON.parse(Buffer.concat(chunks).toString());
+                const { messages, model, temperature, maxTokens, stream } = body;
+                
+                console.log('[API Chat] Request received:', { model, messages: messages?.length, stream });
+                
+                // 导入 LLM Manager
+                const { getLLMManager } = await import('./agent/llm');
+                const llm = getLLMManager();
+                
+                // 非流式响应
+                if (stream === false) {
+                  console.log('[API Chat] Non-streaming request');
+                  const response = await llm.chat({
+                    messages,
+                    model,
+                    temperature,
+                    maxTokens
+                  });
+                  
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ 
+                    success: true, 
+                    data: {
+                      content: response.content,
+                      model: response.model,
+                      usage: response.usage
+                    }
+                  }));
+                  return;
+                }
+                
+                // 流式响应
+                console.log('[API Chat] Starting streaming response');
+                res.setHeader('Content-Type', 'text/event-stream');
+                res.setHeader('Cache-Control', 'no-cache');
+                res.setHeader('Connection', 'keep-alive');
+                
+                const abortController = new AbortController();
+                let isEnded = false;
+                let chunkCount = 0;
+                
+                req.on('close', () => {
+                  console.log('[API Chat] Request closed by client');
+                  abortController.abort();
+                  isEnded = true;
+                });
+                
+                try {
+                  await llm.chatStream(
+                    {
+                      messages,
+                      model,
+                      temperature,
+                      maxTokens,
+                      stream: true,
+                      signal: abortController.signal
+                    },
+                    (chunk) => {
+                      if (isEnded) return;
+                      
+                      chunkCount++;
+                      if (chunkCount <= 3 || chunk.finishReason) {
+                        console.log(`[API Chat] Chunk ${chunkCount}:`, { 
+                          content: chunk.content?.substring(0, 50),
+                          finishReason: chunk.finishReason 
+                        });
+                      }
+                      
+                      const data: any = {
+                        content: chunk.content,
+                        reasoning: chunk.reasoning,
+                        isReasoning: !!chunk.reasoning
+                      };
+                      
+                      if (chunk.finishReason) {
+                        data.finishReason = chunk.finishReason;
+                        data.usage = chunk.usage;
+                      }
+                      
+                      res.write(`data: ${JSON.stringify(data)}\n\n`);
+                      
+                      if (chunk.finishReason) {
+                        res.write('data: [DONE]\n\n');
+                        res.end();
+                        isEnded = true;
+                        console.log('[API Chat] Stream finished, total chunks:', chunkCount);
+                      }
+                    }
+                  );
+                  
+                  if (!isEnded) {
+                    console.log('[API Chat] Stream ended without finishReason');
+                    res.write('data: [DONE]\n\n');
+                    res.end();
+                  }
+                } catch (streamError) {
+                  console.error('[API Chat] Stream error:', streamError);
+                  throw streamError;
+                }
+                
+              } catch (error) {
+                console.error('[API Chat Error]', error);
+                if (!res.headersSent) {
+                  res.statusCode = 500;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ 
+                    success: false, 
+                    error: error instanceof Error ? error.message : 'Chat failed'
+                  }));
+                } else {
+                  res.write(`data: ${JSON.stringify({ error: String(error) })}\n\n`);
+                  res.end();
+                }
+              }
+            });
+          });
 
           // ============================================
           // Health & System API

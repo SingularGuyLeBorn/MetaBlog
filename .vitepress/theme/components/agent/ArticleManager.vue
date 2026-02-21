@@ -324,8 +324,23 @@
                 <span class="tree-label">sections/</span>
               </div>
               
+              <!-- 加载状态 -->
+              <div v-if="isLoadingTree" class="path-tree-loading">
+                <div class="loading-spinner-small"></div>
+                <span>加载目录...</span>
+              </div>
+              
+              <!-- 空状态 -->
+              <div v-else-if="directoryTree.length === 0" class="path-tree-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/>
+                </svg>
+                <span>暂无目录，请先创建文章</span>
+              </div>
+              
               <!-- 递归渲染树节点 -->
               <TreeNode 
+                v-else
                 v-for="item in directoryTree" 
                 :key="item.path"
                 :node="item"
@@ -507,6 +522,7 @@ const articleToDelete = ref<Article | null>(null)
 
 // Directory tree for path selection
 const directoryTree = ref<any[]>([])
+const isLoadingTree = ref(false)
 // 注意：selectedPath 存储的是相对于 sections/ 的路径（如 'posts' 或 'knowledge/rl-math-principle'）
 const selectedPath = ref<string>('posts')
 const isChildDoc = ref(false)  // 是否作为子文档创建
@@ -778,21 +794,36 @@ async function deleteArticle() {
 // ==================== Directory Tree ====================
 async function buildDirectoryTree() {
   // 从后端 API 获取规范化的目录树
+  isLoadingTree.value = true
   try {
+    console.log('[ArticleManager] Loading directory tree...')
     const response = await fetch(`/api/directory-tree?section=posts&t=${Date.now()}`)
     if (!response.ok) throw new Error('Failed to fetch directory tree')
     
     const result = await response.json()
+    console.log('[ArticleManager] Directory tree result:', result)
+    
     if (result.success && result.data) {
       directoryTree.value = result.data
+      console.log('[ArticleManager] Directory tree loaded:', result.data.length, 'items')
     } else {
       directoryTree.value = []
+      console.warn('[ArticleManager] Directory tree empty:', result)
     }
   } catch (e) {
     console.error('[ArticleManager] Failed to build directory tree:', e)
     directoryTree.value = []
+  } finally {
+    isLoadingTree.value = false
   }
 }
+
+// 当打开路径选择器时，重新加载目录树
+watch(showPathSelector, (isOpen) => {
+  if (isOpen) {
+    buildDirectoryTree()
+  }
+})
 
 // 格式化目录名称（如 node-L1 → Node L1 Hub，leaf-1-1 → Leaf 1-1）
 function formatDirName(name: string): string {
@@ -2069,6 +2100,42 @@ onUnmounted(() => {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+}
+
+/* Loading & Empty States */
+.path-tree-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 20px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.loading-spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.path-tree-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.path-tree-empty svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.5;
 }
 
 /* ==================== Responsive ==================== */

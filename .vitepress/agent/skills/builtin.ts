@@ -60,6 +60,16 @@ export const WriteArticleSkill: Skill = {
   handler: async (ctx: SkillContext, params: any): Promise<SkillResult> => {
     const { topic, style = '技术博客', length = 'medium', targetPath } = params
     
+    // FIX: 检查 topic 是否为空
+    if (!topic || !topic.trim()) {
+      return {
+        success: false,
+        error: '缺少文章主题，请指定要写什么内容（例如："写一篇关于Vue3的文章"）',
+        tokensUsed: 0,
+        cost: 0
+      }
+    }
+    
     ctx.logger.info('Starting article writing', { topic, style, length })
     
     // P2-AG-2: 报告进度 - 开始
@@ -137,9 +147,20 @@ export const WriteArticleSkill: Skill = {
     const date = new Date().toISOString().split('T')[0]
     const frontmatter = `---\ntitle: ${topic}\ndate: ${date}\nwikiLinks:\n${relatedArticles.map(r => `  - ${r}`).join('\n')}\n---`
 
-    // 5. 保存文件
+    // 5. 保存文件 - FIX: 路径应该是 sections/posts/ 而不是 posts/
     const fullContent = `${frontmatter}\n\n${content.content}`
-    const filePath = targetPath || `posts/${await slugifyAsync(topic)}.md`
+    const slug = await slugifyAsync(topic)
+    const filePath = targetPath || `sections/posts/${slug}.md`
+    
+    // FIX: 验证生成的路径有效（防止生成 .md 空文件名）
+    if (!filePath || filePath.endsWith('/.md') || filePath === '.md') {
+      return {
+        success: false,
+        error: `生成的文件名无效: "${filePath}"，请检查文章主题是否有效`,
+        tokensUsed: outline.tokens + content.tokens,
+        cost: outline.cost + content.cost
+      }
+    }
 
     // P2-AG-2: 报告进度 - 保存文件
     ctx.onProgress?.({ step: 5, totalSteps: 6, message: '正在保存文件...', detail: filePath })
@@ -674,6 +695,11 @@ async function gitCommit(path: string, message: string): Promise<void> {
 }
 
 async function slugifyAsync(text: string): Promise<string> {
+  // FIX: 处理空字符串
+  if (!text || !text.trim()) {
+    return `article-${Date.now()}`
+  }
+  
   try {
     const res = await fetch('/api/utils/slugify', {
       method: 'POST',
@@ -682,16 +708,22 @@ async function slugifyAsync(text: string): Promise<string> {
     })
     if (res.ok) {
       const data = await res.json()
-      if (data.slug) return data.slug
+      // FIX: 确保 slug 非空
+      if (data.slug && data.slug.trim()) return data.slug.trim()
     }
   } catch (e) {
     // silently fallback
   }
-  return text
+  
+  // FIX: 本地回退方案确保非空
+  const fallback = text
     .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
+    .replace(/[^\w\s-]/gu, '')
     .replace(/\s+/g, '-')
     .substring(0, 50)
+    .trim()
+  
+  return fallback || `article-${Date.now()}`
 }
 
 // 导入文章操作技能

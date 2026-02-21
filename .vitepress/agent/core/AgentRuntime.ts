@@ -324,11 +324,7 @@ export class AgentRuntime {
         percent: Math.round((progress.step / progress.totalSteps) * 100)
       })
       
-      this.logger.debug('task.progress', progress.message, {
-        taskId,
-        step: progress.step,
-        total: progress.totalSteps
-      })
+      this.logger.debug('task.progress', progress.message)
     }
     
     const skillContext: SkillContext = {

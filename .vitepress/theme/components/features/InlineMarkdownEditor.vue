@@ -67,13 +67,23 @@ function findContentContainer(): HTMLElement | null {
   return null
 }
 
-// Load file content
+// Load file content - FIX: 支持 folder-note 模式
 async function loadContent(): Promise<string> {
-  const filePath = page.value.relativePath
+  let filePath = page.value.relativePath
   if (!filePath) return ''
   
   try {
-    const res = await fetch(`/api/files/read?path=${encodeURIComponent(filePath)}`)
+    // 尝试原始路径
+    let res = await fetch(`/api/files/read?path=${encodeURIComponent(filePath)}`)
+    
+    // FIX: 如果是 folder-note 模式（如 article/index.md），尝试 article/article.md
+    if (!res.ok && filePath.endsWith('/index.md')) {
+      const folderPath = filePath.replace(/\/index\.md$/, '').replace(/\\/g, '/')
+      const folderName = folderPath.split('/').pop() || ''
+      const folderNotePath = `${folderPath}/${folderName}.md`
+      res = await fetch(`/api/files/read?path=${encodeURIComponent(folderNotePath)}`)
+    }
+    
     if (res.ok) {
       return await res.text()
     }

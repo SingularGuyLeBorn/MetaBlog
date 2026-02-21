@@ -506,7 +506,7 @@ async function loadActivities() {
           id: log.id || String(index),
           type: mapLogLevelToType(log.level),
           icon: getLogIcon(log.level),
-          message: log.message,
+          message: simplifyMessage(log.message),
           timestamp: new Date(log.timestamp).getTime(),
           cost: log.metadata?.cost
         }))
@@ -540,6 +540,31 @@ function getLogIcon(level: string): string {
     'success': '✓'
   }
   return map[level?.toLowerCase()] || '•'
+}
+
+// 简化日志消息，截断过长的内容
+function simplifyMessage(message: string): string {
+  if (!message) return ''
+  
+  // 限制总长度
+  const maxLength = 60
+  
+  // 简化 URL 编码的长字符串
+  let simplified = message
+    // 简化 GET/POST 请求路径
+    .replace(/(GET|POST)\s+\/(api\/[^?]+)\?[^\s]+/g, '$1 /$2')
+    // 简化文件路径
+    .replace(/([\w-]+)\/([\w-]+)\/[^/]+\/[^/]+\/[^/]+/g, '$1/$2/...')
+    // 移除多余的空格
+    .replace(/\s+/g, ' ')
+    .trim()
+  
+  // 如果还太长，直接截断
+  if (simplified.length > maxLength) {
+    simplified = simplified.substring(0, maxLength) + '...'
+  }
+  
+  return simplified
 }
 
 async function loadTasks() {
@@ -1652,14 +1677,15 @@ watch(() => stats.value, () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 180px;
-  max-width: 220px;
-  padding: 16px;
+  min-width: 160px;
+  max-width: 180px;
+  padding: 12px;
   background: rgba(255, 255, 255, 0.6);
   border: 1px solid var(--color-border);
   border-radius: 12px;
   animation: slideUp 0.5s ease-out backwards;
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 .timeline-item:hover {
@@ -1735,7 +1761,7 @@ watch(() => stats.value, () => {
 }
 
 .timeline-message {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--color-text);
   line-height: 1.4;
@@ -1744,6 +1770,9 @@ watch(() => stats.value, () => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  max-height: 34px;
 }
 
 .timeline-meta {

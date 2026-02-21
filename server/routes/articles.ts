@@ -416,6 +416,115 @@ router.put('/update', async (req, res) => {
   }
 })
 
+// 目录树节点接口
+interface DirectoryNode {
+  path: string
+  name: string
+  displayName?: string
+  type: 'directory' | 'article'
+  children?: DirectoryNode[]
+}
+
+// 递归构建目录树
+async function buildDirectoryTree(dir: string, basePath: string = ''): Promise<DirectoryNode[]> {
+  const nodes: DirectoryNode[] = []
+  
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true })
+    
+    for (const entry of entries) {
+      // 跳过隐藏文件和目录
+      if (entry.name.startsWith('.')) continue
+      
+      const fullPath = join(dir, entry.name)
+      const relativePath = join(basePath, entry.name).replace(/\\/g, '/')
+      
+      if (entry.isDirectory()) {
+        // 递归获取子目录内容
+        const children = await buildDirectoryTree(fullPath, relativePath)
+        nodes.push({
+          path: relativePath,
+          name: entry.name,
+          displayName: formatDirName(entry.name),
+          type: 'directory',
+          children
+        })
+      } else if (entry.isFile() && entry.name.endsWith('.md')) {
+        // 读取文件获取标题
+        let title = entry.name.replace('.md', '')
+        try {
+          const content = await fs.readFile(fullPath, 'utf-8')
+          const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/)
+          if (frontmatterMatch) {
+            const titleMatch = frontmatterMatch[1].match(/^title:\s*(.+)$/m)
+            if (titleMatch) title = titleMatch[1].trim()
+          }
+          // 如果没有 frontmatter 标题，尝试从内容中提取
+          if (!title || title === entry.name.replace('.md', '')) {
+            const contentTitleMatch = content.match(/^#\s+(.+)$/m)
+            if (contentTitleMatch) title = contentTitleMatch[1].trim()
+          }
+        } catch (e) {
+          // 忽略读取错误，使用文件名作为标题
+        }
+        
+        nodes.push({
+          path: relativePath,
+          name: entry.name,
+          displayName: title,
+          type: 'article'
+        })
+      }
+    }
+  } catch (e) {
+    console.error(`Failed to read directory: ${dir}`)
+  }
+  
+  return nodes
+}
+
+// 格式化目录名称
+function formatDirName(name: string): string {
+  // node-L1 → Node L1 Hub
+  if (name.startsWith('node-')) {
+    const num = name.replace('node-', '')
+    return `Node ${num} Hub`
+  }
+  // leaf-1-1 → Leaf 1-1
+  if (name.startsWith('leaf-')) {
+    const parts = name.replace('leaf-', '').split('-')
+    return `Leaf ${parts.join('-')}`
+  }
+  // 默认：首字母大写，替换连字符为空格
+  return name
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+// 获取目录树
+router.get('/directory-tree', async (req, res) => {
+  const { section = 'posts' } = req.query
+  
+  try {
+    const sectionPath = join(SECTIONS_PATH, section as string)
+    const tree = await buildDirectoryTree(sectionPath, section as string)
+    
+    const response: ApiResponse<DirectoryNode[]> = {
+      success: true,
+      data: tree
+    }
+    res.json(response)
+  } catch (error) {
+    console.error('Directory tree error:', error)
+    const response: ApiResponse = {
+      success: false,
+      error: 'Failed to build directory tree'
+    }
+    res.status(500).json(response)
+  }
+})
+
 // 发布文章（移动到正式目录）
 router.post('/publish', async (req, res) => {
   const { path: articlePath } = req.body as { path: string }

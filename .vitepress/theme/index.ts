@@ -2,6 +2,7 @@ import { h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import Layout from './Layout.vue'
 import './style.css'
+import './styles/animations.css'
 import HomePortal from './components/HomePortal.vue'
 import SectionHub from './components/SectionHub.vue'
 import SectionHero from './components/SectionHero.vue'
@@ -10,6 +11,7 @@ import PostsPage from './components/pages/PostsPage.vue'
 import KnowledgePage from './components/pages/KnowledgePage.vue'
 import ResourcesPage from './components/pages/ResourcesPage.vue'
 import AboutPage from './components/pages/AboutPage.vue'
+import ChatPage from './components/pages/ChatPage.vue'
 import Breadcrumb from './components/Breadcrumb.vue'
 import GlobalSidebar from './components/GlobalSidebar.vue'
 import TocSidebar from './components/TocSidebar.vue'
@@ -24,14 +26,17 @@ import KnowledgeGraph from './components/features/KnowledgeGraph.vue'
 import RAGSearch from './components/features/RAGSearch.vue'
 import EditFab from './components/EditFab.vue'
 
-// Agent-Native Components
-import AIChatOrb from './components/agent/AIChatOrb.vue'
+
 import GlobalPageEditorAGI from './components/agent/GlobalPageEditorAGI.vue'
 import AgentModeToggle from './components/agent/AgentModeToggle.vue'
 import InlineSuggestion from './components/agent/InlineSuggestion.vue'
 import ContextIndicator from './components/agent/ContextIndicator.vue'
 import ControlCenter from './components/ControlCenter.vue'
 import FullScreenPanel from './components/FullScreenPanel.vue'
+
+// Animation Components
+import AnimatedContainer from './components/AnimatedContainer.vue'
+import AnimatedButton from './components/AnimatedButton.vue'
 
 export default {
   extends: DefaultTheme,
@@ -51,6 +56,7 @@ export default {
     app.component('KnowledgePage', KnowledgePage)
     app.component('ResourcesPage', ResourcesPage)
     app.component('AboutPage', AboutPage)
+    app.component('ChatPage', ChatPage)
     app.component('InlineMarkdownEditor', InlineMarkdownEditor)
     app.component('AboutProfile', AboutProfile)
     app.component('KnowledgeGraph', KnowledgeGraph)
@@ -61,14 +67,17 @@ export default {
     app.component('EditFab', EditFab)
     app.component('Breadcrumb', Breadcrumb)
     
-    // Register Agent-Native components
-    app.component('AIChatOrb', AIChatOrb)
+
     app.component('GlobalPageEditorAGI', GlobalPageEditorAGI)
     app.component('AgentModeToggle', AgentModeToggle)
     app.component('InlineSuggestion', InlineSuggestion)
     app.component('ContextIndicator', ContextIndicator)
     app.component('ControlCenter', ControlCenter)
     app.component('FullScreenPanel', FullScreenPanel)
+    
+    // Register Animation components
+    app.component('AnimatedContainer', AnimatedContainer)
+    app.component('AnimatedButton', AnimatedButton)
   }
 } satisfies Theme
 

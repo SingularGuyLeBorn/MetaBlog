@@ -62,6 +62,24 @@ const LOGS_DIR = join(process.cwd(), '.vitepress', 'agent', 'logs')
 const MAX_FILES = '7d'
 const DATE_PATTERN = 'YYYY-MM-DD'
 
+// 自定义日志级别（添加 success）
+const customLevels = {
+  levels: {
+    error: 0,
+    warn: 1,
+    success: 2,  // 添加 success 级别
+    info: 3,
+    debug: 4
+  },
+  colors: {
+    error: 'red',
+    warn: 'yellow',
+    success: 'green',  // success 显示绿色
+    info: 'blue',
+    debug: 'gray'
+  }
+}
+
 function createWinstonLogger(): WinstonLogger {
   const structuredFormat = format.combine(
     format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
@@ -78,7 +96,7 @@ function createWinstonLogger(): WinstonLogger {
 
   const consoleFormat = format.combine(
     format.timestamp({ format: 'HH:mm:ss' }),
-    format.colorize(),
+    format.colorize({ all: true, colors: customLevels.colors }),
     format.printf(({ level, message, timestamp, event, requestId, component }: any) => {
       const reqInfo = requestId ? ` [${requestId}]` : ''
       const compInfo = component ? ` (${component})` : ''
@@ -87,6 +105,7 @@ function createWinstonLogger(): WinstonLogger {
   )
 
   return createLogger({
+    levels: customLevels.levels,  // 使用自定义级别
     level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
     defaultMeta: {
       service: 'metablog-agent',
@@ -174,7 +193,19 @@ class ServerLogger {
   }
 
   success(event: string, message: string, data?: Record<string, any>): void {
-    this.log('SUCCESS', event, message, data)
+    // FIX: 使用 winston 的 success 方法（自定义级别）
+    const entry = {
+      level: 'SUCCESS',
+      event,
+      component: 'system',
+      actor: 'system' as LogActor,
+      ...data,
+      sessionId: this.sessionId,
+      requestId: this.currentRequestId,
+      timestamp: new Date().toISOString()
+    }
+    // 使用类型断言访问自定义方法
+    ;(this.winston as any).success(message, entry)
   }
 
   startRequest(requestId?: string, actor: LogActor = 'system'): string {

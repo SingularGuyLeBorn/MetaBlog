@@ -63,7 +63,7 @@ export class LLMManager {
   private config: LLMManagerConfig & { failover: FailoverConfig }
   private dailyUsage: number = 0
   private usageHistory: UsageHistoryItem[] = []
-  private healthCheckTimer: number | null = null
+  private healthCheckTimer: ReturnType<typeof setInterval> | null = null
 
   constructor(config: LLMManagerConfig) {
     this.config = {
@@ -137,7 +137,7 @@ export class LLMManager {
   private startHealthChecks(): void {
     if (!this.config.failover.enabled) return
     
-    this.healthCheckTimer = window.setInterval(() => {
+    this.healthCheckTimer = setInterval(() => {
       this.performHealthChecks()
     }, this.config.failover.healthCheckInterval)
   }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, provide, nextTick } from 'vue'
+import { ref, onMounted, computed, watch, provide, nextTick, defineAsyncComponent } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import { useData, useRoute } from 'vitepress'
 import GlobalSidebar from './components/GlobalSidebar.vue'
@@ -8,7 +8,10 @@ import TocFab from './components/TocFab.vue'
 import EditFab from './components/EditFab.vue'
 import Breadcrumb from './components/Breadcrumb.vue'
 import DocTitleBar from './components/DocTitleBar.vue'
-import AIChatOrb from './components/agent/AIChatOrb.vue'
+
+// 异步加载 ChatPage，避免 SSR 问题
+const ChatPage = defineAsyncComponent(() => import('./components/pages/ChatPage.vue'))
+
 import ControlCenter from './components/ControlCenter.vue'
 import FullScreenPanel from './components/FullScreenPanel.vue'
 import AgentDashboard from './components/agent/AgentDashboard.vue'
@@ -20,6 +23,11 @@ const { Layout } = DefaultTheme
 const { frontmatter, page } = useData()
 const store = useAppStore()
 const route = useRoute()
+
+// 检查是否为 Chat 页面
+const isChatPage = computed(() => {
+  return route.path === '/chat' || route.path.startsWith('/chat/')
+})
 
 // Control center panel state
 const activePanel = ref<'dashboard' | 'articles' | 'logs' | null>(null)
@@ -34,8 +42,7 @@ const createNewArticle = () => {
   window.dispatchEvent(new CustomEvent('article-manager:create'))
 }
 
-// Agent refs
-const aiChatOrb = ref()
+
 
 // Panel widths configuration
 const LEFT_CONFIG = {
@@ -200,7 +207,11 @@ watch(() => route.path, () => {
 </script>
 
 <template>
-  <div class="metablog-layout" :class="{ 
+  <!-- Chat 页面：独立全屏布局 -->
+  <ChatPage v-if="isChatPage" />
+  
+  <!-- 其他页面：默认三栏布局 -->
+  <div v-else class="metablog-layout" :class="{ 
     'is-editing': store.isEditorOpen,
     'has-left-sidebar': showLeftSidebar,
     'has-right-sidebar': showRightSidebar,
@@ -278,8 +289,7 @@ watch(() => route.path, () => {
     <!-- Edit FAB -->
     <EditFab />
     
-    <!-- AI Chat Orb (Global Agent Interface) -->
-    <AIChatOrb ref="aiChatOrb" />
+
     
     <!-- Full Screen Panels -->
     <!-- Agent Dashboard Panel -->

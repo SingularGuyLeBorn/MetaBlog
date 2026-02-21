@@ -12,7 +12,7 @@ interface IntentPattern {
   type: IntentType
   patterns: RegExp[]
   description: string
-  parameterExtractors: Record<string, (match: RegExpMatchArray) => any>
+  parameterExtractors: Record<string, (match: RegExpMatchArray, input?: string) => any>
 }
 
 /**
@@ -77,11 +77,18 @@ export class IntentRouter {
       patterns: [
         /(?:写|创作|生成|创建).{0,5}(?:文章|博客|内容|文档)/i,
         /(?:write|create|generate).{0,10}(?:article|blog|post|content)/i,
-        /关于.+?(?:的)?(?:文章|博客)/i
+        /关于.+?(?:的)?(?:文章|博客)/i,
+        /(?:请|帮我|给我)?(?:写|创作|生成|创建).*?(?:关于|介绍)(.+?)(?:的|教程|文章|博客|内容)/i
       ],
       description: '撰写新文章',
       parameterExtractors: {
-        topic: (m) => m[0].replace(/(?:写|创作|生成|创建|关于|的|文章|博客)/g, '').trim()
+        topic: (m: RegExpMatchArray, input?: string) => {
+          // 尝试从完整输入中提取主题
+          const topicMatch = input?.match(/(?:关于|介绍)(.+?)(?:的|教程|文章|博客|内容|，|,|$)/i)
+          if (topicMatch) return topicMatch[1].trim()
+          // 回退：从匹配结果中清理
+          return m[0].replace(/(?:写|创作|生成|创建|关于|的|文章|博客|内容|教程)/g, '').trim()
+        }
       }
     },
     {
@@ -160,18 +167,26 @@ export class IntentRouter {
     this.skills.set(skill.name, skill)
   }
 
-  // 否定词列表
+  // 否定词列表 - FIX: 按长度降序排列，优先匹配长的
   private readonly NEGATION_WORDS = [
-    '不', '别', '不要', '不能', '别要', '无需', '不用', '不必',
-    'no', 'not', 'don\'t', 'cannot', 'donot', 'no need to'
+    'no need to', 'don\'t', 'cannot', 'donot', '不要', '不能', '别要', '无需', '不用', '不必',
+    'no', 'not', '别', '不'
   ]
 
   /**
-   * 检测输入是否包含否定词
+   * 检测输入是否包含否定词 - FIX: 使用词边界匹配，避免子串误报
    */
   private hasNegation(input: string): boolean {
     const normalizedInput = input.toLowerCase()
-    return this.NEGATION_WORDS.some(word => normalizedInput.includes(word.toLowerCase()))
+    return this.NEGATION_WORDS.some(word => {
+      const wordLower = word.toLowerCase()
+      // 对于单字否定词，需要检查前后是否是字符边界
+      if (wordLower.length === 1) {
+        const regex = new RegExp(`[^a-zA-Z\u4e00-\u9fa5]${wordLower}[^a-zA-Z\u4e00-\u9fa5]|^${wordLower}[^a-zA-Z\u4e00-\u9fa5]|[^a-zA-Z\u4e00-\u9fa5]${wordLower}$|^${wordLower}$`)
+        return regex.test(normalizedInput)
+      }
+      return normalizedInput.includes(wordLower)
+    })
   }
 
   /**
@@ -391,10 +406,10 @@ export class IntentRouter {
   ): Record<string, any> {
     const params: Record<string, any> = {}
 
-    // 使用参数提取器
+    // 使用参数提取器 - FIX: 传递 input 给提取器
     for (const [key, extractor] of Object.entries(pattern.parameterExtractors)) {
       try {
-        params[key] = extractor(match)
+        params[key] = extractor(match, input)
       } catch (e) {
         params[key] = null
       }

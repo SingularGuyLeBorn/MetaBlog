@@ -47,12 +47,40 @@ export class FileStorage<T> {
     try {
       const content = await getFileContent(this.getFilePath())
       if (content) {
-        const parsed = JSON.parse(content)
-        this.data = { ...this.data, ...parsed }
-        console.log(`[FileStorage] 加载成功: ${this.name}`)
+        // FIX: 移除 UTF-8 BOM 和 UTF-16 BOM
+        let cleanContent = content
+          .replace(/^\uFEFF/, '')  // UTF-8 BOM
+          .replace(/^\uFFFE/, '')  // UTF-16 LE BOM
+          .replace(/^\uFEFF/, '')  // UTF-16 BE BOM (as UTF-16 chars)
+          .trim()
+        
+        // FIX: 如果内容以 null 字节开头，可能是 UTF-16 编码，尝试提取 ASCII 字符
+        if (cleanContent.charCodeAt(0) === 0 || cleanContent.includes('\u0000')) {
+          cleanContent = cleanContent.replace(/\u0000/g, '').trim()
+        }
+        
+        if (cleanContent) {
+          try {
+            const parsed = JSON.parse(cleanContent)
+            this.data = { ...this.data, ...parsed }
+            console.log(`[FileStorage] 加载成功: ${this.name}`)
+          } catch (parseError) {
+            console.error(`[FileStorage] JSON 解析失败: ${this.name}`, parseError)
+            // 尝试修复常见 JSON 问题
+            try {
+              // 移除所有控制字符
+              const sanitized = cleanContent.replace(/[\x00-\x1F\x7F-\x9F]/g, '')
+              const parsed = JSON.parse(sanitized)
+              this.data = { ...this.data, ...parsed }
+              console.log(`[FileStorage] 清理后加载成功: ${this.name}`)
+            } catch {
+              throw parseError
+            }
+          }
+        }
       }
     } catch (error) {
-      console.warn(`[FileStorage] 加载失败，使用默认�? ${this.name}`, error)
+      console.warn(`[FileStorage] 加载失败，使用默认值: ${this.name}`, error)
       // 使用默认数据
     }
 

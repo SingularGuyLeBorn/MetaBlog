@@ -116,64 +116,116 @@ const addTitleToContent = (content: string, title: string): string => {
   return `# ${title}\n\n${cleanContent}`
 }
 
+// 辅助函数：处理并导出内容
+const processAndExportContent = async (content: string, format: 'md' | 'pdf' | 'docx') => {
+  // 添加标题（如果需要）
+  let processedContent = content
+  if (exportWithTitle.value) {
+    processedContent = addTitleToContent(content, displayTitle.value)
+  }
+  
+  if (format === 'md') {
+    const blob = new Blob([processedContent], { type: 'text/markdown' })
+    downloadBlob(blob, `${displayTitle.value}.md`)
+  } else if (format === 'pdf') {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>${displayTitle.value}</title>
+        <style>
+          body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
+          h1 { color: #333; border-bottom: 2px solid #1677ff; padding-bottom: 10px; }
+          h2 { color: #444; margin-top: 30px; }
+          code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+          pre { background: #f4f4f4; padding: 16px; border-radius: 8px; overflow-x: auto; }
+        </style>
+      </head>
+      <body>
+        ${markdownToHtml(processedContent)}
+      </body>
+      </html>
+    `
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(htmlContent)
+      printWindow.document.close()
+      printWindow.focus()
+      setTimeout(() => {
+        printWindow.print()
+        printWindow.close()
+      }, 250)
+    }
+  } else if (format === 'docx') {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="UTF-8"><title>${displayTitle.value}</title></head>
+      <body>${markdownToHtml(processedContent)}</body>
+      </html>
+    `
+    const blob = new Blob([htmlContent], { type: 'application/msword' })
+    downloadBlob(blob, `${displayTitle.value}.doc`)
+  }
+}
+
 const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
   try {
-    const response = await fetch(`/api/files/content?path=${encodeURIComponent(filePath.value)}`)
-    if (!response.ok) throw new Error('Failed to fetch content')
+    // FIX: 处理 folder-note 模式的路径
+    let targetPath = filePath.value
     
-    let content = await response.text()
-    
-    if (exportWithTitle.value) {
-      content = addTitleToContent(content, displayTitle.value)
+    // 移除开头的 /
+    if (targetPath.startsWith('/')) {
+      targetPath = targetPath.slice(1)
     }
     
-    if (format === 'md') {
-      const blob = new Blob([content], { type: 'text/markdown' })
-      downloadBlob(blob, `${displayTitle.value}.md`)
-    } else if (format === 'pdf') {
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>${displayTitle.value}</title>
-          <style>
-            body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
-            h1 { color: #333; border-bottom: 2px solid #1677ff; padding-bottom: 10px; }
-            h2 { color: #444; margin-top: 30px; }
-            code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
-            pre { background: #f4f4f4; padding: 16px; border-radius: 8px; overflow-x: auto; }
-          </style>
-        </head>
-        <body>
-          ${markdownToHtml(content)}
-        </body>
-        </html>
-      `
-      const printWindow = window.open('', '_blank')
-      if (printWindow) {
-        printWindow.document.write(htmlContent)
-        printWindow.document.close()
-        printWindow.focus()
-        setTimeout(() => {
-          printWindow.print()
-          printWindow.close()
-        }, 250)
+    // 如果以 / 结尾（folder-note 目录），尝试两种可能的文件路径
+    if (targetPath.endsWith('/')) {
+      const folderName = targetPath.slice(0, -1).split('/').pop() || 'index'
+      // 尝试 folder-name/folder-name.md 模式
+      const possiblePaths = [
+        `${targetPath}${folderName}.md`,
+        `${targetPath}index.md`
+      ]
+      
+      let content = null
+      let lastError = null
+      for (const path of possiblePaths) {
+        try {
+          const encodedPath = encodeURIComponent(path)
+          const response = await fetch(`/api/files/content?path=${encodedPath}`)
+          if (response.ok) {
+            content = await response.text()
+            break
+          }
+        } catch (e) {
+          lastError = e
+          // 继续尝试下一个路径
+        }
       }
-    } else if (format === 'docx') {
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"><title>${displayTitle.value}</title></head>
-        <body>${markdownToHtml(content)}</body>
-        </html>
-      `
-      const blob = new Blob([htmlContent], { type: 'application/msword' })
-      downloadBlob(blob, `${displayTitle.value}.doc`)
+      
+      if (!content) {
+        throw new Error('无法找到文件内容，尝试路径: ' + possiblePaths.join(', '))
+      }
+      
+      // 处理内容并导出
+      await processAndExportContent(content, format)
+    } else {
+      // 普通文件路径
+      const encodedPath = encodeURIComponent(targetPath)
+      const response = await fetch(`/api/files/content?path=${encodedPath}`)
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Failed to fetch content: ${response.status} ${errorText}`)
+      }
+      
+      const content = await response.text()
+      await processAndExportContent(content, format)
     }
   } catch (error) {
     console.error('Export failed:', error)
-    alert('Export failed: ' + (error as Error).message)
+    alert('导出失败: ' + (error as Error).message)
   }
   showExportMenu.value = false
 }
@@ -202,60 +254,58 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
     </div>
     
     <div class="export-section">
-      <button class="export-btn batch-btn" @click="showBatchExport = true">
-        [BATCH]
-        <span>Batch Export</span>
+      <!-- 批量导出按钮 -->
+      <button class="export-btn icon-btn" @click="showBatchExport = true" title="批量导出">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+          <line x1="8" y1="3" x2="16" y2="3"/>
+        </svg>
       </button>
       
+      <!-- 单个导出下拉菜单 -->
       <div class="export-dropdown" v-click-outside="closeExportMenu">
-        <button class="export-btn primary" @click="showExportMenu = !showExportMenu">
-          [DOWN]
-          <span>Export</span>
-          <span class="arrow" :class="{ open: showExportMenu }">v</span>
+        <button class="export-btn icon-btn" @click="showExportMenu = !showExportMenu" title="导出当前文章">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
         </button>
         
         <Transition name="menu">
           <div v-if="showExportMenu" class="export-menu">
-            <div class="export-info">
-              <div class="info-title">[INFO] Export Options</div>
-              <div class="info-content">
-                <p>Content: Markdown content of the file</p>
-                <p>Title bar: Optional title at top of export</p>
-              </div>
-            </div>
-            
             <div class="export-option-row">
               <label class="checkbox-label">
                 <input type="checkbox" v-model="exportWithTitle" />
-                <span class="check-icon">{{ exportWithTitle ? '[x]' : '[ ]' }}</span>
-                <span class="label-text">Include title at top</span>
+                <span class="check-icon">{{ exportWithTitle ? '☑' : '☐' }}</span>
+                <span class="label-text">包含标题</span>
               </label>
-              <div class="option-hint">
-                Adds "# {{ displayTitle }}" at the beginning
-              </div>
             </div>
             
             <div class="menu-divider"></div>
             
             <div class="menu-item" @click="exportDoc('md')">
-              <span class="menu-icon">[MD]</span>
+              <span class="menu-icon">📝</span>
               <div class="menu-content">
-                <span class="menu-label">Markdown Source</span>
-                <span class="menu-desc">Export {{ exportWithTitle ? 'with title' : 'original' }} .md</span>
+                <span class="menu-label">Markdown</span>
+                <span class="menu-desc">导出为 .md 文件</span>
               </div>
             </div>
             <div class="menu-item" @click="exportDoc('pdf')">
-              <span class="menu-icon">[PDF]</span>
+              <span class="menu-icon">📄</span>
               <div class="menu-content">
-                <span class="menu-label">PDF Document</span>
-                <span class="menu-desc">Print as PDF format</span>
+                <span class="menu-label">PDF 文档</span>
+                <span class="menu-desc">打印为 PDF 格式</span>
               </div>
             </div>
             <div class="menu-item" @click="exportDoc('docx')">
-              <span class="menu-icon">[DOC]</span>
+              <span class="menu-icon">📘</span>
               <div class="menu-content">
-                <span class="menu-label">Word Document</span>
-                <span class="menu-desc">Export as .doc format</span>
+                <span class="menu-label">Word 文档</span>
+                <span class="menu-desc">导出为 Word 格式</span>
               </div>
             </div>
           </div>
@@ -370,6 +420,28 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
 
 .export-btn.primary:hover {
   background: #0958d9;
+}
+
+/* Icon button style for top buttons */
+.export-btn.icon-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  justify-content: center;
+  background: white;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+}
+
+.export-btn.icon-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.export-btn.icon-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .arrow {

@@ -146,7 +146,7 @@
             <button class="dropdown-trigger" @click="showEventDropdown = !showEventDropdown">
               <span class="trigger-text">{{ eventLabel }}</span>
               <svg class="trigger-arrow" :class="{ open: showEventDropdown }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyine points="6 9 12 15 18 9"/>
+                <polyline points="6 9 12 15 18 9"/>
               </svg>
             </button>
             <Transition name="dropdown">
@@ -364,14 +364,6 @@ type ServerLogEntry = StructuredLogEntry & {
   actor?: 'human' | 'ai' | 'system'
 }
 
-// ==================== Constants ====================
-const LEVEL_COLORS = {
-  DEBUG: '#6B7280',
-  INFO: '#2563EB',
-  WARN: '#D97706',
-  ERROR: '#DC2626',
-  SUCCESS: '#10B981'
-}
 
 const LEVEL_LABELS = {
   DEBUG: 'Debug',
@@ -779,9 +771,9 @@ watch(() => logs.value.length, (newLen, oldLen) => {
   font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   margin: 0;
-  font-family: var(--mono-font);
+  font-family: var(--mono-font),serif;
 }
 
 .status-indicator {
@@ -794,7 +786,7 @@ watch(() => logs.value.length, (newLen, oldLen) => {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
-  font-family: var(--mono-font);
+  font-family: var(--mono-font),serif;
   border: 1px solid var(--border-subtle);
   transition: all 0.3s ease;
 }
@@ -890,18 +882,9 @@ watch(() => logs.value.length, (newLen, oldLen) => {
   font-weight: 600;
   color: white;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  font-family: var(--mono-font);
+  font-family: var(--mono-font),serif;
 }
 
-.stat-segment.level-info { background: var(--color-info); }
-.stat-segment.level-warn { background: var(--color-warn); }
-.stat-segment.level-error { background: var(--color-error); }
-.stat-segment.level-debug { background: var(--color-debug); }
-
-/* Pulse animation for error segments */
-.stat-segment.level-error.pulse {
-  animation: segment-pulse 1.5s ease-in-out infinite;
-}
 
 @keyframes segment-pulse {
   0%, 100% { 
@@ -935,10 +918,6 @@ watch(() => logs.value.length, (newLen, oldLen) => {
   border-radius: 50%;
 }
 
-.legend-dot.level-info { background: var(--color-info); }
-.legend-dot.level-warn { background: var(--color-warn); }
-.legend-dot.level-error { background: var(--color-error); }
-.legend-dot.level-debug { background: var(--color-debug); }
 
 .legend-label {
   color: var(--text-secondary);
@@ -947,7 +926,7 @@ watch(() => logs.value.length, (newLen, oldLen) => {
 .legend-count {
   font-weight: 600;
   color: var(--text-primary);
-  font-family: var(--mono-font);
+  font-family: var(--mono-font),serif;
   padding: 1px 6px;
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
@@ -1045,11 +1024,6 @@ watch(() => logs.value.length, (newLen, oldLen) => {
   font-weight: 500;
 }
 
-.trigger-text.debug { color: #6B7280; }
-.trigger-text.info { color: #2563EB; }
-.trigger-text.warn { color: #D97706; }
-.trigger-text.error { color: #DC2626; }
-
 .trigger-arrow {
   width: 14px;
   height: 14px;
@@ -1105,11 +1079,6 @@ watch(() => logs.value.length, (newLen, oldLen) => {
   background: var(--text-secondary);
 }
 
-.item-dot.debug { background: #6B7280; }
-.item-dot.info { background: #2563EB; }
-.item-dot.warn { background: #D97706; }
-.item-dot.error { background: #DC2626; }
-
 .item-actor-icon {
   font-size: 14px;
   width: 20px;
@@ -1134,16 +1103,6 @@ watch(() => logs.value.length, (newLen, oldLen) => {
 }
 
 /* Dropdown Animation */
-.dropdown-enter-active,
-.dropdown-leave-active {
-  transition: all 0.2s ease;
-}
-
-.dropdown-enter-from,
-.dropdown-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
 
 /* Cyber Toggle Switch */
 .cyber-toggle {
@@ -1263,7 +1222,7 @@ watch(() => logs.value.length, (newLen, oldLen) => {
 .empty-subtext {
   font-size: 11px;
   color: var(--text-muted);
-  font-family: var(--mono-font);
+  font-family: var(--mono-font),serif;
   letter-spacing: 2px;
   margin: 0;
 }
@@ -1304,9 +1263,6 @@ watch(() => logs.value.length, (newLen, oldLen) => {
   box-shadow: var(--shadow-glow);
 }
 
-.log-capsule.level-error.pulse {
-  animation: slide-in 0.3s ease-out, error-pulse 1.5s ease-in-out;
-}
 
 @keyframes error-pulse {
   0%, 100% {
@@ -1328,11 +1284,6 @@ watch(() => logs.value.length, (newLen, oldLen) => {
   width: 4px;
 }
 
-.capsule-indicator.level-debug { background: var(--color-debug); }
-.capsule-indicator.level-info { background: var(--color-info); }
-.capsule-indicator.level-warn { background: var(--color-warn); }
-.capsule-indicator.level-error { background: var(--color-error); }
-
 /* Capsule Content */
 .capsule-content {
   flex: 1;
@@ -1348,7 +1299,7 @@ watch(() => logs.value.length, (newLen, oldLen) => {
 }
 
 .log-timestamp {
-  font-family: var(--mono-font);
+  font-family: var(--mono-font),fantasy;
   font-size: 12px;
   color: var(--text-muted);
   white-space: nowrap;
@@ -1361,29 +1312,9 @@ watch(() => logs.value.length, (newLen, oldLen) => {
   font-size: 10px;
   font-weight: 600;
   text-transform: lowercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   white-space: nowrap;
   flex-shrink: 0;
-}
-
-.log-level-badge.level-debug {
-  background: rgba(107, 114, 128, 0.12);
-  color: var(--color-debug);
-}
-
-.log-level-badge.level-info {
-  background: rgba(37, 99, 235, 0.12);
-  color: var(--color-info);
-}
-
-.log-level-badge.level-warn {
-  background: rgba(217, 119, 6, 0.12);
-  color: var(--color-warn);
-}
-
-.log-level-badge.level-error {
-  background: rgba(220, 38, 38, 0.12);
-  color: var(--color-error);
 }
 
 /* Actor Badge Styles */
@@ -1396,7 +1327,7 @@ watch(() => logs.value.length, (newLen, oldLen) => {
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   white-space: nowrap;
   flex-shrink: 0;
   transition: all 0.2s ease;
@@ -1408,36 +1339,6 @@ watch(() => logs.value.length, (newLen, oldLen) => {
 
 .log-actor-badge .actor-label {
   font-size: 9px;
-}
-
-.log-actor-badge.actor-human {
-  background: rgba(37, 99, 235, 0.15);
-  color: #2563eb;
-  border: 1px solid rgba(37, 99, 235, 0.2);
-}
-
-.log-actor-badge.actor-ai {
-  background: rgba(147, 51, 234, 0.15);
-  color: #9333ea;
-  border: 1px solid rgba(147, 51, 234, 0.2);
-}
-
-.log-actor-badge.actor-system {
-  background: rgba(107, 114, 128, 0.15);
-  color: #6b7280;
-  border: 1px solid rgba(107, 114, 128, 0.2);
-}
-
-.log-capsule:hover .log-actor-badge.actor-human {
-  background: rgba(37, 99, 235, 0.25);
-}
-
-.log-capsule:hover .log-actor-badge.actor-ai {
-  background: rgba(147, 51, 234, 0.25);
-}
-
-.log-capsule:hover .log-actor-badge.actor-system {
-  background: rgba(107, 114, 128, 0.25);
 }
 
 .log-event-tag {
@@ -1468,7 +1369,7 @@ watch(() => logs.value.length, (newLen, oldLen) => {
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
   font-size: 11px;
-  font-family: var(--mono-font);
+  font-family: var(--mono-font),serif;
   color: var(--text-secondary);
   white-space: nowrap;
   flex-shrink: 0;
@@ -1540,7 +1441,7 @@ watch(() => logs.value.length, (newLen, oldLen) => {
 }
 
 .detail-value.mono {
-  font-family: var(--mono-font);
+  font-family: var(--mono-font),serif;
 }
 
 .detail-code {
@@ -1549,33 +1450,13 @@ watch(() => logs.value.length, (newLen, oldLen) => {
   padding: 12px;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
-  font-family: var(--mono-font);
+  font-family: var(--mono-font),serif;
   font-size: 11px;
   line-height: 1.5;
   color: var(--text-primary);
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
-}
-
-/* Expand Transition */
-.expand-enter-active,
-.expand-leave-active {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.expand-enter-from,
-.expand-leave-to {
-  opacity: 0;
-  max-height: 0;
-  margin-top: 0;
-  padding-top: 0;
-}
-
-.expand-enter-to,
-.expand-leave-from {
-  opacity: 1;
-  max-height: 500px;
 }
 
 /* ========== Pagination ========== */
@@ -1623,7 +1504,7 @@ watch(() => logs.value.length, (newLen, oldLen) => {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--mono-font);
+  font-family: var(--mono-font),serif;
   font-size: 13px;
 }
 
@@ -1700,7 +1581,7 @@ watch(() => logs.value.length, (newLen, oldLen) => {
 }
 
 .warning-code {
-  font-family: var(--mono-font);
+  font-family: var(--mono-font),serif;
   font-size: 11px !important;
   color: var(--color-warn) !important;
   letter-spacing: 1px;
@@ -1750,15 +1631,6 @@ watch(() => logs.value.length, (newLen, oldLen) => {
 }
 
 /* Modal Transitions */
-.modal-enter-active,
-.modal-leave-active {
-  transition: all 0.2s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
 
 .modal-enter-from .modal-content,
 .modal-leave-to .modal-content {

@@ -47,7 +47,7 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useDeepSeekBalance, formatBalance } from '../../../agent/api/balance'
+import { useDeepSeekBalance, formatBalance } from '../../../agent/api'
 
 const { balance, loading, error, formattedBalance, isLowBalance, refresh } = useDeepSeekBalance()
 

@@ -60,46 +60,60 @@ export class DeepSeekProvider extends LLMProvider {
     request: LLMRequest,
     onChunk: (chunk: LLMStreamChunk) => void
   ): Promise<void> {
-    const response = await fetch(`${this.baseURL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`
-      },
-      body: JSON.stringify({
-        model: request.model || this.config.model,
-        messages: request.messages,
-        temperature: request.temperature ?? this.config.temperature,
-        max_tokens: request.maxTokens ?? this.config.maxTokens,
-        top_p: request.topP ?? 1,
-        stream: true
-      }),
-      signal: request.signal
-    })
+    console.log(`[DeepSeek] Starting chatStream, model: ${request.model || this.config.model}`);
+    console.log(`[DeepSeek] BaseURL: ${this.baseURL}`);
+    console.log(`[DeepSeek] API Key length: ${this.config.apiKey?.length}`);
+    
+    try {
+      const response = await fetch(`${this.baseURL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.apiKey}`
+        },
+        body: JSON.stringify({
+          model: request.model || this.config.model,
+          messages: request.messages,
+          temperature: request.temperature ?? this.config.temperature,
+          max_tokens: request.maxTokens ?? this.config.maxTokens,
+          top_p: request.topP ?? 1,
+          stream: true
+        }),
+        signal: request.signal
+      })
 
-    if (!response.ok) {
-      const error = await response.text()
-      throw new Error(`DeepSeek API error: ${error}`)
-    }
+      console.log(`[DeepSeek] Response status: ${response.status}`);
 
-    // 使用公共 SSE 流读取函数
-    await readSSEStream(response, request.signal, (data) => {
-      try {
-        const chunk = JSON.parse(data)
-        const delta = chunk.choices[0]?.delta
-        const content = delta?.content || ''
-        const reasoning = delta?.reasoning_content || ''
-        const finishReason = chunk.choices[0]?.finish_reason
-
-        onChunk({
-          content,
-          reasoning,
-          finishReason
-        })
-      } catch {
-        // 忽略解析错误
+      if (!response.ok) {
+        const error = await response.text()
+        console.error(`[DeepSeek] API error: ${error}`);
+        throw new Error(`DeepSeek API error: ${error}`)
       }
-    })
+
+      // 使用公共 SSE 流读取函数
+      console.log(`[DeepSeek] Starting to read SSE stream`);
+      await readSSEStream(response, request.signal, (data) => {
+        try {
+          const chunk = JSON.parse(data)
+          const delta = chunk.choices[0]?.delta
+          const content = delta?.content || ''
+          const reasoning = delta?.reasoning_content || ''
+          const finishReason = chunk.choices[0]?.finish_reason
+
+          onChunk({
+            content,
+            reasoning,
+            finishReason
+          })
+        } catch {
+          // 忽略解析错误
+        }
+      })
+      console.log(`[DeepSeek] SSE stream completed`);
+    } catch (error) {
+      console.error(`[DeepSeek] Fetch error:`, error);
+      throw error;
+    }
   }
 
   getAvailableModels(): string[] {
