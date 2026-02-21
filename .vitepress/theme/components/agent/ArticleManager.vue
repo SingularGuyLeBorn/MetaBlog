@@ -318,7 +318,7 @@
             <div class="path-tree">
               <!-- Root sections -->
               <div class="path-tree-header">
-                <svg class="tree-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="tree-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                 </svg>
                 <span class="tree-label">sections/</span>
@@ -428,6 +428,8 @@ const TreeNode = defineComponent({
           }, [
             h('svg', { 
               class: 'tree-icon',
+              width: '16',
+              height: '16',
               viewBox: '0 0 24 24', 
               fill: 'none', 
               stroke: 'currentColor', 
@@ -463,6 +465,8 @@ const TreeNode = defineComponent({
       }, [
         h('svg', { 
           class: 'tree-icon',
+          width: '16',
+          height: '16',
           viewBox: '0 0 24 24', 
           fill: 'none', 
           stroke: 'currentColor', 
@@ -555,10 +559,14 @@ const hasActiveFilters = computed(() => {
   return searchQuery.value || currentFilter.value !== 'all'
 })
 
-// 显示用的路径标签（加上 sections/ 前缀）
+// 显示用的路径标签（修复重复路径问题）
 const selectedPathLabel = computed(() => {
   if (isChildDoc.value && parentArticle.value) {
-    return `${parentArticle.value.path} (作为子文档)`
+    // 清理路径显示：去掉开头的 / 和 .html 后缀
+    const cleanPath = parentArticle.value.path
+      .replace(/^\//, '')
+      .replace(/\.html$/, '')
+    return `${cleanPath}/ (作为子文档)`
   }
   return `sections/${selectedPath.value}/`
 })

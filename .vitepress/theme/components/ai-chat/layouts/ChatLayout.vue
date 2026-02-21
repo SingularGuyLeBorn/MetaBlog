@@ -23,6 +23,10 @@
           <button class="menu-btn" @click="leftCollapsed = !leftCollapsed">
             <Icon name="menu" :size="20" />
           </button>
+          <!-- 返回首页按钮 -->
+          <a href="/" class="back-btn" title="返回首页">
+            <Icon name="arrow-left" :size="18" />
+          </a>
           <div class="header-info">
             <h1 class="session-title">{{ currentSession?.title || '新对话' }}</h1>
             <span v-if="currentSession" class="model-tag">
@@ -233,6 +237,27 @@ function updateConfig(config: Partial<SessionConfig>) {
 .header-right {
   display: flex;
   gap: var(--ai-space-2);
+}
+
+/* 返回首页按钮 */
+.back-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--ai-radius-md);
+  color: var(--ai-text-tertiary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--ai-transition-fast);
+}
+
+.back-btn:hover {
+  background: var(--ai-gray-100);
+  color: var(--ai-text-primary);
 }
 
 /* 响应式 */
