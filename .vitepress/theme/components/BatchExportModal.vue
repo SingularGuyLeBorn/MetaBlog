@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import TreeNodeSelect from './TreeNodeSelect.vue'
 
 const props = defineProps<{
@@ -19,9 +19,17 @@ const includeTitle = ref(false)
 
 const loadDirectoryTree = async () => {
   isLoading.value = true
+  treeData.value = []
+  
   try {
     // Load all sections
     const sections = ['posts', 'knowledge', 'resources', 'about']
+    const sectionNames: Record<string, string> = {
+      posts: '文章 (Posts)',
+      knowledge: '知识库 (Knowledge)', 
+      resources: '资源 (Resources)',
+      about: '关于 (About)'
+    }
     const allData: any[] = []
     
     for (const section of sections) {
@@ -29,18 +37,30 @@ const loadDirectoryTree = async () => {
         const response = await fetch(`/api/directory-tree?section=${section}&t=${Date.now()}`)
         if (response.ok) {
           const result = await response.json()
-          if (result.success && result.data) {
-            allData.push(...result.data)
+          if (result.success && result.data && result.data.length > 0) {
+            // 为每个 section 添加一个根节点
+            allData.push({
+              path: section,
+              name: section,
+              displayName: sectionNames[section] || section,
+              type: 'directory',
+              children: result.data
+            })
+            // 默认展开 section
+            expandedPaths.value.add(section)
           }
+        } else {
+          console.warn(`[BatchExport] Failed to load section ${section}: ${response.status}`)
         }
       } catch (e) {
-        console.error(`Failed to load ${section}:`, e)
+        console.error(`[BatchExport] Failed to load ${section}:`, e)
       }
     }
     
+    console.log('[BatchExport] Loaded sections:', allData.map(s => `${s.name}(${s.children?.length || 0} items)`))
     treeData.value = allData
   } catch (error) {
-    console.error('Failed to load directory tree:', error)
+    console.error('[BatchExport] Failed to load directory tree:', error)
   } finally {
     isLoading.value = false
   }
@@ -61,6 +81,29 @@ const toggleExpand = (path: string) => {
     expandedPaths.value.delete(path)
   } else {
     expandedPaths.value.add(path)
+  }
+}
+
+// 展开所有节点
+const expandAll = () => {
+  const collectPaths = (nodes: any[]): string[] => {
+    const paths: string[] = []
+    for (const node of nodes) {
+      paths.push(node.path)
+      if (node.children) {
+        paths.push(...collectPaths(node.children))
+      }
+    }
+    return paths
+  }
+  expandedPaths.value = new Set(collectPaths(treeData.value))
+}
+
+// 折叠所有节点（只保留 section 根节点）
+const collapseAll = () => {
+  expandedPaths.value.clear()
+  for (const section of treeData.value) {
+    expandedPaths.value.add(section.path)
   }
 }
 
@@ -128,11 +171,14 @@ const close = () => {
   emit('update:visible', false)
 }
 
-onMounted(() => {
-  if (props.visible) {
+// 监听 visible 变化，当弹窗打开时加载数据
+watch(() => props.visible, (newVisible) => {
+  if (newVisible) {
+    selectedPaths.value.clear()
+    expandedPaths.value.clear()
     loadDirectoryTree()
   }
-})
+}, { immediate: true })
 </script>
 
 <template>
@@ -182,16 +228,31 @@ onMounted(() => {
             
             <div class="files-section">
               <div class="section-header">
-                <label class="section-label">Select Files</label>
-                <button class="select-all-btn" @click="selectAll">
-                  {{ selectedCount === getAllFiles(treeData).length ? 'Deselect All' : 'Select All' }}
-                </button>
+                <label class="section-label">
+                  Select Files 
+                  <span class="file-count">({{ getAllFiles(treeData).length }} total)</span>
+                </label>
+                <div class="header-actions">
+                  <button class="action-btn" @click="expandAll" title="Expand All">
+                    展开全部
+                  </button>
+                  <button class="action-btn" @click="collapseAll" title="Collapse All">
+                    折叠全部
+                  </button>
+                  <button class="select-all-btn" @click="selectAll">
+                    {{ selectedCount === getAllFiles(treeData).length ? 'Deselect All' : 'Select All' }}
+                  </button>
+                </div>
               </div>
               
               <div class="tree-container">
                 <div v-if="isLoading" class="loading-state">
                   <span class="loading-spinner"></span>
                   Loading...
+                </div>
+                <div v-else-if="treeData.length === 0" class="empty-state">
+                  <span class="empty-icon">📂</span>
+                  <span class="empty-text">No files found</span>
                 </div>
                 <TreeNodeSelect
                   v-else
@@ -357,6 +418,36 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.file-count {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: normal;
+}
+
+.action-btn {
+  padding: 4px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: white;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  border-color: #1677ff;
+  color: #1677ff;
 }
 
 .select-all-btn {
@@ -366,6 +457,11 @@ onMounted(() => {
   background: white;
   font-size: 13px;
   cursor: pointer;
+}
+
+.select-all-btn:hover {
+  border-color: #1677ff;
+  color: #1677ff;
 }
 
 .tree-container {
@@ -384,6 +480,24 @@ onMounted(() => {
   gap: 8px;
   padding: 40px;
   color: #6b7280;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px;
+  color: #9ca3af;
+}
+
+.empty-icon {
+  font-size: 32px;
+}
+
+.empty-text {
+  font-size: 14px;
 }
 
 .loading-spinner {

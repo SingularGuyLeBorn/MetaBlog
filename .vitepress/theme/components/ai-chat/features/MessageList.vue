@@ -10,7 +10,7 @@
 <template>
   <div ref="containerRef" class="message-list ai-scroll" @scroll="handleScroll">
     <!-- 欢迎页面 -->
-    <div v-if="!sessionId || !messages[sessionId] || messages[sessionId].length === 0" class="welcome-page">
+    <div v-if="!sessionId || messages.length === 0" class="welcome-page">
       <div class="welcome-logo">
         <div class="logo-bg"></div>
         <span class="logo-icon">✨</span>
@@ -35,12 +35,14 @@
     <!-- 消息列表 -->
     <template v-else>
       <MessageBubble
-        v-for="(message, index) in messages[sessionId]"
+        v-for="(message, index) in messages"
         :key="message.id"
         :message="message"
-        :is-streaming="isStreaming && index === messages[sessionId].length - 1"
-        :is-last="index === messages[sessionId].length - 1"
+        :is-streaming="isStreaming && index === messages.length - 1"
+        :is-last="index === messages.length - 1"
+        :versions="getMessageVersions(message)"
         @regenerate="$emit('regenerate')"
+        @switch-version="$emit('switch-version', $event.userMessageId, $event.versionIndex)"
       />
     </template>
 
@@ -59,14 +61,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import MessageBubble from './MessageBubble.vue'
 import { Icon } from '../ui'
-import type { ChatMessage } from '../composables/types'
+import type { ChatMessage, MessageGroup } from '../composables/types'
 
 interface Props {
-  // 直接传入 messages ref 和 sessionId，避免 computed 缓存问题
-  messages: Record<string, ChatMessage[]>
+  // 现在直接传入消息数组，不再使用 Record 结构
+  messages: ChatMessage[]
+  messageGroups: MessageGroup[]
   sessionId: string | null
   isStreaming: boolean
 }
@@ -76,7 +79,22 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'use-prompt': [text: string]
   regenerate: []
+  'switch-version': [userMessageId: string, versionIndex: number]
 }>()
+
+// 获取消息的版本信息
+const getMessageVersions = (message: ChatMessage) => {
+  if (message.role !== 'assistant' || !message.parentMessageId) return null
+  
+  const group = props.messageGroups.find(g => g.userMessage.id === message.parentMessageId)
+  if (!group || group.aiVersions.length <= 1) return null
+  
+  return {
+    versions: group.aiVersions,
+    currentIndex: group.currentVersionIndex,
+    userMessageId: group.userMessage.id
+  }
+}
 
 const containerRef = ref<HTMLElement>()
 const showScrollBtn = ref(false)
@@ -139,7 +157,7 @@ function scrollToBottom(smooth = true) {
 
 // 监听消息数量变化（新消息到达）
 watch(
-  () => props.sessionId ? props.messages[props.sessionId]?.length : 0,
+  () => props.messages.length,
   (newLength, oldLength) => {
     if (newLength <= (oldLength || 0)) return
     
@@ -156,7 +174,7 @@ watch(
 // 监听 AI 生成内容变化
 let contentUpdateTimeout: ReturnType<typeof setTimeout> | null = null
 watch(
-  () => props.sessionId ? props.messages[props.sessionId]?.[props.messages[props.sessionId]?.length - 1]?.content : '',
+  () => props.messages[props.messages.length - 1]?.content || '',
   () => {
     // 只有 AI 在生成且用户没有手动向上滚动时才滚动
     if (!props.isStreaming || userScrolledUp.value) return

@@ -50,6 +50,17 @@ export interface MessageMetadata {
   generationTime?: number
 }
 
+/** AI 响应版本 */
+export interface MessageVersion {
+  id: string
+  content: string
+  reasoning?: ReasoningContent
+  status: MessageStatus
+  metadata?: MessageMetadata
+  createdAt: number
+  model: string
+}
+
 /** 消息对象 */
 export interface ChatMessage {
   id: string
@@ -62,6 +73,22 @@ export interface ChatMessage {
   metadata?: MessageMetadata
   createdAt: number
   updatedAt: number
+  
+  // === 版本管理（仅 AI 消息使用）===
+  /** 关联的用户消息 ID（AI 响应时必填） */
+  parentMessageId?: string
+  /** 是否为当前激活的版本 */
+  isActiveVersion?: boolean
+}
+
+/** 消息组（一个用户查询 + 多个 AI 响应版本） */
+export interface MessageGroup {
+  /** 用户消息 */
+  userMessage: ChatMessage
+  /** AI 响应版本数组 */
+  aiVersions: ChatMessage[]
+  /** 当前显示的版本索引 */
+  currentVersionIndex: number
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -159,6 +186,15 @@ export interface PersistedData {
   messages: Record<string, ChatMessage[]>
   lastSessionId: string | null
   version: number
+}
+
+/** 消息版本化的持久化数据结构（v2） */
+export interface PersistedDataV2 {
+  sessions: ChatSession[]
+  /** 按会话存储的消息组 */
+  messageGroups: Record<string, MessageGroup[]>
+  lastSessionId: string | null
+  version: 2
 }
 
 /** 生成状态 */

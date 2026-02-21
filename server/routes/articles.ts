@@ -5,6 +5,7 @@
 import { Router } from 'express'
 import { promises as fs } from 'fs'
 import { join, extname, basename, dirname } from 'path'
+import JSZip from 'jszip'
 
 const router = Router()
 const DOCS_PATH = join(process.cwd(), 'docs')
@@ -565,5 +566,206 @@ router.post('/publish', async (req, res) => {
     res.status(500).json(response)
   }
 })
+
+// 批量导出请求体
+interface BatchExportBody {
+  paths: string[]
+  format: 'md' | 'pdf' | 'docx'
+  includeTitle?: boolean
+}
+
+// 批量导出文章
+router.post('/batch-export', async (req, res) => {
+  try {
+    const { paths, format, includeTitle = false } = req.body as BatchExportBody
+    
+    if (!Array.isArray(paths) || paths.length === 0) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Paths array required'
+      }
+      return res.status(400).json(response)
+    }
+    
+    const zip = new JSZip()
+    const errors: string[] = []
+    
+    for (const relativePath of paths) {
+      try {
+        // 安全检查：防止路径遍历
+        const cleanPath = relativePath.replace(/\.\./g, '').replace(/^[\/\\]+/, '')
+        const fullPath = join(SECTIONS_PATH, cleanPath)
+        
+        // 验证路径在 sections 目录内
+        if (!fullPath.startsWith(SECTIONS_PATH)) {
+          errors.push(`Access denied: ${relativePath}`)
+          continue
+        }
+        
+        // 读取文件内容
+        let content = await fs.readFile(fullPath, 'utf-8')
+        
+        // 如果需要包含标题，添加 frontmatter 中的标题
+        if (includeTitle) {
+          const titleMatch = content.match(/^---\n[\s\S]*?title:\s*(.+?)\n[\s\S]*?---/)
+          if (titleMatch) {
+            const title = titleMatch[1].trim().replace(/^["']|["']$/g, '')
+            content = `# ${title}\n\n${content}`
+          }
+        }
+        
+        // 根据格式处理内容
+        let fileName = basename(cleanPath, '.md')
+        let fileContent: string | Buffer = content
+        
+        switch (format) {
+          case 'md':
+            fileName += '.md'
+            break
+          case 'docx':
+            // 简化的 Word 导出（HTML 格式）
+            fileName += '.doc'
+            fileContent = `
+              <!DOCTYPE html>
+              <html>
+              <head><meta charset="UTF-8"><title>${fileName}</title></head>
+              <body>
+                ${markdownToHtml(content)}
+              </body>
+              </html>
+            `
+            break
+          case 'pdf':
+            // PDF 导出暂不支持，回退到 Markdown
+            fileName += '.md'
+            break
+          default:
+            fileName += '.md'
+        }
+        
+        // 添加到 zip
+        zip.file(fileName, fileContent)
+        
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        errors.push(`Failed to process ${relativePath}: ${errorMsg}`)
+      }
+    }
+    
+    // 生成 zip 文件
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
+    
+    // 设置响应头
+    res.setHeader('Content-Type', 'application/zip')
+    res.setHeader('Content-Disposition', `attachment; filename="articles-export-${Date.now()}.zip"`)
+    res.setHeader('Content-Length', zipBuffer.length)
+    
+    // 发送 zip 文件
+    res.send(zipBuffer)
+    
+    if (errors.length > 0) {
+      console.warn('[BatchExport] Some files failed:', errors)
+    }
+    
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    console.error('[BatchExport] Export failed:', errorMsg)
+    
+    const response: ApiResponse = {
+      success: false,
+      error: 'Batch export failed'
+    }
+    res.status(500).json(response)
+  }
+})
+
+// Markdown 转 HTML（简化版）
+function markdownToHtml(md: string): string {
+  return md
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/```[\s\S]*?```/g, '<pre><code>$&</code></pre>')
+    .replace(/^- (.*$)/gim, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+    .replace(/\n/g, '<br>')
+}
+
+// 获取所有文章列表（用于 @ 引用）
+router.get('/list-all', async (req, res) => {
+  try {
+    const articles: Array<{ path: string; title: string; section: string }> = []
+    
+    // 扫描所有 sections
+    const sections = ['posts', 'knowledge', 'resources', 'about']
+    
+    for (const section of sections) {
+      const sectionPath = join(SECTIONS_PATH, section)
+      await scanArticlesForList(sectionPath, section, articles)
+    }
+    
+    const response: ApiResponse<typeof articles> = {
+      success: true,
+      data: articles
+    }
+    res.json(response)
+  } catch (error) {
+    console.error('[ListAll] Failed:', error)
+    const response: ApiResponse = {
+      success: false,
+      error: 'Failed to list articles'
+    }
+    res.status(500).json(response)
+  }
+})
+
+// 辅助函数：递归扫描文章
+async function scanArticlesForList(
+  dir: string,
+  section: string,
+  results: Array<{ path: string; title: string; section: string }>
+): Promise<void> {
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true })
+    
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue
+      
+      const fullPath = join(dir, entry.name)
+      const relativePath = fullPath.replace(SECTIONS_PATH + '\\', '').replace(/\\/g, '/')
+      
+      if (entry.isDirectory()) {
+        await scanArticlesForList(fullPath, section, results)
+      } else if (entry.isFile() && entry.name.endsWith('.md')) {
+        // 读取标题
+        let title = entry.name.replace('.md', '')
+        try {
+          const content = await fs.readFile(fullPath, 'utf-8')
+          const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/)
+          if (frontmatterMatch) {
+            const titleMatch = frontmatterMatch[1].match(/^title:\s*(.+)$/m)
+            if (titleMatch) {
+              title = titleMatch[1].trim().replace(/^["']|["']$/g, '')
+            }
+          }
+        } catch {
+          // 忽略读取错误
+        }
+        
+        results.push({
+          path: relativePath,
+          title,
+          section
+        })
+      }
+    }
+  } catch {
+    // 目录不存在或无法访问
+  }
+}
 
 export default router

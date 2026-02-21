@@ -13,7 +13,7 @@ import type { LogLevel, LogEntry } from '../components/ai-chat/composables/types
 // 是否是开发模式
 const isDev = typeof process !== 'undefined' 
   ? process.env.NODE_ENV !== 'production'
-  : import.meta.env?.DEV !== false
+  : (import.meta.env?.DEV as boolean | undefined) ?? true
 
 // 日志级别优先级
 const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {

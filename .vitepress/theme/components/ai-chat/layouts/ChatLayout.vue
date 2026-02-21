@@ -48,10 +48,12 @@
       <MessageList
         ref="messageListRef"
         :messages="messages"
-      :session-id="currentSessionId"
+        :message-groups="messageGroups"
+        :session-id="currentSessionId"
         :is-streaming="isStreaming"
         @use-prompt="handleQuickPrompt"
-        @regenerate="regenerateLastMessage()"
+        @regenerate="handleRegenerate"
+        @switch-version="switchVersion"
       />
 
       <!-- 输入框 -->
@@ -86,6 +88,7 @@ const {
   currentSessionId,
   currentSession,
   messages,
+  messageGroups,
   isStreaming,
   defaultConfig,
   createSession,
@@ -95,7 +98,8 @@ const {
   sendMessage,
   interruptGeneration,
   clearMessages,
-  regenerateLastMessage,
+  regenerateResponse,
+  switchVersion,
   updateSessionConfig
 } = useAIChat()
 
@@ -114,9 +118,29 @@ const currentConfig = computed({
   }
 })
 
-async function handleSend() {
-  const text = inputText.value.trim()
-  if (!text || isStreaming.value) return
+async function handleRegenerate() {
+  if (!currentSessionId.value) return
+  
+  // 找到最后一条用户消息重新生成
+  const sessionMessages = messages.value
+  for (let i = sessionMessages.length - 1; i >= 0; i--) {
+    if (sessionMessages[i].role === 'user') {
+      await regenerateResponse(sessionMessages[i].id)
+      break
+    }
+  }
+}
+
+interface Skill {
+  id: string
+  name: string
+  description: string
+  icon: string
+  systemPrompt: string
+}
+
+async function handleSend(content: string, skill?: Skill) {
+  if (!content.trim() || isStreaming.value) return
   
   inputText.value = ''
   
@@ -126,7 +150,16 @@ async function handleSend() {
     chatInputRef.value?.focus()
   })
   
-  await sendMessage(text)
+  // 如果有技能，临时更新会话配置使用技能提示词
+  // 注意：这里修改配置后发送，AI 会使用新的 systemPrompt
+  if (skill && currentSessionId.value) {
+    updateSessionConfig(currentSessionId.value, {
+      systemPrompt: skill.systemPrompt
+    })
+  }
+  
+  // 发送消息（content 已经包含了结构化的引用内容）
+  await sendMessage(content)
 }
 
 function handleQuickPrompt(text: string) {

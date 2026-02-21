@@ -13,7 +13,7 @@
 
     <!-- AI 消息 -->
     <div v-else class="ai-message">
-      <Avatar type="ai" :typing="isStreaming" />
+      <AIAvatar :typing="isStreaming" />
       <div class="message-body">
         <!-- 思考过程 -->
         <div v-if="displayReasoning" class="reasoning-box">
@@ -36,13 +36,24 @@
           <span class="thinking-dot"></span>
         </div>
 
+        <!-- 版本切换器（AI 消息始终显示） -->
+        <MessageVersions
+          v-if="versions && !isStreaming"
+          :versions="versions.versions"
+          :current-index="versions.currentIndex"
+          :user-message-id="versions.userMessageId"
+          :is-streaming="isStreaming"
+          @switch="(index) => $emit('switch-version', { userMessageId: versions!.userMessageId, versionIndex: index })"
+          @regenerate="$emit('regenerate')"
+        />
+
         <!-- 操作按钮 -->
         <div class="message-actions">
           <button class="action-btn" @click="copyContent">
             <Icon name="copy" :size="14" />
             <span>{{ copied ? '已复制' : '复制' }}</span>
           </button>
-          <button v-if="isLast" class="action-btn" @click="$emit('regenerate')">
+          <button v-if="isLast && !versions" class="action-btn" @click="$emit('regenerate')">
             <Icon name="refresh" :size="14" />
             <span>重新生成</span>
           </button>
@@ -56,19 +67,28 @@
 import { ref, computed } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import { Avatar, Icon } from '../ui'
-import type { ChatMessage } from '../composables/types'
+import { Avatar, AIAvatar, Icon } from '../ui'
+import MessageVersions from './MessageVersions.vue'
+import type { ChatMessage, ChatMessage as ChatMessageType } from '../composables/types'
+
+interface VersionInfo {
+  versions: ChatMessageType[]
+  currentIndex: number
+  userMessageId: string
+}
 
 interface Props {
   message: ChatMessage
   isStreaming: boolean
   isLast: boolean
+  versions?: VersionInfo | null
 }
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
   regenerate: []
+  'switch-version': [payload: { userMessageId: string; versionIndex: number }]
 }>()
 
 const isExpanded = ref(true)

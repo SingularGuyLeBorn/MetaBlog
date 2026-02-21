@@ -1619,6 +1619,54 @@ export default defineConfig({
             return articles;
           }
 
+          // 辅助函数：轻量级扫描文章列表（用于 @ 引用）
+          async function scanArticlesForList(
+            dir: string,
+            section: string,
+            results: Array<{ path: string; title: string; section: string }>
+          ): Promise<void> {
+            try {
+              const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+              
+              for (const entry of entries) {
+                if (entry.name.startsWith('.')) continue;
+                
+                const fullPath = path.join(dir, entry.name);
+                const relativePath = fullPath.replace(SECTIONS_PATH + path.sep, '').replace(/\\/g, '/');
+                
+                if (entry.isDirectory()) {
+                  await scanArticlesForList(fullPath, section, results);
+                } else if (entry.isFile() && entry.name.endsWith('.md')) {
+                  // 读取标题
+                  let title = entry.name.replace('.md', '');
+                  try {
+                    const content = await fs.promises.readFile(fullPath, 'utf-8');
+                    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+                    if (frontmatterMatch) {
+                      const titleMatch = frontmatterMatch[1].match(/^title:\s*(.+)$/m);
+                      if (titleMatch) title = titleMatch[1].trim();
+                    }
+                    // 如果没有 frontmatter 标题，尝试从内容中提取
+                    if (!title || title === entry.name.replace('.md', '')) {
+                      const contentTitleMatch = content.match(/^#\s+(.+)$/m);
+                      if (contentTitleMatch) title = contentTitleMatch[1].trim();
+                    }
+                  } catch {
+                    // 忽略读取错误
+                  }
+                  
+                  results.push({
+                    path: relativePath,
+                    title,
+                    section
+                  });
+                }
+              }
+            } catch {
+              // 目录不存在或无法访问
+            }
+          }
+
           // 文章列表
           server.middlewares.use(
             "/api/articles/list",
@@ -1647,6 +1695,42 @@ export default defineConfig({
                     JSON.stringify({
                       success: true,
                       data: allArticles,
+                    }),
+                  );
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(
+                    JSON.stringify({
+                      success: false,
+                      error: "Failed to list articles",
+                    }),
+                  );
+                }
+              } else next();
+            },
+          );
+
+          // 获取所有文章列表（用于 @ 引用，轻量级）
+          server.middlewares.use(
+            "/api/articles/list-all",
+            async (req, res, next) => {
+              if (req.method === "GET") {
+                try {
+                  const articles: Array<{ path: string; title: string; section: string }> = [];
+                  const sections = ["posts", "knowledge", "resources", "about"];
+
+                  for (const section of sections) {
+                    const sectionPath = path.join(SECTIONS_PATH, section);
+                    if (fs.existsSync(sectionPath)) {
+                      await scanArticlesForList(sectionPath, section, articles);
+                    }
+                  }
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(
+                    JSON.stringify({
+                      success: true,
+                      data: articles,
                     }),
                   );
                 } catch (e) {

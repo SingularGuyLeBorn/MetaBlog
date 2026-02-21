@@ -306,24 +306,66 @@
               </button>
             </div>
             
+            <!-- 路径输入 + 联想 -->
+            <div class="path-input-section">
+              <div class="path-input-wrapper">
+                <span class="path-prefix">sections/</span>
+                <input
+                  ref="pathInputRef"
+                  v-model="pathInput"
+                  type="text"
+                  class="path-input"
+                  placeholder="输入路径，如：posts/技术文章"
+                  @input="onPathInput"
+                  @focus="showSuggestions = true"
+                  @keydown.enter="confirmPathInput"
+                />
+              </div>
+              
+              <!-- 联想建议列表 -->
+              <div v-if="showSuggestions && filteredPaths.length > 0" class="suggestions-dropdown">
+                <div
+                  v-for="suggestion in filteredPaths"
+                  :key="suggestion.path"
+                  class="suggestion-item"
+                  :class="{ 'is-directory': suggestion.type === 'directory' }"
+                  @click="selectSuggestion(suggestion)"
+                >
+                  <svg v-if="suggestion.type === 'directory'" class="suggestion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <svg v-else class="suggestion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  <span class="suggestion-path">{{ suggestion.displayPath }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Section Tabs -->
+            <div class="section-tabs">
+              <button
+                v-for="section in availableSections"
+                :key="section"
+                class="section-tab"
+                :class="{ active: currentSection === section }"
+                @click="switchSection(section)"
+              >
+                {{ sectionNames[section] || section }}
+              </button>
+            </div>
+            
             <div class="child-doc-hint" v-if="isChildDoc && parentArticle">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M12 16v-4"/>
                 <path d="M12 8h.01"/>
               </svg>
-              <span>将在 "{{ parentArticle.title }}" 下创建子文档，原文件将自动移动到同名文件夹中</span>
+              <span>将在 "{{ parentArticle.title }}" 下创建子文档</span>
             </div>
             
             <div class="path-tree">
-              <!-- Root sections -->
-              <div class="path-tree-header">
-                <svg class="tree-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                </svg>
-                <span class="tree-label">sections/</span>
-              </div>
-              
               <!-- 加载状态 -->
               <div v-if="isLoadingTree" class="path-tree-loading">
                 <div class="loading-spinner-small"></div>
@@ -331,17 +373,17 @@
               </div>
               
               <!-- 空状态 -->
-              <div v-else-if="directoryTree.length === 0" class="path-tree-empty">
+              <div v-else-if="currentSectionTree.length === 0" class="path-tree-empty">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/>
                 </svg>
-                <span>暂无目录，请先创建文章</span>
+                <span>该目录暂无内容</span>
               </div>
               
               <!-- 递归渲染树节点 -->
               <TreeNode 
                 v-else
-                v-for="item in directoryTree" 
+                v-for="item in currentSectionTree" 
                 :key="item.path"
                 :node="item"
                 :selected-path="selectedPath"
@@ -353,7 +395,7 @@
             
             <div class="modal-footer">
               <button class="btn-secondary" @click="showPathSelector = false; isChildDoc = false; parentArticle = null">取消</button>
-              <button class="btn-primary" @click="confirmPathSelection">
+              <button class="btn-primary" @click="confirmPathSelection" :disabled="!pathInput.trim()">
                 确认选择
               </button>
             </div>
@@ -532,6 +574,22 @@ const selectedPath = ref<string>('posts')
 const isChildDoc = ref(false)  // 是否作为子文档创建
 const parentArticle = ref<Article | null>(null)  // 父文档
 
+// 路径输入联想
+const pathInput = ref('')
+const showSuggestions = ref(false)
+const pathInputRef = ref<HTMLInputElement>()
+const allPaths = ref<Array<{path: string, displayPath: string, type: 'directory' | 'file'}>>([])
+
+// Section 管理
+const currentSection = ref('posts')
+const availableSections = ['posts', 'knowledge', 'resources', 'about']
+const sectionNames: Record<string, string> = {
+  posts: '文章',
+  knowledge: '知识库', 
+  resources: '资源',
+  about: '关于'
+}
+
 // New article form
 const newArticle = ref({
   title: '',
@@ -559,6 +617,29 @@ const hasActiveFilters = computed(() => {
   return searchQuery.value || currentFilter.value !== 'all'
 })
 
+// 当前 section 的目录树
+const currentSectionTree = computed(() => {
+  return directoryTree.value.find(s => s.name === currentSection.value)?.children || []
+})
+
+// 路径联想建议
+const filteredPaths = computed(() => {
+  const input = pathInput.value.toLowerCase().trim()
+  if (!input) {
+    // 显示当前 section 下的热门路径
+    return allPaths.value
+      .filter(p => p.path.startsWith(currentSection.value + '/') || p.path === currentSection.value)
+      .slice(0, 10)
+  }
+  
+  return allPaths.value
+    .filter(p => 
+      p.displayPath.toLowerCase().includes(input) ||
+      p.path.toLowerCase().includes(input)
+    )
+    .slice(0, 10)
+})
+
 // 显示用的路径标签（修复重复路径问题）
 const selectedPathLabel = computed(() => {
   if (isChildDoc.value && parentArticle.value) {
@@ -566,9 +647,12 @@ const selectedPathLabel = computed(() => {
     const cleanPath = parentArticle.value.path
       .replace(/^\//, '')
       .replace(/\.html$/, '')
+      .replace(/^sections\//, '')
     return `${cleanPath}/ (作为子文档)`
   }
-  return `sections/${selectedPath.value}/`
+  // 确保不重复添加 sections/ 前缀
+  const cleanPath = selectedPath.value.replace(/^sections\//, '')
+  return `sections/${cleanPath}/`
 })
 
 const filteredArticles = computed(() => {
@@ -801,34 +885,88 @@ async function deleteArticle() {
 
 // ==================== Directory Tree ====================
 async function buildDirectoryTree() {
-  // 从后端 API 获取规范化的目录树
+  // 从后端 API 获取所有 sections 的目录树
   isLoadingTree.value = true
   try {
-    console.log('[ArticleManager] Loading directory tree...')
-    const response = await fetch(`/api/directory-tree?section=posts&t=${Date.now()}`)
-    if (!response.ok) throw new Error('Failed to fetch directory tree')
+    console.log('[ArticleManager] Loading directory tree for all sections...')
     
-    const result = await response.json()
-    console.log('[ArticleManager] Directory tree result:', result)
+    // 并行加载所有 sections
+    const promises = availableSections.map(async (section) => {
+      try {
+        const response = await fetch(`/api/directory-tree?section=${section}&t=${Date.now()}`)
+        if (!response.ok) return null
+        const result = await response.json()
+        if (result.success && result.data && result.data.length > 0) {
+          return {
+            name: section,
+            displayName: sectionNames[section] || section,
+            type: 'directory',
+            path: section,
+            children: result.data
+          }
+        }
+        return null
+      } catch (e) {
+        console.warn(`[ArticleManager] Failed to load section ${section}:`, e)
+        return null
+      }
+    })
     
-    if (result.success && result.data) {
-      directoryTree.value = result.data
-      console.log('[ArticleManager] Directory tree loaded:', result.data.length, 'items')
-    } else {
-      directoryTree.value = []
-      console.warn('[ArticleManager] Directory tree empty:', result)
-    }
+    const results = await Promise.all(promises)
+    directoryTree.value = results.filter(Boolean)
+    
+    // 构建扁平化的路径列表用于联想
+    buildAllPathsList()
+    
+    console.log('[ArticleManager] Directory tree loaded:', directoryTree.value.length, 'sections')
   } catch (e) {
     console.error('[ArticleManager] Failed to build directory tree:', e)
     directoryTree.value = []
+    allPaths.value = []
   } finally {
     isLoadingTree.value = false
   }
 }
 
+// 构建所有路径的扁平列表用于联想
+function buildAllPathsList() {
+  const paths: Array<{path: string, displayPath: string, type: 'directory' | 'file'}> = []
+  
+  function traverse(node: any, parentPath: string = '') {
+    const currentPath = parentPath ? `${parentPath}/${node.name}` : node.name
+    const displayName = node.displayName || node.title || node.name
+    
+    paths.push({
+      path: currentPath,
+      displayPath: currentPath,
+      type: node.type || 'directory'
+    })
+    
+    if (node.children && node.children.length > 0) {
+      node.children.forEach((child: any) => traverse(child, currentPath))
+    }
+  }
+  
+  directoryTree.value.forEach((section: any) => {
+    paths.push({
+      path: section.name,
+      displayPath: section.displayName || section.name,
+      type: 'directory'
+    })
+    if (section.children) {
+      section.children.forEach((child: any) => traverse(child, section.name))
+    }
+  })
+  
+  allPaths.value = paths
+}
+
 // 当打开路径选择器时，重新加载目录树
 watch(showPathSelector, (isOpen) => {
   if (isOpen) {
+    // 初始化 pathInput 为当前选中的路径（去掉 sections/ 前缀）
+    pathInput.value = selectedPath.value.replace(/^sections\//, '')
+    showSuggestions.value = false
     buildDirectoryTree()
   }
 })
@@ -871,19 +1009,81 @@ function selectAsParent(article: Article) {
   selectedPath.value = articlePathWithExt.replace('.html', '')
   isChildDoc.value = true
   parentArticle.value = article
+  // 同步更新输入框
+  pathInput.value = selectedPath.value
+}
+
+// ==================== Path Input Methods ====================
+
+// 路径输入处理
+function onPathInput() {
+  showSuggestions.value = true
+  // 自动提取 section
+  const parts = pathInput.value.split('/')
+  if (parts[0] && availableSections.includes(parts[0])) {
+    currentSection.value = parts[0]
+  }
+}
+
+// 选择联想建议
+function selectSuggestion(suggestion: {path: string, displayPath: string, type: string}) {
+  pathInput.value = suggestion.path
+  selectedPath.value = suggestion.path
+  showSuggestions.value = false
+  
+  // 如果是目录，切换到对应 section
+  const parts = suggestion.path.split('/')
+  if (parts[0] && availableSections.includes(parts[0])) {
+    currentSection.value = parts[0]
+  }
+}
+
+// 切换 section
+function switchSection(section: string) {
+  currentSection.value = section
+  // 如果当前输入是其他 section 开头，清空输入
+  const parts = pathInput.value.split('/')
+  if (parts[0] && parts[0] !== section && availableSections.includes(parts[0])) {
+    pathInput.value = section + '/'
+  } else if (!pathInput.value || !availableSections.includes(parts[0])) {
+    pathInput.value = section + '/'
+  }
+  selectedPath.value = pathInput.value.replace(/\/$/, '') || section
+}
+
+// 确认路径输入
+function confirmPathInput() {
+  if (filteredPaths.value.length > 0) {
+    selectSuggestion(filteredPaths.value[0])
+  } else if (pathInput.value.trim()) {
+    selectedPath.value = pathInput.value.trim().replace(/\/$/, '')
+    showSuggestions.value = false
+  }
 }
 
 function confirmPathSelection() {
-  // 如果不是创建子文档，selectedPath 是 section 路径
-  // 如果是创建子文档，selectedPath 是父文档路径，section 应该从父文档路径中提取
+  // 优先使用 pathInput 的值
+  const finalPath = pathInput.value.trim().replace(/^\//, '').replace(/\/$/, '')
+  
+  if (!finalPath) {
+    showToast('error', '请选择或输入存放位置')
+    return
+  }
+  
+  selectedPath.value = finalPath
+  
+  // 如果不是创建子文档，从路径中提取 section
+  // 如果是创建子文档，section 已经从父文档路径中提取
   if (isChildDoc.value && parentArticle.value) {
     // 从父文档路径提取 section（如 posts/ai-paper-reading-2024 -> posts）
-    const pathParts = selectedPath.value.split('/')
+    const pathParts = finalPath.split('/')
     newArticle.value.section = pathParts[0] || 'posts'
   } else {
-    // 普通路径选择，selectedPath 就是 section
-    newArticle.value.section = selectedPath.value
+    // 从路径提取 section（如 posts/tech/article -> posts）
+    const pathParts = finalPath.split('/')
+    newArticle.value.section = pathParts[0] || 'posts'
   }
+  
   showPathSelector.value = false
 }
 

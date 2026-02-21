@@ -1,5 +1,9 @@
 <!--
-  ChatInput - 输入框组件
+  ChatInput - 智能输入框（支持 / 技能和 @ 引用）
+  
+  发送给 AI 的消息格式：
+  用户看到："请总结 @Docker入门教程 的重点"
+  实际发送："请总结以下文章的重点：\n\n<reference title="Docker入门教程" path="...">[文章内容]</reference>\n\n请总结这篇文章的重点。"
 -->
 <template>
   <div class="chat-input">
@@ -8,16 +12,16 @@
         <Icon name="paperclip" :size="20" />
       </button>
       
-      <textarea
-        ref="textareaRef"
-        v-model="inputValue"
-        class="input-field"
-        :placeholder="isStreaming ? 'AI 思考中...' : '输入消息，按 Enter 发送...'"
-        :disabled="isStreaming"
-        rows="1"
-        @keydown="handleKeydown"
-        @input="autoResize"
-      ></textarea>
+      <div class="input-wrapper">
+        <MentionInput
+          ref="mentionInputRef"
+          v-model="inputValue"
+          :placeholder="isStreaming ? 'AI 思考中，可继续输入下一条...' : '输入消息，/ 选择技能，@ 引用文章，按 Enter 发送...'"
+          @skill-change="handleSkillChange"
+          @mentions-change="handleMentionsChange"
+          @send="handleSend"
+        />
+      </div>
       
       <button
         v-if="isStreaming"
@@ -29,86 +33,116 @@
       <button
         v-else
         class="send-btn"
-        :disabled="!inputValue.trim()"
+        :disabled="!canSend"
         @click="handleSend"
       >
         <Icon name="send" :size="20" />
       </button>
     </div>
     <div class="input-hint">
-      <span>Enter 发送 · Shift+Enter 换行</span>
+      <span>Enter 发送 · Shift+Enter 换行 · / 技能 · @ 引用</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Icon } from '../ui'
+import MentionInput, { type Mention } from '../ui/MentionInput.vue'
 
-interface Props {
-  modelValue: string
-  isStreaming: boolean
+interface Skill {
+  id: string
+  name: string
+  description: string
+  icon: string
+  systemPrompt: string
 }
 
-const props = defineProps<Props>()
+const props = defineProps<{
+  modelValue: string
+  isStreaming: boolean
+}>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
-  send: []
+  send: [content: string, skill?: Skill]
   stop: []
   attach: []
 }>()
 
-const textareaRef = ref<HTMLTextAreaElement>()
+const mentionInputRef = ref<InstanceType<typeof MentionInput>>()
 const inputValue = ref(props.modelValue)
+const currentSkill = ref<Skill | undefined>()
+const currentMentions = ref<Mention[]>([])
 
+const canSend = computed(() => {
+  return inputValue.value.trim().length > 0 && !props.isStreaming
+})
+
+function handleSkillChange(skill: Skill | null) {
+  currentSkill.value = skill || undefined
+}
+
+function handleMentionsChange(mentions: Mention[]) {
+  currentMentions.value = mentions
+}
+
+async function handleSend() {
+  if (!inputValue.value.trim() || props.isStreaming) return
+  
+  // 构建发送内容
+  let finalContent = inputValue.value.trim()
+  
+  // 如果有引用，读取文章内容并格式化为结构化引用
+  if (currentMentions.value.length > 0) {
+    const references: string[] = []
+    
+    for (const mention of currentMentions.value) {
+      try {
+        const response = await fetch(`/api/files/read?path=${encodeURI('sections/' + mention.path)}`)
+        if (response.ok) {
+          const content = await response.text()
+          // 结构化引用格式
+          references.push(`<reference title="${mention.title}" path="${mention.path}">\n${content}\n</reference>`)
+        }
+      } catch (e) {
+        console.error('[ChatInput] Failed to load mention:', mention.path)
+      }
+    }
+    
+    if (references.length > 0) {
+      // 构建清晰的 prompt 结构
+      finalContent = `${finalContent}\n\n---\n引用资料：\n\n${references.join('\n\n')}\n---`
+    }
+  }
+  
+  emit('send', finalContent, currentSkill.value)
+  
+  // 重置输入
+  inputValue.value = ''
+  currentSkill.value = undefined
+  currentMentions.value = []
+  mentionInputRef.value?.clearAll()
+}
+
+// 监听外部值变化
 watch(() => props.modelValue, (val) => {
   if (val !== inputValue.value) {
     inputValue.value = val
   }
 })
-
 watch(inputValue, (val) => {
   emit('update:modelValue', val)
 })
 
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    handleSend()
-  }
-}
-
-function autoResize() {
-  const textarea = textareaRef.value
-  if (!textarea) return
-  
-  textarea.style.height = 'auto'
-  textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px'
-}
-
-function handleSend() {
-  if (!inputValue.value.trim() || props.isStreaming) return
-  emit('send')
-  inputValue.value = ''
-  
-  nextTick(() => {
-    const textarea = textareaRef.value
-    if (textarea) {
-      textarea.style.height = 'auto'
-    }
-  })
-}
-
 defineExpose({
   focus() {
-    textareaRef.value?.focus()
+    mentionInputRef.value?.focus()
   }
 })
 </script>
 
 <style scoped>
-
 .chat-input {
   padding: var(--ai-space-4) var(--ai-space-6);
   background: var(--ai-bg-sidebar);
@@ -151,22 +185,9 @@ defineExpose({
   color: var(--ai-text-primary);
 }
 
-.input-field {
+.input-wrapper {
   flex: 1;
-  background: transparent;
-  border: none;
-  padding: 8px 0;
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--ai-text-primary);
-  resize: none;
-  min-height: 24px;
-  max-height: 200px;
-  outline: none;
-}
-
-.input-field::placeholder {
-  color: var(--ai-text-muted);
+  min-width: 0;
 }
 
 .send-btn {

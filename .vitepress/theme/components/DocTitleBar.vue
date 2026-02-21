@@ -193,8 +193,9 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
       let lastError = null
       for (const path of possiblePaths) {
         try {
-          const encodedPath = encodeURIComponent(path)
-          const response = await fetch(`/api/files/content?path=${encodedPath}`)
+          // FIX: 使用 encodeURI 而不是 encodeURIComponent，保留路径结构
+          const encodedPath = encodeURI(path)
+          const response = await fetch(`/api/files/read?path=${encodedPath}`)
           if (response.ok) {
             content = await response.text()
             break
@@ -213,8 +214,9 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
       await processAndExportContent(content, format)
     } else {
       // 普通文件路径
-      const encodedPath = encodeURIComponent(targetPath)
-      const response = await fetch(`/api/files/content?path=${encodedPath}`)
+      // FIX: 使用 encodeURI 而不是 encodeURIComponent，保留路径结构
+      const encodedPath = encodeURI(targetPath)
+      const response = await fetch(`/api/files/read?path=${encodedPath}`)
       if (!response.ok) {
         const errorText = await response.text()
         throw new Error(`Failed to fetch content: ${response.status} ${errorText}`)
