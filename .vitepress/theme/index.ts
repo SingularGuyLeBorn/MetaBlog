@@ -29,10 +29,7 @@ import RAGSearch from './components/features/RAGSearch.vue'
 import EditFab from './components/EditFab.vue'
 
 
-import GlobalPageEditorAGI from './components/agent/GlobalPageEditorAGI.vue'
-import AgentModeToggle from './components/agent/AgentModeToggle.vue'
-import InlineSuggestion from './components/agent/InlineSuggestion.vue'
-import ContextIndicator from './components/agent/ContextIndicator.vue'
+// Agent 组件已移除 - 使用 ai-chat 模块替代
 import ControlCenter from './components/ControlCenter.vue'
 import FullScreenPanel from './components/FullScreenPanel.vue'
 
@@ -71,10 +68,7 @@ export default {
     app.component('Breadcrumb', Breadcrumb)
     
 
-    app.component('GlobalPageEditorAGI', GlobalPageEditorAGI)
-    app.component('AgentModeToggle', AgentModeToggle)
-    app.component('InlineSuggestion', InlineSuggestion)
-    app.component('ContextIndicator', ContextIndicator)
+    // Agent 组件已移除
     app.component('ControlCenter', ControlCenter)
     app.component('FullScreenPanel', FullScreenPanel)
     

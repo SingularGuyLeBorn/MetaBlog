@@ -1,44 +1,42 @@
 /**
- * AI Chat 组件入口
+ * AI Chat - 智能对话系统
  * 
- * 完全自包含的 AI Chat 模块：
- * - features: UI 组件
- * - layouts: 布局组件
- * - ui: 基础 UI 组件
- * - composables: 逻辑层
- * - services: API 和存储层
- * - styles: 样式
+ * 目录结构：
+ * - core/       核心逻辑（composables, services, types）
+ * - modules/    功能模块（agent, chat）
+ * - ui/         通用 UI 组件
+ * - styles/     样式文件
+ * - layouts/    布局组件
  */
 
-// UI 基础组件
-export { Avatar, Button, Icon } from './ui'
+// ===== Core =====
+export * from './core/composables'
+export * from './core/services'
 
-// 功能组件
-export {
-  SessionPanel,
-  MessageList,
-  MessageBubble,
-  ChatInput,
-  SettingsPanel
-} from './features'
+// ===== Modules - Agent =====
+export { 
+  AgentConfig,
+  AgentAdmin, 
+  AgentCard, 
+  AgentDetail, 
+  AgentForm, 
+  AgentStats,
+  SkillManager, 
+  SkillEditor, 
+  SkillPreview, 
+  SkillImport,
+  MemoryManager,
+  ToolsManager
+} from './modules/agent'
 
-// 布局组件
+// ===== Modules - Chat =====
+export { SessionPanel } from './modules/chat/session'
+export { MessageList, MessageBubble, MessageVersions } from './modules/chat/messages'
+export { ChatInput } from './modules/chat/input'
+export { SettingsPanel } from './modules/chat/settings'
+
+// ===== Layouts =====
 export { default as ChatLayout } from './layouts/ChatLayout.vue'
 
-// Composables
-export { useAIChat } from './composables'
-
-// Services（如需外部使用）
-export { aiService, storage } from './services'
-
-// 类型导出
-export type {
-  ChatSession,
-  ChatMessage,
-  SessionConfig,
-  ModelType,
-  MessageRole,
-  MessageStatus,
-  ReasoningContent,
-  StreamCallbacks
-} from './composables/types'
+// ===== UI =====
+export * from './ui'

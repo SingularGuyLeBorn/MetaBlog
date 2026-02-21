@@ -12,7 +12,17 @@
       </button>
     </div>
     
-
+    <!-- 引用标签（在输入框上方） - 简洁样式 -->
+    <div v-if="selectedMentions.length > 0" class="mentions-bar">
+      <div
+        v-for="mention in selectedMentions"
+        :key="mention.path"
+        class="mention-capsule-mini"
+      >
+        <span>📄</span>
+        <span>{{ mention.title }}</span>
+      </div>
+    </div>
     
     <!-- 输入框容器 -->
     <div class="input-wrapper">
@@ -147,7 +157,7 @@
         </div>
         <div class="panel-list" ref="skillListRef">
           <div
-            v-for="(skill, index) in skills"
+            v-for="(skill, index) in skillList"
             :key="skill.id"
             class="panel-item skill-item"
             :class="{ active: index === selectedSkillIndex }"
@@ -172,6 +182,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { useSkills, type Skill } from '../core/composables/useSkills'
 
 // ==================== 类型定义 ====================
 interface Article {
@@ -182,13 +193,7 @@ interface Article {
   snippet?: string
 }
 
-interface Skill {
-  id: string
-  name: string
-  description: string
-  icon: string
-  systemPrompt: string
-}
+// Skill 类型从 useSkills 导入
 
 export interface Mention {
   path: string
@@ -199,6 +204,7 @@ export interface Mention {
 const props = defineProps<{
   modelValue: string
   placeholder?: string
+  selectedSkill?: Skill
 }>()
 
 const emit = defineEmits<{
@@ -209,43 +215,8 @@ const emit = defineEmits<{
 }>()
 
 // ==================== Skills 配置 ====================
-const skills: Skill[] = [
-  {
-    id: 'write',
-    name: '写作助手',
-    description: '基于提示词生成文章',
-    icon: '✍️',
-    systemPrompt: '你是一个专业的写作助手，擅长根据用户需求创作高质量文章。'
-  },
-  {
-    id: 'summarize',
-    name: '文章总结',
-    description: '总结文章内容，提取要点',
-    icon: '📋',
-    systemPrompt: '你是一个总结专家，擅长提炼文章核心观点和关键信息。'
-  },
-  {
-    id: 'translate',
-    name: '中英翻译',
-    description: '将内容翻译为英文或中文',
-    icon: '🌐',
-    systemPrompt: '你是一个专业翻译，能够准确流畅地进行中英互译。'
-  },
-  {
-    id: 'polish',
-    name: '润色优化',
-    description: '优化文章表达，提升可读性',
-    icon: '✨',
-    systemPrompt: '你是一个文字润色专家，擅长优化表达、修正语法错误。'
-  },
-  {
-    id: 'code',
-    name: '代码生成',
-    description: '生成代码示例和解释',
-    icon: '💻',
-    systemPrompt: '你是一个编程专家，能够编写清晰、高效的代码并提供详细解释。'
-  }
-]
+const { skills, initSkills } = useSkills()
+const skillList = computed(() => skills.value)
 
 // ==================== Refs ====================
 const containerRef = ref<HTMLElement>()
@@ -257,6 +228,13 @@ const skillPanelRef = ref<HTMLElement>()
 const inputValue = ref(props.modelValue)
 const showMentionPanel = ref(false)
 const showSkillPanel = ref(false)
+
+// 监听外部传入的 selectedSkill
+watch(() => props.selectedSkill, (skill) => {
+  if (skill) {
+    selectedSkill.value = skill
+  }
+}, { immediate: true })
 const searchQuery = ref('')
 const selectedSkillIndex = ref(0)
 const mentionTriggerPos = ref(0)
@@ -586,17 +564,17 @@ function handleSkillPanelKeydown(e: KeyboardEvent) {
       break
     case 'ArrowDown':
       e.preventDefault()
-      selectedSkillIndex.value = (selectedSkillIndex.value + 1) % skills.length
+      selectedSkillIndex.value = (selectedSkillIndex.value + 1) % skillList.value.length
       scrollToSelectedSkill()
       break
     case 'ArrowUp':
       e.preventDefault()
-      selectedSkillIndex.value = (selectedSkillIndex.value - 1 + skills.length) % skills.length
+      selectedSkillIndex.value = (selectedSkillIndex.value - 1 + skillList.value.length) % skillList.value.length
       scrollToSelectedSkill()
       break
     case 'Enter':
       e.preventDefault()
-      selectSkill(skills[selectedSkillIndex.value])
+      selectSkill(skillList.value[selectedSkillIndex.value])
       break
   }
 }
@@ -665,16 +643,18 @@ function selectMention(article: Article) {
 
 function removeMention(mention: Mention) {
   // 从输入框中移除 @文章标题
-  const regex = new RegExp(`@${escapeRegExp(mention.title)}\\s?`, 'g')
-  inputValue.value = inputValue.value.replace(regex, '')
+  const escapedTitle = mention.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`@${escapedTitle}\\s?`, 'g')
+  inputValue.value = inputValue.value.replace(regex, '').trim()
   
+  // 从引用列表中移除
   selectedMentions.value = selectedMentions.value.filter(m => m.path !== mention.path)
   emit('mentions-change', selectedMentions.value)
 }
 
 function isSelected(article: Article): boolean {
-  // 检查输入框文本中是否包含 @文章标题
-  return inputValue.value.includes(`@${article.title}`)
+  // 检查是否已选中该文章
+  return selectedMentions.value.some(m => m.path === article.path)
 }
 
 function selectSkill(skill: Skill) {
@@ -702,13 +682,52 @@ function clearSkill() {
   emit('skill-change', null)
 }
 
-function handleSend() {
+/**
+ * 加载文章内容
+ */
+async function loadArticleContent(path: string): Promise<string> {
+  try {
+    const response = await fetch(`/api/files/read?path=${encodeURIComponent('sections/' + path)}`)
+    if (!response.ok) return `[无法加载文章: ${path}]`
+    const content = await response.text()
+    // 清理 frontmatter
+    return content.replace(/^---[\s\S]*?---/, '').trim()
+  } catch (error) {
+    return `[加载错误: ${path}]`
+  }
+}
+
+/**
+ * 构建带引用的完整消息
+ */
+async function buildMessageWithReferences(): Promise<string> {
+  let fullMessage = inputValue.value.trim()
+  
+  // 如果有引用文章，加载内容并附加
+  if (selectedMentions.value.length > 0) {
+    fullMessage += '\n\n---\n\n**引用资料:**\n\n'
+    
+    for (const mention of selectedMentions.value) {
+      const content = await loadArticleContent(mention.path)
+      fullMessage += `<reference title="${mention.title}" path="${mention.path}">\n${content}\n</reference>\n\n`
+    }
+  }
+  
+  return fullMessage
+}
+
+async function handleSend() {
   if (!inputValue.value.trim()) return
   
-  emit('send', inputValue.value, selectedMentions.value, selectedSkill.value || undefined)
+  // 构建包含引用内容的完整消息
+  const fullMessage = await buildMessageWithReferences()
+  
+  emit('send', fullMessage, selectedMentions.value, selectedSkill.value || undefined)
   
   // 重置输入
   inputValue.value = ''
+  selectedMentions.value = []
+  emit('mentions-change', [])
 }
 
 // 清空所有
@@ -724,6 +743,8 @@ function clearAll() {
 onMounted(() => {
   // 预加载文章列表
   loadArticles()
+  // 初始化技能列表
+  initSkills()
 })
 
 onUnmounted(() => {
@@ -739,6 +760,9 @@ defineExpose({
   },
   clearSkill,
   clearAll,
+  setSelectedSkill(skill: Skill) {
+    selectedSkill.value = skill
+  },
   getSkill() {
     return selectedSkill.value
   },
@@ -821,36 +845,19 @@ defineExpose({
 .mentions-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
+  margin-bottom: 4px;
 }
 
-.mention-tag {
+.mention-capsule-mini {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
-  background: var(--vp-c-green-soft);
-  color: var(--vp-c-green-1);
-  border-radius: 16px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  animation: slideIn 0.3s ease;
-}
-
-.mention-tag:hover {
-  background: var(--vp-c-danger-soft);
-  color: var(--vp-c-danger);
-}
-
-.mention-icon {
-  font-weight: bold;
-}
-
-.mention-remove {
-  font-size: 14px;
-  font-weight: bold;
-  margin-left: 2px;
+  padding: 2px 8px;
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+  border-radius: 4px;
+  font-size: 11px;
 }
 
 /* 输入框 */

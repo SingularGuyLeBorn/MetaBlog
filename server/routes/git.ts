@@ -168,9 +168,31 @@ router.post('/revert', async (req, res) => {
 
 // ============================================
 // 检查点（断点续作）- 使用文件存储
-// ============================================
+import { promises as fs } from 'fs'
+import path from 'path'
 
-import { FileStorage } from '../../.vitepress/agent/memory/FileStorage'
+export class FileStorage<T> {
+  private data: T;
+  private filePath: string;
+  constructor(options: { name: string, defaultData: T }) {
+    this.data = options.defaultData;
+    this.filePath = path.join(process.cwd(), '.vitepress/agent/memory', `${options.name}.json`);
+  }
+  async load() {
+    try {
+      const content = await fs.readFile(this.filePath, 'utf-8');
+      this.data = JSON.parse(content);
+    } catch {
+      // ignore
+    }
+  }
+  getData() { return this.data; }
+  updateData(updater: (data: T) => void) { updater(this.data); }
+  async save() {
+    await fs.mkdir(path.dirname(this.filePath), { recursive: true });
+    await fs.writeFile(this.filePath, JSON.stringify(this.data, null, 2));
+  }
+}
 
 interface CheckpointData {
   checkpoints: Record<string, Checkpoint>
@@ -223,7 +245,7 @@ router.post('/checkpoint', async (req, res) => {
     }
     
     // 持久化到文件
-    checkpointStorage.updateData(data => {
+    checkpointStorage.updateData((data: CheckpointData) => {
       data.checkpoints[checkpoint.id] = checkpoint
     })
     await checkpointStorage.save()

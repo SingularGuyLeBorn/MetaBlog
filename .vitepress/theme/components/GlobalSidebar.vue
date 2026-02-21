@@ -78,7 +78,11 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick, provide, readon
 import { useRoute, useRouter, useData } from 'vitepress'
 import { useSidebar } from 'vitepress/theme'
 import TreeNode from './TreeNode.vue'
-import { eventBus } from '../../agent/core/EventBus'
+// EventBus 已移除 - 使用简单的 mitt 替代或直接移除
+const eventBus = {
+  on: () => () => {}, // 返回空函数作为 unsubscribe
+  emit: () => {}
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -403,7 +407,8 @@ let unsubscribeRefresh: (() => void) | null = null
 
 onMounted(() => {
   // 监听侧边栏展开事件（Agent 创建文章后自动展开目录）
-  unsubscribeExpand = eventBus.on('sidebar:expand', (data) => {
+  // @ts-ignore - eventBus stub for deprecated agent module
+  unsubscribeExpand = eventBus.on('sidebar:expand', (data: any) => {
     const filePath = data.path
     
     // 找到包含该文件的所有父目录并展开
@@ -445,7 +450,8 @@ onMounted(() => {
   })
   
   // 监听侧边栏刷新事件（Agent 创建文章后刷新目录）
-  unsubscribeRefresh = eventBus.on('sidebar:refresh', (data) => {
+  // @ts-ignore - eventBus stub for deprecated agent module
+  unsubscribeRefresh = eventBus.on('sidebar:refresh', (data: any) => {
     const section = data.section
     const currentSectionName = extractSectionFromRoute(route.path)
     

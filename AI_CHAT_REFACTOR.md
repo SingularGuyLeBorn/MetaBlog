@@ -1,315 +1,286 @@
-# AI Chat 界面重构说明
+# AI Chat 重构文档
 
 ## 概述
 
-本次重构基于 VitePress 框架，重新设计并实现了 MetaBlog 项目的 AI 对话界面。重构目标：简化架构、完善功能、提升体验。
+本次提交完成了 AI Chat 系统的全面重构，从旧的 monolithic 架构迁移到模块化、可维护的新架构。
 
 ---
 
-## 一、现有问题总结
+## 主要变更
 
-### 架构问题
-1. **过度复杂的状态管理**：使用了状态机 + 4个 Pinia Store，层级太深
-2. **职责边界模糊**：chatStore 既管状态流转又管消息发送
-3. **持久化策略混乱**：同时使用了 localStorage、后端 API 和文件存储
-4. **SSR 兼容性差**：localStorage 和 fetch streaming 没有做好环境判断
+### 1. 架构重构
 
-### 功能缺陷
-1. 思考模式后端未正确处理 DeepSeek 的 reasoning_content
-2. 模型切换后不生效，未与请求关联
-3. 流式输出不支持思考过程的展示
-4. AI 生成时输入框被禁用，用户无法提前输入
-5. Session 删除确认、重命名交互不完善
+#### 删除的目录
+- `.vitepress/agent/` - 旧版 Agent 系统（过度设计，难以维护）
+- `.vitepress/theme/components/agent/` - 旧版 Agent UI 组件
+- `agent-docs/` - 旧的文档（已过时）
 
-### 代码质量问题
-1. 多处使用 `any` 类型，类型定义分散
-2. API 错误处理不完善
-3. 消息列表没有虚拟滚动
-4. 日志系统虽然存在但使用不一致
-
----
-
-## 二、重构方案
-
-### 2.1 架构简化
-
+#### 新架构目录结构
 ```
-旧架构（复杂）：
-ChatStateMachine + 4个 Pinia Store (chatStore/sessionStore/messageStore/streamStore)
-    ↓
-新架构（简化）：
-单一 Composable: useAIChat
-    ├── 状态管理 (ref/computed)
-    ├── 会话管理
-    ├── 消息管理
-    └── API 调用
-```
-
-### 2.2 目录结构
-
-```
-.vitepress/theme/
-├── components/ai-chat/           # AI Chat 组件目录
-│   ├── types.ts                  # 统一类型定义
-│   ├── ChatInterface.vue         # 主界面（三栏布局）
-│   ├── SessionList.vue           # 会话列表（左侧栏）
-│   ├── SessionItem.vue           # 单个会话项
-│   ├── MessageList.vue           # 消息列表（中间栏）
-│   ├── MessageItem.vue           # 单条消息
-│   ├── ChatInput.vue             # 输入框
-│   ├── SettingsPanel.vue         # 设置面板（右侧栏）
-│   └── index.ts                  # 组件库入口
-├── composables/
-│   └── useAIChat.ts              # 核心 Composable
-└── services/
-    ├── ai.ts                     # DeepSeek API 服务
-    ├── storage.ts                # localStorage 服务
-    └── logger.ts                 # 日志服务
+.vitepress/theme/components/ai-chat/
+├── core/                      # 核心层
+│   ├── composables/           # 组合式函数
+│   │   ├── useAIChat.ts      # 聊天核心逻辑
+│   │   ├── useSkills.ts      # 技能管理
+│   │   └── useAgents.ts      # Agent 管理
+│   ├── services/              # 服务层
+│   │   ├── aiService.ts      # DeepSeek API 服务
+│   │   ├── storage.ts        # 本地存储
+│   │   └── toolRegistry.ts   # 工具注册表
+│   ├── types/                 # 类型定义
+│   │   ├── index.ts          # 核心类型
+│   │   └── tools.ts          # 工具类型
+│   └── index.ts              # 核心导出
+├── modules/                   # 功能模块
+│   ├── agent/                # Agent 模块
+│   │   ├── admin/            # Agent 管理中心
+│   │   ├── skills/           # 技能管理 UI
+│   │   ├── memory/           # 记忆管理
+│   │   └── tools/            # 工具管理
+│   └── chat/                 # 聊天模块
+│       ├── session/          # 会话管理
+│       ├── messages/         # 消息展示
+│       ├── input/            # 输入框
+│       └── settings/         # 设置面板
+├── ui/                       # UI 组件
+│   ├── MentionInput.vue     # 提及/技能输入
+│   └── index.ts             # UI 导出
+├── layouts/                  # 布局组件
+│   └── ChatLayout.vue       # 聊天主布局
+└── styles/                   # 样式文件
+    └── index.css            # 主样式
 ```
 
 ---
 
-## 三、核心功能实现
+## 2. 核心功能实现
 
-### 3.1 三栏布局设计
+### 2.1 技能管理系统
 
-| 栏位 | 组件 | 功能 |
-|------|------|------|
-| 左侧栏 | SessionList | 会话列表、搜索、新建、重命名、删除 |
-| 中间栏 | MessageList + ChatInput | 消息展示、欢迎页、快捷提示、输入框 |
-| 右侧栏 | SettingsPanel | 模型选择、思考模式、温度、最大 Token、System Prompt |
+**文件**: `.vitepress/theme/components/ai-chat/core/composables/useSkills.ts`
 
-### 3.2 输入框交互体验
+**功能**:
+- 8个内置技能（写作助手、文章总结、中英翻译、润色优化、代码生成、代码审查、概念解释、头脑风暴）
+- 支持从文件系统加载/保存技能 (`.skills/*.md`)
+- 完整的 CRUD 操作（创建、读取、更新、删除）
+- 支持导入/导出技能文件
 
+**数据结构**:
 ```typescript
-// AI 生成期间：
-// - 输入框保持可编辑状态 ✓
-// - 发送按钮禁用 ✓
-// - Enter 键发送禁用 ✓
-// - placeholder 提示"AI 回复中，请稍候发送..." ✓
-// - 显示停止生成按钮 ✓
-
-// AI 回复完成后：
-// - 自动恢复发送功能 ✓
-// - 焦点回到输入框 ✓
-
-// 快捷键支持：
-// - Enter 发送 ✓
-// - Shift+Enter 换行 ✓
-```
-
-### 3.3 思考模式（Chain-of-Thought）
-
-```typescript
-// DeepSeek API 返回的 reasoning_content 处理
-interface ReasoningContent {
-  content: string      // 思考过程文本
-  isVisible: boolean   // 是否展开显示
-}
-
-// UI 展示：
-// - 可折叠的思考过程区块
-// - 箭头图标指示展开/折叠状态
-// - 斜体显示以区分正常内容
-```
-
-### 3.4 流式输出实现
-
-```typescript
-// 使用 ReadableStream 逐字渲染
-async function chatStream(
-  messages: ChatMessage[],
-  config: SessionConfig,
-  callbacks: StreamCallbacks,
-  signal?: AbortSignal
-) {
-  // 1. 发起 fetch 请求
-  // 2. 获取 reader 读取流
-  // 3. 解析 SSE 数据
-  // 4. 区分 content 和 reasoning_content
-  // 5. 回调更新 UI
+interface Skill {
+  id: string
+  name: string
+  description: string
+  icon: string
+  category: SkillCategory
+  systemPrompt: string
+  version: string
+  tags?: string[]
 }
 ```
 
-### 3.5 本地存储持久化
+### 2.2 文章引用系统 (@)
 
+**文件**: `.vitepress/theme/components/ai-chat/ui/MentionInput.vue`
+
+**功能**:
+- 输入 `@` 触发文章选择面板
+- 支持按标题和内容搜索
+- 选中后在输入框显示 `@文章标题`
+- 发送时自动加载完整文章内容
+
+**实现细节**:
+- 用户输入: `测试 引用 @测试文章的标题`
+- 发送给 AI: 包含完整文章内容（在 `<reference>` 标签内）
+
+### 2.3 Function Call (工具调用)
+
+**文件**: 
+- `.vitepress/theme/components/ai-chat/core/services/aiService.ts`
+- `.vitepress/theme/components/ai-chat/core/services/toolRegistry.ts`
+
+**实现流程**:
+```
+用户消息 → API 调用（非流式）检查 tool_calls → 
+如有则执行工具 → 添加 assistant + tool 消息 → 
+重新调用 API（流式）输出最终回复
+```
+
+**可用工具**:
+- `get_article_content` - 获取指定文章完整内容
+- `search_articles` - 根据关键词搜索文章
+- `list_articles` - 列出所有可用文章
+- `get_current_time` - 获取当前时间
+
+---
+
+## 3. 消息版本系统
+
+**文件**: `.vitepress/theme/components/ai-chat/core/composables/useAIChat.ts`
+
+**特性**:
+- 一个用户消息对应多个 AI 响应版本
+- 重新生成时保留历史版本
+- 支持版本切换、删除
+- 避免切换版本时的闪烁动画
+
+**数据结构**:
 ```typescript
-// 数据结构
-interface PersistedData {
-  sessions: ChatSession[]
-  messages: Record<string, ChatMessage[]>
-  lastSessionId: string | null
-  version: number  // 用于数据迁移
+interface MessageGroup {
+  userMessage: ChatMessage
+  aiVersions: ChatMessage[]
+  currentVersionIndex: number
 }
-
-// 存储策略
-// - 每次操作后自动保存
-// - 清理旧数据（保留最近 50 个会话）
-// - 存储空间不足时自动清理
 ```
 
 ---
 
-## 四、新增文件说明
+## 4. Agent 等级系统
 
-### 4.1 服务层 (services/)
+**文件**: `.vitepress/theme/components/ai-chat/core/composables/useAgents.ts`
 
-| 文件 | 职责 |
-|------|------|
-| `ai.ts` | DeepSeek API 封装，支持普通/流式对话，思考模式 |
-| `storage.ts` | localStorage 封装，数据持久化、迁移、清理 |
-| `logger.ts` | 结构化日志，开发模式详细日志，生产模式仅错误 |
+**等级**（从高到低）:
+1. `meta` - 元级别（最高优先级）
+2. `core` - 核心级别
+3. `fixed` - 固定级别
+4. `custom` - 自定义级别
+5. `temp` - 临时级别（最低优先级）
 
-### 4.2 Composable (composables/)
-
-| 文件 | 职责 |
-|------|------|
-| `useAIChat.ts` | 单一入口管理所有 Chat 状态和功能 |
-
-### 4.3 组件层 (components/ai-chat/)
-
-| 文件 | 职责 |
-|------|------|
-| `types.ts` | 所有类型定义集中管理 |
-| `ChatInterface.vue` | 主组件，整合三栏布局 |
-| `SessionList.vue` | 会话列表，按时间分组 |
-| `SessionItem.vue` | 单个会话，支持重命名/删除 |
-| `MessageList.vue` | 消息列表，自动滚动，欢迎页 |
-| `MessageItem.vue` | 单条消息，Markdown 渲染，思考过程 |
-| `ChatInput.vue` | 输入框，高度自适应，快捷键 |
-| `SettingsPanel.vue` | 设置面板，模型/参数配置 |
+**座次系统**: 数字越小优先级越高
 
 ---
 
-## 五、使用方式
+## 5. UI 组件
 
-### 5.1 在页面中使用
+### 5.1 MentionInput.vue
+- 支持 `@` 引用文章
+- 支持 `/` 选择技能
+- 技能显示为蓝色胶囊
+- 引用显示为浅色提示
 
+### 5.2 MessageBubble.vue
+- 用户消息中的 `@文章` 显示为白色胶囊
+- 技能信息从 metadata 读取并显示
+- 支持 Markdown 渲染
+- 思考过程可折叠
+
+### 5.3 AgentAdmin.vue
+- Agent 控制中心
+- 按等级分组管理
+- CRUD 操作
+- 工具/记忆/统计管理
+
+---
+
+## 6. API 兼容性修复
+
+### 6.1 Reasoner 模型约束
+DeepSeek Reasoner 不接受连续的 assistant 消息，已通过 `cleanMessages()` 函数处理:
+```typescript
+const cleanMessages = messages
+  .filter(m => m.content.trim() || m.role === 'user')
+  .reduce((acc, m) => {
+    const last = acc[acc.length - 1]
+    if (last?.role === 'assistant' && m.role === 'assistant') {
+      return acc  // 跳过连续的 assistant
+    }
+    acc.push(m)
+    return acc
+  }, [])
+```
+
+### 6.2 Tool 消息格式
+确保 tool 消息紧跟在带 tool_calls 的 assistant 消息后:
+```typescript
+// assistant 消息
+{ role: 'assistant', content: '', tool_calls: [...] }
+
+// tool 结果消息
+{ role: 'tool', content: '...', tool_call_id: '...', name: '...' }
+```
+
+---
+
+## 7. 使用方式
+
+### 7.1 基本聊天
 ```vue
-<template>
-  <ChatPage />
-</template>
-
-<script setup>
-// ChatPage 内部已使用 ClientOnly 包裹
-</script>
+<ChatLayout />
 ```
 
-### 5.2 在其他组件中使用
+### 7.2 使用技能
+1. 输入 `/` 打开技能面板
+2. 选择技能（如"翻译助手"）
+3. 输入内容发送
+4. AI 会使用技能的 systemPrompt
 
-```vue
-<template>
-  <ClientOnly>
-    <ChatInterface />
-  </ClientOnly>
-</template>
-
-<script setup>
-import { ChatInterface } from './components/ai-chat'
-</script>
-```
-
-### 5.3 使用 Composable
-
-```typescript
-import { useAIChat } from './composables/useAIChat'
-
-const {
-  // 状态
-  sessions,
-  currentSession,
-  currentMessages,
-  isStreaming,
-  canSend,
-  
-  // 会话操作
-  createSession,
-  switchSession,
-  renameSession,
-  deleteSession,
-  updateSessionConfig,
-  
-  // 消息操作
-  sendMessage,
-  interruptGeneration,
-  regenerateLastMessage
-} = useAIChat()
-```
+### 7.3 引用文章
+1. 输入 `@` 打开文章面板
+2. 搜索并选择文章
+3. 输入框显示 `@文章标题`
+4. 发送时自动附加文章内容
 
 ---
 
-## 六、环境变量配置
+## 8. 配置
 
-在项目根目录创建 `.env` 文件：
-
+### 8.1 环境变量
 ```bash
-# DeepSeek API 配置
-VITE_DEEPSEEK_API_KEY=your-api-key-here
-VITE_DEEPSEEK_MODEL=deepseek-chat
+VITE_DEEPSEEK_API_KEY=your_api_key
+```
+
+### 8.2 技能存储
+技能文件存储在项目根目录 `.skills/` 文件夹下，格式:
+```markdown
+---
+name: "技能名称"
+description: "技能描述"
+icon: "✨"
+category: "content"
+version: "1.0.0"
+tags: ["标签1", "标签2"]
+---
+
+系统提示词内容...
 ```
 
 ---
 
-## 七、与旧代码对比
+## 9. 技术细节
 
-| 维度 | 旧代码 | 新代码 |
-|------|--------|--------|
-| 状态管理 | 4个 Pinia Store + 状态机 | 1个 Composable |
-| 代码行数 | ~3000+ 行 | ~2000 行 |
-| 类型安全 | 多处 any | 完整类型定义 |
-| 输入框体验 | 生成时禁用 | 保持可编辑 |
-| 思考模式 | 前端支持，后端未处理 | 完整支持 |
-| 持久化 | 混乱（localStorage + API） | 统一 localStorage |
-| 日志 | 不一致 | 统一 logger 服务 |
-| SSR 兼容 | 差 | 完善 |
+### 9.1 状态管理
+- 使用 Vue 3 Composition API
+- 状态存储在 composables 中
+- 持久化到 localStorage
 
----
+### 9.2 类型安全
+- 完整的 TypeScript 类型定义
+- 严格的类型检查
 
-## 八、后续优化建议
-
-1. **性能优化**
-   - 消息列表虚拟滚动（大数据量）
-   - 图片懒加载
-   - 代码分割
-
-2. **功能增强**
-   - 文件上传支持
-   - 多模态输入（图片）
-   - 导出对话（Markdown/PDF）
-
-3. **后端集成**
-   - 可选后端持久化
-   - 用户认证
-   - 多端同步
+### 9.3 性能优化
+- 组件按需加载
+- 消息虚拟滚动（待实现）
+- 防抖搜索
 
 ---
 
-## 九、迁移指南
+## 10. 已知问题
 
-### 从旧版本迁移：
-
-1. **数据迁移**：
-   - 旧版本的 localStorage 数据会自动迁移
-   - 无需手动操作
-
-2. **代码迁移**：
-   - 使用 `useAIChat` 替代原有的多个 Store
-   - 使用新的组件替代旧组件
-
-3. **API 迁移**：
-   - 确保环境变量配置正确
-   - DeepSeek API Key 必须配置
+1. **Tool 调用在重新生成时**: 如果原消息触发了 tool 调用，重新生成时可能需要特殊处理
+2. **大量文章加载**: 当前加载所有文章到内存，大量文章时可能需要分页
 
 ---
 
-## 十、开发检查清单
+## 11. 后续计划
 
-- [ ] 环境变量配置（VITE_DEEPSEEK_API_KEY）
-- [ ] 依赖安装（marked, dompurify）
-- [ ] 类型检查通过
-- [ ] 基础对话功能正常
-- [ ] 流式输出正常
-- [ ] 思考模式正常
-- [ ] 会话管理正常
-- [ ] 本地存储持久化正常
-- [ ] SSR 无错误
+- [ ] 消息虚拟滚动
+- [ ] 多模态支持（图片）
+- [ ] 更多工具（搜索、计算器等）
+- [ ] 会话导入/导出
+- [ ] 云端同步
+
+---
+
+## 作者
+
+本次重构由 AI 辅助完成，目标是构建一个简洁、可维护的 AI Chat 系统。

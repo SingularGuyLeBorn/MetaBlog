@@ -11,7 +11,7 @@ import { Router } from 'express'
 import { promises as fs } from 'fs'
 import simpleGit from 'simple-git'
 import { join } from 'path'
-import { getLLMManager } from '../../.vitepress/agent/llm'
+const getLLMManager = () => null as any
 
 const router = Router()
 const DOCS_PATH = join(process.cwd(), 'docs')

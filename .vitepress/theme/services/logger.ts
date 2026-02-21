@@ -8,7 +8,7 @@
  * 4. 支持结构化数据输出
  */
 
-import type { LogLevel, LogEntry } from '../components/ai-chat/composables/types'
+import type { LogLevel, LogEntry } from '../components/ai-chat/core/types'
 
 // 是否是开发模式
 const isDev = typeof process !== 'undefined' 

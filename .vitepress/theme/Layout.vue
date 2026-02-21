@@ -14,9 +14,7 @@ const ChatPage = defineAsyncComponent(() => import('./components/pages/ChatPage.
 
 import ControlCenter from './components/ControlCenter.vue'
 import FullScreenPanel from './components/FullScreenPanel.vue'
-import AgentDashboard from './components/agent/AgentDashboard.vue'
-import ArticleManager from './components/agent/ArticleManager.vue'
-import LogViewer from './components/agent/LogViewer.vue'
+// Agent 组件已移除
 import { useAppStore } from './stores/app'
 
 const { Layout } = DefaultTheme
@@ -292,42 +290,9 @@ watch(() => route.path, () => {
 
     
     <!-- Full Screen Panels -->
-    <!-- Agent Dashboard Panel -->
-    <FullScreenPanel
-      :visible="activePanel === 'dashboard'"
-      title="🤖 Agent 面板"
-      @close="activePanel = null"
-    >
-      <template #actions>
-        <button class="panel-action-btn" @click="activePanel = null">
-          <span>关闭</span>
-        </button>
-      </template>
-      <AgentDashboard />
-    </FullScreenPanel>
-    
-    <!-- Article Manager Panel -->
-    <FullScreenPanel
-      :visible="activePanel === 'articles'"
-      title="📝 文章管理"
-      @close="activePanel = null"
-    >
-      <template #actions>
-        <button class="panel-action-btn primary" @click="createNewArticle">
-          <span>+ 新建文章</span>
-        </button>
-      </template>
-      <ArticleManager />
-    </FullScreenPanel>
-    
-    <!-- Log Viewer Panel -->
-    <FullScreenPanel
-      :visible="activePanel === 'logs'"
-      title="📋 日志查看"
-      @close="activePanel = null"
-    >
-      <LogViewer />
-    </FullScreenPanel>
+    <!-- Agent Dashboard Panel - 已移除 -->
+    <!-- Article Manager Panel - 已移除 -->
+    <!-- Log Viewer Panel - 已移除 -->
   </div>
 </template>
 

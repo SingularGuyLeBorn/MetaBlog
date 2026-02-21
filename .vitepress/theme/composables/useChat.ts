@@ -7,14 +7,15 @@
  * ```typescript
  * const { 
  *   messages, 
-   isLoading, 
-   sendMessage, 
-   interrupt 
- } = useChat()
+ *   isLoading, 
+ *   sendMessage, 
+ *   interrupt 
+ * } = useChat()
  * ```
  */
-import { computed, watch, nextTick } from 'vue'
-import { useChatStores } from '../../agent/stores'
+import { computed, watch, nextTick, ref } from 'vue'
+import { useAIChat } from '../components/ai-chat/core/composables/useAIChat'
+import type { ChatSession, ChatMessage, MessageGroup } from '../components/ai-chat/core/types'
 
 export interface UseChatOptions {
   /** 自动滚动到底部 */
@@ -26,7 +27,22 @@ export interface UseChatOptions {
 }
 
 export function useChat(options: UseChatOptions = {}) {
-  const { chat, message, session, stream } = useChatStores()
+  const aiChat = useAIChat()
+  const { 
+    currentSession,
+    currentSessionId,
+    sessions,
+    messageGroups,
+    isStreaming,
+    createSession,
+    switchSession,
+    deleteSession,
+    deleteVersion,
+    sendMessage: aiSendMessage,
+    regenerateResponse
+  } = aiChat
+  
+  const interrupt = (aiChat as any).interrupt || (() => {})
   
   const { 
     autoScroll = true,
@@ -39,15 +55,24 @@ export function useChat(options: UseChatOptions = {}) {
   // ═══════════════════════════════════════════════════════════════
   
   const messages = computed(() => {
-    if (!session.currentSessionId) return []
-    return message.getSessionMessages(session.currentSessionId)
+    if (!currentSessionId.value) return []
+    const groups = (messageGroups.value as Record<string, any>)[currentSessionId.value] || []
+    // Flatten message groups to messages
+    const result: ChatMessage[] = []
+    groups.forEach((group: any) => {
+      result.push(group.userMessage)
+      const activeVersion = group.aiVersions[group.currentVersionIndex]
+      if (activeVersion) {
+        result.push(activeVersion)
+      }
+    })
+    return result
   })
   
-  const isLoading = computed(() => chat.isLoading)
-  const isStreaming = computed(() => chat.isStreaming)
-  const canSend = computed(() => chat.canSend)
-  const canInterrupt = computed(() => chat.canInterrupt)
-  const currentState = computed(() => chat.currentState)
+  const isLoading = computed(() => isStreaming.value)
+  const canSend = computed(() => !isStreaming.value)
+  const canInterrupt = computed(() => isStreaming.value)
+  const currentState = computed(() => isStreaming.value ? 'streaming' : 'idle')
   
   // ═══════════════════════════════════════════════════════════════
   // 监听
@@ -67,13 +92,6 @@ export function useChat(options: UseChatOptions = {}) {
         scrollToBottom()
       })
     })
-    
-    // 监听流式更新
-    watch(() => stream.buffer, () => {
-      if (autoScroll) {
-        nextTick(() => scrollToBottom())
-      }
-    }, { deep: true })
   }
   
   // ═══════════════════════════════════════════════════════════════
@@ -84,30 +102,40 @@ export function useChat(options: UseChatOptions = {}) {
    * 发送消息
    */
   async function sendMessage(content: string, opts: { stream?: boolean } = {}) {
-    // 直接传递内容到 store，不再需要通过 updateInput 设置
-    return chat.sendMessage(content, { stream: opts.stream !== false })
+    if (!currentSessionId.value) {
+      await createSession('新对话')
+    }
+    return aiSendMessage(content)
   }
   
   /**
    * 中断生成
    */
-  function interrupt() {
-    return chat.interrupt()
+  function doInterrupt() {
+    return interrupt()
   }
   
   /**
    * 重新生成最后一条消息
    */
   async function regenerate() {
-    return chat.retry()
+    if (!currentSessionId.value) return
+    const groups = (messageGroups.value as Record<string, any>)[currentSessionId.value] || []
+    const lastGroup = groups[groups.length - 1]
+    if (lastGroup) {
+      await regenerateResponse(lastGroup.userMessage.id)
+    }
   }
   
   /**
    * 清空当前会话
    */
   function clearChat() {
-    if (session.currentSessionId) {
-      message.clearSessionMessages(session.currentSessionId)
+    if (currentSessionId.value) {
+      const groups = (messageGroups.value as Record<string, any>)[currentSessionId.value] || []
+      groups.forEach((group: any) => {
+        deleteVersion(group.userMessage.id, group.aiVersions[0]?.id)
+      })
     }
   }
   
@@ -115,8 +143,16 @@ export function useChat(options: UseChatOptions = {}) {
    * 导出会话
    */
   function exportChat(format: 'json' | 'markdown' = 'markdown') {
-    if (!session.currentSessionId) return ''
-    return message.exportMessages(session.currentSessionId, format)
+    if (!currentSessionId.value) return ''
+    const msgs = messages.value
+    if (format === 'json') {
+      return JSON.stringify(msgs, null, 2)
+    }
+    // markdown format
+    return msgs.map(m => {
+      const role = m.role === 'user' ? 'User' : 'AI'
+      return `### ${role}\n\n${m.content}\n`
+    }).join('\n---\n\n')
   }
   
   /**
@@ -132,14 +168,14 @@ export function useChat(options: UseChatOptions = {}) {
    * 创建新会话
    */
   async function newChat(title?: string) {
-    return session.createSession(title || '新对话')
+    return createSession(title || '新对话')
   }
   
   /**
    * 切换会话
    */
   async function switchChat(sessionId: string) {
-    return session.switchSession(sessionId)
+    return switchSession(sessionId)
   }
   
   // ═══════════════════════════════════════════════════════════════
@@ -154,20 +190,21 @@ export function useChat(options: UseChatOptions = {}) {
     canSend,
     canInterrupt,
     currentState,
-    
-    // 当前输入
-    inputContent: computed(() => chat.inputContent),
-    updateInput: chat.updateInput,
+    currentSession,
+    sessions,
     
     // 方法
     sendMessage,
-    interrupt,
+    interrupt: doInterrupt,
     regenerate,
     clearChat,
     exportChat,
     newChat,
     switchChat,
-    scrollToBottom
+    scrollToBottom,
+    createSession,
+    switchSession,
+    deleteSession
   }
 }
 
@@ -177,7 +214,7 @@ export function useChat(options: UseChatOptions = {}) {
  * 提供输入框相关的功能和快捷键
  */
 export function useChatInput() {
-  const { chat } = useChatStores()
+  const inputContent = ref('')
   
   /**
    * 处理键盘事件
@@ -186,20 +223,14 @@ export function useChatInput() {
     // Enter 发送，Shift+Enter 换行
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      if (chat.canSend) {
+      if (inputContent.value.trim()) {
         onSend()
       }
     }
     
-    // Ctrl/Cmd + C 中断
-    if (e.key === 'c' && (e.ctrlKey || e.metaKey) && chat.canInterrupt) {
-      e.preventDefault()
-      chat.interrupt()
-    }
-    
     // Escape 取消输入
-    if (e.key === 'Escape' && chat.inputContent) {
-      chat.updateInput('')
+    if (e.key === 'Escape' && inputContent.value) {
+      inputContent.value = ''
     }
   }
   
@@ -207,22 +238,20 @@ export function useChatInput() {
    * 插入文本到输入框
    */
   function insertText(text: string) {
-    const current = chat.inputContent
-    chat.updateInput(current + text)
+    inputContent.value += text
   }
   
   /**
    * 清空输入
    */
   function clearInput() {
-    chat.updateInput('')
-    chat.inputArticles = []
+    inputContent.value = ''
   }
   
   return {
-    inputContent: computed(() => chat.inputContent),
-    canSend: computed(() => chat.canSend),
-    updateInput: chat.updateInput,
+    inputContent,
+    canSend: computed(() => inputContent.value.trim().length > 0),
+    updateInput: (val: string) => { inputContent.value = val },
     handleKeydown,
     insertText,
     clearInput
@@ -233,24 +262,71 @@ export function useChatInput() {
  * useChatHistory - 历史记录专用组合式函数
  */
 export function useChatHistory() {
-  const { session } = useChatStores()
+  const aiChat = useAIChat()
+  const { sessions, currentSessionId, switchSession, createSession, deleteSession } = aiChat
+  
+  // 分组的历史记录
+  const today = computed(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return sessions.value.filter(s => new Date(s.updatedAt).getTime() >= today.getTime())
+  })
+  
+  const yesterday = computed(() => {
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    yesterday.setHours(0, 0, 0, 0)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return sessions.value.filter(s => {
+      const updated = new Date(s.updatedAt).getTime()
+      return updated >= yesterday.getTime() && updated < today.getTime()
+    })
+  })
+  
+  const thisWeek = computed(() => {
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    weekAgo.setHours(0, 0, 0, 0)
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    yesterday.setHours(0, 0, 0, 0)
+    return sessions.value.filter(s => {
+      const updated = new Date(s.updatedAt).getTime()
+      return updated >= weekAgo.getTime() && updated < yesterday.getTime()
+    })
+  })
+  
+  const older = computed(() => {
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    weekAgo.setHours(0, 0, 0, 0)
+    return sessions.value.filter(s => new Date(s.updatedAt).getTime() < weekAgo.getTime())
+  })
+  
+  function searchSessions(query: string): ChatSession[] {
+    const lowerQuery = query.toLowerCase()
+    return sessions.value.filter(s => 
+      s.title.toLowerCase().includes(lowerQuery)
+    )
+  }
   
   return {
     // 分组的历史记录
-    today: computed(() => session.todaySessions),
-    yesterday: computed(() => session.yesterdaySessions),
-    thisWeek: computed(() => session.thisWeekSessions),
-    older: computed(() => session.olderSessions),
+    today,
+    yesterday,
+    thisWeek,
+    older,
     
     // 当前
-    currentId: computed(() => session.currentSessionId),
-    current: computed(() => session.currentSession),
+    currentId: currentSessionId,
+    current: computed(() => sessions.value.find(s => s.id === currentSessionId.value)),
     
     // 操作
-    switch: session.switchSession,
-    create: session.createSession,
-    delete: session.deleteSession,
-    search: session.searchSessions
+    switch: switchSession,
+    create: createSession,
+    delete: deleteSession,
+    search: searchSessions
   }
 }
 

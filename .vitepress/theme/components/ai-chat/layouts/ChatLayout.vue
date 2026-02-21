@@ -32,9 +32,23 @@
             <span v-if="currentSession" class="model-tag">
               {{ currentSession.config.model }}
             </span>
+            <!-- 当前激活的 Agent 标签 -->
+            <span v-if="activeAgent" class="agent-badge" @click="showAgentAdmin = true">
+              <span class="badge-avatar">{{ activeAgent.avatar }}</span>
+              <span class="badge-name">{{ activeAgent.name }}</span>
+            </span>
           </div>
         </div>
         <div class="header-right">
+          <!-- Agent 管理中心按钮 -->
+          <button 
+            class="icon-btn agent-admin-btn" 
+            :class="{ active: showAgentAdmin }"
+            title="Agent 控制中心"
+            @click="showAgentAdmin = true"
+          >
+            <Icon name="sparkles" :size="18" />
+          </button>
           <button class="icon-btn" @click="clearMessages()">
             <Icon name="trash" :size="18" />
           </button>
@@ -61,8 +75,10 @@
         ref="chatInputRef"
         v-model="inputText"
         :is-streaming="isStreaming"
+        :selected-skill="selectedSkill"
         @send="handleSend"
         @stop="interruptGeneration"
+        @select-skill="handleSelectSkill"
       />
     </main>
 
@@ -73,15 +89,27 @@
       @update:config="updateConfig"
       @toggle-collapse="rightCollapsed = !rightCollapsed"
     />
+
+    <!-- Agent 管理中心 -->
+    <AgentAdmin
+      v-model:visible="showAgentAdmin"
+      @agent-change="handleAgentChange"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import { SessionPanel, MessageList, ChatInput, SettingsPanel } from '../features'
+import { SessionPanel } from '../modules/chat/session'
+import { MessageList } from '../modules/chat/messages'
+import { ChatInput } from '../modules/chat/input'
+import { SettingsPanel } from '../modules/chat/settings'
+import { AgentAdmin } from '../modules/agent/admin'
 import { Icon } from '../ui'
-import { useAIChat } from '../composables/useAIChat'
-import type { SessionConfig } from '../composables/types'
+import { useAIChat, useAgents } from '../core/composables'
+import type { SessionConfig } from '../core/types'
+import type { Skill } from '../core/composables/useSkills'
+import type { Agent } from '../core/composables/useAgents'
 
 const {
   sessions,
@@ -103,13 +131,15 @@ const {
   updateSessionConfig
 } = useAIChat()
 
+const { activeAgent } = useAgents()
+
 const leftCollapsed = ref(false)
 const rightCollapsed = ref(true)
 const inputText = ref('')
 const messageListRef = ref<InstanceType<typeof MessageList>>()
 const chatInputRef = ref<InstanceType<typeof ChatInput>>()
-
-
+const showAgentAdmin = ref(false)
+const selectedSkill = ref<Skill | undefined>(undefined)
 
 const currentConfig = computed({
   get: () => currentSession.value?.config || defaultConfig,
@@ -131,15 +161,7 @@ async function handleRegenerate() {
   }
 }
 
-interface Skill {
-  id: string
-  name: string
-  description: string
-  icon: string
-  systemPrompt: string
-}
-
-async function handleSend(content: string, skill?: Skill) {
+async function handleSend(content: string, skillInfo?: { id: string; name: string; icon: string; systemPrompt: string }) {
   if (!content.trim() || isStreaming.value) return
   
   inputText.value = ''
@@ -150,16 +172,17 @@ async function handleSend(content: string, skill?: Skill) {
     chatInputRef.value?.focus()
   })
   
-  // 如果有技能，临时更新会话配置使用技能提示词
-  // 注意：这里修改配置后发送，AI 会使用新的 systemPrompt
-  if (skill && currentSessionId.value) {
-    updateSessionConfig(currentSessionId.value, {
-      systemPrompt: skill.systemPrompt
-    })
+  // 使用当前 Agent 的系统提示词 + 技能系统提示词
+  if (currentSessionId.value) {
+    let systemPrompt = activeAgent.value?.systemPrompt || '你是一个 helpful 的 AI 助手。'
+    if (skillInfo?.systemPrompt) {
+      systemPrompt = skillInfo.systemPrompt
+    }
+    updateSessionConfig(currentSessionId.value, { systemPrompt })
   }
   
-  // 发送消息（content 已经包含了结构化的引用内容）
-  await sendMessage(content)
+  // 发送消息（包含技能信息用于UI显示）
+  await sendMessage(content, skillInfo)
 }
 
 function handleQuickPrompt(text: string) {
@@ -186,6 +209,15 @@ function updateConfig(config: Partial<SessionConfig>) {
   if (currentSessionId.value) {
     updateSessionConfig(currentSessionId.value, config)
   }
+}
+
+function handleSelectSkill(skill: Skill | undefined) {
+  selectedSkill.value = skill
+}
+
+function handleAgentChange(agent: Agent) {
+  // Agent 切换后的处理
+  console.log('切换到 Agent:', agent.name)
 }
 </script>
 
@@ -245,6 +277,11 @@ function updateConfig(config: Partial<SessionConfig>) {
   color: var(--ai-text-primary);
 }
 
+.icon-btn.active {
+  color: var(--vp-c-brand);
+  background: var(--vp-c-brand-soft);
+}
+
 .header-info {
   display: flex;
   align-items: center;
@@ -267,9 +304,64 @@ function updateConfig(config: Partial<SessionConfig>) {
   font-weight: 500;
 }
 
+/* Agent 徽章 */
+.agent-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.agent-badge:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+  border-color: rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.badge-avatar {
+  font-size: 14px;
+}
+
+.badge-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--vp-c-brand);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .header-right {
   display: flex;
   gap: var(--ai-space-2);
+}
+
+/* Agent 管理按钮特殊样式 */
+.agent-admin-btn {
+  position: relative;
+}
+
+.agent-admin-btn::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  background: var(--vp-c-brand);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.agent-admin-btn.active::after {
+  opacity: 1;
 }
 
 /* 返回首页按钮 */

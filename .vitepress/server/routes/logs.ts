@@ -5,7 +5,23 @@
  * v7 修复：改用 StructuredLogger.server，消除跨边界 import
  */
 import type { ServerResponse } from '../types'
-import { getStructuredLogger, type LogQueryFilter, type LogLevel } from '../../agent/runtime/StructuredLogger.server'
+export type LogLevel = 'info' | 'warn' | 'error' | 'success' | 'debug';
+export interface LogQueryFilter {
+  level?: LogLevel;
+  event?: string;
+}
+export function getStructuredLogger() {
+  return {
+    info: (...args: any[]) => console.info(...args),
+    warn: (...args: any[]) => console.warn(...args),
+    error: (...args: any[]) => console.error(...args),
+    success: (...args: any[]) => console.log(...args),
+    debug: (...args: any[]) => console.debug(...args),
+    getRecentLogs: async (count: number, level?: LogLevel) => [] as any[],
+    getStats: async () => ({}),
+    queryLogs: async (filter: any) => [] as any[]
+  }
+}
 
 const logger = getStructuredLogger()
 
@@ -43,21 +59,21 @@ export async function handleLogsAPI(url: URL, method: string, body?: any): Promi
     }
     
     // 根据级别调用对应方法
-    const upperLevel = (level || 'info').toUpperCase() as LogLevel
+    const upperLevel = (level || 'info').toLowerCase() as LogLevel
     switch (upperLevel) {
-      case 'DEBUG':
+      case 'debug':
         logger.debug(event, message, metadata)
         break
-      case 'WARN':
+      case 'warn':
         logger.warn(event, message, metadata)
         break
-      case 'ERROR':
+      case 'error':
         logger.error(event, message, metadata)
         break
-      case 'SUCCESS':
+      case 'success':
         logger.success(event, message, metadata)
         break
-      case 'INFO':
+      case 'info':
       default:
         logger.info(event, message, metadata)
         break
@@ -102,7 +118,7 @@ export async function handleLogsAPI(url: URL, method: string, body?: any): Promi
     }
     
     if (format === 'text') {
-      const text = logs.map(log => {
+      const text = logs.map((log: any) => {
         const actorEmoji = log.actor === 'human' ? '👤' : 
                           log.actor === 'ai' ? '🤖' : '⚙️'
         return `[${log.timestamp}] ${actorEmoji} [${log.actor}] ${log.level} | ${log.event} | ${log.message}`

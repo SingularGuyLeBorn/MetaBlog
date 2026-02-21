@@ -6,11 +6,13 @@
 import type { Theme } from 'vitepress'
 import { createPinia } from 'pinia'
 import DefaultTheme from 'vitepress/theme'
-import { createPersistPlugin } from '../agent/stores/plugins/persistPlugin'
-import { createLoggerPlugin } from '../agent/stores/plugins/loggerPlugin'
+// import { createPersistPlugin } from '../agent/stores/plugins/persistPlugin'  // Agent module deprecated
+// import { createLoggerPlugin } from '../agent/stores/plugins/loggerPlugin'  // Agent module deprecated
+const createPersistPlugin = (options?: any) => () => {}  // Stub
+const createLoggerPlugin = (options?: any) => () => {}   // Stub
 
 // 导入组件
-import AIChatOrbNew from './components/agent/AIChatOrbNew.vue'
+// import AIChatOrbNew from './components/agent/AIChatOrbNew.vue'  // Agent module deprecated
 
 // 样式
 import './style.css'
@@ -43,7 +45,7 @@ export default {
     app.use(pinia)
     
     // 注册全局组件
-    app.component('AIChatOrbNew', AIChatOrbNew)
+    // app.component('AIChatOrbNew', AIChatOrbNew)
     
     // 全局错误处理
     app.config.errorHandler = (err, instance, info) => {

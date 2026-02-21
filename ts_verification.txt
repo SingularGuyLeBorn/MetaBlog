@@ -1,0 +1,1 @@
+.vitepress/theme/components/ai-chat/core/services/aiService.ts(34,57): error TS2367: This comparison appears to be unintentional because the types 'MessageRole' and '"tool"' have no overlap.
