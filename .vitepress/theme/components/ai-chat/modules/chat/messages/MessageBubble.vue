@@ -26,6 +26,38 @@
     <div v-else class="ai-message">
       <AIAvatar :typing="isStreaming" />
       <div class="message-body">
+        <!-- 工具调用记录 -->
+        <div v-if="toolRecords.length > 0" class="tool-records-box">
+          <div class="tool-records-header" @click="showToolRecords = !showToolRecords">
+            <span class="tool-icon">🔧</span>
+            <span>工具调用 ({{ toolRecords.length }})</span>
+            <Icon :name="showToolRecords ? 'chevron-down' : 'chevron-right'" :size="14" />
+          </div>
+          <div v-show="showToolRecords" class="tool-records-content">
+            <div v-for="record in toolRecords" :key="record.id" class="tool-record-item">
+              <div class="tool-record-header">
+                <span class="tool-name">{{ record.name }}</span>
+                <span :class="['tool-status', record.status]">{{ statusText(record.status) }}</span>
+                <span v-if="record.duration" class="tool-duration">{{ record.duration }}ms</span>
+              </div>
+              <div class="tool-record-detail">
+                <div class="tool-section">
+                  <div class="tool-section-title">📥 参数:</div>
+                  <pre class="tool-code">{{ JSON.stringify(record.arguments, null, 2) }}</pre>
+                </div>
+                <div class="tool-section">
+                  <div class="tool-section-title">📤 结果:</div>
+                  <pre class="tool-code">{{ record.result }}</pre>
+                </div>
+                <div v-if="record.error" class="tool-section">
+                  <div class="tool-section-title">❌ 错误:</div>
+                  <pre class="tool-code error">{{ record.error }}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 思考过程 -->
         <div v-if="displayReasoning" class="reasoning-box">
           <div class="reasoning-header" @click="isExpanded = !isExpanded">
@@ -104,6 +136,22 @@ const emit = defineEmits<{
 
 const isExpanded = ref(true)
 const copied = ref(false)
+const showToolRecords = ref(true)
+
+// ==================== 工具调用记录 ====================
+const toolRecords = computed(() => {
+  return props.message.metadata?.toolRecords || []
+})
+
+function statusText(status: string): string {
+  const map: Record<string, string> = {
+    'pending': '等待中',
+    'running': '执行中',
+    'success': '成功',
+    'error': '失败'
+  }
+  return map[status] || status
+}
 
 // ==================== 消息解析 ====================
 
@@ -316,6 +364,135 @@ async function copyContent() {
   font-style: italic;
   line-height: 1.7;
   white-space: pre-wrap;
+}
+
+/* 工具调用记录 */
+.tool-records-box {
+  margin-bottom: var(--ai-space-3);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--ai-radius-lg);
+  overflow: hidden;
+}
+
+.tool-records-header {
+  display: flex;
+  align-items: center;
+  gap: var(--ai-space-2);
+  padding: var(--ai-space-2) var(--ai-space-4);
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+  transition: background var(--ai-transition-fast);
+}
+
+.tool-records-header:hover {
+  background: #f1f5f9;
+}
+
+.tool-icon {
+  font-size: 14px;
+}
+
+.tool-records-content {
+  padding: 0 var(--ai-space-4) var(--ai-space-3);
+}
+
+.tool-record-item {
+  margin-bottom: var(--ai-space-3);
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--ai-radius-md);
+  overflow: hidden;
+}
+
+.tool-record-item:last-child {
+  margin-bottom: 0;
+}
+
+.tool-record-header {
+  display: flex;
+  align-items: center;
+  gap: var(--ai-space-2);
+  padding: var(--ai-space-2) var(--ai-space-3);
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 12px;
+}
+
+.tool-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.tool-status {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.tool-status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tool-status.running {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.tool-status.success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.tool-status.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.tool-duration {
+  margin-left: auto;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.tool-record-detail {
+  padding: var(--ai-space-3);
+}
+
+.tool-section {
+  margin-bottom: var(--ai-space-2);
+}
+
+.tool-section:last-child {
+  margin-bottom: 0;
+}
+
+.tool-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.tool-code {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: var(--ai-space-2) var(--ai-space-3);
+  border-radius: var(--ai-radius-md);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tool-code.error {
+  background: #7f1d1d;
+  color: #fecaca;
 }
 
 /* 消息气泡 */

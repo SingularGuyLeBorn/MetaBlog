@@ -190,7 +190,7 @@ export function useAIChat() {
       // 构建历史记录（使用当前激活版本的消息）
       const history = buildHistoryFromGroups(groups)
       
-      await aiService.chatStream(
+      const { toolRecords } = await aiService.chatStream(
         history,
         config,
         {
@@ -208,7 +208,10 @@ export function useAIChat() {
             const targetMsg = groups[groups.length - 1].aiVersions[0]
             targetMsg.status = 'completed'
             targetMsg.updatedAt = Date.now()
-            targetMsg.metadata = { model: config.model }
+            targetMsg.metadata = { 
+              model: config.model,
+              toolRecords  // 保存工具调用记录到消息
+            }
             isStreaming.value = false
             storage.saveMessageGroups(sessionId, groups)
           },
@@ -219,6 +222,23 @@ export function useAIChat() {
             targetMsg.updatedAt = Date.now()
             isStreaming.value = false
             storage.saveMessageGroups(sessionId, groups)
+          },
+          onToolRecord: (record) => {
+            // 实时更新工具调用记录
+            const targetMsg = groups[groups.length - 1].aiVersions[0]
+            if (!targetMsg.metadata) {
+              targetMsg.metadata = {}
+            }
+            if (!targetMsg.metadata.toolRecords) {
+              targetMsg.metadata.toolRecords = []
+            }
+            // 查找是否已存在该记录
+            const existingIndex = targetMsg.metadata.toolRecords.findIndex(r => r.id === record.id)
+            if (existingIndex >= 0) {
+              targetMsg.metadata.toolRecords[existingIndex] = record
+            } else {
+              targetMsg.metadata.toolRecords.push(record)
+            }
           }
         }
       )

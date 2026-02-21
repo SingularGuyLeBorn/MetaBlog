@@ -7,8 +7,10 @@
  * 3. 系统执行工具函数
  * 4. 发送 tool 结果给 AI
  * 5. AI 返回最终回复
+ * 
+ * 工具调用记录会持久化到消息中，方便查看完整链路
  */
-import type { ChatMessage, SessionConfig, MessageRole } from '../types'
+import type { ChatMessage, SessionConfig, MessageRole, ToolCallRecord } from '../types'
 
 const API_BASE_URL = 'https://api.deepseek.com/v1'
 
@@ -25,6 +27,8 @@ export interface StreamCallbacks {
   onReasoning: (text: string) => void
   onComplete: () => void
   onError: (error: Error) => void
+  /** 工具调用记录回调 */
+  onToolRecord?: (record: ToolCallRecord) => void
 }
 
 /** 工具定义 */
@@ -62,16 +66,61 @@ function registerTool(name: string, definition: ToolDefinition, executor: ToolEx
   tools.set(name, { definition, executor })
 }
 
-/** 执行工具 */
-async function executeTool(name: string, args: Record<string, any>): Promise<string> {
+/** 执行工具（带完整记录） */
+async function executeToolWithRecord(
+  name: string, 
+  args: Record<string, any>,
+  onRecord?: (record: ToolCallRecord) => void
+): Promise<{ result: string; record: ToolCallRecord }> {
   const tool = tools.get(name)
-  if (!tool) {
-    return `错误：工具 "${name}" 未找到`
+  const startTime = Date.now()
+  
+  const record: ToolCallRecord = {
+    id: `tool_${startTime}_${Math.random().toString(36).substr(2, 9)}`,
+    name,
+    description: tool?.definition.function.description,
+    arguments: args,
+    result: '',
+    status: 'running',
+    startTime
   }
+  
+  // 通知开始执行
+  onRecord?.(record)
+  
   try {
-    return await tool.executor(args)
+    let result: string
+    
+    if (!tool) {
+      result = `错误：工具 "${name}" 未找到`
+      record.status = 'error'
+      record.error = result
+    } else {
+      const execResult = await tool.executor(args)
+      result = execResult
+      record.status = 'success'
+    }
+    
+    record.result = result
+    record.endTime = Date.now()
+    record.duration = record.endTime - startTime
+    
+    // 通知完成
+    onRecord?.(record)
+    
+    return { result, record }
   } catch (error) {
-    return `执行错误: ${error instanceof Error ? error.message : String(error)}`
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    record.status = 'error'
+    record.error = errorMsg
+    record.result = `执行错误: ${errorMsg}`
+    record.endTime = Date.now()
+    record.duration = record.endTime - startTime
+    
+    // 通知错误
+    onRecord?.(record)
+    
+    return { result: record.result, record }
   }
 }
 
@@ -79,112 +128,6 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
 function getToolDefinitions(): ToolDefinition[] {
   return Array.from(tools.values()).map(t => t.definition)
 }
-
-// ============ 注册示例工具（可以先返回假数据） ============
-
-// 1. 获取文章
-registerTool('get_article_content', {
-  type: 'function',
-  function: {
-    name: 'get_article_content',
-    description: '获取指定文章的完整内容',
-    parameters: {
-      type: 'object',
-      properties: {
-        path: { type: 'string', description: '文章路径' }
-      },
-      required: ['path']
-    }
-  }
-}, async (args) => {
-  // 这里是假实现，后续替换成真实逻辑
-  return `[模拟数据] 文章 "${args.path}" 的内容：\n这是一篇关于前端开发的技术文章，详细介绍了...`
-})
-
-// 2. 搜索文章
-registerTool('search_articles', {
-  type: 'function',
-  function: {
-    name: 'search_articles',
-    description: '根据关键词搜索文章',
-    parameters: {
-      type: 'object',
-      properties: {
-        query: { type: 'string', description: '搜索关键词' },
-        limit: { type: 'number', description: '返回数量限制' }
-      },
-      required: ['query']
-    }
-  }
-}, async (args) => {
-  // 假实现
-  return `[模拟搜索结果] 关键词 "${args.query}" 的搜索结果：\n1. 文章一\n2. 文章二\n3. 文章三`
-})
-
-// 3. 获取时间
-registerTool('get_current_time', {
-  type: 'function',
-  function: {
-    name: 'get_current_time',
-    description: '获取当前时间',
-    parameters: {
-      type: 'object',
-      properties: {}
-    }
-  }
-}, () => {
-  return new Date().toISOString()
-})
-
-// 4. 【测试工具】回声测试 - 验证工具调用链路的专用工具
-registerTool('test_echo', {
-  type: 'function',
-  function: {
-    name: 'test_echo',
-    description: '【测试专用】回声工具，用于验证工具调用是否正常工作。调用后会返回你发送的内容和调用时间戳。当用户说"测试工具"、"调用测试工具"或"echo测试"时使用此工具。',
-    parameters: {
-      type: 'object',
-      properties: {
-        message: { 
-          type: 'string', 
-          description: '要回显的消息内容' 
-        },
-        repeat_count: {
-          type: 'number',
-          description: '重复次数（可选，默认1）'
-        }
-      },
-      required: ['message']
-    }
-  }
-}, async (args) => {
-  const timestamp = new Date().toLocaleString('zh-CN')
-  const message = args.message || '空消息'
-  const repeat = args.repeat_count || 1
-  
-  // 构建回显内容
-  const lines = []
-  lines.push('🎯 【工具调用成功】')
-  lines.push(`📅 调用时间: ${timestamp}`)
-  lines.push(`📨 收到消息: "${message}"`)
-  lines.push(`🔢 重复次数: ${repeat}`)
-  lines.push('')
-  lines.push('✅ 工具调用链路完整：')
-  lines.push('   1. AI 识别到需要调用工具 ✓')
-  lines.push('   2. 系统执行 test_echo 函数 ✓')
-  lines.push('   3. 函数返回结果 ✓')
-  lines.push('   4. 结果发送给 AI ✓')
-  
-  if (repeat > 1) {
-    lines.push('')
-    lines.push('🔄 重复内容:')
-    for (let i = 0; i < repeat; i++) {
-      lines.push(`   ${i + 1}. ${message}`)
-    }
-  }
-  
-  return lines.join('\n')
-})
 
 /** 准备发送给 API 的消息 */
 function prepareMessages(messages: ChatMessage[]): any[] {
@@ -354,7 +297,9 @@ export const aiService = {
     config: SessionConfig,
     callbacks: StreamCallbacks,
     signal?: AbortSignal
-  ): Promise<void> {
+  ): Promise<{ toolRecords?: ToolCallRecord[] }> {
+    const toolRecords: ToolCallRecord[] = []
+    
     try {
       const sessionId = messages[0]?.sessionId || 'unknown'
       
@@ -368,7 +313,7 @@ export const aiService = {
       
       if (firstResponse.error) {
         callbacks.onError(new Error(firstResponse.error))
-        return
+        return { toolRecords }
       }
       
       // 如果有工具调用
@@ -376,11 +321,20 @@ export const aiService = {
         // 显示工具调用状态
         callbacks.onContent(`🔧 正在使用工具: ${firstResponse.toolCalls[0].function.name}...`)
         
-        // 执行所有工具
+        // 执行所有工具（带记录）
         const toolResults = []
         for (const toolCall of firstResponse.toolCalls) {
           const args = JSON.parse(toolCall.function.arguments || '{}')
-          const result = await executeTool(toolCall.function.name, args)
+          
+          // 执行工具并记录
+          const { result, record } = await executeToolWithRecord(
+            toolCall.function.name, 
+            args,
+            callbacks.onToolRecord
+          )
+          
+          toolRecords.push(record)
+          
           toolResults.push({
             tool_call_id: toolCall.id,
             name: toolCall.function.name,
@@ -388,7 +342,7 @@ export const aiService = {
           })
         }
         
-        // 构建新消息历史
+        // 构建新消息历史（包含工具记录）
         const assistantMsg: ChatMessage = {
           id: `msg_${Date.now()}_assistant`,
           sessionId,
@@ -398,7 +352,8 @@ export const aiService = {
           createdAt: Date.now(),
           updatedAt: Date.now(),
           metadata: {
-            toolCalls: firstResponse.toolCalls
+            toolCalls: firstResponse.toolCalls,
+            toolRecords: toolRecords  // 持久化工具调用记录
           }
         }
         
@@ -412,7 +367,8 @@ export const aiService = {
           updatedAt: Date.now(),
           metadata: {
             toolName: result.name,
-            toolCallId: result.tool_call_id
+            toolCallId: result.tool_call_id,
+            toolRecords: [toolRecords[i]]  // 每个 tool 消息也带上自己的记录
           }
         }))
         
@@ -435,9 +391,12 @@ export const aiService = {
         
         // 第二步：流式请求获取最终回复
         await chatStreamInternal(secondMessages, config, callbacks, signal)
+        
+        return { toolRecords }
       } else {
         // 不需要工具，直接流式输出
         await chatStreamInternal(apiMessages, config, callbacks, signal)
+        return { toolRecords }
       }
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
@@ -445,6 +404,7 @@ export const aiService = {
       } else {
         callbacks.onError(error as Error)
       }
+      return { toolRecords }
     }
   },
   
@@ -462,3 +422,100 @@ export const aiService = {
     return Array.from(tools.keys())
   }
 }
+
+// ============ 注册示例工具 ============
+
+// 1. 获取文章
+registerTool('get_article_content', {
+  type: 'function',
+  function: {
+    name: 'get_article_content',
+    description: '获取指定文章的完整内容',
+    parameters: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: '文章路径' }
+      },
+      required: ['path']
+    }
+  }
+}, async (args) => {
+  return `[模拟数据] 文章 "${args.path}" 的内容：
+这是一篇关于前端开发的技术文章，详细介绍了...`
+})
+
+// 2. 搜索文章
+registerTool('search_articles', {
+  type: 'function',
+  function: {
+    name: 'search_articles',
+    description: '根据关键词搜索文章',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: '搜索关键词' },
+        limit: { type: 'number', description: '返回数量限制' }
+      },
+      required: ['query']
+    }
+  }
+}, async (args) => {
+  return `[模拟搜索结果] 关键词 "${args.query}" 的搜索结果：
+1. 文章一
+2. 文章二
+3. 文章三`
+})
+
+// 3. 获取时间
+registerTool('get_current_time', {
+  type: 'function',
+  function: {
+    name: 'get_current_time',
+    description: '获取当前时间',
+    parameters: {
+      type: 'object',
+      properties: {}
+    }
+  }
+}, () => {
+  return new Date().toISOString()
+})
+
+// 4. 测试工具
+registerTool('test_echo', {
+  type: 'function',
+  function: {
+    name: 'test_echo',
+    description: '【测试专用】回声工具，用于验证工具调用是否正常工作。当用户说"测试工具"、"调用测试工具"或"echo测试"时使用此工具。',
+    parameters: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', description: '要回显的消息内容' },
+        repeat_count: { type: 'number', description: '重复次数（可选，默认1）' }
+      },
+      required: ['message']
+    }
+  }
+}, async (args) => {
+  const timestamp = new Date().toLocaleString('zh-CN')
+  const message = args.message || '空消息'
+  const repeat = args.repeat_count || 1
+  
+  const lines = []
+  lines.push('🎯 【工具调用成功】')
+  lines.push(`📅 调用时间: ${timestamp}`)
+  lines.push(`📨 收到消息: "${message}"`)
+  lines.push(`🔢 重复次数: ${repeat}`)
+  lines.push('')
+  lines.push('✅ 工具调用链路完整')
+  
+  if (repeat > 1) {
+    lines.push('')
+    lines.push('🔄 重复内容:')
+    for (let i = 0; i < repeat; i++) {
+      lines.push(`   ${i + 1}. ${message}`)
+    }
+  }
+  
+  return lines.join('\n')
+})

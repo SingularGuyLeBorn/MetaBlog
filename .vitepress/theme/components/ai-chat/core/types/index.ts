@@ -44,6 +44,20 @@ export interface TokenUsage {
 
 import type { ToolCall } from './tools'
 
+/** 工具调用记录（用于持久化展示） */
+export interface ToolCallRecord {
+  id: string
+  name: string
+  description?: string
+  arguments: Record<string, any>
+  result: string
+  status: 'pending' | 'running' | 'success' | 'error'
+  startTime: number
+  endTime?: number
+  duration?: number
+  error?: string
+}
+
 /** 消息元数据 */
 export interface MessageMetadata {
   model?: string
@@ -60,6 +74,8 @@ export interface MessageMetadata {
     icon: string
     systemPrompt?: string
   }
+  /** 工具调用记录（用于展示完整调用过程） */
+  toolRecords?: ToolCallRecord[]
 }
 
 /** AI 响应版本 */
