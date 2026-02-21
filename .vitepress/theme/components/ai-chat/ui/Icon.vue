@@ -96,6 +96,12 @@
         <circle cx="19" cy="12" r="1"/>
         <circle cx="5" cy="12" r="1"/>
       </template>
+      
+      <!-- 左箭头（返回） -->
+      <template v-else-if="name === 'arrow-left'">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </template>
     </svg>
   </span>
 </template>

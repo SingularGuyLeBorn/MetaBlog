@@ -36,9 +36,6 @@
           <span class="thinking-dot"></span>
         </div>
 
-        <!-- 流式光标 -->
-        <span v-if="isStreaming" class="cursor"></span>
-
         <!-- 操作按钮 -->
         <div class="message-actions">
           <button class="action-btn" @click="copyContent">
