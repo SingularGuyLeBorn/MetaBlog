@@ -1,0 +1,252 @@
+/* =============================================================================
+   AI Chat - 组件通用样式
+   ============================================================================= */
+
+/* 按钮基础 */
+.ai-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ai-space-2);
+  padding: var(--ai-space-2) var(--ai-space-4);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--ai-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--ai-transition-fast);
+  outline: none;
+}
+
+.ai-btn:focus-visible {
+  box-shadow: var(--ai-shadow-glow);
+}
+
+.ai-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 主要按钮 */
+.ai-btn-primary {
+  background: var(--ai-primary-600);
+  color: var(--ai-text-inverse);
+  border-color: var(--ai-primary-600);
+}
+
+.ai-btn-primary:hover:not(:disabled) {
+  background: var(--ai-primary-700);
+  border-color: var(--ai-primary-700);
+}
+
+/* 次要按钮 */
+.ai-btn-secondary {
+  background: var(--ai-gray-100);
+  color: var(--ai-text-secondary);
+  border-color: var(--ai-gray-200);
+}
+
+.ai-btn-secondary:hover:not(:disabled) {
+  background: var(--ai-gray-200);
+  border-color: var(--ai-gray-300);
+}
+
+/* 幽灵按钮 */
+.ai-btn-ghost {
+  background: transparent;
+  color: var(--ai-text-secondary);
+  border-color: transparent;
+}
+
+.ai-btn-ghost:hover:not(:disabled) {
+  background: var(--ai-gray-100);
+  color: var(--ai-text-primary);
+}
+
+/* 图标按钮 */
+.ai-btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: var(--ai-radius-md);
+}
+
+/* 卡片 */
+.ai-card {
+  background: var(--ai-bg-card);
+  border: 1px solid var(--ai-border-light);
+  border-radius: var(--ai-radius-lg);
+  box-shadow: var(--ai-shadow-sm);
+  transition: all var(--ai-transition-fast);
+}
+
+.ai-card:hover {
+  box-shadow: var(--ai-shadow-md);
+}
+
+/* 输入框 */
+.ai-input {
+  width: 100%;
+  padding: var(--ai-space-3) var(--ai-space-4);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ai-text-primary);
+  background: var(--ai-bg-card);
+  border: 1px solid var(--ai-border-light);
+  border-radius: var(--ai-radius-lg);
+  outline: none;
+  transition: all var(--ai-transition-fast);
+}
+
+.ai-input:focus {
+  border-color: var(--ai-border-focus);
+  box-shadow: var(--ai-shadow-glow);
+}
+
+.ai-input::placeholder {
+  color: var(--ai-text-muted);
+}
+
+.ai-input:disabled {
+  background: var(--ai-gray-100);
+  cursor: not-allowed;
+}
+
+/* 文本域 */
+.ai-textarea {
+  resize: none;
+  min-height: 80px;
+}
+
+/* 选择框 */
+.ai-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+/* 滑块 */
+.ai-slider {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--ai-gray-200);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.ai-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--ai-primary-600);
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: var(--ai-shadow-sm);
+  transition: transform var(--ai-transition-fast);
+}
+
+.ai-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+/* 开关 */
+.ai-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.ai-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.ai-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--ai-gray-300);
+  border-radius: var(--ai-radius-full);
+  transition: background var(--ai-transition-fast);
+}
+
+.ai-switch-slider:before {
+  content: '';
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--ai-transition-fast);
+  box-shadow: var(--ai-shadow-sm);
+}
+
+.ai-switch input:checked + .ai-switch-slider {
+  background: var(--ai-primary-600);
+}
+
+.ai-switch input:checked + .ai-switch-slider:before {
+  transform: translateX(20px);
+}
+
+/* 标签 */
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--ai-radius-full);
+}
+
+.ai-badge-primary {
+  background: var(--ai-primary-100);
+  color: var(--ai-primary-700);
+}
+
+.ai-badge-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* 分割线 */
+.ai-divider {
+  height: 1px;
+  background: var(--ai-border-light);
+  margin: var(--ai-space-4) 0;
+}
+
+/* 滚动条 */
+.ai-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.ai-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ai-scroll::-webkit-scrollbar-thumb {
+  background: var(--ai-gray-300);
+  border-radius: 3px;
+}
+
+.ai-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--ai-gray-400);
+}
+
+/* 选中文字 */
+::selection {
+  background: var(--ai-primary-200);
+  color: var(--ai-primary-900);
+}

@@ -1,0 +1,20 @@
+{
+  "summary": {
+    "total": 1,
+    "timestamp": "2026-02-21T14:30:23.814Z",
+    "cwd": "D:\\ALL IN AI\\MetaBlog\\tests"
+  },
+  "errors": [
+    {
+      "filePath": "../.vitepress/theme/services/logger.ts",
+      "line": 16,
+      "column": 5,
+      "severity": "error",
+      "code": "TS2367",
+      "message": "This comparison appears to be unintentional because the types 'string | undefined' and 'boolean' have no overlap.",
+      "details": [],
+      "raw": "../.vitepress/theme/services/logger.ts(16,5): error TS2367: This comparison appears to be unintentional because the types 'string | undefined' and 'boolean' have no overlap.\n",
+      "sourceCode": ": import.meta.env?.DEV !== false"
+    }
+  ]
+}

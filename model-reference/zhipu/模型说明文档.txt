@@ -1,0 +1,1920 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.bigmodel.cn/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# GLM-4.7-Flash
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/rectangle-list.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 概览 </div>
+
+GLM-4.7-Flash 作为 30B 级 SOTA 模型，提供了一个兼顾性能与效率的新选择。面向 **Agentic Coding** 场景强化了编码能力、长程任务规划与工具协同，并在多个公开基准的当期榜单中取得同尺寸开源模型中的出色表现。在执行复杂智能体任务，在工具调用时指令遵循更强，Artifacts 与 Agentic Coding 的前端美感和长程任务完成效率进一步提升。
+
+<CardGroup cols={2}>
+  <Card title="输入模态" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-right.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-right.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    文本
+  </Card>
+
+  <Card title="输出模态" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-left.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-left.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    文本
+  </Card>
+
+  <Card title="上下文窗口" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-arrow-up.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-arrow-up.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    200K
+  </Card>
+
+  <Card title="最大输出 Tokens" icon={<svg style={{maskImage: "url(/resource/icon/maximize.svg)", WebkitMaskImage: "url(/resource/icon/maximize.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    128K
+  </Card>
+</CardGroup>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/bolt.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 能力支持 </div>
+
+<CardGroup cols={3}>
+  <Card title="思考模式" icon={<svg style={{maskImage: "url(/resource/icon/brain.svg)", WebkitMaskImage: "url(/resource/icon/brain.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />} href="/cn/guide/capabilities/thinking-mode">
+    提供多种思考模式，覆盖不同任务需求
+  </Card>
+
+  <Card title="流式输出" icon={<svg style={{maskImage: "url(/resource/icon/maximize.svg)", WebkitMaskImage: "url(/resource/icon/maximize.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />} href="/cn/guide/capabilities/streaming">
+    支持实时流式响应，提升用户交互体验
+  </Card>
+
+  <Card title="Function Call" icon={<svg style={{maskImage: "url(/resource/icon/function.svg)", WebkitMaskImage: "url(/resource/icon/function.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />} href="/cn/guide/capabilities/function-calling">
+    强大的工具调用能力，支持多种外部工具集成
+  </Card>
+
+  <Card title="上下文缓存" icon={<svg style={{maskImage: "url(/resource/icon/database.svg)", WebkitMaskImage: "url(/resource/icon/database.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />} href="/cn/guide/capabilities/cache">
+    智能缓存机制，优化长对话性能
+  </Card>
+
+  <Card title="结构化输出" icon={<svg style={{maskImage: "url(/resource/icon/code.svg)", WebkitMaskImage: "url(/resource/icon/code.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />} href="/cn/guide/capabilities/struct-output">
+    支持 JSON 等结构化格式输出，便于系统集成
+  </Card>
+
+  <Card title="MCP" icon={<svg style={{maskImage: "url(/resource/icon/box.svg)", WebkitMaskImage: "url(/resource/icon/box.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    可灵活调用外部 MCP 工具与数据源，扩展应用场景
+  </Card>
+</CardGroup>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/stars.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 推荐场景 </div>
+
+<AccordionGroup>
+  <Accordion title="Agentic Coding">
+    GLM-4.7 面向「任务完成」而非单点代码生成，能够从目标描述出发，自主完成需求理解、方案拆解与多技术栈整合。在包含前后端联动、实时交互与外设调用的复杂场景中，可直接生成结构完整、可运行的代码框架，显著减少人工拼装与反复调试成本，适合复杂 Demo、原型验证与自动化开发流程。
+  </Accordion>
+
+  <Accordion title="多模态交互与实时应用开发">
+    在需要摄像头、实时输入与交互控制的场景中，GLM-4.7 展现出更强的系统级理解能力。能够将视觉识别、逻辑控制与应用代码整合为统一方案，支持如手势控制、实时反馈等交互式应用的快速构建，加速从想法到可运行应用的落地过程。
+  </Accordion>
+
+  <Accordion title="前端视觉审美优化">
+    对视觉代码与 UI 规范的理解显著增强。GLM-4.7 能在布局结构、配色和谐度与组件样式上给出更具美感且一致的默认方案，减少样式反复“微调”的时间成本，适合低代码平台、AI 前端生成工具及快速原型设计场景。
+  </Accordion>
+
+  <Accordion title="高质量对话与复杂问题协作">
+    在多轮对话中更稳定地保持上下文与约束条件，对简单问题回应更直接，对复杂问题能够持续澄清目标并推进解决路径。GLM-4.7 更像一名可协作的“问题解决型伙伴”，适用于开发支持、方案讨论与决策辅助等高频协作场景。
+  </Accordion>
+
+  <Accordion title="沉浸式写作与角色驱动创作">
+    文字表达更细腻、更具画面感，能够通过气味、声音、光影等感官细节构建氛围。在角色扮演与叙事创作中，对世界观与人设的遵循更加稳定，剧情推进自然有张力，适合互动叙事、IP 内容创作与角色型应用。
+  </Accordion>
+
+  <Accordion title="专业级 PPT / 海报生成">
+    在办公创作中，GLM-4.7 的版式遵循与审美稳定性明显提升。能够稳定适配 16:9 等主流比例，在字体层级、留白与配色上减少模板感，生成结果更接近“即用级”，适合 AI 演示工具、企业办公系统与自动化内容生成场景。
+  </Accordion>
+
+  <Accordion title="智能搜索与 Deep Research">
+    强化用户意图理解、信息检索与结果融合能力。在复杂问题与研究型任务中，GLM-4.7 不仅返回信息，还能进行结构化整理与跨来源整合，通过多轮交互持续逼近核心结论，适合深度研究与决策支持场景。
+  </Accordion>
+</AccordionGroup>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/stars.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 详细介绍 </div>
+
+<Steps>
+  <Step title="小而强的 Coding Agent" icon={<svg style={{maskImage: "url(/resource/icon/star.svg)", WebkitMaskImage: "url(/resource/icon/star.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    GLM-4.7 系列在编程、推理与智能体三个维度实现了显著突破：
+
+    * **更强的编程能力**：显著提升了模型在多语言编码和在终端智能体中的效果；现在可以在 Claude Code、Kilo Code、TRAE、Cline 和 Roo Code 等编程框架中实现“先思考、再行动”的机制，在复杂任务上有更稳定的表现
+    * **前端审美提升**：GLM-4.7 系列模型在前端生成质量方面明显进步，能够生成观感更佳的网页、PPT 、海报
+    * **工具调用与协同执行更强**： 增强对复杂链路的任务拆解与流程编排能力，可在多步执行中持续校验与纠偏，更适合端到端交付类的智能体任务。
+    * **通用能力增强**：GLM-4.7 系列模型的对话更简洁智能且富有人情味，写作与角色扮演更具文采与沉浸感
+
+    在SWE-bench Verified、τ²-Bench等主流基准测试中，GLM-4.7-Flash 的综合表现在相同尺寸模型系列中取得开源SOTA分数。另外，相比于同尺寸模型，GLM-4.7-Flash同样具有出色的前端和后端开发能力。
+
+    在内部的编程实测中，GLM-4.7-Flash在前后端任务上表现出色。在编程场景之外，我们也推荐大家在中文写作、翻译、长文本、情感/角色扮演等通用场景中体验GLM-4.7-Flash。
+
+    ![Description](https://cdn.bigmodel.cn/markdown/176886970126120260120-084119.jpeg?attname=20260120-084119.jpeg)
+  </Step>
+</Steps>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/gauge-high.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 使用资源 </div>
+
+[体验中心](https://bigmodel.cn/trialcenter/modeltrial/text?modelCode=glm-4.7-flash)：快速测试模型在业务场景上的效果<br />
+[接口文档](/api-reference/%E6%A8%A1%E5%9E%8B-api/%E5%AF%B9%E8%AF%9D%E8%A1%A5%E5%85%A8)：API 调用方式
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/rectangle-code.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 调用示例 </div>
+
+以下是完整的调用示例，帮助您快速上手 GLM-4.7-Flash 模型。
+
+<Tabs>
+  <Tab title="cURL">
+    **基础调用**
+
+    ```bash  theme={null}
+    curl -X POST "https://open.bigmodel.cn/api/paas/v4/chat/completions" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer your-api-key" \
+        -d '{
+            "model": "glm-4.7-flash",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "作为一名营销专家，请为我的产品创作一个吸引人的口号"
+                },
+                {
+                    "role": "assistant",
+                    "content": "当然，要创作一个吸引人的口号，请告诉我一些关于您产品的信息"
+                },
+                {
+                    "role": "user",
+                    "content": "智谱AI 开放平台"
+                }
+            ],
+            "thinking": {
+                "type": "enabled"
+            },
+            "max_tokens": 65536,
+            "temperature": 1.0
+        }'
+    ```
+
+    **流式调用**
+
+    ```bash  theme={null}
+    curl -X POST "https://open.bigmodel.cn/api/paas/v4/chat/completions" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer your-api-key" \
+        -d '{
+            "model": "glm-4.7-flash",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "作为一名营销专家，请为我的产品创作一个吸引人的口号"
+                },
+                {
+                    "role": "assistant",
+                    "content": "当然，要创作一个吸引人的口号，请告诉我一些关于您产品的信息"
+                },
+                {
+                    "role": "user",
+                    "content": "智谱AI开放平台"
+                }
+            ],
+            "thinking": {
+                "type": "enabled"
+            },
+            "stream": true,
+            "max_tokens": 65536,
+            "temperature": 1.0
+        }'
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    **安装 SDK**
+
+    ```bash  theme={null}
+    # 安装最新版本
+    pip install zai-sdk
+    # 或指定版本
+    pip install zai-sdk==0.2.2
+    ```
+
+    **验证安装**
+
+    ```python  theme={null}
+    import zai
+    print(zai.__version__)
+    ```
+
+    **基础调用**
+
+    ```python  theme={null}
+    from zai import ZhipuAiClient
+
+    client = ZhipuAiClient(api_key="your-api-key")  # 请填写您自己的 API Key
+
+    response = client.chat.completions.create(
+        model="glm-4.7-flash",
+        messages=[
+            {"role": "user", "content": "作为一名营销专家，请为我的产品创作一个吸引人的口号"},
+            {"role": "assistant", "content": "当然，要创作一个吸引人的口号，请告诉我一些关于您产品的信息"},
+            {"role": "user", "content": "智谱AI开放平台"}
+        ],
+        thinking={
+            "type": "enabled",    # 启用深度思考模式
+        },
+        max_tokens=65536,          # 最大输出 tokens
+        temperature=1.0           # 控制输出的随机性
+    )
+
+    # 获取完整回复
+    print(response.choices[0].message)
+    ```
+
+    **流式调用**
+
+    ```python  theme={null}
+    from zai import ZhipuAiClient
+
+    client = ZhipuAiClient(api_key="your-api-key")  # 请填写您自己的 API Key
+
+    response = client.chat.completions.create(
+        model="glm-4.7-flash",
+        messages=[
+            {"role": "user", "content": "作为一名营销专家，请为我的产品创作一个吸引人的口号"},
+            {"role": "assistant", "content": "当然，要创作一个吸引人的口号，请告诉我一些关于您产品的信息"},
+            {"role": "user", "content": "智谱AI开放平台"}
+            ],
+        thinking={
+            "type": "enabled",    # 启用深度思考模式
+        },
+        stream=True,              # 启用流式输出
+        max_tokens=65536,          # 最大输出tokens
+        temperature=1.0           # 控制输出的随机性
+    )
+
+    # 流式获取回复
+    for chunk in response:
+        if chunk.choices[0].delta.reasoning_content:
+        print(chunk.choices[0].delta.reasoning_content, end='', flush=True)
+
+        if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end='', flush=True)
+    ```
+  </Tab>
+
+  <Tab title="Java">
+    **安装 SDK**
+
+    **Maven**
+
+    ```xml  theme={null}
+    <dependency>
+        <groupId>ai.z.openapi</groupId>
+        <artifactId>zai-sdk</artifactId>
+        <version>0.3.3</version>
+    </dependency>
+    ```
+
+    **Gradle (Groovy)**
+
+    ```groovy  theme={null}
+    implementation 'ai.z.openapi:zai-sdk:0.3.3'
+    ```
+
+    **基础调用**
+
+    ```java  theme={null}
+    import ai.z.openapi.ZhipuAiClient;
+    import ai.z.openapi.service.model.ChatCompletionCreateParams;
+    import ai.z.openapi.service.model.ChatCompletionResponse;
+    import ai.z.openapi.service.model.ChatMessage;
+    import ai.z.openapi.service.model.ChatMessageRole;
+    import ai.z.openapi.service.model.ChatThinking;
+    import java.util.Arrays;
+
+    public class BasicChat {
+        public static void main(String[] args) {
+            // 初始化客户端
+            ZhipuAiClient client = ZhipuAiClient.builder().ofZHIPU()
+                .apiKey("your-api-key")
+                .build();
+
+            // 创建聊天完成请求
+            ChatCompletionCreateParams request = ChatCompletionCreateParams.builder()
+                .model("glm-4.7-flash")
+                .messages(Arrays.asList(
+                    ChatMessage.builder()
+                        .role(ChatMessageRole.USER.value())
+                        .content("作为一名营销专家，请为我的产品创作一个吸引人的口号")
+                        .build(),
+                    ChatMessage.builder()
+                        .role(ChatMessageRole.ASSISTANT.value())
+                        .content("当然，要创作一个吸引人的口号，请告诉我一些关于您产品的信息")
+                        .build(),
+                    ChatMessage.builder()
+                        .role(ChatMessageRole.USER.value())
+                        .content("智谱AI开放平台")
+                        .build()
+                ))
+                .thinking(ChatThinking.builder().type("enabled").build())
+                .maxTokens(65536)
+                .temperature(1.0f)
+                .build();
+
+            // 发送请求
+            ChatCompletionResponse response = client.chat().createChatCompletion(request);
+
+            // 获取回复
+            if (response.isSuccess()) {
+                Object reply = response.getData().getChoices().get(0).getMessage();
+                System.out.println("AI 回复: " + reply);
+            } else {
+                System.err.println("错误: " + response.getMsg());
+            }
+        }
+    }
+    ```
+
+    **流式调用**
+
+    ```java  theme={null}
+    import ai.z.openapi.ZhipuAiClient;
+    import ai.z.openapi.service.model.ChatCompletionCreateParams;
+    import ai.z.openapi.service.model.ChatCompletionResponse;
+    import ai.z.openapi.service.model.ChatMessage;
+    import ai.z.openapi.service.model.ChatMessageRole;
+    import ai.z.openapi.service.model.ChatThinking;
+    import ai.z.openapi.service.model.Delta;
+    import java.util.Arrays;
+
+    public class StreamingChat {
+        public static void main(String[] args) {
+            // 初始化客户端
+            ZhipuAiClient client = ZhipuAiClient.builder().ofZHIPU()
+                .apiKey("your-api-key")
+                .build();
+
+            // 创建流式聊天完成请求
+            ChatCompletionCreateParams request = ChatCompletionCreateParams.builder()
+                .model("glm-4.7-flash")
+                .messages(Arrays.asList(
+                    ChatMessage.builder()
+                        .role(ChatMessageRole.USER.value())
+                        .content("作为一名营销专家，请为我的产品创作一个吸引人的口号")
+                        .build(),
+                    ChatMessage.builder()
+                        .role(ChatMessageRole.ASSISTANT.value())
+                        .content("当然，要创作一个吸引人的口号，请告诉我一些关于您产品的信息")
+                        .build(),
+                    ChatMessage.builder()
+                        .role(ChatMessageRole.USER.value())
+                        .content("智谱AI开放平台")
+                        .build()
+                ))
+                .thinking(ChatThinking.builder().type("enabled").build())
+                .stream(true)  // 启用流式输出
+                .maxTokens(65536)
+                .temperature(1.0f)
+                .build();
+
+            ChatCompletionResponse response = client.chat().createChatCompletion(request);
+
+            if (response.isSuccess()) {
+                response.getFlowable().subscribe(
+                    // Process streaming message data
+                    data -> {
+                        if (data.getChoices() != null && !data.getChoices().isEmpty()) {
+                            Delta delta = data.getChoices().get(0).getDelta();
+                            System.out.print(delta + "\n");
+                        }
+                    },
+                    // Process streaming response error
+                    error -> System.err.println("\nStream error: " + error.getMessage()),
+                    // Process streaming response completion event
+                    () -> System.out.println("\nStreaming response completed")
+                );
+            } else {
+                System.err.println("Error: " + response.getMsg());
+            }
+        }
+    }
+    ```
+  </Tab>
+
+  <Tab title="Python(旧)">
+    **更新 SDK 至 2.1.5.20250726**
+
+    ```bash  theme={null}
+    # 安装最新版本
+    pip install zhipuai
+
+    # 或指定版本
+    pip install zhipuai==2.1.5.20250726
+    ```
+
+    **基础调用**
+
+    ```python  theme={null}
+    from zhipuai import ZhipuAI
+
+    client = ZhipuAI(api_key="your-api-key")  # 请填写您自己的 API Key
+
+    response = client.chat.completions.create(
+        model="glm-4.7-flash",
+        messages=[
+            {"role": "user", "content": "作为一名营销专家，请为我的产品创作一个吸引人的口号"},
+            {"role": "assistant", "content": "当然，要创作一个吸引人的口号，请告诉我一些关于您产品的信息"},
+            {"role": "user", "content": "智谱AI开放平台"}
+        ],
+        thinking={
+            "type": "enabled",
+        },
+        max_tokens=65536,
+        temperature=1.0
+    )
+
+    # 获取完整回复
+    print(response.choices[0].message)
+    ```
+
+    **流式调用**
+
+    ```python  theme={null}
+    from zhipuai import ZhipuAI
+
+    client = ZhipuAI(api_key="your-api-key")  # 请填写您自己的 API Key
+
+    response = client.chat.completions.create(
+        model="glm-4.7-flash",
+        messages=[
+            {"role": "user", "content": "作为一名营销专家，请为我的产品创作一个吸引人的口号"},
+            {"role": "assistant", "content": "当然，要创作一个吸引人的口号，请告诉我一些关于您产品的信息"},
+            {"role": "user", "content": "智谱AI开放平台"}
+        ],
+        thinking={
+            "type": "enabled",
+        },
+        stream=True,              # 启用流式输出
+        max_tokens=65536,
+        temperature=1.0
+        )
+
+    # 流式获取回复
+    for chunk in response:
+        if chunk.choices[0].delta.reasoning_content:
+        print(chunk.choices[0].delta.reasoning_content, end='', flush=True)
+
+        if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end='', flush=True)
+    ```
+  </Tab>
+</Tabs>
+
+
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.bigmodel.cn/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# GLM-4.6V-Flash
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/rectangle-list.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 概览 </div>
+
+GLM-4.6V-Flash 是 GLM-4.6V 的免费版本，是 GLM 系列在多模态方向上的一次重要迭代，支持开启或关闭思考模式。它将训练时上下文窗口提升到128k tokens，在 视觉理解精度上达到同参数规模 SOTA，并首次在模型架构中将 Function Call（工具调用）能力原生融入视觉模型，打通从「视觉感知」到「可执行行动（Action）」的链路，为真实业务场景中的多模态 Agent 提供统一的技术底座。
+
+<CardGroup cols={3}>
+  <Card title="输入模态" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-right.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-right.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    视频、图像、文本、文件
+  </Card>
+
+  <Card title="输出模态" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-left.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-left.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    文本
+  </Card>
+
+  <Card title="上下文窗口" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-arrow-up.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-arrow-up.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    128K
+  </Card>
+</CardGroup>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/bolt.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 能力支持 </div>
+
+<CardGroup cols={3}>
+  <Card title="深度思考" href="/cn/guide/capabilities/thinking" icon={<svg style={{maskImage: "url(/resource/icon/brain.svg)", WebkitMaskImage: "url(/resource/icon/brain.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    支持开启或关闭思考模式，可灵活开关深层推理分析
+  </Card>
+
+  <Card title="视觉理解" icon={<svg style={{maskImage: "url(/resource/icon/eye.svg)", WebkitMaskImage: "url(/resource/icon/eye.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    强大的视觉理解能力，支持图片，视频，文件
+  </Card>
+
+  <Card title="流式输出" href="/cn/guide/capabilities/streaming" icon={<svg style={{maskImage: "url(/resource/icon/maximize.svg)", WebkitMaskImage: "url(/resource/icon/maximize.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    支持实时流式响应，提升用户交互体验
+  </Card>
+
+  <Card title="Function Call" href="/cn/guide/capabilities/function-calling" icon={<svg style={{maskImage: "url(/resource/icon/function.svg)", WebkitMaskImage: "url(/resource/icon/function.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    强大的工具调用能力，支持多种外部工具集成
+  </Card>
+
+  <Card title="上下文缓存" href="/cn/guide/capabilities/cache" icon={<svg style={{maskImage: "url(/resource/icon/database.svg)", WebkitMaskImage: "url(/resource/icon/database.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    智能缓存机制，优化长对话性能
+  </Card>
+</CardGroup>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/stars.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 推荐场景 </div>
+
+<Tabs>
+  <Tab title="图片理解">
+    **图片OCR信息提取、图片内容理解与其相关属性提取**
+
+    | **典型场景**                                 | **功能项**                   | **能力描述**                                                                                |
+    | :--------------------------------------- | :------------------------ | :-------------------------------------------------------------------------------------- |
+    | 发票、证件、手写表单录入                             | **通用OCR识别**               | 支持印刷体、手写体、楷体、艺术字等                                                                       |
+    | 工程造价清单、海关报关单、财务报表                        | **复杂表格解析**                | 多层表头、合并单元格、跨页表格智能识别                                                                     |
+    | 手机随手拍、现场拍摄单据                             | **抗干扰识别**                 | 应对透视变形、模糊、光照不均、复杂背景、折痕、污渍等干扰场景                                                          |
+    | 商品价格采集、洗衣工厂分拣、货架陈列检测                     | **商品属性识别**                | 自动识别品牌、类目、材质、颜色、款式等多维属性                                                                 |
+    | 社交平台内容打标、优质内容筛选、广告素材分析                   | **图像内容分析**                | 识别图片中的场景类型、人物行为、氛围情绪、拍摄角度等高阶语义                                                          |
+    | 手机屏幕质检、商品质控、工业检测                         | **瑕疵缺陷检测**                | 检测污渍、破损、变形、色差、划痕等质量问题                                                                   |
+    | AIGC社区辅助用户生成相似风格图片、设计素材库的风格化标签提取、创意灵感库构建 | **图片反推提示词(Image2Prompt)** | 深度理解画面内容、风格、构图、光影，反向生成高质量的AI绘画提示词，便于复用或二次创作                                             |
+    | 养殖企业、工程施工现场                              | **物体检测与计数**               | 精准识别并定位图片或视频画面中的一个或多个特定目标物体，返回每个目标的位置坐标、尺寸和类别，并支持对指定类别物体进行高精度计数，尤其适用于目标密集、遮挡、尺寸多变的复杂场景。 |
+  </Tab>
+
+  <Tab title="视频理解">
+    **多模态时序融合、动态内容分析**
+
+    | **典型场景**                       | **功能项**       | **能力描述**                                                       |
+    | :----------------------------- | :------------ | :------------------------------------------------------------- |
+    | 短视频平台内容分发、优质内容筛选、视频审核、广告植入检测   | **视频内容标签**    | 自动识别视频主题、风格、情绪、内容类型，支持多标签输出                                    |
+    | 视频摘要生成、封面推荐、精彩集锦制作             | **关键帧提取**     | 智能识别视频中的精彩片段、转场点、关键信息帧                                         |
+    | 长视频导航、精彩片段索引、会议记录、教学视频章节划分     | **事件时间轴构建**   | 自动生成视频内容的时间轴与章节划分，提取关键事件节点                                     |
+    | 视频二创、剪辑辅助、广告脚本提取、影视制作参考、新人创作指导 | **智能分镜与脚本生成** | 自动将视频切分为有意义的镜头段落，识别镜头类型（特写/全景/运动镜头等），分析叙事结构，生成分镜脚本和拍摄建议        |
+    | 短视频创作指导、MCN机构选题策划、平台内容运营、创作者培训 | **爆款视频热点拆解**  | 深度分析爆款视频的成功要素，拆解出"黄金3秒钩子"、"情绪起伏曲线"、"爆点时刻"等创作密码，输出可复用的创作模板内容洞察  |
+    | 门店合规监控、工业生产合规性监测               | **视频巡检**      | 对实时视频流或录像文件进行 7x24 小时自动化监测，精准识别特定事件、违规行为、目标状态等，支持自定义检测规则与多场景适配 |
+    | 视频搜索、内容审核、教学辅助                 | **视频问答**      | 基于视频内容进行自然语言问答，精准定位答案所在时间段                                     |
+  </Tab>
+
+  <Tab title="文档/复杂图表问答">
+    **进行复杂版式理解、多格式适配、智能问答、跨页逻辑重建**
+
+    | **典型场景**                                                   | **优势功能**    | **能力描述**                                                  |
+    | :--------------------------------------------------------- | :---------- | :-------------------------------------------------------- |
+    | 合同扫描件、公章盖章文件、历史档案、现场拍摄文件                                   | **抗干扰识别**   | 穿透红章、斜水印、背景噪声、褶皱污渍等干扰项，稳定识别手写体、楷体、艺术字等多种字体                |
+    | -   多栏排版、页眉页脚、目录索引自动识别<br />-   复杂学术论文解析<br />-   杂志期刊内容提取 | **版式还原与重构** | 深度理解原文档排版逻辑，保留段落层级、字体样式、对齐方式等格式信息，输出结构化JSON/Markdown/HTML |
+    | 长篇合同、多页报表、连续性条款解析                                          | **跨页逻辑理解**  | 自动识别跨页表格、段落续接、章节延续等跨页元素,重建完整逻辑结构                          |
+    | "报表中XX项目的利润率是多少""今年营收的同比增长率是多少"                            | **文档智能问答**  | 对文档(含复杂的图表、公式数据)进行深度理解，支持自然语言提问并精准定位答案来源                  |
+    | -   合同版本比对<br />-   财报年度分析<br />-   政策文件变更追踪               | **多文档关联分析** | 跨文档提取信息并进行关联比对，发现一致性、矛盾点、演变趋势                             |
+  </Tab>
+</Tabs>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/gauge-high.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 使用资源 </div>
+
+[体验中心](https://www.bigmodel.cn/trialcenter/modeltrial/visual?modelCode=glm-4.6v-flash)：快速测试模型在业务场景上的效果<br />
+[接口文档](/api-reference/%E6%A8%A1%E5%9E%8B-api/%E5%AF%B9%E8%AF%9D%E8%A1%A5%E5%85%A8)：API 调用方式
+
+**MCP 工具**：
+
+* [万物识别 MCP](https://bigmodel.cn/marketplace/detail/052df9a6e824)：能够对图片中的地点与人物信息进行快速识别与分析。支持整图识别和对图片局部区域进行精准识别<br />
+* [图像搜索 MCP](https://bigmodel.cn/marketplace/detail/d7e84d0318b0)：能够快速返回图片及网页相关信息，支持文本搜索、图片搜索、反向图片搜索及区域搜索等多种检索方式<br />
+* [图像处理 MCP](https://bigmodel.cn/marketplace/detail/25a98db16370)：提供便捷、高效的图像处理（如裁剪、获取Url、画框等）能力
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/arrow-up.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 详细介绍 </div>
+
+<Steps>
+  <Step title="原生多模态工具调用" titleSize="h3">
+    传统工具调用大多基于纯文本，在面对图像、视频、复杂文档等多模态内容时，需要多次中间转换，带来信息损失和工程复杂度。
+    GLM-4.6V 从设计之初就围绕 「图像即参数，结果即上下文」 ，构建了原生多模态工具调用能力：
+
+    * 输入多模态：图像、截图、文档页面等可以直接作为工具参数，无需先转为文字描述再解析，减少链路损耗。
+    * 输出多模态：对于工具返回的统计图表、渲染后网页截图、检索到的商品图片等结果，模型能够再次进行视觉理解，将其纳入后续推理链路。
+      模型原生支持基于视觉输入的工具调用，完整打通从感知到理解到执行的闭环。这使得 GLM-4.6V 能够应对图文混排输出、商品识别与好价推荐、以及辅助型 Agent 场景等更复杂的视觉任务。
+
+    <Tabs>
+      <Tab title="场景1：智能图文混排与内容创作">
+        在内容创作与知识分发场景中，GLM-4.6V 可以从多模态输入中，自动构建高质量图文输出：无论是直接输入图文混杂的论文、研报、PPT，还是只给出一个主题，模型都能生成结构清晰、图文并茂的社交媒体内容。
+
+        * 复杂图文理解：接收包含文本、图表、公式的文档，准确抽取结构化关键信息。
+        * 多模态工具调用：在生成内容过程中，自动调用检索/搜索类工具，为每一段落寻找候选图片，或从原文中截取关键配图。
+        * 图文混排输出与质量控制：对候选图片进行「视觉审核」，评估其与文字内容的相关性与质量，自动过滤无关或低质图片，输出可直接用于公众号、社交媒体或知识库的结构化图文结果。
+
+        这一流程中，多模态理解、工具调用与质量控制均由 GLM-4.6V 模型独立在同一推理链路内完成。
+
+        <video className="m-0 p-1" src="https://cdn.bigmodel.cn/static/4.6v/Case-推文-1208.m4v" controls />
+
+        ⬆️案例1：仅输入主题，生成图文资讯
+
+        <video className="m-0 p-1" src="https://cdn.bigmodel.cn/static/4.6v/Case-图文-1208.m4v" controls />
+
+        ⬆️案例2：输入论文，生成图文并茂的科普文章
+      </Tab>
+
+      <Tab title="场景2：视觉驱动的识图购物与导购 Agent">
+        在电商购物场景中，GLM-4.6V 模型可以独立完成从「看图」、「比价」、「生成导购清单」的完整链路。
+
+        * **意图识别与任务规划：** 用户上传一张街拍图并发出「搜同款」等指令时，模型识别出购物意图，并自主规划调用 `image_search` 等相关工具。
+        * **异构数据清洗与对齐：** 在京东、唯品会、拼多多等平台返回的多模态、非结构化结果基础上，模型自动完成信息清洗、字段归一化与结果对齐，过滤噪声和重复项。
+        * **多模态导购结果生成：** 最终生成一张标准化 Markdown 导购表格，包含平台与店铺来源、价格、商品缩略图、匹配度与差异说明，以及可直接跳转的购买链接。
+
+        <video className="m-0 p-1" src="https://cdn.bigmodel.cn/static/4.6v/Case-买同款-1208.m4v" controls />
+      </Tab>
+
+      <Tab title="场景3：前端复刻与多轮视觉交互开发">
+        我们重点优化了 GLM-4.6V 在前端复刻与多轮视觉交互修改方面的能力，帮助开发者缩短「设计稿到可运行页面」的链路：
+
+        * **像素级前端复刻：** 上传网页截图或设计稿后，模型可精准识别布局、组件与配色，生成高质量 HTML / CSS / JS 代码，实现接近像素级的页面还原。
+        * **视觉交互调试：** 支持基于截图的多轮视觉交互。用户可以在生成的网页截图上圈选区域并发出自然语言指令（如「把这个按钮向左移一点，颜色改成深蓝」），模型自动定位并修正对应代码片段。
+
+        通过 GLM Coding Plan 的视觉 MCP 协议，这一能力可以集成进现有 IDE、设计工具或内部工程平台，大幅提升前端迭代效率。
+
+        <video className="m-0 p-1" src="https://cdn.bigmodel.cn/static/4.6v/Case-小红书-1208.m4v" controls />
+      </Tab>
+
+      <Tab title="场景4：长上下文的文档与视频理解">
+        GLM-4.6V 将视觉编码器与语言模型的上下文对齐能力提升至128k，模型拥有了“过目不忘”的长记忆力。在实际应用中，128k上下文约等于150页的复杂文档、200页PPT或一小时视频，能够在单次推理中处理多个长文档或长视频。
+
+        在下列案例中，用户一次输入 4 家上市公司的财报，GLM-4.6V 可以跨文档统一抽取核心指标，并理解报表与图表中的隐性信号，自动汇总成一张对比分析表，在长窗口条件下依然保持关键信息不丢失。
+
+        <video className="m-0 p-1" src="https://cdn.bigmodel.cn/static/4.6v/Case-财报-1208.m4v" controls />
+
+        上述能力同样适用于长视频内容的理解与定位：
+
+        在长视频理解场景下，GLM-4.6V 既能对整段内容进行全局梳理，又能结合时序线索做细粒度推理，精准定位关键时间点，例如自动完成一场足球比赛的进球事件与比分时间轴总结。
+
+        <video className="m-0 p-1" src="https://cdn.bigmodel.cn/static/4.6v/Case-球赛-1208.m4v" controls />
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="同规模开源 SOTA" stepNumber={2} titleSize="h3">
+    GLM-4.6V 在 MMBench、MathVista、OCRBench 等 30+ 主流多模态评测基准 上进行了验证，较上一代模型取得显著提升。在同等参数规模下，模型在多模态交互、逻辑推理和长上下文等关键能力上取得 SOTA 表现。其中9B版本的GLM-4.6V-Flash整体表现超过Qwen3-VL-8B，106B参数12B激活的GLM-4.6V表现比肩2倍参数量的Qwen3-VL-235B。
+
+    ![Description](https://cdn.bigmodel.cn/markdown/1765165989046glm-4.6v-1.jpeg?attname=glm-4.6v-1.jpeg)
+  </Step>
+</Steps>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/rectangle-code.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 调用示例 </div>
+
+### 基础与流式
+
+<Tabs>
+  <Tab title="cURL">
+    **基础调用**
+
+    ```bash  theme={null}
+    curl -X POST \
+    https://open.bigmodel.cn/api/paas/v4/chat/completions \
+    -H "Authorization: Bearer your-api-key" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "glm-4.6v-flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": "https://cloudcovert-1305175928.cos.ap-guangzhou.myqcloud.com/%E5%9B%BE%E7%89%87grounding.PNG"
+              }
+            },
+            {
+              "type": "text",
+              "text": "Where is the second bottle of beer from the right on the table?  Provide coordinates in [[xmin,ymin,xmax,ymax]] format"
+            }
+          ]
+        }
+      ],
+      "thinking": {
+        "type": "enabled"
+      }
+    }'
+    ```
+
+    **流式调用**
+
+    ```bash  theme={null}
+    curl -X POST \
+    https://open.bigmodel.cn/api/paas/v4/chat/completions \
+    -H "Authorization: Bearer your-api-key" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "glm-4.6v-flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": "https://cloudcovert-1305175928.cos.ap-guangzhou.myqcloud.com/%E5%9B%BE%E7%89%87grounding.PNG"
+              }
+            },
+            {
+              "type": "text",
+              "text": "Where is the second bottle of beer from the right on the table?  Provide coordinates in [[xmin,ymin,xmax,ymax]] format"
+            }
+          ]
+        }
+      ],
+      "thinking": {
+        "type": "enabled"
+      },
+      "stream": true
+    }'
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    **安装 SDK**
+
+    ```bash  theme={null}
+    # 安装最新版本
+    pip install zai-sdk
+    # 或指定版本
+    pip install zai-sdk==0.2.2
+    ```
+
+    **验证安装**
+
+    ```python  theme={null}
+    import zai
+    print(zai.__version__)
+    ```
+
+    **基础调用**
+
+    ```python  theme={null}
+    from zai import ZhipuAiClient
+
+    client = ZhipuAiClient(api_key="")  # 填写您自己的 APIKey
+    response = client.chat.completions.create(
+        model="glm-4.6v-flash",  # 填写需要调用的模型名称
+        messages=[
+            {
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": "https://cloudcovert-1305175928.cos.ap-guangzhou.myqcloud.com/%E5%9B%BE%E7%89%87grounding.PNG"
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": "Where is the second bottle of beer from the right on the table?  Provide coordinates in [[xmin,ymin,xmax,ymax]] format"
+                    }
+                ],
+                "role": "user"
+            }
+        ],
+        thinking={
+            "type": "enabled"
+        }
+    )
+    print(response.choices[0].message)
+    ```
+
+    **流式调用**
+
+    ```python  theme={null}
+    from zai import ZhipuAiClient
+
+    client = ZhipuAiClient(api_key="")  # 填写您自己的APIKey
+    response = client.chat.completions.create(
+        model="glm-4.6v-flash",  # 填写需要调用的模型名称
+        messages=[
+            {
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": "https://cloudcovert-1305175928.cos.ap-guangzhou.myqcloud.com/%E5%9B%BE%E7%89%87grounding.PNG"
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": "Where is the second bottle of beer from the right on the table?  Provide coordinates in [[xmin,ymin,xmax,ymax]] format"
+                    }
+                ],
+                "role": "user"
+            }
+        ],
+        thinking={
+            "type": "enabled"
+        },
+        stream=True
+    )
+
+    for chunk in response:
+        if chunk.choices[0].delta.reasoning_content:
+            print(chunk.choices[0].delta.reasoning_content, end='', flush=True)
+
+        if chunk.choices[0].delta.content:
+            print(chunk.choices[0].delta.content, end='', flush=True)
+    ```
+  </Tab>
+
+  <Tab title="Java">
+    **安装 SDK**
+
+    **Maven**
+
+    ```xml  theme={null}
+    <dependency>
+        <groupId>ai.z.openapi</groupId>
+        <artifactId>zai-sdk</artifactId>
+        <version>0.3.3</version>
+    </dependency>
+    ```
+
+    **Gradle (Groovy)**
+
+    ```groovy  theme={null}
+    implementation 'ai.z.openapi:zai-sdk:0.3.3'
+    ```
+
+    **基础调用**
+
+    ```java  theme={null}
+    import ai.z.openapi.ZhipuAiClient;
+    import ai.z.openapi.service.model.*;
+    import ai.z.openapi.core.Constants;
+    import java.util.Arrays;
+
+    public class GLM46VExample {
+        public static void main(String[] args) {
+            String apiKey = ""; // 请填写您自己的APIKey
+            ZhipuAiClient client = ZhipuAiClient.builder().ofZHIPU()
+                    .apiKey(apiKey)
+                    .build();
+
+            ChatCompletionCreateParams request = ChatCompletionCreateParams.builder()
+                    .model("glm-4.6v-flash")
+                    .messages(Arrays.asList(
+                            ChatMessage.builder()
+                                    .role(ChatMessageRole.USER.value())
+                                    .content(Arrays.asList(
+                                            MessageContent.builder()
+                                                    .type("text")
+                                                    .text("描述下这张图片")
+                                                    .build(),
+                                            MessageContent.builder()
+                                                    .type("image_url")
+                                                    .imageUrl(ImageUrl.builder()
+                                                            .url("https://aigc-files.bigmodel.cn/api/cogview/20250723213827da171a419b9b4906_0.png")
+                                                            .build())
+                                                    .build()))
+                                    .build()))
+                    .build();
+
+            ChatCompletionResponse response = client.chat().createChatCompletion(request);
+
+            if (response.isSuccess()) {
+                Object reply = response.getData().getChoices().get(0).getMessage();
+                System.out.println(reply);
+            } else {
+                System.err.println("错误: " + response.getMsg());
+            }
+        }
+    }
+    ```
+
+    **流式调用**
+
+    ```java  theme={null}
+    import ai.z.openapi.ZhipuAiClient;
+    import ai.z.openapi.service.model.*;
+    import ai.z.openapi.core.Constants;
+    import java.util.Arrays;
+
+    public class GLM46VStreamExample {
+        public static void main(String[] args) {
+            String apiKey = ""; // 请填写您自己的APIKey
+            ZhipuAiClient client = ZhipuAiClient.builder().ofZHIPU()
+                    .apiKey(apiKey)
+                    .build();
+
+            ChatCompletionCreateParams request = ChatCompletionCreateParams.builder()
+                    .model("glm-4.6v-flash")
+                    .messages(Arrays.asList(
+                            ChatMessage.builder()
+                                    .role(ChatMessageRole.USER.value())
+                                    .content(Arrays.asList(
+                                            MessageContent.builder()
+                                                    .type("text")
+                                                    .text("Where is the second bottle of beer from the right on the table?  Provide coordinates in [[xmin,ymin,xmax,ymax]] format")
+                                                    .build(),
+                                            MessageContent.builder()
+                                                    .type("image_url")
+                                                    .imageUrl(ImageUrl.builder()
+                                                            .url("https://cloudcovert-1305175928.cos.ap-guangzhou.myqcloud.com/%E5%9B%BE%E7%89%87grounding.PNG")
+                                                            .build())
+                                                    .build()))
+                                    .build()))
+                    .stream(true)
+                    .build();
+
+            ChatCompletionResponse response = client.chat().createChatCompletion(request);
+
+            if (response.isSuccess()) {
+                response.getFlowable().subscribe(
+                        // Process streaming message data
+                        data -> {
+                            if (data.getChoices() != null && !data.getChoices().isEmpty()) {
+                                Delta delta = data.getChoices().get(0).getDelta();
+                                System.out.print(delta + "\n");
+                            }
+                        },
+                        // Process streaming response error
+                        error -> System.err.println("\nStream error: " + error.getMessage()),
+                        // Process streaming response completion event
+                        () -> System.out.println("\nStreaming response completed")
+                );
+            } else {
+                System.err.println("Error: " + response.getMsg());
+            }
+        }
+    }
+    ```
+  </Tab>
+
+  <Tab title="Python(旧)">
+    **更新 SDK 至 2.1.5.20250726**
+
+    ```bash  theme={null}
+    # 安装最新版本
+    pip install zhipuai
+
+    # 或指定版本
+    pip install zhipuai==2.1.5.20250726
+    ```
+
+    **基础调用**
+
+    ```Python  theme={null}
+    from zhipuai import ZhipuAI
+
+    client = ZhipuAI(api_key="your-api-key")  # 填写您自己的APIKey
+
+    response = client.chat.completions.create(
+        model="glm-4.6v-flash",  # 填写需要调用的模型名称
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "请帮我解决这个题目，给出详细过程和答案"
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": "传入图片的 url 地址"
+                        }
+                    }
+                ]
+            }
+        ]
+    )
+
+    print(response.choices[0].message)
+    ```
+
+    **流式调用**
+
+    ```python  theme={null}
+    from zhipuai import ZhipuAI
+
+    client = ZhipuAI(api_key="your-api-key")  # 填写您自己的APIKey
+
+    response = client.chat.completions.create(
+        model="glm-4.6v-flash",  # 填写需要调用的模型名称
+        messages=[
+            {
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": "https://cloudcovert-1305175928.cos.ap-guangzhou.myqcloud.com/%E5%9B%BE%E7%89%87grounding.PNG"
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": "Where is the second bottle of beer from the right on the table?  Provide coordinates in [[xmin,ymin,xmax,ymax]] format"
+                    }
+                ],
+                "role": "user"
+            }
+        ],
+        thinking={
+            "type": "enabled"
+        },
+        stream=True
+    )
+
+    for chunk in response:
+        if chunk.choices[0].delta.reasoning_content:
+            print(chunk.choices[0].delta.reasoning_content, end='', flush=True)
+
+        if chunk.choices[0].delta.content:
+            print(chunk.choices[0].delta.content, end='', flush=True)
+    ```
+  </Tab>
+</Tabs>
+
+### 多模态理解
+
+> 不支持同时理解文件、视频和图像。
+
+<Tabs>
+  <Tab title="cURL">
+    **图片理解**
+
+    ```bash  theme={null}
+    curl -X POST \
+    https://open.bigmodel.cn/api/paas/v4/chat/completions \
+    -H "Authorization: Bearer your-api-key" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "glm-4.6v-flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": "https://cdn.bigmodel.cn/static/logo/register.png"
+              }
+            },
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": "https://cdn.bigmodel.cn/static/logo/api-key.png"
+              }
+            },
+            {
+              "type": "text",
+              "text": "What are the pics talk about?"
+            }
+          ]
+        }
+      ],
+      "thinking": {
+        "type": "enabled"
+      }
+    }'
+    ```
+
+    **视频理解**
+
+    ```bash  theme={null}
+    curl -X POST \
+    https://open.bigmodel.cn/api/paas/v4/chat/completions \
+    -H "Authorization: Bearer your-api-key" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "glm-4.6v-flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "video_url",
+              "video_url": {
+                "url": "https://cdn.bigmodel.cn/agent-demos/lark/113123.mov"
+              }
+            },
+            {
+              "type": "text",
+              "text": "What are the video show about?"
+            }
+          ]
+        }
+      ],
+      "thinking": {
+        "type": "enabled"
+      }
+    }'
+    ```
+
+    **文件理解**
+
+    ```bash  theme={null}
+    curl -X POST \
+    https://open.bigmodel.cn/api/paas/v4/chat/completions \
+    -H "Authorization: Bearer your-api-key" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "glm-4.6v-flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "file_url",
+              "file_url": {
+                "url": "https://cdn.bigmodel.cn/static/demo/demo2.txt"
+              }
+            },
+            {
+              "type": "file_url",
+              "file_url": {
+                "url": "https://cdn.bigmodel.cn/static/demo/demo1.pdf"
+              }
+            },
+            {
+              "type": "text",
+              "text": "What are the files show about?"
+            }
+          ]
+        }
+      ],
+      "thinking": {
+        "type": "enabled"
+      }
+    }'
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    **安装 SDK**
+
+    ```bash  theme={null}
+    # 安装最新版本
+    pip install zai-sdk
+    # 或指定版本
+    pip install zai-sdk==0.2.2
+    ```
+
+    **验证安装**
+
+    ```python  theme={null}
+    import zai
+    print(zai.__version__)
+    ```
+
+    **图片理解**
+
+    ```python  theme={null}
+    from zai import ZhipuAiClient
+
+    client = ZhipuAiClient(api_key="your-api-key")  # 填写您自己的APIKey
+    response = client.chat.completions.create(
+        model="glm-4.6v-flash",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": "https://cdn.bigmodel.cn/static/logo/register.png"
+                        }
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": "https://cdn.bigmodel.cn/static/logo/api-key.png"
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": "What are the pics talk about?"
+                    }
+                ]
+            }
+        ],
+        thinking={
+            "type": "enabled"
+        }
+    )
+    print(response.choices[0].message)
+    ```
+
+    **传入 Base64 图片**
+
+    ```python  theme={null}
+    from zai import ZhipuAiClient
+    import base64
+
+    client = ZhipuAiClient(api_key="your-api-key")  # 填写您自己的APIKey
+
+    img_path = "your/path/xxx.png"
+    with open(img_path, "rb") as img_file:
+        img_base = base64.b64encode(img_file.read()).decode("utf-8")
+
+    response = client.chat.completions.create(
+        model="glm-4.6v-flash",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": img_base
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": "请描述这个图片"
+                    }
+                ]
+            }
+        ],
+        thinking={
+            "type": "enabled"
+        }
+    )
+    print(response.choices[0].message)
+    ```
+
+    **视频理解**
+
+    ```python  theme={null}
+    from zai import ZhipuAiClient
+
+    client = ZhipuAiClient(api_key="your-api-key")  # 填写您自己的APIKey
+    response = client.chat.completions.create(
+        model="glm-4.6v-flash",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "video_url",
+                        "video_url": {
+                            "url": "https://cdn.bigmodel.cn/agent-demos/lark/113123.mov"
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": "What are the video show about?"
+                    }
+                ]
+            }
+        ],
+        thinking={
+            "type": "enabled"
+        }
+    )
+    print(response.choices[0].message)
+    ```
+
+    **文件理解**
+
+    ```python  theme={null}
+    from zai import ZhipuAiClient
+
+    client = ZhipuAiClient(api_key="your-api-key")  # 填写您自己的APIKey
+    response = client.chat.completions.create(
+        model="glm-4.6v-flash",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "file_url",
+                        "file_url": {
+                            "url": "https://cdn.bigmodel.cn/static/demo/demo2.txt"
+                        }
+                    },
+                    {
+                        "type": "file_url",
+                        "file_url": {
+                            "url": "https://cdn.bigmodel.cn/static/demo/demo1.pdf"
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": "What are the files show about?"
+                    }
+                ]
+            }
+        ],
+        thinking={
+            "type": "enabled"
+        }
+    )
+    print(response.choices[0].message)
+    ```
+  </Tab>
+
+  <Tab title="Java">
+    **安装 SDK**
+
+    **Maven**
+
+    ```xml  theme={null}
+    <dependency>
+        <groupId>ai.z.openapi</groupId>
+        <artifactId>zai-sdk</artifactId>
+        <version>0.3.3</version>
+    </dependency>
+    ```
+
+    **Gradle (Groovy)**
+
+    ```groovy  theme={null}
+    implementation 'ai.z.openapi:zai-sdk:0.3.3'
+    ```
+
+    **图片理解**
+
+    ```java  theme={null}
+    import ai.z.openapi.ZhipuAiClient;
+    import ai.z.openapi.service.model.*;
+    import java.util.Arrays;
+
+    public class MultiModalImageExample {
+        public static void main(String[] args) {
+            String apiKey = "your-api-key"; // 请填写您自己的APIKey
+            ZhipuAiClient client = ZhipuAiClient.builder().ofZHIPU()
+                    .apiKey(apiKey)
+                    .build();
+
+            ChatCompletionCreateParams request = ChatCompletionCreateParams.builder()
+                    .model("glm-4.6v-flash")
+                    .messages(Arrays.asList(
+                            ChatMessage.builder()
+                                    .role(ChatMessageRole.USER.value())
+                                    .content(Arrays.asList(
+                                            MessageContent.builder()
+                                                    .type("image_url")
+                                                    .imageUrl(ImageUrl.builder()
+                                                            .url("https://cdn.bigmodel.cn/static/logo/register.png")
+                                                            .build())
+                                                    .build(),
+                                            MessageContent.builder()
+                                                    .type("image_url")
+                                                    .imageUrl(ImageUrl.builder()
+                                                            .url("https://cdn.bigmodel.cn/static/logo/api-key.png")
+                                                            .build())
+                                                    .build(),
+                                            MessageContent.builder()
+                                                    .type("text")
+                                                    .text("What are the pics talk about?")
+                                                    .build()
+                                    ))
+                                    .build()
+                    ))
+                    .thinking(ChatThinking.builder()
+                            .type("enabled")
+                            .build())
+                    .build();
+
+            ChatCompletionResponse response = client.chat().createChatCompletion(request);
+
+            if (response.isSuccess()) {
+                Object reply = response.getData().getChoices().get(0).getMessage();
+                System.out.println(reply);
+            } else {
+                System.err.println("错误: " + response.getMsg());
+            }
+        }
+    }
+    ```
+
+    **传入 Base64 图片**
+
+    ```java  theme={null}
+    import ai.z.openapi.ZhipuAiClient;
+    import ai.z.openapi.service.model.*;
+    import java.io.File;
+    import java.io.IOException;
+    import java.nio.file.Files;
+    import java.util.Arrays;
+    import java.util.Base64;
+
+    public class Base64ImageExample {
+        public static void main(String[] args) throws IOException {
+            String apiKey = "your-api-key"; // 请填写您自己的APIKey
+            ZhipuAiClient client = ZhipuAiClient.builder().ofZHIPU().apiKey(apiKey).build();
+
+            String file = ClassLoader.getSystemResource("your/path/xxx.png").getFile();
+            byte[] bytes = Files.readAllBytes(new File(file).toPath());
+            Base64.Encoder encoder = Base64.getEncoder();
+            String base64 = encoder.encodeToString(bytes);
+
+            ChatCompletionCreateParams request = ChatCompletionCreateParams.builder()
+                    .model("glm-4.6v-flash")
+                    .messages(Arrays.asList(
+                            ChatMessage.builder()
+                                    .role(ChatMessageRole.USER.value())
+                                    .content(Arrays.asList(
+                                            MessageContent.builder()
+                                                    .type("image_url")
+                                                    .imageUrl(ImageUrl.builder()
+                                                            .url(base64)
+                                                            .build())
+                                                    .build(),
+                                            MessageContent.builder()
+                                                    .type("text")
+                                                    .text("What are the pics talk about?")
+                                                    .build()))
+                                    .build()))
+                    .thinking(ChatThinking.builder().type("enabled").build())
+                    .build();
+
+            ChatCompletionResponse response = client.chat().createChatCompletion(request);
+
+            if (response.isSuccess()) {
+                Object reply = response.getData().getChoices().get(0).getMessage();
+                System.out.println(reply);
+            } else {
+                System.err.println("错误: " + response.getMsg());
+            }
+        }
+    }
+    ```
+
+    **视频理解**
+
+    ```java  theme={null}
+    import ai.z.openapi.ZhipuAiClient;
+    import ai.z.openapi.service.model.*;
+    import java.util.Arrays;
+
+    public class MultiModalVideoExample {
+        public static void main(String[] args) {
+            String apiKey = "your-api-key"; // 请填写您自己的APIKey
+            ZhipuAiClient client = ZhipuAiClient.builder().ofZHIPU()
+                    .apiKey(apiKey)
+                    .build();
+
+            ChatCompletionCreateParams request = ChatCompletionCreateParams.builder()
+                    .model("glm-4.6v-flash")
+                    .messages(Arrays.asList(
+                            ChatMessage.builder()
+                                    .role(ChatMessageRole.USER.value())
+                                    .content(Arrays.asList(
+                                            MessageContent.builder()
+                                                    .type("video_url")
+                                                    .videoUrl(VideoUrl.builder()
+                                                            .url("https://cdn.bigmodel.cn/agent-demos/lark/113123.mov")
+                                                            .build())
+                                                    .build(),
+                                            MessageContent.builder()
+                                                    .type("text")
+                                                    .text("What are the video show about?")
+                                                    .build()
+                                    ))
+                                    .build()
+                    ))
+                    .thinking(ChatThinking.builder()
+                            .type("enabled")
+                            .build())
+                    .build();
+
+            ChatCompletionResponse response = client.chat().createChatCompletion(request);
+
+            if (response.isSuccess()) {
+                Object reply = response.getData().getChoices().get(0).getMessage();
+                System.out.println(reply);
+            } else {
+                System.err.println("错误: " + response.getMsg());
+            }
+        }
+    }
+    ```
+
+    **文件理解**
+
+    ```java  theme={null}
+    import ai.z.openapi.ZhipuAiClient;
+    import ai.z.openapi.service.model.*;
+    import java.util.Arrays;
+
+    public class MultiModalFileExample {
+        public static void main(String[] args) {
+            String apiKey = "your-api-key"; // 请填写您自己的APIKey
+            ZhipuAiClient client = ZhipuAiClient.builder().ofZHIPU()
+                    .apiKey(apiKey)
+                    .build();
+
+            ChatCompletionCreateParams request = ChatCompletionCreateParams.builder()
+                    .model("glm-4.6v-flash")
+                    .messages(Arrays.asList(
+                            ChatMessage.builder()
+                                    .role(ChatMessageRole.USER.value())
+                                    .content(Arrays.asList(
+                                            MessageContent.builder()
+                                                    .type("file_url")
+                                                    .fileUrl(FileUrl.builder()
+                                                            .url("https://cdn.bigmodel.cn/static/demo/demo2.txt")
+                                                            .build())
+                                                    .build(),
+                                            MessageContent.builder()
+                                                    .type("file_url")
+                                                    .fileUrl(FileUrl.builder()
+                                                            .url("https://cdn.bigmodel.cn/static/demo/demo1.pdf")
+                                                            .build())
+                                                    .build(),
+                                            MessageContent.builder()
+                                                    .type("text")
+                                                    .text("What are the files show about?")
+                                                    .build()
+                                    ))
+                                    .build()
+                    ))
+                    .thinking(ChatThinking.builder()
+                            .type("enabled")
+                            .build())
+                    .build();
+
+            ChatCompletionResponse response = client.chat().createChatCompletion(request);
+
+            if (response.isSuccess()) {
+                Object reply = response.getData().getChoices().get(0).getMessage();
+                System.out.println(reply);
+            } else {
+                System.err.println("错误: " + response.getMsg());
+            }
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.bigmodel.cn/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# GLM-4.1V-Thinking-Flash
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/rectangle-list.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 概览 </div>
+
+GLM-4.1V-Thinking-Flash 是智谱推出的免费视觉推理模型。它在图表/视频理解、前端 Coding、GUI 任务等场景表现出色，核心能力达到全面新 SOTA。模型引入思维链推理机制，显著提升了复杂场景中的回答精准度与可解释性。
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/bolt.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 能力支持 </div>
+
+<CardGroup cols={3}>
+  <Card title="内置深度思考" icon={<svg style={{maskImage: "url(/resource/icon/brain.svg)", WebkitMaskImage: "url(/resource/icon/brain.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    默认内置深度思考，提供更深层次的推理分析
+  </Card>
+
+  <Card title="视觉理解" icon={<svg style={{maskImage: "url(/resource/icon/eye.svg)", WebkitMaskImage: "url(/resource/icon/eye.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    强大的视觉理解能力，支持图片，视频，文件
+  </Card>
+
+  <Card title="流式输出" href="/cn/guide/capabilities/streaming" icon={<svg style={{maskImage: "url(/resource/icon/maximize.svg)", WebkitMaskImage: "url(/resource/icon/maximize.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    支持实时流式响应，提升用户交互体验
+  </Card>
+</CardGroup>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/stars.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 功能特色 </div>
+
+<AccordionGroup>
+  <Accordion title="图文理解" defaultOpen="true">
+    精准识别并综合分析图像与文本信息。
+  </Accordion>
+
+  <Accordion title="数学与科学推理">
+    支持持复杂题解、多步演绎与公式理解。
+  </Accordion>
+
+  <Accordion title="视频理解">
+    具备时序分析与事件逻辑建模能力。
+  </Accordion>
+
+  <Accordion title="GUI 与网页智能体任务">
+    理解界面结构，辅助自动化操作。
+  </Accordion>
+
+  <Accordion title="视觉锚定与实体定位">
+    语言与图像区域精准对齐，提升人机交互可控性。
+  </Accordion>
+</AccordionGroup>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/link.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 快捷入口 </div>
+
+* 接口调用查看 [接口文档](/api-reference/%E6%A8%A1%E5%9E%8B-api/%E5%AF%B9%E8%AF%9D%E8%A1%A5%E5%85%A8)
+* 在 [体验中心](https://www.bigmodel.cn/trialcenter/modeltrial/multimodal?modelCode=glm-4.1v-thinking-flash) 体验模型能力
+* 模型[速率限制](https://www.bigmodel.cn/usercenter/proj-mgmt/rate-limits)
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/cubes.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 场景应用 </div>
+
+<Tabs>
+  <Tab title="图片问答">
+    <CardGroup cols={2}>
+      <Card title="prompt" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-right.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-right.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        ![Description](https://cdn.bigmodel.cn/markdown/1751371892938image.png?attname=image.png)<br />请找出这张图中年度利润最高的公司，以及该公司的最大部门？
+      </Card>
+
+      <Card title="生成结果" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-left.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-left.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        Sony has the highest annual profit at \$6.3B. For Sony, the note states, “Media is Sony’s second - largest segment after game consoles.” Thus, the largest segment is game consoles.
+      </Card>
+    </CardGroup>
+  </Tab>
+
+  <Tab title="学科解题">
+    <CardGroup cols={2}>
+      <Card title="prompt" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-right.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-right.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        ![Description](https://cdn.bigmodel.cn/markdown/1751371905445image.png?attname=image.png)<br />请帮我解决这个题目，给出详细过程和答案.
+      </Card>
+
+      <Card title="生成结果" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-left.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-left.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        思考过程略.<br />已知 PA ⊥ 平面 ABCD ，故 PA ⊥ AD 且 PA ⊥ AB。又 AB ⊥ AD ，AB ⊥ AD ，且 PA 与 AB 的公共点为 A ，因此 AD ⊥平面 PAB。由于 AD ⊂ 平面 PAD，故平面 PAB **⊥** 平面 PAD。
+      </Card>
+    </CardGroup>
+  </Tab>
+
+  <Tab title="GUI Agent">
+    <CardGroup cols={2}>
+      <Card title="prompt" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-right.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-right.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        ![Description](https://cdn.bigmodel.cn/markdown/1751371916542image.png?attname=image.png)<br />在 APP 中，帮我创建一个两周后 3 点与史密斯博士的会议
+      </Card>
+
+      <Card title="生成结果" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-left.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-left.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        ![Description](https://cdn.bigmodel.cn/markdown/175282595604320250718-160538.jpeg?attname=20250718-160538.jpeg)
+      </Card>
+    </CardGroup>
+  </Tab>
+
+  <Tab title="前端网页 Coding">
+    <CardGroup cols={2}>
+      <Card title="prompt" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-right.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-right.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        ![Description](https://cdn.bigmodel.cn/markdown/1751371942040image.png?attname=image.png)<br />请构建一个与输入图片相似的网页并将其转换为 React 代码。
+      </Card>
+
+      <Card title="生成结果" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-left.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-left.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        生成的 React 代码后渲染的网页界面截图：<br />![Description](https://cdn.bigmodel.cn/markdown/1751381809888image.png?attname=image.png)
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.bigmodel.cn/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# GLM-4.1V-Thinking-Flash
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/rectangle-list.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 概览 </div>
+
+GLM-4.1V-Thinking-Flash 是智谱推出的免费视觉推理模型。它在图表/视频理解、前端 Coding、GUI 任务等场景表现出色，核心能力达到全面新 SOTA。模型引入思维链推理机制，显著提升了复杂场景中的回答精准度与可解释性。
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/bolt.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 能力支持 </div>
+
+<CardGroup cols={3}>
+  <Card title="内置深度思考" icon={<svg style={{maskImage: "url(/resource/icon/brain.svg)", WebkitMaskImage: "url(/resource/icon/brain.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    默认内置深度思考，提供更深层次的推理分析
+  </Card>
+
+  <Card title="视觉理解" icon={<svg style={{maskImage: "url(/resource/icon/eye.svg)", WebkitMaskImage: "url(/resource/icon/eye.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    强大的视觉理解能力，支持图片，视频，文件
+  </Card>
+
+  <Card title="流式输出" href="/cn/guide/capabilities/streaming" icon={<svg style={{maskImage: "url(/resource/icon/maximize.svg)", WebkitMaskImage: "url(/resource/icon/maximize.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    支持实时流式响应，提升用户交互体验
+  </Card>
+</CardGroup>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/stars.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 功能特色 </div>
+
+<AccordionGroup>
+  <Accordion title="图文理解" defaultOpen="true">
+    精准识别并综合分析图像与文本信息。
+  </Accordion>
+
+  <Accordion title="数学与科学推理">
+    支持持复杂题解、多步演绎与公式理解。
+  </Accordion>
+
+  <Accordion title="视频理解">
+    具备时序分析与事件逻辑建模能力。
+  </Accordion>
+
+  <Accordion title="GUI 与网页智能体任务">
+    理解界面结构，辅助自动化操作。
+  </Accordion>
+
+  <Accordion title="视觉锚定与实体定位">
+    语言与图像区域精准对齐，提升人机交互可控性。
+  </Accordion>
+</AccordionGroup>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/link.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 快捷入口 </div>
+
+* 接口调用查看 [接口文档](/api-reference/%E6%A8%A1%E5%9E%8B-api/%E5%AF%B9%E8%AF%9D%E8%A1%A5%E5%85%A8)
+* 在 [体验中心](https://www.bigmodel.cn/trialcenter/modeltrial/multimodal?modelCode=glm-4.1v-thinking-flash) 体验模型能力
+* 模型[速率限制](https://www.bigmodel.cn/usercenter/proj-mgmt/rate-limits)
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/cubes.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 场景应用 </div>
+
+<Tabs>
+  <Tab title="图片问答">
+    <CardGroup cols={2}>
+      <Card title="prompt" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-right.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-right.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        ![Description](https://cdn.bigmodel.cn/markdown/1751371892938image.png?attname=image.png)<br />请找出这张图中年度利润最高的公司，以及该公司的最大部门？
+      </Card>
+
+      <Card title="生成结果" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-left.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-left.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        Sony has the highest annual profit at \$6.3B. For Sony, the note states, “Media is Sony’s second - largest segment after game consoles.” Thus, the largest segment is game consoles.
+      </Card>
+    </CardGroup>
+  </Tab>
+
+  <Tab title="学科解题">
+    <CardGroup cols={2}>
+      <Card title="prompt" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-right.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-right.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        ![Description](https://cdn.bigmodel.cn/markdown/1751371905445image.png?attname=image.png)<br />请帮我解决这个题目，给出详细过程和答案.
+      </Card>
+
+      <Card title="生成结果" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-left.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-left.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        思考过程略.<br />已知 PA ⊥ 平面 ABCD ，故 PA ⊥ AD 且 PA ⊥ AB。又 AB ⊥ AD ，AB ⊥ AD ，且 PA 与 AB 的公共点为 A ，因此 AD ⊥平面 PAB。由于 AD ⊂ 平面 PAD，故平面 PAB **⊥** 平面 PAD。
+      </Card>
+    </CardGroup>
+  </Tab>
+
+  <Tab title="GUI Agent">
+    <CardGroup cols={2}>
+      <Card title="prompt" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-right.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-right.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        ![Description](https://cdn.bigmodel.cn/markdown/1751371916542image.png?attname=image.png)<br />在 APP 中，帮我创建一个两周后 3 点与史密斯博士的会议
+      </Card>
+
+      <Card title="生成结果" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-left.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-left.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        ![Description](https://cdn.bigmodel.cn/markdown/175282595604320250718-160538.jpeg?attname=20250718-160538.jpeg)
+      </Card>
+    </CardGroup>
+  </Tab>
+
+  <Tab title="前端网页 Coding">
+    <CardGroup cols={2}>
+      <Card title="prompt" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-right.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-right.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        ![Description](https://cdn.bigmodel.cn/markdown/1751371942040image.png?attname=image.png)<br />请构建一个与输入图片相似的网页并将其转换为 React 代码。
+      </Card>
+
+      <Card title="生成结果" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-left.svg)", WebkitMaskImage: "url(/resource/icon/arrow-down-left.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+        生成的 React 代码后渲染的网页界面截图：<br />![Description](https://cdn.bigmodel.cn/markdown/1751381809888image.png?attname=image.png)
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.bigmodel.cn/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# GLM-4V-Flash
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/rectangle-list.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 概览 </div>
+
+GLM-4V-Flash 是智谱推出的首个完全免费的图像理解模型。在图像识别、图像问答、图像推理等多项任务中展现出卓越的性能。在企业应用场景中，GLM-4V-Flash 表现突出，不仅能够帮助企业实现高效图像处理，还能紧密贴合不同垂直领域的实际需求，适配多样化应用场景。
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/bolt.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 能力支持 </div>
+
+<CardGroup cols={3}>
+  <Card title="视觉理解" icon={<svg style={{maskImage: "url(/resource/icon/eye.svg)", WebkitMaskImage: "url(/resource/icon/eye.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    强大的视觉理解能力，支持图片
+  </Card>
+
+  <Card title="流式输出" href="/cn/guide/capabilities/streaming" icon={<svg style={{maskImage: "url(/resource/icon/maximize.svg)", WebkitMaskImage: "url(/resource/icon/maximize.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} />}>
+    支持实时流式响应，提升用户交互体验
+  </Card>
+</CardGroup>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/stars.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 功能特色 </div>
+
+* 图像描述生成
+* 图像分类
+* 图像情感分析
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/link.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 快捷入口 </div>
+
+* 接口调用查看 [接口文档](/api-reference/%E6%A8%A1%E5%9E%8B-api/%E5%AF%B9%E8%AF%9D%E8%A1%A5%E5%85%A8)
+* 在 [体验中心](https://www.bigmodel.cn/console/trialcenter?modelCode=glm-4v-flash) 体验模型能力
+* 查看模型 [速率限制](https://www.bigmodel.cn/usercenter/corporateequity)；
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/cubes.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 场景应用 </div>
+
+<Tabs>
+  <Tab title="图表问答">
+    大模型 GLM-4V-Flash 拥有优秀的图表分析能力，在处理折线图时表现尤为出色。它能够精准识别和提取图表中的数据拐点、峰值和谷值，并对数据趋势进行深入解读。通过分析历史数据的变化规律，模型可以生成科学的预测结果，并以清晰的方式呈现未来可能的发展走向。
+
+    | Prompt                                                                                                                                                                                                                                                                                                           | 生成结果                                                                                                                                                                                                                                       |
+    | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | 请你帮我分析一下图片中的房价走势，并预测接下来一年的趋势是什么![Image](https://cdn.bigmodel.cn/markdown/1735635250726%E6%88%90%E9%83%BD%E4%BA%8C%E6%89%8B%E6%88%BF%E4%BB%B7%E4%BB%8A%E5%B9%B4%E4%BB%B7%E6%A0%BC%E5%9B%BE.jpeg?attname=%E6%88%90%E9%83%BD%E4%BA%8C%E6%89%8B%E6%88%BF%E4%BB%B7%E4%BB%8A%E5%B9%B4%E4%BB%B7%E6%A0%BC%E5%9B%BE.jpeg) | 近两年成都新房和二手房成交量走势对比折线图显示，2022年7月到8月，新房成交量呈上升趋势；9月到12月，新房成交量有所下降。 2023年1月到4月，新房成交量持续上升至28189套；5月到6月，新房成交量又有所下降；7月再次回升至23790套左右；之后几个月新房成交量波动较大，但总体保持在较高水平。 对于未来一年（2024年）的新房市场走势，根据图表所示的趋势来看，预计新房成交量将继续保持波动性增长，但由于受到宏观经济、政策调控等因素的影响，增速可能会有所放缓。 |
+  </Tab>
+
+  <Tab title="社交媒体内容生成">
+    | Prompt                                                                                                       | 生成结果                                                                                                                                                                                              |
+    | :----------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+    | 根据图片内容创作一篇吸引人的小红书（徒步旅行）文案![Image](https://cdn.bigmodel.cn/markdown/1735118803138image.png?attname=image.png) | 🏞️ 山水之间，漫步云端！<br />🌄 阳光洒在身上，微风拂过脸庞，感受大自然的魅力。<br />💪 徒步旅行不仅是一种锻炼身体的方式，更是一次心灵的洗礼。<br />📸 拍下沿途的美景，记录下每一个难忘的时刻。<br />💌 分享给你的朋友，一起感受这份快乐与激情。<br />🔥 快来加入我们，一起征服高山，领略美景吧！<br />#徒步旅行 #探索大自然 #挑战自我 |
+  </Tab>
+
+  <Tab title="教育应用">
+    | Prompt                                                                                          | 生成结果                                                                                                             |
+    | :---------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
+    | 图中反应了什么物理学现象![Image](https://cdn.bigmodel.cn/markdown/1735118908375image.png?attname=image.png) | 这张图片展示了光的色散现象。图中的玻璃棱镜将白光分解成不同颜色的光谱，形成彩虹的效果。这种现象是由于不同波长的光在通过棱镜时折射角度不同，从而分离出红、橙、黄、绿、蓝、靛、紫七种颜色。这个实验通常用来演示光的色散和折射原理。 |
+  </Tab>
+
+  <Tab title="质量检测">
+    | Prompt                                                                                       | 生成结果                                                                                              |
+    | :------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------ |
+    | 识别图中有几个坏果![Image](https://cdn.bigmodel.cn/markdown/1735119051024image.png?attname=image.png) | 根据图片中红色圈出的部分来看，一共有三个坏果。坏果通常是指水果在采摘、运输或储存过程中受到损伤或者因为病害等原因导致品质下降的水果。这些坏果可能会影响其他好果的品质，因此需要及时进行分拣和处理。 |
+  </Tab>
+
+  <Tab title="商品描述生成">
+    | Prompt                                                                                                    | 生成结果                            |
+    | :-------------------------------------------------------------------------------------------------------- | :------------------------------ |
+    | 给图中的物品生成一个商品标题，用于淘宝商店!![Image](https://cdn.bigmodel.cn/markdown/1735119077344image.png?attname=image.png) | 【皇家蓝花卉】骨瓷茶杯套装，金边描花，细腻典雅，尽显高贵气质！ |
+  </Tab>
+
+  <Tab title="肤质图片测试建议">
+    GLM-4V-Flash 的美容咨询助手功能，能够识别图中的皮肤问题，还能提供一系列细致的护肤建议。它从清洁、保湿、防晒等多个角度出发，为用户量身定制护肤方案，同时强调避免不当的护肤行为和注意生活习惯。这一功能可以为用户提供有关于美容方面的建议。
+
+    | Prompt                                                                                                                                                                                                                                                                                                                                                                                                 | 生成结果                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+    | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | ＃ Role： 专业护肤顾问<br />## Description：我是一位专业的护肤顾问， 擅长通过图片分析肤质状况，<br />并提供个性化的护肤建议和方案规划。<br />## Commands<br />/analyze- 分析肤质状况<br />Idiagnose - 问题诊断<br />/plan- 护肤方案定制<br />/routine - 日常护理建议<br />/product - 产品类型推荐<br />llifestyle - 生活习惯建议<br />/progress - 跟踪改善进度<br /><img src="https://cdn.bigmodel.cn/markdown/1735119024866image.png?attname=image.png" alt="Image" style={{ width:"350px" }} /> | 根据您提供的图片信息，我们可以观察到皮肤上有一些小红疙瘩或丘疹，这可能是痤疮（俗称青春痘）的表现。以下是我的分析和建议：<br /> 肤质分析：<br />•肤质类型：从图片上看，皮肤看起来比较油性或者混合型，因为可以看到明显的毛孔和一些油脂分泌。<br />问题诊断：<br />• 问题成因：痤疮的形成通常与皮脂腺分泌过多、毛囊堵塞以及细菌感染有关。此外，遗传因素、荷尔蒙变化、饮食习惯、压力等也可能影响痤疮的发生和发展。<br />护肤方案定制：<br />清洁：选择温和但不刺激的洁面产品，每天早晚两次洗脸，避免过度清洗导致皮肤干燥。<br />• 控油：可以使用含有水杨酸或苯氧乙醇成分的产品来帮助控制油脂分泌。<br />• 去角质：定期进行物理或化学去角质可以帮助去除死皮细胞，减少毛孔堵塞。<br />• 抗炎治疗：可以考虑使用含有消炎成分如尼古丁酰胺、甘草提取物等产品。<br />• 防晒：紫外线可以加重痤疮的症状，因此外出时务必做好防晒措施。<br />• 生活习惯：保持良好的作息时间，减少油腻食物摄入，多喝水，适当运动以调节内分泌平衡。<br />生活方式建议：<br />•饮食：减少高糖、高脂肪和高GI值的食物摄入，多吃富含维生素C和E的食物。<br />•水分：保证充足的水分摄入有助于维持皮肤的水油平衡。<br />•压力管理：长期的压力可能导致激素水平失衡，进而加剧痤疮症状。尝试冥想、瑜伽或其他放松技巧来缓解压力。<br />请注意，以上仅为一般性的护肤建议。如果您的痤疮症状严重或有其他并发症，请务必咨询皮肤科医生的意见。同时，护肤品的选择和使用应根据个人情况而定，最好在专业人士指导下进行。 |
+  </Tab>
+</Tabs>
+
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.bigmodel.cn/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Cogview-3-Flash
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/rectangle-list.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 概览 </div>
+
+CogView-3-Flash 是智谱推出的免费图像生成模型，能够根据用户指令生成符合要求且美学评分更高的图像。CogView-3-Flash 主要应用于艺术创作、设计参考、游戏开发、虚拟现实等领域，帮助用户快速实现从文本到图像的转换需求。
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/stars.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 功能特色 </div>
+
+<AccordionGroup>
+  <Accordion title="多分辨率支持" defaultOpen="true">
+    该模型支持多种分辨率，包括 1024x1024、768x1344、864x1152、1344x768、1152x864、1440x720、720x1440 等，能够满足专业设计、广告宣传、艺术创作等领域对图像质量的高标准要求。
+  </Accordion>
+
+  <Accordion title="创意丰富多样">
+    模型能够根据用户输入的文本描述，生成具有丰富创意和想象力的图像，为创意工作者提供了广泛的灵感来源和创作可能性。
+  </Accordion>
+
+  <Accordion title="推理速度快">
+    该模型具备实时生成图像的能力，响应速度快，能够迅速满足用户对图像生成的需求。
+  </Accordion>
+</AccordionGroup>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/link.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 快捷入口 </div>
+
+* 接口调用查看 [接口文档](/api-reference/%E6%A8%A1%E5%9E%8B-api/%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90)
+* 在 [体验中心](https://www.bigmodel.cn/console/trialcenter?modelCode=cogview-3-flash) 体验模型能力
+* 查看模型 [速率限制](https://www.bigmodel.cn/usercenter/proj-mgmt/rate-limits)；
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/cubes.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 场景应用 </div>
+
+CogView-3-Flash 是一款高效的 AI 文生图模型,能够基于用户的文字描述快速生成高质量图像。它以超快的推理速度和准确的细节还原见长,平均只需数秒即可完成一张图片的生成,让创意转化为视觉作品的过程更加流畅自然。
+
+<Tabs>
+  <Tab title="PPT 配图">
+    CogView-3-Flash 能够显著提升 PPT 制作的效率，特别是在背景图的选择上。当我们需要特定主题或风格的 PPT 背景图时，只需要通过文字描述我们想要的场景、风格和色调，CogView-3-Flash就能快速生成符合需求的背景图。无论是商务简报、学术汇报还是创意展示，它都能根据具体场景生成专业、美观的背景图像。这不仅节省了搜索素材的时间，还能确保背景图的独特性，让 PPT 的视觉效果更具吸引力。通过 AI 的辅助，我们可以将更多精力集中在内容创作上，提高整体工作效率。
+
+    <CardGroup cols={2}>
+      <Card title="Prompt" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-right.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"}/>}>
+        请生成一张温馨而富有教育意义的背景图，适合用于幼儿防溺水 PPT。图中应包含清澈的游泳池或湖泊，周围有救生圈、救生衣等安全设施，以及配备游泳圈等安全措施快乐玩耍的小朋友们，同时要有醒目的安全提示标志，色彩明亮，适合儿童视觉
+      </Card>
+
+      <Card title="生成图片" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-left.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"}/>}>
+        ![description](https://cdn.bigmodel.cn/markdown/1735639142702202412261511317a8ea0a7d50f4152_0.png.jpeg?attname=202412261511317a8ea0a7d50f4152_0.png.jpeg)
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.bigmodel.cn/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Cogview-3-Flash
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/rectangle-list.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 概览 </div>
+
+CogView-3-Flash 是智谱推出的免费图像生成模型，能够根据用户指令生成符合要求且美学评分更高的图像。CogView-3-Flash 主要应用于艺术创作、设计参考、游戏开发、虚拟现实等领域，帮助用户快速实现从文本到图像的转换需求。
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/stars.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 功能特色 </div>
+
+<AccordionGroup>
+  <Accordion title="多分辨率支持" defaultOpen="true">
+    该模型支持多种分辨率，包括 1024x1024、768x1344、864x1152、1344x768、1152x864、1440x720、720x1440 等，能够满足专业设计、广告宣传、艺术创作等领域对图像质量的高标准要求。
+  </Accordion>
+
+  <Accordion title="创意丰富多样">
+    模型能够根据用户输入的文本描述，生成具有丰富创意和想象力的图像，为创意工作者提供了广泛的灵感来源和创作可能性。
+  </Accordion>
+
+  <Accordion title="推理速度快">
+    该模型具备实时生成图像的能力，响应速度快，能够迅速满足用户对图像生成的需求。
+  </Accordion>
+</AccordionGroup>
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/link.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 快捷入口 </div>
+
+* 接口调用查看 [接口文档](/api-reference/%E6%A8%A1%E5%9E%8B-api/%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90)
+* 在 [体验中心](https://www.bigmodel.cn/console/trialcenter?modelCode=cogview-3-flash) 体验模型能力
+* 查看模型 [速率限制](https://www.bigmodel.cn/usercenter/proj-mgmt/rate-limits)；
+
+## <div className="flex items-center"> <svg style={{maskImage: "url(/resource/icon/cubes.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"} /> 场景应用 </div>
+
+CogView-3-Flash 是一款高效的 AI 文生图模型,能够基于用户的文字描述快速生成高质量图像。它以超快的推理速度和准确的细节还原见长,平均只需数秒即可完成一张图片的生成,让创意转化为视觉作品的过程更加流畅自然。
+
+<Tabs>
+  <Tab title="PPT 配图">
+    CogView-3-Flash 能够显著提升 PPT 制作的效率，特别是在背景图的选择上。当我们需要特定主题或风格的 PPT 背景图时，只需要通过文字描述我们想要的场景、风格和色调，CogView-3-Flash就能快速生成符合需求的背景图。无论是商务简报、学术汇报还是创意展示，它都能根据具体场景生成专业、美观的背景图像。这不仅节省了搜索素材的时间，还能确保背景图的独特性，让 PPT 的视觉效果更具吸引力。通过 AI 的辅助，我们可以将更多精力集中在内容创作上，提高整体工作效率。
+
+    <CardGroup cols={2}>
+      <Card title="Prompt" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-right.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"}/>}>
+        请生成一张温馨而富有教育意义的背景图，适合用于幼儿防溺水 PPT。图中应包含清澈的游泳池或湖泊，周围有救生圈、救生衣等安全设施，以及配备游泳圈等安全措施快乐玩耍的小朋友们，同时要有醒目的安全提示标志，色彩明亮，适合儿童视觉
+      </Card>
+
+      <Card title="生成图片" icon={<svg style={{maskImage: "url(/resource/icon/arrow-down-left.svg)", maskRepeat: "no-repeat", maskPosition: "center center",}} className={"h-6 w-6 bg-primary dark:bg-primary-light !m-0 shrink-0"}/>}>
+        ![description](https://cdn.bigmodel.cn/markdown/1735639142702202412261511317a8ea0a7d50f4152_0.png.jpeg?attname=202412261511317a8ea0a7d50f4152_0.png.jpeg)
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
+

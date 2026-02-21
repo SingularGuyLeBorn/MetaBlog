@@ -1,0 +1,428 @@
+/**
+ * Chat Service - 前端聊天服务
+ * 
+ * 提供直接的 LLM 聊天功能，支持：
+ * - 基础对话
+ * - 流式输出（支持 reasoning_content 推理过程）
+ * - 多轮对话上下文
+ * - 自动读取环境变量配置
+ * 
+ * 使用方法:
+ * ```typescript
+ * import { useChatService } from './chat-service'
+ * 
+ * const chat = useChatService()
+ * 
+ * // 发送消息
+ * const response = await chat.sendMessage('你好')
+ * 
+ * // 流式对话（深度思考模式）
+ * await chat.sendMessageStream('证明勾股定理', (chunk) => {
+ *   if (chunk.reasoning) {
+ *     console.log('推理:', chunk.reasoning)
+ *   } else {
+ *     console.log('回答:', chunk.content)
+ *   }
+ * })
+ * ```
+ */
+
+import { ref, computed } from 'vue'
+import { getLLMManager, createLLMManager } from './llm'
+import { loadEnvConfig, createLLMConfigFromEnv } from './config/env'
+import type { LLMMessage } from './llm/types'
+import { AgentRuntime } from './core/AgentRuntime'
+// 浏览器环境使用API发送日志
+const aiLogger = {
+  log: (level: 'info' | 'error' | 'debug', event: string, message: string, metadata?: any) => {
+    fetch('/api/logs/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        level,
+        event,
+        message,
+        actor: 'ai',
+        metadata
+      })
+    }).catch(() => {}) // 忽略日志发送错误
+  }
+}
+
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant' | 'system' | 'tool'
+  content: string
+  reasoning?: string  // 推理过程（深度思考模式）
+  timestamp: number
+  metadata?: {
+    tokens?: number
+    cost?: number
+    model?: string
+    isError?: boolean
+    isResearch?: boolean
+    sources?: string[]
+    [key: string]: any  // 允许其他自定义属性
+  }
+}
+
+export interface ChatOptions {
+  model?: string
+  temperature?: number
+  maxTokens?: number
+  stream?: boolean
+  systemPrompt?: string
+}
+
+export function useChatService() {
+  // 消息历史
+  const messages = ref<ChatMessage[]>([])
+  
+  // 状态
+  const isLoading = ref(false)
+  const isStreaming = ref(false)
+  const error = ref<string | null>(null)
+  
+  // P0-3: AbortController 用于取消请求
+  let currentAbortController: AbortController | null = null
+  
+  // P0-3: 取消当前请求
+  function abortCurrentRequest() {
+    if (currentAbortController) {
+      currentAbortController.abort()
+      currentAbortController = null
+    }
+    
+    // P1-STOP: 同时取消 AgentRuntime 中的技能任务
+    try {
+      const agentRuntime = AgentRuntime.getInstance()
+      agentRuntime.abort() // 取消当前正在执行的任务
+    } catch {
+      // AgentRuntime 可能未初始化，忽略错误
+    }
+  }
+  
+  // 当前对话的 token 和成本统计
+  const totalTokens = computed(() => 
+    messages.value.reduce((sum, m) => sum + (m.metadata?.tokens || 0), 0)
+  )
+  const totalCost = computed(() => 
+    messages.value.reduce((sum, m) => sum + (m.metadata?.cost || 0), 0)
+  )
+  
+  // 确保 LLM Manager 已初始化
+  function ensureLLMManager() {
+    try {
+      return getLLMManager()
+    } catch {
+      const config = createLLMConfigFromEnv()
+      return createLLMManager(config)
+    }
+  }
+  
+  /**
+   * 发送消息（非流式）
+   */
+  async function sendMessage(
+    content: string,
+    options: ChatOptions = {}
+  ): Promise<ChatMessage> {
+    const llm = ensureLLMManager()
+    const env = loadEnvConfig()
+    
+    isLoading.value = true
+    error.value = null
+    const startTime = Date.now()
+    
+    aiLogger.log('info', 'chat.request', 'AI请求开始', { 
+      contentLength: content.length,
+      model: options.model || env.DEEPSEEK_MODEL || 'deepseek-chat'
+    })
+    
+    try {
+      // 添加用户消息
+      const userMessage: ChatMessage = {
+        id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        role: 'user',
+        content,
+        timestamp: Date.now()
+      }
+      messages.value.push(userMessage)
+      
+      // 构建消息列表
+      const chatMessages: LLMMessage[] = []
+      
+      // 系统提示词
+      if (options.systemPrompt) {
+        chatMessages.push({ role: 'system', content: options.systemPrompt })
+      }
+      
+      // 添加历史消息（最近 10 条）
+      const recentMessages = messages.value.slice(-11, -1)
+      for (const msg of recentMessages) {
+        // 只添加 LLM 支持的角色（排除 system 和 tool）
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          chatMessages.push({ role: msg.role, content: msg.content })
+        }
+      }
+      
+      // 添加当前消息
+      chatMessages.push({ role: 'user', content })
+      
+      // 调用 LLM
+      const response = await llm.chat({
+        messages: chatMessages,
+        model: options.model || env.DEEPSEEK_MODEL || 'deepseek-chat',
+        temperature: options.temperature ?? 0.7,
+        maxTokens: options.maxTokens ?? 2048
+      })
+      
+      // 添加助手回复
+      const assistantMessage: ChatMessage = {
+        id: `assistant_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        role: 'assistant',
+        content: response.content,
+        timestamp: Date.now(),
+        metadata: {
+          tokens: response.usage.totalTokens,
+          cost: response.cost,
+          model: response.model
+        }
+      }
+      messages.value.push(assistantMessage)
+      
+      const duration = Date.now() - startTime
+      aiLogger.log('info', 'chat.response', 'AI响应完成', {
+        duration,
+        tokens: response.usage.totalTokens,
+        cost: response.cost,
+        model: response.model
+      })
+      
+      return assistantMessage
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      error.value = errorMsg
+      aiLogger.log('error', 'chat.error', 'AI请求失败', { error: errorMsg })
+      throw err
+    } finally {
+      isLoading.value = false
+    }
+  }
+  
+  /**
+   * 发送消息（流式）
+   * 
+   * 对于 deepseek-reasoner 模型，会返回 reasoning_content（推理过程）
+   * 
+   * P0-3: 支持通过 AbortController 取消请求
+   */
+  async function sendMessageStream(
+    content: string,
+    onChunk: (chunk: { content: string; reasoning?: string; isReasoning?: boolean }) => void,
+    options: ChatOptions = {}
+  ): Promise<ChatMessage> {
+    const llm = ensureLLMManager()
+    const env = loadEnvConfig()
+    
+    // P0-3: 取消之前的请求（如果有）
+    abortCurrentRequest()
+    currentAbortController = new AbortController()
+    
+    isLoading.value = true
+    isStreaming.value = true
+    error.value = null
+    const startTime = Date.now()
+    
+    // 根因 D 修复：在函数作用域顶部声明变量，避免 catch 块访问不到
+    let assistantMessageId = ''
+    let fullContent = ''
+    let fullReasoning = ''
+    
+    // 判断是否是深度思考模式
+    const isReasonerModel = (options.model || env.DEEPSEEK_MODEL || 'deepseek-chat').includes('reasoner')
+    
+    aiLogger.log('info', 'chat.stream.request', 'AI流式请求开始', { 
+      contentLength: content.length,
+      model: options.model || env.DEEPSEEK_MODEL || 'deepseek-chat',
+      isReasoner: isReasonerModel
+    })
+    
+    try {
+      // 添加用户消息
+      const userMessage: ChatMessage = {
+        id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        role: 'user',
+        content,
+        timestamp: Date.now()
+      }
+      messages.value.push(userMessage)
+      
+      // 构建消息列表
+      const chatMessages: LLMMessage[] = []
+      
+      // 系统提示词
+      if (options.systemPrompt) {
+        chatMessages.push({ role: 'system', content: options.systemPrompt })
+      }
+      
+      // 添加历史消息
+      const recentMessages = messages.value.slice(-11, -1)
+      for (const msg of recentMessages) {
+        // 只添加 LLM 支持的角色（排除 system 和 tool）
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          // 对于 reasoner 模型，历史消息只保留 content，不保留 reasoning
+          chatMessages.push({ role: msg.role, content: msg.content })
+        }
+      }
+      
+      // 添加当前消息
+      chatMessages.push({ role: 'user', content })
+      
+      // 创建助手消息占位
+      assistantMessageId = `assistant_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
+      let hasReceivedContent = false
+      let hasReceivedReasoning = false
+      
+      // 流式调用
+      // P0-3: 传递 signal 以支持取消
+      const { usage, cost } = await llm.chatStream(
+        {
+          messages: chatMessages,
+          model: options.model || env.DEEPSEEK_MODEL || 'deepseek-chat',
+          temperature: options.temperature ?? 0.7,
+          maxTokens: options.maxTokens ?? 2048,
+          stream: true,
+          signal: currentAbortController?.signal
+        },
+        (chunk) => {
+          // 记录第一个chunk到达
+          if (!hasReceivedContent && !hasReceivedReasoning && (chunk.content || chunk.reasoning)) {
+            const timeToFirstToken = Date.now() - startTime
+            aiLogger.log('debug', 'chat.stream.first_token', '首Token到达', { 
+              timeToFirstToken,
+              hasReasoning: !!chunk.reasoning 
+            })
+          }
+          const content = chunk.content || ''
+          const reasoning = chunk.reasoning || ''
+          
+          // 处理推理过程
+          if (reasoning) {
+            hasReceivedReasoning = true
+            fullReasoning += reasoning
+            onChunk({ content: '', reasoning, isReasoning: true })
+          }
+          
+          // 处理正式回答
+          if (content) {
+            hasReceivedContent = true
+            fullContent += content
+            onChunk({ content, reasoning: '', isReasoning: false })
+          }
+        }
+      )
+      
+      // 添加完整的助手回复
+      const assistantMessage: ChatMessage = {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: fullContent,
+        reasoning: fullReasoning || undefined,
+        timestamp: Date.now(),
+        metadata: {
+          tokens: usage.totalTokens,
+          cost,
+          model: options.model || env.DEEPSEEK_MODEL || 'deepseek-chat'
+        }
+      }
+      messages.value.push(assistantMessage)
+      
+      const duration = Date.now() - startTime
+      aiLogger.log('info', 'chat.stream.complete', 'AI流式响应完成', {
+        duration,
+        tokens: usage.totalTokens,
+        cost,
+        hasReasoning: !!fullReasoning,
+        contentLength: fullContent.length
+      })
+      
+      return assistantMessage
+    } catch (err) {
+      // P0-3: 如果是用户取消，不记录为错误
+      if (err instanceof Error && err.message === 'Request aborted') {
+        aiLogger.log('info', 'chat.stream.aborted', '用户取消流式请求', {
+          duration: Date.now() - startTime
+        })
+        // 返回一个空消息表示已取消
+        const cancelledMessage: ChatMessage = {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: fullContent || '[已取消]',
+          reasoning: fullReasoning || undefined,
+          timestamp: Date.now(),
+          metadata: {
+            tokens: 0,
+            cost: 0,
+            model: options.model || env.DEEPSEEK_MODEL || 'deepseek-chat',
+            isCancelled: true
+          }
+        }
+        return cancelledMessage
+      }
+      
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      error.value = errorMsg
+      aiLogger.log('error', 'chat.stream.error', 'AI流式请求失败', { 
+        error: errorMsg,
+        duration: Date.now() - startTime 
+      })
+      throw err
+    } finally {
+      isLoading.value = false
+      isStreaming.value = false
+      currentAbortController = null
+    }
+  }
+  
+  /**
+   * 清空对话历史
+   */
+  function clearMessages() {
+    messages.value = []
+    error.value = null
+  }
+  
+  /**
+   * 获取当前配置信息
+   */
+  function getConfig() {
+    const env = loadEnvConfig()
+    return {
+      defaultProvider: env.LLM_DEFAULT_PROVIDER,
+      deepseekModel: env.DEEPSEEK_MODEL || 'deepseek-chat',
+      hasApiKey: !!(env.DEEPSEEK_API_KEY && !env.DEEPSEEK_API_KEY.includes('your'))
+    }
+  }
+  
+  return {
+    // 状态
+    messages,
+    isLoading,
+    isStreaming,
+    error,
+    totalTokens,
+    totalCost,
+    
+    // 方法
+    sendMessage,
+    sendMessageStream,
+    clearMessages,
+    getConfig,
+    // P0-3: 暴露 abort 方法供组件使用
+    abort: abortCurrentRequest
+  }
+}
+
+// 默认导出
+export default useChatService

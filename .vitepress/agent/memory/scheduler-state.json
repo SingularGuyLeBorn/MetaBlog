@@ -1,0 +1,41 @@
+{
+  "tasks": [
+    {
+      "taskType": "arxiv-digest",
+      "cronExpression": "0 9 * * 1",
+      "lastRun": 0,
+      "nextRun": 1771603642261,
+      "runCount": 0,
+      "failCount": 0,
+      "enabled": true
+    },
+    {
+      "taskType": "rss-aggregator",
+      "cronExpression": "0 */6 * * *",
+      "lastRun": 1771689600031,
+      "nextRun": 1771689660033,
+      "runCount": 4,
+      "failCount": 0,
+      "enabled": true
+    },
+    {
+      "taskType": "code-docs",
+      "cronExpression": "0 2 * * 0",
+      "lastRun": 0,
+      "nextRun": 1771603642267,
+      "runCount": 0,
+      "failCount": 0,
+      "enabled": true
+    },
+    {
+      "taskType": "content-cleanup",
+      "cronExpression": "0 3 1 * *",
+      "lastRun": 0,
+      "nextRun": 1771603642271,
+      "runCount": 0,
+      "failCount": 0,
+      "enabled": true
+    }
+  ],
+  "lastSave": 1771689627034
+}

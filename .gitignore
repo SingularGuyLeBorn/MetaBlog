@@ -7,3 +7,6 @@ cache
 .vitepress/cache
 .idea
 *.log
+.env
+.env.local
+.env.*.local

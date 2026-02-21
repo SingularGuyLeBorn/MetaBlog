@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 7
+    },
+    "auditLog": "D:\\ALL IN AI\\MetaBlog\\.vitepress\\agent\\logs\\.b7752177bc80422c17b609cc2a4e7b2752d4f3af-audit.json",
+    "files": [
+        {
+            "date": 1771524962456,
+            "name": "D:\\ALL IN AI\\MetaBlog\\.vitepress\\agent\\logs\\rejections-%DATE{}.log.2026-02-20",
+            "hash": "5cff94ce3268c51f943fccd59e98b4a0452e33db0d05e72aa61f27e2f6d471d0"
+        }
+    ],
+    "hashType": "sha256"
+}
