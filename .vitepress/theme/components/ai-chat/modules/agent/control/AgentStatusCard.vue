@@ -34,7 +34,7 @@
         />
         <div class="status-dot" :class="agent.status"></div>
       </div>
-      <div class="avatar-id">#{{ agent.avatarId }}</div>
+      <div class="avatar-id">#{{ agent.avatarId || 1 }}</div>
     </div>
     
     <!-- 信息区 -->
@@ -54,7 +54,7 @@
           {{ triggerIcon(trigger.type) }}
           {{ triggerTypeName(trigger.type) }}
         </span>
-        <span v-if="agent.triggers.length === 0" class="trigger-tag empty">
+        <span v-if="(agent.triggers || []).length === 0" class="trigger-tag empty">
           无触发器
         </span>
       </div>
@@ -64,11 +64,11 @@
     <div class="stats-section">
       <div class="stat-item" title="运行次数">
         <span class="stat-icon">▶️</span>
-        <span class="stat-value">{{ agent.totalRuns }}</span>
+        <span class="stat-value">{{ agent.totalRuns || 0 }}</span>
       </div>
-      <div class="stat-item" title="错误次数" v-if="agent.errorCount > 0">
+      <div class="stat-item" title="错误次数" v-if="(agent.errorCount || 0) > 0">
         <span class="stat-icon">⚠️</span>
-        <span class="stat-value error">{{ agent.errorCount }}</span>
+        <span class="stat-value error">{{ agent.errorCount || 0 }}</span>
       </div>
     </div>
     
@@ -96,7 +96,7 @@
         class="action-btn start"
         @click="$emit('start', agent)"
         title="启动"
-        :disabled="agent.status === 'creating'"
+        :disabled="agent.status === 'busy'"
       >
         ▶️
       </button>
@@ -130,8 +130,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { Agent, TriggerType } from '../../../core/composables/useAgentControl'
-import { generateAvatarUrl } from '../../../core/composables/useAgentControl'
+import type { Agent, TriggerType } from '../../../core/composables'
+import { generateAvatarUrl } from '../../../core/composables'
 
 const props = defineProps<{
   agent: Agent
@@ -154,12 +154,12 @@ const avatarUrl = computed(() => {
   if (avatarError.value) {
     return `https://api.dicebear.com/7.x/identicon/svg?seed=${props.agent.id}`
   }
-  return generateAvatarUrl(props.agent.avatarId, props.agent.id)
+  return generateAvatarUrl(props.agent.avatarId || 1, props.agent.id)
 })
 
 // 启用的触发器
 const enabledTriggers = computed(() => 
-  props.agent.triggers.filter(t => t.enabled).slice(0, 3)
+  (props.agent.triggers || []).filter(t => t.enabled).slice(0, 3)
 )
 
 // 触发器图标
@@ -231,7 +231,9 @@ function handleAvatarError() {
 .status-bar.paused { background: linear-gradient(180deg, #f59e0b, #d97706); }
 .status-bar.error { background: linear-gradient(180deg, #ef4444, #dc2626); }
 .status-bar.idle { background: linear-gradient(180deg, #6b7280, #4b5563); }
-.status-bar.creating { background: linear-gradient(180deg, #3b82f6, #2563eb); }
+.status-bar.busy { background: linear-gradient(180deg, #3b82f6, #2563eb); }
+.status-bar.online { background: linear-gradient(180deg, #22c55e, #16a34a); }
+.status-bar.offline { background: linear-gradient(180deg, #9ca3af, #6b7280); }
 
 /* 头像区 */
 .avatar-section {
@@ -269,7 +271,9 @@ function handleAvatarError() {
 .status-dot.paused { background: #f59e0b; }
 .status-dot.error { background: #ef4444; }
 .status-dot.idle { background: #6b7280; }
-.status-dot.creating { background: #3b82f6; animation: pulse 1.5s infinite; }
+.status-dot.busy { background: #3b82f6; animation: pulse 1.5s infinite; }
+.status-dot.online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+.status-dot.offline { background: #9ca3af; }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }

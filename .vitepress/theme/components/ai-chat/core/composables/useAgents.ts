@@ -179,14 +179,43 @@ export function useAgents() {
     try {
       const data = await fetchAgents()
       
-      // 确保默认 Agent 存在
-      if (!data.find((a: Agent) => a.id === DEFAULT_AGENT.id)) {
-        data.unshift({ ...DEFAULT_AGENT })
-        // 保存到后端
-        await createAgentAPI(DEFAULT_AGENT)
+      // 过滤掉无效数据（缺少必要字段的）
+      const validData = data.filter((a: any) => a.name && a.id)
+      
+      // 确保每个 Agent 都有完整的属性
+      const completeData = validData.map((a: Partial<Agent>) => ({
+        ...DEFAULT_AGENT,
+        ...a,
+        id: a.id || `agent-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        name: a.name || '未命名 Agent',
+        avatar: a.avatar || '🤖',
+        description: a.description || '',
+        level: (a.level || 'custom') as AgentLevel,
+        status: (a.status || 'idle') as AgentStatus,
+        seat: a.seat ?? 999,
+        skills: a.skills || [],
+        permissions: a.permissions || PERMISSION_TEMPLATES.map(p => ({ ...p, granted: p.id === 'chat' })),
+        systemPrompt: a.systemPrompt || '',
+        memoryEnabled: a.memoryEnabled ?? false,
+        memoryContent: a.memoryContent || '',
+        callCount: a.callCount ?? 0,
+        isDefault: a.isDefault ?? false,
+        createdAt: a.createdAt ?? Date.now(),
+        updatedAt: a.updatedAt ?? Date.now(),
+        lastActiveAt: a.lastActiveAt ?? Date.now()
+      }))
+      
+      // 确保只有一个默认 Agent 且存在
+      const defaultAgentIndex = completeData.findIndex((a: Agent) => a.id === DEFAULT_AGENT.id)
+      if (defaultAgentIndex === -1) {
+        // 不存在则添加
+        completeData.unshift({ ...DEFAULT_AGENT })
+      } else {
+        // 存在则确保数据完整
+        completeData[defaultAgentIndex] = { ...DEFAULT_AGENT, ...completeData[defaultAgentIndex] }
       }
       
-      agents.value = data
+      agents.value = completeData
       
       // 加载活跃 Agent ID（从 localStorage，这只是 UI 状态）
       if (typeof localStorage !== 'undefined') {

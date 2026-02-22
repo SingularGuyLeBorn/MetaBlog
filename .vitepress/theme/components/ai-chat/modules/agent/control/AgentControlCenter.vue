@@ -118,8 +118,8 @@
 import { ref, computed, onMounted } from 'vue'
 import AgentList from './AgentList.vue'
 import AgentDetailPanel from './AgentDetailPanel.vue'
-import { useAgentControl, generateAvatarUrl, getRandomAvatarId } from '../../../core/composables/useAgentControl'
-import type { Agent } from '../../../core/composables/useAgentControl'
+import { useAgents, generateAvatarUrl, getRandomAvatarId } from '../../../core/composables'
+import type { Agent, AgentStatus } from '../../../core/composables'
 
 const props = defineProps<{
   visible: boolean
@@ -133,16 +133,13 @@ const emit = defineEmits<{
 const {
   agents,
   activeAgentId,
-  agentsByStatus,
   sortedAgents,
   init,
   create,
   update,
   remove,
   setActive,
-  startAgent: doStart,
-  pauseAgent: doPause,
-} = useAgentControl()
+} = useAgents()
 
 // 本地状态
 const selectedAgent = ref<Agent | null>(null)
@@ -160,6 +157,31 @@ const previewAvatarId = ref(1)
 const previewAvatarUrl = computed(() => 
   generateAvatarUrl(previewAvatarId.value)
 )
+
+// 计算 agentsByStatus (适配新的 AgentStatus 类型)
+const agentsByStatus = computed(() => {
+  const result: Record<AgentStatus | 'all' | string, Agent[]> = {
+    all: agents.value,
+    online: [],
+    offline: [],
+    busy: [],
+    idle: [],
+    running: [],
+    paused: [],
+    error: [],
+    creating: []
+  }
+  agents.value.forEach(agent => {
+    if (result[agent.status]) {
+      result[agent.status].push(agent)
+    } else {
+      // Handle any unknown status
+      result[agent.status] = result[agent.status] || []
+      result[agent.status].push(agent)
+    }
+  })
+  return result
+})
 
 // 初始化
 onMounted(() => {
@@ -180,18 +202,19 @@ function selectAgent(agent: Agent) {
 // 打开创建弹窗
 function openCreate() {
   createForm.value = { name: '', description: '' }
-  previewAvatarId.value = getRandomAvatarId(agents.value.map(a => a.avatarId))
+  previewAvatarId.value = getRandomAvatarId(agents.value.map(a => a.avatarId || 1).filter((id): id is number => id !== undefined))
   showCreateModal.value = true
 }
 
 // 创建 Agent
-function doCreate() {
+async function doCreate() {
   if (!createForm.value.name.trim()) return
   
-  const agent = create({
+  const agent = await create({
     name: createForm.value.name.trim(),
     description: createForm.value.description.trim(),
-    avatarId: previewAvatarId.value
+    avatarId: previewAvatarId.value,
+    level: 'custom'
   })
   
   showCreateModal.value = false
@@ -204,9 +227,9 @@ function editAgent(agent: Agent) {
 }
 
 // 保存 Agent
-function saveAgent(data: Partial<Agent>) {
+async function saveAgent(data: Partial<Agent>) {
   if (selectedAgent.value) {
-    update(selectedAgent.value.id, data)
+    await update(selectedAgent.value.id, data)
     // 更新本地选中的 agent
     Object.assign(selectedAgent.value, data)
   }
@@ -214,14 +237,13 @@ function saveAgent(data: Partial<Agent>) {
 
 // 启动 Agent
 function startAgent(agent: Agent) {
-  doStart(agent.id)
+  setActive(agent.id)
   agent.status = 'running'
-  agent.lastRunAt = new Date()
+  agent.lastRunAt = Date.now()
 }
 
 // 暂停 Agent
 function pauseAgent(agent: Agent) {
-  doPause(agent.id)
   agent.status = 'paused'
 }
 
@@ -231,9 +253,9 @@ function confirmDelete(agent: Agent) {
 }
 
 // 执行删除
-function doDelete() {
+async function doDelete() {
   if (deleteConfirm.value) {
-    remove(deleteConfirm.value.id)
+    await remove(deleteConfirm.value.id)
     if (selectedAgent.value?.id === deleteConfirm.value.id) {
       selectedAgent.value = null
     }

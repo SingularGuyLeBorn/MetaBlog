@@ -1,0 +1,547 @@
+{
+  "sessionId": "session_1771782264049_vy1cft0g6",
+  "startTime": "2026-02-22T17:44:27.379Z",
+  "endTime": "2026-02-22T17:44:33.185Z",
+  "totalRounds": 3,
+  "entryCount": 5,
+  "entries": [
+    {
+      "timestamp": "2026-02-22T17:44:27.379Z",
+      "type": "request",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 1,
+      "data": {
+        "model": "deepseek-reasoner",
+        "messages": [
+          {
+            "role": "system",
+            "content": "你是一个 helpful 的 AI 助手。"
+          },
+          {
+            "role": "user",
+            "content": "现在几点了呢?"
+          }
+        ],
+        "max_tokens": 4096,
+        "stream": false,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_article_content",
+              "description": "获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"或需要基于已有文章内容回答时使用。不要主动调用此工具。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径，例如 \"knowledge/getting-started.md\""
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "最大返回字符数，默认8000，避免消息过长"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_articles",
+              "description": "根据关键词搜索文章",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索关键词，例如 \"深度学习\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认5条"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_articles",
+              "description": "列出文章列表，可按分类筛选。仅在用户询问\"有哪些文章\"、\"文章列表\"或需要查找特定文章时使用。不要主动调用此工具。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "section": {
+                    "type": "string",
+                    "description": "可选：按分类筛选，例如 \"knowledge\"、\"posts\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认20，最大50"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_article",
+              "description": "创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n\n重要提示：\n- path 参数必须包含文件夹和文件名，格式为 \"section/filename.md\"\n- 例如：\"knowledge/transformer-detailed.md\" 会在 knowledge 文件夹下创建 transformer-detailed.md\n- 如果用户没有指定 section，默认使用 \"knowledge\" 或 \"posts\"\n- 标题应该简洁明了，反映文章主题\n- 不要主动调用此工具，除非用户明确要求创建文章",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "文章标题，例如 \"Transformer 详解\""
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "文章完整路径，格式为 \"section/filename.md\"，例如 \"knowledge/transformer-detailed.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "文章内容（支持 Markdown），可以包含标题、段落、代码块等"
+                  }
+                },
+                "required": [
+                  "title",
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "update_article",
+              "description": "更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径，例如 \"posts/existing-article.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "新的文章内容（完整替换）"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "delete_article",
+              "description": "删除文章。当用户要求删除、移除文章时使用。此操作不可逆！",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "要删除的文章路径"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_current_time",
+              "description": "获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。",
+              "parameters": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "test_echo",
+              "description": "【测试专用】回声工具，验证工具调用是否正常工作。当用户说\"测试工具\"时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "要回显的消息"
+                  },
+                  "repeat_count": {
+                    "type": "number",
+                    "description": "重复次数"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-02-22T17:44:29.293Z",
+      "type": "response",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 1,
+      "data": {
+        "id": "64f9a7cd-b4d6-425c-9bae-ced3c7d237d0",
+        "object": "chat.completion",
+        "created": 1771782264,
+        "model": "deepseek-reasoner",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "用户想知道现在的时间，我需要使用get_current_time工具来获取当前系统时间。",
+              "tool_calls": [
+                {
+                  "index": 0,
+                  "id": "call_00_W5aLjsmOE6FoNNdImb3AvMU3",
+                  "type": "function",
+                  "function": {
+                    "name": "get_current_time",
+                    "arguments": "{}"
+                  }
+                }
+              ]
+            },
+            "logprobs": null,
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1144,
+          "completion_tokens": 46,
+          "total_tokens": 1190,
+          "prompt_tokens_details": {
+            "cached_tokens": 1088
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 17
+          },
+          "prompt_cache_hit_tokens": 1088,
+          "prompt_cache_miss_tokens": 56
+        },
+        "system_fingerprint": "fp_eaab8d114b_prod0820_fp8_kvcache"
+      }
+    },
+    {
+      "timestamp": "2026-02-22T17:44:29.308Z",
+      "type": "request",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 2,
+      "data": {
+        "model": "deepseek-reasoner",
+        "messages": [
+          {
+            "role": "system",
+            "content": "你是一个 helpful 的 AI 助手。"
+          },
+          {
+            "role": "user",
+            "content": "现在几点了呢?"
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+              {
+                "id": "call_00_W5aLjsmOE6FoNNdImb3AvMU3",
+                "type": "function",
+                "function": {
+                  "name": "get_current_time",
+                  "arguments": "{}"
+                }
+              }
+            ],
+            "reasoning_content": "用户想知道现在的时间，我需要使用get_current_time工具来获取当前系统时间。"
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_00_W5aLjsmOE6FoNNdImb3AvMU3",
+            "content": "2026-02-22T17:44:29.299Z"
+          }
+        ],
+        "max_tokens": 4096,
+        "stream": false,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_article_content",
+              "description": "获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"或需要基于已有文章内容回答时使用。不要主动调用此工具。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径，例如 \"knowledge/getting-started.md\""
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "最大返回字符数，默认8000，避免消息过长"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_articles",
+              "description": "根据关键词搜索文章",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索关键词，例如 \"深度学习\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认5条"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_articles",
+              "description": "列出文章列表，可按分类筛选。仅在用户询问\"有哪些文章\"、\"文章列表\"或需要查找特定文章时使用。不要主动调用此工具。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "section": {
+                    "type": "string",
+                    "description": "可选：按分类筛选，例如 \"knowledge\"、\"posts\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认20，最大50"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_article",
+              "description": "创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n\n重要提示：\n- path 参数必须包含文件夹和文件名，格式为 \"section/filename.md\"\n- 例如：\"knowledge/transformer-detailed.md\" 会在 knowledge 文件夹下创建 transformer-detailed.md\n- 如果用户没有指定 section，默认使用 \"knowledge\" 或 \"posts\"\n- 标题应该简洁明了，反映文章主题\n- 不要主动调用此工具，除非用户明确要求创建文章",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "文章标题，例如 \"Transformer 详解\""
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "文章完整路径，格式为 \"section/filename.md\"，例如 \"knowledge/transformer-detailed.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "文章内容（支持 Markdown），可以包含标题、段落、代码块等"
+                  }
+                },
+                "required": [
+                  "title",
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "update_article",
+              "description": "更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径，例如 \"posts/existing-article.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "新的文章内容（完整替换）"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "delete_article",
+              "description": "删除文章。当用户要求删除、移除文章时使用。此操作不可逆！",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "要删除的文章路径"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_current_time",
+              "description": "获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。",
+              "parameters": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "test_echo",
+              "description": "【测试专用】回声工具，验证工具调用是否正常工作。当用户说\"测试工具\"时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "要回显的消息"
+                  },
+                  "repeat_count": {
+                    "type": "number",
+                    "description": "重复次数"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-02-22T17:44:31.260Z",
+      "type": "response",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 2,
+      "data": {
+        "id": "feff464c-9102-481a-b1d7-76d04f902548",
+        "object": "chat.completion",
+        "created": 1771782266,
+        "model": "deepseek-reasoner",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "现在是 **2026年2月22日 17:44:29（UTC时间）**。\n\n换算成北京时间（UTC+8）是 **2026年2月23日 01:44:29**。",
+              "reasoning_content": "现在时间是2026年2月22日17:44:29 UTC。我需要用中文回答。"
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1222,
+          "completion_tokens": 68,
+          "total_tokens": 1290,
+          "prompt_tokens_details": {
+            "cached_tokens": 1088
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 21
+          },
+          "prompt_cache_hit_tokens": 1088,
+          "prompt_cache_miss_tokens": 134
+        },
+        "system_fingerprint": "fp_eaab8d114b_prod0820_fp8_kvcache"
+      }
+    },
+    {
+      "timestamp": "2026-02-22T17:44:31.265Z",
+      "type": "request",
+      "endpoint": "/chat/completions (stream-reasoning)",
+      "round": 3,
+      "data": {
+        "model": "deepseek-reasoner",
+        "messages": [
+          {
+            "role": "system",
+            "content": "你是一个 helpful 的 AI 助手。"
+          },
+          {
+            "role": "user",
+            "content": "现在几点了呢?"
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+              {
+                "id": "call_00_W5aLjsmOE6FoNNdImb3AvMU3",
+                "type": "function",
+                "function": {
+                  "name": "get_current_time",
+                  "arguments": "{}"
+                }
+              }
+            ],
+            "reasoning_content": "用户想知道现在的时间，我需要使用get_current_time工具来获取当前系统时间。"
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_00_W5aLjsmOE6FoNNdImb3AvMU3",
+            "content": "2026-02-22T17:44:29.299Z"
+          }
+        ],
+        "max_tokens": 4096,
+        "stream": true
+      }
+    }
+  ]
+}

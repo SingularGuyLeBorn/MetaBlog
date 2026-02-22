@@ -58,6 +58,25 @@ export interface ToolCallRecord {
   error?: string
 }
 
+/** 思考步骤类型 */
+export type ThinkingStepType = 'thinking' | 'tool_call'
+
+/** 思考步骤（用于展示思考过程中的每个步骤） */
+export interface ThinkingStep {
+  /** 步骤ID */
+  id: string
+  /** 步骤类型：思考 或 工具调用 */
+  type: ThinkingStepType
+  /** 步骤序号 */
+  index: number
+  /** 思考内容（type='thinking' 时使用） */
+  content?: string
+  /** 工具调用记录（type='tool_call' 时使用） */
+  toolRecord?: ToolCallRecord
+  /** 创建时间 */
+  createdAt: number
+}
+
 /** 消息元数据 */
 export interface MessageMetadata {
   model?: string
@@ -76,6 +95,10 @@ export interface MessageMetadata {
   }
   /** 工具调用记录（用于展示完整调用过程） */
   toolRecords?: ToolCallRecord[]
+  /** 思考步骤（用于分步展示思考过程） */
+  thinkingSteps?: ThinkingStep[]
+  /** 错误信息（当消息处理出错时） */
+  error?: string
 }
 
 /** AI 响应版本 */

@@ -1,9 +1,16 @@
 <template>
-  <div class="posts-container">
+  <div class="posts-container-3d">
+    <!-- 背景光效 -->
+    <div class="ambient-light">
+      <div class="light-orb orb-1"></div>
+      <div class="light-orb orb-2"></div>
+      <div class="light-orb orb-3"></div>
+    </div>
+
     <!-- Hero Section -->
-    <section class="hero">
+    <section class="hero-3d">
       <div class="hero-content">
-        <div class="hero-badge">
+        <div class="hero-badge-3d">
           <span class="badge-icon">✍️</span>
           <span class="badge-text">博客文章</span>
         </div>
@@ -11,23 +18,29 @@
         <p class="hero-desc">深入的技术文章与学习思考，探索编程与人工智能的无限可能</p>
         
         <!-- Stats -->
-        <div class="hero-stats">
-          <div class="stat-card">
-            <div class="stat-icon">📚</div>
+        <div class="hero-stats-3d">
+          <div class="stat-card-3d">
+            <div class="stat-icon-wrapper">
+              <span class="stat-icon">📚</span>
+            </div>
             <div class="stat-info">
               <span class="stat-value">{{ posts.length }}</span>
               <span class="stat-label">篇文章</span>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon">🏷️</div>
+          <div class="stat-card-3d">
+            <div class="stat-icon-wrapper">
+              <span class="stat-icon">🏷️</span>
+            </div>
             <div class="stat-info">
               <span class="stat-value">{{ uniqueTags }}</span>
               <span class="stat-label">个分类</span>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon">📅</div>
+          <div class="stat-card-3d">
+            <div class="stat-icon-wrapper">
+              <span class="stat-icon">📅</span>
+            </div>
             <div class="stat-info">
               <span class="stat-value">2024</span>
               <span class="stat-label">持续更新</span>
@@ -37,7 +50,7 @@
       </div>
       
       <!-- Decorative Elements -->
-      <div class="hero-decoration">
+      <div class="hero-decoration-3d">
         <div class="deco-circle deco-1"></div>
         <div class="deco-circle deco-2"></div>
         <div class="deco-circle deco-3"></div>
@@ -45,13 +58,14 @@
     </section>
 
     <!-- Filter Bar -->
-    <div class="filter-bar">
-      <div class="filter-tabs">
+    <div class="filter-bar-3d">
+      <div class="filter-tabs-3d">
         <button 
-          v-for="tab in filterTabs" 
+          v-for="(tab, index) in filterTabs" 
           :key="tab.value"
-          class="filter-tab"
+          class="filter-tab-3d"
           :class="{ active: currentFilter === tab.value }"
+          :style="{ animationDelay: `${index * 0.05}s` }"
           @click="currentFilter = tab.value"
         >
           <span class="tab-icon">{{ tab.icon }}</span>
@@ -61,35 +75,36 @@
     </div>
 
     <!-- Posts Grid -->
-    <main class="posts-main">
-      <TransitionGroup name="post-list" tag="div" class="posts-grid">
+    <main class="posts-main-3d">
+      <TransitionGroup name="post-list-3d" tag="div" class="posts-grid-3d">
         <article 
-          v-for="post in filteredPosts" 
+          v-for="(post, index) in filteredPosts" 
           :key="post.title" 
-          class="post-card"
+          class="post-card-3d"
+          :style="{ '--delay': `${index * 0.08}s` }"
         >
-          <a :href="post.link" class="post-link">
+          <a :href="post.link" class="post-link-3d">
             <!-- Card Header with Tag -->
-            <div class="card-header">
-              <span class="post-tag" :class="post.badgeClass">
+            <div class="card-header-3d">
+              <span class="post-tag-3d" :class="post.badgeClass">
                 <span class="tag-dot"></span>
                 {{ post.tag }}
               </span>
-              <time class="post-date" :datetime="post.date">
+              <time class="post-date-3d" :datetime="post.date">
                 <span class="date-icon">📅</span>
                 {{ formatDate(post.date) }}
               </time>
             </div>
             
             <!-- Card Content -->
-            <div class="card-content">
+            <div class="card-content-3d">
               <h2 class="post-title">{{ post.title }}</h2>
               <p class="post-excerpt">{{ post.excerpt }}</p>
             </div>
             
             <!-- Card Footer -->
-            <div class="card-footer">
-              <span class="read-more">
+            <div class="card-footer-3d">
+              <span class="read-more-3d">
                 阅读全文
                 <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -98,13 +113,13 @@
             </div>
             
             <!-- Hover Effect Overlay -->
-            <div class="card-glow"></div>
+            <div class="card-glow-3d"></div>
           </a>
         </article>
       </TransitionGroup>
       
       <!-- Empty State -->
-      <div v-if="filteredPosts.length === 0" class="empty-state">
+      <div v-if="filteredPosts.length === 0" class="empty-state-3d">
         <div class="empty-icon">🔍</div>
         <p>暂无相关文章</p>
       </div>
@@ -192,22 +207,79 @@ function formatDate(dateStr: string): string {
 </script>
 
 <style scoped>
-.posts-container {
+.posts-container-3d {
+  position: relative;
   max-width: 1200px;
   margin: 0 auto;
   padding: 100px 24px 80px;
   min-height: 100vh;
+  overflow: hidden;
 }
 
-/* Hero Section */
-.hero {
+/* 环境光效 */
+.ambient-light {
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.light-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+  animation: float-orb 20s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.15), transparent 70%);
+  top: 10%;
+  right: 20%;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(118, 75, 162, 0.12), transparent 70%);
+  top: 40%;
+  left: 10%;
+  animation-delay: -7s;
+}
+
+.orb-3 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.1), transparent 70%);
+  bottom: 20%;
+  right: 30%;
+  animation-delay: -14s;
+}
+
+@keyframes float-orb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -30px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+
+/* 3D Hero Section */
+.hero-3d {
   position: relative;
-  padding: 60px 40px;
-  margin-bottom: 40px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 64px 48px;
+  margin-bottom: 48px;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
   border-radius: 32px;
   overflow: hidden;
   text-align: center;
+  box-shadow: 
+    0 25px 50px -12px rgba(124, 58, 237, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
 
 .hero-content {
@@ -215,16 +287,17 @@ function formatDate(dateStr: string): string {
   z-index: 2;
 }
 
-.hero-badge {
+.hero-badge-3d {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 20px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
+  padding: 10px 24px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
   border-radius: 50px;
-  margin-bottom: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  margin-bottom: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .badge-icon {
@@ -233,55 +306,69 @@ function formatDate(dateStr: string): string {
 
 .badge-text {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: white;
   letter-spacing: 0.5px;
 }
 
 .hero-title {
-  font-size: 48px;
+  font-size: 52px;
   font-weight: 800;
   color: white;
   margin: 0 0 16px 0;
-  letter-spacing: -1px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  letter-spacing: -2px;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .hero-desc {
   font-size: 18px;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.95);
   max-width: 600px;
   margin: 0 auto 40px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
-/* Hero Stats */
-.hero-stats {
+/* 3D Stats */
+.hero-stats-3d {
   display: flex;
   justify-content: center;
   gap: 24px;
   flex-wrap: wrap;
 }
 
-.stat-card {
+.stat-card-3d {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 24px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  transition: all 0.3s ease;
+  gap: 16px;
+  padding: 20px 28px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.stat-card:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
+.stat-card-3d:hover {
+  transform: translateY(-6px) rotateX(5deg);
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.stat-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  font-size: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .stat-icon {
-  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .stat-info {
@@ -291,20 +378,22 @@ function formatDate(dateStr: string): string {
 }
 
 .stat-value {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 800;
   color: white;
   line-height: 1;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .stat-label {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.8);
-  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 4px;
+  font-weight: 600;
 }
 
 /* Decorative Elements */
-.hero-decoration {
+.hero-decoration-3d {
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -314,109 +403,154 @@ function formatDate(dateStr: string): string {
 .deco-circle {
   position: absolute;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  animation: float-deco 8s ease-in-out infinite;
 }
 
 .deco-1 {
-  width: 300px;
-  height: 300px;
-  top: -100px;
-  right: -50px;
+  width: 350px;
+  height: 350px;
+  top: -120px;
+  right: -60px;
+  animation-delay: 0s;
 }
 
 .deco-2 {
-  width: 200px;
-  height: 200px;
-  bottom: -50px;
-  left: -50px;
+  width: 250px;
+  height: 250px;
+  bottom: -80px;
+  left: -60px;
+  animation-delay: -3s;
 }
 
 .deco-3 {
-  width: 150px;
-  height: 150px;
+  width: 180px;
+  height: 180px;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   background: rgba(255, 255, 255, 0.05);
+  animation-delay: -6s;
 }
 
-/* Filter Bar */
-.filter-bar {
-  margin-bottom: 32px;
+@keyframes float-deco {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.05); }
+}
+
+/* 3D Filter Bar */
+.filter-bar-3d {
+  margin-bottom: 40px;
   display: flex;
   justify-content: center;
 }
 
-.filter-tabs {
+.filter-tabs-3d {
   display: flex;
-  gap: 8px;
-  padding: 6px;
-  background: #f1f5f9;
-  border-radius: 14px;
+  gap: 10px;
+  padding: 8px;
+  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
 }
 
-.filter-tab {
+.filter-tab-3d {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 18px;
+  gap: 8px;
+  padding: 12px 24px;
   border: none;
   background: transparent;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
   color: #64748b;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: tab-fade-in 0.4s ease backwards;
 }
 
-.filter-tab:hover {
-  color: #475569;
-  background: rgba(255, 255, 255, 0.5);
+@keyframes tab-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.filter-tab.active {
-  background: white;
+.filter-tab-3d:hover {
   color: #7c3aed;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.filter-tab-3d.active {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: white;
+  box-shadow: 
+    0 4px 16px rgba(124, 58, 237, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
 }
 
 .tab-icon {
-  font-size: 14px;
+  font-size: 16px;
 }
 
-/* Posts Grid */
-.posts-main {
+/* 3D Posts Grid */
+.posts-main-3d {
   position: relative;
 }
 
-.posts-grid {
+.posts-grid-3d {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 28px;
 }
 
-.post-card {
+.post-card-3d {
   position: relative;
-  background: white;
-  border-radius: 20px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(226, 232, 240, 0.8) inset;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  animation: card-fade-in 0.6s ease backwards;
+  animation-delay: var(--delay);
+  transform-style: preserve-3d;
 }
 
-.post-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
-  border-color: #c4b5fd;
+@keyframes card-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.post-link {
+.post-card-3d:hover {
+  transform: translateY(-8px) rotateX(3deg);
+  box-shadow: 
+    0 30px 60px -12px rgba(124, 58, 237, 0.2),
+    0 0 0 1px rgba(139, 92, 246, 0.2) inset;
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.post-link-3d {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 24px;
+  padding: 28px;
   text-decoration: none;
   color: inherit;
   position: relative;
@@ -424,88 +558,105 @@ function formatDate(dateStr: string): string {
 }
 
 /* Card Header */
-.card-header {
+.card-header-3d {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-}
-
-.post-tag {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.tag-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-
-.post-tag.ai {
-  background: #ede9fe;
-  color: #7c3aed;
-}
-.post-tag.ai .tag-dot { background: #8b5cf6; }
-
-.post-tag.rl {
-  background: #fef3c7;
-  color: #d97706;
-}
-.post-tag.rl .tag-dot { background: #f59e0b; }
-
-.post-tag.series {
-  background: #dbeafe;
-  color: #2563eb;
-}
-.post-tag.series .tag-dot { background: #3b82f6; }
-
-.post-tag.test {
-  background: #f1f5f9;
-  color: #64748b;
-}
-.post-tag.test .tag-dot { background: #94a3b8; }
-
-.post-date {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: #94a3b8;
-}
-
-.date-icon {
-  font-size: 12px;
-}
-
-/* Card Content */
-.card-content {
-  flex: 1;
   margin-bottom: 20px;
 }
 
-.post-title {
-  font-size: 20px;
+.post-tag-3d {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-size: 12px;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tag-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.post-tag-3d.ai {
+  background: linear-gradient(145deg, #ede9fe, #ddd6fe);
+  color: #6d28d9;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.15);
+}
+.post-tag-3d.ai .tag-dot { 
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+}
+
+.post-tag-3d.rl {
+  background: linear-gradient(145deg, #fef3c7, #fde68a);
+  color: #b45309;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+}
+.post-tag-3d.rl .tag-dot { 
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+
+.post-tag-3d.series {
+  background: linear-gradient(145deg, #dbeafe, #bfdbfe);
+  color: #1d4ed8;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+.post-tag-3d.series .tag-dot { 
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+.post-tag-3d.test {
+  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+  color: #475569;
+}
+.post-tag-3d.test .tag-dot { 
+  background: #94a3b8;
+}
+
+.post-date-3d {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.date-icon {
+  font-size: 13px;
+}
+
+/* Card Content */
+.card-content-3d {
+  flex: 1;
+  margin-bottom: 24px;
+}
+
+.post-title {
+  font-size: 22px;
+  font-weight: 800;
   color: #1e293b;
-  margin: 0 0 12px 0;
+  margin: 0 0 14px 0;
   line-height: 1.4;
   transition: color 0.3s ease;
 }
 
-.post-card:hover .post-title {
+.post-card-3d:hover .post-title {
   color: #7c3aed;
 }
 
 .post-excerpt {
   font-size: 15px;
   color: #64748b;
-  line-height: 1.7;
+  line-height: 1.8;
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -514,119 +665,128 @@ function formatDate(dateStr: string): string {
 }
 
 /* Card Footer */
-.card-footer {
+.card-footer-3d {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 16px;
-  border-top: 1px solid #f1f5f9;
+  padding-top: 20px;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-.read-more {
+.read-more-3d {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: #7c3aed;
-  transition: gap 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-.post-card:hover .read-more {
-  gap: 10px;
+.post-card-3d:hover .read-more-3d {
+  gap: 14px;
+  color: #6d28d9;
 }
 
 .arrow-icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   transition: transform 0.3s ease;
 }
 
-.post-card:hover .arrow-icon {
-  transform: translateX(4px);
+.post-card-3d:hover .arrow-icon {
+  transform: translateX(6px);
 }
 
 /* Card Glow Effect */
-.card-glow {
+.card-glow-3d {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.03) 0%, rgba(139, 92, 246, 0.05) 100%);
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
 }
 
-.post-card:hover .card-glow {
+.post-card-3d:hover .card-glow-3d {
   opacity: 1;
 }
 
 /* Transition Animations */
-.post-list-enter-active,
-.post-list-leave-active {
-  transition: all 0.4s ease;
+.post-list-3d-enter-active,
+.post-list-3d-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.post-list-enter-from,
-.post-list-leave-to {
+.post-list-3d-enter-from,
+.post-list-3d-leave-to {
   opacity: 0;
   transform: translateY(20px);
 }
 
 /* Empty State */
-.empty-state {
+.empty-state-3d {
   text-align: center;
-  padding: 80px 20px;
+  padding: 100px 20px;
   color: #94a3b8;
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  border-radius: 24px;
+  border: 2px dashed rgba(226, 232, 240, 0.8);
 }
 
 .empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 56px;
+  margin-bottom: 20px;
+  opacity: 0.6;
+}
+
+.empty-state-3d p {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .posts-container {
+  .posts-container-3d {
     padding: 80px 16px 60px;
   }
   
-  .hero {
+  .hero-3d {
     padding: 40px 24px;
     border-radius: 24px;
   }
   
   .hero-title {
-    font-size: 32px;
+    font-size: 36px;
   }
   
   .hero-desc {
     font-size: 16px;
   }
   
-  .hero-stats {
-    gap: 12px;
+  .hero-stats-3d {
+    flex-direction: column;
+    gap: 16px;
   }
   
-  .stat-card {
-    padding: 12px 16px;
+  .stat-card-3d {
+    width: 100%;
+    justify-content: center;
   }
   
-  .stat-value {
-    font-size: 20px;
-  }
-  
-  .filter-tabs {
+  .filter-tabs-3d {
     flex-wrap: wrap;
     justify-content: center;
   }
   
-  .posts-grid {
+  .posts-grid-3d {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 20px;
   }
   
-  .post-link {
-    padding: 20px;
+  .post-link-3d {
+    padding: 24px;
   }
 }
 </style>

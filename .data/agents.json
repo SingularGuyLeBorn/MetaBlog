@@ -83,5 +83,17 @@
     "lastActiveAt": 1771732685527,
     "callCount": 0,
     "isDefault": true
+  },
+  {
+    "id": "default-assistant",
+    "status": "offline",
+    "createdAt": 1771756055340,
+    "updatedAt": 1771756055340
+  },
+  {
+    "id": "default-assistant",
+    "status": "online",
+    "createdAt": 1771756055811,
+    "updatedAt": 1771756055811
   }
 ]

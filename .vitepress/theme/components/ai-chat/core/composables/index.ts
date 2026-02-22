@@ -3,17 +3,28 @@
  */
 
 export { useAIChat } from './useAIChat'
-export { useAgents } from './useAgents'
+// 统一使用 useAgentsUnified 替代 useAgents
+export { useAgentsUnified as useAgents } from './useAgentsUnified'
+export { generateAvatarUrl, getRandomAvatarId } from './useAgentsUnified'
 export { useSkills } from './useSkills'
 
-// Types
+// Constants
+export { LEVEL_CONFIG, PERMISSION_TEMPLATES, AVATAR_STYLES } from './useAgentsUnified'
+
+// Types (从新模块导出)
 export type {
   AgentLevel,
   AgentStatus,
   AgentPermission,
   Agent,
-  AgentCreateParams
-} from './useAgents'
+  AgentCreateParams,
+  Trigger,
+  TriggerType,
+  FunctionCallConfig,
+  MemoryConfig,
+  LifecycleConfig,
+  RuntimeConfig
+} from './useAgentsUnified'
 
 export type {
   Skill,

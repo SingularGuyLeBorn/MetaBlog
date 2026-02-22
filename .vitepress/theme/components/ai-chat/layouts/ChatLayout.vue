@@ -23,10 +23,6 @@
           <button class="menu-btn" @click="leftCollapsed = !leftCollapsed">
             <Icon name="menu" :size="20" />
           </button>
-          <!-- 返回首页按钮 -->
-          <a href="/" class="back-btn" title="返回首页">
-            <Icon name="arrow-left" :size="18" />
-          </a>
           <div class="header-info">
             <h1 class="session-title">{{ currentSession?.title || '新对话' }}</h1>
             <span v-if="currentSession" class="model-tag">
@@ -40,6 +36,15 @@
           </div>
         </div>
         <div class="header-right">
+          <!-- 日志监控按钮 -->
+          <button 
+            class="icon-btn log-dashboard-btn" 
+            :class="{ active: showLogDashboard }"
+            title="日志监控 (Ctrl+L)"
+            @click="showLogDashboard = !showLogDashboard"
+          >
+            <Icon name="terminal" :size="18" />
+          </button>
           <!-- Agent 管理中心按钮 -->
           <button 
             class="icon-btn agent-admin-btn" 
@@ -96,16 +101,20 @@
       v-model:visible="showAgentAdmin"
       @agent-change="handleAgentChange"
     />
+    
+    <!-- 日志监控面板 -->
+    <LogDashboard v-model:visible="showLogDashboard" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { SessionPanel } from '../modules/chat/session'
 import { MessageList } from '../modules/chat/messages'
 import { ChatInput } from '../modules/chat/input'
 import { SettingsPanel } from '../modules/chat/settings'
 import { AgentAdmin } from '../modules/agent'
+import { LogDashboard } from '../modules/agent/admin'
 import { Icon } from '../ui'
 import { useAIChat, useAgents } from '../core/composables'
 import type { SessionConfig } from '../core/types'
@@ -140,7 +149,24 @@ const inputText = ref('')
 const messageListRef = ref<InstanceType<typeof MessageList>>()
 const chatInputRef = ref<InstanceType<typeof ChatInput>>()
 const showAgentAdmin = ref(false)
+const showLogDashboard = ref(false)
 const selectedSkill = ref<Skill | undefined>(undefined)
+
+// 键盘快捷键：Ctrl+L 打开日志面板
+function handleKeydown(e: KeyboardEvent) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+    e.preventDefault()
+    showLogDashboard.value = true
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
 
 const currentConfig = computed({
   get: () => currentSession.value?.config || defaultConfig,
@@ -226,7 +252,7 @@ function handleAgentChange(agent: Agent) {
 
 .chat-layout {
   display: flex;
-  height: 100vh;
+  height: calc(100vh - var(--vp-nav-height, 64px));
   background: var(--ai-bg-body);
   overflow: hidden;
 }
@@ -365,25 +391,19 @@ function handleAgentChange(agent: Agent) {
   opacity: 1;
 }
 
-/* 返回首页按钮 */
-.back-btn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: var(--ai-radius-md);
-  color: var(--ai-text-tertiary);
-  text-decoration: none;
-  cursor: pointer;
-  transition: all var(--ai-transition-fast);
+/* 日志按钮特殊样式 */
+.log-dashboard-btn {
+  position: relative;
 }
 
-.back-btn:hover {
-  background: var(--ai-gray-100);
-  color: var(--ai-text-primary);
+.log-dashboard-btn:hover {
+  color: #059669;
+  background: #d1fae5;
+}
+
+.log-dashboard-btn.active {
+  color: #059669;
+  background: #a7f3d0;
 }
 
 /* 响应式 */

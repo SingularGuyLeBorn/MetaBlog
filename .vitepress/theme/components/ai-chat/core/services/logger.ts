@@ -237,8 +237,17 @@ export async function loadStats(): Promise<LogStats | null> {
 /** 清空日志 */
 export async function clearLogs(days?: number): Promise<boolean> {
   try {
-    const url = days ? `/api/logs/clear?days=${days}` : '/api/logs/clear'
-    const response = await fetch(url, { method: 'DELETE' })
+    const response = await fetch('/api/logs/cleanup', { 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ days: days ?? 0 })  // days=0 表示清空所有
+    })
+    
+    if (!response.ok) {
+      console.error('[Logger] Clear failed:', response.status, response.statusText)
+      return false
+    }
+    
     const result = await response.json()
     
     if (result.success) {
@@ -337,13 +346,15 @@ export const logger = {
 }
 
 // 页面卸载前确保日志写入
-window.addEventListener('beforeunload', () => {
-  if (logBuffer.length > 0) {
-    // 使用 sendBeacon 确保日志发送
-    const blob = new Blob(
-      [JSON.stringify({ entries: logBuffer })],
-      { type: 'application/json' }
-    )
-    navigator.sendBeacon('/api/logs/batch', blob)
-  }
-})
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    if (logBuffer.length > 0) {
+      // 使用 sendBeacon 确保日志发送
+      const blob = new Blob(
+        [JSON.stringify({ entries: logBuffer })],
+        { type: 'application/json' }
+      )
+      navigator.sendBeacon('/api/logs/batch', blob)
+    }
+  })
+}

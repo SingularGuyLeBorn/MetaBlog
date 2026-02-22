@@ -1,0 +1,313 @@
+{
+  "sessionId": "session_1771777207381_hsm4dwhp5",
+  "startTime": "2026-02-22T16:20:31.054Z",
+  "endTime": "2026-02-22T16:20:36.417Z",
+  "totalRounds": 2,
+  "entryCount": 5,
+  "entries": [
+    {
+      "timestamp": "2026-02-22T16:20:31.054Z",
+      "type": "request",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 1,
+      "data": {
+        "model": "deepseek-reasoner",
+        "messages": [
+          {
+            "role": "system",
+            "content": "你是一个 helpful 的 AI 助手。"
+          },
+          {
+            "role": "user",
+            "content": "你好，请介绍一下自己"
+          },
+          {
+            "role": "assistant",
+            "content": "你好！我是DeepSeek，一个由深度求索公司创造的AI助手，很高兴认识你！😊\n\n让我简单介绍一下自己：\n\n**我的特点：**\n- 🆓 **完全免费**：目前没有任何收费计划，你可以放心使用\n- 📚 **知识丰富**：知识截止到2024年7月，涵盖各个领域\n- 📄 **文件处理**：支持上传图像、txt、pdf、ppt、word、excel等文件，能从中读取文字信息进行处理\n- 🌐 **联网搜索**：支持联网功能（需要你在Web/App中手动开启）\n- 💬 **对话流畅**：拥有128K的上下文长度，能进行深入的长对话\n\n**我能帮你做什么：**\n- 回答各种问题，提供信息和解释\n- 协助写作、翻译、编程\n- 分析文档内容\n- 创意思考和问题解决\n- 学习辅导和工作协助\n\n**使用方式：**\n- 可以通过网页版直接使用\n- 也可以通过官方应用商店下载App\n\n我的回复风格比较热情细腻，希望能给你带来温暖的交流体验！有什么问题或需要帮助的地方，尽管告诉我吧！✨",
+            "reasoning_content": ""
+          },
+          {
+            "role": "user",
+            "content": "你好，请介绍一下自己"
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "reasoning_content": ""
+          }
+        ],
+        "max_tokens": 4096,
+        "stream": false,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_article_content",
+              "description": "获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"或需要基于已有文章内容回答时使用。不要主动调用此工具。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径，例如 \"knowledge/getting-started.md\""
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "最大返回字符数，默认8000，避免消息过长"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_articles",
+              "description": "根据关键词搜索文章",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索关键词，例如 \"深度学习\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认5条"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_articles",
+              "description": "列出文章列表，可按分类筛选。仅在用户询问\"有哪些文章\"、\"文章列表\"或需要查找特定文章时使用。不要主动调用此工具。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "section": {
+                    "type": "string",
+                    "description": "可选：按分类筛选，例如 \"knowledge\"、\"posts\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认20，最大50"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_article",
+              "description": "创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n\n重要提示：\n- path 参数必须包含文件夹和文件名，格式为 \"section/filename.md\"\n- 例如：\"knowledge/transformer-detailed.md\" 会在 knowledge 文件夹下创建 transformer-detailed.md\n- 如果用户没有指定 section，默认使用 \"knowledge\" 或 \"posts\"\n- 标题应该简洁明了，反映文章主题\n- 不要主动调用此工具，除非用户明确要求创建文章",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "文章标题，例如 \"Transformer 详解\""
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "文章完整路径，格式为 \"section/filename.md\"，例如 \"knowledge/transformer-detailed.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "文章内容（支持 Markdown），可以包含标题、段落、代码块等"
+                  }
+                },
+                "required": [
+                  "title",
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "update_article",
+              "description": "更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径，例如 \"posts/existing-article.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "新的文章内容（完整替换）"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "delete_article",
+              "description": "删除文章。当用户要求删除、移除文章时使用。此操作不可逆！",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "要删除的文章路径"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_current_time",
+              "description": "获取当前时间",
+              "parameters": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "test_echo",
+              "description": "【测试专用】回声工具，验证工具调用是否正常工作。当用户说\"测试工具\"时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "要回显的消息"
+                  },
+                  "repeat_count": {
+                    "type": "number",
+                    "description": "重复次数"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-02-22T16:20:36.312Z",
+      "type": "response",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 1,
+      "data": {
+        "id": "a914f244-efea-49a6-a202-24ba224897c8",
+        "object": "chat.completion",
+        "created": 1771777228,
+        "model": "deepseek-reasoner",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "你好！很高兴再次见到你！😊\n\n我是DeepSeek，你的AI助手，由深度求索公司创造。看来我们刚刚已经打过招呼了，不过很高兴能继续为你服务！\n\n刚才我介绍了我的基本特点：完全免费使用、知识丰富、支持文件上传处理、可联网搜索、拥有128K上下文长度等。\n\n你是想了解更详细的功能，还是有特定的问题需要我帮助呢？比如：\n- 想了解我的技术细节？\n- 需要我帮你处理什么具体任务？\n- 还是想测试一下我的能力？\n\n我很期待能真正帮到你！✨",
+              "reasoning_content": "用户又重复了同样的问候。我刚刚已经详细介绍过自己了。为了避免重复，我应该用稍微不同的方式回应，或者可以询问用户是否有特定想了解的部分。不过我可以先简单打个招呼，然后引导对话方向。让我用友好的方式回应。"
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1369,
+          "completion_tokens": 177,
+          "total_tokens": 1546,
+          "prompt_tokens_details": {
+            "cached_tokens": 1152
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 53
+          },
+          "prompt_cache_hit_tokens": 1152,
+          "prompt_cache_miss_tokens": 217
+        },
+        "system_fingerprint": "fp_eaab8d114b_prod0820_fp8_kvcache"
+      }
+    },
+    {
+      "timestamp": "2026-02-22T16:20:36.313Z",
+      "type": "request",
+      "endpoint": "/chat/completions (stream)",
+      "round": 2,
+      "data": {
+        "model": "deepseek-reasoner",
+        "messages": [
+          {
+            "role": "system",
+            "content": "你是一个 helpful 的 AI 助手。"
+          },
+          {
+            "role": "user",
+            "content": "你好，请介绍一下自己"
+          },
+          {
+            "role": "assistant",
+            "content": "你好！我是DeepSeek，一个由深度求索公司创造的AI助手，很高兴认识你！😊\n\n让我简单介绍一下自己：\n\n**我的特点：**\n- 🆓 **完全免费**：目前没有任何收费计划，你可以放心使用\n- 📚 **知识丰富**：知识截止到2024年7月，涵盖各个领域\n- 📄 **文件处理**：支持上传图像、txt、pdf、ppt、word、excel等文件，能从中读取文字信息进行处理\n- 🌐 **联网搜索**：支持联网功能（需要你在Web/App中手动开启）\n- 💬 **对话流畅**：拥有128K的上下文长度，能进行深入的长对话\n\n**我能帮你做什么：**\n- 回答各种问题，提供信息和解释\n- 协助写作、翻译、编程\n- 分析文档内容\n- 创意思考和问题解决\n- 学习辅导和工作协助\n\n**使用方式：**\n- 可以通过网页版直接使用\n- 也可以通过官方应用商店下载App\n\n我的回复风格比较热情细腻，希望能给你带来温暖的交流体验！有什么问题或需要帮助的地方，尽管告诉我吧！✨",
+            "reasoning_content": ""
+          },
+          {
+            "role": "user",
+            "content": "你好，请介绍一下自己"
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "reasoning_content": ""
+          }
+        ],
+        "max_tokens": 4096,
+        "stream": true
+      }
+    },
+    {
+      "timestamp": "2026-02-22T16:20:36.413Z",
+      "type": "error",
+      "endpoint": "/chat/completions (stream)",
+      "round": 2,
+      "data": {
+        "message": "HTTP 400: {\"error\":{\"message\":\"Invalid consecutive assistant message at message index 4\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}",
+        "stack": "Error: HTTP 400: {\"error\":{\"message\":\"Invalid consecutive assistant message at message index 4\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}\n    at chatStreamInternal (http://localhost:5173/@fs/D:/ALL%20IN%20AI/MetaBlog/.vitepress/theme/components/ai-chat/core/services/aiService.ts?t=1771776658078:462:21)\n    at async Object.chatStream (http://localhost:5173/@fs/D:/ALL%20IN%20AI/MetaBlog/.vitepress/theme/components/ai-chat/core/services/aiService.ts?t=1771776658078:669:13)\n    at async sendMessage (http://localhost:5173/@fs/D:/ALL%20IN%20AI/MetaBlog/.vitepress/theme/components/ai-chat/core/composables/useAIChat.ts?t=1771776658078:155:7)\n    at async handleSend (http://localhost:5173/@fs/D:/ALL%20IN%20AI/MetaBlog/.vitepress/theme/components/ai-chat/layouts/ChatLayout.vue?t=1771776658078:84:7)",
+        "name": "Error"
+      }
+    },
+    {
+      "timestamp": "2026-02-22T16:20:36.413Z",
+      "type": "error",
+      "endpoint": "/chat/completions (stream)",
+      "round": 2,
+      "data": {
+        "message": "API Error: {\"error\":{\"message\":\"Invalid consecutive assistant message at message index 4\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}",
+        "stack": "Error: API Error: {\"error\":{\"message\":\"Invalid consecutive assistant message at message index 4\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}\n    at chatStreamInternal (http://localhost:5173/@fs/D:/ALL%20IN%20AI/MetaBlog/.vitepress/theme/components/ai-chat/core/services/aiService.ts?t=1771776658078:556:47)\n    at async Object.chatStream (http://localhost:5173/@fs/D:/ALL%20IN%20AI/MetaBlog/.vitepress/theme/components/ai-chat/core/services/aiService.ts?t=1771776658078:669:13)\n    at async sendMessage (http://localhost:5173/@fs/D:/ALL%20IN%20AI/MetaBlog/.vitepress/theme/components/ai-chat/core/composables/useAIChat.ts?t=1771776658078:155:7)\n    at async handleSend (http://localhost:5173/@fs/D:/ALL%20IN%20AI/MetaBlog/.vitepress/theme/components/ai-chat/layouts/ChatLayout.vue?t=1771776658078:84:7)",
+        "name": "Error"
+      }
+    }
+  ]
+}

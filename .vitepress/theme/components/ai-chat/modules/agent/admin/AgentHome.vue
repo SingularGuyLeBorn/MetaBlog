@@ -1,27 +1,22 @@
 <!--
-  AgentHome - Agent 管理首页
-  
-  设计特点：
-  - 卡片式布局，展示所有 Agent
-  - 顶部工具栏：新建、搜索、筛选
-  - 统计概览：总数、在线数、技能数等
-  - 每个卡片显示：头像、名称、状态、技能、操作
-  - 点击卡片进入详情配置
+  AgentHome - 3D 液态玻璃风格首页
 -->
 <template>
-  <div class="agent-home">
-    <!-- 顶部工具栏 -->
-    <header class="home-header">
+  <div class="agent-home-3d">
+    <!-- 背景光效 -->
+    <div class="ambient-light"></div>
+    
+    <!-- 头部 -->
+    <header class="home-header" :style="headerTransform">
       <div class="header-left">
         <h1 class="page-title">
-          <span class="title-icon">🤖</span>
+          <span class="title-glow">🤖</span>
           <span>Agent 管理</span>
         </h1>
         <p class="page-subtitle">管理和配置您的 AI 智能助手</p>
       </div>
       
       <div class="header-actions">
-        <!-- 搜索框 -->
         <div class="search-box">
           <input
             v-model="searchQuery"
@@ -32,7 +27,6 @@
           <span class="search-icon">🔍</span>
         </div>
         
-        <!-- 筛选下拉 -->
         <select v-model="filterLevel" class="filter-select">
           <option value="">全部等级</option>
           <option value="meta">元 Agent</option>
@@ -41,63 +35,49 @@
           <option value="custom">自定义 Agent</option>
         </select>
         
-        <!-- 新建按钮 -->
-        <button class="btn-create" @click="openCreateDialog">
+        <button class="btn-create-3d" @click="openCreateDialog">
           <span class="btn-icon">+</span>
           <span>新建 Agent</span>
         </button>
       </div>
     </header>
     
-    <!-- 统计概览 -->
-    <section class="stats-section">
-      <div class="stat-card">
-        <div class="stat-icon total">🤖</div>
-        <div class="stat-info">
-          <span class="stat-value">{{ stats.total }}</span>
-          <span class="stat-label">总 Agent</span>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon online">🟢</div>
-        <div class="stat-info">
-          <span class="stat-value">{{ stats.online }}</span>
-          <span class="stat-label">在线</span>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon skills">🎯</div>
-        <div class="stat-info">
-          <span class="stat-value">{{ stats.totalSkills }}</span>
-          <span class="stat-label">技能总数</span>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon calls">📞</div>
-        <div class="stat-info">
-          <span class="stat-value">{{ formatNumber(stats.totalCalls) }}</span>
-          <span class="stat-label">总调用</span>
+    <!-- 统计卡片 - 悬浮效果 -->
+    <section class="stats-float">
+      <div 
+        v-for="(stat, index) in statsList" 
+        :key="index"
+        class="stat-card-3d"
+        :style="{ animationDelay: `${index * 0.1}s` }"
+      >
+        <div class="stat-glow" :class="stat.type"></div>
+        <div class="stat-content">
+          <span class="stat-icon">{{ stat.icon }}</span>
+          <div class="stat-info">
+            <span class="stat-value">{{ stat.value }}</span>
+            <span class="stat-label">{{ stat.label }}</span>
+          </div>
         </div>
       </div>
     </section>
     
     <!-- 加载状态 -->
-    <div v-if="isLoading" class="loading-state">
-      <div class="loading-spinner"></div>
+    <div v-if="isLoading" class="loading-3d">
+      <div class="loading-ring"></div>
       <p>加载中...</p>
     </div>
     
     <!-- 错误状态 -->
-    <div v-else-if="error" class="error-state">
+    <div v-else-if="error" class="error-3d">
       <div class="error-icon">⚠️</div>
       <h3>加载失败</h3>
       <p>{{ error }}</p>
       <button class="btn-retry" @click="init">重试</button>
     </div>
     
-    <!-- Agent 卡片网格 -->
-    <section v-else class="agents-grid">
-      <div v-if="filteredAgents.length === 0" class="empty-state">
+    <!-- Agent 网格 -->
+    <section v-else class="agents-grid-3d">
+      <div v-if="filteredAgents.length === 0" class="empty-3d">
         <div class="empty-icon">🤖</div>
         <h3>还没有 Agent</h3>
         <p>点击右上角按钮创建您的第一个 AI 助手</p>
@@ -108,7 +88,7 @@
       
       <template v-else>
         <AgentCard
-          v-for="agent in filteredAgents"
+          v-for="(agent, index) in filteredAgents"
           :key="agent.id"
           :agent="agent"
           :is-active="agent.id === activeAgentId"
@@ -116,15 +96,18 @@
           @edit="openEditDialog(agent)"
           @delete="confirmDelete(agent)"
           @toggle-status="toggleAgentStatus(agent)"
+          :style="{ animationDelay: `${index * 0.05}s` }"
+          class="agent-fade-in"
         />
       </template>
     </section>
     
-    <!-- 新建/编辑对话框 -->
+    <!-- 对话框 -->
     <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="showDialog" class="dialog-overlay" @click.self="closeDialog">
-          <div class="dialog-content">
+      <Transition name="modal-3d">
+        <div v-if="showDialog" class="dialog-overlay-3d" @click.self="closeDialog">
+          <div class="dialog-content-3d">
+            <div class="dialog-glow"></div>
             <div class="dialog-header">
               <h3>{{ editingAgent ? '编辑 Agent' : '新建 Agent' }}</h3>
               <button class="btn-close" @click="closeDialog">✕</button>
@@ -133,21 +116,16 @@
             <div class="dialog-body">
               <div class="form-group">
                 <label>名称 *</label>
-                <input
-                  v-model="form.name"
-                  type="text"
-                  placeholder="给 Agent 起个名字"
-                  class="form-input"
-                />
+                <input v-model="form.name" type="text" class="form-input-3d" />
               </div>
               
               <div class="form-group">
                 <label>头像</label>
-                <div class="avatar-selector">
+                <div class="avatar-grid">
                   <button
                     v-for="emoji in avatarOptions"
                     :key="emoji"
-                    class="avatar-option"
+                    class="avatar-btn"
                     :class="{ active: form.avatar === emoji }"
                     @click="form.avatar = emoji"
                   >
@@ -158,17 +136,12 @@
               
               <div class="form-group">
                 <label>描述</label>
-                <textarea
-                  v-model="form.description"
-                  rows="3"
-                  placeholder="描述这个 Agent 的用途..."
-                  class="form-textarea"
-                ></textarea>
+                <textarea v-model="form.description" rows="3" class="form-textarea-3d" />
               </div>
               
               <div class="form-group">
                 <label>等级</label>
-                <select v-model="form.level" class="form-select">
+                <select v-model="form.level" class="form-select-3d">
                   <option value="custom">自定义 Agent</option>
                   <option value="fixed">固定 Agent</option>
                   <option value="core">核心 Agent</option>
@@ -177,19 +150,14 @@
               
               <div class="form-group">
                 <label>系统提示词</label>
-                <textarea
-                  v-model="form.systemPrompt"
-                  rows="5"
-                  placeholder="定义 Agent 的角色和行为..."
-                  class="form-textarea code"
-                ></textarea>
+                <textarea v-model="form.systemPrompt" rows="5" class="form-textarea-3d code" />
               </div>
             </div>
             
             <div class="dialog-footer">
-              <button class="btn-secondary" @click="closeDialog">取消</button>
+              <button class="btn-secondary-3d" @click="closeDialog">取消</button>
               <button
-                class="btn-primary"
+                class="btn-primary-3d"
                 :disabled="!form.name.trim() || isSaving"
                 @click="saveAgent"
               >
@@ -201,17 +169,17 @@
       </Transition>
     </Teleport>
     
-    <!-- 删除确认对话框 -->
+    <!-- 删除确认 -->
     <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="showDeleteConfirm" class="dialog-overlay" @click.self="showDeleteConfirm = false">
-          <div class="dialog-content confirm">
-            <div class="confirm-icon">⚠️</div>
+      <Transition name="modal-3d">
+        <div v-if="showDeleteConfirm" class="dialog-overlay-3d" @click.self="showDeleteConfirm = false">
+          <div class="dialog-content-3d confirm">
+            <div class="confirm-icon-3d">⚠️</div>
             <h3>确认删除</h3>
-            <p>确定要删除 Agent "{{ agentToDelete?.name }}" 吗？此操作无法撤销。</p>
+            <p>确定要删除 Agent "{{ agentToDelete?.name }}" 吗？</p>
             <div class="dialog-footer">
-              <button class="btn-secondary" @click="showDeleteConfirm = false">取消</button>
-              <button class="btn-danger" @click="deleteAgent">删除</button>
+              <button class="btn-secondary-3d" @click="showDeleteConfirm = false">取消</button>
+              <button class="btn-danger-3d" @click="deleteAgent">删除</button>
             </div>
           </div>
         </div>
@@ -223,7 +191,7 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
 import AgentCard from './AgentCard.vue'
-import { useAgents, type Agent, type AgentCreateParams, LEVEL_CONFIG } from '../../../core/composables/useAgents'
+import { useAgents, type Agent, type AgentCreateParams, type AgentLevel } from '../../../core/composables/useAgents'
 
 const props = defineProps<{
   activeAgentId: string | null
@@ -234,40 +202,29 @@ const emit = defineEmits<{
   'agent-change': [agent: Agent]
 }>()
 
-const { agents, isLoading, error, init, create, update, remove, setActive } = useAgents()
+const { agents, isLoading, error, init, create, update, remove } = useAgents()
 
-// 初始化加载
-onMounted(() => {
-  init()
-})
-
-// 搜索和筛选
 const searchQuery = ref('')
 const filterLevel = ref('')
-
-// 对话框状态
 const showDialog = ref(false)
 const showDeleteConfirm = ref(false)
 const editingAgent = ref<Agent | null>(null)
 const agentToDelete = ref<Agent | null>(null)
+const isSaving = ref(false)
 
-// 表单数据
 const form = reactive({
   name: '',
   avatar: '🤖',
   description: '',
-  level: 'custom' as const,
+  level: 'custom' as AgentLevel,
   systemPrompt: ''
 })
 
-// 头像选项
 const avatarOptions = ['🤖', '👩‍💻', '👨‍💻', '🎨', '✍️', '🔬', '📊', '💼', '🎭', '🔮']
 
-// 过滤后的 Agent
 const filteredAgents = computed(() => {
   let result = agents.value
   
-  // 搜索过滤
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
     result = result.filter(a => 
@@ -276,12 +233,10 @@ const filteredAgents = computed(() => {
     )
   }
   
-  // 等级过滤
   if (filterLevel.value) {
     result = result.filter(a => a.level === filterLevel.value)
   }
   
-  // 排序：默认 Agent 在前，然后按座次
   return result.sort((a, b) => {
     if (a.isDefault) return -1
     if (b.isDefault) return 1
@@ -289,16 +244,27 @@ const filteredAgents = computed(() => {
   })
 })
 
-// 统计数据
-const stats = computed(() => {
-  const total = agents.value.length
-  const online = agents.value.filter(a => a.status === 'online').length
-  const totalSkills = agents.value.reduce((sum, a) => sum + a.skills.length, 0)
-  const totalCalls = agents.value.reduce((sum, a) => sum + a.callCount, 0)
-  return { total, online, totalSkills, totalCalls }
+const statsList = computed(() => [
+  { icon: '🤖', value: agents.value.length, label: '总 Agent', type: 'total' },
+  { icon: '🟢', value: agents.value.filter(a => a.status === 'online').length, label: '在线', type: 'online' },
+  { icon: '🎯', value: agents.value.reduce((sum, a) => sum + (a.skills?.length || 0), 0), label: '技能总数', type: 'skills' },
+  { icon: '📞', value: formatNumber(agents.value.reduce((sum, a) => sum + (a.callCount || 0), 0)), label: '总调用', type: 'calls' }
+])
+
+const headerTransform = computed(() => ({
+  transform: `translateY(${Math.min(0, scrollY.value * 0.1)}px)`,
+  opacity: Math.max(0.8, 1 - scrollY.value * 0.001)
+}))
+
+const scrollY = ref(0)
+
+onMounted(() => {
+  init()
+  window.addEventListener('scroll', () => {
+    scrollY.value = window.scrollY
+  }, { passive: true })
 })
 
-// 打开新建对话框
 function openCreateDialog() {
   editingAgent.value = null
   form.name = ''
@@ -309,7 +275,6 @@ function openCreateDialog() {
   showDialog.value = true
 }
 
-// 打开编辑对话框
 function openEditDialog(agent: Agent) {
   editingAgent.value = agent
   form.name = agent.name
@@ -320,14 +285,10 @@ function openEditDialog(agent: Agent) {
   showDialog.value = true
 }
 
-// 关闭对话框
 function closeDialog() {
   showDialog.value = false
   editingAgent.value = null
 }
-
-// 保存 Agent
-const isSaving = ref(false)
 
 async function saveAgent() {
   if (!form.name.trim()) return
@@ -335,7 +296,6 @@ async function saveAgent() {
   isSaving.value = true
   try {
     if (editingAgent.value) {
-      // 更新现有 Agent
       await update(editingAgent.value.id, {
         name: form.name.trim(),
         avatar: form.avatar,
@@ -344,7 +304,6 @@ async function saveAgent() {
         systemPrompt: form.systemPrompt.trim()
       })
     } else {
-      // 创建新 Agent
       const newAgent = await create({
         name: form.name.trim(),
         avatar: form.avatar,
@@ -362,13 +321,11 @@ async function saveAgent() {
   }
 }
 
-// 确认删除
 function confirmDelete(agent: Agent) {
   agentToDelete.value = agent
   showDeleteConfirm.value = true
 }
 
-// 删除 Agent
 async function deleteAgent() {
   if (agentToDelete.value) {
     try {
@@ -381,7 +338,6 @@ async function deleteAgent() {
   }
 }
 
-// 切换 Agent 状态
 async function toggleAgentStatus(agent: Agent) {
   const newStatus = agent.status === 'online' ? 'offline' : 'online'
   try {
@@ -391,12 +347,10 @@ async function toggleAgentStatus(agent: Agent) {
   }
 }
 
-// 打开 Agent 详情
 function openAgentDetail(agent: Agent) {
   emit('select-agent', agent)
 }
 
-// 格式化数字
 function formatNumber(num: number): string {
   if (num >= 10000) return (num / 10000).toFixed(1) + 'w'
   if (num >= 1000) return (num / 1000).toFixed(1) + 'k'
@@ -405,21 +359,48 @@ function formatNumber(num: number): string {
 </script>
 
 <style scoped>
-.agent-home {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 24px;
-  overflow-y: auto;
+.agent-home-3d {
+  position: relative;
+  min-height: 100%;
+  padding: 32px;
+  overflow-x: hidden;
 }
 
-/* 顶部工具栏 */
+/* 背景光效 */
+.ambient-light {
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    ellipse at 30% 20%,
+    rgba(59, 130, 246, 0.08) 0%,
+    transparent 50%
+  ),
+  radial-gradient(
+    ellipse at 70% 80%,
+    rgba(139, 92, 246, 0.06) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+  animation: ambient-float 20s ease-in-out infinite;
+}
+
+@keyframes ambient-float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(2%, 2%) rotate(2deg); }
+  66% { transform: translate(-1%, 1%) rotate(-1deg); }
+}
+
+/* 头部 */
 .home-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
   gap: 24px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 .header-left {
@@ -429,21 +410,29 @@ function formatNumber(num: number): string {
 .page-title {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 0 0 4px 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--vp-c-text-1);
+  gap: 14px;
+  margin: 0 0 8px 0;
+  font-size: 32px;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: -0.5px;
 }
 
-.title-icon {
-  font-size: 32px;
+.title-glow {
+  font-size: 36px;
+  filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
+  animation: title-pulse 3s ease-in-out infinite;
+}
+
+@keyframes title-pulse {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3)); }
+  50% { filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.6)); }
 }
 
 .page-subtitle {
   margin: 0;
-  font-size: 14px;
-  color: var(--vp-c-text-2);
+  font-size: 15px;
+  color: #64748b;
 }
 
 .header-actions {
@@ -458,63 +447,73 @@ function formatNumber(num: number): string {
 }
 
 .search-input {
-  width: 240px;
-  padding: 10px 14px 10px 38px;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
+  width: 260px;
+  padding: 12px 16px 12px 44px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   font-size: 14px;
-  background: var(--vp-c-bg);
-  color: var(--vp-c-text-1);
+  color: #1e293b;
   outline: none;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .search-input:focus {
-  border-color: var(--vp-c-brand);
-  box-shadow: 0 0 0 3px var(--vp-c-brand-soft);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 12px rgba(59, 130, 246, 0.1);
 }
 
 .search-icon {
   position: absolute;
-  left: 12px;
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
   font-size: 14px;
   opacity: 0.5;
 }
 
-/* 筛选下拉 */
 .filter-select {
-  padding: 10px 14px;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
+  padding: 12px 16px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   font-size: 14px;
-  background: var(--vp-c-bg);
-  color: var(--vp-c-text-1);
+  color: #1e293b;
   outline: none;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-/* 新建按钮 */
-.btn-create {
+/* 3D 创建按钮 */
+.btn-create-3d {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 12px 24px;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 12px rgba(59, 130, 246, 0.4),
+    0 8px 24px rgba(59, 130, 246, 0.2);
+  transform-style: preserve-3d;
 }
 
-.btn-create:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+.btn-create-3d:hover {
+  transform: translateY(-2px) rotateX(5deg);
+  box-shadow: 
+    0 8px 20px rgba(59, 130, 246, 0.5),
+    0 16px 40px rgba(59, 130, 246, 0.3);
+}
+
+.btn-create-3d:active {
+  transform: translateY(0) rotateX(0);
 }
 
 .btn-icon {
@@ -522,78 +521,116 @@ function formatNumber(num: number): string {
   font-weight: 400;
 }
 
-/* 统计概览 */
-.stats-section {
+/* 3D 统计卡片 */
+.stats-float {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: 20px;
+  margin-bottom: 40px;
 }
 
-.stat-card {
+.stat-card-3d {
+  position: relative;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 
+    0 4px 6px rgba(0, 0, 0, 0.02),
+    0 10px 20px rgba(0, 0, 0, 0.03);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: stat-float 3s ease-in-out infinite;
+  overflow: hidden;
+}
+
+.stat-card-3d:hover {
+  transform: translateY(-8px) rotateX(5deg);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(59, 130, 246, 0.1);
+}
+
+@keyframes stat-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.stat-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  opacity: 0.1;
+  filter: blur(40px);
+}
+
+.stat-glow.total { background: radial-gradient(circle, #3b82f6, transparent 70%); }
+.stat-glow.online { background: radial-gradient(circle, #22c55e, transparent 70%); }
+.stat-glow.skills { background: radial-gradient(circle, #f59e0b, transparent 70%); }
+.stat-glow.calls { background: radial-gradient(circle, #8b5cf6, transparent 70%); }
+
+.stat-content {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 20px;
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 16px;
-  transition: all 0.2s;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  background: var(--vp-c-bg);
-  border-radius: 12px;
+  font-size: 32px;
 }
-
-.stat-icon.total { background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); }
-.stat-icon.online { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.1)); }
-.stat-icon.skills { background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 88, 12, 0.1)); }
-.stat-icon.calls { background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(124, 58, 237, 0.1)); }
 
 .stat-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--vp-c-text-1);
+  font-size: 28px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
 }
 
 .stat-label {
   font-size: 13px;
-  color: var(--vp-c-text-2);
+  color: #94a3b8;
+  font-weight: 500;
 }
 
 /* Agent 网格 */
-.agents-grid {
+.agents-grid-3d {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+  gap: 24px;
+}
+
+.agent-fade-in {
+  animation: fade-in-up 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 空状态 */
-.empty-state {
+.empty-3d {
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 20px;
+  padding: 100px 20px;
   text-align: center;
 }
 
@@ -601,58 +638,316 @@ function formatNumber(num: number): string {
   font-size: 80px;
   margin-bottom: 24px;
   opacity: 0.5;
+  filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.3));
 }
 
-.empty-state h3 {
+.empty-3d h3 {
   margin: 0 0 8px 0;
   font-size: 20px;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
+  font-weight: 700;
+  color: #1e293b;
 }
 
-.empty-state p {
+.empty-3d p {
   margin: 0 0 24px 0;
   font-size: 14px;
-  color: var(--vp-c-text-2);
+  color: #94a3b8;
 }
 
 .btn-create-empty {
-  padding: 12px 24px;
+  padding: 14px 28px;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   color: white;
   border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-create-empty:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
+}
+
+/* 3D 对话框 */
+.dialog-overlay-3d {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  perspective: 1000px;
+}
+
+.dialog-content-3d {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+  transform-style: preserve-3d;
+}
+
+.dialog-glow {
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+  border-radius: 26px;
+  opacity: 0.3;
+  filter: blur(20px);
+  z-index: -1;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.btn-close {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+  border: none;
+  border-radius: 10px;
+  font-size: 18px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-close:hover {
+  background: linear-gradient(145deg, #fee2e2, #fecaca);
+  color: #ef4444;
+}
+
+.dialog-body {
+  padding: 28px;
+  overflow-y: auto;
+  max-height: calc(90vh - 160px);
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.form-input-3d,
+.form-textarea-3d,
+.form-select-3d {
+  width: 100%;
+  padding: 14px 18px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.form-input-3d:focus,
+.form-textarea-3d:focus,
+.form-select-3d:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.form-textarea-3d {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-textarea-3d.code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+
+.avatar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.avatar-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: linear-gradient(145deg, #ffffff, #f1f5f9);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.avatar-btn:hover {
+  border-color: #cbd5e1;
+  transform: scale(1.1);
+}
+
+.avatar-btn.active {
+  border-color: #3b82f6;
+  background: linear-gradient(145deg, #dbeafe, #bfdbfe);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 28px;
+  border-top: 1px solid #e2e8f0;
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+}
+
+.btn-secondary-3d,
+.btn-primary-3d,
+.btn-danger-3d {
+  padding: 12px 24px;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
-.btn-create-empty:hover {
+.btn-secondary-3d {
+  background: linear-gradient(145deg, #ffffff, #f1f5f9);
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.btn-secondary-3d:hover {
+  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+}
+
+.btn-primary-3d {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary-3d:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
 }
 
-/* 加载状态 */
-.loading-state,
-.error-state {
+.btn-primary-3d:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-danger-3d {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: none;
+  color: white;
+}
+
+.btn-danger-3d:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* 确认对话框 */
+.dialog-content-3d.confirm {
+  max-width: 400px;
+  padding: 40px;
+  text-align: center;
+}
+
+.confirm-icon-3d {
+  font-size: 56px;
+  margin-bottom: 20px;
+}
+
+.dialog-content-3d.confirm h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.dialog-content-3d.confirm p {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* 动画 */
+.modal-3d-enter-active,
+.modal-3d-leave-active {
+  transition: all 0.3s ease;
+}
+
+.modal-3d-enter-from,
+.modal-3d-leave-to {
+  opacity: 0;
+}
+
+.modal-3d-enter-from .dialog-content-3d,
+.modal-3d-leave-to .dialog-content-3d {
+  transform: perspective(1000px) rotateX(10deg) translateY(-20px);
+  opacity: 0;
+}
+
+/* 加载和错误状态 */
+.loading-3d,
+.error-3d {
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 20px;
+  padding: 100px 20px;
   text-align: center;
 }
 
-.loading-spinner {
-  width: 48px;
-  height: 48px;
-  border: 3px solid var(--vp-c-divider);
-  border-top-color: var(--vp-c-brand);
+.loading-ring {
+  width: 60px;
+  height: 60px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 @keyframes spin {
@@ -664,281 +959,30 @@ function formatNumber(num: number): string {
   margin-bottom: 16px;
 }
 
-.error-state h3 {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
-}
-
-.error-state p {
-  margin: 0 0 16px 0;
-  font-size: 14px;
-  color: var(--vp-c-text-2);
-}
-
 .btn-retry {
-  padding: 10px 20px;
-  background: var(--vp-c-brand);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-/* 对话框 */
-.dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  padding: 20px;
-}
-
-.dialog-content {
-  width: 100%;
-  max-width: 520px;
-  max-height: 90vh;
-  background: var(--vp-c-bg);
-  border-radius: 20px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.dialog-content.confirm {
-  max-width: 400px;
-  text-align: center;
-  padding: 32px;
-}
-
-.dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--vp-c-divider);
-}
-
-.dialog-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
-}
-
-.btn-close {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  font-size: 18px;
-  color: var(--vp-c-text-2);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-close:hover {
-  background: var(--vp-c-bg-soft);
-  color: var(--vp-c-text-1);
-}
-
-.dialog-body {
-  padding: 24px;
-  overflow-y: auto;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid var(--vp-c-divider);
-}
-
-/* 表单样式 */
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group:last-child {
-  margin-bottom: 0;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--vp-c-text-1);
-}
-
-.form-input,
-.form-textarea,
-.form-select {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
-  font-size: 14px;
-  background: var(--vp-c-bg-soft);
-  color: var(--vp-c-text-1);
-  outline: none;
-  transition: all 0.2s;
-}
-
-.form-input:focus,
-.form-textarea:focus,
-.form-select:focus {
-  border-color: var(--vp-c-brand);
-  box-shadow: 0 0 0 3px var(--vp-c-brand-soft);
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-.form-textarea.code {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-}
-
-/* 头像选择器 */
-.avatar-selector {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.avatar-option {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  background: var(--vp-c-bg-soft);
-  border: 2px solid transparent;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.avatar-option:hover {
-  background: var(--vp-c-bg);
-  border-color: var(--vp-c-divider);
-}
-
-.avatar-option.active {
-  background: var(--vp-c-brand-soft);
-  border-color: var(--vp-c-brand);
-}
-
-/* 按钮样式 */
-.btn-secondary,
-.btn-primary,
-.btn-danger {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-secondary {
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  color: var(--vp-c-text-1);
-}
-
-.btn-secondary:hover {
-  background: var(--vp-c-bg);
-}
-
-.btn-primary {
+  padding: 12px 24px;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  border: none;
   color: white;
-}
-
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-danger {
-  background: #ef4444;
   border: none;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #dc2626;
-}
-
-/* 确认对话框 */
-.confirm-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
-.dialog-content.confirm h3 {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
-}
-
-.dialog-content.confirm p {
-  margin: 0 0 24px 0;
+  border-radius: 10px;
   font-size: 14px;
-  color: var(--vp-c-text-2);
-  line-height: 1.5;
-}
-
-/* 动画 */
-.modal-enter-active,
-.modal-leave-active {
-  transition: all 0.2s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
-.modal-enter-from .dialog-content,
-.modal-leave-to .dialog-content {
-  transform: scale(0.95);
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 16px;
 }
 
 /* 响应式 */
 @media (max-width: 1024px) {
-  .stats-section {
+  .stats-float {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
+  .agent-home-3d {
+    padding: 20px;
+  }
+  
   .home-header {
     flex-direction: column;
   }
@@ -953,11 +997,11 @@ function formatNumber(num: number): string {
     width: 100%;
   }
   
-  .stats-section {
+  .stats-float {
     grid-template-columns: 1fr;
   }
   
-  .agents-grid {
+  .agents-grid-3d {
     grid-template-columns: 1fr;
   }
 }

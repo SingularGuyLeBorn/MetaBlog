@@ -57,19 +57,19 @@
     <!-- 统计卡片 -->
     <div class="stats-row">
       <div class="stat-card">
-        <div class="stat-value running">{{ agentsByStatus.running.length }}</div>
+        <div class="stat-value running">{{ (agentsByStatus.running || []).length }}</div>
         <div class="stat-label">运行中</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value idle">{{ agentsByStatus.idle.length }}</div>
+        <div class="stat-value idle">{{ (agentsByStatus.idle || []).length }}</div>
         <div class="stat-label">空闲</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value paused">{{ agentsByStatus.paused.length }}</div>
+        <div class="stat-value paused">{{ (agentsByStatus.paused || []).length }}</div>
         <div class="stat-label">已暂停</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value error">{{ agentsByStatus.error.length }}</div>
+        <div class="stat-value error">{{ (agentsByStatus.error || []).length }}</div>
         <div class="stat-label">错误</div>
       </div>
       <div class="stat-card">
@@ -112,12 +112,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import AgentStatusCard from './AgentStatusCard.vue'
-import type { Agent, AgentStatus } from '../../../core/composables/useAgentControl'
+import type { Agent, AgentStatus } from '../../../core/composables'
 
 const props = defineProps<{
   agents: Agent[]
   activeAgentId: string | null
-  agentsByStatus: Record<AgentStatus, Agent[]>
+  agentsByStatus: Record<AgentStatus | string, Agent[]>
 }>()
 
 const emit = defineEmits<{
@@ -131,15 +131,15 @@ const emit = defineEmits<{
 
 // 搜索和筛选
 const searchQuery = ref('')
-const currentFilter = ref<AgentStatus | 'all'>('all')
+const currentFilter = ref<string>('all')
 
 // 状态筛选配置
 const statusFilters = computed(() => [
-  { status: 'all' as const, name: '全部', icon: '🌐', count: props.agents.length },
-  { status: 'running' as const, name: '运行中', icon: '▶️', count: props.agentsByStatus.running.length },
-  { status: 'idle' as const, name: '空闲', icon: '⏸️', count: props.agentsByStatus.idle.length },
-  { status: 'paused' as const, name: '已暂停', icon: '⏹️', count: props.agentsByStatus.paused.length },
-  { status: 'error' as const, name: '错误', icon: '⚠️', count: props.agentsByStatus.error.length },
+  { status: 'all', name: '全部', icon: '🌐', count: props.agents.length },
+  { status: 'running', name: '运行中', icon: '▶️', count: (props.agentsByStatus.running || []).length },
+  { status: 'idle', name: '空闲', icon: '⏸️', count: (props.agentsByStatus.idle || []).length },
+  { status: 'paused', name: '已暂停', icon: '⏹️', count: (props.agentsByStatus.paused || []).length },
+  { status: 'error', name: '错误', icon: '⚠️', count: (props.agentsByStatus.error || []).length },
 ])
 
 // 过滤后的 Agent
@@ -165,7 +165,7 @@ const filteredAgents = computed(() => {
 
 // 总运行次数
 const totalRuns = computed(() => 
-  props.agents.reduce((sum, a) => sum + a.totalRuns, 0)
+  props.agents.reduce((sum, a) => sum + (a.totalRuns || 0), 0)
 )
 
 // 空状态文本

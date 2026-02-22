@@ -28,7 +28,7 @@
           v-else
           class="btn-action start"
           @click="$emit('start', agent)"
-          :disabled="agent.status === 'creating'"
+          :disabled="agent.status === 'busy'"
         >
           <span>▶️</span>
           <span>启动</span>
@@ -111,7 +111,7 @@
               <div class="avatar-selector">
                 <div class="current-avatar">
                   <img :src="currentAvatarUrl" :alt="formData.name" />
-                  <span>#{{ formData.avatarId }}</span>
+                  <span>#{{ formData.avatarId || 1 }}</span>
                 </div>
                 <button class="btn-random" @click="randomizeAvatar">
                   🎲 随机更换
@@ -146,7 +146,7 @@
             
             <div class="triggers-list">
               <div 
-                v-for="(trigger, index) in formData.triggers" 
+                v-for="(trigger, index) in (formData.triggers || [])" 
                 :key="trigger.id"
                 class="trigger-item"
               >
@@ -218,7 +218,7 @@
         </template>
         
         <!-- 记忆管理 -->
-        <template v-if="currentSection === 'memory'">
+        <template v-if="currentSection === 'memory' && formData.memory">
           <section class="content-section">
             <h3>短期记忆</h3>
             <div class="form-row">
@@ -252,7 +252,7 @@
             
             <div v-if="formData.memory.longTerm.enabled" class="memory-entries">
               <div 
-                v-for="(entry, index) in formData.memory.longTerm.entries" 
+                v-for="(entry, index) in (formData.memory?.longTerm?.entries || [])" 
                 :key="index"
                 class="memory-entry"
               >
@@ -288,7 +288,7 @@
                 v-for="skill in availableSkills" 
                 :key="skill.id"
                 class="skill-checkbox"
-                :class="{ checked: formData.skills.includes(skill.id) }"
+                :class="{ checked: (formData.skills || []).includes(skill.id) }"
               >
                 <input 
                   type="checkbox" 
@@ -306,7 +306,7 @@
         </template>
         
         <!-- 工具调用 -->
-        <template v-if="currentSection === 'functions'">
+        <template v-if="currentSection === 'functions' && formData.functionCall">
           <section class="content-section">
             <div class="section-header">
               <h3>工具调用 (Function Call)</h3>
@@ -363,47 +363,18 @@
         <template v-if="currentSection === 'permissions'">
           <section class="content-section">
             <h3>权限设置</h3>
+            <p class="section-desc">配置此 Agent 的权限（权限以权限列表形式存储）</p>
             
             <div class="permission-list">
-              <label class="permission-item">
-                <input type="checkbox" v-model="formData.permissions.fileAccess" />
+              <label 
+                v-for="perm in (formData.permissions || [])" 
+                :key="perm.id"
+                class="permission-item"
+              >
+                <input type="checkbox" v-model="perm.granted" />
                 <div class="permission-info">
-                  <span class="permission-name">📁 文件访问</span>
-                  <span class="permission-desc">允许 Agent 读取和写入文件</span>
-                </div>
-              </label>
-              
-              <div v-if="formData.permissions.fileAccess" class="permission-config">
-                <label>允许的路径</label>
-                <textarea 
-                  v-model="allowedPathsText" 
-                  rows="3"
-                  placeholder="每行一个路径"
-                  class="form-textarea"
-                ></textarea>
-              </div>
-              
-              <label class="permission-item">
-                <input type="checkbox" v-model="formData.permissions.networkAccess" />
-                <div class="permission-info">
-                  <span class="permission-name">🌐 网络访问</span>
-                  <span class="permission-desc">允许 Agent 访问网络资源</span>
-                </div>
-              </label>
-              
-              <label class="permission-item">
-                <input type="checkbox" v-model="formData.permissions.commandExecution" />
-                <div class="permission-info">
-                  <span class="permission-name">⚡ 命令执行</span>
-                  <span class="permission-desc">允许 Agent 执行系统命令</span>
-                </div>
-              </label>
-              
-              <label class="permission-item">
-                <input type="checkbox" v-model="formData.permissions.codeExecution" />
-                <div class="permission-info">
-                  <span class="permission-name">💻 代码执行</span>
-                  <span class="permission-desc">允许 Agent 执行代码片段</span>
+                  <span class="permission-name">{{ perm.name }}</span>
+                  <span class="permission-desc">{{ perm.description }}</span>
                 </div>
               </label>
             </div>
@@ -411,7 +382,7 @@
         </template>
         
         <!-- 运行配置 -->
-        <template v-if="currentSection === 'runtime'">
+        <template v-if="currentSection === 'runtime' && formData.runtime">
           <section class="content-section">
             <h3>运行配置</h3>
             
@@ -428,9 +399,10 @@
               </div>
               
               <div class="form-group">
-                <label>温度 ({{ formData.runtime.temperature }})</label>
+                <label>温度 ({{ formData.runtime?.temperature || 0.7 }})</label>
                 <input 
-                  v-model.number="formData.runtime.temperature" 
+                  :value="formData.runtime?.temperature || 0.7"
+                  @input="updateRuntimeTemperature"
                   type="range"
                   min="0"
                   max="2"
@@ -444,7 +416,8 @@
               <div class="form-group">
                 <label>最大 Token</label>
                 <input 
-                  v-model.number="formData.runtime.maxTokens" 
+                  :value="formData.runtime?.maxTokens || 2048"
+                  @input="updateRuntimeMaxTokens"
                   type="number"
                   class="form-input"
                 />
@@ -453,7 +426,8 @@
               <div class="form-group">
                 <label>超时时间 (秒)</label>
                 <input 
-                  v-model.number="formData.runtime.timeout" 
+                  :value="formData.runtime?.timeout || 60"
+                  @input="updateRuntimeTimeout"
                   type="number"
                   class="form-input"
                 />
@@ -464,7 +438,8 @@
               <div class="form-group">
                 <label>重试次数</label>
                 <input 
-                  v-model.number="formData.runtime.retryCount" 
+                  :value="formData.runtime?.retryCount || 3"
+                  @input="updateRuntimeRetryCount"
                   type="number"
                   class="form-input"
                 />
@@ -473,7 +448,8 @@
               <div class="form-group">
                 <label>重试延迟 (秒)</label>
                 <input 
-                  v-model.number="formData.runtime.retryDelay" 
+                  :value="formData.runtime?.retryDelay || 1"
+                  @input="updateRuntimeRetryDelay"
                   type="number"
                   class="form-input"
                 />
@@ -483,7 +459,7 @@
         </template>
         
         <!-- 生命周期 -->
-        <template v-if="currentSection === 'lifecycle'">
+        <template v-if="currentSection === 'lifecycle' && formData.lifecycle">
           <section class="content-section">
             <h3>生命周期</h3>
             
@@ -499,7 +475,8 @@
               <div class="form-group">
                 <label>最大运行时间 (秒, 0=无限制)</label>
                 <input 
-                  v-model.number="formData.lifecycle.maxRunTime" 
+                  :value="formData.lifecycle?.maxRunTime || 0"
+                  @input="updateLifecycleMaxRunTime"
                   type="number"
                   class="form-input"
                 />
@@ -508,7 +485,8 @@
               <div class="form-group">
                 <label>空闲超时 (秒)</label>
                 <input 
-                  v-model.number="formData.lifecycle.idleTimeout" 
+                  :value="formData.lifecycle?.idleTimeout || 300"
+                  @input="updateLifecycleIdleTimeout"
                   type="number"
                   class="form-input"
                 />
@@ -517,17 +495,18 @@
             
             <div class="form-group">
               <label>清理策略</label>
-              <select v-model="formData.lifecycle.cleanupPolicy" class="form-select">
+              <select :value="formData.lifecycle?.cleanupPolicy ?? 'keep'" @change="updateLifecycleCleanupPolicy" class="form-select">
                 <option value="keep">保留</option>
                 <option value="archive">归档</option>
                 <option value="delete">删除</option>
               </select>
             </div>
             
-            <div v-if="formData.lifecycle.cleanupPolicy !== 'keep'" class="form-group">
+            <div v-if="(formData.lifecycle?.cleanupPolicy ?? 'keep') !== 'keep'" class="form-group">
               <label>归档/删除前 (天)</label>
               <input 
-                v-model.number="formData.lifecycle.archiveAfter" 
+                :value="formData.lifecycle?.archiveAfter ?? 30"
+                @input="updateLifecycleArchiveAfter"
                 type="number"
                 class="form-input"
               />
@@ -554,7 +533,7 @@
             </div>
             <div class="preview-stat">
               <span class="stat-label">运行次数</span>
-              <span class="stat-value">{{ agent.totalRuns }}</span>
+              <span class="stat-value">{{ agent.totalRuns || 0 }}</span>
             </div>
             <div class="preview-stat">
               <span class="stat-label">创建时间</span>
@@ -606,8 +585,8 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, watch } from 'vue'
-import type { Agent, Trigger } from '../../../core/composables/useAgentControl'
-import { generateAvatarUrl } from '../../../core/composables/useAgentControl'
+import type { Agent, Trigger, RuntimeConfig, LifecycleConfig } from '../../../core/composables'
+import { generateAvatarUrl } from '../../../core/composables'
 
 const props = defineProps<{
   agent: Agent
@@ -639,17 +618,72 @@ const advancedNavItems = [
   { id: 'lifecycle', name: '生命周期', icon: '♻️' },
 ]
 
-// 表单数据 (深拷贝)
-const formData = reactive<Agent>(JSON.parse(JSON.stringify(props.agent)))
+// 表单数据 (深拷贝，带默认值)
+const createDefaultFormData = (): Agent => ({
+  id: '',
+  name: '',
+  avatar: '🤖',
+  avatarId: 1,
+  description: '',
+  level: 'custom',
+  status: 'idle',
+  seat: 1,
+  skills: [],
+  permissions: [],
+  systemPrompt: '',
+  memoryEnabled: false,
+  memoryContent: '',
+  memory: {
+    shortTerm: { maxMessages: 20, ttl: 3600, messages: [] },
+    longTerm: { enabled: false, storagePath: '', entries: [] },
+    contextWindow: 4096
+  },
+  functionCall: {
+    enabled: false,
+    allowedTools: [],
+    customTools: [],
+    timeout: 30,
+    maxCallsPerRequest: 5
+  },
+  runtime: {
+    model: 'deepseek-chat',
+    temperature: 0.7,
+    maxTokens: 2048,
+    timeout: 60,
+    retryCount: 3,
+    retryDelay: 1
+  },
+  lifecycle: {
+    autoStart: false,
+    maxRunTime: 0,
+    idleTimeout: 300,
+    cleanupPolicy: 'keep',
+    archiveAfter: 30
+  },
+  triggers: [],
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+  lastActiveAt: Date.now(),
+  callCount: 0,
+  totalRuns: 0,
+  errorCount: 0,
+  isDefault: false
+})
+
+// 合并默认值与实际数据
+const formData = reactive<Agent>({
+  ...createDefaultFormData(),
+  ...JSON.parse(JSON.stringify(props.agent))
+})
 
 // 同步 props 变化
 watch(() => props.agent, (newAgent) => {
-  Object.assign(formData, JSON.parse(JSON.stringify(newAgent)))
+  Object.assign(formData, createDefaultFormData(), JSON.parse(JSON.stringify(newAgent)))
 }, { deep: true })
 
 // 当前头像 URL
 const currentAvatarUrl = computed(() => 
-  generateAvatarUrl(formData.avatarId, formData.id)
+  generateAvatarUrl(formData.avatarId || 1, formData.id)
 )
 
 // 状态文本
@@ -659,17 +693,11 @@ const statusText = computed(() => {
     paused: '已暂停',
     error: '错误',
     idle: '空闲',
-    creating: '创建中'
+    busy: '忙碌',
+    online: '在线',
+    offline: '离线'
   }
   return texts[props.agent.status] || props.agent.status
-})
-
-// 权限路径文本
-const allowedPathsText = computed({
-  get: () => formData.permissions.allowedPaths.join('\n'),
-  set: (val) => {
-    formData.permissions.allowedPaths = val.split('\n').filter(p => p.trim())
-  }
 })
 
 // 提及关键词
@@ -707,12 +735,15 @@ function addTrigger() {
     config: {},
     triggerCount: 0
   }
+  if (!formData.triggers) {
+    formData.triggers = []
+  }
   formData.triggers.push(newTrigger)
 }
 
 // 删除触发器
 function removeTrigger(index: number) {
-  formData.triggers.splice(index, 1)
+  formData.triggers?.splice(index, 1)
 }
 
 // 更新提及关键词
@@ -723,18 +754,208 @@ function updateMentionKeywords(trigger: Trigger, event: Event) {
 
 // 添加记忆条目
 function addMemoryEntry() {
+  if (!formData.memory) {
+    formData.memory = {
+      shortTerm: { maxMessages: 10, ttl: 3600, messages: [] },
+      longTerm: { enabled: true, storagePath: '', entries: [] },
+      contextWindow: 10
+    }
+  }
+  if (!formData.memory.longTerm) {
+    formData.memory.longTerm = { enabled: true, storagePath: '', entries: [] }
+  }
+  if (!formData.memory.longTerm.entries) {
+    formData.memory.longTerm.entries = []
+  }
   formData.memory.longTerm.entries.push({
     key: '',
     value: '',
     importance: 0.5,
-    createdAt: new Date(),
-    updatedAt: new Date()
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   })
 }
 
 // 删除记忆条目
 function removeMemoryEntry(index: number) {
-  formData.memory.longTerm.entries.splice(index, 1)
+  formData.memory?.longTerm?.entries?.splice(index, 1)
+}
+
+// Runtime config update helpers
+function updateRuntimeTemperature(e: Event) {
+  const val = parseFloat((e.target as HTMLInputElement).value)
+  if (!formData.runtime) formData.runtime = {} as RuntimeConfig
+  formData.runtime.temperature = val
+}
+
+function updateRuntimeMaxTokens(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value)
+  if (!formData.runtime) formData.runtime = {} as RuntimeConfig
+  formData.runtime.maxTokens = val
+}
+
+function updateRuntimeTimeout(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value)
+  if (!formData.runtime) formData.runtime = {} as RuntimeConfig
+  formData.runtime.timeout = val
+}
+
+function updateRuntimeRetryCount(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value)
+  if (!formData.runtime) formData.runtime = {} as RuntimeConfig
+  formData.runtime.retryCount = val
+}
+
+function updateRuntimeRetryDelay(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value)
+  if (!formData.runtime) formData.runtime = {} as RuntimeConfig
+  formData.runtime.retryDelay = val
+}
+
+// Lifecycle config update helpers
+function updateLifecycleMaxRunTime(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value)
+  if (!formData.lifecycle) formData.lifecycle = {} as LifecycleConfig
+  formData.lifecycle.maxRunTime = val
+}
+
+function updateLifecycleIdleTimeout(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value)
+  if (!formData.lifecycle) formData.lifecycle = {} as LifecycleConfig
+  formData.lifecycle.idleTimeout = val
+}
+
+function updateLifecycleCleanupPolicy(e: Event) {
+  const val = (e.target as HTMLSelectElement).value as 'keep' | 'archive' | 'delete'
+  if (!formData.lifecycle) formData.lifecycle = {} as LifecycleConfig
+  formData.lifecycle.cleanupPolicy = val
+}
+
+function updateLifecycleArchiveAfter(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value)
+  if (!formData.lifecycle) formData.lifecycle = {} as LifecycleConfig
+  formData.lifecycle.archiveAfter = val
+}
+
+// Memory config update helpers
+function updateMemoryMaxMessages(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value)
+  if (!formData.memory) {
+    formData.memory = {
+      shortTerm: { maxMessages: 10, ttl: 3600, messages: [] },
+      longTerm: { enabled: true, storagePath: '', entries: [] },
+      contextWindow: 10
+    }
+  }
+  formData.memory.shortTerm.maxMessages = val
+}
+
+function updateMemoryTtl(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value)
+  if (!formData.memory) {
+    formData.memory = {
+      shortTerm: { maxMessages: 10, ttl: 3600, messages: [] },
+      longTerm: { enabled: true, storagePath: '', entries: [] },
+      contextWindow: 10
+    }
+  }
+  formData.memory.shortTerm.ttl = val
+}
+
+function updateMemoryLongTermEnabled(e: Event) {
+  const checked = (e.target as HTMLInputElement).checked
+  if (!formData.memory) {
+    formData.memory = {
+      shortTerm: { maxMessages: 10, ttl: 3600, messages: [] },
+      longTerm: { enabled: true, storagePath: '', entries: [] },
+      contextWindow: 10
+    }
+  }
+  if (!formData.memory.longTerm) {
+    formData.memory.longTerm = { enabled: true, storagePath: '', entries: [] }
+  }
+  formData.memory.longTerm.enabled = checked
+}
+
+function updateMemoryEntry(index: number, field: 'key' | 'value', value: string) {
+  if (formData.memory?.longTerm?.entries?.[index]) {
+    formData.memory.longTerm.entries[index][field] = value
+  }
+}
+
+function updateMemoryEntryImportance(index: number, value: string) {
+  if (formData.memory?.longTerm?.entries?.[index]) {
+    formData.memory.longTerm.entries[index].importance = parseFloat(value)
+  }
+}
+
+// FunctionCall config update helpers
+function updateFunctionCallEnabled(e: Event) {
+  const checked = (e.target as HTMLInputElement).checked
+  if (!formData.functionCall) {
+    formData.functionCall = {
+      enabled: false,
+      allowedTools: [],
+      customTools: [],
+      timeout: 30,
+      maxCallsPerRequest: 5
+    }
+  }
+  formData.functionCall.enabled = checked
+}
+
+function toggleAllowedTool(tool: string, e: Event) {
+  const checked = (e.target as HTMLInputElement).checked
+  if (!formData.functionCall) {
+    formData.functionCall = {
+      enabled: false,
+      allowedTools: [],
+      customTools: [],
+      timeout: 30,
+      maxCallsPerRequest: 5
+    }
+  }
+  if (!formData.functionCall.allowedTools) {
+    formData.functionCall.allowedTools = []
+  }
+  if (checked) {
+    if (!formData.functionCall.allowedTools.includes(tool)) {
+      formData.functionCall.allowedTools.push(tool)
+    }
+  } else {
+    formData.functionCall.allowedTools = formData.functionCall.allowedTools.filter(t => t !== tool)
+  }
+}
+
+// Runtime model update helper
+function updateRuntimeModel(e: Event) {
+  const val = (e.target as HTMLSelectElement).value
+  if (!formData.runtime) {
+    formData.runtime = {
+      model: 'gpt-4o',
+      temperature: 0.7,
+      maxTokens: 2048,
+      timeout: 60,
+      retryCount: 3,
+      retryDelay: 1
+    }
+  }
+  formData.runtime.model = val
+}
+
+// Lifecycle autoStart update helper
+function updateLifecycleAutoStart(e: Event) {
+  const checked = (e.target as HTMLInputElement).checked
+  if (!formData.lifecycle) {
+    formData.lifecycle = {
+      autoStart: false,
+      maxRunTime: 0,
+      idleTimeout: 300,
+      cleanupPolicy: 'keep',
+      archiveAfter: 30
+    }
+  }
+  formData.lifecycle.autoStart = checked
 }
 
 // 保存
@@ -761,8 +982,9 @@ function handleTest() {
 }
 
 // 格式化日期
-function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString('zh-CN')
+function formatDate(timestamp: number): string {
+  if (!timestamp) return '-'
+  return new Date(timestamp).toLocaleDateString('zh-CN')
 }
 
 // 格式化时间

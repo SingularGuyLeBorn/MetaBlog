@@ -149,6 +149,7 @@ export default defineConfig({
   description: "数字孪生级知识管理系统",
   base: "/",
   cleanUrls: true,
+  ignoreDeadLinks: true,
 
   // Generate rewrites dynamically
   rewrites: generateRewrites(),
@@ -257,6 +258,10 @@ export default defineConfig({
           replacement: fileURLToPath(new URL("./theme", import.meta.url)),
         },
       ],
+    },
+    // Exclude visual scene modules from SSR - they use browser-only APIs
+    ssr: {
+      noExternal: ['three'],
     },
     // P1-8 修复：排除 Agent 数据目录和日志目录，避免 Vite HMR OOM
     server: {
@@ -2460,6 +2465,113 @@ ${content}`;
           });
 
           // ============================================
+          // API Debug Logs - 完整 API 交互记录
+          // ============================================
+          
+          // POST /api/logs/api-debug - 保存 API 调试日志
+          server.middlewares.use("/api/logs/api-debug", async (req, res, next) => {
+            if (req.method === "POST") {
+              try {
+                const chunks: Buffer[] = [];
+                req.on("data", chunk => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const { sessionId, startTime, endTime, totalRounds, entries } = body;
+                    
+                    if (!sessionId || !entries) {
+                      res.statusCode = 400;
+                      res.end(JSON.stringify({ 
+                        success: false, 
+                        error: 'Missing required fields: sessionId, entries' 
+                      }));
+                      return;
+                    }
+                    
+                    // 创建调试日志目录
+                    const debugDir = path.join(process.cwd(), '.logs', 'api-debug');
+                    if (!fs.existsSync(debugDir)) {
+                      fs.mkdirSync(debugDir, { recursive: true });
+                    }
+                    
+                    // 生成文件名：timestamp-sessionId.json
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                    const filename = `${timestamp}-${sessionId}.json`;
+                    const filepath = path.join(debugDir, filename);
+                    
+                    // 构建完整的调试数据
+                    const debugData = {
+                      sessionId,
+                      startTime,
+                      endTime: endTime || new Date().toISOString(),
+                      totalRounds,
+                      entryCount: entries.length,
+                      entries
+                    };
+                    
+                    // 写入文件
+                    fs.writeFileSync(filepath, JSON.stringify(debugData, null, 2), 'utf-8');
+                    
+                    console.log(`[API Debug] Saved to ${filename} (${entries.length} entries)`);
+                    
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(JSON.stringify({
+                      success: true,
+                      data: {
+                        filename,
+                        entryCount: entries.length
+                      }
+                    }));
+                  } catch (e) {
+                    res.statusCode = 500;
+                    res.end(JSON.stringify({ success: false, error: String(e) }));
+                  }
+                });
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+          
+          // GET /api/logs/api-debug/list - 列出所有调试日志文件
+          server.middlewares.use("/api/logs/api-debug/list", async (req, res, next) => {
+            if (req.method === "GET") {
+              try {
+                const debugDir = path.join(process.cwd(), '.logs', 'api-debug');
+                
+                if (!fs.existsSync(debugDir)) {
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: [] }));
+                  return;
+                }
+                
+                const files = fs.readdirSync(debugDir).filter(f => f.endsWith('.json'));
+                
+                // 获取文件信息
+                const fileInfos = files.map(filename => {
+                  const filepath = path.join(debugDir, filename);
+                  const stats = fs.statSync(filepath);
+                  return {
+                    filename,
+                    size: stats.size,
+                    createdAt: stats.ctime.toISOString()
+                  };
+                });
+                
+                // 按创建时间倒序
+                fileInfos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: fileInfos }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+
+          // ============================================
           // Proxy API - 网络抓取代理
           // ============================================
 
@@ -3404,6 +3516,55 @@ ${content}`;
                   
                   res.setHeader("Content-Type", "application/json");
                   res.end(JSON.stringify({ success: true }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // POST /api/agents/trigger - 触发 Agent 执行
+          server.middlewares.use("/api/agents/trigger", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { agentId, triggerId } = body;
+                  
+                  let agents = readAgents();
+                  const agent = agents.find((a: any) => a.id === agentId);
+                  
+                  if (!agent) {
+                    res.statusCode = 404;
+                    res.end(JSON.stringify({ success: false, error: 'Agent not found' }));
+                    return;
+                  }
+                  
+                  // 更新触发统计
+                  if (agent.triggers) {
+                    const trigger = agent.triggers.find((t: any) => t.id === triggerId);
+                    if (trigger) {
+                      trigger.lastTriggered = new Date().toISOString();
+                      trigger.triggerCount = (trigger.triggerCount || 0) + 1;
+                    }
+                  }
+                  
+                  // 更新 Agent 运行统计
+                  agent.totalRuns = (agent.totalRuns || 0) + 1;
+                  agent.lastRunAt = Date.now();
+                  agent.status = 'running';
+                  agent.updatedAt = Date.now();
+                  
+                  writeAgents(agents);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ 
+                    success: true, 
+                    data: { agent, triggered: true }
+                  }));
                 } catch (e) {
                   res.statusCode = 500;
                   res.end(JSON.stringify({ success: false, error: String(e) }));

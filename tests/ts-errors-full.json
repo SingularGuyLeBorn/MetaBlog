@@ -1,20 +1,22 @@
 {
   "summary": {
     "total": 1,
-    "timestamp": "2026-02-21T14:30:23.814Z",
+    "timestamp": "2026-02-22T09:06:17.954Z",
     "cwd": "D:\\ALL IN AI\\MetaBlog\\tests"
   },
   "errors": [
     {
-      "filePath": "../.vitepress/theme/services/logger.ts",
-      "line": 16,
-      "column": 5,
+      "filePath": "../.vitepress/theme/components/ai-chat/core/composables/useAgentsUnified.ts",
+      "line": 531,
+      "column": 62,
       "severity": "error",
-      "code": "TS2367",
-      "message": "This comparison appears to be unintentional because the types 'string | undefined' and 'boolean' have no overlap.",
-      "details": [],
-      "raw": "../.vitepress/theme/services/logger.ts(16,5): error TS2367: This comparison appears to be unintentional because the types 'string | undefined' and 'boolean' have no overlap.\n",
-      "sourceCode": ": import.meta.env?.DEV !== false"
+      "code": "TS2345",
+      "message": "Argument of type '{}' is not assignable to parameter of type 'AgentCreateParams'.",
+      "details": [
+        "Property 'name' is missing in type '{}' but required in type 'AgentCreateParams'."
+      ],
+      "raw": "../.vitepress/theme/components/ai-chat/core/composables/useAgentsUnified.ts(531,62): error TS2345: Argument of type '{}' is not assignable to parameter of type 'AgentCreateParams'.\n  Property 'name' is missing in type '{}' but required in type 'AgentCreateParams'.\n",
+      "sourceCode": "...createDefaultAgent(a.id || `agent-${Date.now()}`, {}, 999),"
     }
   ]
 }

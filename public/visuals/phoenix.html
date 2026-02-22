@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phoenix Rising</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #0a0a0f;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4400;
+            font-size: 18px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: pulse 1.5s ease-in-out infinite;
+            z-index: 100;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 50;
+        }
+        .btn {
+            width: 44px;
+            height: 44px;
+            border: 1px solid rgba(255, 68, 0, 0.4);
+            background: rgba(20, 15, 15, 0.7);
+            color: #ff4400;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        .btn:hover {
+            background: rgba(255, 68, 0, 0.2);
+            border-color: #ff4400;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 68, 0, 0.3);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #ff4400;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.8;
+            z-index: 50;
+        }
+    </style>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div id="canvas-container">
+        <div id="loading">Summoning...</div>
+        <div class="title">Phoenix Rising</div>
+        <div class="controls">
+            <button class="btn" id="resetBtn" title="Reset View">⟲</button>
+            <button class="btn" id="fullscreenBtn" title="Fullscreen">⛶</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0f);
+        scene.fog = new THREE.FogExp2(0x0a0a0f, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 2, 18);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 8;
+        controls.maxDistance = 40;
+        controls.maxPolarAngle = Math.PI / 1.8;
+
+        // Phoenix group
+        const phoenixGroup = new THREE.Group();
+        scene.add(phoenixGroup);
+
+        // Fire colors
+        const fireColors = [
+            new THREE.Color(0xff0000),  // Deep red
+            new THREE.Color(0xff4400),  // Orange red
+            new THREE.Color(0xff8800),  // Orange
+            new THREE.Color(0xffaa00),  // Yellow orange
+            new THREE.Color(0xffff00),  // Yellow
+            new THREE.Color(0xff5500)   // Bright orange
+        ];
+
+        // Phoenix body - central particles
+        const bodyParticleCount = 3000;
+        const bodyGeometry = new THREE.BufferGeometry();
+        const bodyPositions = new Float32Array(bodyParticleCount * 3);
+        const bodyColors = new Float32Array(bodyParticleCount * 3);
+        const bodySizes = new Float32Array(bodyParticleCount);
+        const bodyData = [];
+
+        for (let i = 0; i < bodyParticleCount; i++) {
+            // Serpentine body shape
+            const t = i / bodyParticleCount;
+            const angle = t * Math.PI * 6;
+            const radius = 0.5 + Math.sin(t * Math.PI) * 1.5;
+            const x = Math.cos(angle) * radius * (1 - t * 0.3);
+            const y = t * 10 - 5 + Math.sin(angle * 2) * 0.5;
+            const z = Math.sin(angle) * radius * (1 - t * 0.3);
+            
+            bodyPositions[i * 3] = x;
+            bodyPositions[i * 3 + 1] = y;
+            bodyPositions[i * 3 + 2] = z;
+            
+            const color = fireColors[Math.floor(Math.random() * fireColors.length)];
+            bodyColors[i * 3] = color.r;
+            bodyColors[i * 3 + 1] = color.g;
+            bodyColors[i * 3 + 2] = color.b;
+            
+            bodySizes[i] = 0.1 + Math.random() * 0.15;
+            
+            bodyData.push({
+                originalY: y,
+                originalX: x,
+                originalZ: z,
+                speed: 0.5 + Math.random() * 1,
+                phase: Math.random() * Math.PI * 2,
+                t: t
+            });
+        }
+
+        bodyGeometry.setAttribute('position', new THREE.BufferAttribute(bodyPositions, 3));
+        bodyGeometry.setAttribute('color', new THREE.BufferAttribute(bodyColors, 3));
+        bodyGeometry.setAttribute('size', new THREE.BufferAttribute(bodySizes, 1));
+
+        const bodyMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 }
+            },
+            vertexShader: `
+                attribute float size;
+                attribute vec3 color;
+                varying vec3 vColor;
+                uniform float time;
+                void main() {
+                    vColor = color;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_PointSize = size * (300.0 / -mvPosition.z);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vColor;
+                void main() {
+                    float dist = length(gl_PointCoord - vec2(0.5));
+                    if (dist > 0.5) discard;
+                    float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+                    gl_FragColor = vec4(vColor, alpha);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const bodyParticles = new THREE.Points(bodyGeometry, bodyMaterial);
+        phoenixGroup.add(bodyParticles);
+
+        // Wings
+        const wingParticleCount = 4000;
+        const wingGeometry = new THREE.BufferGeometry();
+        const wingPositions = new Float32Array(wingParticleCount * 3);
+        const wingColors = new Float32Array(wingParticleCount * 3);
+        const wingSizes = new Float32Array(wingParticleCount);
+        const wingData = [];
+
+        for (let i = 0; i < wingParticleCount; i++) {
+            const isLeft = i < wingParticleCount / 2;
+            const wingT = (i % (wingParticleCount / 2)) / (wingParticleCount / 2);
+            
+            const wingSpan = 8;
+            const wingCurve = Math.sin(wingT * Math.PI) * 3;
+            const x = (isLeft ? -1 : 1) * (2 + wingT * wingSpan);
+            const y = 2 + wingCurve + Math.random() * 2;
+            const z = Math.sin(wingT * Math.PI * 2) * 2 + (Math.random() - 0.5);
+            
+            wingPositions[i * 3] = x;
+            wingPositions[i * 3 + 1] = y;
+            wingPositions[i * 3 + 2] = z;
+            
+            const colorIndex = Math.floor(wingT * fireColors.length);
+            const color = fireColors[Math.min(colorIndex, fireColors.length - 1)];
+            wingColors[i * 3] = color.r;
+            wingColors[i * 3 + 1] = color.g;
+            wingColors[i * 3 + 2] = color.b;
+            
+            wingSizes[i] = 0.08 + Math.random() * 0.12;
+            
+            wingData.push({
+                originalX: x,
+                originalY: y,
+                originalZ: z,
+                phase: Math.random() * Math.PI * 2,
+                speed: 1 + Math.random() * 2,
+                isLeft: isLeft
+            });
+        }
+
+        wingGeometry.setAttribute('position', new THREE.BufferAttribute(wingPositions, 3));
+        wingGeometry.setAttribute('color', new THREE.BufferAttribute(wingColors, 3));
+        wingGeometry.setAttribute('size', new THREE.BufferAttribute(wingSizes, 1));
+
+        const wingMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 }
+            },
+            vertexShader: `
+                attribute float size;
+                attribute vec3 color;
+                varying vec3 vColor;
+                uniform float time;
+                void main() {
+                    vColor = color;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_PointSize = size * (300.0 / -mvPosition.z);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vColor;
+                void main() {
+                    float dist = length(gl_PointCoord - vec2(0.5));
+                    if (dist > 0.5) discard;
+                    float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+                    gl_FragColor = vec4(vColor, alpha * 0.9);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const wingParticles = new THREE.Points(wingGeometry, wingMaterial);
+        phoenixGroup.add(wingParticles);
+
+        // Tail feathers
+        const tailParticleCount = 2000;
+        const tailGeometry = new THREE.BufferGeometry();
+        const tailPositions = new Float32Array(tailParticleCount * 3);
+        const tailColors = new Float32Array(tailParticleCount * 3);
+        const tailSizes = new Float32Array(tailParticleCount);
+        const tailData = [];
+
+        for (let i = 0; i < tailParticleCount; i++) {
+            const feather = Math.floor(i / 100);
+            const t = (i % 100) / 100;
+            
+            const spread = (feather - 10) * 0.3;
+            const length = 6 + Math.random() * 2;
+            
+            const x = spread * t + Math.sin(t * Math.PI * 3) * 0.5;
+            const y = -5 - t * length;
+            const z = Math.cos(t * Math.PI * 2) * 0.3;
+            
+            tailPositions[i * 3] = x;
+            tailPositions[i * 3 + 1] = y;
+            tailPositions[i * 3 + 2] = z;
+            
+            const color = fireColors[Math.floor(t * fireColors.length)];
+            tailColors[i * 3] = color.r;
+            tailColors[i * 3 + 1] = color.g;
+            tailColors[i * 3 + 2] = color.b;
+            
+            tailSizes[i] = 0.06 + (1 - t) * 0.1;
+            
+            tailData.push({
+                originalX: x,
+                originalY: y,
+                originalZ: z,
+                phase: Math.random() * Math.PI * 2,
+                feather: feather,
+                t: t
+            });
+        }
+
+        tailGeometry.setAttribute('position', new THREE.BufferAttribute(tailPositions, 3));
+        tailGeometry.setAttribute('color', new THREE.BufferAttribute(tailColors, 3));
+        tailGeometry.setAttribute('size', new THREE.BufferAttribute(tailSizes, 1));
+
+        const tailMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 }
+            },
+            vertexShader: `
+                attribute float size;
+                attribute vec3 color;
+                varying vec3 vColor;
+                uniform float time;
+                void main() {
+                    vColor = color;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_PointSize = size * (300.0 / -mvPosition.z);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vColor;
+                void main() {
+                    float dist = length(gl_PointCoord - vec2(0.5));
+                    if (dist > 0.5) discard;
+                    float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+                    gl_FragColor = vec4(vColor, alpha * 0.8);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const tailParticles = new THREE.Points(tailGeometry, tailMaterial);
+        phoenixGroup.add(tailParticles);
+
+        // Rising embers
+        const emberCount = 800;
+        const emberGeometry = new THREE.BufferGeometry();
+        const emberPositions = new Float32Array(emberCount * 3);
+        const emberColors = new Float32Array(emberCount * 3);
+        const emberData = [];
+
+        for (let i = 0; i < emberCount; i++) {
+            emberPositions[i * 3] = (Math.random() - 0.5) * 15;
+            emberPositions[i * 3 + 1] = -8 + Math.random() * 16;
+            emberPositions[i * 3 + 2] = (Math.random() - 0.5) * 8;
+            
+            const color = fireColors[Math.floor(Math.random() * fireColors.length)];
+            emberColors[i * 3] = color.r;
+            emberColors[i * 3 + 1] = color.g;
+            emberColors[i * 3 + 2] = color.b;
+            
+            emberData.push({
+                speed: 0.02 + Math.random() * 0.05,
+                wobble: Math.random() * Math.PI * 2,
+                radius: Math.random() * 8
+            });
+        }
+
+        emberGeometry.setAttribute('position', new THREE.BufferAttribute(emberPositions, 3));
+        emberGeometry.setAttribute('color', new THREE.BufferAttribute(emberColors, 3));
+
+        const emberMaterial = new THREE.PointsMaterial({
+            size: 0.08,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+
+        const embers = new THREE.Points(emberGeometry, emberMaterial);
+        scene.add(embers);
+
+        // Fire glow (point lights)
+        const fireLight1 = new THREE.PointLight(0xff4400, 2, 20);
+        fireLight1.position.set(0, 0, 2);
+        phoenixGroup.add(fireLight1);
+
+        const fireLight2 = new THREE.PointLight(0xff8800, 1.5, 15);
+        fireLight2.position.set(-3, 2, 1);
+        phoenixGroup.add(fireLight2);
+
+        const fireLight3 = new THREE.PointLight(0xff8800, 1.5, 15);
+        fireLight3.position.set(3, 2, 1);
+        phoenixGroup.add(fireLight3);
+
+        // Hide loading spinner
+        document.getElementById('loading').style.display = 'none';
+
+        // Animation
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = clock.getElapsedTime();
+
+            // Update shader uniforms
+            bodyMaterial.uniforms.time.value = time;
+            wingMaterial.uniforms.time.value = time;
+            tailMaterial.uniforms.time.value = time;
+
+            // Animate body (rising motion)
+            const rise = Math.sin(time * 0.5) * 0.5;
+            phoenixGroup.position.y = rise;
+
+            // Animate body particles
+            const bodyPos = bodyParticles.geometry.attributes.position.array;
+            for (let i = 0; i < bodyParticleCount; i++) {
+                const data = bodyData[i];
+                const wave = Math.sin(time * 2 + data.phase) * 0.1;
+                const flutter = Math.sin(time * 5 + data.t * 10) * 0.05;
+                
+                bodyPos[i * 3] = data.originalX + wave + flutter;
+                bodyPos[i * 3 + 1] = data.originalY + rise + wave * 0.5;
+                bodyPos[i * 3 + 2] = data.originalZ + wave * 0.5;
+            }
+            bodyParticles.geometry.attributes.position.needsUpdate = true;
+
+            // Animate wings (flapping)
+            const wingPos = wingParticles.geometry.attributes.position.array;
+            const flap = Math.sin(time * 3) * 0.3;
+            
+            for (let i = 0; i < wingParticleCount; i++) {
+                const data = wingData[i];
+                const wingFlap = flap * (1 - Math.abs(data.originalX) / 10);
+                const wave = Math.sin(time * 2 + data.phase) * 0.1;
+                
+                wingPos[i * 3] = data.originalX;
+                wingPos[i * 3 + 1] = data.originalY + wingFlap + wave + rise;
+                wingPos[i * 3 + 2] = data.originalZ + wingFlap * 0.5;
+            }
+            wingParticles.geometry.attributes.position.needsUpdate = true;
+
+            // Animate tail
+            const tailPos = tailParticles.geometry.attributes.position.array;
+            for (let i = 0; i < tailParticleCount; i++) {
+                const data = tailData[i];
+                const sway = Math.sin(time * 2 + data.feather * 0.5) * 0.2 * data.t;
+                const flutter = Math.sin(time * 8 + data.t * 5) * 0.05;
+                
+                tailPos[i * 3] = data.originalX + sway + flutter;
+                tailPos[i * 3 + 1] = data.originalY + rise;
+                tailPos[i * 3 + 2] = data.originalZ + sway * 0.3;
+            }
+            tailParticles.geometry.attributes.position.needsUpdate = true;
+
+            // Animate embers
+            const emberPos = embers.geometry.attributes.position.array;
+            for (let i = 0; i < emberCount; i++) {
+                const data = emberData[i];
+                emberPos[i * 3 + 1] += data.speed;
+                emberPos[i * 3] += Math.sin(time * 2 + data.wobble) * 0.01;
+                
+                if (emberPos[i * 3 + 1] > 10) {
+                    emberPos[i * 3 + 1] = -8;
+                    emberPos[i * 3] = (Math.random() - 0.5) * 15;
+                }
+            }
+            embers.geometry.attributes.position.needsUpdate = true;
+
+            // Rotate entire phoenix slowly
+            phoenixGroup.rotation.y = Math.sin(time * 0.2) * 0.1;
+
+            // Update lights
+            fireLight1.intensity = 1.5 + Math.sin(time * 4) * 0.5;
+            fireLight2.intensity = 1 + Math.sin(time * 3 + 1) * 0.4;
+            fireLight3.intensity = 1 + Math.sin(time * 3 + 2) * 0.4;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Controls
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            camera.position.set(0, 2, 18);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        });
+
+        document.getElementById('fullscreenBtn').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

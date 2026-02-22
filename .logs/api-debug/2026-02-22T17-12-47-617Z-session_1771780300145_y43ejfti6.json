@@ -1,0 +1,293 @@
+{
+  "sessionId": "session_1771780300145_y43ejfti6",
+  "startTime": "2026-02-22T17:12:34.842Z",
+  "endTime": "2026-02-22T17:12:47.614Z",
+  "totalRounds": 2,
+  "entryCount": 3,
+  "entries": [
+    {
+      "timestamp": "2026-02-22T17:12:34.842Z",
+      "type": "request",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 1,
+      "data": {
+        "model": "deepseek-chat",
+        "messages": [
+          {
+            "role": "system",
+            "content": "你是一个 helpful 的 AI 助手。"
+          },
+          {
+            "role": "user",
+            "content": "现在北京天气咋样?"
+          },
+          {
+            "role": "assistant",
+            "content": "要获取北京当前的天气信息，我无法直接提供实时数据，但你可以通过以下方式快速查询：\n\n1. **天气预报应用**  \n   打开手机上的天气应用（如苹果天气、墨迹天气等），搜索“北京”即可查看实时温度、湿度、风力等。\n\n2. **搜索引擎查询**  \n   在浏览器中搜索“北京天气”，通常会直接显示当前天气状况和未来几天的预报。\n\n3. **气象网站**  \n   访问中国天气网（www.weather.com.cn）或权威国际气象网站（如AccuWeather）。\n\n**温馨提示**：北京近期昼夜温差可能较大，建议出行前确认实时天气，并注意增减衣物。如果需要具体时段（如明天或周末）的预报，可以告诉我，我会为你分析趋势哦！ 😊"
+          },
+          {
+            "role": "user",
+            "content": "你有啥工具能用?"
+          },
+          {
+            "role": "assistant",
+            "content": "我目前没有直接调用外部工具（如实时天气API、计算器、搜索引擎等）的功能，但可以通过以下方式为你提供帮助：\n\n---\n\n### **我能做的事**：\n1. **信息整理与解答**  \n   - 基于我的知识库（截至2024年7月），回答历史、科学、文化、技术等领域的问题。\n   - 提供学习建议、旅行攻略、生活技巧等实用指南。\n\n2. **文本处理与创作**  \n   - 翻译、润色、总结文档。\n   - 写邮件、诗歌、故事、代码等。\n\n3. **逻辑分析与建议**  \n   - 帮你分析问题（如学习计划、决策思路）。\n   - 提供简单的数学计算步骤（需你手动执行）。\n\n---\n\n### **如果你需要工具类协助**：\n- **天气/新闻/股票等实时信息**：建议直接使用搜索引擎或专业APP。\n- **复杂计算/图表**：可尝试工具如Wolfram Alpha、Excel。\n- **文件处理**：我可以指导你如何用Word/PDF工具操作。\n\n---\n\n### **举个栗子**🌰：\n- 你想知道“如何用Python爬取天气数据？” → 我可以提供代码框架和思路。\n- 你想了解“北京春季气候特点？” → 我可以结合地理知识为你解释。\n\n如果有具体需求，随时告诉我，我会尽力用文字帮你解决！ 😄"
+          },
+          {
+            "role": "user",
+            "content": "帮我写一篇文章放到 knowledge下谢谢!"
+          }
+        ],
+        "max_tokens": 4096,
+        "stream": false,
+        "temperature": 0.7,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_article_content",
+              "description": "获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"或需要基于已有文章内容回答时使用。不要主动调用此工具。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径，例如 \"knowledge/getting-started.md\""
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "最大返回字符数，默认8000，避免消息过长"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_articles",
+              "description": "根据关键词搜索文章",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索关键词，例如 \"深度学习\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认5条"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_articles",
+              "description": "列出文章列表，可按分类筛选。仅在用户询问\"有哪些文章\"、\"文章列表\"或需要查找特定文章时使用。不要主动调用此工具。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "section": {
+                    "type": "string",
+                    "description": "可选：按分类筛选，例如 \"knowledge\"、\"posts\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认20，最大50"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_article",
+              "description": "创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n\n重要提示：\n- path 参数必须包含文件夹和文件名，格式为 \"section/filename.md\"\n- 例如：\"knowledge/transformer-detailed.md\" 会在 knowledge 文件夹下创建 transformer-detailed.md\n- 如果用户没有指定 section，默认使用 \"knowledge\" 或 \"posts\"\n- 标题应该简洁明了，反映文章主题\n- 不要主动调用此工具，除非用户明确要求创建文章",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "文章标题，例如 \"Transformer 详解\""
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "文章完整路径，格式为 \"section/filename.md\"，例如 \"knowledge/transformer-detailed.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "文章内容（支持 Markdown），可以包含标题、段落、代码块等"
+                  }
+                },
+                "required": [
+                  "title",
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "update_article",
+              "description": "更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径，例如 \"posts/existing-article.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "新的文章内容（完整替换）"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "delete_article",
+              "description": "删除文章。当用户要求删除、移除文章时使用。此操作不可逆！",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "要删除的文章路径"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_current_time",
+              "description": "获取当前时间",
+              "parameters": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "test_echo",
+              "description": "【测试专用】回声工具，验证工具调用是否正常工作。当用户说\"测试工具\"时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "要回显的消息"
+                  },
+                  "repeat_count": {
+                    "type": "number",
+                    "description": "重复次数"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-02-22T17:12:39.354Z",
+      "type": "response",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 1,
+      "data": {
+        "id": "d13489ba-2c6c-4ffe-a6ec-e4f67f709445",
+        "object": "chat.completion",
+        "created": 1771780352,
+        "model": "deepseek-chat",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "好的！我很乐意帮你写一篇文章并放到 knowledge 目录下。不过我需要知道你想写什么主题的文章呢？\n\n请告诉我：\n1. **文章主题**：比如技术教程、学习笔记、生活感悟、知识分享等\n2. **具体内容方向**：比如 \"Python 入门指南\"、\"机器学习基础\"、\"健康饮食建议\"、\"旅行攻略\" 等\n3. **文章长度**：大概需要多长的内容？\n\n**一些建议主题**：\n- 技术类：Python 基础、Web 开发、数据分析、AI 入门\n- 学习类：高效学习方法、笔记技巧、时间管理\n- 生活类：健康习惯、理财基础、旅行准备\n- 知识类：科学常识、历史故事、文化差异\n\n请告诉我你的想法，我会为你创作一篇结构清晰、内容实用的文章！ 📝"
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1588,
+          "completion_tokens": 178,
+          "total_tokens": 1766,
+          "prompt_tokens_details": {
+            "cached_tokens": 1280
+          },
+          "prompt_cache_hit_tokens": 1280,
+          "prompt_cache_miss_tokens": 308
+        },
+        "system_fingerprint": "fp_eaab8d114b_prod0820_fp8_kvcache"
+      }
+    },
+    {
+      "timestamp": "2026-02-22T17:12:39.357Z",
+      "type": "request",
+      "endpoint": "/chat/completions (stream)",
+      "round": 2,
+      "data": {
+        "model": "deepseek-chat",
+        "messages": [
+          {
+            "role": "system",
+            "content": "你是一个 helpful 的 AI 助手。"
+          },
+          {
+            "role": "user",
+            "content": "现在北京天气咋样?"
+          },
+          {
+            "role": "assistant",
+            "content": "要获取北京当前的天气信息，我无法直接提供实时数据，但你可以通过以下方式快速查询：\n\n1. **天气预报应用**  \n   打开手机上的天气应用（如苹果天气、墨迹天气等），搜索“北京”即可查看实时温度、湿度、风力等。\n\n2. **搜索引擎查询**  \n   在浏览器中搜索“北京天气”，通常会直接显示当前天气状况和未来几天的预报。\n\n3. **气象网站**  \n   访问中国天气网（www.weather.com.cn）或权威国际气象网站（如AccuWeather）。\n\n**温馨提示**：北京近期昼夜温差可能较大，建议出行前确认实时天气，并注意增减衣物。如果需要具体时段（如明天或周末）的预报，可以告诉我，我会为你分析趋势哦！ 😊"
+          },
+          {
+            "role": "user",
+            "content": "你有啥工具能用?"
+          },
+          {
+            "role": "assistant",
+            "content": "我目前没有直接调用外部工具（如实时天气API、计算器、搜索引擎等）的功能，但可以通过以下方式为你提供帮助：\n\n---\n\n### **我能做的事**：\n1. **信息整理与解答**  \n   - 基于我的知识库（截至2024年7月），回答历史、科学、文化、技术等领域的问题。\n   - 提供学习建议、旅行攻略、生活技巧等实用指南。\n\n2. **文本处理与创作**  \n   - 翻译、润色、总结文档。\n   - 写邮件、诗歌、故事、代码等。\n\n3. **逻辑分析与建议**  \n   - 帮你分析问题（如学习计划、决策思路）。\n   - 提供简单的数学计算步骤（需你手动执行）。\n\n---\n\n### **如果你需要工具类协助**：\n- **天气/新闻/股票等实时信息**：建议直接使用搜索引擎或专业APP。\n- **复杂计算/图表**：可尝试工具如Wolfram Alpha、Excel。\n- **文件处理**：我可以指导你如何用Word/PDF工具操作。\n\n---\n\n### **举个栗子**🌰：\n- 你想知道“如何用Python爬取天气数据？” → 我可以提供代码框架和思路。\n- 你想了解“北京春季气候特点？” → 我可以结合地理知识为你解释。\n\n如果有具体需求，随时告诉我，我会尽力用文字帮你解决！ 😄"
+          },
+          {
+            "role": "user",
+            "content": "帮我写一篇文章放到 knowledge下谢谢!"
+          }
+        ],
+        "max_tokens": 4096,
+        "stream": true,
+        "temperature": 0.7
+      }
+    }
+  ]
+}

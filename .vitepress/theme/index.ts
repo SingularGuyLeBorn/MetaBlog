@@ -1,4 +1,4 @@
-import { h } from 'vue'
+import { h, defineAsyncComponent } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import Layout from './Layout.vue'
 import './style.css'
@@ -36,6 +36,11 @@ import FullScreenPanel from './components/FullScreenPanel.vue'
 // Animation Components
 import AnimatedContainer from './components/AnimatedContainer.vue'
 import AnimatedButton from './components/AnimatedButton.vue'
+
+// Visuals Components - disabled due to SSR issues
+// const VisualScene = defineAsyncComponent(() => 
+//   import('./components/visuals/VisualScene.client.vue')
+// )
 
 export default {
   extends: DefaultTheme,
@@ -75,6 +80,9 @@ export default {
     // Register Animation components
     app.component('AnimatedContainer', AnimatedContainer)
     app.component('AnimatedButton', AnimatedButton)
+    
+    // Register Visuals components
+    // app.component('VisualScene', VisualScene)
   }
 } satisfies Theme
 

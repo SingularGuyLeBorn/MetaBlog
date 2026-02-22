@@ -7,7 +7,7 @@
  * 3. 支持版本切换、删除
  */
 import { ref, computed } from 'vue'
-import type { ChatSession, ChatMessage, SessionConfig, MessageGroup } from '../types'
+import type { ChatSession, ChatMessage, SessionConfig, MessageGroup, ToolCallRecord, ThinkingStep } from '../types'
 import { storage, convertGroupsToMessages } from '../services/storage'
 import { aiService } from '../services/aiService'
 import { logger, addLog } from '../services/logger'
@@ -28,6 +28,8 @@ const currentSessionId = ref<string | null>(null)
 const messageGroups = ref<Record<string, MessageGroup[]>>({})
 const isStreaming = ref(false)
 const isInitialized = ref(false)
+// 每个会话独立的 AbortController（切换会话不中断）
+const sessionControllers = new Map<string, AbortController>()
 
 export function useAIChat() {
   // ==================== 初始化 ====================
@@ -185,7 +187,19 @@ export function useAIChat() {
     groups.push(newGroup)
     messageGroups.value[sessionId] = groups
     
-    isStreaming.value = true
+    // 只为当前会话设置 isStreaming
+    if (sessionId === currentSessionId.value) {
+      isStreaming.value = true
+    }
+    
+    // 创建或获取当前会话的 AbortController
+    let controller = sessionControllers.get(sessionId)
+    if (controller) {
+      // 如果已有 controller，先中断之前的请求
+      controller.abort()
+    }
+    controller = new AbortController()
+    sessionControllers.set(sessionId, controller)
     
     // 创建对话追踪
     addLog({
@@ -216,19 +230,46 @@ export function useAIChat() {
           },
           onReasoning: (text) => {
             const targetMsg = groups[groups.length - 1].aiVersions[0]
-            targetMsg.reasoning = { content: text, isVisible: true }
+            // 如果已经有 thinkingSteps，不再更新传统 reasoning（避免覆盖串行显示）
+            if (!targetMsg.metadata?.thinkingSteps?.length) {
+              targetMsg.reasoning = { content: text, isVisible: true }
+            }
+            targetMsg.updatedAt = Date.now()
+          },
+          onThinkingStep: (step: ThinkingStep) => {
+            const targetMsg = groups[groups.length - 1].aiVersions[0]
+            if (!targetMsg.metadata) {
+              targetMsg.metadata = {}
+            }
+            if (!targetMsg.metadata.thinkingSteps) {
+              targetMsg.metadata.thinkingSteps = []
+            }
+            // 检查是否已存在相同ID的步骤，存在则更新，否则添加
+            const existingIndex = targetMsg.metadata.thinkingSteps.findIndex(s => s.id === step.id)
+            if (existingIndex >= 0) {
+              targetMsg.metadata.thinkingSteps[existingIndex] = step
+            } else {
+              targetMsg.metadata.thinkingSteps.push(step)
+            }
             targetMsg.updatedAt = Date.now()
           },
           onComplete: () => {
             const targetMsg = groups[groups.length - 1].aiVersions[0]
             targetMsg.status = 'completed'
             targetMsg.updatedAt = Date.now()
+            // 保留现有的 metadata（包括 thinkingSteps），只添加新字段
             targetMsg.metadata = { 
+              ...targetMsg.metadata,  // 保留 thinkingSteps 等
               model: config.model,
               toolRecords  // 保存工具调用记录到消息
             }
-            isStreaming.value = false
+            // 只有当前会话才更新全局 isStreaming
+            if (sessionId === currentSessionId.value) {
+              isStreaming.value = false
+            }
             storage.saveMessageGroups(sessionId, groups)
+            // 清理 controller
+            sessionControllers.delete(sessionId)
             
             // 记录完成日志
             addLog({
@@ -246,10 +287,30 @@ export function useAIChat() {
           },
           onError: (err) => {
             const targetMsg = groups[groups.length - 1].aiVersions[0]
+            const hasToolCalls = toolRecords.length > 0
+            const errorMessage = err.message || String(err)
+            
             targetMsg.status = 'error'
-            targetMsg.content = `错误：${err.message}`
+            
+            // 如果工具调用成功但后续失败，显示更详细的错误
+            if (hasToolCalls) {
+              targetMsg.content = `⚠️ 工具调用成功，但获取 AI 回复时出错\n\n错误：${errorMessage}\n\n可能原因：\n1. 网络连接中断\n2. API 服务暂时不可用\n3. 请求超时\n\n建议：检查网络连接后重试，工具操作可能已完成`
+            } else {
+              targetMsg.content = `错误：${errorMessage}`
+            }
+            
             targetMsg.updatedAt = Date.now()
-            isStreaming.value = false
+            targetMsg.metadata = { 
+              model: config.model,
+              toolRecords,
+              error: errorMessage
+            }
+            // 只有当前会话才更新全局 isStreaming
+            if (sessionId === currentSessionId.value) {
+              isStreaming.value = false
+            }
+            // 清理 controller
+            sessionControllers.delete(sessionId)
             storage.saveMessageGroups(sessionId, groups)
             
             // 记录错误日志
@@ -257,10 +318,15 @@ export function useAIChat() {
               level: 'error',
               category: 'error',
               event: 'message_error',
-              message: 'AI 回复失败',
+              message: hasToolCalls ? '工具成功但AI回复失败' : 'AI 回复失败',
               sessionId,
               messageId: targetMsg.id,
-              data: { error: err.message }
+              data: { 
+                error: errorMessage,
+                hasToolCalls,
+                toolCount: toolRecords.length,
+                type: err.name || 'UnknownError'
+              }
             })
           },
           onToolRecord: (record) => {
@@ -288,12 +354,49 @@ export function useAIChat() {
               targetMsg.metadata.toolRecords.push(record)
             }
           }
-        }
+        },
+        controller.signal,
+        10,
+        sessionId
       )
       
       return true
     } catch (err) {
-      isStreaming.value = false
+      const error = err instanceof Error ? err : new Error(String(err))
+      // 只有当前会话才更新全局 isStreaming
+      if (sessionId === currentSessionId.value) {
+        isStreaming.value = false
+      }
+      // 清理 controller
+      sessionControllers.delete(sessionId)
+      
+      // 更新最后一条消息为错误状态
+      const lastGroup = groups[groups.length - 1]
+      if (lastGroup && lastGroup.aiVersions.length > 0) {
+        const targetMsg = lastGroup.aiVersions[lastGroup.aiVersions.length - 1]
+        targetMsg.status = 'error'
+        targetMsg.content = `错误：${error.message}`
+        targetMsg.updatedAt = Date.now()
+        storage.saveMessageGroups(sessionId, groups)
+      }
+      
+      // 记录详细错误日志
+      addLog({
+        level: 'error',
+        category: 'error',
+        event: 'message_error',
+        message: `发送消息异常: ${error.message}`,
+        sessionId,
+        data: { 
+          error: error.message,
+          stack: error.stack,
+          name: error.name,
+          type: error.name === 'TypeError' && error.message.includes('fetch') 
+            ? 'NetworkError' 
+            : error.name
+        }
+      })
+      
       return false
     }
   }
@@ -345,6 +448,9 @@ export function useAIChat() {
       // 构建历史记录（截断到目标用户消息）
       const history = buildHistoryForRegenerate(groups, targetGroupIndex)
       
+      // 用于存储工具调用记录
+      let toolRecords: ToolCallRecord[] = []
+      
       await aiService.chatStream(
         history,
         config,
@@ -360,10 +466,32 @@ export function useAIChat() {
             }
             targetGroup.aiVersions[versionIndex].updatedAt = Date.now()
           },
+          onThinkingStep: (step: ThinkingStep) => {
+            const targetMsg = targetGroup.aiVersions[versionIndex]
+            if (!targetMsg.metadata) {
+              targetMsg.metadata = {}
+            }
+            if (!targetMsg.metadata.thinkingSteps) {
+              targetMsg.metadata.thinkingSteps = []
+            }
+            const existingIndex = targetMsg.metadata.thinkingSteps.findIndex(s => s.id === step.id)
+            if (existingIndex >= 0) {
+              targetMsg.metadata.thinkingSteps[existingIndex] = step
+            } else {
+              targetMsg.metadata.thinkingSteps.push(step)
+            }
+            targetMsg.updatedAt = Date.now()
+          },
+          onToolRecord: (record) => {
+            toolRecords.push(record)
+          },
           onComplete: () => {
             targetGroup.aiVersions[versionIndex].status = 'completed'
             targetGroup.aiVersions[versionIndex].updatedAt = Date.now()
-            targetGroup.aiVersions[versionIndex].metadata = { model: config.model }
+            targetGroup.aiVersions[versionIndex].metadata = { 
+              model: config.model,
+              toolRecords  // 保存工具调用记录
+            }
             isStreaming.value = false
             storage.saveMessageGroups(sessionId, groups)
           },
@@ -457,14 +585,18 @@ export function useAIChat() {
   
   /**
    * 从消息组构建历史记录（用于发送消息）
+   * 确保包含 tool_calls 和 tool_call_id 等字段，符合 DeepSeek API 要求
    */
   function buildHistoryFromGroups(groups: MessageGroup[]): ChatMessage[] {
     const history: ChatMessage[] = []
     for (const group of groups) {
+      // 添加用户消息
       history.push(group.userMessage)
+      
       // 只使用当前激活的版本
       const activeVersion = group.aiVersions[group.currentVersionIndex]
       if (activeVersion) {
+        // 确保 metadata 中的 toolCalls 被正确保留
         history.push(activeVersion)
       }
     }
@@ -490,8 +622,21 @@ export function useAIChat() {
     return history
   }
 
-  function interruptGeneration() {
-    isStreaming.value = false
+  function interruptGeneration(sessionId?: string) {
+    const targetSessionId = sessionId || currentSessionId.value
+    if (!targetSessionId) return
+    
+    // 获取该会话的 controller 并中断
+    const controller = sessionControllers.get(targetSessionId)
+    if (controller) {
+      controller.abort()
+      sessionControllers.delete(targetSessionId)
+    }
+    
+    // 只有当前会话才更新全局 isStreaming
+    if (targetSessionId === currentSessionId.value) {
+      isStreaming.value = false
+    }
   }
 
   function clearMessages() {

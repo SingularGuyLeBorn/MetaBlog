@@ -1,37 +1,31 @@
 <!--
-  AgentDetail - Agent 详细配置页面
-  
-  设计特点：
-  - 三栏布局：左侧导航、中间内容、右侧预览
-  - 左侧：配置分类导航菜单
-  - 中间：动态表单配置
-  - 右侧：实时预览和测试
+  AgentDetail - Agent 详细配置页面（3D 液态玻璃风格）
 -->
 <template>
-  <div class="agent-detail">
+  <div class="agent-detail-3d">
     <!-- 顶部栏 -->
-    <header class="detail-header">
-      <button class="btn-back" @click="$emit('back')">
+    <header class="detail-header-3d">
+      <button class="btn-back-3d" @click="$emit('back')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="m15 18-6-6 6-6"/>
         </svg>
         <span>返回列表</span>
       </button>
       
-      <div class="header-title">
-        <span class="title-avatar">{{ agent.avatar }}</span>
+      <div class="header-title-3d">
+        <span class="title-avatar-3d">{{ agent.avatar }}</span>
         <div class="title-info">
           <h2>{{ agent.name }}</h2>
-          <span class="title-level" :style="levelStyle">{{ levelLabel }}</span>
+          <span class="title-level-3d" :style="levelStyle">{{ levelLabel }}</span>
         </div>
       </div>
       
-      <div class="header-actions">
-        <button class="btn-status" :class="agent.status" @click="toggleStatus">
-          <span class="status-dot"></span>
+      <div class="header-actions-3d">
+        <button class="btn-status-3d" :class="agent.status" @click="toggleStatus">
+          <span class="status-dot-3d"></span>
           {{ statusText }}
         </button>
-        <button class="btn-save" :disabled="!hasChanges" @click="saveChanges">
+        <button class="btn-save-3d" :disabled="!hasChanges" @click="saveChanges">
           <span>💾</span>
           <span>保存</span>
         </button>
@@ -39,56 +33,58 @@
     </header>
     
     <!-- 三栏主体 -->
-    <div class="detail-body">
+    <div class="detail-body-3d">
       <!-- 左侧导航 -->
-      <nav class="detail-nav">
-        <div class="nav-section">
-          <div class="nav-title">基础配置</div>
+      <nav class="detail-nav-3d">
+        <div class="nav-section-3d">
+          <div class="nav-title-3d">基础配置</div>
           <button
-            v-for="item in basicNavItems"
+            v-for="(item, index) in basicNavItems"
             :key="item.id"
-            class="nav-item"
+            class="nav-item-3d"
             :class="{ active: currentTab === item.id }"
+            :style="{ animationDelay: `${index * 0.05}s` }"
             @click="currentTab = item.id"
           >
-            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-icon-3d">{{ item.icon }}</span>
             <span class="nav-label">{{ item.label }}</span>
           </button>
         </div>
         
-        <div class="nav-section">
-          <div class="nav-title">高级配置</div>
+        <div class="nav-section-3d">
+          <div class="nav-title-3d">高级配置</div>
           <button
-            v-for="item in advancedNavItems"
+            v-for="(item, index) in advancedNavItems"
             :key="item.id"
-            class="nav-item"
+            class="nav-item-3d"
             :class="{ active: currentTab === item.id }"
+            :style="{ animationDelay: `${(index + 3) * 0.05}s` }"
             @click="currentTab = item.id"
           >
-            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-icon-3d">{{ item.icon }}</span>
             <span class="nav-label">{{ item.label }}</span>
           </button>
         </div>
       </nav>
       
       <!-- 中间内容区 -->
-      <main class="detail-content">
+      <main class="detail-content-3d">
         <!-- 基本信息 -->
-        <section v-if="currentTab === 'basic'" class="content-section">
+        <section v-if="currentTab === 'basic'" class="content-section-3d">
           <h3>基本信息</h3>
           
-          <div class="form-group">
+          <div class="form-group-3d">
             <label>名称</label>
-            <input v-model="form.name" type="text" class="form-input" />
+            <input v-model="form.name" type="text" class="form-input-3d" />
           </div>
           
-          <div class="form-group">
+          <div class="form-group-3d">
             <label>头像</label>
-            <div class="avatar-grid">
+            <div class="avatar-grid-3d">
               <button
                 v-for="emoji in avatarOptions"
                 :key="emoji"
-                class="avatar-btn"
+                class="avatar-btn-3d"
                 :class="{ active: form.avatar === emoji }"
                 @click="form.avatar = emoji"
               >
@@ -97,14 +93,14 @@
             </div>
           </div>
           
-          <div class="form-group">
+          <div class="form-group-3d">
             <label>描述</label>
-            <textarea v-model="form.description" rows="3" class="form-textarea" />
+            <textarea v-model="form.description" rows="3" class="form-textarea-3d" />
           </div>
           
-          <div class="form-group">
+          <div class="form-group-3d">
             <label>等级</label>
-            <select v-model="form.level" class="form-select">
+            <select v-model="form.level" class="form-select-3d">
               <option value="meta">元 Agent</option>
               <option value="core">核心 Agent</option>
               <option value="fixed">固定 Agent</option>
@@ -114,25 +110,25 @@
         </section>
         
         <!-- 系统提示词 -->
-        <section v-if="currentTab === 'prompt'" class="content-section">
+        <section v-if="currentTab === 'prompt'" class="content-section-3d">
           <h3>系统提示词</h3>
-          <p class="section-desc">定义 Agent 的角色、行为和回答风格</p>
+          <p class="section-desc-3d">定义 Agent 的角色、行为和回答风格</p>
           
-          <div class="form-group">
+          <div class="form-group-3d">
             <textarea 
               v-model="form.systemPrompt" 
               rows="20" 
-              class="form-textarea code"
+              class="form-textarea-3d code"
               placeholder="你是一个 helpful 的 AI 助手..."
             />
           </div>
           
-          <div class="prompt-templates">
-            <span class="template-label">快速模板：</span>
+          <div class="prompt-templates-3d">
+            <span class="template-label-3d">快速模板：</span>
             <button 
               v-for="tpl in promptTemplates" 
               :key="tpl.name"
-              class="template-btn"
+              class="template-btn-3d"
               @click="applyPromptTemplate(tpl)"
             >
               {{ tpl.name }}
@@ -141,24 +137,25 @@
         </section>
         
         <!-- 技能配置 -->
-        <section v-if="currentTab === 'skills'" class="content-section">
+        <section v-if="currentTab === 'skills'" class="content-section-3d">
           <h3>技能配置</h3>
-          <p class="section-desc">为此 Agent 配置可用的技能</p>
+          <p class="section-desc-3d">为此 Agent 配置可用的技能</p>
           
-          <div class="skills-list">
+          <div class="skills-list-3d">
             <label
-              v-for="skill in availableSkills"
+              v-for="(skill, index) in availableSkills"
               :key="skill.id"
-              class="skill-checkbox"
+              class="skill-checkbox-3d"
               :class="{ checked: form.skills.includes(skill.id) }"
+              :style="{ animationDelay: `${index * 0.05}s` }"
             >
               <input
                 type="checkbox"
                 :value="skill.id"
                 v-model="form.skills"
               />
-              <span class="skill-icon">{{ skill.icon }}</span>
-              <div class="skill-info">
+              <span class="skill-icon-3d">{{ skill.icon }}</span>
+              <div class="skill-info-3d">
                 <span class="skill-name">{{ skill.name }}</span>
                 <span class="skill-desc">{{ skill.description }}</span>
               </div>
@@ -167,45 +164,46 @@
         </section>
         
         <!-- 记忆管理 -->
-        <section v-if="currentTab === 'memory'" class="content-section">
+        <section v-if="currentTab === 'memory'" class="content-section-3d">
           <h3>记忆管理</h3>
           
-          <div class="form-group inline">
+          <div class="form-group-3d inline">
             <label>启用长期记忆</label>
-            <label class="toggle-switch">
+            <label class="toggle-switch-3d">
               <input type="checkbox" v-model="form.memoryEnabled" />
-              <span class="toggle-slider"></span>
+              <span class="toggle-slider-3d"></span>
             </label>
           </div>
           
-          <div v-if="form.memoryEnabled" class="form-group">
+          <div v-if="form.memoryEnabled" class="form-group-3d">
             <label>记忆内容</label>
             <textarea 
               v-model="form.memoryContent" 
               rows="10" 
-              class="form-textarea"
+              class="form-textarea-3d"
               placeholder="输入 Agent 需要记住的信息..."
             />
           </div>
         </section>
         
         <!-- 权限设置 -->
-        <section v-if="currentTab === 'permissions'" class="content-section">
+        <section v-if="currentTab === 'permissions'" class="content-section-3d">
           <h3>权限设置</h3>
-          <p class="section-desc">配置 Agent 的操作权限</p>
+          <p class="section-desc-3d">配置 Agent 的操作权限</p>
           
-          <div class="permissions-list">
+          <div class="permissions-list-3d">
             <label
-              v-for="perm in permissionTemplates"
+              v-for="(perm, index) in permissionTemplates"
               :key="perm.id"
-              class="permission-item"
+              class="permission-item-3d"
+              :style="{ animationDelay: `${index * 0.05}s` }"
             >
               <input
                 type="checkbox"
                 :checked="isPermissionGranted(perm.id)"
                 @change="togglePermission(perm.id)"
               />
-              <div class="permission-info">
+              <div class="permission-info-3d">
                 <span class="permission-name">{{ perm.name }}</span>
                 <span class="permission-desc">{{ perm.description }}</span>
               </div>
@@ -214,18 +212,18 @@
         </section>
         
         <!-- 高级设置 -->
-        <section v-if="currentTab === 'advanced'" class="content-section">
+        <section v-if="currentTab === 'advanced'" class="content-section-3d">
           <h3>高级设置</h3>
           
-          <div class="form-group">
+          <div class="form-group-3d">
             <label>座次</label>
-            <input v-model.number="form.seat" type="number" class="form-input" min="1" />
-            <span class="form-hint">数字越小，排名越靠前</span>
+            <input v-model.number="form.seat" type="number" class="form-input-3d" min="1" />
+            <span class="form-hint-3d">数字越小，排名越靠前</span>
           </div>
           
-          <div class="form-group danger-zone">
+          <div class="form-group-3d danger-zone-3d">
             <label>危险区域</label>
-            <button class="btn-danger" @click="confirmDelete">
+            <button class="btn-danger-3d" @click="confirmDelete">
               <span>🗑️</span>
               <span>删除此 Agent</span>
             </button>
@@ -234,48 +232,48 @@
       </main>
       
       <!-- 右侧预览区 -->
-      <aside class="detail-preview">
-        <div class="preview-card">
-          <div class="preview-header">
+      <aside class="detail-preview-3d">
+        <div class="preview-card-3d">
+          <div class="preview-header-3d">
             <span class="preview-title">实时预览</span>
           </div>
           
-          <div class="preview-agent">
-            <div class="preview-avatar">{{ form.avatar }}</div>
-            <div class="preview-info">
+          <div class="preview-agent-3d">
+            <div class="preview-avatar-3d">{{ form.avatar }}</div>
+            <div class="preview-info-3d">
               <span class="preview-name">{{ form.name || '未命名' }}</span>
-              <span class="preview-status" :class="agent.status">{{ statusText }}</span>
+              <span class="preview-status-3d" :class="agent.status">{{ statusText }}</span>
             </div>
           </div>
           
-          <div class="preview-stats">
-            <div class="preview-stat">
+          <div class="preview-stats-3d">
+            <div class="preview-stat-3d">
               <span class="stat-label">调用次数</span>
               <span class="stat-value">{{ agent.callCount }}</span>
             </div>
-            <div class="preview-stat">
+            <div class="preview-stat-3d">
               <span class="stat-label">技能数</span>
               <span class="stat-value">{{ form.skills.length }}</span>
             </div>
-            <div class="preview-stat">
+            <div class="preview-stat-3d">
               <span class="stat-label">权限数</span>
               <span class="stat-value">{{ grantedPermissionsCount }}</span>
             </div>
           </div>
         </div>
         
-        <div class="test-card">
-          <div class="test-header">
+        <div class="test-card-3d">
+          <div class="test-header-3d">
             <span>🧪 快速测试</span>
           </div>
           <textarea
             v-model="testMessage"
             rows="4"
             placeholder="输入测试消息..."
-            class="test-input"
+            class="test-input-3d"
           />
           <button 
-            class="btn-test" 
+            class="btn-test-3d" 
             :disabled="!testMessage.trim()"
             @click="sendTest"
           >
@@ -302,10 +300,8 @@ const emit = defineEmits<{
   delete: [agent: Agent]
 }>()
 
-// 当前标签页
 const currentTab = ref('basic')
 
-// 导航菜单
 const basicNavItems = [
   { id: 'basic', label: '基本信息', icon: '📝' },
   { id: 'prompt', label: '系统提示词', icon: '💭' },
@@ -318,7 +314,6 @@ const advancedNavItems = [
   { id: 'advanced', label: '高级设置', icon: '⚙️' },
 ]
 
-// 表单数据
 const form = reactive({
   name: props.agent.name,
   avatar: props.agent.avatar,
@@ -332,7 +327,6 @@ const form = reactive({
   permissions: JSON.parse(JSON.stringify(props.agent.permissions)) as AgentPermission[]
 })
 
-// 同步 props 变化
 watch(() => props.agent, (newAgent) => {
   form.name = newAgent.name
   form.avatar = newAgent.avatar
@@ -346,10 +340,8 @@ watch(() => props.agent, (newAgent) => {
   form.permissions = JSON.parse(JSON.stringify(newAgent.permissions))
 }, { deep: true })
 
-// 头像选项
 const avatarOptions = ['🤖', '👩‍💻', '👨‍💻', '🎨', '✍️', '🔬', '📊', '💼', '🎭', '🔮', '👑', '⚡']
 
-// 可用技能
 const availableSkills = [
   { id: 'write', name: '写作', icon: '✍️', description: '撰写和编辑文章' },
   { id: 'code', name: '编程', icon: '💻', description: '编写和调试代码' },
@@ -359,10 +351,8 @@ const availableSkills = [
   { id: 'search', name: '搜索', icon: '🔍', description: '网络搜索和信息检索' },
 ]
 
-// 权限模板
 const permissionTemplates = PERMISSION_TEMPLATES
 
-// 提示词模板
 const promptTemplates = [
   { name: '通用助手', content: '你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。' },
   { name: '编程专家', content: '你是一个专业的编程助手，精通多种编程语言，擅长代码审查、调试和优化。' },
@@ -370,7 +360,6 @@ const promptTemplates = [
   { name: '数据分析', content: '你是一个数据分析专家，擅长数据清洗、统计分析、可视化和洞察提取。' },
 ]
 
-// 计算属性
 const levelConfig = computed(() => LEVEL_CONFIG[form.level])
 const levelLabel = computed(() => levelConfig.value.label)
 const levelStyle = computed(() => ({ color: levelConfig.value.color }))
@@ -404,10 +393,8 @@ const hasChanges = computed(() => {
   )
 })
 
-// 测试消息
 const testMessage = ref('')
 
-// 方法
 function toggleStatus() {
   const newStatus = props.agent.status === 'online' ? 'offline' : 'online'
   emit('save', { status: newStatus })
@@ -452,654 +439,808 @@ function confirmDelete() {
 
 function sendTest() {
   console.log('Test message:', testMessage.value)
-  // TODO: 实现测试逻辑
   testMessage.value = ''
 }
 </script>
 
 <style scoped>
-.agent-detail {
+.agent-detail-3d {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--vp-c-bg);
+  background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
-/* 顶部栏 */
-.detail-header {
+/* 3D 顶部栏 */
+.detail-header-3d {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--vp-c-divider);
-  background: var(--vp-c-bg-soft);
+  padding: 20px 28px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
-.btn-back {
+.btn-back-3d {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  background: transparent;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 8px;
+  gap: 10px;
+  padding: 12px 18px;
+  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
   font-size: 14px;
-  color: var(--vp-c-text-1);
+  font-weight: 600;
+  color: #475569;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
-.btn-back:hover {
-  background: var(--vp-c-bg);
-  border-color: var(--vp-c-brand);
+.btn-back-3d:hover {
+  background: linear-gradient(145deg, #eff6ff, #dbeafe);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
-.btn-back svg {
+.btn-back-3d svg {
   width: 18px;
   height: 18px;
 }
 
-.header-title {
+.header-title-3d {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
-.title-avatar {
-  width: 40px;
-  height: 40px;
+.title-avatar-3d {
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  background: var(--vp-c-bg);
-  border-radius: 10px;
+  font-size: 26px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  animation: avatar-float 3s ease-in-out infinite;
+}
+
+@keyframes avatar-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
 .title-info h2 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e293b;
 }
 
-.title-level {
+.title-level-3d {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 20px;
 }
 
-.header-actions {
+.header-actions-3d {
   display: flex;
   gap: 12px;
 }
 
-.btn-status {
+.btn-status-3d {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 8px;
+  padding: 10px 18px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
-.btn-status.online {
-  color: #16a34a;
-  background: #dcfce7;
+.btn-status-3d.online {
+  color: #059669;
+  background: linear-gradient(145deg, #d1fae5, #a7f3d0);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
-.btn-status.offline {
-  color: #6b7280;
-  background: #f3f4f6;
+.btn-status-3d.offline {
+  color: #64748b;
+  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
 }
 
-.status-dot {
+.status-dot-3d {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: currentColor;
+  box-shadow: 0 0 8px currentColor;
 }
 
-.btn-save {
+.btn-save-3d {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
 }
 
-.btn-save:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+.btn-save-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.45);
 }
 
-.btn-save:disabled {
-  opacity: 0.5;
+.btn-save-3d:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 /* 三栏主体 */
-.detail-body {
+.detail-body-3d {
   flex: 1;
   display: flex;
   overflow: hidden;
 }
 
-/* 左侧导航 */
-.detail-nav {
-  width: 200px;
-  padding: 20px;
-  border-right: 1px solid var(--vp-c-divider);
-  background: var(--vp-c-bg-soft);
-  overflow-y: auto;
-}
-
-.nav-section {
-  margin-bottom: 24px;
-}
-
-.nav-title {
-  padding: 0 12px;
-  margin-bottom: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--vp-c-text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 12px;
-  margin-bottom: 2px;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  color: var(--vp-c-text-2);
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: left;
-}
-
-.nav-item:hover {
-  background: var(--vp-c-bg);
-  color: var(--vp-c-text-1);
-}
-
-.nav-item.active {
-  background: var(--vp-c-brand);
-  color: white;
-}
-
-.nav-icon {
-  font-size: 16px;
-}
-
-/* 中间内容区 */
-.detail-content {
-  flex: 1;
+/* 3D 左侧导航 */
+.detail-nav-3d {
+  width: 220px;
   padding: 24px;
+  border-right: 1px solid rgba(226, 232, 240, 0.8);
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   overflow-y: auto;
 }
 
-.content-section {
-  max-width: 600px;
+.nav-section-3d {
+  margin-bottom: 28px;
 }
 
-.content-section h3 {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
+.nav-title-3d {
+  padding: 0 14px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.section-desc {
-  margin: 0 0 24px 0;
-  font-size: 13px;
-  color: var(--vp-c-text-2);
-}
-
-/* 表单样式 */
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group.inline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--vp-c-text-1);
-}
-
-.form-input,
-.form-textarea,
-.form-select {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 8px;
-  font-size: 14px;
-  background: var(--vp-c-bg);
-  color: var(--vp-c-text-1);
-  outline: none;
-  transition: all 0.2s;
-}
-
-.form-input:focus,
-.form-textarea:focus,
-.form-select:focus {
-  border-color: var(--vp-c-brand);
-  box-shadow: 0 0 0 3px var(--vp-c-brand-soft);
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-.form-textarea.code {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.form-hint {
-  display: block;
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--vp-c-text-3);
-}
-
-/* 头像网格 */
-.avatar-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.avatar-btn {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  background: var(--vp-c-bg-soft);
-  border: 2px solid transparent;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.avatar-btn:hover {
-  border-color: var(--vp-c-divider);
-}
-
-.avatar-btn.active {
-  background: var(--vp-c-brand-soft);
-  border-color: var(--vp-c-brand);
-}
-
-/* 提示词模板 */
-.prompt-templates {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.template-label {
-  font-size: 13px;
-  color: var(--vp-c-text-2);
-}
-
-.template-btn {
-  padding: 6px 12px;
-  font-size: 12px;
-  color: var(--vp-c-brand);
-  background: var(--vp-c-brand-soft);
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.template-btn:hover {
-  background: var(--vp-c-brand);
-  color: white;
-}
-
-/* 技能列表 */
-.skills-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.skill-checkbox {
+.nav-item-3d {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px;
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 4px;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+  animation: slide-in-left 0.4s ease backwards;
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.nav-item-3d:hover {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.nav-item-3d.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.nav-icon-3d {
+  font-size: 18px;
+}
+
+/* 中间内容区 */
+.detail-content-3d {
+  flex: 1;
+  padding: 28px 32px;
+  overflow-y: auto;
+}
+
+.content-section-3d {
+  max-width: 640px;
+  animation: fade-in-up 0.4s ease;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.content-section-3d h3 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.section-desc-3d {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* 3D 表单样式 */
+.form-group-3d {
+  margin-bottom: 24px;
+}
+
+.form-group-3d.inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.form-group-3d label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.form-input-3d,
+.form-textarea-3d,
+.form-select-3d {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  font-size: 14px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  color: #1e293b;
+  outline: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.form-input-3d:focus,
+.form-textarea-3d:focus,
+.form-select-3d:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.form-textarea-3d {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.form-textarea-3d.code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.form-hint-3d {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* 3D 头像网格 */
+.avatar-grid-3d {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.avatar-btn-3d {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 2px solid transparent;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.avatar-btn-3d:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px) scale(1.1);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+}
+
+.avatar-btn-3d.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border-color: transparent;
+  transform: scale(1.1);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+/* 3D 提示词模板 */
+.prompt-templates-3d {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 20px;
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  border-radius: 16px;
+}
+
+.template-label-3d {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.template-btn-3d {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3b82f6;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
-.skill-checkbox:hover {
-  border-color: var(--vp-c-brand);
+.template-btn-3d:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
 
-.skill-checkbox.checked {
-  border-color: var(--vp-c-brand);
-  background: var(--vp-c-brand-soft);
+/* 3D 技能列表 */
+.skills-list-3d {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.skill-checkbox input {
+.skill-checkbox-3d {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: fade-in-up 0.4s ease backwards;
+}
+
+.skill-checkbox-3d:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateX(4px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1);
+}
+
+.skill-checkbox-3d.checked {
+  border-color: rgba(59, 130, 246, 0.5);
+  background: linear-gradient(145deg, #eff6ff, #dbeafe);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+}
+
+.skill-checkbox-3d input {
   display: none;
 }
 
-.skill-icon {
-  font-size: 24px;
+.skill-icon-3d {
+  font-size: 28px;
 }
 
-.skill-info {
+.skill-info-3d {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .skill-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--vp-c-text-1);
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
 }
 
 .skill-desc {
-  font-size: 12px;
-  color: var(--vp-c-text-2);
+  font-size: 13px;
+  color: #64748b;
 }
 
-/* Toggle Switch */
-.toggle-switch {
+/* 3D Toggle Switch */
+.toggle-switch-3d {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 24px;
+  width: 52px;
+  height: 28px;
 }
 
-.toggle-switch input {
+.toggle-switch-3d input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-.toggle-slider {
+.toggle-slider-3d {
   position: absolute;
   cursor: pointer;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--vp-c-divider);
+  background: linear-gradient(145deg, #e2e8f0, #cbd5e1);
   transition: 0.3s;
-  border-radius: 24px;
+  border-radius: 28px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.toggle-slider:before {
+.toggle-slider-3d:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
+  height: 22px;
+  width: 22px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
   transition: 0.3s;
   border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-input:checked + .toggle-slider {
-  background-color: var(--vp-c-brand);
+input:checked + .toggle-slider-3d {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
 }
 
-input:checked + .toggle-slider:before {
-  transform: translateX(20px);
+input:checked + .toggle-slider-3d:before {
+  transform: translateX(24px);
 }
 
-/* 权限列表 */
-.permissions-list {
+/* 3D 权限列表 */
+.permissions-list-3d {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
-.permission-item {
+.permission-item-3d {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px;
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
+  gap: 14px;
+  padding: 16px 20px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  animation: fade-in-up 0.4s ease backwards;
 }
 
-.permission-item:hover {
-  border-color: var(--vp-c-brand);
+.permission-item-3d:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateX(4px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1);
 }
 
-.permission-item input {
-  margin-top: 2px;
+.permission-item-3d input {
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  accent-color: #3b82f6;
 }
 
-.permission-info {
+.permission-info-3d {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .permission-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--vp-c-text-1);
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
 }
 
 .permission-desc {
-  font-size: 12px;
-  color: var(--vp-c-text-2);
+  font-size: 13px;
+  color: #64748b;
 }
 
-/* 危险区域 */
-.danger-zone {
-  padding: 20px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 10px;
+/* 3D 危险区域 */
+.danger-zone-3d {
+  padding: 24px;
+  background: linear-gradient(145deg, #fef2f2, #fee2e2);
+  border: 2px dashed #fca5a5;
+  border-radius: 16px;
 }
 
-.danger-zone label {
+.danger-zone-3d label {
   color: #dc2626;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  font-weight: 700;
 }
 
-.btn-danger {
+.btn-danger-3d {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: #ef4444;
+  gap: 10px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
 }
 
-.btn-danger:hover {
-  background: #dc2626;
+.btn-danger-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
 }
 
-/* 右侧预览区 */
-.detail-preview {
-  width: 280px;
-  padding: 20px;
-  border-left: 1px solid var(--vp-c-divider);
-  background: var(--vp-c-bg-soft);
+/* 3D 右侧预览区 */
+.detail-preview-3d {
+  width: 300px;
+  padding: 24px;
+  border-left: 1px solid rgba(226, 232, 240, 0.8);
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   overflow-y: auto;
 }
 
-.preview-card,
-.test-card {
-  background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 12px;
+.preview-card-3d,
+.test-card-3d {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 20px;
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
-.preview-header,
-.test-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--vp-c-divider);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
+.preview-header-3d,
+.test-header-3d {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
 }
 
-.preview-agent {
+.preview-agent-3d {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 14px;
+  padding: 20px;
 }
 
-.preview-avatar {
-  width: 48px;
-  height: 48px;
+.preview-avatar-3d {
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  background: var(--vp-c-bg-soft);
-  border-radius: 12px;
+  font-size: 28px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  animation: avatar-float 3s ease-in-out infinite;
 }
 
-.preview-info {
+.preview-info-3d {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .preview-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
 }
 
-.preview-status {
+.preview-status-3d {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  width: fit-content;
 }
 
-.preview-status.online { color: #16a34a; }
-.preview-status.offline { color: #6b7280; }
-
-.preview-stats {
-  display: flex;
-  padding: 12px 16px;
-  border-top: 1px solid var(--vp-c-divider);
+.preview-status-3d.online {
+  color: #059669;
+  background: linear-gradient(145deg, #d1fae5, #a7f3d0);
 }
 
-.preview-stat {
-  flex: 1;
+.preview-status-3d.offline {
+  color: #64748b;
+  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+}
+
+.preview-stats-3d {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.preview-stat-3d {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-}
-
-.preview-stat .stat-label {
-  font-size: 11px;
-  color: var(--vp-c-text-3);
-}
-
-.preview-stat .stat-value {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
-}
-
-/* 测试卡片 */
-.test-input {
-  width: 100%;
+  gap: 6px;
   padding: 12px;
-  border: none;
-  border-bottom: 1px solid var(--vp-c-divider);
-  font-size: 13px;
-  background: transparent;
-  resize: vertical;
-  outline: none;
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  border-radius: 12px;
+  transition: all 0.3s ease;
 }
 
-.btn-test {
+.preview-stat-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.preview-stat-3d .stat-label {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.preview-stat-3d .stat-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #3b82f6;
+}
+
+/* 3D 测试卡片 */
+.test-card-3d {
+  padding: 0;
+}
+
+.test-header-3d {
+  color: #8b5cf6;
+}
+
+.test-input-3d {
   width: 100%;
-  padding: 10px;
-  background: var(--vp-c-brand);
+  padding: 16px 20px;
+  border: none;
+  font-size: 14px;
+  background: transparent;
+  color: #1e293b;
+  outline: none;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.test-input-3d::placeholder {
+  color: #94a3b8;
+}
+
+.btn-test-3d {
+  width: calc(100% - 40px);
+  margin: 0 20px 20px;
+  padding: 14px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
   border: none;
-  font-size: 13px;
-  font-weight: 500;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
 }
 
-.btn-test:hover {
-  background: var(--vp-c-brand-dark);
+.btn-test-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
 }
 
-.btn-test:disabled {
-  opacity: 0.5;
+.btn-test-3d:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* 响应式 */
 @media (max-width: 1024px) {
-  .detail-preview {
-    display: none;
+  .detail-nav-3d {
+    width: 180px;
+    padding: 20px 16px;
+  }
+  
+  .detail-preview-3d {
+    width: 260px;
+    padding: 20px;
   }
 }
 
 @media (max-width: 768px) {
-  .detail-nav {
+  .detail-body-3d {
+    flex-direction: column;
+  }
+  
+  .detail-nav-3d {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    display: flex;
+    gap: 8px;
+    padding: 16px;
+  }
+  
+  .nav-section-3d {
+    display: flex;
+    margin-bottom: 0;
+  }
+  
+  .nav-title-3d {
     display: none;
+  }
+  
+  .detail-preview-3d {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
   }
 }
 </style>

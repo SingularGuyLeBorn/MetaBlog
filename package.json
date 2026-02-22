@@ -16,6 +16,7 @@
   "author": "Gemini",
   "license": "ISC",
   "dependencies": {
+    "@types/three": "^0.183.1",
     "@vueuse/core": "^10.7.0",
     "async-mutex": "^0.5.0",
     "cytoscape": "^3.28.0",
@@ -31,6 +32,7 @@
     "node-cron": "^4.2.1",
     "pinia": "^2.1.7",
     "pinyin": "^4.0.0",
+    "three": "^0.183.1",
     "vditor": "^3.9.8",
     "vue": "^3.4.0"
   },

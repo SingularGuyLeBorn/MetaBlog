@@ -215,8 +215,16 @@ watch(() => route.path, () => {
 </script>
 
 <template>
-  <!-- Chat 页面：独立全屏布局 -->
-  <ChatPage v-if="isChatPage" />
+  <!-- Chat 页面：使用相同的布局框架 -->
+  <template v-if="isChatPage">
+    <div class="metablog-layout chat-layout-integrated">
+      <div class="layout-container">
+        <main class="main-content chat-main-content">
+          <ChatPage />
+        </main>
+      </div>
+    </div>
+  </template>
   
   <!-- 其他页面：默认三栏布局 -->
   <div v-else class="metablog-layout" :class="{ 
@@ -512,6 +520,37 @@ body.inline-editing .VPNav {
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
+}
+
+/* Chat Layout Integrated Styles */
+.chat-layout-integrated {
+  --vp-layout-max-width: 100%;
+}
+
+.chat-layout-integrated .layout-container {
+  padding-top: 0;
+  min-height: calc(100vh - var(--vp-nav-height, 64px));
+}
+
+.chat-layout-integrated .main-content {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding: 0 !important;
+}
+
+.chat-layout-integrated .VPNav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+}
+
+.chat-main-content {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Desktop optimization */

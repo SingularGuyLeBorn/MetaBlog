@@ -7,11 +7,11 @@
  */
 
 export { default as AgentControlCenter } from './AgentControlCenter.vue'
-export { useAgentControl, generateAvatarUrl, getRandomAvatarId } from '../../../core/composables/useAgentControl'
+export { useAgents as useAgentControl, generateAvatarUrl, getRandomAvatarId } from '../../../core/composables'
 export type { 
   Agent, 
   AgentStatus, 
   Trigger, 
   TriggerType,
   AgentCreateParams 
-} from '../../../core/composables/useAgentControl'
+} from '../../../core/composables'

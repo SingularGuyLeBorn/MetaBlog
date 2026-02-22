@@ -1,16 +1,14 @@
 <!--
-  SettingsPanel - 设置面板（美化版）
-  
-  特性：
-  - 模型特定配置（思考模式根据模型显示/禁用）
-  - 美化的下拉选择框
-  - 清晰的输入框边界
+  SettingsPanel - 设置面板（3D 液态玻璃风格）
 -->
 <template>
-  <aside class="settings-panel" :class="{ collapsed }">
-    <div class="panel-header">
+  <aside class="settings-panel-3d" :class="{ collapsed }">
+    <!-- 背景光效 -->
+    <div class="panel-bg-glow"></div>
+    
+    <div class="panel-header-3d">
       <div class="header-title">
-        <div class="header-icon">
+        <div class="header-icon-3d">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -18,7 +16,7 @@
         </div>
         <h3>设置</h3>
       </div>
-      <button class="close-btn" @click="$emit('toggle-collapse')">
+      <button class="close-btn-3d" @click="$emit('toggle-collapse')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
@@ -26,30 +24,32 @@
       </button>
     </div>
 
-    <div class="panel-content">
-      <!-- 模型选择 - 美化卡片式 -->
-      <div class="setting-section">
-        <label class="section-label">
+    <div class="panel-content-3d">
+      <!-- 模型选择 - 3D 卡片式 -->
+      <div class="setting-section-3d">
+        <label class="section-label-3d">
           <span class="label-icon">🤖</span>
           模型
         </label>
-        <div class="model-selector">
+        <div class="model-selector-3d">
           <button
-            v-for="model in availableModels"
+            v-for="(model, index) in availableModels"
             :key="model.id"
-            class="model-option"
+            class="model-option-3d"
             :class="{ 
               active: config.model === model.id,
               recommended: model.recommended 
             }"
+            :style="{ animationDelay: `${index * 0.1}s` }"
             @click="selectModel(model.id)"
           >
+            <div class="model-glow" :class="{ active: config.model === model.id }"></div>
             <div class="model-info">
               <div class="model-name">{{ model.name }}</div>
               <div class="model-desc">{{ model.description }}</div>
             </div>
-            <div v-if="model.recommended" class="model-badge">推荐</div>
-            <div v-if="config.model === model.id" class="check-icon">
+            <div v-if="model.recommended" class="model-badge-3d">推荐</div>
+            <div v-if="config.model === model.id" class="check-icon-3d">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
@@ -58,16 +58,16 @@
         </div>
       </div>
 
-      <!-- 思考模式 - 根据模型动态显示 -->
-      <div v-if="currentModelConfig?.supportsReasoning" class="setting-section">
-        <div class="section-header">
-          <label class="section-label">
+      <!-- 思考模式 -->
+      <div v-if="currentModelConfig?.supportsReasoning" class="setting-section-3d">
+        <div class="section-header-3d">
+          <label class="section-label-3d">
             <span class="label-icon">💭</span>
             思考模式
           </label>
           <div class="toggle-wrapper">
             <button
-              class="toggle-btn"
+              class="toggle-btn-3d"
               :class="{ 
                 active: config.enableReasoning,
                 disabled: currentModelConfig?.reasoningRequired 
@@ -75,14 +75,14 @@
               :disabled="currentModelConfig?.reasoningRequired"
               @click="toggleReasoning"
             >
-              <span class="toggle-slider"></span>
+              <span class="toggle-slider-3d"></span>
             </button>
             <span class="toggle-status">
               {{ currentModelConfig?.reasoningRequired ? '始终开启' : (config.enableReasoning ? '开启' : '关闭') }}
             </span>
           </div>
         </div>
-        <p class="section-desc">
+        <p class="section-desc-3d">
           {{ currentModelConfig?.reasoningRequired 
             ? '该模型始终显示推理过程' 
             : '显示 AI 的推理过程，适合复杂问题' 
@@ -91,13 +91,13 @@
       </div>
 
       <!-- 温度 -->
-      <div class="setting-section">
-        <label class="section-label">
+      <div class="setting-section-3d">
+        <label class="section-label-3d">
           <span class="label-icon">🌡️</span>
           温度
-          <span class="value-badge">{{ config.temperature }}</span>
+          <span class="value-badge-3d">{{ config.temperature }}</span>
         </label>
-        <div class="slider-wrapper">
+        <div class="slider-wrapper-3d">
           <span class="slider-label">精确</span>
           <input
             v-model.number="config.temperature"
@@ -105,21 +105,21 @@
             min="0"
             max="2"
             step="0.1"
-            class="slider"
+            class="slider-3d"
           >
           <span class="slider-label">创意</span>
         </div>
-        <p class="section-desc">较低值使回答更精确，较高值使回答更有创意</p>
+        <p class="section-desc-3d">较低值使回答更精确，较高值使回答更有创意</p>
       </div>
 
       <!-- 最大 Token -->
-      <div class="setting-section">
-        <label class="section-label">
+      <div class="setting-section-3d">
+        <label class="section-label-3d">
           <span class="label-icon">📏</span>
           最大 Token
-          <span class="value-badge">{{ config.maxTokens }}</span>
+          <span class="value-badge-3d">{{ config.maxTokens }}</span>
         </label>
-        <div class="slider-wrapper">
+        <div class="slider-wrapper-3d">
           <span class="slider-label">短</span>
           <input
             v-model.number="config.maxTokens"
@@ -127,47 +127,47 @@
             min="256"
             max="8192"
             step="256"
-            class="slider"
+            class="slider-3d"
           >
           <span class="slider-label">长</span>
         </div>
-        <p class="section-desc">控制回答的最大长度</p>
+        <p class="section-desc-3d">控制回答的最大长度</p>
       </div>
 
-      <!-- 系统提示词 - 带边框的输入框 -->
-      <div class="setting-section">
-        <label class="section-label">
+      <!-- 系统提示词 -->
+      <div class="setting-section-3d">
+        <label class="section-label-3d">
           <span class="label-icon">📝</span>
           系统提示词
         </label>
-        <div class="prompt-input-wrapper">
+        <div class="prompt-input-wrapper-3d">
           <textarea
             v-model="config.systemPrompt"
-            class="prompt-input"
+            class="prompt-input-3d"
             rows="5"
-            placeholder="设置 AI 的角色和行为方式，例如：你是一位专业的编程助手，擅长解释复杂的代码..."
+            placeholder="设置 AI 的角色和行为方式..."
           ></textarea>
-          <div class="input-footer">
+          <div class="input-footer-3d">
             <span class="char-count">{{ config.systemPrompt.length }} 字符</span>
             <button 
               v-if="config.systemPrompt" 
-              class="clear-btn"
+              class="clear-btn-3d"
               @click="config.systemPrompt = ''"
             >
               清空
             </button>
           </div>
         </div>
-        <p class="section-desc">定义 AI 助手的身份、性格和专长领域</p>
+        <p class="section-desc-3d">定义 AI 助手的身份、性格和专长领域</p>
       </div>
 
-      <!-- Agent 控制中心入口 -->
-      <div class="setting-section">
-        <label class="section-label">
+      <!-- Agent 控制中心 -->
+      <div class="setting-section-3d">
+        <label class="section-label-3d">
           <span class="label-icon">🤖</span>
           Agent 管理
         </label>
-        <button class="agent-center-btn" @click="$emit('open-agent-center')">
+        <button class="agent-center-btn-3d" @click="$emit('open-agent-center')">
           <span class="btn-icon">⚡</span>
           <div class="btn-content">
             <span class="btn-title">打开控制中心</span>
@@ -180,8 +180,8 @@
       </div>
 
       <!-- 重置按钮 -->
-      <div class="setting-section">
-        <button class="reset-btn" @click="resetSettings">
+      <div class="setting-section-3d">
+        <button class="reset-btn-3d" @click="resetSettings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="23 4 23 10 17 10"/>
             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
@@ -197,7 +197,6 @@
 import { computed } from 'vue'
 import type { SessionConfig, ModelType } from '../../../core/types'
 
-// 模型配置
 interface ModelConfig {
   id: ModelType
   name: string
@@ -263,7 +262,6 @@ function selectModel(modelId: ModelType) {
 
   const updates: Partial<SessionConfig> = { model: modelId }
   
-  // 根据模型自动设置思考模式
   if (model.supportsReasoning) {
     updates.enableReasoning = model.reasoningRequired || props.config.enableReasoning
   } else {
@@ -275,9 +273,7 @@ function selectModel(modelId: ModelType) {
 
 function toggleReasoning() {
   if (currentModelConfig.value?.reasoningRequired) return
-  emit('update:config', { 
-    enableReasoning: !props.config.enableReasoning 
-  })
+  emit('update:config', { enableReasoning: !props.config.enableReasoning })
 }
 
 function resetSettings() {
@@ -294,200 +290,279 @@ function resetSettings() {
 </script>
 
 <style scoped>
-.settings-panel {
+.settings-panel-3d {
+  position: relative;
   width: 340px;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  border-left: 1px solid #e5e7eb;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-left: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 
+    -8px 0 32px rgba(0, 0, 0, 0.06),
+    -4px 0 16px rgba(0, 0, 0, 0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
+  overflow: hidden;
 }
 
-.settings-panel.collapsed {
+.settings-panel-3d.collapsed {
   width: 0;
   opacity: 0;
   overflow: hidden;
 }
 
-/* 头部 */
-.panel-header {
+/* 背景光效 */
+.panel-bg-glow {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 100% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 100%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* 3D 头部 */
+.panel-header-3d {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid #f3f4f6;
-  background: linear-gradient(to right, #f9fafb, #ffffff);
+  padding: 24px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  z-index: 1;
 }
 
 .header-title {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
-.header-icon {
+.header-icon-3d {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transition: all 0.3s ease;
+}
+
+.header-icon-3d:hover {
+  transform: translateY(-2px) rotate(10deg);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
+}
+
+.header-icon-3d svg {
+  width: 22px;
+  height: 22px;
+}
+
+.header-title h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.close-btn-3d {
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 10px;
-  color: white;
-}
-
-.header-icon svg {
-  width: 20px;
-  height: 20px;
-}
-
-.header-title h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0;
-}
-
-.close-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  color: #9ca3af;
+  color: #64748b;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
-.close-btn:hover {
-  background: #f3f4f6;
-  color: #4b5563;
+.close-btn-3d:hover {
+  background: linear-gradient(145deg, #fee2e2, #fecaca);
+  color: #ef4444;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.15);
 }
 
-.close-btn svg {
+.close-btn-3d svg {
   width: 18px;
   height: 18px;
 }
 
 /* 内容区 */
-.panel-content {
+.panel-content-3d {
+  position: relative;
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  z-index: 1;
 }
 
-.setting-section {
+.setting-section-3d {
   margin-bottom: 28px;
+  animation: fade-in-up 0.4s ease-out;
 }
 
-.section-label {
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-label-3d {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: #374151;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .label-icon {
   font-size: 16px;
 }
 
-.value-badge {
+.value-badge-3d {
   margin-left: auto;
-  padding: 2px 10px;
-  background: #eff6ff;
+  padding: 4px 12px;
+  background: linear-gradient(145deg, #eff6ff, #dbeafe);
   color: #2563eb;
   border-radius: 20px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
 }
 
-.section-desc {
+.section-desc-3d {
   font-size: 13px;
-  color: #9ca3af;
-  margin: 8px 0 0;
+  color: #94a3b8;
+  margin: 10px 0 0;
   line-height: 1.5;
 }
 
-/* 模型选择器 */
-.model-selector {
+/* 3D 模型选择器 */
+.model-selector-3d {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
-.model-option {
+.model-option-3d {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  background: #f9fafb;
-  border: 2px solid transparent;
-  border-radius: 12px;
+  gap: 14px;
+  padding: 16px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  animation: slide-in-left 0.4s ease-out backwards;
 }
 
-.model-option:hover {
-  background: #f3f4f6;
-  border-color: #e5e7eb;
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-.model-option.active {
-  background: #eff6ff;
+.model-option-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(59, 130, 246, 0.1);
+}
+
+.model-option-3d.active {
+  background: linear-gradient(145deg, #eff6ff, #dbeafe);
   border-color: #3b82f6;
+  box-shadow: 
+    0 4px 16px rgba(59, 130, 246, 0.2),
+    0 0 0 1px rgba(59, 130, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.model-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.model-glow.active {
+  opacity: 1;
 }
 
 .model-info {
+  position: relative;
   flex: 1;
 }
 
 .model-name {
   font-size: 14px;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 2px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 4px;
 }
 
 .model-desc {
   font-size: 12px;
-  color: #6b7280;
+  color: #64748b;
 }
 
-.model-badge {
-  padding: 2px 8px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+.model-badge-3d {
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
   color: white;
   border-radius: 20px;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
-.check-icon {
-  width: 20px;
-  height: 20px;
+.check-icon-3d {
+  width: 24px;
+  height: 24px;
   color: #3b82f6;
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
 }
 
-.check-icon svg {
+.check-icon-3d svg {
   width: 100%;
   height: 100%;
 }
 
-/* 头部带切换 */
-.section-header {
+/* 3D 切换头部 */
+.section-header-3d {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .toggle-wrapper {
@@ -496,245 +571,291 @@ function resetSettings() {
   gap: 10px;
 }
 
-.toggle-btn {
-  width: 48px;
-  height: 26px;
+.toggle-btn-3d {
+  width: 52px;
+  height: 28px;
   padding: 2px;
-  background: #e5e7eb;
+  background: linear-gradient(145deg, #e2e8f0, #cbd5e1);
   border: none;
-  border-radius: 13px;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s;
   position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.toggle-btn.active {
-  background: #3b82f6;
+.toggle-btn-3d.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  box-shadow: 
+    0 2px 8px rgba(59, 130, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-.toggle-btn.disabled {
-  background: #93c5fd;
+.toggle-btn-3d.disabled {
+  background: linear-gradient(145deg, #93c5fd, #bfdbfe);
   cursor: not-allowed;
 }
 
-.toggle-slider {
+.toggle-slider-3d {
   display: block;
-  width: 22px;
-  height: 22px;
-  background: white;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
   border-radius: 50%;
-  transition: transform 0.3s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-.toggle-btn.active .toggle-slider {
-  transform: translateX(22px);
+.toggle-btn-3d.active .toggle-slider-3d {
+  transform: translateX(24px);
 }
 
 .toggle-status {
   font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
+  font-weight: 600;
+  color: #64748b;
 }
 
-/* 滑块 */
-.slider-wrapper {
+/* 3D 滑块 */
+.slider-wrapper-3d {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  padding: 10px 14px;
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .slider-label {
   font-size: 11px;
-  color: #9ca3af;
-  font-weight: 500;
+  color: #94a3b8;
+  font-weight: 700;
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.slider {
+.slider-3d {
   flex: 1;
-  height: 6px;
+  height: 8px;
   -webkit-appearance: none;
-  background: #e5e7eb;
-  border-radius: 3px;
+  background: linear-gradient(90deg, #e2e8f0, #cbd5e1);
+  border-radius: 4px;
   outline: none;
   cursor: pointer;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.slider::-webkit-slider-thumb {
+.slider-3d::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-  transition: transform 0.2s;
+  border: 3px solid white;
+  box-shadow: 
+    0 2px 8px rgba(59, 130, 246, 0.4),
+    0 4px 12px rgba(59, 130, 246, 0.2);
+  transition: all 0.2s ease;
 }
 
-.slider::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
+.slider-3d::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 
+    0 4px 12px rgba(59, 130, 246, 0.5),
+    0 8px 20px rgba(59, 130, 246, 0.3);
 }
 
-/* 系统提示词输入 */
-.prompt-input-wrapper {
-  background: #f9fafb;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
+/* 3D 系统提示词输入 */
+.prompt-input-wrapper-3d {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
   overflow: hidden;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
-.prompt-input-wrapper:focus-within {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.prompt-input-wrapper-3d:focus-within {
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 
+    0 0 0 4px rgba(59, 130, 246, 0.1),
+    0 8px 20px rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
 }
 
-.prompt-input {
+.prompt-input-3d {
   width: 100%;
-  padding: 16px;
+  padding: 18px;
   background: transparent;
   border: none;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.7;
   color: #374151;
   resize: vertical;
   min-height: 100px;
   outline: none;
+  font-family: inherit;
 }
 
-.prompt-input::placeholder {
-  color: #9ca3af;
+.prompt-input-3d::placeholder {
+  color: #94a3b8;
 }
 
-.input-footer {
+.input-footer-3d {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
-  background: #f3f4f6;
-  border-top: 1px solid #e5e7eb;
+  padding: 10px 18px;
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
 }
 
 .char-count {
   font-size: 12px;
-  color: #9ca3af;
+  color: #94a3b8;
+  font-weight: 500;
 }
 
-.clear-btn {
-  padding: 4px 12px;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
+.clear-btn-3d {
+  padding: 6px 14px;
+  background: linear-gradient(145deg, #ffffff, #f1f5f9);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 8px;
   font-size: 12px;
+  font-weight: 600;
   color: #ef4444;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-.clear-btn:hover {
-  background: #fee2e2;
-}
-
-/* 重置按钮 */
-.reset-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px;
-  background: #f9fafb;
-  border: 1px dashed #d1d5db;
-  border-radius: 10px;
-  font-size: 13px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.reset-btn:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
-  color: #374151;
-}
-
-.reset-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* Agent 控制中心按钮 */
-.agent-center-btn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 14px 16px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: left;
-}
-
-.agent-center-btn:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-  border-color: rgba(59, 130, 246, 0.4);
+.clear-btn-3d:hover {
+  background: linear-gradient(145deg, #fee2e2, #fecaca);
+  border-color: rgba(239, 68, 68, 0.3);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.15);
+}
+
+/* 3D Agent 控制中心按钮 */
+.agent-center-btn-3d {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 18px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.08));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.agent-center-btn-3d:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.12));
+  border-color: rgba(59, 130, 246, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 20px rgba(59, 130, 246, 0.2),
+    0 0 0 1px rgba(59, 130, 246, 0.1);
 }
 
 .btn-icon {
-  font-size: 24px;
+  font-size: 28px;
 }
 
 .btn-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .btn-title {
   font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
+  font-weight: 700;
+  color: #1e293b;
 }
 
 .btn-desc {
   font-size: 12px;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .btn-arrow {
   width: 20px;
   height: 20px;
-  color: #9ca3af;
-  transition: all 0.2s;
+  color: #94a3b8;
+  transition: all 0.3s ease;
 }
 
-.agent-center-btn:hover .btn-arrow {
+.agent-center-btn-3d:hover .btn-arrow {
   color: #3b82f6;
-  transform: translateX(4px);
+  transform: translateX(6px);
 }
 
-/* 滚动条 */
-.panel-content::-webkit-scrollbar {
+/* 3D 重置按钮 */
+.reset-btn-3d {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px dashed rgba(148, 163, 184, 0.5);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.reset-btn-3d:hover {
+  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+  border-color: rgba(100, 116, 139, 0.5);
+  color: #475569;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.reset-btn-3d svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* 3D 滚动条 */
+.panel-content-3d::-webkit-scrollbar {
   width: 6px;
 }
 
-.panel-content::-webkit-scrollbar-track {
+.panel-content-3d::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.panel-content::-webkit-scrollbar-thumb {
-  background: #e5e7eb;
+.panel-content-3d::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #cbd5e1, #94a3b8);
   border-radius: 3px;
 }
 
-.panel-content::-webkit-scrollbar-thumb:hover {
-  background: #d1d5db;
+.panel-content-3d::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #94a3b8, #64748b);
+}
+
+/* 响应式 */
+@media (max-width: 1024px) {
+  .settings-panel-3d {
+    position: absolute;
+    right: 0;
+    height: 100%;
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.1);
+  }
 }
 </style>

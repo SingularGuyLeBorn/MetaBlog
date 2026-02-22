@@ -5,6 +5,9 @@
  * v7 修复：改用 StructuredLogger.server，消除跨边界 import
  */
 import type { ServerResponse } from '../types'
+import { promises as fs } from 'fs'
+import { join } from 'path'
+
 export type LogLevel = 'info' | 'warn' | 'error' | 'success' | 'debug';
 export interface LogQueryFilter {
   level?: LogLevel;
@@ -132,6 +135,116 @@ export async function handleLogsAPI(url: URL, method: string, body?: any): Promi
     }
     
     return { success: false, error: 'Unsupported format' }
+  }
+  
+  // POST /api/logs/api-debug - 保存 API 调试日志
+  if (path === '/api/logs/api-debug' && method === 'POST') {
+    try {
+      const { sessionId, startTime, endTime, totalRounds, entries } = body || {}
+      
+      if (!sessionId || !entries) {
+        return {
+          success: false,
+          error: 'Missing required fields: sessionId, entries'
+        }
+      }
+      
+      // 创建调试日志目录
+      const debugDir = join(process.cwd(), '.logs', 'api-debug')
+      await fs.mkdir(debugDir, { recursive: true })
+      
+      // 生成文件名：timestamp-sessionId.json
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+      const filename = `${timestamp}-${sessionId}.json`
+      const filepath = join(debugDir, filename)
+      
+      // 构建完整的调试数据
+      const debugData = {
+        sessionId,
+        startTime,
+        endTime: endTime || new Date().toISOString(),
+        totalRounds,
+        entryCount: entries.length,
+        entries
+      }
+      
+      // 写入文件
+      await fs.writeFile(filepath, JSON.stringify(debugData, null, 2), 'utf-8')
+      
+      console.log(`[API Debug] Saved to ${filename} (${entries.length} entries)`)
+      
+      return {
+        success: true,
+        data: {
+          filename,
+          entryCount: entries.length
+        }
+      }
+    } catch (error: any) {
+      console.error('[API Debug] Failed to save:', error)
+      return {
+        success: false,
+        error: `Failed to save debug log: ${error.message}`
+      }
+    }
+  }
+  
+  // GET /api/logs/api-debug/list - 列出所有 API 调试日志文件
+  if (path === '/api/logs/api-debug/list' && method === 'GET') {
+    try {
+      const debugDir = join(process.cwd(), '.logs', 'api-debug')
+      
+      try {
+        await fs.access(debugDir)
+      } catch {
+        return { success: true, data: [] }
+      }
+      
+      const files = await fs.readdir(debugDir)
+      const jsonFiles = files.filter(f => f.endsWith('.json'))
+      
+      // 获取文件信息
+      const fileInfos = await Promise.all(
+        jsonFiles.map(async (filename) => {
+          const filepath = join(debugDir, filename)
+          const stat = await fs.stat(filepath)
+          return {
+            filename,
+            size: stat.size,
+            createdAt: stat.ctime.toISOString()
+          }
+        })
+      )
+      
+      // 按创建时间倒序
+      fileInfos.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      
+      return { success: true, data: fileInfos }
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  }
+  
+  // GET /api/logs/api-debug/:filename - 获取特定调试日志内容
+  if (path.startsWith('/api/logs/api-debug/') && method === 'GET') {
+    try {
+      const filename = path.replace('/api/logs/api-debug/', '')
+      
+      // 安全检查：防止目录遍历
+      if (filename.includes('..') || !filename.endsWith('.json')) {
+        return { success: false, error: 'Invalid filename' }
+      }
+      
+      const debugDir = join(process.cwd(), '.logs', 'api-debug')
+      const filepath = join(debugDir, filename)
+      
+      const content = await fs.readFile(filepath, 'utf-8')
+      const data = JSON.parse(content)
+      
+      return { success: true, data }
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
   }
   
   return { success: false, error: 'Not found' }
