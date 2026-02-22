@@ -1,388 +1,258 @@
 <!--
   AgentCard - Agent 卡片组件
   
-  液态玻璃风格，显示 Agent 的核心信息
+  设计特点：
+  - 简洁现代的设计风格
+  - 显示核心信息：头像、名称、状态、技能
+  - 悬停显示操作按钮
+  - 点击卡片进入详情
 -->
 <template>
   <div 
     class="agent-card"
-    :class="[ 
-      `level-${agent.level}`,
-      { 'is-active': isActive, 'is-default': agent.isDefault, 'is-dragging': isDragging }
-    ]"
-    :style="cardStyle"
+    :class="{ 
+      'is-active': isActive,
+      'is-offline': agent.status === 'offline'
+    }"
     @click="$emit('click', agent)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
-    <!-- 座次标识 -->
-    <div class="seat-badge" :style="seatStyle">
-      <span class="seat-number">{{ agent.seat }}</span>
-      <span class="seat-label">座</span>
-    </div>
-    
-    <!-- 等级标识 -->
-    <div class="level-badge" :style="levelStyle">
-      <span class="level-icon">{{ levelConfig.icon }}</span>
-      <span class="level-name">{{ levelConfig.label }}</span>
-    </div>
-    
     <!-- 状态指示器 -->
-    <div class="status-indicator" :class="agent.status">
-      <span class="status-dot"></span>
-      <span class="status-name">{{ statusText }}</span>
-    </div>
+    <div class="status-bar" :class="agent.status"></div>
     
-    <!-- 主要内容 -->
-    <div class="card-content">
-      <div class="avatar-section">
-        <div class="avatar" :style="avatarStyle">
-          {{ agent.avatar }}
-        </div>
-        <div v-if="agent.isDefault" class="default-badge">默认</div>
+    <!-- 头部：头像和名称 -->
+    <div class="card-header">
+      <div class="avatar-wrapper">
+        <span class="avatar">{{ agent.avatar }}</span>
+        <span class="status-dot" :class="agent.status"></span>
       </div>
       
-      <div class="info-section">
+      <div class="header-info">
         <h4 class="agent-name">{{ agent.name }}</h4>
-        <p class="agent-desc">{{ agent.description }}</p>
-        
-        <!-- 技能标签 -->
-        <div class="skills-preview">
-          <span 
-            v-for="skillId in displayedSkills" 
-            :key="skillId"
-            class="skill-tag"
-          >{{ getSkillName(skillId) }}</span>
-          <span v-if="remainingSkills > 0" class="skill-more">+{{ remainingSkills }}</span>
-        </div>
+        <span class="agent-level" :style="levelStyle">{{ levelLabel }}</span>
+      </div>
+      
+      <!-- 默认标识 -->
+      <div v-if="agent.isDefault" class="default-badge">
+        <span>默认</span>
       </div>
     </div>
     
-    <!-- 底部信息栏 -->
-    <div class="card-footer">
-      <div class="footer-stat">
-        <span class="stat-icon">📞</span>
+    <!-- 描述 -->
+    <p class="agent-desc">{{ agent.description || '暂无描述' }}</p>
+    
+    <!-- 技能标签 -->
+    <div class="skills-section">
+      <span 
+        v-for="skill in displayedSkills" 
+        :key="skill"
+        class="skill-tag"
+      >{{ skill }}</span>
+      <span v-if="remainingSkills > 0" class="skill-more">+{{ remainingSkills }}</span>
+    </div>
+    
+    <!-- 统计信息 -->
+    <div class="stats-row">
+      <div class="stat-item">
+        <span class="stat-label">调用</span>
         <span class="stat-value">{{ formatNumber(agent.callCount) }}</span>
       </div>
-      <div class="footer-stat">
-        <span class="stat-icon">🎯</span>
+      <div class="stat-item">
+        <span class="stat-label">技能</span>
         <span class="stat-value">{{ agent.skills.length }}</span>
       </div>
-      <div class="footer-stat">
-        <span class="stat-icon">🔒</span>
+      <div class="stat-item">
+        <span class="stat-label">权限</span>
         <span class="stat-value">{{ grantedPermissions }}</span>
-      </div>
-      <div class="footer-stat" :title="lastActiveText">
-        <span class="stat-icon">⏱️</span>
-        <span class="stat-value">{{ timeAgo }}</span>
       </div>
     </div>
     
-    <!-- 悬停操作按钮 -->
-    <Transition name="fade">
-      <div v-if="isHovered && !agent.isDefault" class="card-actions">
-        <button class="action-btn edit" @click.stop="$emit('edit', agent)" title="编辑">
+    <!-- 底部操作栏 -->
+    <div class="card-footer">
+      <!-- 状态切换按钮 -->
+      <button 
+        class="btn-status"
+        :class="agent.status"
+        @click.stop="$emit('toggle-status', agent)"
+      >
+        <span class="status-indicator"></span>
+        {{ statusText }}
+      </button>
+      
+      <!-- 操作按钮组 -->
+      <div class="action-group">
+        <button 
+          class="btn-action"
+          title="编辑"
+          @click.stop="$emit('edit', agent)"
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
           </svg>
         </button>
-        <button class="action-btn delete" @click.stop="$emit('delete', agent)" title="删除">
+        
+        <button 
+          v-if="!agent.isDefault"
+          class="btn-action delete"
+          title="删除"
+          @click.stop="$emit('delete', agent)"
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="3 6 5 6 21 6"/>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
           </svg>
         </button>
       </div>
-    </Transition>
-    
-    <!-- 激活指示器 -->
-    <div v-if="isActive" class="active-indicator">
-      <div class="active-pulse"></div>
-      <span>当前使用</span>
     </div>
     
-    <!-- 边框光效 -->
-    <div class="glow-border" :style="glowStyle"></div>
+    <!-- 悬停遮罩 -->
+    <Transition name="fade">
+      <div v-if="isHovered" class="hover-overlay">
+        <span class="hover-text">点击查看详情</span>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { Agent, AgentLevel, AgentStatus } from '../../../core/composables/useAgents'
+import type { Agent } from '../../../core/composables/useAgents'
 import { LEVEL_CONFIG } from '../../../core/composables/useAgents'
 
 const props = defineProps<{
   agent: Agent
   isActive: boolean
-  isDragging?: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   click: [agent: Agent]
   edit: [agent: Agent]
   delete: [agent: Agent]
+  'toggle-status': [agent: Agent]
 }>()
 
 const isHovered = ref(false)
 
 // 等级配置
 const levelConfig = computed(() => LEVEL_CONFIG[props.agent.level])
+const levelLabel = computed(() => levelConfig.value.label)
+const levelStyle = computed(() => ({
+  color: levelConfig.value.color,
+  background: `${levelConfig.value.color}15`
+}))
 
 // 状态文本
 const statusText = computed(() => {
-  const map: Record<AgentStatus, string> = {
+  const map: Record<string, string> = {
     online: '在线',
     offline: '离线',
     busy: '忙碌',
     idle: '空闲'
   }
-  return map[props.agent.status]
+  return map[props.agent.status] || props.agent.status
 })
 
-// 卡片样式
-const cardStyle = computed(() => ({
-  '--level-color': levelConfig.value.color,
-  '--glow-opacity': isHovered.value ? '0.6' : '0.2'
-}))
+// 技能显示
+const maxSkills = 3
+const displayedSkills = computed(() => props.agent.skills.slice(0, maxSkills))
+const remainingSkills = computed(() => Math.max(0, props.agent.skills.length - maxSkills))
 
-// 座次样式
-const seatStyle = computed(() => ({
-  background: `linear-gradient(135deg, ${levelConfig.value.color}20, ${levelConfig.value.color}40)`,
-  borderColor: levelConfig.value.color
-}))
-
-// 等级样式
-const levelStyle = computed(() => ({
-  background: levelConfig.value.color,
-  color: '#fff'
-}))
-
-// 头像样式
-const avatarStyle = computed(() => ({
-  background: `linear-gradient(135deg, ${levelConfig.value.color}30, ${levelConfig.value.color}10)`,
-  borderColor: `${levelConfig.value.color}50`
-}))
-
-// 光效样式
-const glowStyle = computed(() => ({
-  boxShadow: `0 0 30px ${levelConfig.value.color}${isHovered.value ? '60' : '20'}`
-}))
-
-// 显示的技能（最多3个）
-const displayedSkills = computed(() => props.agent.skills.slice(0, 3))
-const remainingSkills = computed(() => Math.max(0, props.agent.skills.length - 3))
-
-// 已授权权限数量
+// 权限数量
 const grantedPermissions = computed(() => 
   props.agent.permissions.filter(p => p.granted).length
 )
 
-// 时间格式化
+// 格式化数字
 function formatNumber(num: number): string {
   if (num >= 10000) return (num / 10000).toFixed(1) + 'w'
   if (num >= 1000) return (num / 1000).toFixed(1) + 'k'
   return num.toString()
-}
-
-// 相对时间
-const timeAgo = computed(() => {
-  const diff = Date.now() - props.agent.lastActiveAt
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-  
-  if (minutes < 1) return '刚刚'
-  if (minutes < 60) return `${minutes}分钟前`
-  if (hours < 24) return `${hours}小时前`
-  if (days < 7) return `${days}天前`
-  return '很久以前'
-})
-
-const lastActiveText = computed(() => {
-  const date = new Date(props.agent.lastActiveAt)
-  return `最后活跃: ${date.toLocaleString()}`
-})
-
-// 技能名称映射（简化版）
-const skillNames: Record<string, string> = {
-  write: '写作',
-  code: '代码',
-  summarize: '总结',
-  translate: '翻译',
-  polish: '润色',
-  review: '审查'
-}
-
-function getSkillName(id: string): string {
-  return skillNames[id] || id
 }
 </script>
 
 <style scoped>
 .agent-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
   border-radius: 16px;
-  padding: 16px;
+  padding: 20px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.05),
-    0 2px 4px -1px rgba(0, 0, 0, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   overflow: hidden;
 }
 
 .agent-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 
-    0 20px 25px -5px rgba(0, 0, 0, 0.08),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  border-color: var(--vp-c-brand);
 }
 
 .agent-card.is-active {
-  border-color: var(--level-color);
-  background: rgba(255, 255, 255, 0.85);
+  border-color: var(--vp-c-brand);
+  box-shadow: 0 0 0 3px var(--vp-c-brand-soft);
 }
 
-.agent-card.is-default {
-  border-width: 2px;
-}
-
-/* 座次标识 */
-.seat-badge {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 4px 8px;
-  border-radius: 8px;
-  border: 1px solid;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--level-color);
-}
-
-.seat-number {
-  font-size: 14px;
-}
-
-.seat-label {
-  font-size: 10px;
+.agent-card.is-offline {
   opacity: 0.8;
 }
 
-/* 等级标识 */
-.level-badge {
+/* 状态条 */
+.status-bar {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.status-bar.online { background: linear-gradient(90deg, #22c55e, #16a34a); }
+.status-bar.offline { background: linear-gradient(90deg, #6b7280, #4b5563); }
+.status-bar.busy { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.status-bar.idle { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+
+/* 头部 */
+.card-header {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 100px;
-  font-size: 11px;
-  font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.level-icon {
-  font-size: 12px;
-}
-
-/* 状态指示器 */
-.status-indicator {
-  position: absolute;
-  top: 44px;
-  right: 12px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--vp-c-text-2);
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #9ca3af;
-}
-
-.status-indicator.online .status-dot {
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
-}
-
-.status-indicator.busy .status-dot {
-  background: #f59e0b;
-  animation: pulse 2s infinite;
-}
-
-.status-indicator.offline .status-dot {
-  background: #6b7280;
-}
-
-.status-indicator.idle .status-dot {
-  background: #3b82f6;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-/* 卡片内容 */
-.card-content {
-  display: flex;
   gap: 12px;
-  margin-top: 24px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
-.avatar-section {
+.avatar-wrapper {
   position: relative;
   flex-shrink: 0;
 }
 
 .avatar {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
-  border-radius: 16px;
-  border: 2px solid;
-  transition: all 0.3s;
+  font-size: 24px;
+  background: var(--vp-c-bg-soft);
+  border-radius: 12px;
 }
 
-.agent-card:hover .avatar {
-  transform: scale(1.1) rotate(-5deg);
-}
-
-.default-badge {
+.status-dot {
   position: absolute;
-  bottom: -4px;
-  right: -4px;
-  padding: 2px 6px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  color: white;
-  font-size: 9px;
-  font-weight: 700;
-  border-radius: 100px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  bottom: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--vp-c-bg);
 }
 
-.info-section {
+.status-dot.online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+.status-dot.offline { background: #6b7280; }
+.status-dot.busy { background: #f59e0b; }
+.status-dot.idle { background: #3b82f6; }
+
+.header-info {
   flex: 1;
   min-width: 0;
 }
@@ -390,18 +260,41 @@ function getSkillName(id: string): string {
 .agent-name {
   margin: 0 0 4px 0;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--vp-c-text-1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.agent-level {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+.default-badge {
+  flex-shrink: 0;
+}
+
+.default-badge span {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vp-c-brand);
+  background: var(--vp-c-brand-soft);
+  border-radius: 20px;
+}
+
+/* 描述 */
 .agent-desc {
-  margin: 0 0 8px 0;
-  font-size: 12px;
+  margin: 0 0 16px 0;
+  font-size: 13px;
   color: var(--vp-c-text-2);
-  line-height: 1.4;
+  line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -409,186 +302,157 @@ function getSkillName(id: string): string {
 }
 
 /* 技能标签 */
-.skills-preview {
+.skills-section {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
+  margin-bottom: 16px;
 }
 
 .skill-tag {
-  padding: 2px 8px;
-  background: rgba(var(--level-color-rgb, 59, 130, 246), 0.1);
-  color: var(--level-color, #3b82f6);
-  font-size: 10px;
-  font-weight: 500;
-  border-radius: 100px;
-  border: 1px solid rgba(var(--level-color-rgb, 59, 130, 246), 0.2);
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+  background: var(--vp-c-bg-soft);
+  border-radius: 6px;
 }
 
 .skill-more {
-  padding: 2px 8px;
-  background: var(--vp-c-bg-mute);
-  color: var(--vp-c-text-2);
-  font-size: 10px;
-  border-radius: 100px;
-}
-
-/* 底部统计 */
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  padding-top: 12px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.footer-stat {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  padding: 4px 10px;
   font-size: 12px;
-  color: var(--vp-c-text-2);
+  color: var(--vp-c-brand);
+  background: var(--vp-c-brand-soft);
+  border-radius: 6px;
+  font-weight: 500;
 }
 
-.stat-icon {
-  font-size: 12px;
-  opacity: 0.7;
+/* 统计信息 */
+.stats-row {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--vp-c-divider);
+  border-bottom: 1px solid var(--vp-c-divider);
+  margin-bottom: 16px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--vp-c-text-3);
 }
 
 .stat-value {
+  font-size: 14px;
   font-weight: 600;
   color: var(--vp-c-text-1);
 }
 
-/* 悬停操作按钮 */
-.card-actions {
-  position: absolute;
-  top: 50%;
-  right: 12px;
-  transform: translateY(-50%);
+/* 底部操作栏 */
+.card-footer {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-status.online {
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+.btn-status.offline {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
+.btn-status .status-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.action-group {
+  display: flex;
   gap: 8px;
 }
 
-.action-btn {
+.btn-action {
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--vp-c-bg-soft);
+  border: none;
   border-radius: 8px;
+  color: var(--vp-c-text-2);
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.action-btn svg {
-  width: 14px;
-  height: 14px;
+.btn-action:hover {
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand);
 }
 
-.action-btn.edit {
-  color: #3b82f6;
-}
-
-.action-btn.edit:hover {
-  background: #3b82f6;
-  color: white;
-  transform: scale(1.1);
-}
-
-.action-btn.delete {
+.btn-action.delete:hover {
+  background: #fee2e2;
   color: #ef4444;
 }
 
-.action-btn.delete:hover {
-  background: #ef4444;
-  color: white;
-  transform: scale(1.1);
+.btn-action svg {
+  width: 16px;
+  height: 16px;
 }
 
-/* 激活指示器 */
-.active-indicator {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  background: linear-gradient(135deg, var(--level-color), var(--level-color));
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 100px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.active-pulse {
-  width: 6px;
-  height: 6px;
-  background: white;
-  border-radius: 50%;
-  animation: pulse-ring 2s infinite;
-}
-
-@keyframes pulse-ring {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-  }
-}
-
-/* 光效边框 */
-.glow-border {
+/* 悬停遮罩 */
+.hover-overlay {
   position: absolute;
   inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.9);
+  backdrop-filter: blur(4px);
   border-radius: 16px;
-  pointer-events: none;
-  opacity: var(--glow-opacity, 0.2);
-  transition: opacity 0.3s;
+}
+
+.hover-text {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
 }
 
 /* 动画 */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
+  transition: opacity 0.2s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-  transform: translateX(10px);
-}
-
-/* 深色模式适配 */
-.dark .agent-card {
-  background: rgba(30, 30, 40, 0.7);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.2),
-    0 2px 4px -1px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-.dark .agent-card:hover {
-  background: rgba(40, 40, 55, 0.8);
-}
-
-.dark .card-footer {
-  border-top-color: rgba(255, 255, 255, 0.1);
-}
-
-.dark .action-btn {
-  background: rgba(50, 50, 65, 0.9);
-  border-color: rgba(255, 255, 255, 0.1);
 }
 </style>

@@ -27,6 +27,19 @@ export interface StreamCallbacks {
   onToolRecord?: (record: ToolCallRecord) => void
 }
 
+/** 清理 AI 输出中的调试标签 */
+function cleanAIOutput(content: string): string {
+  // 移除 DSML 标签
+  return content
+    .replace(/<\|DSML\|[^>]*>/g, '')
+    .replace(/<\|\/DSML\|[^>]*>/g, '')
+    .replace(/\|DSML\|/g, '')
+    .replace(/function_calls/g, '')
+    .replace(/invoke/g, '')
+    .replace(/parameter/g, '')
+    .trim()
+}
+
 /** 工具定义 */
 interface ToolDefinition {
   type: 'function'
@@ -229,7 +242,9 @@ async function chatStreamInternal(
         
         if (delta?.content) {
           fullContent += delta.content
-          callbacks.onContent(fullContent)
+          // 清理 DSML 调试标签
+          const cleaned = cleanAIOutput(fullContent)
+          callbacks.onContent(cleaned)
         }
       } catch {}
     }
@@ -271,7 +286,7 @@ export const aiService = {
       // 有工具调用
       const toolCalls = firstResponse.toolCalls
       if (toolCalls && toolCalls.length > 0) {
-        callbacks.onContent(`🔧 正在使用工具: ${toolCalls[0].function.name}...`)
+        // 不显示提示，直接执行工具
         
         // 执行工具
         const toolResults = []

@@ -17,10 +17,9 @@ export * from './core/services'
 export { 
   AgentConfig,
   AgentAdmin, 
+  AgentHome,
   AgentCard, 
-  AgentDetail, 
-  AgentForm, 
-  AgentStats,
+  AgentDetail,
   SkillManager, 
   SkillEditor, 
   SkillPreview, 

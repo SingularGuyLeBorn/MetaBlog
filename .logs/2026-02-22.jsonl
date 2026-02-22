@@ -1,0 +1,2 @@
+{"id":"1771732727724_nqxqefogk","timestamp":1771732727724,"level":"info","category":"chat","event":"message_start","message":"用户发送消息","sessionId":"session_1771732721392_fycwevqca","messageId":"msg_1771732727724_akv2aen3e","data":{"content":"测试工具 你说详细一点"}}
+{"id":"1771732734152_zki8dayw9","timestamp":1771732734152,"level":"info","category":"chat","event":"message_complete","message":"AI 回复完成","sessionId":"session_1771732721392_fycwevqca","messageId":"msg_1771732727725_lghd3yfi3","data":{"contentLength":462,"hasToolCalls":true}}

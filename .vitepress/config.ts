@@ -1169,6 +1169,50 @@ export default defineConfig({
           );
 
           // ============================================
+          // Files API - 目录操作
+          // ============================================
+
+          // 创建目录
+          server.middlewares.use("/api/files/mkdir", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", async () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { path: dirPath } = body;
+                  
+                  if (!dirPath) {
+                    res.statusCode = 400;
+                    res.end(JSON.stringify({ success: false, error: "Path required" }));
+                    return;
+                  }
+                  
+                  // 支持 .skills 等配置目录
+                  const isConfigPath = dirPath.startsWith('.') || dirPath.startsWith('_');
+                  const basePath = isConfigPath ? process.cwd() : path.join(process.cwd(), 'docs');
+                  const fullPath = path.resolve(basePath, dirPath);
+                  
+                  // 安全检查
+                  if (!fullPath.startsWith(basePath)) {
+                    res.statusCode = 403;
+                    res.end(JSON.stringify({ success: false, error: "Access denied" }));
+                    return;
+                  }
+                  
+                  await fs.promises.mkdir(fullPath, { recursive: true });
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+
+          // ============================================
           // Agent API Routes - AI-Native Operations
           // ============================================
 
@@ -2252,6 +2296,112 @@ ${content}`;
             } else next();
           });
 
+          // 查询日志 (支持过滤)
+          server.middlewares.use("/api/logs/query", async (req, res, next) => {
+            if (req.method === "GET") {
+              try {
+                const url = new URL(req.url || "", `http://${req.headers.host}`);
+                const LOGS_DIR = path.join(process.cwd(), '.logs');
+                
+                if (!fs.existsSync(LOGS_DIR)) {
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: [] }));
+                  return;
+                }
+                
+                // 读取所有日志文件
+                const files = fs.readdirSync(LOGS_DIR).filter(f => f.endsWith('.jsonl'));
+                let allLogs: any[] = [];
+                
+                for (const file of files) {
+                  const filePath = path.join(LOGS_DIR, file);
+                  const content = fs.readFileSync(filePath, 'utf-8');
+                  const lines = content.split('\n').filter(Boolean);
+                  for (const line of lines) {
+                    try {
+                      const log = JSON.parse(line);
+                      // 应用过滤条件
+                      const level = url.searchParams.get('level');
+                      const category = url.searchParams.get('category');
+                      const component = url.searchParams.get('component');
+                      const keyword = url.searchParams.get('keyword');
+                      
+                      if (level && log.level !== level) continue;
+                      if (category && log.category !== category) continue;
+                      if (component && log.component !== component) continue;
+                      if (keyword && !JSON.stringify(log).toLowerCase().includes(keyword.toLowerCase())) continue;
+                      
+                      allLogs.push(log);
+                    } catch (e) {
+                      // 跳过无效行
+                    }
+                  }
+                }
+                
+                // 按时间倒序排序
+                allLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                
+                // 分页
+                const limit = parseInt(url.searchParams.get('limit') || '100');
+                const offset = parseInt(url.searchParams.get('offset') || '0');
+                const paginatedLogs = allLogs.slice(offset, offset + limit);
+                
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: paginatedLogs, total: allLogs.length }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+
+          // 批量添加日志
+          server.middlewares.use("/api/logs/batch", async (req, res, next) => {
+            if (req.method === "POST") {
+              try {
+                const chunks: Buffer[] = [];
+                req.on("data", chunk => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const logs = body.logs || [];
+                    
+                    // 确保日志目录存在
+                    const LOGS_DIR = path.join(process.cwd(), '.logs');
+                    if (!fs.existsSync(LOGS_DIR)) {
+                      fs.mkdirSync(LOGS_DIR, { recursive: true });
+                    }
+                    
+                    // 按日期分组写入
+                    const logsByDate = new Map<string, any[]>();
+                    for (const log of logs) {
+                      const date = new Date(log.timestamp || Date.now()).toISOString().split('T')[0];
+                      if (!logsByDate.has(date)) {
+                        logsByDate.set(date, []);
+                      }
+                      logsByDate.get(date)!.push(log);
+                    }
+                    
+                    for (const [date, dateLogs] of logsByDate) {
+                      const filePath = path.join(LOGS_DIR, `${date}.jsonl`);
+                      const lines = dateLogs.map((l: any) => JSON.stringify(l)).join('\n') + '\n';
+                      fs.appendFileSync(filePath, lines);
+                    }
+                    
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(JSON.stringify({ success: true, count: logs.length }));
+                  } catch (e) {
+                    res.statusCode = 500;
+                    res.end(JSON.stringify({ success: false, error: String(e) }));
+                  }
+                });
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+
           // 清理日志
           server.middlewares.use("/api/logs/cleanup", async (req, res, next) => {
             if (req.method === "POST") {
@@ -2264,7 +2414,7 @@ ${content}`;
                     const days = body.days ?? 7;  // 默认保留7天，days=0表示清空所有
                     
                     // 获取日志目录
-                    const LOGS_DIR = path.join(process.cwd(), '.vitepress', 'agent', 'logs');
+                    const LOGS_DIR = path.join(process.cwd(), '.logs');
                     
                     if (!fs.existsSync(LOGS_DIR)) {
                       res.setHeader("Content-Type", "application/json");
@@ -2279,7 +2429,7 @@ ${content}`;
                     let deletedCount = 0;
                     for (const file of files) {
                       // 跳过审计文件和隐藏文件
-                      if (file.startsWith('.') || !file.endsWith('.log')) continue;
+                      if (file.startsWith('.') || !file.endsWith('.jsonl')) continue;
                       
                       const filePath = path.join(LOGS_DIR, file);
                       const stats = fs.statSync(filePath);
@@ -3135,6 +3285,130 @@ ${content}`;
             if (req.method === "GET") {
               res.setHeader("Content-Type", "application/json");
               res.end(JSON.stringify({ success: true, data: [] }));
+            } else next();
+          });
+
+          // ============================================
+          // Agent CRUD API - 持久化存储
+          // ============================================
+          
+          const AGENTS_FILE = path.join(process.cwd(), '.data', 'agents.json');
+          
+          // 确保数据目录存在
+          if (!fs.existsSync(path.dirname(AGENTS_FILE))) {
+            fs.mkdirSync(path.dirname(AGENTS_FILE), { recursive: true });
+          }
+          
+          // 读取 Agents
+          function readAgents(): any[] {
+            try {
+              if (fs.existsSync(AGENTS_FILE)) {
+                const data = fs.readFileSync(AGENTS_FILE, 'utf-8');
+                return JSON.parse(data);
+              }
+            } catch (e) {
+              console.error('[API] Failed to read agents:', e);
+            }
+            return [];
+          }
+          
+          // 写入 Agents
+          function writeAgents(agents: any[]) {
+            try {
+              fs.writeFileSync(AGENTS_FILE, JSON.stringify(agents, null, 2));
+            } catch (e) {
+              console.error('[API] Failed to write agents:', e);
+            }
+          }
+          
+          // GET /api/agents - 获取所有 Agents
+          server.middlewares.use("/api/agents", (req, res, next) => {
+            if (req.method === "GET") {
+              const agents = readAgents();
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ success: true, data: agents }));
+            } else if (req.method === "POST") {
+              // POST /api/agents - 创建 Agent
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const agents = readAgents();
+                  
+                  const newAgent = {
+                    id: `agent-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                    ...body,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                  };
+                  
+                  agents.push(newAgent);
+                  writeAgents(agents);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: newAgent }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // PUT /api/agents/:id - 更新 Agent
+          server.middlewares.use("/api/agents/update", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { id, ...updates } = body;
+                  
+                  const agents = readAgents();
+                  const index = agents.findIndex((a: any) => a.id === id);
+                  
+                  if (index === -1) {
+                    res.statusCode = 404;
+                    res.end(JSON.stringify({ success: false, error: 'Agent not found' }));
+                    return;
+                  }
+                  
+                  agents[index] = { ...agents[index], ...updates, updatedAt: Date.now() };
+                  writeAgents(agents);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: agents[index] }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // DELETE /api/agents/:id - 删除 Agent
+          server.middlewares.use("/api/agents/delete", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { id } = body;
+                  
+                  let agents = readAgents();
+                  agents = agents.filter((a: any) => a.id !== id);
+                  writeAgents(agents);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
             } else next();
           });
         },

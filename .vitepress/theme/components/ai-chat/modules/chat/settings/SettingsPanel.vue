@@ -161,6 +161,24 @@
         <p class="section-desc">定义 AI 助手的身份、性格和专长领域</p>
       </div>
 
+      <!-- Agent 控制中心入口 -->
+      <div class="setting-section">
+        <label class="section-label">
+          <span class="label-icon">🤖</span>
+          Agent 管理
+        </label>
+        <button class="agent-center-btn" @click="$emit('open-agent-center')">
+          <span class="btn-icon">⚡</span>
+          <div class="btn-content">
+            <span class="btn-title">打开控制中心</span>
+            <span class="btn-desc">管理 Agents、技能、触发器</span>
+          </div>
+          <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </div>
+
       <!-- 重置按钮 -->
       <div class="setting-section">
         <button class="reset-btn" @click="resetSettings">
@@ -230,6 +248,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'update:config': [config: Partial<SessionConfig>]
   'toggle-collapse': []
+  'open-agent-center': []
 }>()
 
 const availableModels = modelConfigs
@@ -643,6 +662,62 @@ function resetSettings() {
 .reset-btn svg {
   width: 16px;
   height: 16px;
+}
+
+/* Agent 控制中心按钮 */
+.agent-center-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.agent-center-btn:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+  border-color: rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.btn-icon {
+  font-size: 24px;
+}
+
+.btn-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.btn-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.btn-desc {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.btn-arrow {
+  width: 20px;
+  height: 20px;
+  color: #9ca3af;
+  transition: all 0.2s;
+}
+
+.agent-center-btn:hover .btn-arrow {
+  color: #3b82f6;
+  transform: translateX(4px);
 }
 
 /* 滚动条 */

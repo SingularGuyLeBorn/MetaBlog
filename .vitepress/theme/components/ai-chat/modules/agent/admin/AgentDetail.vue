@@ -1,541 +1,921 @@
 <!--
-  AgentDetail - Agent 详情弹窗
+  AgentDetail - Agent 详细配置页面
   
-  显示 Agent 的完整信息和操作
+  设计特点：
+  - 三栏布局：左侧导航、中间内容、右侧预览
+  - 左侧：配置分类导航菜单
+  - 中间：动态表单配置
+  - 右侧：实时预览和测试
 -->
 <template>
-  <Teleport to="body">
-    <Transition name="detail-fade">
-      <div v-if="visible" class="detail-overlay" @click.self="close">
-        <div class="detail-panel" :style="panelStyle">
-          <!-- 头部 -->
-          <div class="detail-header" :style="headerStyle">
-            <div class="header-bg"></div>
-            <div class="header-content">
-              <div class="detail-avatar">{{ agent.avatar }}</div>
-              <div class="header-info">
-                <h3 class="detail-name">{{ agent.name }}</h3>
-                <div class="detail-badges">
-                  <span class="badge level" :style="levelBadgeStyle">
-                    {{ levelConfig.icon }} {{ levelConfig.label }}
-                  </span>
-                  <span class="badge status" :class="agent.status">
-                    <span class="status-dot"></span>
-                    {{ statusText }}
-                  </span>
-                  <span v-if="agent.isDefault" class="badge default">⭐ 默认</span>
-                </div>
-              </div>
+  <div class="agent-detail">
+    <!-- 顶部栏 -->
+    <header class="detail-header">
+      <button class="btn-back" @click="$emit('back')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
+        <span>返回列表</span>
+      </button>
+      
+      <div class="header-title">
+        <span class="title-avatar">{{ agent.avatar }}</span>
+        <div class="title-info">
+          <h2>{{ agent.name }}</h2>
+          <span class="title-level" :style="levelStyle">{{ levelLabel }}</span>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <button class="btn-status" :class="agent.status" @click="toggleStatus">
+          <span class="status-dot"></span>
+          {{ statusText }}
+        </button>
+        <button class="btn-save" :disabled="!hasChanges" @click="saveChanges">
+          <span>💾</span>
+          <span>保存</span>
+        </button>
+      </div>
+    </header>
+    
+    <!-- 三栏主体 -->
+    <div class="detail-body">
+      <!-- 左侧导航 -->
+      <nav class="detail-nav">
+        <div class="nav-section">
+          <div class="nav-title">基础配置</div>
+          <button
+            v-for="item in basicNavItems"
+            :key="item.id"
+            class="nav-item"
+            :class="{ active: currentTab === item.id }"
+            @click="currentTab = item.id"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label">{{ item.label }}</span>
+          </button>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-title">高级配置</div>
+          <button
+            v-for="item in advancedNavItems"
+            :key="item.id"
+            class="nav-item"
+            :class="{ active: currentTab === item.id }"
+            @click="currentTab = item.id"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label">{{ item.label }}</span>
+          </button>
+        </div>
+      </nav>
+      
+      <!-- 中间内容区 -->
+      <main class="detail-content">
+        <!-- 基本信息 -->
+        <section v-if="currentTab === 'basic'" class="content-section">
+          <h3>基本信息</h3>
+          
+          <div class="form-group">
+            <label>名称</label>
+            <input v-model="form.name" type="text" class="form-input" />
+          </div>
+          
+          <div class="form-group">
+            <label>头像</label>
+            <div class="avatar-grid">
+              <button
+                v-for="emoji in avatarOptions"
+                :key="emoji"
+                class="avatar-btn"
+                :class="{ active: form.avatar === emoji }"
+                @click="form.avatar = emoji"
+              >
+                {{ emoji }}
+              </button>
             </div>
-            <button class="close-btn" @click="close">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
+          </div>
+          
+          <div class="form-group">
+            <label>描述</label>
+            <textarea v-model="form.description" rows="3" class="form-textarea" />
+          </div>
+          
+          <div class="form-group">
+            <label>等级</label>
+            <select v-model="form.level" class="form-select">
+              <option value="meta">元 Agent</option>
+              <option value="core">核心 Agent</option>
+              <option value="fixed">固定 Agent</option>
+              <option value="custom">自定义 Agent</option>
+            </select>
+          </div>
+        </section>
+        
+        <!-- 系统提示词 -->
+        <section v-if="currentTab === 'prompt'" class="content-section">
+          <h3>系统提示词</h3>
+          <p class="section-desc">定义 Agent 的角色、行为和回答风格</p>
+          
+          <div class="form-group">
+            <textarea 
+              v-model="form.systemPrompt" 
+              rows="20" 
+              class="form-textarea code"
+              placeholder="你是一个 helpful 的 AI 助手..."
+            />
+          </div>
+          
+          <div class="prompt-templates">
+            <span class="template-label">快速模板：</span>
+            <button 
+              v-for="tpl in promptTemplates" 
+              :key="tpl.name"
+              class="template-btn"
+              @click="applyPromptTemplate(tpl)"
+            >
+              {{ tpl.name }}
             </button>
           </div>
-
-          <!-- 内容 -->
-          <div class="detail-body">
-            <!-- 描述 -->
-            <div class="detail-section">
-              <h4 class="section-title">📝 描述</h4>
-              <p class="detail-desc">{{ agent.description }}</p>
-            </div>
-
-            <!-- 座次信息 -->
-            <div class="detail-section seat-section">
-              <div class="seat-display">
-                <div class="seat-number" :style="seatNumberStyle">{{ agent.seat }}</div>
-                <div class="seat-label">当前座次</div>
+        </section>
+        
+        <!-- 技能配置 -->
+        <section v-if="currentTab === 'skills'" class="content-section">
+          <h3>技能配置</h3>
+          <p class="section-desc">为此 Agent 配置可用的技能</p>
+          
+          <div class="skills-list">
+            <label
+              v-for="skill in availableSkills"
+              :key="skill.id"
+              class="skill-checkbox"
+              :class="{ checked: form.skills.includes(skill.id) }"
+            >
+              <input
+                type="checkbox"
+                :value="skill.id"
+                v-model="form.skills"
+              />
+              <span class="skill-icon">{{ skill.icon }}</span>
+              <div class="skill-info">
+                <span class="skill-name">{{ skill.name }}</span>
+                <span class="skill-desc">{{ skill.description }}</span>
               </div>
-              <div class="seat-info">
-                <p>座次越小，优先级越高</p>
-                <p v-if="levelConfig">{{ levelConfig.label }} 范围: 1-{{ levelConfig.maxSeat }}</p>
+            </label>
+          </div>
+        </section>
+        
+        <!-- 记忆管理 -->
+        <section v-if="currentTab === 'memory'" class="content-section">
+          <h3>记忆管理</h3>
+          
+          <div class="form-group inline">
+            <label>启用长期记忆</label>
+            <label class="toggle-switch">
+              <input type="checkbox" v-model="form.memoryEnabled" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          
+          <div v-if="form.memoryEnabled" class="form-group">
+            <label>记忆内容</label>
+            <textarea 
+              v-model="form.memoryContent" 
+              rows="10" 
+              class="form-textarea"
+              placeholder="输入 Agent 需要记住的信息..."
+            />
+          </div>
+        </section>
+        
+        <!-- 权限设置 -->
+        <section v-if="currentTab === 'permissions'" class="content-section">
+          <h3>权限设置</h3>
+          <p class="section-desc">配置 Agent 的操作权限</p>
+          
+          <div class="permissions-list">
+            <label
+              v-for="perm in permissionTemplates"
+              :key="perm.id"
+              class="permission-item"
+            >
+              <input
+                type="checkbox"
+                :checked="isPermissionGranted(perm.id)"
+                @change="togglePermission(perm.id)"
+              />
+              <div class="permission-info">
+                <span class="permission-name">{{ perm.name }}</span>
+                <span class="permission-desc">{{ perm.description }}</span>
               </div>
-            </div>
-
-            <!-- 技能列表 -->
-            <div class="detail-section">
-              <div class="section-header-row">
-                <h4 class="section-title">🎯 技能 ({{ agent.skills.length }})</h4>
-                <button class="btn-text" @click="showSkillManager = true">管理技能</button>
-              </div>
-              <div class="skills-list">
-                <span 
-                  v-for="skillId in agent.skills" 
-                  :key="skillId"
-                  class="skill-chip"
-                >{{ getSkillName(skillId) }}</span>
-                <span v-if="agent.skills.length === 0" class="empty-hint">暂无技能</span>
-              </div>
-            </div>
-
-            <!-- 权限列表 -->
-            <div class="detail-section">
-              <div class="section-header-row">
-                <h4 class="section-title">🔒 权限 ({{ grantedCount }}/{{ agent.permissions.length }})</h4>
-              </div>
-              <div class="permissions-grid">
-                <div 
-                  v-for="perm in agent.permissions" 
-                  :key="perm.id"
-                  class="permission-item"
-                  :class="{ granted: perm.granted }"
-                >
-                  <div class="permission-check">
-                    <svg v-if="perm.granted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="18" y1="6" x2="6" y2="18"/>
-                      <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                  </div>
-                  <div class="permission-info">
-                    <span class="permission-name">{{ perm.name }}</span>
-                    <span class="permission-desc">{{ perm.description }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 系统提示词 -->
-            <div class="detail-section">
-              <h4 class="section-title">⚙️ 系统提示词</h4>
-              <div class="prompt-preview">
-                <pre>{{ agent.systemPrompt || '使用默认系统提示词' }}</pre>
-              </div>
-            </div>
-
-            <!-- 统计信息 -->
-            <div class="detail-section stats-section">
-              <h4 class="section-title">📊 统计</h4>
-              <div class="stats-grid">
-                <div class="stat-item">
-                  <span class="stat-value">{{ agent.callCount }}</span>
-                  <span class="stat-label">调用次数</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value">{{ formatDate(agent.createdAt) }}</span>
-                  <span class="stat-label">创建时间</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value">{{ formatDate(agent.updatedAt) }}</span>
-                  <span class="stat-label">更新时间</span>
-                </div>
-              </div>
+            </label>
+          </div>
+        </section>
+        
+        <!-- 高级设置 -->
+        <section v-if="currentTab === 'advanced'" class="content-section">
+          <h3>高级设置</h3>
+          
+          <div class="form-group">
+            <label>座次</label>
+            <input v-model.number="form.seat" type="number" class="form-input" min="1" />
+            <span class="form-hint">数字越小，排名越靠前</span>
+          </div>
+          
+          <div class="form-group danger-zone">
+            <label>危险区域</label>
+            <button class="btn-danger" @click="confirmDelete">
+              <span>🗑️</span>
+              <span>删除此 Agent</span>
+            </button>
+          </div>
+        </section>
+      </main>
+      
+      <!-- 右侧预览区 -->
+      <aside class="detail-preview">
+        <div class="preview-card">
+          <div class="preview-header">
+            <span class="preview-title">实时预览</span>
+          </div>
+          
+          <div class="preview-agent">
+            <div class="preview-avatar">{{ form.avatar }}</div>
+            <div class="preview-info">
+              <span class="preview-name">{{ form.name || '未命名' }}</span>
+              <span class="preview-status" :class="agent.status">{{ statusText }}</span>
             </div>
           </div>
-
-          <!-- 底部操作 -->
-          <div class="detail-footer">
-            <button class="btn-secondary" @click="close">关闭</button>
-            <div class="footer-actions">
-              <button 
-                v-if="!agent.isDefault"
-                class="btn-secondary" 
-                @click="$emit('edit', agent)"
-              >
-                编辑
-              </button>
-              <button 
-                class="btn-primary"
-                :class="{ active: isCurrent }"
-                :disabled="isCurrent"
-                @click="activate"
-              >
-                {{ isCurrent ? '当前使用中' : '激活使用' }}
-              </button>
+          
+          <div class="preview-stats">
+            <div class="preview-stat">
+              <span class="stat-label">调用次数</span>
+              <span class="stat-value">{{ agent.callCount }}</span>
+            </div>
+            <div class="preview-stat">
+              <span class="stat-label">技能数</span>
+              <span class="stat-value">{{ form.skills.length }}</span>
+            </div>
+            <div class="preview-stat">
+              <span class="stat-label">权限数</span>
+              <span class="stat-value">{{ grantedPermissionsCount }}</span>
             </div>
           </div>
         </div>
-      </div>
-    </Transition>
-  </Teleport>
+        
+        <div class="test-card">
+          <div class="test-header">
+            <span>🧪 快速测试</span>
+          </div>
+          <textarea
+            v-model="testMessage"
+            rows="4"
+            placeholder="输入测试消息..."
+            class="test-input"
+          />
+          <button 
+            class="btn-test" 
+            :disabled="!testMessage.trim()"
+            @click="sendTest"
+          >
+            发送测试
+          </button>
+        </div>
+      </aside>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { LEVEL_CONFIG, type Agent } from '../../../core/composables/useAgents'
+import { ref, reactive, computed, watch } from 'vue'
+import type { Agent, AgentPermission } from '../../../core/composables/useAgents'
+import { LEVEL_CONFIG, PERMISSION_TEMPLATES } from '../../../core/composables/useAgents'
 
 const props = defineProps<{
   agent: Agent
-  visible: boolean
 }>()
 
 const emit = defineEmits<{
-  close: []
-  activate: [agent: Agent]
-  edit: [agent: Agent]
+  back: []
+  save: [data: Partial<Agent>]
+  delete: [agent: Agent]
 }>()
 
-const showSkillManager = ref(false)
+// 当前标签页
+const currentTab = ref('basic')
 
-// 等级配置
-const levelConfig = computed(() => LEVEL_CONFIG[props.agent.level])
+// 导航菜单
+const basicNavItems = [
+  { id: 'basic', label: '基本信息', icon: '📝' },
+  { id: 'prompt', label: '系统提示词', icon: '💭' },
+  { id: 'skills', label: '技能配置', icon: '🎯' },
+]
 
-// 是否当前激活
-const isCurrent = computed(() => {
-  const activeId = localStorage.getItem('ai-active-agent-id')
-  return activeId === props.agent.id || (!activeId && props.agent.isDefault)
+const advancedNavItems = [
+  { id: 'memory', label: '记忆管理', icon: '🧠' },
+  { id: 'permissions', label: '权限设置', icon: '🔒' },
+  { id: 'advanced', label: '高级设置', icon: '⚙️' },
+]
+
+// 表单数据
+const form = reactive({
+  name: props.agent.name,
+  avatar: props.agent.avatar,
+  description: props.agent.description,
+  level: props.agent.level,
+  systemPrompt: props.agent.systemPrompt,
+  skills: [...props.agent.skills],
+  memoryEnabled: props.agent.memoryEnabled,
+  memoryContent: props.agent.memoryContent,
+  seat: props.agent.seat,
+  permissions: JSON.parse(JSON.stringify(props.agent.permissions)) as AgentPermission[]
 })
 
-// 状态文本
+// 同步 props 变化
+watch(() => props.agent, (newAgent) => {
+  form.name = newAgent.name
+  form.avatar = newAgent.avatar
+  form.description = newAgent.description
+  form.level = newAgent.level
+  form.systemPrompt = newAgent.systemPrompt
+  form.skills = [...newAgent.skills]
+  form.memoryEnabled = newAgent.memoryEnabled
+  form.memoryContent = newAgent.memoryContent
+  form.seat = newAgent.seat
+  form.permissions = JSON.parse(JSON.stringify(newAgent.permissions))
+}, { deep: true })
+
+// 头像选项
+const avatarOptions = ['🤖', '👩‍💻', '👨‍💻', '🎨', '✍️', '🔬', '📊', '💼', '🎭', '🔮', '👑', '⚡']
+
+// 可用技能
+const availableSkills = [
+  { id: 'write', name: '写作', icon: '✍️', description: '撰写和编辑文章' },
+  { id: 'code', name: '编程', icon: '💻', description: '编写和调试代码' },
+  { id: 'summarize', name: '总结', icon: '📋', description: '总结长文本内容' },
+  { id: 'translate', name: '翻译', icon: '🌐', description: '多语言翻译' },
+  { id: 'analyze', name: '分析', icon: '📊', description: '数据分析和可视化' },
+  { id: 'search', name: '搜索', icon: '🔍', description: '网络搜索和信息检索' },
+]
+
+// 权限模板
+const permissionTemplates = PERMISSION_TEMPLATES
+
+// 提示词模板
+const promptTemplates = [
+  { name: '通用助手', content: '你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。' },
+  { name: '编程专家', content: '你是一个专业的编程助手，精通多种编程语言，擅长代码审查、调试和优化。' },
+  { name: '写作助手', content: '你是一个专业的写作助手，擅长撰写、编辑和润色各种文体的文章。' },
+  { name: '数据分析', content: '你是一个数据分析专家，擅长数据清洗、统计分析、可视化和洞察提取。' },
+]
+
+// 计算属性
+const levelConfig = computed(() => LEVEL_CONFIG[form.level])
+const levelLabel = computed(() => levelConfig.value.label)
+const levelStyle = computed(() => ({ color: levelConfig.value.color }))
+
 const statusText = computed(() => {
-  const map = {
+  const map: Record<string, string> = {
     online: '在线',
     offline: '离线',
     busy: '忙碌',
     idle: '空闲'
   }
-  return map[props.agent.status]
+  return map[props.agent.status] || props.agent.status
 })
 
-// 已授权权限数
-const grantedCount = computed(() => 
-  props.agent.permissions.filter(p => p.granted).length
+const grantedPermissionsCount = computed(() => 
+  form.permissions.filter(p => p.granted).length
 )
 
-// 面板样式
-const panelStyle = computed(() => ({
-  '--level-color': levelConfig.value.color
-}))
+const hasChanges = computed(() => {
+  return (
+    form.name !== props.agent.name ||
+    form.avatar !== props.agent.avatar ||
+    form.description !== props.agent.description ||
+    form.level !== props.agent.level ||
+    form.systemPrompt !== props.agent.systemPrompt ||
+    JSON.stringify(form.skills) !== JSON.stringify(props.agent.skills) ||
+    form.memoryEnabled !== props.agent.memoryEnabled ||
+    form.memoryContent !== props.agent.memoryContent ||
+    form.seat !== props.agent.seat ||
+    JSON.stringify(form.permissions) !== JSON.stringify(props.agent.permissions)
+  )
+})
 
-const headerStyle = computed(() => ({
-  background: `linear-gradient(135deg, ${levelConfig.value.color}15, ${levelConfig.value.color}05)`
-}))
+// 测试消息
+const testMessage = ref('')
 
-const levelBadgeStyle = computed(() => ({
-  background: levelConfig.value.color,
-  color: 'white'
-}))
-
-const seatNumberStyle = computed(() => ({
-  background: `linear-gradient(135deg, ${levelConfig.value.color}, ${levelConfig.value.color}80)`,
-  color: 'white'
-}))
-
-function close() {
-  emit('close')
+// 方法
+function toggleStatus() {
+  const newStatus = props.agent.status === 'online' ? 'offline' : 'online'
+  emit('save', { status: newStatus })
 }
 
-function activate() {
-  emit('activate', props.agent)
+function saveChanges() {
+  emit('save', {
+    name: form.name,
+    avatar: form.avatar,
+    description: form.description,
+    level: form.level,
+    systemPrompt: form.systemPrompt,
+    skills: form.skills,
+    memoryEnabled: form.memoryEnabled,
+    memoryContent: form.memoryContent,
+    seat: form.seat,
+    permissions: form.permissions
+  })
 }
 
-function formatDate(timestamp: number): string {
-  const date = new Date(timestamp)
-  return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`
+function isPermissionGranted(id: string): boolean {
+  const perm = form.permissions.find(p => p.id === id)
+  return perm?.granted || false
 }
 
-// 技能名称映射
-const skillNames: Record<string, string> = {
-  write: '写作助手',
-  code: '代码生成',
-  summarize: '文章总结',
-  translate: '中英翻译',
-  polish: '润色优化',
-  review: '代码审查',
-  explain: '概念解释',
-  brainstorm: '头脑风暴'
+function togglePermission(id: string) {
+  const perm = form.permissions.find(p => p.id === id)
+  if (perm) {
+    perm.granted = !perm.granted
+  }
 }
 
-function getSkillName(id: string): string {
-  return skillNames[id] || id
+function applyPromptTemplate(tpl: { name: string; content: string }) {
+  form.systemPrompt = tpl.content
+}
+
+function confirmDelete() {
+  if (confirm(`确定要删除 Agent "${props.agent.name}" 吗？此操作无法撤销。`)) {
+    emit('delete', props.agent)
+  }
+}
+
+function sendTest() {
+  console.log('Test message:', testMessage.value)
+  // TODO: 实现测试逻辑
+  testMessage.value = ''
 }
 </script>
 
 <style scoped>
-.detail-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10001;
-  padding: 20px;
-}
-
-.detail-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(30px);
-  border-radius: 20px;
-  width: 100%;
-  max-width: 600px;
-  max-height: 85vh;
+.agent-detail {
   display: flex;
   flex-direction: column;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  overflow: hidden;
+  height: 100%;
+  background: var(--vp-c-bg);
 }
 
-/* 头部 */
+/* 顶部栏 */
 .detail-header {
-  position: relative;
-  padding: 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.header-bg {
-  position: absolute;
-  inset: 0;
-  opacity: 0.5;
-}
-
-.header-content {
-  position: relative;
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg-soft);
 }
 
-.detail-avatar {
-  width: 72px;
-  height: 72px;
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--vp-c-text-1);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-back:hover {
+  background: var(--vp-c-bg);
+  border-color: var(--vp-c-brand);
+}
+
+.btn-back svg {
+  width: 18px;
+  height: 18px;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-avatar {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 36px;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-size: 20px;
+  background: var(--vp-c-bg);
+  border-radius: 10px;
 }
 
-.header-info {
-  flex: 1;
-}
-
-.detail-name {
-  margin: 0 0 8px 0;
-  font-size: 22px;
-  font-weight: 700;
+.title-info h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--vp-c-text-1);
 }
 
-.detail-badges {
+.title-level {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-status.online {
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+.btn-status.offline {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.btn-save {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-save:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 三栏主体 */
+.detail-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 左侧导航 */
+.detail-nav {
+  width: 200px;
+  padding: 20px;
+  border-right: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg-soft);
+  overflow-y: auto;
+}
+
+.nav-section {
+  margin-bottom: 24px;
+}
+
+.nav-title {
+  padding: 0 12px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vp-c-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 2px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.nav-item:hover {
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+}
+
+.nav-item.active {
+  background: var(--vp-c-brand);
+  color: white;
+}
+
+.nav-icon {
+  font-size: 16px;
+}
+
+/* 中间内容区 */
+.detail-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.content-section {
+  max-width: 600px;
+}
+
+.content-section h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+.section-desc {
+  margin: 0 0 24px 0;
+  font-size: 13px;
+  color: var(--vp-c-text-2);
+}
+
+/* 表单样式 */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group.inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--vp-c-text-1);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+  outline: none;
+  transition: all 0.2s;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  border-color: var(--vp-c-brand);
+  box-shadow: 0 0 0 3px var(--vp-c-brand-soft);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-textarea.code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}
+
+/* 头像网格 */
+.avatar-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.badge {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 100px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.badge.status {
-  background: var(--vp-c-bg-mute);
-  color: var(--vp-c-text-2);
-}
-
-.badge.status.online {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.badge.status.busy {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.badge.status.offline {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.badge.default {
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: white;
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.close-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 36px;
-  height: 36px;
+.avatar-btn {
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.05);
-  border: none;
+  font-size: 20px;
+  background: var(--vp-c-bg-soft);
+  border: 2px solid transparent;
   border-radius: 10px;
-  color: var(--vp-c-text-2);
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.close-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+.avatar-btn:hover {
+  border-color: var(--vp-c-divider);
 }
 
-.close-btn svg {
-  width: 18px;
-  height: 18px;
+.avatar-btn.active {
+  background: var(--vp-c-brand-soft);
+  border-color: var(--vp-c-brand);
 }
 
-/* 内容区 */
-.detail-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px 24px;
-}
-
-.detail-section {
-  margin-bottom: 24px;
-}
-
-.detail-section:last-child {
-  margin-bottom: 0;
-}
-
-.section-header-row {
+/* 提示词模板 */
+.prompt-templates {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-top: 16px;
 }
 
-.section-title {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
-}
-
-.detail-desc {
-  margin: 0;
-  font-size: 14px;
-  color: var(--vp-c-text-2);
-  line-height: 1.6;
-}
-
-/* 座次显示 */
-.seat-section {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 12px;
-}
-
-.seat-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.seat-number {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 700;
-  border-radius: 12px;
-}
-
-.seat-label {
-  font-size: 11px;
-  color: var(--vp-c-text-2);
-}
-
-.seat-info {
-  flex: 1;
-}
-
-.seat-info p {
-  margin: 0;
+.template-label {
   font-size: 13px;
   color: var(--vp-c-text-2);
+}
+
+.template-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--vp-c-brand);
+  background: var(--vp-c-brand-soft);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.template-btn:hover {
+  background: var(--vp-c-brand);
+  color: white;
 }
 
 /* 技能列表 */
 .skills-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
 }
 
-.skill-chip {
-  padding: 6px 14px;
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-  font-size: 13px;
+.skill-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.skill-checkbox:hover {
+  border-color: var(--vp-c-brand);
+}
+
+.skill-checkbox.checked {
+  border-color: var(--vp-c-brand);
+  background: var(--vp-c-brand-soft);
+}
+
+.skill-checkbox input {
+  display: none;
+}
+
+.skill-icon {
+  font-size: 24px;
+}
+
+.skill-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.skill-name {
+  font-size: 14px;
   font-weight: 500;
-  border-radius: 100px;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: var(--vp-c-text-1);
 }
 
-.empty-hint {
-  color: var(--vp-c-text-3);
-  font-style: italic;
-  font-size: 13px;
+.skill-desc {
+  font-size: 12px;
+  color: var(--vp-c-text-2);
 }
 
-/* 权限网格 */
-.permissions-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--vp-c-divider);
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: var(--vp-c-brand);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* 权限列表 */
+.permissions-list {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
 .permission-item {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.03);
+  gap: 12px;
+  padding: 14px;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
   border-radius: 10px;
-  opacity: 0.6;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.permission-item.granted {
-  background: rgba(34, 197, 94, 0.08);
-  opacity: 1;
+.permission-item:hover {
+  border-color: var(--vp-c-brand);
 }
 
-.permission-check {
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.permission-item.granted .permission-check {
-  color: #22c55e;
-}
-
-.permission-item:not(.granted) .permission-check {
-  color: #9ca3af;
-}
-
-.permission-check svg {
-  width: 12px;
-  height: 12px;
+.permission-item input {
+  margin-top: 2px;
 }
 
 .permission-info {
@@ -545,168 +925,181 @@ function getSkillName(id: string): string {
 }
 
 .permission-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--vp-c-text-1);
 }
 
 .permission-desc {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--vp-c-text-2);
 }
 
-/* 提示词预览 */
-.prompt-preview {
-  background: rgba(0, 0, 0, 0.03);
+/* 危险区域 */
+.danger-zone {
+  padding: 20px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
   border-radius: 10px;
+}
+
+.danger-zone label {
+  color: #dc2626;
+  margin-bottom: 12px;
+}
+
+.btn-danger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+/* 右侧预览区 */
+.detail-preview {
+  width: 280px;
+  padding: 20px;
+  border-left: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg-soft);
+  overflow-y: auto;
+}
+
+.preview-card,
+.test-card {
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.preview-header,
+.test-header {
   padding: 12px 16px;
-}
-
-.prompt-preview pre {
-  margin: 0;
+  border-bottom: 1px solid var(--vp-c-divider);
   font-size: 13px;
-  line-height: 1.6;
+  font-weight: 600;
   color: var(--vp-c-text-1);
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: inherit;
 }
 
-/* 统计 */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+.preview-agent {
+  display: flex;
+  align-items: center;
   gap: 12px;
+  padding: 16px;
 }
 
-.stat-item {
+.preview-avatar {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background: var(--vp-c-bg-soft);
+  border-radius: 12px;
+}
+
+.preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+.preview-status {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.preview-status.online { color: #16a34a; }
+.preview-status.offline { color: #6b7280; }
+
+.preview-stats {
+  display: flex;
+  padding: 12px 16px;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.preview-stat {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 12px;
 }
 
-.stat-value {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--vp-c-text-1);
-}
-
-.stat-label {
+.preview-stat .stat-label {
   font-size: 11px;
-  color: var(--vp-c-text-2);
+  color: var(--vp-c-text-3);
 }
 
-/* 底部 */
-.detail-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background: rgba(255, 255, 255, 0.6);
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.footer-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.btn-secondary {
-  padding: 10px 20px;
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--vp-c-text-1);
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.btn-primary {
-  padding: 10px 24px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
+.preview-stat .stat-value {
+  font-size: 16px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  color: var(--vp-c-text-1);
 }
 
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-}
-
-.btn-primary:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.btn-primary.active {
-  background: linear-gradient(135deg, #22c55e, #10b981);
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-}
-
-.btn-text {
-  padding: 4px 10px;
+/* 测试卡片 */
+.test-input {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-bottom: 1px solid var(--vp-c-divider);
+  font-size: 13px;
   background: transparent;
-  color: #3b82f6;
+  resize: vertical;
+  outline: none;
+}
+
+.btn-test {
+  width: 100%;
+  padding: 10px;
+  background: var(--vp-c-brand);
+  color: white;
   border: none;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
-.btn-text:hover {
-  text-decoration: underline;
+.btn-test:hover {
+  background: var(--vp-c-brand-dark);
 }
 
-/* 动画 */
-.detail-fade-enter-active,
-.detail-fade-leave-active {
-  transition: all 0.3s ease;
+.btn-test:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.detail-fade-enter-from,
-.detail-fade-leave-to {
-  opacity: 0;
-  transform: scale(0.95);
+/* 响应式 */
+@media (max-width: 1024px) {
+  .detail-preview {
+    display: none;
+  }
 }
 
-/* 深色模式 */
-.dark .detail-panel {
-  background: rgba(30, 30, 40, 0.9);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.dark .detail-avatar {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.dark .seat-section,
-.dark .prompt-preview,
-.dark .stat-item,
-.dark .permission-item {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.dark .detail-footer {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.dark .btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
+@media (max-width: 768px) {
+  .detail-nav {
+    display: none;
+  }
 }
 </style>

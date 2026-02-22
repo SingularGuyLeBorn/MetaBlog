@@ -88,6 +88,7 @@
       :collapsed="rightCollapsed"
       @update:config="updateConfig"
       @toggle-collapse="rightCollapsed = !rightCollapsed"
+      @open-agent-center="showAgentAdmin = true"
     />
 
     <!-- Agent 管理中心 -->
@@ -104,7 +105,7 @@ import { SessionPanel } from '../modules/chat/session'
 import { MessageList } from '../modules/chat/messages'
 import { ChatInput } from '../modules/chat/input'
 import { SettingsPanel } from '../modules/chat/settings'
-import { AgentAdmin } from '../modules/agent/admin'
+import { AgentAdmin } from '../modules/agent'
 import { Icon } from '../ui'
 import { useAIChat, useAgents } from '../core/composables'
 import type { SessionConfig } from '../core/types'

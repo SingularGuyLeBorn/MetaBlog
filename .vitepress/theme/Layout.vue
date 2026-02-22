@@ -14,7 +14,7 @@ const ChatPage = defineAsyncComponent(() => import('./components/pages/ChatPage.
 
 import ControlCenter from './components/ControlCenter.vue'
 import FullScreenPanel from './components/FullScreenPanel.vue'
-// Agent 组件已移除
+import { AgentAdmin } from './components/ai-chat/modules/agent'
 import { useAppStore } from './stores/app'
 
 const { Layout } = DefaultTheme
@@ -29,9 +29,19 @@ const isChatPage = computed(() => {
 
 // Control center panel state
 const activePanel = ref<'dashboard' | 'articles' | 'logs' | null>(null)
+const showAgentAdmin = ref(false)
 
 const handleControlOpen = (panel: 'dashboard' | 'articles' | 'logs') => {
   activePanel.value = panel
+  
+  // 打开 Agent 管理面板
+  if (panel === 'dashboard') {
+    showAgentAdmin.value = true
+  }
+}
+
+const handleAgentChange = (agent: any) => {
+  console.log('Agent changed:', agent.name)
 }
 
 const createNewArticle = () => {
@@ -290,7 +300,11 @@ watch(() => route.path, () => {
 
     
     <!-- Full Screen Panels -->
-    <!-- Agent Dashboard Panel - 已移除 -->
+    <!-- Agent Dashboard Panel -->
+    <AgentAdmin 
+      v-model:visible="showAgentAdmin"
+      @agent-change="handleAgentChange"
+    />
     <!-- Article Manager Panel - 已移除 -->
     <!-- Log Viewer Panel - 已移除 -->
   </div>

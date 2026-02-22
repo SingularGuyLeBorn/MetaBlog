@@ -1,5 +1,5 @@
 /**
- * useAgents - Agent 管理中心
+ * useAgents - Agent 管理中心（后端持久化版）
  * 
  * Agent 等级体系：
  * - meta: 元 Agent，最高权限，可管理其他 Agent
@@ -7,12 +7,9 @@
  * - fixed: 固定唤起 Agent，常驻助手
  * - custom: 自定义 Agent，用户创建的
  * - temp: 临时 Agent，一次性任务
- * 
- * 座次系统：数字越小，排名越前
  */
 
-import { ref, computed, watch } from 'vue'
-import type { Skill } from './useSkills'
+import { ref, computed } from 'vue'
 
 export type AgentLevel = 'meta' | 'core' | 'fixed' | 'custom' | 'temp'
 export type AgentStatus = 'online' | 'offline' | 'busy' | 'idle'
@@ -31,8 +28,8 @@ export interface Agent {
   description: string
   level: AgentLevel
   status: AgentStatus
-  seat: number // 座次，越小越靠前
-  skills: string[] // 技能 ID 列表
+  seat: number
+  skills: string[]
   permissions: AgentPermission[]
   systemPrompt: string
   memoryEnabled: boolean
@@ -40,8 +37,8 @@ export interface Agent {
   createdAt: number
   updatedAt: number
   lastActiveAt: number
-  callCount: number // 被调用次数
-  isDefault: boolean // 是否为默认 Agent
+  callCount: number
+  isDefault: boolean
 }
 
 export interface AgentCreateParams {
@@ -76,7 +73,7 @@ export const LEVEL_CONFIG: Record<AgentLevel, { label: string; color: string; ic
   temp: { label: '临时 Agent', color: '#6b7280', icon: '⏱️', maxSeat: 10 }
 }
 
-// 默认 Agent（顶部 AI 助手）
+// 默认 Agent
 const DEFAULT_AGENT: Agent = {
   id: 'default-assistant',
   name: 'Meta 助手',
@@ -97,285 +94,215 @@ const DEFAULT_AGENT: Agent = {
   isDefault: true
 }
 
-// 存储键
-const STORAGE_KEY = 'ai-agents-v1'
+// 存储键（仅用于活跃 Agent ID）
 const ACTIVE_AGENT_KEY = 'ai-active-agent-id'
 
-// 创建新 Agent
-function createAgent(params: AgentCreateParams): Agent {
-  const now = Date.now()
-  return {
-    id: `agent-${now}-${Math.random().toString(36).slice(2, 9)}`,
-    name: params.name,
-    avatar: params.avatar || '🤖',
-    description: params.description,
-    level: params.level,
-    status: 'idle',
-    seat: 999, // 默认座次，需要手动调整
-    skills: params.skills || [],
-    permissions: PERMISSION_TEMPLATES.map(p => ({
-      ...p,
-      granted: p.id === 'chat' // 默认只有对话权限
-    })),
-    systemPrompt: params.systemPrompt || '',
-    memoryEnabled: false,
-    memoryContent: '',
-    createdAt: now,
-    updatedAt: now,
-    lastActiveAt: now,
-    callCount: 0,
-    isDefault: false
-  }
+// 状态
+const agents = ref<Agent[]>([])
+const activeAgentId = ref<string | null>(null)
+const isLoading = ref(false)
+const error = ref<string | null>(null)
+
+// API 函数
+async function fetchAgents(): Promise<Agent[]> {
+  const response = await fetch('/api/agents')
+  const result = await response.json()
+  if (!result.success) throw new Error(result.error)
+  return result.data
 }
 
-// 加载 Agents
-function loadAgents(): Agent[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      const agents = JSON.parse(stored)
-      // 确保默认 Agent 存在
-      if (!agents.find((a: Agent) => a.id === DEFAULT_AGENT.id)) {
-        agents.unshift({ ...DEFAULT_AGENT })
-      }
-      return agents
-    }
-  } catch (e) {
-    console.error('[useAgents] Failed to load agents:', e)
-  }
-  return [{ ...DEFAULT_AGENT }]
-}
-
-// 保存 Agents
-function saveAgents(agents: Agent[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(agents))
-  } catch (e) {
-    console.error('[useAgents] Failed to save agents:', e)
-  }
-}
-
-// 加载当前激活的 Agent ID
-function loadActiveAgentId(): string {
-  try {
-    return localStorage.getItem(ACTIVE_AGENT_KEY) || DEFAULT_AGENT.id
-  } catch {
-    return DEFAULT_AGENT.id
-  }
-}
-
-// 保存当前激活的 Agent ID
-function saveActiveAgentId(id: string) {
-  try {
-    localStorage.setItem(ACTIVE_AGENT_KEY, id)
-  } catch (e) {
-    console.error('[useAgents] Failed to save active agent:', e)
-  }
-}
-
-// Composable
-export function useAgents() {
-  const agents = ref<Agent[]>(loadAgents())
-  const activeAgentId = ref<string>(loadActiveAgentId())
-
-  // 按座次排序的 Agents
-  const sortedAgents = computed(() => {
-    return [...agents.value].sort((a, b) => {
-      // 先按等级排序
-      const levelOrder = { meta: 0, core: 1, fixed: 2, custom: 3, temp: 4 }
-      if (levelOrder[a.level] !== levelOrder[b.level]) {
-        return levelOrder[a.level] - levelOrder[b.level]
-      }
-      // 再按座次排序
-      return a.seat - b.seat
-    })
+async function createAgentAPI(params: AgentCreateParams): Promise<Agent> {
+  const response = await fetch('/api/agents', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params)
   })
+  const result = await response.json()
+  if (!result.success) throw new Error(result.error)
+  return result.data
+}
 
-  // 按等级分组的 Agents
+async function updateAgentAPI(id: string, updates: Partial<Agent>): Promise<Agent> {
+  const response = await fetch('/api/agents/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, ...updates })
+  })
+  const result = await response.json()
+  if (!result.success) throw new Error(result.error)
+  return result.data
+}
+
+async function deleteAgentAPI(id: string): Promise<void> {
+  const response = await fetch('/api/agents/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  })
+  const result = await response.json()
+  if (!result.success) throw new Error(result.error)
+}
+
+export function useAgents() {
+  // 计算属性
+  const activeAgent = computed(() => 
+    agents.value.find(a => a.id === activeAgentId.value) || agents.value[0] || null
+  )
+  
   const agentsByLevel = computed(() => {
-    const groups: Record<AgentLevel, Agent[]> = {
+    const result: Record<AgentLevel, Agent[]> = {
       meta: [],
       core: [],
       fixed: [],
       custom: [],
       temp: []
     }
-    sortedAgents.value.forEach(agent => {
-      groups[agent.level].push(agent)
+    agents.value.forEach(agent => {
+      result[agent.level].push(agent)
     })
-    return groups
+    return result
+  })
+  
+  const sortedAgents = computed(() => {
+    return [...agents.value].sort((a, b) => {
+      if (a.isDefault) return -1
+      if (b.isDefault) return 1
+      return a.seat - b.seat
+    })
   })
 
-  // 当前激活的 Agent
-  const activeAgent = computed(() => {
-    return agents.value.find(a => a.id === activeAgentId.value) || agents.value[0]
-  })
-
-  // 默认 Agent
-  const defaultAgent = computed(() => {
-    return agents.value.find(a => a.isDefault) || agents.value[0]
-  })
-
-  // 监听变化并保存
-  watch(agents, (val) => {
-    saveAgents(val)
-  }, { deep: true })
-
-  watch(activeAgentId, (val) => {
-    saveActiveAgentId(val)
-  })
-
-  // CRUD 操作
-  function create(params: AgentCreateParams): Agent {
-    const agent = createAgent(params)
-    agents.value.push(agent)
-    return agent
-  }
-
-  function update(id: string, updates: Partial<Agent>): boolean {
-    const index = agents.value.findIndex(a => a.id === id)
-    if (index === -1) return false
+  // 初始化 - 从后端加载
+  async function init() {
+    isLoading.value = true
+    error.value = null
     
-    agents.value[index] = {
-      ...agents.value[index],
-      ...updates,
-      updatedAt: Date.now()
+    try {
+      const data = await fetchAgents()
+      
+      // 确保默认 Agent 存在
+      if (!data.find((a: Agent) => a.id === DEFAULT_AGENT.id)) {
+        data.unshift({ ...DEFAULT_AGENT })
+        // 保存到后端
+        await createAgentAPI(DEFAULT_AGENT)
+      }
+      
+      agents.value = data
+      
+      // 加载活跃 Agent ID（从 localStorage，这只是 UI 状态）
+      if (typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem(ACTIVE_AGENT_KEY)
+        if (stored && agents.value.find(a => a.id === stored)) {
+          activeAgentId.value = stored
+        } else {
+          activeAgentId.value = agents.value[0]?.id || null
+        }
+      }
+    } catch (e) {
+      error.value = String(e)
+      console.error('[useAgents] Failed to load:', e)
+    } finally {
+      isLoading.value = false
     }
-    return true
   }
 
-  function remove(id: string): boolean {
-    const agent = agents.value.find(a => a.id === id)
-    if (!agent || agent.isDefault) return false // 不能删除默认 Agent
+  // 创建 Agent
+  async function create(params: AgentCreateParams): Promise<Agent> {
+    const now = Date.now()
+    const newAgentData = {
+      name: params.name,
+      avatar: params.avatar || '🤖',
+      description: params.description,
+      level: params.level,
+      status: 'idle' as AgentStatus,
+      seat: 999,
+      skills: params.skills || [],
+      permissions: PERMISSION_TEMPLATES.map(p => ({
+        ...p,
+        granted: p.id === 'chat'
+      })),
+      systemPrompt: params.systemPrompt || '',
+      memoryEnabled: false,
+      memoryContent: '',
+      lastActiveAt: now,
+      callCount: 0,
+      isDefault: false
+    }
     
+    const newAgent = await createAgentAPI(newAgentData)
+    agents.value.push(newAgent)
+    
+    // 如果是第一个 Agent，设为活跃
+    if (agents.value.length === 1) {
+      setActive(newAgent.id)
+    }
+    
+    return newAgent
+  }
+
+  // 更新 Agent
+  async function update(id: string, data: Partial<Agent>): Promise<void> {
+    const updated = await updateAgentAPI(id, data)
+    const index = agents.value.findIndex(a => a.id === id)
+    if (index !== -1) {
+      agents.value[index] = updated
+    }
+  }
+
+  // 删除 Agent
+  async function remove(id: string): Promise<void> {
+    await deleteAgentAPI(id)
     agents.value = agents.value.filter(a => a.id !== id)
     
-    // 如果删除的是当前激活的 Agent，切换到默认
+    // 如果删除的是活跃 Agent，重置
     if (activeAgentId.value === id) {
-      activeAgentId.value = defaultAgent.value?.id || agents.value[0]?.id
+      activeAgentId.value = agents.value[0]?.id || null
+      if (typeof localStorage !== 'undefined' && activeAgentId.value) {
+        localStorage.setItem(ACTIVE_AGENT_KEY, activeAgentId.value)
+      }
     }
-    
-    return true
   }
 
-  function getById(id: string): Agent | undefined {
-    return agents.value.find(a => a.id === id)
-  }
-
-  function setActive(id: string): boolean {
-    const agent = agents.value.find(a => a.id === id)
-    if (!agent) return false
-    
+  // 设置活跃 Agent
+  function setActive(id: string) {
     activeAgentId.value = id
-    agent.lastActiveAt = Date.now()
-    agent.callCount++
-    return true
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(ACTIVE_AGENT_KEY, id)
+    }
   }
 
-  // 更新 Agent 状态
-  function setStatus(id: string, status: AgentStatus): boolean {
-    return update(id, { status })
-  }
-
-  // 调整座次
-  function setSeat(id: string, seat: number): boolean {
-    return update(id, { seat })
-  }
-
-  // 批量调整座次（交换两个 Agent 的座次）
-  function swapSeat(id1: string, id2: string): boolean {
-    const agent1 = agents.value.find(a => a.id === id1)
-    const agent2 = agents.value.find(a => a.id === id2)
-    if (!agent1 || !agent2) return false
-    
-    const temp = agent1.seat
-    agent1.seat = agent2.seat
-    agent2.seat = temp
-    
-    update(id1, { seat: agent1.seat })
-    update(id2, { seat: agent2.seat })
-    
-    return true
-  }
-
-  // 更新权限
-  function setPermission(agentId: string, permissionId: string, granted: boolean): boolean {
-    const agent = getById(agentId)
-    if (!agent) return false
-    
-    const perm = agent.permissions.find(p => p.id === permissionId)
-    if (!perm) return false
-    
-    perm.granted = granted
-    update(agentId, { permissions: agent.permissions })
-    return true
-  }
-
-  // 添加技能
-  function addSkill(agentId: string, skillId: string): boolean {
-    const agent = getById(agentId)
-    if (!agent || agent.skills.includes(skillId)) return false
-    
-    agent.skills.push(skillId)
-    update(agentId, { skills: agent.skills })
-    return true
-  }
-
-  // 移除技能
-  function removeSkill(agentId: string, skillId: string): boolean {
-    const agent = getById(agentId)
-    if (!agent) return false
-    
-    agent.skills = agent.skills.filter(s => s !== skillId)
-    update(agentId, { skills: agent.skills })
-    return true
-  }
-
-  // 获取统计信息
+  // 获取统计
   function getStats() {
     return {
       total: agents.value.length,
+      online: agents.value.filter(a => a.status === 'online').length,
       byLevel: {
         meta: agents.value.filter(a => a.level === 'meta').length,
         core: agents.value.filter(a => a.level === 'core').length,
         fixed: agents.value.filter(a => a.level === 'fixed').length,
         custom: agents.value.filter(a => a.level === 'custom').length,
         temp: agents.value.filter(a => a.level === 'temp').length
-      },
-      online: agents.value.filter(a => a.status === 'online').length,
-      totalCalls: agents.value.reduce((sum, a) => sum + a.callCount, 0)
+      }
     }
   }
 
   return {
-    // State
+    // 状态
     agents,
     activeAgentId,
-    sortedAgents,
-    agentsByLevel,
     activeAgent,
-    defaultAgent,
+    isLoading,
+    error,
     
-    // CRUD
+    // 计算属性
+    agentsByLevel,
+    sortedAgents,
+    
+    // 方法
+    init,
     create,
     update,
     remove,
-    getById,
     setActive,
-    
-    // 状态管理
-    setStatus,
-    setSeat,
-    swapSeat,
-    
-    // 权限和技能
-    setPermission,
-    addSkill,
-    removeSkill,
-    
-    // 统计
     getStats
   }
 }
-
-export default useAgents

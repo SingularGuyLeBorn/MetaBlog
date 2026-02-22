@@ -121,14 +121,21 @@ async function flushLogs() {
     const response = await fetch('/api/logs/batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entries })
+      body: JSON.stringify({ logs: entries })
     })
     
     if (!response.ok) {
+      // 检查是否是 HTML 错误页面
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        console.warn('[Logger] Server returned non-JSON response, logs may not be persisted')
+        return
+      }
       console.error('[Logger] Failed to flush logs:', await response.text())
     }
   } catch (error) {
-    console.error('[Logger] Flush error:', error)
+    // 静默处理网络错误，避免影响用户体验
+    console.debug('[Logger] Flush error (non-critical):', error)
   }
 }
 
@@ -161,7 +168,7 @@ export function addLog(entry: Omit<LogEntry, 'id' | 'timestamp'>): LogEntry {
   }
   
   // 添加到批量写入缓冲区
-  logBuffer.push(entry)
+  logBuffer.push(fullEntry)
   scheduleFlush()
   
   return fullEntry
@@ -181,6 +188,14 @@ export async function loadLogs(filter: LogFilter = {}): Promise<LogEntry[]> {
     if (filter.offset) params.append('offset', filter.offset.toString())
     
     const response = await fetch(`/api/logs/query?${params}`)
+    
+    // 检查 Content-Type，避免解析 HTML 错误页面
+    const contentType = response.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      console.warn('[Logger] Server returned non-JSON response, skipping log load')
+      return []
+    }
+    
     const result = await response.json()
     
     if (result.success) {
@@ -198,6 +213,14 @@ export async function loadLogs(filter: LogFilter = {}): Promise<LogEntry[]> {
 export async function loadStats(): Promise<LogStats | null> {
   try {
     const response = await fetch('/api/logs/stats')
+    
+    // 检查 Content-Type，避免解析 HTML 错误页面
+    const contentType = response.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      console.warn('[Logger] Server returned non-JSON response, skipping stats load')
+      return null
+    }
+    
     const result = await response.json()
     
     if (result.success) {

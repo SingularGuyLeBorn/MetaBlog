@@ -165,6 +165,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  'update:visible': [value: boolean]
   close: []
   use: [skill: Skill]
   selectSkill: [skill: Skill]
@@ -239,6 +240,7 @@ const filteredSkills = computed(() => [
 
 // 方法
 function close() {
+  emit('update:visible', false)
   emit('close')
 }
 
