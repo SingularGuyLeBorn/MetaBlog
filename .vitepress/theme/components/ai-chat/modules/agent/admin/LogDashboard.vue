@@ -144,46 +144,43 @@
               </div>
             </div>
             
-            <!-- 右侧：对话链路 -->
+            <!-- 右侧：日志详情 -->
             <div class="traces-panel">
               <div class="panel-header">
-                <h4>🔄 对话链路</h4>
+                <h4>📋 日志详情</h4>
               </div>
               
-              <div class="traces-list">
-                <div
-                  v-for="trace in recentTraces"
-                  :key="trace.id"
-                  :class="['trace-item', trace.status]"
-                  @click="selectedTrace = trace"
-                >
-                  <div class="trace-header">
-                    <span class="trace-status">{{ statusIcon(trace.status) }}</span>
-                    <span class="trace-time">{{ formatTime(trace.startTime) }}</span>
-                    <span v-if="trace.endTime" class="trace-duration">
-                      {{ trace.endTime - trace.startTime }}ms
+              <div class="log-detail-placeholder">
+                <p>点击左侧日志查看详情</p>
+                <div class="log-stats-summary">
+                  <div class="summary-item">
+                    <span class="summary-label">总日志数:</span>
+                    <span class="summary-value">{{ totalLogs }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">今日日志:</span>
+                    <span class="summary-value">{{ todayLogs }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">错误数:</span>
+                    <span class="summary-value" :class="{ 'text-error': errorCount > 0 }">
+                      {{ errorCount }}
                     </span>
                   </div>
-                  <div class="trace-nodes">
-                    <div class="node-flow">
-                      <span v-for="(node, i) in getTraceNodes(trace)" :key="node.id" class="node-item">
-                        {{ nodeTypeIcon(node.type) }}
-                        <span v-if="i < getTraceNodes(trace).length - 1" class="node-arrow">→</span>
-                      </span>
-                    </div>
-                  </div>
                 </div>
-              </div>
-              
-              <!-- 选中链路的详情 -->
-              <div v-if="selectedTrace && selectedTrace.nodes.get(selectedTrace.rootNodeId)" class="trace-detail">
-                <h5>链路详情</h5>
-                <div class="trace-tree">
-                  <TraceNode
-                    :node="selectedTrace.nodes.get(selectedTrace.rootNodeId)!"
-                    :nodes="selectedTrace.nodes"
-                    :level="0"
-                  />
+                
+                <div v-if="uniqueComponents.length > 0" class="components-list">
+                  <h5>活跃组件</h5>
+                  <div class="component-tags">
+                    <span 
+                      v-for="comp in uniqueComponents.slice(0, 10)" 
+                      :key="comp"
+                      class="component-tag"
+                      @click="filter.component = comp"
+                    >
+                      {{ comp }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -195,8 +192,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
-import { logger, type LogEntry, type LogLevel, type LogCategory, type ChatTrace } from '../../../core/services/logger'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { 
+  logger, 
+  loadLogs, 
+  loadStats, 
+  clearLogs as clearServerLogs,
+  exportLogs as exportServerLogs,
+  type LogEntry, 
+  type LogLevel, 
+  type LogCategory 
+} from '../../../core/services/logger'
 import TraceNode from './TraceNode.vue'
 
 const props = defineProps<{
@@ -211,7 +217,8 @@ const emit = defineEmits<{
 const logsContainer = ref<HTMLElement>()
 const autoScroll = ref(true)
 const expandedLogs = ref(new Set<string>())
-const selectedTrace = ref<ChatTrace | null>(null)
+const isLoading = ref(false)
+const refreshTimer = ref<number | null>(null)
 
 const filter = ref({
   keyword: '',
@@ -235,7 +242,7 @@ const categoryLabels: Record<LogCategory | string, string> = {
 // ==================== 计算属性 ====================
 const isRecording = computed(() => logger.isRecording.value)
 const allLogs = computed(() => logger.logs.value)
-const allTraces = computed(() => Array.from(logger.traces.value.values()))
+const serverStats = computed(() => logger.stats.value)
 
 const filteredLogs = computed(() => {
   return allLogs.value.filter(log => {
@@ -252,32 +259,19 @@ const filteredLogs = computed(() => {
       return false
     }
     return true
-  }).slice(-500) // 最多显示500条
+  }).slice(-500)
 })
 
 const uniqueComponents = computed(() => {
-  const comps = new Set(allLogs.value.map(l => l.component).filter(Boolean))
-  return Array.from(comps).sort()
+  return serverStats.value?.uniqueComponents || []
 })
 
-// 统计
-const totalLogs = computed(() => allLogs.value.length)
-const todayLogs = computed(() => {
-  const today = new Date().setHours(0, 0, 0, 0)
-  return allLogs.value.filter(l => l.timestamp >= today).length
-})
-const errorCount = computed(() => allLogs.value.filter(l => l.level === 'error').length)
-const activeTraces = computed(() => allTraces.value.filter(t => t.status === 'running').length)
-const avgResponseTime = computed(() => {
-  const traces = allTraces.value.filter(t => t.endTime)
-  if (traces.length === 0) return 0
-  const total = traces.reduce((sum, t) => sum + (t.endTime! - t.startTime), 0)
-  return Math.round(total / traces.length)
-})
-
-const recentTraces = computed(() => {
-  return allTraces.value.slice(-10).reverse()
-})
+// 统计（从服务端获取）
+const totalLogs = computed(() => serverStats.value?.totalLogs || 0)
+const todayLogs = computed(() => serverStats.value?.todayLogs || 0)
+const errorCount = computed(() => serverStats.value?.errorCount || 0)
+const activeTraces = computed(() => 0) // 暂不实现
+const avgResponseTime = computed(() => 0) // 暂不实现)
 
 // ==================== 方法 ====================
 function close() {
@@ -305,27 +299,25 @@ function toggleLog(id: string) {
   }
 }
 
-function clearAllLogs() {
+async function clearAllLogs() {
   if (confirm('确定要清空所有日志吗？')) {
-    logger.clearLogs()
+    await clearServerLogs()
     expandedLogs.value.clear()
-    selectedTrace.value = null
+    await refreshData()
   }
 }
 
 function exportLogs() {
-  const data = {
-    logs: allLogs.value,
-    traces: allTraces.value,
-    exportTime: new Date().toISOString()
-  }
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `ai-chat-logs-${Date.now()}.json`
-  a.click()
-  URL.revokeObjectURL(url)
+  exportServerLogs()
+}
+
+async function refreshData() {
+  isLoading.value = true
+  await Promise.all([
+    loadLogs({ limit: 1000 }),
+    loadStats()
+  ])
+  isLoading.value = false
 }
 
 function formatTime(timestamp: number): string {
@@ -338,37 +330,28 @@ function formatTime(timestamp: number): string {
   })
 }
 
-function statusIcon(status: string): string {
-  const map: Record<string, string> = {
-    running: '🔄',
-    completed: '✅',
-    error: '❌'
-  }
-  return map[status] || '⏸️'
-}
-
-function nodeTypeIcon(type: string): string {
-  const map: Record<string, string> = {
-    user_message: '👤',
-    ai_response: '🤖',
-    tool_call: '🔧',
-    api_request: '🌐'
-  }
-  return map[type] || '📄'
-}
-
-function getTraceNodes(trace: ChatTrace) {
-  return Array.from(trace.nodes.values()).slice(0, 5)
-}
-
 function handleScroll() {
-  // 用户手动滚动时暂停自动滚动
   if (logsContainer.value) {
     const { scrollTop, scrollHeight, clientHeight } = logsContainer.value
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 50
     autoScroll.value = isAtBottom
   }
 }
+
+// 自动刷新
+let refreshInterval: number | null = null
+
+onMounted(() => {
+  refreshData()
+  // 每 5 秒刷新一次
+  refreshInterval = window.setInterval(refreshData, 5000)
+})
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
+})
 
 // 自动滚动
 watch(filteredLogs, () => {

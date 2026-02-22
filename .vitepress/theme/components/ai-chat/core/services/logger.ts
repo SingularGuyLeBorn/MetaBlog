@@ -1,12 +1,12 @@
 /**
- * 结构化日志系统
+ * 结构化日志系统（服务端存储版）
  * 
  * 功能：
  * 1. 组件生命周期日志（挂载、更新、卸载）
  * 2. 对话完整链路追踪
  * 3. 工具调用记录
  * 4. 支持搜索和筛选
- * 5. 持久化到 localStorage
+ * 5. 日志存储到服务端文件系统
  */
 
 import { ref, computed, type Ref } from 'vue'
@@ -58,49 +58,88 @@ export interface LogEntry {
   sessionId?: string
   messageId?: string
   duration?: number
-  parentId?: string  // 用于构建调用链
-}
-
-/** 对话链路节点 */
-export interface ChatTraceNode {
-  id: string
-  type: 'user_message' | 'ai_response' | 'tool_call' | 'api_request'
-  timestamp: number
-  content?: string
-  status: 'pending' | 'running' | 'success' | 'error'
-  duration?: number
-  metadata?: any
-  children: string[]
   parentId?: string
 }
 
-/** 完整对话追踪 */
-export interface ChatTrace {
+/** 工具调用记录 */
+export interface ToolCallRecord {
   id: string
-  sessionId: string
+  name: string
+  description?: string
+  arguments: Record<string, any>
+  result: string
+  status: 'pending' | 'running' | 'success' | 'error'
   startTime: number
   endTime?: number
-  status: 'running' | 'completed' | 'error'
-  nodes: Map<string, ChatTraceNode>
-  rootNodeId: string
+  duration?: number
+  error?: string
 }
 
-// ==================== 存储 ====================
+/** 日志统计 */
+export interface LogStats {
+  totalLogs: number
+  todayLogs: number
+  errorCount: number
+  uniqueComponents: string[]
+}
 
-const STORAGE_KEY = 'ai_chat_logs_v1'
-const MAX_LOGS = 10000  // 最大日志条数
+/** 日志筛选 */
+export interface LogFilter {
+  level?: LogLevel
+  category?: LogCategory
+  component?: string
+  keyword?: string
+  startTime?: number
+  endTime?: number
+  limit?: number
+  offset?: number
+}
 
 // ==================== 状态 ====================
 
 const logs: Ref<LogEntry[]> = ref([])
-const traces: Ref<Map<string, ChatTrace>> = ref(new Map())
+const stats: Ref<LogStats | null> = ref(null)
 const isRecording = ref(true)
+let logBuffer: Omit<LogEntry, 'id' | 'timestamp'>[] = []
+let flushTimer: number | null = null
 
 // ==================== 核心函数 ====================
 
 /** 生成唯一ID */
 function generateId(): string {
   return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+}
+
+/** 批量写入日志到服务端 */
+async function flushLogs() {
+  if (logBuffer.length === 0) return
+  
+  const entries = [...logBuffer]
+  logBuffer = []
+  
+  try {
+    const response = await fetch('/api/logs/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entries })
+    })
+    
+    if (!response.ok) {
+      console.error('[Logger] Failed to flush logs:', await response.text())
+    }
+  } catch (error) {
+    console.error('[Logger] Flush error:', error)
+  }
+}
+
+/** 延迟批量写入 */
+function scheduleFlush() {
+  if (flushTimer) return
+  
+  flushTimer = window.setTimeout(() => {
+    flushLogs()
+    flushTimer = null
+  }, 1000) // 1秒批量写入一次
 }
 
 /** 添加日志 */
@@ -113,170 +152,105 @@ export function addLog(entry: Omit<LogEntry, 'id' | 'timestamp'>): LogEntry {
     ...entry
   }
   
+  // 添加到本地缓存（用于实时显示）
   logs.value.push(fullEntry)
   
-  // 限制日志数量
-  if (logs.value.length > MAX_LOGS) {
-    logs.value = logs.value.slice(-MAX_LOGS)
+  // 限制本地缓存数量
+  if (logs.value.length > 1000) {
+    logs.value = logs.value.slice(-1000)
   }
   
-  // 持久化
-  persistLogs()
+  // 添加到批量写入缓冲区
+  logBuffer.push(entry)
+  scheduleFlush()
   
   return fullEntry
 }
 
-/** 创建对话追踪 */
-export function createTrace(sessionId: string, userMessageId: string): ChatTrace {
-  const traceId = generateId()
-  const rootNode: ChatTraceNode = {
-    id: userMessageId,
-    type: 'user_message',
-    timestamp: Date.now(),
-    status: 'success',
-    children: []
-  }
-  
-  const trace: ChatTrace = {
-    id: traceId,
-    sessionId,
-    startTime: Date.now(),
-    status: 'running',
-    nodes: new Map([[rootNode.id, rootNode]]),
-    rootNodeId: rootNode.id
-  }
-  
-  traces.value.set(traceId, trace)
-  
-  // 记录日志
-  addLog({
-    level: 'info',
-    category: 'chat',
-    event: 'message_start',
-    message: '对话开始',
-    sessionId,
-    data: { traceId, userMessageId }
-  })
-  
-  return trace
-}
-
-/** 添加追踪节点 */
-export function addTraceNode(
-  traceId: string,
-  parentId: string,
-  node: Omit<ChatTraceNode, 'id' | 'timestamp' | 'children'>
-): ChatTraceNode | null {
-  const trace = traces.value.get(traceId)
-  if (!trace) return null
-  
-  const newNode: ChatTraceNode = {
-    id: generateId(),
-    timestamp: Date.now(),
-    children: [],
-    ...node
-  }
-  
-  trace.nodes.set(newNode.id, newNode)
-  
-  const parent = trace.nodes.get(parentId)
-  if (parent) {
-    parent.children.push(newNode.id)
-    newNode.parentId = parentId
-  }
-  
-  return newNode
-}
-
-/** 完成追踪 */
-export function completeTrace(traceId: string, status: 'completed' | 'error' = 'completed') {
-  const trace = traces.value.get(traceId)
-  if (!trace) return
-  
-  trace.status = status
-  trace.endTime = Date.now()
-  
-  // 记录日志
-  addLog({
-    level: status === 'error' ? 'error' : 'info',
-    category: 'chat',
-    event: 'message_complete',
-    message: status === 'error' ? '对话失败' : '对话完成',
-    sessionId: trace.sessionId,
-    data: { 
-      traceId, 
-      duration: trace.endTime - trace.startTime,
-      status 
-    }
-  })
-}
-
-/** 持久化日志 */
-function persistLogs() {
+/** 从服务端加载日志 */
+export async function loadLogs(filter: LogFilter = {}): Promise<LogEntry[]> {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      logs: logs.value,
-      timestamp: Date.now()
-    }))
-  } catch (e) {
-    console.error('[Logger] Failed to persist logs:', e)
+    const params = new URLSearchParams()
+    if (filter.level) params.append('level', filter.level)
+    if (filter.category) params.append('category', filter.category)
+    if (filter.component) params.append('component', filter.component)
+    if (filter.keyword) params.append('keyword', filter.keyword)
+    if (filter.startTime) params.append('startTime', filter.startTime.toString())
+    if (filter.endTime) params.append('endTime', filter.endTime.toString())
+    if (filter.limit) params.append('limit', filter.limit.toString())
+    if (filter.offset) params.append('offset', filter.offset.toString())
+    
+    const response = await fetch(`/api/logs/query?${params}`)
+    const result = await response.json()
+    
+    if (result.success) {
+      logs.value = result.data
+      return result.data
+    }
+    return []
+  } catch (error) {
+    console.error('[Logger] Load error:', error)
+    return []
   }
 }
 
-/** 加载日志 */
-export function loadLogs() {
+/** 加载统计信息 */
+export async function loadStats(): Promise<LogStats | null> {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      const data = JSON.parse(stored)
-      logs.value = data.logs || []
+    const response = await fetch('/api/logs/stats')
+    const result = await response.json()
+    
+    if (result.success) {
+      stats.value = result.data
+      return result.data
     }
-  } catch (e) {
-    console.error('[Logger] Failed to load logs:', e)
+    return null
+  } catch (error) {
+    console.error('[Logger] Stats error:', error)
+    return null
   }
 }
 
 /** 清空日志 */
-export function clearLogs() {
-  logs.value = []
-  traces.value.clear()
-  localStorage.removeItem(STORAGE_KEY)
+export async function clearLogs(days?: number): Promise<boolean> {
+  try {
+    const url = days ? `/api/logs/clear?days=${days}` : '/api/logs/clear'
+    const response = await fetch(url, { method: 'DELETE' })
+    const result = await response.json()
+    
+    if (result.success) {
+      logs.value = []
+      await loadStats()
+      return true
+    }
+    return false
+  } catch (error) {
+    console.error('[Logger] Clear error:', error)
+    return false
+  }
 }
 
-// ==================== 搜索和筛选 ====================
-
-export interface LogFilter {
-  level?: LogLevel
-  category?: LogCategory
-  component?: string
-  sessionId?: string
-  startTime?: number
-  endTime?: number
-  keyword?: string
+/** 导出日志 */
+export function exportLogs(startDate?: string, endDate?: string) {
+  const params = new URLSearchParams()
+  if (startDate) params.append('startDate', startDate)
+  if (endDate) params.append('endDate', endDate)
+  
+  const url = `/api/logs/export?${params}`
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `logs-export-${Date.now()}.json`
+  a.click()
 }
 
 /** 搜索日志 */
-export function searchLogs(filter: LogFilter): LogEntry[] {
-  return logs.value.filter(log => {
-    if (filter.level && log.level !== filter.level) return false
-    if (filter.category && log.category !== filter.category) return false
-    if (filter.component && log.component !== filter.component) return false
-    if (filter.sessionId && log.sessionId !== filter.sessionId) return false
-    if (filter.startTime && log.timestamp < filter.startTime) return false
-    if (filter.endTime && log.timestamp > filter.endTime) return false
-    if (filter.keyword && !log.message.toLowerCase().includes(filter.keyword.toLowerCase())) return false
-    return true
-  })
+export async function searchLogs(filter: LogFilter): Promise<LogEntry[]> {
+  return loadLogs(filter)
 }
 
 /** 获取组件相关日志 */
-export function getComponentLogs(componentName: string): LogEntry[] {
-  return logs.value.filter(log => log.component === componentName)
-}
-
-/** 获取会话完整链路 */
-export function getSessionTrace(sessionId: string): ChatTrace | undefined {
-  return Array.from(traces.value.values()).find(t => t.sessionId === sessionId)
+export async function getComponentLogs(componentName: string): Promise<LogEntry[]> {
+  return loadLogs({ component: componentName })
 }
 
 // ==================== Vue 组合式函数 ====================
@@ -314,47 +288,19 @@ export function useComponentLogger(componentName: string) {
   }
 }
 
-/**
- * 对话追踪钩子
- */
-export function useChatTracer() {
-  let currentTrace: ChatTrace | null = null
-  
-  const startTrace = (sessionId: string, userMessageId: string) => {
-    currentTrace = createTrace(sessionId, userMessageId)
-    return currentTrace.id
-  }
-  
-  const addNode = (parentId: string, node: Omit<ChatTraceNode, 'id' | 'timestamp' | 'children'>) => {
-    if (!currentTrace) return null
-    return addTraceNode(currentTrace.id, parentId, node)
-  }
-  
-  const endTrace = (status: 'completed' | 'error' = 'completed') => {
-    if (!currentTrace) return
-    completeTrace(currentTrace.id, status)
-    currentTrace = null
-  }
-  
-  return {
-    startTrace,
-    addNode,
-    endTrace,
-    getCurrentTrace: () => currentTrace
-  }
-}
-
 // ==================== 导出 ====================
 
 export const logger = {
   logs: computed(() => logs.value),
-  traces: computed(() => traces.value),
+  stats: computed(() => stats.value),
   isRecording: computed(() => isRecording.value),
   
   addLog,
-  searchLogs,
-  clearLogs,
   loadLogs,
+  loadStats,
+  clearLogs,
+  exportLogs,
+  searchLogs,
   
   // 快捷方法
   debug: (message: string, data?: any) => addLog({ level: 'debug', category: 'chat', message, data }),
@@ -367,5 +313,14 @@ export const logger = {
   stopRecording: () => { isRecording.value = false }
 }
 
-// 初始化时加载日志
-loadLogs()
+// 页面卸载前确保日志写入
+window.addEventListener('beforeunload', () => {
+  if (logBuffer.length > 0) {
+    // 使用 sendBeacon 确保日志发送
+    const blob = new Blob(
+      [JSON.stringify({ entries: logBuffer })],
+      { type: 'application/json' }
+    )
+    navigator.sendBeacon('/api/logs/batch', blob)
+  }
+})

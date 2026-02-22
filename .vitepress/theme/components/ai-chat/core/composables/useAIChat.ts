@@ -10,7 +10,7 @@ import { ref, computed } from 'vue'
 import type { ChatSession, ChatMessage, SessionConfig, MessageGroup } from '../types'
 import { storage, convertGroupsToMessages } from '../services/storage'
 import { aiService } from '../services/aiService'
-import { logger, useChatTracer, addLog } from '../services/logger'
+import { logger, addLog } from '../services/logger'
 
 const DEFAULT_CONFIG: SessionConfig = {
   model: 'deepseek-chat',
