@@ -1,161 +1,155 @@
 <!--
-  TypewriterText - 打字机文本效果组件
-  用于在思考模式下模拟流式输出的视觉效果
+  TypewriterText - 打字机效果组件（思考模式流式视觉）
+  
+  专为 deepseek-reasoner 设计：
+  - 官方非流式API，但UI层模拟流式输出效果
+  - 首次显示时有打字机效果
+  - 再次查看时直接显示完整内容
 -->
 <template>
-  <span class="typewriter-text">
-    {{ displayText }}<span v-if="isTyping" class="cursor">|</span>
-  </span>
+  <span class="typewriter-content" v-html="displayedContent"></span>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 
 interface Props {
-  /** 完整文本内容 */
-  text: string
-  /** 打字速度（毫秒/字符） */
+  /** 完整内容 */
+  content: string
+  /** 打字速度(ms/字符)，默认15 */
   speed?: number
-  /** 是否启用打字效果 */
+  /** 是否启用打字机效果 */
   enabled?: boolean
-  /** 最小文本长度才启用打字效果（避免短文本也打字） */
-  minLength?: number
+  /** 内容是否为HTML */
+  html?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  speed: 25,
+  speed: 15,
   enabled: true,
-  minLength: 15
+  html: false
 })
 
 const emit = defineEmits<{
   complete: []
 }>()
 
-const displayText = ref('')
-const isTyping = ref(false)
-let currentIndex = 0
-let timeoutId: ReturnType<typeof setTimeout> | null = null
-let isCancelled = false
+const displayedContent = ref('')
+let timeoutId: number | null = null
+let isTyping = false
 
-// 获取字符延迟
-function getDelay(char: string): number {
-  // 标点符号增加延迟
-  if (/[。！？.!?]/.test(char)) return props.speed * 4
-  if (/[，,；;：:]/.test(char)) return props.speed * 2
-  // 换行增加延迟
-  if (char === '\n') return props.speed * 3
-  return props.speed
-}
-
-// 开始打字
-function startTyping() {
-  // 清理之前的状态
-  stopTyping()
-  
-  if (!props.text) {
-    displayText.value = ''
-    return
-  }
-  
-  // 不启用或文本太短，直接显示
-  if (!props.enabled || props.text.length < props.minLength) {
-    displayText.value = props.text
-    emit('complete')
-    return
-  }
-  
-  displayText.value = ''
-  currentIndex = 0
-  isTyping.value = true
-  isCancelled = false
-  
-  typeNextChar()
-}
-
-// 打下一个字符
-function typeNextChar() {
-  if (isCancelled || currentIndex >= props.text.length) {
-    isTyping.value = false
-    if (!isCancelled) {
-      emit('complete')
-    }
-    return
-  }
-  
-  const char = props.text[currentIndex]
-  displayText.value += char
-  currentIndex++
-  
-  const delay = getDelay(char)
-  timeoutId = setTimeout(() => {
-    typeNextChar()
-  }, delay)
-}
-
-// 停止打字
-function stopTyping() {
-  isCancelled = true
-  isTyping.value = false
+/** 清理定时器 */
+function clearTimer() {
   if (timeoutId) {
     clearTimeout(timeoutId)
     timeoutId = null
   }
 }
 
-// 立即完成
-function complete() {
-  stopTyping()
-  displayText.value = props.text
+/** 开始打字效果 */
+function startTyping() {
+  if (!props.enabled || !props.content) {
+    displayedContent.value = props.content
+    emit('complete')
+    return
+  }
+
+  // 已经在打字中，不重复开始
+  if (isTyping) return
+  
+  isTyping = true
+  const content = props.html ? props.content : escapeHtml(props.content)
+  let index = 0
+  displayedContent.value = ''
+
+  const typeNext = () => {
+    if (index < content.length) {
+      // 处理HTML标签：如果是HTML模式，需要完整显示标签
+      if (props.html && content[index] === '<') {
+        const tagEnd = content.indexOf('>', index)
+        if (tagEnd !== -1) {
+          displayedContent.value += content.substring(index, tagEnd + 1)
+          index = tagEnd + 1
+        } else {
+          displayedContent.value += content[index]
+          index++
+        }
+      } else {
+        displayedContent.value += content[index]
+        index++
+      }
+
+      // 动态调整速度
+      const char = content[index - 1]
+      let delay = props.speed
+      if ('。！？.!?'.includes(char)) delay *= 4
+      else if ('，,；;'.includes(char)) delay *= 2
+      else if (char === '\n') delay *= 2
+
+      timeoutId = window.setTimeout(typeNext, delay)
+    } else {
+      isTyping = false
+      emit('complete')
+    }
+  }
+
+  typeNext()
+}
+
+/** 跳过打字，直接显示完整内容 */
+function skip() {
+  clearTimer()
+  isTyping = false
+  displayedContent.value = props.html ? props.content : escapeHtml(props.content)
   emit('complete')
 }
 
-// 监听文本变化
-watch(() => props.text, (newText, oldText) => {
-  if (newText !== oldText) {
-    // 如果文本是追加的，从当前位置继续
-    if (oldText && newText.startsWith(oldText) && displayText.value === oldText) {
-      currentIndex = oldText.length
-      isTyping.value = true
-      isCancelled = false
-      typeNextChar()
+/** 转义HTML特殊字符 */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+// 监听内容变化
+watch(() => props.content, (newContent, oldContent) => {
+  if (newContent !== oldContent) {
+    clearTimer()
+    // 如果内容变长很多（超过100字符），可能是完整回复到了，直接显示
+    if (newContent.length > (oldContent?.length || 0) + 100) {
+      skip()
     } else {
-      // 全新文本，重新开始
       startTyping()
     }
   }
-}, { immediate: true })
-
-// 组件卸载时清理
-onUnmounted(() => {
-  stopTyping()
 })
 
-// 暴露方法给父组件
+// 监听启用状态
+watch(() => props.enabled, (enabled) => {
+  if (enabled && !isTyping && displayedContent.value.length < props.content.length) {
+    startTyping()
+  }
+})
+
+onMounted(() => {
+  startTyping()
+})
+
+// 暴露方法
 defineExpose({
-  complete,
-  stop: stopTyping
+  skip,
+  reset: () => {
+    clearTimer()
+    isTyping = false
+    displayedContent.value = ''
+    startTyping()
+  }
 })
 </script>
 
 <style scoped>
-.typewriter-text {
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.cursor {
-  display: inline-block;
-  width: 2px;
-  height: 1.2em;
-  background: currentColor;
-  margin-left: 2px;
-  animation: blink 1s step-end infinite;
-  vertical-align: text-bottom;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+.typewriter-content {
+  display: inline;
 }
 </style>

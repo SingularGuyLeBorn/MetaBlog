@@ -92,14 +92,28 @@
         </div>
 
         <!-- 消息内容（最终回复） -->
+        <!-- 思考模式：使用打字机效果模拟流式输出 -->
         <div 
-          v-if="message.content" 
-          class="message-bubble-3d" 
-          :class="{ 'typing-effect': shouldUseTypewriter }"
+          v-if="message.content && shouldUseTypewriter" 
+          class="message-bubble-3d typing-effect"
+        >
+          <TypewriterText
+            ref="typewriterRef"
+            :content="renderedHtml"
+            :speed="12"
+            :html="true"
+            :enabled="true"
+            @complete="onTypewriterComplete"
+          />
+        </div>
+        <!-- 普通模式：直接显示 -->
+        <div 
+          v-else-if="message.content" 
+          class="message-bubble-3d"
           v-html="renderedHtml"
         ></div>
-        <!-- 思考中占位 - 仅当非推理模型或没有思考内容时显示 -->
-        <div v-else-if="isStreaming && !displayReasoning && thinkingSteps.length === 0" class="thinking-placeholder-3d">
+        <!-- 思考中占位 -->
+        <div v-else-if="isStreaming" class="thinking-placeholder-3d">
           <span class="thinking-dot-3d"></span>
           <span class="thinking-dot-3d"></span>
           <span class="thinking-dot-3d"></span>
@@ -322,13 +336,36 @@ const thinkingSteps = computed(() => {
   return [...steps].sort((a, b) => a.index - b.index)
 })
 
-// 是否使用打字机效果：思考模式下且是最后一条消息且不是流式状态
+// 全局记录已完成打字机效果的消息ID
+const completedTypewriterMessages = new Set<string>()
+
+// 是否使用打字机效果：只在消息首次完成时显示一次
 const shouldUseTypewriter = computed(() => {
-  return props.isLast && 
-         !props.isStreaming && 
-         props.message.role === 'assistant' &&
-         props.message.metadata?.model?.includes('reasoner')
+  // 不是助手消息 -> 不使用
+  if (props.message.role !== 'assistant') return false
+  
+  // 不是推理模型 -> 不使用
+  if (!props.message.metadata?.model?.includes('reasoner')) return false
+  
+  // 消息已经完成过打字机效果 -> 不再使用
+  if (completedTypewriterMessages.has(props.message.id)) return false
+  
+  // 消息状态为已完成 -> 使用打字机效果
+  if (props.message.status === 'completed') {
+    completedTypewriterMessages.add(props.message.id)
+    return true
+  }
+  
+  return false
 })
+
+// 打字机组件引用
+const typewriterRef = ref<InstanceType<typeof TypewriterText> | null>(null)
+
+// 打字机效果完成回调
+function onTypewriterComplete() {
+  // 打字机效果完成后的操作
+}
 
 const renderedHtml = computed(() => {
   const content = props.message.content
