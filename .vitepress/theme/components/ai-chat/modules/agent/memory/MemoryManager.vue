@@ -1,150 +1,576 @@
 <!--
-  MemoryManager - 记忆管理面板
+  MemoryManager - 记忆管理页面（Claude 风格）
   
-  管理 Agent 的长期记忆和工作记忆
+  功能：
+  - 查看所有记忆
+  - 按分类筛选
+  - 添加/编辑/删除记忆
+  - 搜索记忆
+  - 记忆持久化存储
 -->
 <template>
-  <Teleport to="body">
-    <Transition name="memory-fade">
-      <div v-if="visible" class="memory-overlay" @click.self="close">
-        <div class="memory-panel">
-          <div class="panel-header">
-            <div class="header-title">
-              <span class="header-icon">🧠</span>
-              <h3>记忆管理</h3>
+  <div class="memory-manager">
+    <!-- 头部 -->
+    <header class="manager-header">
+      <div class="header-title">
+        <h1>🧠 记忆管理</h1>
+        <p class="subtitle">管理 AI 助手记住的信息和偏好</p>
+      </div>
+      <div class="header-stats">
+        <div class="stat-item">
+          <span class="stat-value">{{ memories.length }}</span>
+          <span class="stat-label">总记忆</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ enabledMemories.length }}</span>
+          <span class="stat-label">已启用</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <div class="search-box">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="搜索记忆..."
+          class="search-input"
+        />
+        <span class="search-icon">🔍</span>
+      </div>
+      
+      <select v-model="filterCategory" class="filter-select">
+        <option value="">全部分类</option>
+        <option value="user_info">用户信息</option>
+        <option value="preferences">偏好设置</option>
+        <option value="facts">重要信息</option>
+        <option value="goals">目标计划</option>
+        <option value="context">上下文</option>
+      </select>
+      
+      <button class="btn-create" @click="openCreateDialog">
+        <span>+</span>
+        <span>添加记忆</span>
+      </button>
+    </div>
+
+    <!-- 记忆列表 -->
+    <section class="memory-list">
+      <div v-if="filteredMemories.length === 0" class="empty-state">
+        <span class="empty-icon">📝</span>
+        <h3>还没有记忆</h3>
+        <p>添加一些信息让 AI 更了解你</p>
+      </div>
+
+      <template v-else>
+        <div
+          v-for="memory in filteredMemories"
+          :key="memory.id"
+          class="memory-card"
+          :class="{ disabled: !memory.enabled }"
+        >
+          <div class="memory-header">
+            <div class="memory-category-badge" :class="memory.category">
+              {{ categoryName(memory.category) }}
             </div>
-            <button class="close-btn" @click="close">✕</button>
+            <div class="memory-importance">
+              <span v-for="i in 5" :key="i" :class="{ active: i <= memory.importance }">★</span>
+            </div>
           </div>
 
-          <div class="panel-body">
-            <!-- 记忆开关 -->
-            <div class="memory-section">
-              <div class="section-row">
-                <div class="section-info">
-                  <h4>会话记忆</h4>
-                  <p>记住当前对话的上下文</p>
-                </div>
-                <label class="toggle-switch">
-                  <input type="checkbox" v-model="config.enableSessionMemory" />
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-            </div>
+          <p class="memory-content">{{ memory.content }}</p>
 
-            <!-- 长期记忆 -->
-            <div class="memory-section">
-              <div class="section-row">
-                <div class="section-info">
-                  <h4>长期记忆</h4>
-                  <p>跨会话持久化的关键信息</p>
-                </div>
-                <label class="toggle-switch">
-                  <input type="checkbox" v-model="config.enableLongTermMemory" />
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              
-              <div v-if="config.enableLongTermMemory" class="memory-editor">
-                <textarea
-                  v-model="config.longTermContent"
-                  rows="8"
-                  placeholder="输入需要 AI 记住的长期信息..."
-                  class="memory-textarea"
-                ></textarea>
-                <div class="editor-actions">
-                  <button class="btn-secondary" @click="clearMemory">清空</button>
-                  <button class="btn-primary" @click="saveMemory">保存</button>
-                </div>
-              </div>
+          <div class="memory-footer">
+            <div class="memory-meta">
+              <span class="memory-source" :class="memory.source">
+                {{ memory.source === 'user' ? '👤 用户' : '🤖 AI' }}
+              </span>
+              <span class="memory-date">{{ formatDate(memory.updatedAt) }}</span>
             </div>
-
-            <!-- 自动提取 -->
-            <div class="memory-section">
-              <div class="section-row">
-                <div class="section-info">
-                  <h4>自动提取记忆</h4>
-                  <p>自动从对话中提取重要信息</p>
-                </div>
-                <label class="toggle-switch">
-                  <input type="checkbox" v-model="config.autoExtract" />
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-            </div>
-
-            <!-- 记忆统计 -->
-            <div class="memory-stats">
-              <h4>记忆统计</h4>
-              <div class="stats-grid">
-                <div class="stat-item">
-                  <span class="stat-value">{{ sessionCount }}</span>
-                  <span class="stat-label">会话记忆</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value">{{ longTermSize }}</span>
-                  <span class="stat-label">长期记忆大小</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value">{{ extractCount }}</span>
-                  <span class="stat-label">自动提取</span>
-                </div>
-              </div>
+            <div class="memory-actions">
+              <button class="action-btn" @click="editMemory(memory)" title="编辑">
+                ✏️
+              </button>
+              <button class="action-btn" @click="toggleEnabled(memory)" :title="memory.enabled ? '禁用' : '启用'">
+                {{ memory.enabled ? '👁️' : '🚫' }}
+              </button>
+              <button class="action-btn danger" @click="confirmDelete(memory)" title="删除">
+                🗑️
+              </button>
             </div>
           </div>
         </div>
+      </template>
+    </section>
+
+    <!-- 添加/编辑弹窗 -->
+    <Teleport to="body">
+      <div v-if="showDialog" class="dialog-overlay" @click.self="closeDialog">
+        <div class="dialog-content">
+          <div class="dialog-header">
+            <h3>{{ isEditing ? '编辑记忆' : '添加记忆' }}</h3>
+            <button class="btn-close" @click="closeDialog">✕</button>
+          </div>
+
+          <div class="dialog-body">
+            <div class="form-group">
+              <label>内容 *</label>
+              <textarea 
+                v-model="form.content" 
+                rows="4" 
+                class="form-textarea"
+                placeholder="例如：我喜欢用 Python 编程，偏好简洁的代码风格..."
+              />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>分类</label>
+                <select v-model="form.category" class="form-select">
+                  <option value="user_info">用户信息</option>
+                  <option value="preferences">偏好设置</option>
+                  <option value="facts">重要信息</option>
+                  <option value="goals">目标计划</option>
+                  <option value="context">上下文</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>重要性 ({{ form.importance }})</label>
+                <input 
+                  v-model.number="form.importance"
+                  type="range" 
+                  min="1" 
+                  max="5" 
+                  class="form-slider"
+                />
+                <div class="importance-labels">
+                  <span>低</span>
+                  <span>高</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>来源</label>
+              <div class="source-options">
+                <label class="source-option" :class="{ active: form.source === 'user' }">
+                  <input type="radio" value="user" v-model="form.source" />
+                  <span>👤 用户明确告知</span>
+                </label>
+                <label class="source-option" :class="{ active: form.source === 'inferred' }">
+                  <input type="radio" value="inferred" v-model="form.source" />
+                  <span>🤖 AI 推断</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="dialog-footer">
+            <button class="btn-secondary" @click="closeDialog">取消</button>
+            <button class="btn-primary" @click="saveMemory" :disabled="!form.content.trim()">
+              {{ isEditing ? '保存' : '添加' }}
+            </button>
+          </div>
+        </div>
       </div>
-    </Transition>
-  </Teleport>
+    </Teleport>
+
+    <!-- 删除确认 -->
+    <Teleport to="body">
+      <div v-if="showDeleteConfirm" class="dialog-overlay" @click.self="showDeleteConfirm = false">
+        <div class="dialog-content confirm">
+          <div class="confirm-icon">⚠️</div>
+          <h3>确认删除</h3>
+          <p>确定要删除这条记忆吗？</p>
+          <div class="dialog-footer">
+            <button class="btn-secondary" @click="showDeleteConfirm = false">取消</button>
+            <button class="btn-danger" @click="deleteMemory">删除</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
+import type { Memory, MemoryCategory } from '../../../core/memory'
+import {
+  getAllMemories,
+  createMemory,
+  updateMemory,
+  deleteMemory as deleteMemoryApi
+} from '../../../core/memory'
 
-const props = defineProps<{
-  visible: boolean
-  agentId?: string
-}>()
+const searchQuery = ref('')
+const filterCategory = ref('')
+const memories = ref<Memory[]>(getAllMemories())
+const showDialog = ref(false)
+const showDeleteConfirm = ref(false)
+const isEditing = ref(false)
+const memoryToDelete = ref<Memory | null>(null)
 
-const emit = defineEmits<{
-  close: []
-  save: [config: MemoryConfig]
-}>()
-
-interface MemoryConfig {
-  enableSessionMemory: boolean
-  enableLongTermMemory: boolean
-  longTermContent: string
-  autoExtract: boolean
-}
-
-const config = reactive<MemoryConfig>({
-  enableSessionMemory: true,
-  enableLongTermMemory: false,
-  longTermContent: '',
-  autoExtract: false
+const form = reactive({
+  id: '',
+  content: '',
+  category: 'facts' as MemoryCategory,
+  importance: 3,
+  source: 'user' as 'user' | 'inferred'
 })
 
-// 模拟统计数据
-const sessionCount = computed(() => 12)
-const longTermSize = computed(() => '2.4KB')
-const extractCount = computed(() => 8)
+const filteredMemories = computed(() => {
+  let result = memories.value
+  
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter(m => m.content.toLowerCase().includes(query))
+  }
+  
+  if (filterCategory.value) {
+    result = result.filter(m => m.category === filterCategory.value)
+  }
+  
+  return result.sort((a, b) => {
+    // 按重要性排序，然后按时间排序
+    if (b.importance !== a.importance) return b.importance - a.importance
+    return b.updatedAt - a.updatedAt
+  })
+})
 
-function close() {
-  emit('close')
+const enabledMemories = computed(() => memories.value.filter(m => m.enabled))
+
+function categoryName(cat: MemoryCategory): string {
+  const names: Record<string, string> = {
+    user_info: '用户',
+    preferences: '偏好',
+    facts: '信息',
+    goals: '目标',
+    context: '上下文'
+  }
+  return names[cat] || cat
+}
+
+function formatDate(timestamp: number): string {
+  const date = new Date(timestamp)
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
+function openCreateDialog() {
+  isEditing.value = false
+  form.id = ''
+  form.content = ''
+  form.category = 'facts'
+  form.importance = 3
+  form.source = 'user'
+  showDialog.value = true
+}
+
+function editMemory(memory: Memory) {
+  isEditing.value = true
+  form.id = memory.id
+  form.content = memory.content
+  form.category = memory.category
+  form.importance = memory.importance
+  form.source = memory.source
+  showDialog.value = true
+}
+
+function closeDialog() {
+  showDialog.value = false
+  isEditing.value = false
 }
 
 function saveMemory() {
-  emit('save', { ...config })
-  close()
+  if (!form.content.trim()) return
+  
+  if (isEditing.value) {
+    updateMemory(form.id, {
+      content: form.content.trim(),
+      category: form.category,
+      importance: form.importance,
+      source: form.source
+    })
+  } else {
+    createMemory(
+      form.content.trim(),
+      form.category,
+      { importance: form.importance, source: form.source }
+    )
+  }
+  
+  memories.value = getAllMemories()
+  closeDialog()
 }
 
-function clearMemory() {
-  config.longTermContent = ''
+function confirmDelete(memory: Memory) {
+  memoryToDelete.value = memory
+  showDeleteConfirm.value = true
+}
+
+function deleteMemory() {
+  if (memoryToDelete.value) {
+    deleteMemoryApi(memoryToDelete.value.id)
+    memories.value = getAllMemories()
+    showDeleteConfirm.value = false
+    memoryToDelete.value = null
+  }
+}
+
+function toggleEnabled(memory: Memory) {
+  updateMemory(memory.id, { enabled: !memory.enabled })
+  memories.value = getAllMemories()
 }
 </script>
 
 <style scoped>
-.memory-overlay {
+.memory-manager {
+  padding: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* 头部 */
+.manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header-title h1 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 0;
+  color: #64748b;
+}
+
+.header-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* 工具栏 */
+.toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px 12px 44px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+}
+
+.filter-select {
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  background: white;
+}
+
+.btn-create {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* 记忆列表 */
+.memory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #94a3b8;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.memory-card {
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
+}
+
+.memory-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.memory-card.disabled {
+  opacity: 0.6;
+  background: #f8fafc;
+}
+
+.memory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.memory-category-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.memory-category-badge.user_info {
+  background: #dbeafe;
+  color: #3b82f6;
+}
+
+.memory-category-badge.preferences {
+  background: #dcfce7;
+  color: #22c55e;
+}
+
+.memory-category-badge.facts {
+  background: #fef3c7;
+  color: #f59e0b;
+}
+
+.memory-category-badge.goals {
+  background: #fce7f3;
+  color: #ec4899;
+}
+
+.memory-category-badge.context {
+  background: #f3e8ff;
+  color: #a855f7;
+}
+
+.memory-importance {
+  color: #e2e8f0;
+  font-size: 14px;
+}
+
+.memory-importance span.active {
+  color: #f59e0b;
+}
+
+.memory-content {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #1e293b;
+}
+
+.memory-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.memory-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.memory-source {
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.memory-source.user {
+  background: #dbeafe;
+  color: #3b82f6;
+}
+
+.memory-source.inferred {
+  background: #f3e8ff;
+  color: #a855f7;
+}
+
+.memory-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.action-btn:hover {
+  background: #f1f5f9;
+}
+
+.action-btn.danger:hover {
+  background: #fee2e2;
+}
+
+/* 弹窗 */
+.dialog-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
@@ -152,270 +578,169 @@ function clearMemory() {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10002;
+  z-index: 1000;
   padding: 20px;
 }
 
-.memory-panel {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(30px);
-  border-radius: 20px;
+.dialog-content {
   width: 100%;
-  max-width: 520px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  max-width: 500px;
+  background: white;
+  border-radius: 16px;
   overflow: hidden;
 }
 
-.panel-header {
+.dialog-content.confirm {
+  max-width: 400px;
+  padding: 40px;
+  text-align: center;
+}
+
+.dialog-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.header-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-icon {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
-  border-radius: 12px;
-  font-size: 20px;
-}
-
-.header-title h3 {
+.dialog-header h3 {
   margin: 0;
   font-size: 18px;
-  font-weight: 700;
 }
 
-.close-btn {
-  width: 36px;
-  height: 36px;
+.btn-close {
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.05);
   border: none;
-  border-radius: 10px;
-  font-size: 18px;
-  color: var(--vp-c-text-2);
+  background: transparent;
+  border-radius: 8px;
   cursor: pointer;
+  font-size: 18px;
 }
 
-.close-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.panel-body {
-  flex: 1;
-  overflow-y: auto;
+.dialog-body {
   padding: 24px;
 }
 
-.memory-section {
-  margin-bottom: 24px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 12px;
-}
-
-.section-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.section-info h4 {
-  margin: 0 0 4px 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.section-info p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--vp-c-text-2);
-}
-
-/* Toggle Switch */
-.toggle-switch {
-  position: relative;
-  width: 48px;
-  height: 26px;
-  cursor: pointer;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 26px;
-  transition: 0.3s;
-}
-
-.toggle-slider::before {
-  content: '';
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  left: 2px;
-  top: 2px;
-  background: white;
-  border-radius: 50%;
-  transition: 0.3s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.toggle-switch input:checked + .toggle-slider {
-  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
-}
-
-.toggle-switch input:checked + .toggle-slider::before {
-  transform: translateX(22px);
-}
-
-/* Memory Editor */
-.memory-editor {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.memory-textarea {
-  width: 100%;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  font-size: 14px;
-  line-height: 1.6;
-  resize: vertical;
-  min-height: 120px;
-  font-family: inherit;
-}
-
-.memory-textarea:focus {
-  outline: none;
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-}
-
-.editor-actions {
+.dialog-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 12px;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
 }
 
-.btn-secondary {
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--vp-c-text-1);
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  cursor: pointer;
+/* 表单 */
+.form-group {
+  margin-bottom: 20px;
 }
 
-.btn-primary {
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-/* Stats */
-.memory-stats {
-  padding: 16px;
-  background: rgba(139, 92, 246, 0.08);
-  border-radius: 12px;
-}
-
-.memory-stats h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.stats-grid {
+.form-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1.5fr 1fr;
+  gap: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-textarea,
+.form-select,
+.form-slider {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-slider {
+  padding: 8px 0;
+}
+
+.importance-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* 来源选项 */
+.source-options {
+  display: flex;
   gap: 12px;
 }
 
-.stat-item {
+.source-option {
+  flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.stat-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #8b5cf6;
+.source-option.active {
+  border-color: #3b82f6;
+  background: #dbeafe;
 }
 
-.stat-label {
-  font-size: 12px;
-  color: var(--vp-c-text-2);
+.source-option input {
+  display: none;
 }
 
-/* Animation */
-.memory-fade-enter-active,
-.memory-fade-leave-active {
-  transition: all 0.3s ease;
+/* 按钮 */
+.btn-secondary,
+.btn-primary,
+.btn-danger {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
 }
 
-.memory-fade-enter-from,
-.memory-fade-leave-to {
-  opacity: 0;
-  transform: scale(0.95);
+.btn-secondary {
+  background: #f1f5f9;
+  color: #475569;
 }
 
-/* Dark Mode */
-.dark .memory-panel {
-  background: rgba(30, 30, 40, 0.95);
-  border-color: rgba(255, 255, 255, 0.1);
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
 }
 
-.dark .memory-section,
-.dark .memory-stats {
-  background: rgba(255, 255, 255, 0.05);
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.dark .memory-textarea {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+.btn-danger {
+  background: #ef4444;
+  color: white;
 }
 
-.dark .stat-item {
-  background: rgba(255, 255, 255, 0.05);
+.confirm-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
 }
 </style>
