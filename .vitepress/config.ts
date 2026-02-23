@@ -287,6 +287,290 @@ export default defineConfig({
            *      将请求重写到 VitePress 的 @fs 路径，让其直接渲染文件
            */
 
+          // ============================================
+          // 优先注册 API 路由（确保在 VitePress 路由之前）
+          // ============================================
+          
+          // Agents API - 简化版（确保在第一个 configureServer hook 中注册）
+          const AGENTS_FILE = path.join(process.cwd(), '.data', 'agents.json');
+          const SKILLS_FILE = path.join(process.cwd(), '.data', 'skills.json');
+          
+          function readAgents(): any[] {
+            try {
+              if (fs.existsSync(AGENTS_FILE)) {
+                const agents = JSON.parse(fs.readFileSync(AGENTS_FILE, 'utf-8'));
+                // 为每个 agent 添加默认值
+                return agents.map((agent: any) => ({
+                  ...agent,
+                  capabilities: agent.capabilities || {
+                    mode: 'raw',
+                    skillIds: [],
+                    toolIds: [],
+                    customSystemPrompt: '你是一个 helpful 的 AI 助手。'
+                  },
+                  memory: agent.memory || {
+                    enabled: true,
+                    content: '',
+                    autoExtract: true,
+                    maxTokens: 2000
+                  },
+                  permissions: agent.permissions || [],
+                  callCount: agent.callCount || 0,
+                  isDefault: agent.isDefault || false,
+                  status: agent.status || 'online',
+                  seat: agent.seat || 1,
+                  lastActiveAt: agent.lastActiveAt || Date.now()
+                }));
+              }
+            } catch (e) { console.error('[API] Failed to read agents:', e); }
+            return [];
+          }
+          
+          function readSkills(): any[] {
+            try {
+              if (fs.existsSync(SKILLS_FILE)) {
+                return JSON.parse(fs.readFileSync(SKILLS_FILE, 'utf-8'));
+              }
+            } catch (e) { console.error('[API] Failed to read skills:', e); }
+            return [];
+          }
+          
+          // 初始化默认数据
+          function initializeDefaultData() {
+            // 初始化默认 Agent
+            if (!fs.existsSync(AGENTS_FILE) || readAgents().length === 0) {
+              const defaultAgent = {
+                id: `agent-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                name: 'Meta 助手',
+                avatar: '🤖',
+                description: '基于 DeepSeek 大模型的通用 AI 助手，为您提供专业智能对话体验',
+                level: 'meta',
+                status: 'online',
+                seat: 1,
+                capabilities: {
+                  mode: 'raw',
+                  skillIds: [],
+                  toolIds: [],
+                  customSystemPrompt: '你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。'
+                },
+                memory: {
+                  enabled: true,
+                  content: '',
+                  autoExtract: true,
+                  maxTokens: 2000
+                },
+                permissions: [],
+                callCount: 0,
+                isDefault: true,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                lastActiveAt: Date.now()
+              };
+              fs.writeFileSync(AGENTS_FILE, JSON.stringify([defaultAgent], null, 2), 'utf-8');
+              console.log('[API] Initialized default agent');
+            }
+            
+            // 初始化示例 Skills (10个)
+            if (!fs.existsSync(SKILLS_FILE) || readSkills().length === 0) {
+              const now = Date.now();
+              const defaultSkills = [
+                {
+                  id: `skill-${now}-1`,
+                  name: '代码工匠',
+                  icon: '💻',
+                  description: '专业编程助手，擅长代码审查、重构和最佳实践',
+                  systemPrompt: '你是一位经验丰富的程序员，精通多种编程语言。你的任务是帮助用户解决编程问题、审查代码、提供最佳实践建议、重构代码和调试错误。',
+                  category: 'coding',
+                  version: '1.0.0',
+                  isBuiltIn: true,
+                  enabled: true,
+                  createdAt: now,
+                  updatedAt: now,
+                  tags: ['编程', '代码审查', '重构', '调试'],
+                  tools: ['get_current_time', 'execute_code', 'analyze_code', 'read_file', 'write_file'],
+                  author: 'system'
+                },
+                {
+                  id: `skill-${now}-2`,
+                  name: '文章大师',
+                  icon: '✍️',
+                  description: '专业写作助手，擅长各类文本创作和编辑',
+                  systemPrompt: '你是一位专业的写作助手，擅长各类文本创作。你可以帮助用户撰写文章、编辑内容、改进文笔、检查语法错误、生成摘要和格式化文本。',
+                  category: 'writing',
+                  version: '1.0.0',
+                  isBuiltIn: true,
+                  enabled: true,
+                  createdAt: now,
+                  updatedAt: now,
+                  tags: ['写作', '编辑', '内容创作', '文案'],
+                  tools: ['summarize_text', 'format_text', 'translate_text', 'create_article', 'update_article'],
+                  author: 'system'
+                },
+                {
+                  id: `skill-${now}-3`,
+                  name: '数据分析师',
+                  icon: '📊',
+                  description: '数据分析专家，提供统计计算和商业智能洞察',
+                  systemPrompt: '你是一位数据分析师，擅长数据分析、统计计算和商业智能。你可以帮助用户理解数据、创建分析报告、提供数据驱动的洞察、执行数学计算。',
+                  category: 'analysis',
+                  version: '1.0.0',
+                  isBuiltIn: true,
+                  enabled: true,
+                  createdAt: now,
+                  updatedAt: now,
+                  tags: ['数据', '分析', '统计', '商业智能'],
+                  tools: ['calculate', 'summarize_text', 'format_text', 'query_knowledge'],
+                  author: 'system'
+                },
+                {
+                  id: `skill-${now}-4`,
+                  name: '翻译专家',
+                  icon: '🌐',
+                  description: '多语言翻译专家，支持多种语言互译',
+                  systemPrompt: '你是一位专业的翻译专家，精通多种语言。你可以帮助用户翻译文本、解释词汇、提供语言学习建议，并确保翻译的准确性和自然性。',
+                  category: 'general',
+                  version: '1.0.0',
+                  isBuiltIn: true,
+                  enabled: true,
+                  createdAt: now,
+                  updatedAt: now,
+                  tags: ['翻译', '语言', '多语言', '学习'],
+                  tools: ['translate_text', 'summarize_text', 'format_text'],
+                  author: 'system'
+                },
+                {
+                  id: `skill-${now}-5`,
+                  name: '研究助手',
+                  icon: '🔬',
+                  description: '学术研究助手，擅长信息检索和知识整理',
+                  systemPrompt: '你是一位研究助手，擅长信息检索、文献整理和知识管理。你可以帮助用户搜索信息、整理资料、创建笔记、管理知识库。',
+                  category: 'analysis',
+                  version: '1.0.0',
+                  isBuiltIn: true,
+                  enabled: true,
+                  createdAt: now,
+                  updatedAt: now,
+                  tags: ['研究', '学术', '信息检索', '知识管理'],
+                  tools: ['web_search', 'fetch_url', 'query_knowledge', 'create_note', 'list_notes', 'summarize_text'],
+                  author: 'system'
+                },
+                {
+                  id: `skill-${now}-6`,
+                  name: '文件管家',
+                  icon: '📁',
+                  description: '文件管理专家，帮助整理和管理文件系统',
+                  systemPrompt: '你是一位文件管理专家，擅长文件操作和系统管理。你可以帮助用户读取文件、写入文件、列出目录、搜索文件、管理文档。',
+                  category: 'general',
+                  version: '1.0.0',
+                  isBuiltIn: true,
+                  enabled: true,
+                  createdAt: now,
+                  updatedAt: now,
+                  tags: ['文件管理', '系统', '文档', '操作'],
+                  tools: ['read_file', 'write_file', 'list_files', 'get_article_content', 'list_articles'],
+                  author: 'system'
+                },
+                {
+                  id: `skill-${now}-7`,
+                  name: '创意设计师',
+                  icon: '🎨',
+                  description: '创意设计助手，提供设计灵感和创意建议',
+                  systemPrompt: '你是一位创意设计师，擅长提供设计灵感、创意建议和美学指导。你可以帮助用户生成创意想法、提供设计方案、优化视觉呈现。',
+                  category: 'creative',
+                  version: '1.0.0',
+                  isBuiltIn: true,
+                  enabled: true,
+                  createdAt: now,
+                  updatedAt: now,
+                  tags: ['设计', '创意', '美学', '灵感'],
+                  tools: ['get_current_time', 'summarize_text', 'format_text', 'web_search'],
+                  author: 'system'
+                },
+                {
+                  id: `skill-${now}-8`,
+                  name: '项目经理',
+                  icon: '📋',
+                  description: '项目管理专家，帮助规划和跟踪项目进度',
+                  systemPrompt: '你是一位项目经理，擅长项目规划、进度跟踪和任务管理。你可以帮助用户制定计划、分解任务、跟踪进度、管理笔记和待办事项。',
+                  category: 'general',
+                  version: '1.0.0',
+                  isBuiltIn: true,
+                  enabled: true,
+                  createdAt: now,
+                  updatedAt: now,
+                  tags: ['项目管理', '规划', '任务', '跟踪'],
+                  tools: ['get_current_time', 'create_note', 'list_notes', 'summarize_text', 'format_text'],
+                  author: 'system'
+                },
+                {
+                  id: `skill-${now}-9`,
+                  name: '天气助手',
+                  icon: '🌤️',
+                  description: '提供天气预报和生活建议',
+                  systemPrompt: '你是一位天气助手，提供准确的天气预报和实用的生活建议。你可以帮助用户查询天气、提供出行建议、推荐穿衣指南。',
+                  category: 'general',
+                  version: '1.0.0',
+                  isBuiltIn: true,
+                  enabled: true,
+                  createdAt: now,
+                  updatedAt: now,
+                  tags: ['天气', '生活', '出行', '建议'],
+                  tools: ['get_weather', 'get_current_time', 'web_search'],
+                  author: 'system'
+                },
+                {
+                  id: `skill-${now}-10`,
+                  name: '全栈开发者',
+                  icon: '🚀',
+                  description: '全栈开发专家，前后端技术全能',
+                  systemPrompt: '你是一位全栈开发专家，精通前后端技术栈。你可以帮助用户构建完整的应用程序、设计系统架构、解决技术难题、优化性能。',
+                  category: 'coding',
+                  version: '1.0.0',
+                  isBuiltIn: true,
+                  enabled: true,
+                  createdAt: now,
+                  updatedAt: now,
+                  tags: ['全栈', '前端', '后端', '架构'],
+                  tools: ['execute_code', 'analyze_code', 'read_file', 'write_file', 'list_files', 'web_search', 'fetch_url'],
+                  author: 'system'
+                }
+              ];
+              fs.writeFileSync(SKILLS_FILE, JSON.stringify(defaultSkills, null, 2), 'utf-8');
+              console.log('[API] Initialized 10 default skills');
+            }
+          }
+          
+          // 执行初始化
+          initializeDefaultData();
+          
+          // GET /api/agents
+          server.middlewares.use("/api/agents", (req, res, next) => {
+            // 只处理精确的 /api/agents 路径（不包括子路径如 /api/agents/update）
+            if (req.url !== '/' && req.url !== '' && !req.url?.startsWith('?')) {
+              return next();
+            }
+            if (req.method === "GET") {
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ success: true, data: readAgents() }));
+            } else {
+              next();
+            }
+          });
+          
+          // GET /api/skills
+          server.middlewares.use("/api/skills", (req, res, next) => {
+            // 只处理精确的 /api/skills 路径（不包括子路径）
+            if (req.url !== '/' && req.url !== '' && !req.url?.startsWith('?')) {
+              return next();
+            }
+            if (req.method === "GET") {
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ success: true, data: readSkills() }));
+            } else {
+              next();
+            }
+          });
+
           // 辅助函数：检查路径是否是 folder-note 模式，返回实际文件路径
           function getFolderNoteInfo(
             urlPath: string,
@@ -346,6 +630,12 @@ export default defineConfig({
                 /\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico|json)(\?|$)/,
               )
             ) {
+              // 对于 API 请求，直接调用 next()，让后续的 BFF 中间件处理
+              // 不要在此时返回，以确保请求继续传递到下一个中间件
+              if (rawUrl.startsWith("/api/")) {
+                next();
+                return;
+              }
               next();
               return;
             }
@@ -3416,7 +3706,29 @@ ${content}`;
             try {
               if (fs.existsSync(AGENTS_FILE)) {
                 const data = fs.readFileSync(AGENTS_FILE, 'utf-8');
-                return JSON.parse(data);
+                const agents = JSON.parse(data);
+                // 为每个 agent 添加默认值
+                return agents.map((agent: any) => ({
+                  ...agent,
+                  capabilities: agent.capabilities || {
+                    mode: 'raw',
+                    skillIds: [],
+                    toolIds: [],
+                    customSystemPrompt: '你是一个 helpful 的 AI 助手。'
+                  },
+                  memory: agent.memory || {
+                    enabled: true,
+                    content: '',
+                    autoExtract: true,
+                    maxTokens: 2000
+                  },
+                  permissions: agent.permissions || [],
+                  callCount: agent.callCount || 0,
+                  isDefault: agent.isDefault || false,
+                  status: agent.status || 'online',
+                  seat: agent.seat || 1,
+                  lastActiveAt: agent.lastActiveAt || Date.now()
+                }));
               }
             } catch (e) {
               console.error('[API] Failed to read agents:', e);
@@ -3427,14 +3739,60 @@ ${content}`;
           // 写入 Agents
           function writeAgents(agents: any[]) {
             try {
-              fs.writeFileSync(AGENTS_FILE, JSON.stringify(agents, null, 2));
+              fs.writeFileSync(AGENTS_FILE, JSON.stringify(agents, null, 2), 'utf-8');
             } catch (e) {
               console.error('[API] Failed to write agents:', e);
             }
           }
           
+          // 初始化默认 Agent（如果没有数据）
+          function initializeDefaultAgent() {
+            const agents = readAgents();
+            if (agents.length === 0) {
+              const defaultAgent = {
+                id: `agent-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                name: 'Meta 助手',
+                avatar: '🤖',
+                description: '基于 DeepSeek 大模型的通用 AI 助手，为您提供专业智能对话体验',
+                level: 'meta',
+                status: 'online',
+                seat: 1,
+                capabilities: {
+                  mode: 'raw',
+                  skillIds: [],
+                  toolIds: [],
+                  customSystemPrompt: '你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。'
+                },
+                memory: {
+                  enabled: true,
+                  content: '',
+                  autoExtract: true,
+                  maxTokens: 2000
+                },
+                permissions: [],
+                callCount: 0,
+                isDefault: true,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                lastActiveAt: Date.now()
+              };
+              writeAgents([defaultAgent]);
+              console.log('[API] Initialized default agent');
+            }
+          }
+          
+          // 执行初始化
+          initializeDefaultAgent();
+          
           // GET /api/agents - 获取所有 Agents
+          // POST /api/agents - 创建 Agent（只处理精确路径，不包括子路径）
           server.middlewares.use("/api/agents", (req, res, next) => {
+            const url = req.url || '';
+            // 只处理精确路径 /api/agents 或 /api/agents/（不包括 /api/agents/update 等子路径）
+            if (url !== '/' && url !== '' && !url.startsWith('?')) {
+              return next();
+            }
+            
             if (req.method === "GET") {
               const agents = readAgents();
               res.setHeader("Content-Type", "application/json");
@@ -3450,9 +3808,30 @@ ${content}`;
                   
                   const newAgent = {
                     id: `agent-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-                    ...body,
+                    name: body.name || 'New Agent',
+                    avatar: body.avatar || '🤖',
+                    description: body.description || 'A helpful AI agent',
+                    level: body.level || 'custom',
+                    status: 'online',
+                    seat: 1,
+                    capabilities: body.capabilities || {
+                      mode: 'raw',
+                      skillIds: [],
+                      toolIds: [],
+                      customSystemPrompt: '你是一个 helpful 的 AI 助手。'
+                    },
+                    memory: body.memory || {
+                      enabled: true,
+                      content: '',
+                      autoExtract: true,
+                      maxTokens: 2000
+                    },
+                    permissions: [],
+                    callCount: 0,
+                    isDefault: false,
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
+                    lastActiveAt: Date.now()
                   };
                   
                   agents.push(newAgent);
@@ -3565,6 +3944,250 @@ ${content}`;
                     success: true, 
                     data: { agent, triggered: true }
                   }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // GET /api/agents/:id - 获取单个 Agent
+          server.middlewares.use("/api/agents/", (req, res, next) => {
+            const url = req.url || '';
+            // 只处理 /api/agents/:id 格式，排除其他子路径
+            if (url.includes('/') && !url.includes('/active')) {
+              const id = url.split('/')[1]?.split('?')[0];
+              if (!id || req.method !== 'GET') return next();
+              
+              try {
+                const agents = readAgents();
+                const agent = agents.find((a: any) => a.id === id);
+                
+                if (!agent) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ success: false, error: 'Agent not found' }));
+                  return;
+                }
+                
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: agent }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+          
+          // GET/POST /api/agents/active - 活跃 Agent 管理
+          const ACTIVE_AGENT_FILE = path.join(process.cwd(), '.data', 'active-agent.json');
+          
+          server.middlewares.use("/api/agents/active", (req, res, next) => {
+            if (req.method === "GET") {
+              // 获取活跃 Agent ID
+              try {
+                let activeId = null;
+                if (fs.existsSync(ACTIVE_AGENT_FILE)) {
+                  const data = JSON.parse(fs.readFileSync(ACTIVE_AGENT_FILE, 'utf-8'));
+                  activeId = data.id;
+                }
+                // 如果没有设置，返回第一个 agent
+                if (!activeId) {
+                  const agents = readAgents();
+                  activeId = agents[0]?.id || null;
+                }
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, id: activeId }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else if (req.method === "POST") {
+              // 设置活跃 Agent ID
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { id } = body;
+                  
+                  fs.writeFileSync(ACTIVE_AGENT_FILE, JSON.stringify({ id, updatedAt: Date.now() }), 'utf-8');
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // ============================================
+          // Skills API - 技能管理
+          // ============================================
+          
+          const SKILLS_FILE = path.join(process.cwd(), '.data', 'skills.json');
+          
+          // 确保数据目录存在
+          if (!fs.existsSync(path.dirname(SKILLS_FILE))) {
+            fs.mkdirSync(path.dirname(SKILLS_FILE), { recursive: true });
+          }
+          
+          // 读取 Skills
+          function readSkills(): any[] {
+            try {
+              if (fs.existsSync(SKILLS_FILE)) {
+                const data = fs.readFileSync(SKILLS_FILE, 'utf-8');
+                return JSON.parse(data);
+              }
+            } catch (e) {
+              console.error('[API] Failed to read skills:', e);
+            }
+            return [];
+          }
+          
+          // 写入 Skills
+          function writeSkills(skills: any[]) {
+            try {
+              fs.writeFileSync(SKILLS_FILE, JSON.stringify(skills, null, 2), 'utf-8');
+            } catch (e) {
+              console.error('[API] Failed to write skills:', e);
+            }
+          }
+          
+          // GET /api/skills - 获取所有 Skills
+          server.middlewares.use("/api/skills", (req, res, next) => {
+            const url = req.url || '';
+            // 排除子路径，只处理 /api/skills 或 /api/skills/
+            if (url !== '/' && url !== '' && !url.startsWith('?')) {
+              return next();
+            }
+            
+            if (req.method === "GET") {
+              const skills = readSkills();
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ success: true, data: skills }));
+            } else if (req.method === "POST") {
+              // POST /api/skills - 创建 Skill
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const skills = readSkills();
+                  
+                  const newSkill = {
+                    id: `skill-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                    ...body,
+                    isBuiltIn: false,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                  };
+                  
+                  skills.push(newSkill);
+                  writeSkills(skills);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: newSkill }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // GET /api/skills/:id - 获取单个 Skill
+          server.middlewares.use("/api/skills/", (req, res, next) => {
+            const url = req.url || '';
+            // 处理 /api/skills/:id 格式
+            const parts = url.split('/');
+            if (parts.length < 2 || parts[1].includes('update') || parts[1].includes('delete')) {
+              return next();
+            }
+            
+            if (req.method === "GET") {
+              const id = parts[1].split('?')[0];
+              try {
+                const skills = readSkills();
+                const skill = skills.find((s: any) => s.id === id);
+                
+                if (!skill) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ success: false, error: 'Skill not found' }));
+                  return;
+                }
+                
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: skill }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+          
+          // PATCH /api/skills/:id - 更新 Skill
+          server.middlewares.use("/api/skills/update", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { id, ...updates } = body;
+                  
+                  const skills = readSkills();
+                  const index = skills.findIndex((s: any) => s.id === id);
+                  
+                  if (index === -1) {
+                    res.statusCode = 404;
+                    res.end(JSON.stringify({ success: false, error: 'Skill not found' }));
+                    return;
+                  }
+                  
+                  // 不允许修改内置技能标记
+                  delete updates.isBuiltIn;
+                  delete updates.id;
+                  
+                  skills[index] = { ...skills[index], ...updates, updatedAt: Date.now() };
+                  writeSkills(skills);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: skills[index] }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // DELETE /api/skills/:id - 删除 Skill
+          server.middlewares.use("/api/skills/delete", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { id } = body;
+                  
+                  let skills = readSkills();
+                  const skill = skills.find((s: any) => s.id === id);
+                  
+                  if (skill && skill.isBuiltIn) {
+                    res.statusCode = 403;
+                    res.end(JSON.stringify({ success: false, error: 'Cannot delete built-in skill' }));
+                    return;
+                  }
+                  
+                  skills = skills.filter((s: any) => s.id !== id);
+                  writeSkills(skills);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true }));
                 } catch (e) {
                   res.statusCode = 500;
                   res.end(JSON.stringify({ success: false, error: String(e) }));

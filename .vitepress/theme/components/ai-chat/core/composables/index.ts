@@ -3,7 +3,11 @@
  */
 
 export { useAIChat } from './useAIChat'
-// 统一使用 useAgentsUnified 替代 useAgents
+
+// 新的统一 Agent 配置系统（推荐）
+export { useAgentConfig } from './useAgentConfig'
+
+// 旧的实现（保留兼容性）
 export { useAgentsUnified as useAgents } from './useAgentsUnified'
 export { generateAvatarUrl, getRandomAvatarId } from './useAgentsUnified'
 export { useSkills } from './useSkills'
@@ -31,3 +35,15 @@ export type {
   SkillCreateParams,
   SkillCategory
 } from './useSkills'
+
+// 新的统一类型
+export type {
+  Agent as AgentV2,
+  AgentConfigMode,
+  AgentCapabilities,
+  Skill as SkillV2,
+  Tool,
+  CapabilityGraph,
+  CapabilityNode,
+  ConfigModeInfo
+} from '../types/agent'

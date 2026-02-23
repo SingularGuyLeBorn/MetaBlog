@@ -119,7 +119,7 @@ import { Icon } from '../ui'
 import { useAIChat, useAgents } from '../core/composables'
 import type { SessionConfig } from '../core/types'
 import type { Skill } from '../core/composables/useSkills'
-import type { Agent } from '../core/composables/useAgents'
+import type { Agent } from '../core/types/agent'
 
 const {
   sessions,

@@ -241,4 +241,31 @@ export interface LogEntry {
   timestamp: number
 }
 
+// ═══════════════════════════════════════════════════════════════
+// 重新导出 Agent 类型
+// ═══════════════════════════════════════════════════════════════
+
+export type {
+  Agent,
+  AgentLevel,
+  AgentStatus,
+  AgentPermission,
+  AgentMemory,
+  AgentCapabilities,
+  AgentConfigMode,
+  AgentCreateParams,
+  AgentUpdateParams,
+  Skill,
+  SkillCategory,
+  SkillCreateParams,
+  Tool,
+  CapabilityNode,
+  CapabilityEdge,
+  CapabilityGraph,
+  SystemPromptContext,
+  ConfigModeInfo
+} from './agent'
+
+export { CONFIG_MODES, STORAGE_KEYS } from './agent'
+
 

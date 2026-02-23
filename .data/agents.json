@@ -1,99 +1,29 @@
 [
   {
-    "id": "default-assistant",
+    "id": "agent-1771864714589-mpgyp1p",
     "name": "Meta 助手",
     "avatar": "🤖",
     "description": "基于 DeepSeek 大模型的通用 AI 助手，为您提供专业智能对话体验",
     "level": "meta",
     "status": "online",
     "seat": 1,
-    "skills": [
-      "write",
-      "code",
-      "summarize",
-      "translate"
-    ],
-    "permissions": [
-      {
-        "id": "chat",
-        "name": "对话权限",
-        "description": "可以进行对话交流",
-        "granted": true
-      },
-      {
-        "id": "file_read",
-        "name": "文件读取",
-        "description": "可以读取项目文件",
-        "granted": true
-      },
-      {
-        "id": "file_write",
-        "name": "文件写入",
-        "description": "可以修改项目文件",
-        "granted": true
-      },
-      {
-        "id": "skill_use",
-        "name": "技能调用",
-        "description": "可以使用已配置的技能",
-        "granted": true
-      },
-      {
-        "id": "skill_create",
-        "name": "技能创建",
-        "description": "可以创建新技能",
-        "granted": true
-      },
-      {
-        "id": "agent_manage",
-        "name": "Agent 管理",
-        "description": "可以管理其他 Agent",
-        "granted": true
-      },
-      {
-        "id": "memory_access",
-        "name": "记忆访问",
-        "description": "可以访问长期记忆",
-        "granted": true
-      },
-      {
-        "id": "web_search",
-        "name": "网络搜索",
-        "description": "可以进行网络搜索",
-        "granted": true
-      },
-      {
-        "id": "code_execute",
-        "name": "代码执行",
-        "description": "可以执行代码",
-        "granted": true
-      },
-      {
-        "id": "system_config",
-        "name": "系统配置",
-        "description": "可以修改系统配置",
-        "granted": true
-      }
-    ],
-    "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。",
-    "memoryEnabled": true,
-    "memoryContent": "",
-    "createdAt": 1771732756787,
-    "updatedAt": 1771732756787,
-    "lastActiveAt": 1771732685527,
+    "capabilities": {
+      "mode": "tools-only",
+      "skillIds": [],
+      "toolIds": [],
+      "customSystemPrompt": ""
+    },
+    "memory": {
+      "enabled": true,
+      "content": "",
+      "autoExtract": true,
+      "maxTokens": 2000
+    },
+    "permissions": [],
     "callCount": 0,
-    "isDefault": true
-  },
-  {
-    "id": "default-assistant",
-    "status": "offline",
-    "createdAt": 1771756055340,
-    "updatedAt": 1771756055340
-  },
-  {
-    "id": "default-assistant",
-    "status": "online",
-    "createdAt": 1771756055811,
-    "updatedAt": 1771756055811
+    "isDefault": true,
+    "createdAt": 1771864714589,
+    "updatedAt": 1771864804892,
+    "lastActiveAt": 1771864714589
   }
 ]

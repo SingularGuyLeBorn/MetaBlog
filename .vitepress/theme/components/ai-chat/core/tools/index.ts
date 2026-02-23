@@ -41,6 +41,19 @@ export {
   testEchoDef,
   summarizeTextDef,
   formatTextDef,
+  readFileDef,
+  writeFileDef,
+  listFilesDef,
+  webSearchDef,
+  fetchUrlDef,
+  calculateDef,
+  translateTextDef,
+  executeCodeDef,
+  analyzeCodeDef,
+  queryKnowledgeDef,
+  getWeatherDef,
+  createNoteDef,
+  listNotesDef,
   allToolDefinitions
 } from './definitions'
 
@@ -55,7 +68,20 @@ export {
   getCurrentTime,
   testEcho,
   summarizeText,
-  formatText
+  formatText,
+  readFile,
+  writeFile,
+  listFiles,
+  webSearch,
+  fetchUrl,
+  calculate,
+  translateText,
+  executeCode,
+  analyzeCode,
+  queryKnowledge,
+  getWeather,
+  createNote,
+  listNotes
 } from './executors'
 
 import { registerTools } from './registry'
@@ -68,16 +94,42 @@ import * as executors from './executors'
  */
 export function initializeDefaultTools(): void {
   const tools = [
+    // 文章管理工具
     { name: 'get_article_content', definition: definitions.getArticleContentDef, executor: executors.getArticleContent },
     { name: 'search_articles', definition: definitions.searchArticlesDef, executor: executors.searchArticles },
     { name: 'list_articles', definition: definitions.listArticlesDef, executor: executors.listArticles },
     { name: 'create_article', definition: definitions.createArticleDef, executor: executors.createArticle },
     { name: 'update_article', definition: definitions.updateArticleDef, executor: executors.updateArticle },
     { name: 'delete_article', definition: definitions.deleteArticleDef, executor: executors.deleteArticle },
-    { name: 'get_current_time', definition: definitions.getCurrentTimeDef, executor: executors.getCurrentTime },
-    { name: 'test_echo', definition: definitions.testEchoDef, executor: executors.testEcho },
+    
+    // 文件管理工具
+    { name: 'read_file', definition: definitions.readFileDef, executor: executors.readFile },
+    { name: 'write_file', definition: definitions.writeFileDef, executor: executors.writeFile },
+    { name: 'list_files', definition: definitions.listFilesDef, executor: executors.listFiles },
+    
+    // 网络工具
+    { name: 'web_search', definition: definitions.webSearchDef, executor: executors.webSearch },
+    { name: 'fetch_url', definition: definitions.fetchUrlDef, executor: executors.fetchUrl },
+    
+    // 计算与转换工具
+    { name: 'calculate', definition: definitions.calculateDef, executor: executors.calculate },
+    { name: 'translate_text', definition: definitions.translateTextDef, executor: executors.translateText },
     { name: 'summarize_text', definition: definitions.summarizeTextDef, executor: executors.summarizeText },
-    { name: 'format_text', definition: definitions.formatTextDef, executor: executors.formatText }
+    { name: 'format_text', definition: definitions.formatTextDef, executor: executors.formatText },
+    
+    // 代码工具
+    { name: 'execute_code', definition: definitions.executeCodeDef, executor: executors.executeCode },
+    { name: 'analyze_code', definition: definitions.analyzeCodeDef, executor: executors.analyzeCode },
+    
+    // 知识与笔记工具
+    { name: 'query_knowledge', definition: definitions.queryKnowledgeDef, executor: executors.queryKnowledge },
+    { name: 'create_note', definition: definitions.createNoteDef, executor: executors.createNote },
+    { name: 'list_notes', definition: definitions.listNotesDef, executor: executors.listNotes },
+    
+    // 其他工具
+    { name: 'get_current_time', definition: definitions.getCurrentTimeDef, executor: executors.getCurrentTime },
+    { name: 'get_weather', definition: definitions.getWeatherDef, executor: executors.getWeather },
+    { name: 'test_echo', definition: definitions.testEchoDef, executor: executors.testEcho }
   ]
   
   registerTools(tools)

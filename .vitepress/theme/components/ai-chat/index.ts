@@ -13,10 +13,62 @@
 export * from './core/composables'
 export * from './core/services'
 
+// ===== Core Types =====
+export type {
+  MessageRole,
+  MessageStatus,
+  ModelType,
+  ReasoningContent,
+  MessageAttachment,
+  TokenUsage,
+  MessageMetadata,
+  MessageVersion,
+  ChatMessage,
+  MessageGroup,
+  SessionConfig,
+  SessionStats,
+  ChatSession,
+  GroupedSessions,
+  DeepSeekRequest,
+  DeepSeekStreamChunk,
+  StreamCallbacks,
+  ChatState,
+  PersistedData,
+  PersistedDataV2,
+  StreamState,
+  LogLevel,
+  LogEntry
+} from './core/types'
+
+// ===== Core Types（新统一 Agent 类型） =====
+export {
+  CONFIG_MODES,
+  STORAGE_KEYS
+} from './core/types/agent'
+
+export type {
+  Agent,
+  AgentLevel,
+  AgentStatus,
+  AgentCapabilities,
+  AgentConfigMode,
+  AgentCreateParams,
+  AgentUpdateParams,
+  Skill,
+  SkillCategory,
+  SkillCreateParams,
+  Tool,
+  CapabilityGraph,
+  CapabilityNode,
+  ConfigModeInfo
+} from './core/types/agent'
+
 // ===== Modules - Agent =====
+// 注意：CapabilityGraph 已经包含在下面的导出中
 export { 
   AgentConfig,
   AgentAdmin, 
+  AgentConfigPanel,
   AgentHome,
   AgentCard, 
   AgentDetail,

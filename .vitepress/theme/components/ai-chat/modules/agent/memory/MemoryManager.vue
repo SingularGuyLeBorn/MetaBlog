@@ -1,746 +1,603 @@
 <!--
-  MemoryManager - 记忆管理页面（Claude 风格）
+  MemoryManager - 记忆管理组件
   
   功能：
-  - 查看所有记忆
-  - 按分类筛选
-  - 添加/编辑/删除记忆
-  - 搜索记忆
-  - 记忆持久化存储
+  1. 会话记忆开关
+  2. 长期记忆编辑
+  3. 自动提取开关
 -->
 <template>
   <div class="memory-manager">
-    <!-- 头部 -->
-    <header class="manager-header">
-      <div class="header-title">
-        <h1>🧠 记忆管理</h1>
-        <p class="subtitle">管理 AI 助手记住的信息和偏好</p>
-      </div>
-      <div class="header-stats">
-        <div class="stat-item">
-          <span class="stat-value">{{ memories.length }}</span>
-          <span class="stat-label">总记忆</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-value">{{ enabledMemories.length }}</span>
-          <span class="stat-label">已启用</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- 工具栏 -->
-    <div class="toolbar">
-      <div class="search-box">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="搜索记忆..."
-          class="search-input"
-        />
-        <span class="search-icon">🔍</span>
-      </div>
-      
-      <select v-model="filterCategory" class="filter-select">
-        <option value="">全部分类</option>
-        <option value="user_info">用户信息</option>
-        <option value="preferences">偏好设置</option>
-        <option value="facts">重要信息</option>
-        <option value="goals">目标计划</option>
-        <option value="context">上下文</option>
-      </select>
-      
-      <button class="btn-create" @click="openCreateDialog">
-        <span>+</span>
-        <span>添加记忆</span>
-      </button>
-    </div>
-
-    <!-- 记忆列表 -->
-    <section class="memory-list">
-      <div v-if="filteredMemories.length === 0" class="empty-state">
-        <span class="empty-icon">📝</span>
-        <h3>还没有记忆</h3>
-        <p>添加一些信息让 AI 更了解你</p>
-      </div>
-
-      <template v-else>
-        <div
-          v-for="memory in filteredMemories"
-          :key="memory.id"
-          class="memory-card"
-          :class="{ disabled: !memory.enabled }"
-        >
-          <div class="memory-header">
-            <div class="memory-category-badge" :class="memory.category">
-              {{ categoryName(memory.category) }}
+    <div class="memory-layout">
+      <!-- 左侧：配置选项 -->
+      <div class="memory-config">
+        <!-- 会话记忆 -->
+        <div class="config-card">
+          <div class="card-header">
+            <div class="header-icon">💬</div>
+            <div class="header-info">
+              <h4>会话记忆</h4>
+              <p>记住对话历史，保持上下文连贯性</p>
             </div>
-            <div class="memory-importance">
-              <span v-for="i in 5" :key="i" :class="{ active: i <= memory.importance }">★</span>
-            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" v-model="config.enabled" />
+              <span class="toggle-slider"></span>
+            </label>
           </div>
-
-          <p class="memory-content">{{ memory.content }}</p>
-
-          <div class="memory-footer">
-            <div class="memory-meta">
-              <span class="memory-source" :class="memory.source">
-                {{ memory.source === 'user' ? '👤 用户' : '🤖 AI' }}
-              </span>
-              <span class="memory-date">{{ formatDate(memory.updatedAt) }}</span>
-            </div>
-            <div class="memory-actions">
-              <button class="action-btn" @click="editMemory(memory)" title="编辑">
-                ✏️
-              </button>
-              <button class="action-btn" @click="toggleEnabled(memory)" :title="memory.enabled ? '禁用' : '启用'">
-                {{ memory.enabled ? '👁️' : '🚫' }}
-              </button>
-              <button class="action-btn danger" @click="confirmDelete(memory)" title="删除">
-                🗑️
-              </button>
-            </div>
-          </div>
-        </div>
-      </template>
-    </section>
-
-    <!-- 添加/编辑弹窗 -->
-    <Teleport to="body">
-      <div v-if="showDialog" class="dialog-overlay" @click.self="closeDialog">
-        <div class="dialog-content">
-          <div class="dialog-header">
-            <h3>{{ isEditing ? '编辑记忆' : '添加记忆' }}</h3>
-            <button class="btn-close" @click="closeDialog">✕</button>
-          </div>
-
-          <div class="dialog-body">
-            <div class="form-group">
-              <label>内容 *</label>
-              <textarea 
-                v-model="form.content" 
-                rows="4" 
-                class="form-textarea"
-                placeholder="例如：我喜欢用 Python 编程，偏好简洁的代码风格..."
-              />
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label>分类</label>
-                <select v-model="form.category" class="form-select">
-                  <option value="user_info">用户信息</option>
-                  <option value="preferences">偏好设置</option>
-                  <option value="facts">重要信息</option>
-                  <option value="goals">目标计划</option>
-                  <option value="context">上下文</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>重要性 ({{ form.importance }})</label>
+          <div class="card-content" v-if="config.enabled">
+            <div class="setting-item">
+              <label>最大记忆 Tokens</label>
+              <div class="token-input">
                 <input 
-                  v-model.number="form.importance"
-                  type="range" 
-                  min="1" 
-                  max="5" 
-                  class="form-slider"
+                  type="number" 
+                  v-model.number="config.maxTokens"
+                  min="500"
+                  max="8000"
+                  step="500"
                 />
-                <div class="importance-labels">
-                  <span>低</span>
-                  <span>高</span>
+                <span class="token-hint">约 {{ Math.floor(config.maxTokens / 4) }} 字</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 长期记忆 -->
+        <div class="config-card">
+          <div class="card-header">
+            <div class="header-icon">🧠</div>
+            <div class="header-info">
+              <h4>长期记忆</h4>
+              <p>AI 需要永久记住的信息</p>
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="memory-editor">
+              <div class="editor-toolbar">
+                <button 
+                  v-for="template in memoryTemplates"
+                  :key="template.id"
+                  class="template-btn"
+                  @click="applyTemplate(template)"
+                >
+                  {{ template.name }}
+                </button>
+              </div>
+              <textarea
+                v-model="config.content"
+                rows="10"
+                placeholder="输入 AI 需要记住的长期信息，例如：
+- 用户的编程语言偏好
+- 用户的业务领域
+- 特定的术语定义
+- 个人喜好和习惯..."
+              />
+              <div class="editor-stats">
+                <span>{{ config.content.length }} 字符</span>
+                <button class="btn-save" @click="saveMemory">
+                  <span>💾</span>
+                  保存记忆
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 自动提取 -->
+        <div class="config-card">
+          <div class="card-header">
+            <div class="header-icon">🔍</div>
+            <div class="header-info">
+              <h4>智能提取</h4>
+              <p>自动从对话中提取重要信息</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" v-model="config.autoExtract" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="card-content" v-if="config.autoExtract">
+            <p class="hint-text">
+              开启后，AI 会自动识别对话中的重要信息（如偏好、事实、决定等）并保存到长期记忆。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：预览 -->
+      <div class="memory-preview">
+        <div class="preview-card">
+          <div class="preview-header">
+            <h4>
+              <span>👁️</span>
+              记忆预览
+            </h4>
+          </div>
+          <div class="preview-content">
+            <div v-if="!config.enabled && !config.content" class="empty-state">
+              <span class="empty-icon">📝</span>
+              <p>记忆功能未启用</p>
+            </div>
+            <template v-else>
+              <div v-if="config.enabled" class="preview-section">
+                <span class="section-label">会话记忆</span>
+                <div class="preview-box">
+                  <span class="status-badge" :class="{ active: config.enabled }">
+                    {{ config.enabled ? '已启用' : '已禁用' }}
+                  </span>
+                  <span v-if="config.enabled" class="token-badge">
+                    最大 {{ config.maxTokens }} tokens
+                  </span>
                 </div>
               </div>
-            </div>
-
-            <div class="form-group">
-              <label>来源</label>
-              <div class="source-options">
-                <label class="source-option" :class="{ active: form.source === 'user' }">
-                  <input type="radio" value="user" v-model="form.source" />
-                  <span>👤 用户明确告知</span>
-                </label>
-                <label class="source-option" :class="{ active: form.source === 'inferred' }">
-                  <input type="radio" value="inferred" v-model="form.source" />
-                  <span>🤖 AI 推断</span>
-                </label>
+              
+              <div v-if="config.content" class="preview-section">
+                <span class="section-label">长期记忆</span>
+                <div class="memory-content-preview">
+                  <pre>{{ config.content }}</pre>
+                </div>
               </div>
-            </div>
-          </div>
-
-          <div class="dialog-footer">
-            <button class="btn-secondary" @click="closeDialog">取消</button>
-            <button class="btn-primary" @click="saveMemory" :disabled="!form.content.trim()">
-              {{ isEditing ? '保存' : '添加' }}
-            </button>
+              
+              <div v-if="config.autoExtract" class="preview-section">
+                <span class="section-label">智能提取</span>
+                <span class="status-badge active">已启用</span>
+              </div>
+            </template>
           </div>
         </div>
-      </div>
-    </Teleport>
 
-    <!-- 删除确认 -->
-    <Teleport to="body">
-      <div v-if="showDeleteConfirm" class="dialog-overlay" @click.self="showDeleteConfirm = false">
-        <div class="dialog-content confirm">
-          <div class="confirm-icon">⚠️</div>
-          <h3>确认删除</h3>
-          <p>确定要删除这条记忆吗？</p>
-          <div class="dialog-footer">
-            <button class="btn-secondary" @click="showDeleteConfirm = false">取消</button>
-            <button class="btn-danger" @click="deleteMemory">删除</button>
-          </div>
+        <!-- 记忆使用提示 -->
+        <div class="tips-card">
+          <h5>💡 使用建议</h5>
+          <ul>
+            <li>长期记忆适合保存用户偏好、业务背景等稳定信息</li>
+            <li>避免存储敏感信息（密码、密钥等）</li>
+            <li>定期清理过期记忆以保持效率</li>
+            <li>使用结构化格式（列表、段落）更易被 AI 理解</li>
+          </ul>
         </div>
       </div>
-    </Teleport>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
-import type { Memory, MemoryCategory } from '../../../core/memory'
-import {
-  getAllMemories,
-  createMemory,
-  updateMemory,
-  deleteMemory as deleteMemoryApi
-} from '../../../core/memory'
+import { ref, watch } from 'vue'
+import type { Agent } from '../../../core/types/agent'
 
-const searchQuery = ref('')
-const filterCategory = ref('')
-const memories = ref<Memory[]>(getAllMemories())
-const showDialog = ref(false)
-const showDeleteConfirm = ref(false)
-const isEditing = ref(false)
-const memoryToDelete = ref<Memory | null>(null)
+const props = defineProps<{
+  agent: Agent | null
+}>()
 
-const form = reactive({
-  id: '',
-  content: '',
-  category: 'facts' as MemoryCategory,
-  importance: 3,
-  source: 'user' as 'user' | 'inferred'
+// 本地配置
+const config = ref({
+  enabled: props.agent?.memory.enabled ?? true,
+  content: props.agent?.memory.content ?? '',
+  autoExtract: props.agent?.memory.autoExtract ?? false,
+  maxTokens: props.agent?.memory.maxTokens ?? 2000
 })
 
-const filteredMemories = computed(() => {
-  let result = memories.value
-  
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter(m => m.content.toLowerCase().includes(query))
+// 记忆模板
+const memoryTemplates = [
+  {
+    id: 'dev',
+    name: '开发者偏好',
+    content: `## 开发偏好
+- 主要编程语言: 
+- 技术栈: 
+- 代码风格偏好: 
+- 注释语言: 中文/英文`
+  },
+  {
+    id: 'writer',
+    name: '写作偏好',
+    content: `## 写作偏好
+- 写作领域: 
+- 目标读者: 
+- 语言风格: 专业/ casual
+- 常用格式: Markdown`
+  },
+  {
+    id: 'business',
+    name: '业务背景',
+    content: `## 业务背景
+- 行业领域: 
+- 公司/组织: 
+- 主要职责: 
+- 专业术语: `
   }
-  
-  if (filterCategory.value) {
-    result = result.filter(m => m.category === filterCategory.value)
+]
+
+// 监听 agent 变化
+watch(() => props.agent, (newAgent) => {
+  if (newAgent) {
+    config.value = {
+      enabled: newAgent.memory.enabled,
+      content: newAgent.memory.content,
+      autoExtract: newAgent.memory.autoExtract,
+      maxTokens: newAgent.memory.maxTokens
+    }
   }
-  
-  return result.sort((a, b) => {
-    // 按重要性排序，然后按时间排序
-    if (b.importance !== a.importance) return b.importance - a.importance
-    return b.updatedAt - a.updatedAt
-  })
-})
+}, { deep: true })
 
-const enabledMemories = computed(() => memories.value.filter(m => m.enabled))
-
-function categoryName(cat: MemoryCategory): string {
-  const names: Record<string, string> = {
-    user_info: '用户',
-    preferences: '偏好',
-    facts: '信息',
-    goals: '目标',
-    context: '上下文'
-  }
-  return names[cat] || cat
-}
-
-function formatDate(timestamp: number): string {
-  const date = new Date(timestamp)
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
-
-function openCreateDialog() {
-  isEditing.value = false
-  form.id = ''
-  form.content = ''
-  form.category = 'facts'
-  form.importance = 3
-  form.source = 'user'
-  showDialog.value = true
-}
-
-function editMemory(memory: Memory) {
-  isEditing.value = true
-  form.id = memory.id
-  form.content = memory.content
-  form.category = memory.category
-  form.importance = memory.importance
-  form.source = memory.source
-  showDialog.value = true
-}
-
-function closeDialog() {
-  showDialog.value = false
-  isEditing.value = false
+function applyTemplate(template: typeof memoryTemplates[0]) {
+  config.value.content = template.content
 }
 
 function saveMemory() {
-  if (!form.content.trim()) return
-  
-  if (isEditing.value) {
-    updateMemory(form.id, {
-      content: form.content.trim(),
-      category: form.category,
-      importance: form.importance,
-      source: form.source
-    })
-  } else {
-    createMemory(
-      form.content.trim(),
-      form.category,
-      { importance: form.importance, source: form.source }
-    )
-  }
-  
-  memories.value = getAllMemories()
-  closeDialog()
-}
-
-function confirmDelete(memory: Memory) {
-  memoryToDelete.value = memory
-  showDeleteConfirm.value = true
-}
-
-function deleteMemory() {
-  if (memoryToDelete.value) {
-    deleteMemoryApi(memoryToDelete.value.id)
-    memories.value = getAllMemories()
-    showDeleteConfirm.value = false
-    memoryToDelete.value = null
-  }
-}
-
-function toggleEnabled(memory: Memory) {
-  updateMemory(memory.id, { enabled: !memory.enabled })
-  memories.value = getAllMemories()
+  // TODO: 调用 updateAgent 保存记忆
+  console.log('Save memory:', config.value)
 }
 </script>
 
 <style scoped>
 .memory-manager {
-  padding: 32px;
-  max-width: 900px;
-  margin: 0 auto;
+  height: 100%;
 }
 
-/* 头部 */
-.manager-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.header-title h1 {
-  margin: 0 0 8px 0;
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.subtitle {
-  margin: 0;
-  color: #64748b;
-}
-
-.header-stats {
-  display: flex;
+.memory-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
   gap: 24px;
+  height: 100%;
 }
 
-.stat-item {
-  text-align: center;
-}
-
-.stat-value {
-  display: block;
-  font-size: 24px;
-  font-weight: 700;
-  color: #3b82f6;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: #64748b;
-}
-
-/* 工具栏 */
-.toolbar {
+/* 左侧配置 */
+.memory-config {
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
 }
 
-.search-box {
-  position: relative;
+.config-card {
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: var(--vp-c-bg);
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.header-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--vp-c-brand-soft), var(--vp-c-brand));
+  border-radius: 10px;
+  font-size: 20px;
+}
+
+.header-info {
   flex: 1;
 }
 
-.search-input {
-  width: 100%;
-  padding: 12px 16px 12px 44px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 14px;
+.header-info h4 {
+  margin: 0 0 2px 0;
+  font-size: 15px;
+  font-weight: 600;
 }
 
-.search-icon {
+.header-info p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--vp-c-text-2);
+}
+
+.card-content {
+  padding: 16px 20px;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
   position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
+  inset: 0;
+  background: var(--vp-c-divider);
+  border-radius: 26px;
+  transition: 0.3s;
 }
 
-.filter-select {
-  padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 14px;
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  left: 2px;
+  top: 2px;
   background: white;
+  border-radius: 50%;
+  transition: 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.btn-create {
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--vp-c-brand);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(22px);
+}
+
+/* 设置项 */
+.setting-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-/* 记忆列表 */
-.memory-list {
+.setting-item label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.token-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.token-input input {
+  width: 100px;
+  padding: 8px 12px;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.token-hint {
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}
+
+/* 记忆编辑器 */
+.memory-editor {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.template-btn {
+  padding: 6px 12px;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.template-btn:hover {
+  border-color: var(--vp-c-brand);
+  color: var(--vp-c-brand);
+}
+
+.memory-editor textarea {
+  width: 100%;
+  padding: 14px;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  resize: vertical;
+  min-height: 160px;
+}
+
+.memory-editor textarea:focus {
+  outline: none;
+  border-color: var(--vp-c-brand);
+}
+
+.editor-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.editor-stats span {
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}
+
+.btn-save {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--vp-c-brand);
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-save:hover {
+  background: var(--vp-c-brand-dark);
+}
+
+.hint-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--vp-c-text-2);
+  line-height: 1.5;
+}
+
+/* 右侧预览 */
+.memory-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.preview-card {
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.preview-header {
+  padding: 16px 20px;
+  background: var(--vp-c-bg);
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.preview-header h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.preview-content {
+  padding: 20px;
+}
+
 .empty-state {
   text-align: center;
-  padding: 80px 20px;
-  color: #94a3b8;
+  padding: 40px 20px;
+  color: var(--vp-c-text-3);
 }
 
 .empty-icon {
   font-size: 48px;
-  margin-bottom: 16px;
-}
-
-.memory-card {
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  transition: all 0.2s;
-}
-
-.memory-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.memory-card.disabled {
-  opacity: 0.6;
-  background: #f8fafc;
-}
-
-.memory-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 12px;
 }
 
-.memory-category-badge {
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.memory-category-badge.user_info {
-  background: #dbeafe;
-  color: #3b82f6;
-}
-
-.memory-category-badge.preferences {
-  background: #dcfce7;
-  color: #22c55e;
-}
-
-.memory-category-badge.facts {
-  background: #fef3c7;
-  color: #f59e0b;
-}
-
-.memory-category-badge.goals {
-  background: #fce7f3;
-  color: #ec4899;
-}
-
-.memory-category-badge.context {
-  background: #f3e8ff;
-  color: #a855f7;
-}
-
-.memory-importance {
-  color: #e2e8f0;
-  font-size: 14px;
-}
-
-.memory-importance span.active {
-  color: #f59e0b;
-}
-
-.memory-content {
-  margin: 0 0 16px 0;
-  font-size: 15px;
-  line-height: 1.6;
-  color: #1e293b;
-}
-
-.memory-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.memory-meta {
-  display: flex;
-  gap: 12px;
-  font-size: 12px;
-  color: #64748b;
-}
-
-.memory-source {
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.memory-source.user {
-  background: #dbeafe;
-  color: #3b82f6;
-}
-
-.memory-source.inferred {
-  background: #f3e8ff;
-  color: #a855f7;
-}
-
-.memory-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.action-btn:hover {
-  background: #f1f5f9;
-}
-
-.action-btn.danger:hover {
-  background: #fee2e2;
-}
-
-/* 弹窗 */
-.dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.dialog-content {
-  width: 100%;
-  max-width: 500px;
-  background: white;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.dialog-content.confirm {
-  max-width: 400px;
-  padding: 40px;
-  text-align: center;
-}
-
-.dialog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.dialog-header h3 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.btn-close {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 18px;
-}
-
-.dialog-body {
-  padding: 24px;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
-}
-
-/* 表单 */
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 16px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.form-textarea,
-.form-select,
-.form-slider {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-.form-slider {
-  padding: 8px 0;
-}
-
-.importance-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: #64748b;
-  margin-top: 4px;
-}
-
-/* 来源选项 */
-.source-options {
-  display: flex;
-  gap: 12px;
-}
-
-.source-option {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.source-option.active {
-  border-color: #3b82f6;
-  background: #dbeafe;
-}
-
-.source-option input {
-  display: none;
-}
-
-/* 按钮 */
-.btn-secondary,
-.btn-primary,
-.btn-danger {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-}
-
-.btn-secondary {
-  background: #f1f5f9;
-  color: #475569;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  color: white;
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-danger {
-  background: #ef4444;
-  color: white;
-}
-
-.confirm-icon {
-  font-size: 48px;
+.preview-section {
   margin-bottom: 16px;
+}
+
+.preview-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vp-c-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.preview-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  background: var(--vp-c-bg);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}
+
+.status-badge.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.token-badge {
+  padding: 4px 10px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.memory-content-preview {
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.memory-content-preview pre {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--vp-c-text-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 提示卡片 */
+.tips-card {
+  padding: 16px 20px;
+  background: linear-gradient(145deg, #fef3c7, #fde68a);
+  border-radius: 12px;
+}
+
+.tips-card h5 {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.tips-card ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12px;
+  color: #a16207;
+  line-height: 1.6;
+}
+
+.tips-card li {
+  margin-bottom: 4px;
+}
+
+/* 响应式 */
+@media (max-width: 1024px) {
+  .memory-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .memory-preview {
+    order: -1;
+  }
 }
 </style>

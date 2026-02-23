@@ -220,6 +220,297 @@ export const formatTextDef: ToolDefinition = {
   }
 }
 
+// ============ 文件操作工具定义 ============
+
+export const readFileDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'read_file',
+    description: '读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: '文件路径，例如 "docs/readme.md" 或 "src/config.ts"'
+        }
+      },
+      required: ['path']
+    }
+  }
+}
+
+export const writeFileDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'write_file',
+    description: '写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: '文件路径'
+        },
+        content: {
+          type: 'string',
+          description: '要写入的文件内容'
+        }
+      },
+      required: ['path', 'content']
+    }
+  }
+}
+
+export const listFilesDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'list_files',
+    description: '列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: '目录路径，默认为当前目录'
+        },
+        recursive: {
+          type: 'boolean',
+          description: '是否递归列出子目录，默认 false'
+        }
+      },
+      required: []
+    }
+  }
+}
+
+// ============ Web 与搜索工具定义 ============
+
+export const webSearchDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'web_search',
+    description: '执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: '搜索关键词'
+        },
+        num_results: {
+          type: 'number',
+          description: '返回结果数量，默认 5'
+        }
+      },
+      required: ['query']
+    }
+  }
+}
+
+export const fetchUrlDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'fetch_url',
+    description: '获取指定 URL 的网页内容。当用户需要提供特定网页的摘要或分析网页内容时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          description: '要获取的网页 URL'
+        }
+      },
+      required: ['url']
+    }
+  }
+}
+
+// ============ 数学与计算工具定义 ============
+
+export const calculateDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'calculate',
+    description: '执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        expression: {
+          type: 'string',
+          description: '数学表达式，例如 "2 + 2 * 3" 或 "sin(30)"'
+        }
+      },
+      required: ['expression']
+    }
+  }
+}
+
+// ============ 语言与翻译工具定义 ============
+
+export const translateTextDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'translate_text',
+    description: '翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        text: {
+          type: 'string',
+          description: '要翻译的文本'
+        },
+        target_language: {
+          type: 'string',
+          description: '目标语言代码，如 "zh"（中文）、"en"（英文）、"ja"（日文）、"ko"（韩文）、"fr"（法文）、"de"（德文）等'
+        },
+        source_language: {
+          type: 'string',
+          description: '源语言代码（可选，自动检测）'
+        }
+      },
+      required: ['text', 'target_language']
+    }
+  }
+}
+
+// ============ 代码相关工具定义 ============
+
+export const executeCodeDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'execute_code',
+    description: '执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          description: '要执行的代码'
+        },
+        language: {
+          type: 'string',
+          description: '编程语言，如 "python", "javascript", "bash" 等'
+        }
+      },
+      required: ['code', 'language']
+    }
+  }
+}
+
+export const analyzeCodeDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'analyze_code',
+    description: '分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          description: '要分析的源代码'
+        },
+        language: {
+          type: 'string',
+          description: '编程语言'
+        }
+      },
+      required: ['code', 'language']
+    }
+  }
+}
+
+// ============ 数据与知识管理工具定义 ============
+
+export const queryKnowledgeDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'query_knowledge',
+    description: '查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: '查询内容'
+        }
+      },
+      required: ['query']
+    }
+  }
+}
+
+// ============ 天气与时间工具定义 ============
+
+export const getWeatherDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'get_weather',
+    description: '获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        city: {
+          type: 'string',
+          description: '城市名称，如 "北京"、"上海"、"New York"'
+        },
+        days: {
+          type: 'number',
+          description: '预报天数，默认 3 天'
+        }
+      },
+      required: ['city']
+    }
+  }
+}
+
+// ============ 笔记与待办工具定义 ============
+
+export const createNoteDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'create_note',
+    description: '创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        title: {
+          type: 'string',
+          description: '笔记标题'
+        },
+        content: {
+          type: 'string',
+          description: '笔记内容'
+        },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+          description: '标签列表'
+        }
+      },
+      required: ['title', 'content']
+    }
+  }
+}
+
+export const listNotesDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'list_notes',
+    description: '列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。',
+    parameters: {
+      type: 'object',
+      properties: {
+        tag: {
+          type: 'string',
+          description: '按标签筛选（可选）'
+        }
+      },
+      required: []
+    }
+  }
+}
+
 // ============ 所有工具定义列表 ============
 
 export const allToolDefinitions = [
@@ -232,5 +523,18 @@ export const allToolDefinitions = [
   getCurrentTimeDef,
   testEchoDef,
   summarizeTextDef,
-  formatTextDef
+  formatTextDef,
+  readFileDef,
+  writeFileDef,
+  listFilesDef,
+  webSearchDef,
+  fetchUrlDef,
+  calculateDef,
+  translateTextDef,
+  executeCodeDef,
+  analyzeCodeDef,
+  queryKnowledgeDef,
+  getWeatherDef,
+  createNoteDef,
+  listNotesDef
 ]

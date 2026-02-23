@@ -3,8 +3,8 @@
  * 
  * 包含：
  * - AgentConfig: Agent 配置面板
- * - AgentAdmin: Agent 管理中心
- * - AgentControlCenter: Agent 控制中心 (新)
+ * - AgentAdmin: Agent 管理中心（新 - 统一配置）
+ * - AgentControlCenter: Agent 控制中心
  * - Skills: 技能管理
  * - Memory: 记忆管理
  * - Tools: 工具管理
@@ -12,15 +12,29 @@
 
 export { default as AgentConfig } from './AgentConfig.vue'
 
-// Admin
-export { AgentAdmin, AgentHome, AgentDetail, AgentCard } from './admin'
+// Admin（新设计）
+export { 
+  AgentAdmin, 
+  AgentConfigPanel,
+  CapabilityGraph,
+  AgentHome,
+  AgentCard, 
+  AgentDetail 
+} from './admin'
 
-// Control Center (新)
+// Control Center
 export { AgentControlCenter, useAgentControl } from './control'
 export type { Agent, AgentStatus, Trigger, AgentCreateParams } from './control'
 
 // Skills
-export { SkillManager, SkillEditor, SkillPreview, SkillImport } from './skills'
+export { 
+  SkillManager, 
+  SkillsManager,
+  SkillDetailModal,
+  SkillEditor, 
+  SkillPreview, 
+  SkillImport 
+} from './skills'
 
 // Memory
 export { MemoryManager } from './memory'
