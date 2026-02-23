@@ -2861,6 +2861,49 @@ ${content}`;
             } else next();
           });
 
+          // POST /api/logs/session - 保存 Session 日志
+          server.middlewares.use("/api/logs/session", async (req, res, next) => {
+            if (req.method === "POST") {
+              try {
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const sessionLog = JSON.parse(Buffer.concat(chunks).toString());
+                    
+                    // 保存到 .logs/sessions 目录
+                    const sessionsDir = path.join(process.cwd(), '.logs', 'sessions');
+                    if (!fs.existsSync(sessionsDir)) {
+                      fs.mkdirSync(sessionsDir, { recursive: true });
+                    }
+                    
+                    // 生成文件名
+                    const filename = sessionLog.filename || `session-${Date.now()}.json`;
+                    const filepath = path.join(sessionsDir, filename);
+                    
+                    // 写入文件
+                    fs.writeFileSync(filepath, JSON.stringify(sessionLog, null, 2), 'utf-8');
+                    
+                    console.log(`[Session Log] Saved to ${filename} (${sessionLog.entries?.length || 0} entries)`);
+                    
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(JSON.stringify({
+                      success: true,
+                      data: { filename, path: filepath }
+                    }));
+                  } catch (e) {
+                    console.error('[Session Log] Error saving:', e);
+                    res.statusCode = 500;
+                    res.end(JSON.stringify({ success: false, error: String(e) }));
+                  }
+                });
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+
           // ============================================
           // Proxy API - 网络抓取代理
           // ============================================

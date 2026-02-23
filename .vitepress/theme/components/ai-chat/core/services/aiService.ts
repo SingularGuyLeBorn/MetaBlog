@@ -280,6 +280,32 @@ function cleanAIOutput(content: string): string {
     .trim()
 }
 
+/**
+ * 截断过长的消息内容，防止请求体过大
+ * 工具结果消息可能包含大量内容（如完整文件），需要截断
+ */
+function truncateMessages(messages: any[], maxContentLength: number = 8000): any[] {
+  return messages.map(m => {
+    // 如果是工具结果消息，截断内容
+    if (m.role === 'tool' && m.content && m.content.length > maxContentLength) {
+      const truncated = m.content.substring(0, maxContentLength)
+      const truncatedLength = m.content.length - maxContentLength
+      return {
+        ...m,
+        content: truncated + `\n\n... [内容已截断，省略 ${truncatedLength} 字符]`
+      }
+    }
+    // 如果是 assistant 的 tool_calls 响应，也检查内容长度
+    if (m.role === 'assistant' && m.content && m.content.length > maxContentLength * 2) {
+      return {
+        ...m,
+        content: m.content.substring(0, maxContentLength * 2) + `\n\n... [内容已截断]`
+      }
+    }
+    return m
+  })
+}
+
 // ==================== API 请求 ====================
 
 async function chatNonStream(
@@ -305,6 +331,9 @@ async function chatNonStream(
       return m
     })
   }
+  
+  // 截断过长的消息，防止请求体过大
+  processedMessages = truncateMessages(processedMessages, 6000)
   
   const requestBody: any = {
     model: config.model,
@@ -388,8 +417,10 @@ async function chatStreamInternal(
   const isThinkingEnabled = config.enableReasoning && config.model === 'deepseek-chat'
   
   let processedMessages = messages
+  
+  // 处理 reasoning_content
   if (isThinkingEnabled && !isToolContinuation) {
-    processedMessages = messages.map((m: any) => {
+    processedMessages = processedMessages.map((m: any) => {
       if (m.role === 'assistant' && m.reasoning_content) {
         const { reasoning_content, ...rest } = m
         return rest
@@ -397,6 +428,9 @@ async function chatStreamInternal(
       return m
     })
   }
+  
+  // 截断过长的消息，防止请求体过大
+  processedMessages = truncateMessages(processedMessages, 6000)
   
   const requestBody: any = {
     model: config.model,

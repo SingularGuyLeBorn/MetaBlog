@@ -173,7 +173,6 @@
             <template v-if="!isEditing">
               <button class="btn-secondary" @click="close">关闭</button>
               <button 
-                v-if="!displaySkill?.isBuiltIn"
                 class="btn-primary"
                 @click="startEdit"
               >

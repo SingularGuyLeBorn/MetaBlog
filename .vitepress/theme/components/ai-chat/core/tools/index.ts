@@ -46,6 +46,13 @@ export {
   listFilesDef,
   webSearchDef,
   fetchUrlDef,
+  // GitHub 工具
+  githubGetRepoDef,
+  githubListRepoContentsDef,
+  githubGetFileContentDef,
+  githubSearchCodeDef,
+  githubGetCommitHistoryDef,
+  githubGetIssuesDef,
   calculateDef,
   translateTextDef,
   executeCodeDef,
@@ -74,6 +81,13 @@ export {
   listFiles,
   webSearch,
   fetchUrl,
+  // GitHub 工具
+  githubGetRepo,
+  githubListRepoContents,
+  githubGetFileContent,
+  githubSearchCode,
+  githubGetCommitHistory,
+  githubGetIssues,
   calculate,
   translateText,
   executeCode,
@@ -125,6 +139,14 @@ export function initializeDefaultTools(): void {
     { name: 'query_knowledge', definition: definitions.queryKnowledgeDef, executor: executors.queryKnowledge },
     { name: 'create_note', definition: definitions.createNoteDef, executor: executors.createNote },
     { name: 'list_notes', definition: definitions.listNotesDef, executor: executors.listNotes },
+    
+    // GitHub 工具
+    { name: 'github_get_repo', definition: definitions.githubGetRepoDef, executor: executors.githubGetRepo },
+    { name: 'github_list_repo_contents', definition: definitions.githubListRepoContentsDef, executor: executors.githubListRepoContents },
+    { name: 'github_get_file_content', definition: definitions.githubGetFileContentDef, executor: executors.githubGetFileContent },
+    { name: 'github_search_code', definition: definitions.githubSearchCodeDef, executor: executors.githubSearchCode },
+    { name: 'github_get_commit_history', definition: definitions.githubGetCommitHistoryDef, executor: executors.githubGetCommitHistory },
+    { name: 'github_get_issues', definition: definitions.githubGetIssuesDef, executor: executors.githubGetIssues },
     
     // 其他工具
     { name: 'get_current_time', definition: definitions.getCurrentTimeDef, executor: executors.getCurrentTime },

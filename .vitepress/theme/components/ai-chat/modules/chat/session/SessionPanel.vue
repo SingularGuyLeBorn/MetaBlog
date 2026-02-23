@@ -35,24 +35,35 @@
               active: currentId === session.id,
               streaming: streamingIds.includes(session.id)
             }"
-
-            @click="$emit('switch', session.id)"
+            @click="handleSessionClick(session.id)"
           >
             <div class="session-icon-3d">
               <Icon name="message" :size="16" />
               <span v-if="streamingIds.includes(session.id)" class="streaming-dot-3d" />
             </div>
             <div class="session-info">
-              <div class="session-title">{{ session.title }}</div>
+              <!-- 行内编辑模式 -->
+              <div v-if="editingId === session.id" class="session-title-edit" @click.stop>
+                <input
+                  :ref="(el) => { if (el) inputRefs[session.id] = el as HTMLInputElement }"
+                  v-model="editingTitle"
+                  type="text"
+                  @keydown.enter="saveRename"
+                  @keydown.esc="cancelRename"
+                  @blur="saveRename"
+                />
+              </div>
+              <!-- 正常显示模式 -->
+              <div v-else class="session-title">{{ session.title }}</div>
               <div class="session-time">
                 {{ streamingIds.includes(session.id) ? '生成中...' : formatTime(session.updatedAt) }}
               </div>
             </div>
             <div class="session-actions" @click.stop>
-              <button class="action-btn-3d" @click="$emit('rename', session.id)">
+              <button class="action-btn-3d" @click.prevent="startRename(session)" title="重命名">
                 <Icon name="edit" :size="14" />
               </button>
-              <button class="action-btn-3d delete" @click="$emit('delete', session.id)">
+              <button class="action-btn-3d delete" @click.prevent="$emit('delete', session.id)" title="删除">
                 <Icon name="trash" :size="14" />
               </button>
             </div>
@@ -68,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { Icon } from '../../../ui'
 import type { ChatSession } from '../../../core/types'
 
@@ -83,15 +94,24 @@ const props = withDefaults(defineProps<Props>(), {
   streamingIds: () => []
 })
 
-defineEmits<{
+const emit = defineEmits<{
   create: []
   switch: [id: string]
-  rename: [id: string]
+  rename: [id: string, newTitle: string]
   delete: [id: string]
   'toggle-collapse': []
 }>()
 
+// 搜索
 const searchQuery = ref('')
+
+// 行内编辑状态
+const editingId = ref<string | null>(null)
+const editingTitle = ref('')
+const editInput = ref<HTMLInputElement | null>(null)
+
+// 存储每个会话的 input ref
+const inputRefs = ref<Record<string, HTMLInputElement>>({})
 
 const filteredGroups = computed(() => {
   let sessions = props.sessions
@@ -128,6 +148,41 @@ const filteredGroups = computed(() => {
 function formatTime(timestamp: number) {
   const date = new Date(timestamp)
   return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+}
+
+// 处理会话点击
+function handleSessionClick(id: string) {
+  if (editingId.value !== id) {
+    emit('switch', id)
+  }
+}
+
+// 开始重命名
+function startRename(session: ChatSession) {
+  editingId.value = session.id
+  editingTitle.value = session.title
+  nextTick(() => {
+    const input = inputRefs.value[session.id]
+    if (input) {
+      input.focus()
+      input.select()
+    }
+  })
+}
+
+// 保存重命名
+function saveRename() {
+  if (editingId.value && editingTitle.value.trim()) {
+    emit('rename', editingId.value, editingTitle.value.trim())
+  }
+  editingId.value = null
+  editingTitle.value = ''
+}
+
+// 取消重命名
+function cancelRename() {
+  editingId.value = null
+  editingTitle.value = ''
 }
 </script>
 
@@ -271,18 +326,18 @@ function formatTime(timestamp: number) {
   border-radius: 14px;
   cursor: pointer;
   color: #475569;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-  transform-style: preserve-3d;
+  position: relative;
 }
 
 .session-item-3d:hover {
   background: linear-gradient(145deg, #ffffff, #eff6ff);
   border-color: rgba(59, 130, 246, 0.3);
   color: #1e293b;
-  transform: translateY(-2px) translateZ(10px);
+  transform: translateY(-1px);
   box-shadow: 
-    0 8px 16px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.08),
     0 0 0 1px rgba(59, 130, 246, 0.1);
 }
 
@@ -372,6 +427,22 @@ function formatTime(timestamp: number) {
   text-overflow: ellipsis;
 }
 
+.session-title-edit {
+  flex: 1;
+}
+
+.session-title-edit input {
+  width: 100%;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background: white;
+  border: 2px solid #3b82f6;
+  border-radius: 6px;
+  outline: none;
+  color: #1e293b;
+}
+
 .session-time {
   font-size: 11px;
   color: #94a3b8;
@@ -387,8 +458,8 @@ function formatTime(timestamp: number) {
 .session-actions {
   display: flex;
   gap: 4px;
-  opacity: 0;
-  transition: all 0.2s ease;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
 }
 
 .session-item-3d:hover .session-actions {
@@ -396,30 +467,30 @@ function formatTime(timestamp: number) {
 }
 
 .action-btn-3d {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #ffffff, #f1f5f9);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 8px;
-  color: #94a3b8;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #64748b;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 .action-btn-3d:hover {
-  background: linear-gradient(145deg, #f8fafc, #e2e8f0);
-  color: #475569;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #f1f5f9;
+  color: #334155;
+  border-color: #cbd5e1;
 }
 
 .action-btn-3d.delete:hover {
-  background: linear-gradient(145deg, #fee2e2, #fecaca);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: #ef4444;
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
 }
 
 /* 3D 折叠按钮 */

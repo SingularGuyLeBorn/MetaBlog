@@ -8,8 +8,11 @@
     "status": "online",
     "seat": 1,
     "capabilities": {
-      "mode": "tools-only",
-      "skillIds": [],
+      "mode": "skills-only",
+      "skillIds": [
+        "skill-1771864714590-2",
+        "skill-1771864714590-3"
+      ],
       "toolIds": [],
       "customSystemPrompt": ""
     },
@@ -23,7 +26,7 @@
     "callCount": 0,
     "isDefault": true,
     "createdAt": 1771864714589,
-    "updatedAt": 1771864804892,
+    "updatedAt": 1771866634292,
     "lastActiveAt": 1771864714589
   }
 ]

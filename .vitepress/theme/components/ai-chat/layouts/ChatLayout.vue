@@ -104,11 +104,27 @@
     
     <!-- 日志监控面板 -->
     <LogDashboard v-model:visible="showLogDashboard" />
+    
+    <!-- 删除确认弹窗 -->
+    <Teleport to="body">
+      <div v-if="showDeleteConfirm" class="confirm-overlay" @click.self="showDeleteConfirm = false">
+        <div class="confirm-modal">
+          <div class="confirm-icon">⚠️</div>
+          <h4>确认删除会话</h4>
+          <p class="confirm-hint">删除后无法恢复，该会话的所有消息都将被清除</p>
+          <div class="confirm-actions">
+            <button class="btn-secondary" @click="showDeleteConfirm = false">取消</button>
+            <button class="btn-danger" @click="executeDelete">确认删除</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { Teleport } from 'vue'
 import { SessionPanel } from '../modules/chat/session'
 import { MessageList } from '../modules/chat/messages'
 import { ChatInput } from '../modules/chat/input'
@@ -151,6 +167,10 @@ const chatInputRef = ref<InstanceType<typeof ChatInput>>()
 const showAgentAdmin = ref(false)
 const showLogDashboard = ref(false)
 const selectedSkill = ref<Skill | undefined>(undefined)
+
+// 删除确认状态
+const showDeleteConfirm = ref(false)
+const sessionToDelete = ref<string | null>(null)
 
 // 键盘快捷键：Ctrl+L 打开日志面板
 function handleKeydown(e: KeyboardEvent) {
@@ -219,16 +239,22 @@ function handleQuickPrompt(text: string) {
   })
 }
 
-function handleRename(id: string) {
-  const newTitle = prompt('重命名会话：')
+function handleRename(id: string, newTitle: string) {
   if (newTitle?.trim()) {
     renameSession(id, newTitle.trim())
   }
 }
 
 function handleDelete(id: string) {
-  if (confirm('确定要删除这个会话吗？')) {
-    deleteSession(id)
+  sessionToDelete.value = id
+  showDeleteConfirm.value = true
+}
+
+function executeDelete() {
+  if (sessionToDelete.value) {
+    deleteSession(sessionToDelete.value)
+    sessionToDelete.value = null
+    showDeleteConfirm.value = false
   }
 }
 
@@ -423,5 +449,84 @@ function handleAgentChange(agent: Agent) {
   .chat-layout :deep(.settings-panel) {
     right: 0;
   }
+}
+
+/* 确认弹窗 */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10002;
+  padding: 20px;
+}
+
+.confirm-modal {
+  background: var(--vp-c-bg);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.25);
+}
+
+.confirm-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.confirm-modal h4 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+.confirm-hint {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  color: var(--vp-c-text-2);
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-secondary {
+  padding: 10px 20px;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--vp-c-text-1);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: var(--vp-c-bg-mute);
+}
+
+.btn-danger {
+  padding: 10px 20px;
+  background: #dc2626;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
 }
 </style>
