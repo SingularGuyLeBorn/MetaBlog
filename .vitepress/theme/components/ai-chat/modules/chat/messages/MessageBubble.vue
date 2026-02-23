@@ -336,10 +336,8 @@ const thinkingSteps = computed(() => {
   return [...steps].sort((a, b) => a.index - b.index)
 })
 
-// 全局记录已完成打字机效果的消息ID
-const completedTypewriterMessages = new Set<string>()
-
 // 是否使用打字机效果：只在消息首次完成时显示一次
+// 使用消息的 metadata 来记录是否已经显示过打字机效果
 const shouldUseTypewriter = computed(() => {
   // 不是助手消息 -> 不使用
   if (props.message.role !== 'assistant') return false
@@ -347,12 +345,15 @@ const shouldUseTypewriter = computed(() => {
   // 不是推理模型 -> 不使用
   if (!props.message.metadata?.model?.includes('reasoner')) return false
   
-  // 消息已经完成过打字机效果 -> 不再使用
-  if (completedTypewriterMessages.has(props.message.id)) return false
+  // 消息已经完成过打字机效果（记录在 metadata 中）-> 不再使用
+  if (props.message.metadata?.typewriterShown) return false
   
   // 消息状态为已完成 -> 使用打字机效果
   if (props.message.status === 'completed') {
-    completedTypewriterMessages.add(props.message.id)
+    // 标记为已显示，这样下次就不会再用打字机效果
+    if (props.message.metadata) {
+      props.message.metadata.typewriterShown = true
+    }
     return true
   }
   

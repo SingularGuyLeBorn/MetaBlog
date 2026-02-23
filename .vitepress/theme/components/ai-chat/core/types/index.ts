@@ -69,6 +69,8 @@ export interface MessageMetadata {
   thinkingSteps?: ThinkingStep[]
   /** 错误信息（当消息处理出错时） */
   error?: string
+  /** 是否已经显示过打字机效果 */
+  typewriterShown?: boolean
 }
 
 /** AI 响应版本 */
