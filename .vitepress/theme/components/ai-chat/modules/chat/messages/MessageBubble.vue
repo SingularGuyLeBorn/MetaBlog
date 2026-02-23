@@ -336,8 +336,33 @@ const thinkingSteps = computed(() => {
   return [...steps].sort((a, b) => a.index - b.index)
 })
 
+// 从 localStorage 加载已显示打字机效果的消息ID
+function getShownMessageIds(): Set<string> {
+  try {
+    const saved = localStorage.getItem('ai-chat-typewriter-shown')
+    if (saved) {
+      return new Set(JSON.parse(saved))
+    }
+  } catch (e) {
+    console.error('[MessageBubble] Failed to load shown message IDs:', e)
+  }
+  return new Set()
+}
+
+// 保存已显示打字机效果的消息ID到 localStorage
+function saveShownMessageId(messageId: string): void {
+  try {
+    const ids = getShownMessageIds()
+    ids.add(messageId)
+    // 只保留最近100条记录，防止 localStorage 过大
+    const idsArray = Array.from(ids).slice(-100)
+    localStorage.setItem('ai-chat-typewriter-shown', JSON.stringify(idsArray))
+  } catch (e) {
+    console.error('[MessageBubble] Failed to save shown message ID:', e)
+  }
+}
+
 // 是否使用打字机效果：只在消息首次完成时显示一次
-// 使用消息的 metadata 来记录是否已经显示过打字机效果
 const shouldUseTypewriter = computed(() => {
   // 不是助手消息 -> 不使用
   if (props.message.role !== 'assistant') return false
@@ -345,19 +370,18 @@ const shouldUseTypewriter = computed(() => {
   // 不是推理模型 -> 不使用
   if (!props.message.metadata?.model?.includes('reasoner')) return false
   
-  // 消息已经完成过打字机效果（记录在 metadata 中）-> 不再使用
-  if (props.message.metadata?.typewriterShown) return false
+  // 消息状态不是已完成 -> 不使用
+  if (props.message.status !== 'completed') return false
   
-  // 消息状态为已完成 -> 使用打字机效果
-  if (props.message.status === 'completed') {
-    // 标记为已显示，这样下次就不会再用打字机效果
-    if (props.message.metadata) {
-      props.message.metadata.typewriterShown = true
-    }
-    return true
+  // 检查 localStorage 是否已记录该消息显示过打字机效果
+  const shownIds = getShownMessageIds()
+  if (shownIds.has(props.message.id)) {
+    return false
   }
   
-  return false
+  // 首次显示，记录到 localStorage
+  saveShownMessageId(props.message.id)
+  return true
 })
 
 // 打字机组件引用
