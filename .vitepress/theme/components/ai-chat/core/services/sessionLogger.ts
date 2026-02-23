@@ -8,6 +8,7 @@
  */
 
 import { addLog } from './logger'
+import { generateUUID, generateReadableFilename } from '../utils/uuid'
 
 /** 日志条目类型 */
 export type SessionLogEntryType = 
@@ -50,8 +51,12 @@ export interface SessionLogEntry {
 
 /** Session 日志 */
 export interface SessionLog {
-  /** Session ID */
+  /** 唯一标识符（UUID） */
+  uuid: string
+  /** Session ID（用于关联前端会话） */
   sessionId: string
+  /** 文件名（人类可读） */
+  filename: string
   /** 开始时间 */
   startTime: string
   /** 结束时间 */
@@ -83,8 +88,13 @@ export function startSessionLog(sessionId: string, config: { model: string; reas
     endSessionLog()
   }
 
+  const uuid = generateUUID()
+  const filename = generateReadableFilename(config.model, 'session')
+
   currentSessionLog = {
+    uuid,
     sessionId,
+    filename,
     startTime: new Date().toISOString(),
     model: config.model,
     reasoningEnabled: config.reasoningEnabled,
@@ -99,8 +109,8 @@ export function startSessionLog(sessionId: string, config: { model: string; reas
   addLogEntry({
     type: 'system',
     title: '🚀 Session 开始',
-    note: `模型: ${config.model}, 思考模式: ${config.reasoningEnabled ? '开启' : '关闭'}`,
-    metadata: { model: config.model, reasoningEnabled: config.reasoningEnabled }
+    note: `UUID: ${uuid}, 文件名: ${filename}, 模型: ${config.model}, 思考模式: ${config.reasoningEnabled ? '开启' : '关闭'}`,
+    metadata: { uuid, filename, model: config.model, reasoningEnabled: config.reasoningEnabled }
   })
 }
 
