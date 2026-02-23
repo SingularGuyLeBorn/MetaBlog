@@ -11,6 +11,20 @@
  */
 import type { ChatMessage, SessionConfig, MessageRole, ToolCallRecord, ThinkingStep } from '../types'
 import { addLog } from './logger'
+import {
+  startSessionLog,
+  addLogEntry,
+  logUserInput,
+  logAIRequest,
+  logAIResponse,
+  logAIContent,
+  logThinkingStep,
+  logToolCall,
+  logToolResult,
+  logHumanNote,
+  logError,
+  endSessionLog
+} from './sessionLogger'
 import { 
   getToolDefinitions, 
   executeToolWithRecord,
@@ -486,7 +500,26 @@ export const aiService = {
     const startTime = Date.now()
     
     const debugSessionId = sessionId || `session_${startTime}`
+    const isReasoningModel = config.model === 'deepseek-reasoner'
+    const isThinkingEnabled = config.enableReasoning && config.model === 'deepseek-chat'
+    const isReasoningMode = isReasoningModel || isThinkingEnabled
+    
     apiDebugLogger.startSession(debugSessionId)
+    
+    // 启动 Session 日志
+    startSessionLog(debugSessionId, {
+      model: config.model,
+      reasoningEnabled: isReasoningModel || config.enableReasoning
+    })
+    
+    // 记录用户输入
+    const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
+    if (lastUserMessage) {
+      logUserInput(lastUserMessage.content, {
+        messageId: lastUserMessage.id,
+        sessionId: debugSessionId
+      })
+    }
     
     addLog({
       level: 'info', category: 'chat', component: 'aiService',
@@ -497,10 +530,6 @@ export const aiService = {
     
     try {
       const currentMessages = messages.slice(-10)
-      
-      const isReasoningModel = config.model === 'deepseek-reasoner'
-      const isThinkingEnabled = config.enableReasoning && config.model === 'deepseek-chat'
-      const isReasoningMode = isReasoningModel || isThinkingEnabled
       
       let apiMessages: any[] = [
         ...(config.systemPrompt ? [{ role: 'system', content: config.systemPrompt }] : []),
@@ -578,6 +607,12 @@ export const aiService = {
           }
           callbacks.onThinkingStep?.(thinkingStep)
           
+          // 记录思考步骤到 Session 日志
+          logThinkingStep(toolRound, 'thinking', currentThinking, {
+            stepId: thinkingStep.id,
+            stepIndex: thinkingStep.index
+          })
+          
           // 记录UI可见性
           apiDebugLogger.logNote('thinking', '【UI展示】思考步骤', { stepIndex, content: currentThinking }, true)
         }
@@ -587,7 +622,15 @@ export const aiService = {
         if (!toolCalls || toolCalls.length === 0) {
           // 没有工具调用，直接显示最终回复
           if (response.content) {
-            callbacks.onContent(cleanAIOutput(response.content))
+            const cleanedContent = cleanAIOutput(response.content)
+            callbacks.onContent(cleanedContent)
+            
+            // 记录 AI 内容到 Session 日志
+            logAIContent(cleanedContent, {
+              round: toolRound,
+              hasThinking: !!response.reasoningContent,
+              model: config.model
+            })
             apiDebugLogger.logNote('final_response', '【UI展示】最终回复（立即显示）', { content: response.content }, true)
           }
           if (isReasoningMode && response.reasoningContent) {
@@ -701,6 +744,9 @@ export const aiService = {
         data: { duration, toolRounds: toolRound, toolCount: toolRecords.length }
       })
       
+      // 结束 Session 日志
+      endSessionLog()
+      
       await apiDebugLogger.flush()
       return { toolRecords }
       
@@ -708,6 +754,10 @@ export const aiService = {
       const duration = Date.now() - startTime
       const errorName = (error as Error).name
       const errorMessage = (error as Error).message
+      
+      // 记录错误到 Session 日志
+      logError(error as Error, '对话处理过程中发生错误')
+      endSessionLog()
       
       if (errorName !== 'AbortError') {
         addLog({
