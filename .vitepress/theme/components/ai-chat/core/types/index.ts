@@ -42,40 +42,10 @@ export interface TokenUsage {
   total: number
 }
 
-import type { ToolCall } from './tools'
+import type { ToolCall, ToolCallRecord, ThinkingStep } from '../tools'
 
-/** 工具调用记录（用于持久化展示） */
-export interface ToolCallRecord {
-  id: string
-  name: string
-  description?: string
-  arguments: Record<string, any>
-  result: string
-  status: 'pending' | 'running' | 'success' | 'error'
-  startTime: number
-  endTime?: number
-  duration?: number
-  error?: string
-}
-
-/** 思考步骤类型 */
-export type ThinkingStepType = 'thinking' | 'tool_call'
-
-/** 思考步骤（用于展示思考过程中的每个步骤） */
-export interface ThinkingStep {
-  /** 步骤ID */
-  id: string
-  /** 步骤类型：思考 或 工具调用 */
-  type: ThinkingStepType
-  /** 步骤序号 */
-  index: number
-  /** 思考内容（type='thinking' 时使用） */
-  content?: string
-  /** 工具调用记录（type='tool_call' 时使用） */
-  toolRecord?: ToolCallRecord
-  /** 创建时间 */
-  createdAt: number
-}
+/** 重新导出工具类型 */
+export type { ToolCall, ToolCallRecord, ThinkingStep }
 
 /** 消息元数据 */
 export interface MessageMetadata {
@@ -269,16 +239,4 @@ export interface LogEntry {
   timestamp: number
 }
 
-// ═══════════════════════════════════════════════════════════════
-// 工具类型重新导出
-// ═══════════════════════════════════════════════════════════════
 
-export type {
-  ToolDefinition,
-  ToolCall,
-  ToolResult,
-  ToolExecutor,
-  ToolParameter,
-  ToolParameters,
-  RegisteredTool
-} from './tools'

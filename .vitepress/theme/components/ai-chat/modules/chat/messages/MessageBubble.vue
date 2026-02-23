@@ -21,53 +21,63 @@
     <div v-else class="ai-message-3d">
       <AIAvatar :typing="isStreaming" />
       <div class="message-body">
-        <!-- 思考步骤（串行展示）-->
-        <template v-if="thinkingSteps && thinkingSteps.length > 0">
-          <div 
-            v-for="(step, index) in thinkingSteps" 
-            :key="step.id"
-            class="thinking-step"
-            :class="[step.type, { 'last': index === thinkingSteps.length - 1 && !message.content }]"
-          >
-            <!-- 思考步骤 -->
-            <template v-if="step.type === 'thinking'">
-              <div class="step-header">
-                <span class="step-icon">💭</span>
-                <span class="step-title">思考 {{ step.index + 1 }}</span>
-              </div>
-              <div class="step-content thinking-content">
-                {{ step.content }}
-              </div>
-            </template>
-            
-            <!-- 工具调用步骤 -->
-            <template v-else-if="step.type === 'tool_call' && step.toolRecord">
-              <div class="step-header">
-                <span class="step-icon">🔨</span>
-                <span class="step-title">工具调用</span>
-                <span :class="['step-status', step.toolRecord.status]">
-                  {{ statusText(step.toolRecord.status) }}
-                </span>
-              </div>
-              <div class="step-content tool-content">
-                <div class="tool-name">{{ step.toolRecord.name }}</div>
-                <div class="tool-args">
-                  <span class="label">参数:</span>
-                  <code>{{ JSON.stringify(step.toolRecord.arguments, null, 2) }}</code>
-                </div>
-                <div v-if="step.toolRecord.status !== 'pending' && step.toolRecord.status !== 'running'" class="tool-result">
-                  <span class="label">结果:</span>
-                  <pre>{{ step.toolRecord.result }}</pre>
-                </div>
-                <div v-else class="tool-running">
-                  <span class="loading-dot"></span>
-                  <span class="loading-dot"></span>
-                  <span class="loading-dot"></span>
-                </div>
-              </div>
-            </template>
+        <!-- 思考步骤控制面板 -->
+        <div v-if="thinkingSteps && thinkingSteps.length > 0" class="thinking-steps-panel">
+          <div class="thinking-steps-header" @click="showThinkingSteps = !showThinkingSteps">
+            <span class="thinking-steps-icon">🧠</span>
+            <span class="thinking-steps-title">思考过程 ({{ thinkingSteps.length }} 步)</span>
+            <Icon :name="showThinkingSteps ? 'chevron-down' : 'chevron-right'" :size="14" />
           </div>
-        </template>
+          
+          <!-- 思考步骤列表 -->
+          <div v-show="showThinkingSteps" class="thinking-steps-list">
+            <div 
+              v-for="(step, index) in thinkingSteps" 
+              :key="step.id"
+              class="thinking-step"
+              :class="[step.type, { 'last': index === thinkingSteps.length - 1 && !message.content }]"
+            >
+              <!-- 思考步骤 -->
+              <template v-if="step.type === 'thinking'">
+                <div class="step-header" @click="expandedThinkingSteps[step.id] = !expandedThinkingSteps[step.id]">
+                  <span class="step-icon">💭</span>
+                  <span class="step-title">思考 {{ step.index + 1 }}</span>
+                  <Icon :name="expandedThinkingSteps[step.id] ? 'chevron-down' : 'chevron-right'" :size="12" />
+                </div>
+                <div v-show="expandedThinkingSteps[step.id]" class="step-content thinking-content">
+                  {{ step.content }}
+                </div>
+              </template>
+              
+              <!-- 工具调用步骤 -->
+              <template v-else-if="step.type === 'tool_call' && step.toolRecord">
+                <div class="step-header" @click="expandedThinkingSteps[step.id] = !expandedThinkingSteps[step.id]">
+                  <span class="step-icon">🔨</span>
+                  <span class="step-title">{{ step.toolRecord.name }}</span>
+                  <span :class="['step-status', step.toolRecord.status]">
+                    {{ statusText(step.toolRecord.status) }}
+                  </span>
+                  <Icon :name="expandedThinkingSteps[step.id] ? 'chevron-down' : 'chevron-right'" :size="12" />
+                </div>
+                <div v-show="expandedThinkingSteps[step.id]" class="step-content tool-content">
+                  <div class="tool-args">
+                    <span class="label">参数:</span>
+                    <code>{{ JSON.stringify(step.toolRecord.arguments, null, 2) }}</code>
+                  </div>
+                  <div v-if="step.toolRecord.status !== 'pending' && step.toolRecord.status !== 'running'" class="tool-result">
+                    <span class="label">结果:</span>
+                    <pre>{{ step.toolRecord.result }}</pre>
+                  </div>
+                  <div v-else class="tool-running">
+                    <span class="loading-dot"></span>
+                    <span class="loading-dot"></span>
+                    <span class="loading-dot"></span>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
         
         <!-- 传统思考框（兼容旧数据）-->
         <div v-else-if="displayReasoning" class="reasoning-box-3d">
@@ -82,7 +92,12 @@
         </div>
 
         <!-- 消息内容（最终回复） -->
-        <div v-if="message.content" class="message-bubble-3d" v-html="renderedHtml"></div>
+        <div 
+          v-if="message.content" 
+          class="message-bubble-3d" 
+          :class="{ 'typing-effect': shouldUseTypewriter }"
+          v-html="renderedHtml"
+        ></div>
         <!-- 思考中占位 - 仅当非推理模型或没有思考内容时显示 -->
         <div v-else-if="isStreaming && !displayReasoning && thinkingSteps.length === 0" class="thinking-placeholder-3d">
           <span class="thinking-dot-3d"></span>
@@ -184,7 +199,7 @@
 import { ref, computed } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import { Avatar, AIAvatar, Icon } from '../../../ui'
+import { Avatar, AIAvatar, Icon, TypewriterText } from '../../../ui'
 import MessageVersions from './MessageVersions.vue'
 import type { ChatMessage, ChatMessage as ChatMessageType } from '../../../core/types'
 
@@ -208,11 +223,13 @@ const emit = defineEmits<{
   'switch-version': [payload: { userMessageId: string; versionIndex: number }]
 }>()
 
-const isExpanded = ref(true)
+const isExpanded = ref(false) // 传统思考框默认折叠
 const copied = ref(false)
 const showToolRecords = ref(false) // 工具调用面板默认折叠
 const expandedTools = ref<boolean[]>([]) // 每个工具的详情默认折叠
 const expandedSections = ref<Record<string, boolean>>({}) // 参数/结果区域折叠状态
+const showThinkingSteps = ref(false) // 思考步骤默认折叠
+const expandedThinkingSteps = ref<Record<string, boolean>>({}) // 单个思考步骤的展开状态
 
 const toolRecords = computed(() => props.message.metadata?.toolRecords || [])
 
@@ -303,6 +320,14 @@ const thinkingSteps = computed(() => {
   const steps = props.message.metadata?.thinkingSteps || []
   // 按 index 排序
   return [...steps].sort((a, b) => a.index - b.index)
+})
+
+// 是否使用打字机效果：思考模式下且是最后一条消息且不是流式状态
+const shouldUseTypewriter = computed(() => {
+  return props.isLast && 
+         !props.isStreaming && 
+         props.message.role === 'assistant' &&
+         props.message.metadata?.model?.includes('reasoner')
 })
 
 const renderedHtml = computed(() => {
@@ -463,6 +488,47 @@ async function copyContent() {
   box-shadow: 
     0 8px 20px rgba(16, 185, 129, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* 思考步骤面板样式 */
+.thinking-steps-panel {
+  margin-bottom: 16px;
+  background: linear-gradient(145deg, #f0fdf4, #dcfce7);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 12px rgba(16, 185, 129, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.thinking-steps-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.thinking-steps-header:hover {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.thinking-steps-icon {
+  font-size: 18px;
+}
+
+.thinking-steps-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #065f46;
+}
+
+.thinking-steps-list {
+  border-top: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .reasoning-header {
@@ -922,6 +988,22 @@ async function copyContent() {
     0 8px 20px rgba(0, 0, 0, 0.06),
     0 16px 40px rgba(0, 0, 0, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* 打字机效果 */
+.message-bubble-3d.typing-effect {
+  animation: typing-fade-in 0.6s ease-out;
+}
+
+@keyframes typing-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Markdown 样式增强 */
