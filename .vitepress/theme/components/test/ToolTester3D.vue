@@ -207,7 +207,7 @@ import { ref, computed, nextTick } from 'vue'
 import { mcpManager } from '../ai-chat/core/mcp'
 import TestCard3D from './TestCard3D.vue'
 import AIProjectCard from './AIProjectCard.vue'
-import { aiProjectsData } from './ai-projects-data.ts'
+import { aiProjectsData } from './ai-projects-data'
 
 const API_BASE = '/api'
 
