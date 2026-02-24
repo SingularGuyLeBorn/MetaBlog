@@ -4,47 +4,55 @@ import Layout from './Layout.vue'
 import './style.css'
 import './styles/animations.css'
 import './components/ai-chat/styles/index.css'
-import HomePortal from './components/HomePortal.vue'
-import SectionHub from './components/SectionHub.vue'
-import SectionHero from './components/SectionHero.vue'
+import type { Theme } from 'vitepress'
+import { useData, useRoute } from 'vitepress'
+import { createPinia } from 'pinia'
+
+// ========== Pages ==========
 import HomePage from './components/pages/HomePage.vue'
 import PostsPage from './components/pages/PostsPage.vue'
 import KnowledgePage from './components/pages/KnowledgePage.vue'
 import ResourcesPage from './components/pages/ResourcesPage.vue'
 import AboutPage from './components/pages/AboutPage.vue'
 import ChatPage from './components/pages/ChatPage.vue'
-import { ChatLayout } from './components/ai-chat'
-import Breadcrumb from './components/Breadcrumb.vue'
-import GlobalSidebar from './components/GlobalSidebar.vue'
-import TocSidebar from './components/TocSidebar.vue'
-import TocFab from './components/TocFab.vue'
-import { useData, useRoute } from 'vitepress'
-import type { Theme } from 'vitepress'
 
-import { createPinia } from 'pinia'
+// ========== AI Chat Module ==========
+import { ChatLayout } from './components/ai-chat'
+
+// ========== Layout Components ==========
+import Breadcrumb from './components/layout/Breadcrumb.vue'
+import GlobalSidebar from './components/layout/GlobalSidebar.vue'
+import TocSidebar from './components/layout/TocSidebar.vue'
+import TocFab from './components/layout/TocFab.vue'
+
+// ========== Home Components ==========
+import HomePortal from './components/home/HomePortal.vue'
+import SectionHub from './components/home/SectionHub.vue'
+import SectionHero from './components/home/SectionHero.vue'
+
+// ========== Feature Components ==========
 import InlineMarkdownEditor from './components/features/InlineMarkdownEditor.vue'
-import AboutProfile from './components/Dashboards/AboutProfile.vue'
 import KnowledgeGraph from './components/features/KnowledgeGraph.vue'
 import RAGSearch from './components/features/RAGSearch.vue'
-import EditFab from './components/EditFab.vue'
-import ToolTester from './components/ToolTester.vue'
-import ToolTester3D from './components/ToolTester3D.vue'
-import TestCard3D from './components/TestCard3D.vue'
-import AIProjectCard from './components/AIProjectCard.vue'
 
+// ========== Dashboard Components ==========
+import AboutProfile from './components/Dashboards/AboutProfile.vue'
 
-// Agent 组件已移除 - 使用 ai-chat 模块替代
-import ControlCenter from './components/ControlCenter.vue'
-import FullScreenPanel from './components/FullScreenPanel.vue'
+// ========== Editor Components ==========
+import EditFab from './components/editor/EditFab.vue'
 
-// Animation Components
-import AnimatedContainer from './components/AnimatedContainer.vue'
-import AnimatedButton from './components/AnimatedButton.vue'
+// ========== Test Components ==========
+import ToolTester3D from './components/test/ToolTester3D.vue'
+import TestCard3D from './components/test/TestCard3D.vue'
+import AIProjectCard from './components/test/AIProjectCard.vue'
 
-// Visuals Components - disabled due to SSR issues
-// const VisualScene = defineAsyncComponent(() => 
-//   import('./components/visuals/VisualScene.client.vue')
-// )
+// ========== UI Components ==========
+import AnimatedContainer from './components/ui/AnimatedContainer.vue'
+import AnimatedButton from './components/ui/AnimatedButton.vue'
+
+// ========== Legacy Components ==========
+import ControlCenter from './components/legacy/ControlCenter.vue'
+import FullScreenPanel from './components/legacy/FullScreenPanel.vue'
 
 export default {
   extends: DefaultTheme,
@@ -55,42 +63,51 @@ export default {
     const pinia = createPinia()
     app.use(pinia)
     
-    // Register components
-    app.component('HomePortal', HomePortal)
-    app.component('SectionHub', SectionHub)
-    app.component('SectionHero', SectionHero)
+    // ========== Register Pages ==========
     app.component('HomePage', HomePage)
     app.component('PostsPage', PostsPage)
     app.component('KnowledgePage', KnowledgePage)
     app.component('ResourcesPage', ResourcesPage)
     app.component('AboutPage', AboutPage)
     app.component('ChatPage', ChatPage)
+    
+    // ========== Register AI Chat ==========
     app.component('ChatLayout', ChatLayout)
-    app.component('InlineMarkdownEditor', InlineMarkdownEditor)
-    app.component('AboutProfile', AboutProfile)
-    app.component('KnowledgeGraph', KnowledgeGraph)
-    app.component('RAGSearch', RAGSearch)
+    
+    // ========== Register Layout ==========
+    app.component('Breadcrumb', Breadcrumb)
     app.component('GlobalSidebar', GlobalSidebar)
     app.component('TocSidebar', TocSidebar)
     app.component('TocFab', TocFab)
+    
+    // ========== Register Home Components ==========
+    app.component('HomePortal', HomePortal)
+    app.component('SectionHub', SectionHub)
+    app.component('SectionHero', SectionHero)
+    
+    // ========== Register Features ==========
+    app.component('InlineMarkdownEditor', InlineMarkdownEditor)
+    app.component('KnowledgeGraph', KnowledgeGraph)
+    app.component('RAGSearch', RAGSearch)
+    
+    // ========== Register Dashboards ==========
+    app.component('AboutProfile', AboutProfile)
+    
+    // ========== Register Editor ==========
     app.component('EditFab', EditFab)
-    app.component('Breadcrumb', Breadcrumb)
-    app.component('ToolTester', ToolTester)
+    
+    // ========== Register Test Components ==========
     app.component('ToolTester3D', ToolTester3D)
     app.component('TestCard3D', TestCard3D)
     app.component('AIProjectCard', AIProjectCard)
     
-
-    // Agent 组件已移除
-    app.component('ControlCenter', ControlCenter)
-    app.component('FullScreenPanel', FullScreenPanel)
-    
-    // Register Animation components
+    // ========== Register UI ==========
     app.component('AnimatedContainer', AnimatedContainer)
     app.component('AnimatedButton', AnimatedButton)
     
-    // Register Visuals components
-    // app.component('VisualScene', VisualScene)
+    // ========== Register Legacy ==========
+    app.component('ControlCenter', ControlCenter)
+    app.component('FullScreenPanel', FullScreenPanel)
   }
 } satisfies Theme
 
