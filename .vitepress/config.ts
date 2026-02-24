@@ -3037,7 +3037,7 @@ ${content}`;
           server.middlewares.use("/api/mcp/tools", async (req, res, next) => {
             if (req.method === "GET") {
               try {
-                const { mcpManager } = await import("./theme/components/ai-chat/core/mcp/index.ts");
+                const { mcpManager } = await import("./theme/components/ai-chat/core/mcp/index");
                 const tools = mcpManager.getAllTools();
                 res.setHeader("Content-Type", "application/json");
                 res.end(JSON.stringify({ success: true, data: tools }));
@@ -3062,7 +3062,7 @@ ${content}`;
                   const { tool, args = {} } = body;
 
                   // 获取 MCP Manager（从运行时模块）
-                  const { mcpManager } = await import("./theme/components/ai-chat/core/mcp/index.ts");
+                  const { mcpManager } = await import("./theme/components/ai-chat/core/mcp/index");
                   
                   const result = await mcpManager.execute(tool, args);
                   

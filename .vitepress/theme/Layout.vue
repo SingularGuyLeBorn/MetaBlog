@@ -2,18 +2,18 @@
 import { ref, onMounted, computed, watch, provide, nextTick, defineAsyncComponent } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import { useData, useRoute } from 'vitepress'
-import GlobalSidebar from './components/GlobalSidebar.vue'
-import TocSidebar from './components/TocSidebar.vue'
-import TocFab from './components/TocFab.vue'
-import EditFab from './components/EditFab.vue'
-import Breadcrumb from './components/Breadcrumb.vue'
-import DocTitleBar from './components/DocTitleBar.vue'
+import GlobalSidebar from './components/layout/GlobalSidebar.vue'
+import TocSidebar from './components/layout/TocSidebar.vue'
+import TocFab from './components/layout/TocFab.vue'
+import EditFab from './components/editor/EditFab.vue'
+import Breadcrumb from './components/layout/Breadcrumb.vue'
+import DocTitleBar from './components/ui/DocTitleBar.vue'
 
 // 异步加载 ChatPage，避免 SSR 问题
 const ChatPage = defineAsyncComponent(() => import('./components/pages/ChatPage.vue'))
 
-import ControlCenter from './components/ControlCenter.vue'
-import FullScreenPanel from './components/FullScreenPanel.vue'
+import ControlCenter from './components/legacy/ControlCenter.vue'
+import FullScreenPanel from './components/legacy/FullScreenPanel.vue'
 import { AgentAdmin } from './components/ai-chat/modules/agent'
 import { useAppStore } from './stores/app'
 

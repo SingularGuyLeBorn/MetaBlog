@@ -77,7 +77,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick, provide, readonly } from 'vue'
 import { useRoute, useRouter, useData } from 'vitepress'
 import { useSidebar } from 'vitepress/theme'
-import TreeNode from './TreeNode.vue'
+import TreeNode from '../ui/TreeNode.vue'
 // EventBus 已移除 - 使用简单的 mitt 替代或直接移除
 const eventBus = {
   on: () => () => {}, // 返回空函数作为 unsubscribe
