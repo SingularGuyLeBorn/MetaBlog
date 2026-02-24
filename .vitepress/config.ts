@@ -2973,13 +2973,18 @@ ${content}`;
                   req.on("close", abortOnClose);
 
                   try {
+                    structuredLog.info("proxy.fetch.node.start", `Node.js fetching ${url}`);
+                    
                     const response = await fetch(url, {
                       signal: controller.signal,
                       headers: {
-                        "User-Agent":
-                          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.0.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.0",
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
                       },
                     });
+                    
+                    structuredLog.info("proxy.fetch.node.success", `Node.js fetched ${url}`, { status: response.status });
 
                     clearTimeout(timeoutId);
                     req.removeListener("close", abortOnClose);
@@ -3026,15 +3031,18 @@ ${content}`;
                       fetchError instanceof Error &&
                       (fetchError.message?.includes('ECONNREFUSED') ||
                        fetchError.message?.includes('ENOTFOUND') ||
-                       fetchError.message?.includes('ETIMEDOUT'));
+                       fetchError.message?.includes('ETIMEDOUT') ||
+                       fetchError.message?.includes('fetch failed'));
                     
+                    // 获取详细错误信息
+                    const errorDetail = fetchError instanceof Error ? fetchError.message : String(fetchError);
                     let errorMsg = isTimeout
                       ? `请求超时 (${timeout}ms)`
-                      : String(fetchError);
+                      : errorDetail;
                     
                     // 提供更详细的错误信息
                     if (isNetworkError) {
-                      errorMsg = `网络连接失败: ${fetchError.message}\n\n可能原因:\n1. 目标网站无法访问\n2. DNS 解析失败\n3. 本地网络限制\n4. 目标网站有反爬虫机制`;
+                      errorMsg = `网络连接失败: ${errorDetail}\n\n可能原因:\n1. Node.js 无法访问外网（检查系统代理）\n2. DNS 解析失败\n3. 防火墙/安全软件拦截\n4. 目标网站有反爬虫机制`;
                     }
 
                     structuredLog.error(
