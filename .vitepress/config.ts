@@ -2959,9 +2959,12 @@ ${content}`;
                     timeout,
                   });
 
-                  // 使用 Node.js 原生 fetch (Node 18+) 或 undici
-                  // 这比 https 模块更现代化，且支持更好的错误处理
+                  // 使用 Node.js fetch (兼容 Node 16+)
                   structuredLog.info("proxy.fetch.request", `Fetching ${url}`, { hostname: targetUrl.hostname });
+                  
+                  // 创建 AbortController 实现超时（兼容 Node 16）
+                  const controller = new AbortController();
+                  const timeoutId = setTimeout(() => controller.abort(), timeout);
                   
                   try {
                     const fetchResponse = await fetch(url, {
@@ -2971,8 +2974,10 @@ ${content}`;
                         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
                       },
-                      signal: AbortSignal.timeout(timeout),
+                      signal: controller.signal,
                     });
+                    
+                    clearTimeout(timeoutId);
                     
                     if (!fetchResponse.ok) {
                       structuredLog.warn("proxy.fetch.failed", `Failed to fetch ${url}`, { status: fetchResponse.status });
@@ -2991,7 +2996,8 @@ ${content}`;
                     res.end(data);
                     
                   } catch (fetchError: any) {
-                    const isTimeout = fetchError.name === 'TimeoutError' || fetchError.message?.includes('timeout');
+                    clearTimeout(timeoutId);
+                    const isTimeout = fetchError.name === 'AbortError' || fetchError.message?.includes('timeout');
                     const errorMsg = isTimeout 
                       ? `请求超时 (${timeout}ms)` 
                       : `请求失败: ${fetchError.message}`;
