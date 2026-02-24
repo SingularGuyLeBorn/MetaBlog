@@ -216,14 +216,19 @@ interface TestCase {
   description: string
   status: 'pending' | 'running' | 'success' | 'error'
   result?: string
+  rawResult?: string  // 原始响应数据
   error?: boolean
   category: string
-  fn: () => Promise<any>
+  fn: () => Promise<{formatted: string, raw: string}>  // 返回格式化和原始数据
 }
 
 // 主题切换
 const isDarkMode = ref(true)
 const toggleTheme = () => isDarkMode.value = !isDarkMode.value
+
+// 显示原始响应开关
+const showRawResponse = ref(false)
+const toggleRawResponse = () => showRawResponse.value = !showRawResponse.value
 
 // 展开状态
 const expanded = ref({
@@ -251,7 +256,7 @@ function addLog(message: string, type: 'info' | 'success' | 'error' = 'info') {
   })
 }
 
-// MCP 测试 - 带详细结果展示
+// MCP 测试 - 带原始数据展示
 const mcpTests = ref<TestCase[]>([
   { 
     category: 'mcp', 
@@ -261,7 +266,9 @@ const mcpTests = ref<TestCase[]>([
     fn: async () => {
       const expression = '123 + 456 * 2'
       const result = await mcpManager.execute('calculate', { expression })
-      return `✅ 数学计算成功\n\n📝 输入表达式: ${expression}\n📊 计算结果: ${result.result}\n✨ 执行状态: 成功`
+      const raw = JSON.stringify(result, null, 2)
+      const formatted = `✅ 数学计算成功\n\n📝 输入表达式: ${expression}\n📊 计算结果: ${result.result}\n✨ 执行状态: 成功`
+      return { formatted, raw }
     }
   },
   { 
@@ -272,7 +279,9 @@ const mcpTests = ref<TestCase[]>([
     fn: async () => {
       const text = 'Hello World! 你好世界！这是一段测试文本。'
       const result = await mcpManager.execute('text_stats', { text })
-      return `✅ 文本统计成功\n\n📝 原文: "${text.substring(0, 30)}..."\n📊 统计结果:\n  • 总字符数: ${result.length}\n  • 行数: ${result.lines}\n  • 单词数: ${result.words}\n  • 中文字符: ${result.chineseChars}`
+      const raw = JSON.stringify(result, null, 2)
+      const formatted = `✅ 文本统计成功\n\n📝 原文: "${text.substring(0, 30)}..."\n📊 统计结果:\n  • 总字符数: ${result.length}\n  • 行数: ${result.lines}\n  • 单词数: ${result.words}\n  • 中文字符: ${result.chineseChars}`
+      return { formatted, raw }
     }
   },
   { 
@@ -282,7 +291,9 @@ const mcpTests = ref<TestCase[]>([
     status: 'pending', 
     fn: async () => {
       const result = await mcpManager.execute('get_system_info', {})
-      return `✅ 系统信息获取成功\n\n🖥️ 平台: ${result.platform}\n🌐 语言: ${result.language}\n🌍 时区: ${result.timezone}\n⏰ 时间: ${new Date(result.timestamp).toLocaleString('zh-CN')}`
+      const raw = JSON.stringify(result, null, 2)
+      const formatted = `✅ 系统信息获取成功\n\n🖥️ 平台: ${result.platform}\n🌐 语言: ${result.language}\n🌍 时区: ${result.timezone}\n⏰ 时间: ${new Date(result.timestamp).toLocaleString('zh-CN')}`
+      return { formatted, raw }
     }
   },
   { 
@@ -292,10 +303,13 @@ const mcpTests = ref<TestCase[]>([
     status: 'pending', 
     fn: async () => {
       const result = await mcpManager.execute('get_memory_usage', {})
+      const raw = JSON.stringify(result, null, 2)
       if (result.error) {
-        return `⚠️ 内存信息: ${result.error}\n\n注: 浏览器安全限制可能阻止内存查询`
+        const formatted = `⚠️ 内存信息: ${result.error}\n\n注: 浏览器安全限制可能阻止内存查询`
+        return { formatted, raw }
       }
-      return `✅ 内存查询成功\n\n💾 JS 堆内存使用: ${result.usedJSHeapSize}\n💾 JS 堆内存总量: ${result.totalJSHeapSize}\n💾 JS 堆内存限制: ${result.jsHeapSizeLimit}`
+      const formatted = `✅ 内存查询成功\n\n💾 JS 堆内存使用: ${result.usedJSHeapSize}\n💾 JS 堆内存总量: ${result.totalJSHeapSize}\n💾 JS 堆内存限制: ${result.jsHeapSizeLimit}`
+      return { formatted, raw }
     }
   },
   { 
@@ -307,7 +321,9 @@ const mcpTests = ref<TestCase[]>([
       const text = 'apple,banana,cherry,date'
       const separator = ','
       const result = await mcpManager.execute('split_text', { text, separator })
-      return `✅ 文本分割成功\n\n📝 原文: "${text}"\n✂️ 分隔符: "${separator}"\n📦 分割结果 (${result.count} 项):\n${result.parts.map((p: string, i: number) => `  ${i + 1}. ${p}`).join('\n')}`
+      const raw = JSON.stringify(result, null, 2)
+      const formatted = `✅ 文本分割成功\n\n📝 原文: "${text}"\n✂️ 分隔符: "${separator}"\n📦 分割结果 (${result.count} 项):\n${result.parts.map((p: string, i: number) => `  ${i + 1}. ${p}`).join('\n')}`
+      return { formatted, raw }
     }
   },
   { 
@@ -318,7 +334,9 @@ const mcpTests = ref<TestCase[]>([
     fn: async () => {
       const json = '{"name":"AI Agent","version":"1.0","features":["chat","agent","tools"]}'
       const result = await mcpManager.execute('format_json', { json, indent: 2 })
-      return `✅ JSON 格式化成功\n\n📝 原始 JSON:\n${json}\n\n✨ 格式化结果:\n${result.formatted}`
+      const raw = JSON.stringify(result, null, 2)
+      const formatted = `✅ JSON 格式化成功\n\n📝 原始 JSON:\n${json}\n\n✨ 格式化结果:\n${result.formatted}`
+      return { formatted, raw }
     }
   },
 ])
@@ -336,15 +354,17 @@ const networkTests = ref<TestCase[]>([
         body: JSON.stringify({ url: 'https://api.deepseek.com/models', timeout: 10000 })
       })
       const text = await response.text()
+      const raw = `HTTP Status: ${response.status}\nHeaders: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}\n\nBody:\n${text}`
       if (!response.ok) {
-        // 401 是预期的（需要认证），说明服务正常
         if (response.status === 401) {
-          return `✅ DeepSeek API 服务正常\n状态: ${response.status}\n说明: 需要 API Key 认证\n\n响应预览:\n${text.substring(0, 200)}`
+          const formatted = `✅ DeepSeek API 服务正常\n状态: ${response.status}\n说明: 需要 API Key 认证\n\n响应预览:\n${text.substring(0, 200)}`
+          return { formatted, raw }
         }
         throw new Error(`HTTP ${response.status}`)
       }
       const json = JSON.parse(text)
-      return `✅ DeepSeek API\n模型列表:\n${JSON.stringify(json, null, 2).substring(0, 500)}`
+      const formatted = `✅ DeepSeek API\n模型列表:\n${JSON.stringify(json, null, 2).substring(0, 500)}`
+      return { formatted, raw }
     }
   },
   { 
@@ -358,13 +378,16 @@ const networkTests = ref<TestCase[]>([
         body: JSON.stringify({ url: 'https://open.bigmodel.cn/api/paas/v4/models', timeout: 10000 })
       })
       const text = await response.text()
+      const raw = `HTTP Status: ${response.status}\nHeaders: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}\n\nBody:\n${text}`
       if (!response.ok) {
         if (response.status === 401) {
-          return `✅ 智谱 AI API 服务正常\n状态: ${response.status}\n说明: 需要 API Key 认证`
+          const formatted = `✅ 智谱 AI API 服务正常\n状态: ${response.status}\n说明: 需要 API Key 认证`
+          return { formatted, raw }
         }
         throw new Error(`HTTP ${response.status}`)
       }
-      return `✅ 智谱 AI API\n响应:\n${text.substring(0, 400)}`
+      const formatted = `✅ 智谱 AI API\n响应:\n${text.substring(0, 400)}`
+      return { formatted, raw }
     }
   },
   { 
@@ -379,10 +402,11 @@ const networkTests = ref<TestCase[]>([
       })
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const text = await response.text()
-      // 提取标题
+      const raw = `HTTP Status: ${response.status}\nContent-Type: ${response.headers.get('content-type')}\nContent-Length: ${text.length}\n\nBody (first 2000 chars):\n${text.substring(0, 2000)}`
       const titleMatch = text.match(/<title>(.*?)<\/title>/)
       const title = titleMatch ? titleMatch[1] : '未知'
-      return `✅ DeepSeek 文档\n标题: ${title}\n内容长度: ${text.length} 字符\n\n内容预览:\n${text.replace(/<[^>]+>/g, ' ').substring(0, 300).trim()}...`
+      const formatted = `✅ DeepSeek 文档\n标题: ${title}\n内容长度: ${text.length} 字符\n\n内容预览:\n${text.replace(/<[^>]+>/g, ' ').substring(0, 300).trim()}...`
+      return { formatted, raw }
     }
   },
   { 
@@ -397,9 +421,11 @@ const networkTests = ref<TestCase[]>([
       })
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const text = await response.text()
+      const raw = `HTTP Status: ${response.status}\nContent-Type: ${response.headers.get('content-type')}\nContent-Length: ${text.length}\n\nBody (first 2000 chars):\n${text.substring(0, 2000)}`
       const titleMatch = text.match(/<title>(.*?)<\/title>/)
       const title = titleMatch ? titleMatch[1] : '未知'
-      return `✅ 智谱 AI 文档\n标题: ${title}\n内容长度: ${text.length} 字符\n\n内容预览:\n${text.replace(/<[^>]+>/g, ' ').substring(0, 300).trim()}...`
+      const formatted = `✅ 智谱 AI 文档\n标题: ${title}\n内容长度: ${text.length} 字符\n\n内容预览:\n${text.replace(/<[^>]+>/g, ' ').substring(0, 300).trim()}...`
+      return { formatted, raw }
     }
   },
   { 
@@ -413,37 +439,70 @@ const networkTests = ref<TestCase[]>([
         body: JSON.stringify({ url: 'https://api.openai.com/v1/models', timeout: 10000 })
       })
       const text = await response.text()
+      const raw = `HTTP Status: ${response.status}\nHeaders: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}\n\nBody:\n${text}`
       if (response.status === 401) {
-        return `✅ OpenAI API 服务正常\n状态: ${response.status}\n说明: 需要 Bearer Token 认证\n\n这是预期的响应，证明 API 服务正在运行`
+        const formatted = `✅ OpenAI API 服务正常\n状态: ${response.status}\n说明: 需要 Bearer Token 认证\n\n这是预期的响应，证明 API 服务正在运行`
+        return { formatted, raw }
       }
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const json = JSON.parse(text)
-      return `✅ OpenAI API\n模型数量: ${json.data?.length || 0}`
+      const formatted = `✅ OpenAI API\n模型数量: ${json.data?.length || 0}`
+      return { formatted, raw }
     }
   },
 ])
 
-// 文章工具测试
+// 文章工具测试 - 带原始数据展示
 const articleTests = ref<TestCase[]>([
-  { category: 'article', name: 'List Articles', description: '获取文章列表', status: 'pending', fn: async () => {
-    const response = await fetch(`${API_BASE}/articles/list-all`)
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    const result = await response.json()
-    const data = result.data || []
-    return `✅ 找到 ${data.length} 篇文章`
-  }},
-  { category: 'article', name: 'Read Article', description: '读取文章内容', status: 'pending', fn: async () => {
-    const response = await fetch(`${API_BASE}/articles/list-all`)
-    const result = await response.json()
-    const data = result.data || []
-    if (data.length === 0) return '⚠️ 暂无文章'
-    const contentRes = await fetch(`${API_BASE}/articles/detail?path=${encodeURIComponent(data[0].path)}`)
-    const content = await contentRes.text()
-    return `✅ 读取成功\n长度: ${content.length} 字符`
-  }},
+  { 
+    category: 'article', 
+    name: 'List Articles', 
+    description: '获取文章列表', 
+    status: 'pending', 
+    fn: async () => {
+      const response = await fetch(`${API_BASE}/articles/list-all`)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const result = await response.json()
+      const data = result.data || []
+      const raw = JSON.stringify(result, null, 2)
+      const formatted = `找到 ${data.length} 篇文章` + (data.length > 0 ? '
+
+前3篇文章:
+' + data.slice(0, 3).map((a: any, i: number) => `  ${i + 1}. ${a.title} (${a.path})`).join('
+') : '')
+      return { formatted, raw }
+    }
+  },
+  { 
+    category: 'article', 
+    name: 'Read Article', 
+    description: '读取文章内容', 
+    status: 'pending', 
+    fn: async () => {
+      const response = await fetch(`${API_BASE}/articles/list-all`)
+      const result = await response.json()
+      const data = result.data || []
+      if (data.length === 0) {
+        return { formatted: '暂无文章', raw: '[]' }
+      }
+      const contentRes = await fetch(`${API_BASE}/articles/detail?path=${encodeURIComponent(data[0].path)}`)
+      const content = await contentRes.text()
+      const raw = `Path: ${data[0].path}
+
+Content:
+${content}`
+      const formatted = `读取成功
+路径: ${data[0].path}
+长度: ${content.length} 字符
+
+内容预览 (前500字符):
+${content.substring(0, 500)}${content.length > 500 ? '...' : ''}`
+      return { formatted, raw }
+    }
+  },
 ])
 
-// GitHub 工具测试 - 增强结果展示
+// GitHub 工具测试 - 带原始数据展示
 const githubTests = ref<TestCase[]>([
   { 
     category: 'github', 
@@ -454,7 +513,9 @@ const githubTests = ref<TestCase[]>([
       const response = await fetch(`${API_BASE}/github/repo/microsoft/autogen`)
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const data = await response.json()
-      return `✅ 仓库信息获取成功\n\n📦 ${data.full_name}\n📝 ${data.description?.substring(0, 100)}${data.description?.length > 100 ? '...' : ''}\n\n⭐ Stars: ${data.stargazers_count?.toLocaleString()}\n🍴 Forks: ${data.forks_count?.toLocaleString()}\n👁️ Watchers: ${data.watchers_count?.toLocaleString()}\n\n🔤 主要语言: ${data.language || '未知'}\n📄 License: ${data.license?.name || '未知'}`
+      const raw = JSON.stringify(data, null, 2)
+      const formatted = `✅ 仓库信息获取成功\n\n📦 ${data.full_name}\n📝 ${data.description?.substring(0, 100)}${data.description?.length > 100 ? '...' : ''}\n\n⭐ Stars: ${data.stargazers_count?.toLocaleString()}\n🍴 Forks: ${data.forks_count?.toLocaleString()}\n👁️ Watchers: ${data.watchers_count?.toLocaleString()}\n\n🔤 主要语言: ${data.language || '未知'}\n📄 License: ${data.license?.name || '未知'}`
+      return { formatted, raw }
     }
   },
   { 
@@ -466,7 +527,9 @@ const githubTests = ref<TestCase[]>([
       const response = await fetch(`${API_BASE}/github/repo/foundationagents/metagpt`)
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const data = await response.json()
-      return `✅ 仓库信息获取成功\n\n📦 ${data.full_name}\n📝 ${data.description?.substring(0, 100)}${data.description?.length > 100 ? '...' : ''}\n\n⭐ Stars: ${data.stargazers_count?.toLocaleString()}\n🍴 Forks: ${data.forks_count?.toLocaleString()}\n\n🔤 主要语言: ${data.language || '未知'}`
+      const raw = JSON.stringify(data, null, 2)
+      const formatted = `✅ 仓库信息获取成功\n\n📦 ${data.full_name}\n📝 ${data.description?.substring(0, 100)}${data.description?.length > 100 ? '...' : ''}\n\n⭐ Stars: ${data.stargazers_count?.toLocaleString()}\n🍴 Forks: ${data.forks_count?.toLocaleString()}\n\n🔤 主要语言: ${data.language || '未知'}`
+      return { formatted, raw }
     }
   },
   { 
@@ -480,7 +543,9 @@ const githubTests = ref<TestCase[]>([
       const data = await response.json()
       const content = typeof window !== 'undefined' ? atob(data.content) : Buffer.from(data.content, 'base64').toString()
       const lines = content.split('\n')
-      return `✅ 文件内容获取成功\n\n📄 文件名: ${data.name}\n📦 大小: ${data.size} bytes\n📏 行数: ${lines.length}\n\n📝 内容预览 (前 15 行):\n${lines.slice(0, 15).join('\n')}${lines.length > 15 ? '\n...' : ''}`
+      const raw = JSON.stringify(data, null, 2) + '\n\n--- Decoded Content ---\n\n' + content.substring(0, 3000)
+      const formatted = `✅ 文件内容获取成功\n\n📄 文件名: ${data.name}\n📦 大小: ${data.size} bytes\n📏 行数: ${lines.length}\n\n📝 内容预览 (前 15 行):\n${lines.slice(0, 15).join('\n')}${lines.length > 15 ? '\n...' : ''}`
+      return { formatted, raw }
     }
   },
   { 
@@ -492,11 +557,13 @@ const githubTests = ref<TestCase[]>([
       const response = await fetch(`${API_BASE}/github/commits/microsoft/autogen/main?per_page=5`)
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const data = await response.json()
+      const raw = JSON.stringify(data, null, 2)
       const commits = data.map((c: any, i: number) => {
         const msg = c.commit.message.split('\n')[0].substring(0, 60)
         return `  ${i + 1}. ${c.sha.substring(0, 7)} - ${msg}${c.commit.message.split('\n')[0].length > 60 ? '...' : ''}\n     👤 ${c.commit.author.name} @ ${new Date(c.commit.author.date).toLocaleDateString('zh-CN')}`
       }).join('\n')
-      return `✅ 提交历史获取成功\n\n最近 ${data.length} 条提交:\n\n${commits}`
+      const formatted = `✅ 提交历史获取成功\n\n最近 ${data.length} 条提交:\n\n${commits}`
+      return { formatted, raw }
     }
   },
 ])
@@ -517,14 +584,17 @@ const testingAll = ref(false)
 async function runTest(test: TestCase) {
   test.status = 'running'
   test.result = ''
+  test.rawResult = ''
   addLog(`开始: ${test.name}`)
   try {
-    const result = await test.fn()
-    test.result = result
+    const { formatted, raw } = await test.fn()
+    test.result = formatted
+    test.rawResult = raw
     test.status = 'success'
     addLog(`✅ ${test.name}`, 'success')
   } catch (err: any) {
     test.result = err.message || String(err)
+    test.rawResult = err.stack || err.message || String(err)
     test.status = 'error'
     addLog(`❌ ${test.name}: ${err.message}`, 'error')
   }

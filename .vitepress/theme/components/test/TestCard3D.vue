@@ -56,10 +56,19 @@
     <div class="card-back" v-if="test.result">
       <div class="result-header">
         <span class="result-badge" :class="test.status">{{ resultBadge }}</span>
-        <button class="btn-close" @click.stop="showResult = false">✕</button>
+        <div class="result-actions">
+          <button 
+            v-if="test.rawResult"
+            class="btn-toggle-raw"
+            @click.stop="showRaw = !showRaw"
+          >
+            {{ showRaw ? '📝 格式化' : '⚙️ 原始数据' }}
+          </button>
+          <button class="btn-close" @click.stop="showResult = false">✕</button>
+        </div>
       </div>
       <div class="result-content">
-        <pre class="result-text" :class="{ error: test.error }">{{ test.result }}</pre>
+        <pre class="result-text" :class="{ error: test.error, 'raw-mode': showRaw }">{{ displayResult }}</pre>
       </div>
     </div>
   </div>
@@ -73,6 +82,7 @@ interface TestCase {
   description: string
   status: 'pending' | 'running' | 'success' | 'error'
   result?: string
+  rawResult?: string
   error?: boolean
 }
 
@@ -85,6 +95,11 @@ defineEmits<{
 }>()
 
 const showResult = ref(false)
+const showRaw = ref(false)
+
+const displayResult = computed(() => {
+  return showRaw.value && props.test.rawResult ? props.test.rawResult : props.test.result
+})
 
 const statusIcon = computed(() => {
   const icons: Record<string, string> = {
@@ -396,6 +411,27 @@ function flipCard() {
   color: #ef4444;
 }
 
+.result-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-toggle-raw {
+  padding: 0.25rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  background: rgba(139, 92, 246, 0.2);
+  color: #a78bfa;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-toggle-raw:hover {
+  background: rgba(139, 92, 246, 0.3);
+}
+
 .btn-close {
   width: 28px;
   height: 28px;
@@ -436,6 +472,12 @@ function flipCard() {
 
 .result-text.error {
   color: #fca5a5;
+}
+
+.result-text.raw-mode {
+  font-size: 0.75rem;
+  background: rgba(10, 10, 15, 0.8);
+  border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
 /* 滚动条 */
