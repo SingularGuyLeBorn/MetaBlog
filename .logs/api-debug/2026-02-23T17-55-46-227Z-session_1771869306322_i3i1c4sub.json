@@ -1,0 +1,3860 @@
+{
+  "sessionId": "session_1771869306322_i3i1c4sub",
+  "startTime": "2026-02-23T17:55:14.813Z",
+  "endTime": "2026-02-23T17:55:46.223Z",
+  "totalRounds": 4,
+  "entryCount": 16,
+  "entries": [
+    {
+      "timestamp": "2026-02-23T17:55:14.814Z",
+      "type": "request",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 1,
+      "data": {
+        "model": "deepseek-reasoner",
+        "messages": [
+          {
+            "role": "system",
+            "content": "你是一个 helpful 的 AI 助手。"
+          },
+          {
+            "role": "user",
+            "content": "https://api-docs.deepseek.com/zh-cn/guides/thinking_mode 这个链接在讲什么?"
+          }
+        ],
+        "max_tokens": 8192,
+        "stream": false,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_article_content",
+              "description": "获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n\n路径格式支持：\n- URL格式：\"/sections/knowledge/folder/\"（文件夹以/结尾，自动读取index.md）\n- 文件格式：\"/sections/posts/article\"（文件路径）\n- 完整路径：\"sections/posts/article.md\"\n\n重要提示：\n1. 使用此工具前，建议先调用 list_articles 或 search_articles 获取文章路径\n2. 如果用户提供了文章标题，请先搜索获取正确的路径\n3. 支持可选的起止行号参数，用于读取文章片段",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径。支持：1）URL格式 \"/sections/knowledge/folder/\" 2）文件格式 \"/sections/posts/article\" 3）完整路径 \"sections/posts/article.md\""
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "最大返回字符数，默认8000，避免消息过长。如果文章超出此长度，会提示用户"
+                  },
+                  "start_line": {
+                    "type": "number",
+                    "description": "可选：起始行号（从1开始），用于读取文章片段。与 end_line 配合使用"
+                  },
+                  "end_line": {
+                    "type": "number",
+                    "description": "可选：结束行号，用于读取文章片段。不指定则读到文章末尾"
+                  },
+                  "include_metadata": {
+                    "type": "boolean",
+                    "description": "是否包含文章元数据（frontmatter），默认false"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_articles",
+              "description": "根据关键词搜索文章，支持全文检索和分类筛选。\n\n使用场景：\n1. 用户想找特定主题的文章\n2. 需要获取文章路径以便读取内容（配合 get_article_content 使用）\n3. 在特定分类下搜索文章\n\n返回结果包含文章路径，路径格式可直接用于 get_article_content 工具。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索关键词，例如 \"深度学习\"、\"Docker\"、\"Transformer\"。支持模糊匹配"
+                  },
+                  "section": {
+                    "type": "string",
+                    "description": "可选：限定搜索的分类，例如 \"knowledge\"、\"posts\"。不指定则搜索所有分类"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认5条，最大20条"
+                  },
+                  "include_folders": {
+                    "type": "boolean",
+                    "description": "是否包含文件夹结果，默认true。文件夹路径以/结尾"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_articles",
+              "description": "列出文章列表，支持分类筛选和层级浏览。\n\n使用场景：\n1. 用户询问\"有哪些文章\"、\"文章列表\"\n2. 需要获取文章路径以便读取内容（配合 get_article_content 使用）\n3. 浏览知识库的层级结构\n4. 查看特定分类下的所有文章\n\n返回结果说明：\n- 📄 表示文章文件，路径可直接用于 get_article_content\n- 📂 表示文件夹，路径以/结尾，进入文件夹需再次调用 list_articles 或使用 get_article_content 读取其中的 index.md",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "section": {
+                    "type": "string",
+                    "description": "可选：按分类筛选，例如 \"knowledge\"、\"posts\"。不指定则列出所有分类"
+                  },
+                  "folder_path": {
+                    "type": "string",
+                    "description": "可选：指定文件夹路径，列出该文件夹下的内容。例如 \"/sections/knowledge/ml/\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认20，最大100"
+                  },
+                  "recursive": {
+                    "type": "boolean",
+                    "description": "是否递归列出子文件夹内容，默认false。设为true会展开所有层级"
+                  },
+                  "sort_by": {
+                    "type": "string",
+                    "enum": [
+                      "name",
+                      "date",
+                      "category"
+                    ],
+                    "description": "排序方式：name（名称）、date（修改时间）、category（分类）。默认按分类分组"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_article",
+              "description": "创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n\n重要提示：\n1. 路径格式：\"section/filename.md\"，例如 \"knowledge/transformer-detailed.md\"\n2. 如果指定路径的文件夹不存在，系统会自动创建\n3. 支持 frontmatter 元数据，可通过 tags、category 等参数自动添加\n4. 如果用户没有指定 section，默认使用 \"knowledge\" 或 \"posts\"\n5. 不要主动调用此工具，除非用户明确要求创建文章\n6. 创建后可返回文章路径供用户确认",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "文章标题，例如 \"Transformer 详解\"。会同时用于 frontmatter 和文档 H1 标题"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "文章完整路径，格式为 \"section/filename.md\"，例如 \"knowledge/transformer-detailed.md\"。支持嵌套路径如 \"knowledge/ml/transformer.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "文章内容（支持 Markdown）。如不提供，会创建带标题的模板内容"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "可选：文章标签数组，例如 [\"AI\", \"深度学习\", \"Transformer\"]。会添加到 frontmatter"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "可选：文章分类，会添加到 frontmatter。例如 \"技术\", \"随笔\""
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "可选：文章作者，默认当前用户"
+                  },
+                  "create_parent_folders": {
+                    "type": "boolean",
+                    "description": "是否自动创建父文件夹，默认true。如设为false且父文件夹不存在会报错"
+                  },
+                  "overwrite": {
+                    "type": "boolean",
+                    "description": "如果文件已存在是否覆盖，默认false。设为true会覆盖原有内容，请谨慎使用"
+                  }
+                },
+                "required": [
+                  "title",
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "update_article",
+              "description": "更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n更新模式说明：\n1. 完整替换（默认）：replace=true，用新内容完全替换旧内容\n2. 增量更新：replace=false + position，在指定位置插入或追加内容\n3. 部分修改：配合 start_line/end_line 实现行级替换\n\n重要提示：\n- 更新前建议先读取文章确认内容\n- 大型文章更新建议先备份或分块修改\n- 更新后会保留原有 frontmatter（除非显式修改）",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径。支持URL格式 \"/sections/posts/article\" 或文件路径 \"sections/posts/article.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "新的文章内容。根据 mode 参数决定是完整替换还是部分更新"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "replace",
+                      "append",
+                      "prepend",
+                      "insert"
+                    ],
+                    "description": "更新模式：replace（完整替换，默认）、append（追加到末尾）、prepend（插入到开头）、insert（插入到指定位置）"
+                  },
+                  "position": {
+                    "type": "number",
+                    "description": "插入位置（字符索引），仅在 mode=insert 时有效。0 表示开头，-1 表示末尾"
+                  },
+                  "after_section": {
+                    "type": "string",
+                    "description": "可选：指定在某个章节标题后插入内容。例如 \"## 引言\"，会找到该标题并在其后插入"
+                  },
+                  "preserve_frontmatter": {
+                    "type": "boolean",
+                    "description": "是否保留原有 frontmatter，默认true。设为false会用新内容的frontmatter替换"
+                  },
+                  "dry_run": {
+                    "type": "boolean",
+                    "description": "是否仅预览变更而不实际保存，默认false。设为true会返回预览内容供确认"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "delete_article",
+              "description": "删除文章或文件夹。当用户要求删除、移除文章时使用。\n\n重要警告：\n1. 此操作不可逆，删除后无法恢复\n2. 删除文件夹会同时删除其所有子文件和子文件夹\n3. 支持安全模式，删除前会要求二次确认\n4. 建议删除前先读取文章确认内容\n\n使用建议：\n- 删除单篇文章：提供文章路径\n- 删除整个文件夹：提供文件夹路径（以/结尾）\n- 批量删除：需多次调用或使用通配符（如支持）",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "要删除的文章或文件夹路径。支持：1）文章路径 \"/sections/posts/article\" 2）文件夹路径 \"/sections/knowledge/old-folder/\""
+                  },
+                  "confirm": {
+                    "type": "boolean",
+                    "description": "是否确认删除，默认false。作为安全机制，某些实现可能要求此参数为true才执行删除"
+                  },
+                  "delete_empty_parent": {
+                    "type": "boolean",
+                    "description": "删除后如果父文件夹为空，是否同时删除父文件夹，默认false"
+                  },
+                  "backup_first": {
+                    "type": "boolean",
+                    "description": "删除前是否创建备份，默认false。设为true会在删除前备份到 .trash 目录"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "read_file",
+              "description": "读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文件路径，例如 \"docs/readme.md\" 或 \"src/config.ts\""
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "write_file",
+              "description": "写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文件路径"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "要写入的文件内容"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_files",
+              "description": "列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "目录路径，默认为当前目录"
+                  },
+                  "recursive": {
+                    "type": "boolean",
+                    "description": "是否递归列出子目录，默认 false"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "web_search",
+              "description": "执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索关键词"
+                  },
+                  "num_results": {
+                    "type": "number",
+                    "description": "返回结果数量，默认 5"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "fetch_url",
+              "description": "获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n\n使用场景：\n1. 获取网页内容进行摘要分析\n2. 调用 REST API 获取数据\n3. 获取原始代码文件内容\n4. 获取文档、博客、新闻等内容\n\n支持自动内容类型识别：HTML、JSON、纯文本等。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "要获取的 URL，支持 http/https。例如：https://api.github.com/users/octocat"
+                  },
+                  "method": {
+                    "type": "string",
+                    "description": "HTTP 方法：GET、POST、PUT、DELETE 等，默认 GET",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "DELETE",
+                      "PATCH"
+                    ],
+                    "default": "GET"
+                  },
+                  "headers": {
+                    "type": "object",
+                    "description": "可选：自定义 HTTP 请求头，如 {\"Authorization\": \"Bearer token\"}"
+                  },
+                  "body": {
+                    "type": "string",
+                    "description": "可选：请求体内容，用于 POST/PUT/PATCH 请求"
+                  },
+                  "timeout": {
+                    "type": "number",
+                    "description": "请求超时时间（毫秒），默认 10000（10秒）"
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "返回内容最大长度（字符），默认 15000"
+                  }
+                },
+                "required": [
+                  "url"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "calculate",
+              "description": "执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "expression": {
+                    "type": "string",
+                    "description": "数学表达式，例如 \"2 + 2 * 3\" 或 \"sin(30)\""
+                  }
+                },
+                "required": [
+                  "expression"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "translate_text",
+              "description": "翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "要翻译的文本"
+                  },
+                  "target_language": {
+                    "type": "string",
+                    "description": "目标语言代码，如 \"zh\"（中文）、\"en\"（英文）、\"ja\"（日文）、\"ko\"（韩文）、\"fr\"（法文）、\"de\"（德文）等"
+                  },
+                  "source_language": {
+                    "type": "string",
+                    "description": "源语言代码（可选，自动检测）"
+                  }
+                },
+                "required": [
+                  "text",
+                  "target_language"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "summarize_text",
+              "description": "对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "需要摘要的原始文本"
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "摘要最大长度（字符数），默认200"
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "format_text",
+              "description": "将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "原始文本内容"
+                  },
+                  "format": {
+                    "type": "string",
+                    "description": "目标格式：markdown、json、yaml、table，默认markdown",
+                    "enum": [
+                      "markdown",
+                      "json",
+                      "yaml",
+                      "table"
+                    ]
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "execute_code",
+              "description": "执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "要执行的代码"
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "编程语言，如 \"python\", \"javascript\", \"bash\" 等"
+                  }
+                },
+                "required": [
+                  "code",
+                  "language"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "analyze_code",
+              "description": "分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "要分析的源代码"
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "编程语言"
+                  }
+                },
+                "required": [
+                  "code",
+                  "language"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "query_knowledge",
+              "description": "查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "查询内容"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_note",
+              "description": "创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "笔记标题"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "笔记内容"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "标签列表"
+                  }
+                },
+                "required": [
+                  "title",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_notes",
+              "description": "列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "tag": {
+                    "type": "string",
+                    "description": "按标签筛选（可选）"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_repo",
+              "description": "获取 GitHub 仓库信息。查看仓库详情、统计信息、最近更新等。\n\n使用场景：\n1. 了解一个开源项目的基本信息\n2. 查看仓库的 Star 数、Fork 数、语言分布\n3. 获取 README 内容摘要\n4. 查看最近的提交活动\n\n示例：\n- 查看 React 仓库：owner=\"facebook\", repo=\"react\"\n- 查看 VS Code：owner=\"microsoft\", repo=\"vscode\"",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者（用户名或组织名），例如 \"facebook\"、\"microsoft\"、\"vercel\""
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称，例如 \"react\"、\"vscode\"、\"next.js\""
+                  },
+                  "include_readme": {
+                    "type": "boolean",
+                    "description": "是否获取并返回 README 内容摘要，默认 true"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_list_repo_contents",
+              "description": "列出 GitHub 仓库的文件和目录内容。浏览代码结构、查找特定文件。\n\n使用场景：\n1. 浏览仓库的目录结构\n2. 查找特定的源代码文件\n3. 了解项目组织结构\n4. 定位配置文件（package.json、tsconfig.json 等）\n\n示例：\n- 查看根目录：owner=\"facebook\", repo=\"react\", path=\"\"\n- 查看 src 目录：owner=\"facebook\", repo=\"react\", path=\"src\"\n- 查看特定文件：owner=\"facebook\", repo=\"react\", path=\"README.md\"",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "目录或文件路径，默认空字符串（根目录）。例如 \"src\"、\"docs\"、\"package.json\""
+                  },
+                  "ref": {
+                    "type": "string",
+                    "description": "分支、标签或 commit SHA，默认主分支（main/master）"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_file_content",
+              "description": "获取 GitHub 仓库中特定文件的内容。读取源代码、配置文件等。\n\n使用场景：\n1. 查看源代码实现\n2. 读取配置文件（package.json、.gitignore 等）\n3. 学习优秀的代码示例\n4. 查看文档文件\n\n注意：\n- 文件路径需要包含完整的相对路径\n- 支持获取文件的原始内容（自动解码 base64）\n- 可以指定特定分支或 commit",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "文件路径，例如 \"src/index.ts\"、\"package.json\"、\"README.md\""
+                  },
+                  "ref": {
+                    "type": "string",
+                    "description": "分支、标签或 commit SHA，默认主分支"
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "返回内容最大长度，默认 10000 字符"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo",
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_search_code",
+              "description": "在 GitHub 上搜索代码。查找开源项目中的代码示例、特定实现。\n\n使用场景：\n1. 查找特定函数的代码实现示例\n2. 搜索开源项目中的最佳实践\n3. 查找特定语言/框架的使用示例\n4. 学习如何解决特定问题\n\n搜索语法：\n- 关键词搜索：\"useState hook\"\n- 限定语言：\"quickSort language:python\"\n- 限定仓库：\"apiCall repo:facebook/react\"\n- 限定路径：\"config path:src\"",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索查询，支持 GitHub 代码搜索语法。例如 \"useEffect cleanup\"、\"language:typescript react hooks\""
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "可选：限定编程语言，例如 \"javascript\"、\"python\"、\"typescript\"、\"go\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量，默认 5，最大 10"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_commit_history",
+              "description": "获取 GitHub 仓库的提交历史。查看最近的代码变更、提交信息。\n\n使用场景：\n1. 了解项目最近的发展动态\n2. 查看特定功能的实现历史\n3. 追踪 bug 修复记录\n4. 了解贡献者活动",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "可选：限定特定文件或目录的提交历史"
+                  },
+                  "per_page": {
+                    "type": "number",
+                    "description": "返回的提交数量，默认 10，最大 30"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_issues",
+              "description": "获取 GitHub 仓库的 Issues。查看问题、bug 报告、功能请求。\n\n使用场景：\n1. 了解项目已知的问题\n2. 查看功能请求和讨论\n3. 了解社区反馈\n4. 查看问题的解决方案",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "Issue 状态：open（开放）、closed（已关闭）、all（全部），默认 open",
+                    "enum": [
+                      "open",
+                      "closed",
+                      "all"
+                    ],
+                    "default": "open"
+                  },
+                  "per_page": {
+                    "type": "number",
+                    "description": "返回数量，默认 10，最大 30"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_current_time",
+              "description": "获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。",
+              "parameters": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_weather",
+              "description": "获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "city": {
+                    "type": "string",
+                    "description": "城市名称，如 \"北京\"、\"上海\"、\"New York\""
+                  },
+                  "days": {
+                    "type": "number",
+                    "description": "预报天数，默认 3 天"
+                  }
+                },
+                "required": [
+                  "city"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "test_echo",
+              "description": "【测试专用】回声工具，验证工具调用是否正常工作。当用户说\"测试工具\"时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "要回显的消息"
+                  },
+                  "repeat_count": {
+                    "type": "number",
+                    "description": "重复次数"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "humanNote": "【API请求】发送到DeepSeek"
+    },
+    {
+      "timestamp": "2026-02-23T17:55:19.040Z",
+      "type": "response",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 1,
+      "data": {
+        "id": "1573601e-d502-4479-ac8b-dc99a40f1534",
+        "object": "chat.completion",
+        "created": 1771869313,
+        "model": "deepseek-reasoner",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "用户询问的是DeepSeek官方文档中关于\"thinking mode\"（思考模式）的指南页面。我需要获取这个URL的内容来了解它具体在讲什么。\n\n我应该使用`fetch_url`工具来获取该网页的内容。URL已经提供：https://api-docs.deepseek.com/zh-cn/guides/thinking_mode\n\n让我调用这个工具。",
+              "tool_calls": [
+                {
+                  "index": 0,
+                  "id": "call_00_nZfiwVVqSnxYxlycfSz08MAG",
+                  "type": "function",
+                  "function": {
+                    "name": "fetch_url",
+                    "arguments": "{\"url\": \"https://api-docs.deepseek.com/zh-cn/guides/thinking_mode\"}"
+                  }
+                }
+              ]
+            },
+            "logprobs": null,
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 5602,
+          "completion_tokens": 135,
+          "total_tokens": 5737,
+          "prompt_tokens_details": {
+            "cached_tokens": 5568
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 75
+          },
+          "prompt_cache_hit_tokens": 5568,
+          "prompt_cache_miss_tokens": 34
+        },
+        "system_fingerprint": "fp_eaab8d114b_prod0820_fp8_kvcache"
+      },
+      "humanNote": "【API响应】DeepSeek返回"
+    },
+    {
+      "timestamp": "2026-02-23T17:55:19.056Z",
+      "type": "note",
+      "endpoint": "thinking",
+      "round": 1,
+      "data": {
+        "stepIndex": 1,
+        "content": "用户询问的是DeepSeek官方文档中关于\"thinking mode\"（思考模式）的指南页面。我需要获取这个URL的内容来了解它具体在讲什么。\n\n我应该使用`fetch_url`工具来获取该网页的内容。URL已经提供：https://api-docs.deepseek.com/zh-cn/guides/thinking_mode\n\n让我调用这个工具。"
+      },
+      "humanNote": "【UI展示】思考步骤",
+      "uiVisible": true
+    },
+    {
+      "timestamp": "2026-02-23T17:55:19.091Z",
+      "type": "note",
+      "endpoint": "tool_call",
+      "round": 1,
+      "data": {
+        "name": "fetch_url",
+        "args": {
+          "url": "https://api-docs.deepseek.com/zh-cn/guides/thinking_mode"
+        },
+        "result": "❌ 请求失败: HTTP 504"
+      },
+      "humanNote": "【UI展示】工具调用步骤",
+      "uiVisible": true
+    },
+    {
+      "timestamp": "2026-02-23T17:55:19.092Z",
+      "type": "request",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 2,
+      "data": {
+        "model": "deepseek-reasoner",
+        "messages": [
+          {
+            "role": "system",
+            "content": "你是一个 helpful 的 AI 助手。"
+          },
+          {
+            "role": "user",
+            "content": "https://api-docs.deepseek.com/zh-cn/guides/thinking_mode 这个链接在讲什么?"
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+              {
+                "id": "call_00_nZfiwVVqSnxYxlycfSz08MAG",
+                "type": "function",
+                "function": {
+                  "name": "fetch_url",
+                  "arguments": "{\"url\": \"https://api-docs.deepseek.com/zh-cn/guides/thinking_mode\"}"
+                }
+              }
+            ],
+            "reasoning_content": "用户询问的是DeepSeek官方文档中关于\"thinking mode\"（思考模式）的指南页面。我需要获取这个URL的内容来了解它具体在讲什么。\n\n我应该使用`fetch_url`工具来获取该网页的内容。URL已经提供：https://api-docs.deepseek.com/zh-cn/guides/thinking_mode\n\n让我调用这个工具。"
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_00_nZfiwVVqSnxYxlycfSz08MAG",
+            "content": "❌ 请求失败: HTTP 504"
+          }
+        ],
+        "max_tokens": 8192,
+        "stream": false,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_article_content",
+              "description": "获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n\n路径格式支持：\n- URL格式：\"/sections/knowledge/folder/\"（文件夹以/结尾，自动读取index.md）\n- 文件格式：\"/sections/posts/article\"（文件路径）\n- 完整路径：\"sections/posts/article.md\"\n\n重要提示：\n1. 使用此工具前，建议先调用 list_articles 或 search_articles 获取文章路径\n2. 如果用户提供了文章标题，请先搜索获取正确的路径\n3. 支持可选的起止行号参数，用于读取文章片段",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径。支持：1）URL格式 \"/sections/knowledge/folder/\" 2）文件格式 \"/sections/posts/article\" 3）完整路径 \"sections/posts/article.md\""
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "最大返回字符数，默认8000，避免消息过长。如果文章超出此长度，会提示用户"
+                  },
+                  "start_line": {
+                    "type": "number",
+                    "description": "可选：起始行号（从1开始），用于读取文章片段。与 end_line 配合使用"
+                  },
+                  "end_line": {
+                    "type": "number",
+                    "description": "可选：结束行号，用于读取文章片段。不指定则读到文章末尾"
+                  },
+                  "include_metadata": {
+                    "type": "boolean",
+                    "description": "是否包含文章元数据（frontmatter），默认false"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_articles",
+              "description": "根据关键词搜索文章，支持全文检索和分类筛选。\n\n使用场景：\n1. 用户想找特定主题的文章\n2. 需要获取文章路径以便读取内容（配合 get_article_content 使用）\n3. 在特定分类下搜索文章\n\n返回结果包含文章路径，路径格式可直接用于 get_article_content 工具。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索关键词，例如 \"深度学习\"、\"Docker\"、\"Transformer\"。支持模糊匹配"
+                  },
+                  "section": {
+                    "type": "string",
+                    "description": "可选：限定搜索的分类，例如 \"knowledge\"、\"posts\"。不指定则搜索所有分类"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认5条，最大20条"
+                  },
+                  "include_folders": {
+                    "type": "boolean",
+                    "description": "是否包含文件夹结果，默认true。文件夹路径以/结尾"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_articles",
+              "description": "列出文章列表，支持分类筛选和层级浏览。\n\n使用场景：\n1. 用户询问\"有哪些文章\"、\"文章列表\"\n2. 需要获取文章路径以便读取内容（配合 get_article_content 使用）\n3. 浏览知识库的层级结构\n4. 查看特定分类下的所有文章\n\n返回结果说明：\n- 📄 表示文章文件，路径可直接用于 get_article_content\n- 📂 表示文件夹，路径以/结尾，进入文件夹需再次调用 list_articles 或使用 get_article_content 读取其中的 index.md",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "section": {
+                    "type": "string",
+                    "description": "可选：按分类筛选，例如 \"knowledge\"、\"posts\"。不指定则列出所有分类"
+                  },
+                  "folder_path": {
+                    "type": "string",
+                    "description": "可选：指定文件夹路径，列出该文件夹下的内容。例如 \"/sections/knowledge/ml/\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认20，最大100"
+                  },
+                  "recursive": {
+                    "type": "boolean",
+                    "description": "是否递归列出子文件夹内容，默认false。设为true会展开所有层级"
+                  },
+                  "sort_by": {
+                    "type": "string",
+                    "enum": [
+                      "name",
+                      "date",
+                      "category"
+                    ],
+                    "description": "排序方式：name（名称）、date（修改时间）、category（分类）。默认按分类分组"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_article",
+              "description": "创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n\n重要提示：\n1. 路径格式：\"section/filename.md\"，例如 \"knowledge/transformer-detailed.md\"\n2. 如果指定路径的文件夹不存在，系统会自动创建\n3. 支持 frontmatter 元数据，可通过 tags、category 等参数自动添加\n4. 如果用户没有指定 section，默认使用 \"knowledge\" 或 \"posts\"\n5. 不要主动调用此工具，除非用户明确要求创建文章\n6. 创建后可返回文章路径供用户确认",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "文章标题，例如 \"Transformer 详解\"。会同时用于 frontmatter 和文档 H1 标题"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "文章完整路径，格式为 \"section/filename.md\"，例如 \"knowledge/transformer-detailed.md\"。支持嵌套路径如 \"knowledge/ml/transformer.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "文章内容（支持 Markdown）。如不提供，会创建带标题的模板内容"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "可选：文章标签数组，例如 [\"AI\", \"深度学习\", \"Transformer\"]。会添加到 frontmatter"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "可选：文章分类，会添加到 frontmatter。例如 \"技术\", \"随笔\""
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "可选：文章作者，默认当前用户"
+                  },
+                  "create_parent_folders": {
+                    "type": "boolean",
+                    "description": "是否自动创建父文件夹，默认true。如设为false且父文件夹不存在会报错"
+                  },
+                  "overwrite": {
+                    "type": "boolean",
+                    "description": "如果文件已存在是否覆盖，默认false。设为true会覆盖原有内容，请谨慎使用"
+                  }
+                },
+                "required": [
+                  "title",
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "update_article",
+              "description": "更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n更新模式说明：\n1. 完整替换（默认）：replace=true，用新内容完全替换旧内容\n2. 增量更新：replace=false + position，在指定位置插入或追加内容\n3. 部分修改：配合 start_line/end_line 实现行级替换\n\n重要提示：\n- 更新前建议先读取文章确认内容\n- 大型文章更新建议先备份或分块修改\n- 更新后会保留原有 frontmatter（除非显式修改）",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径。支持URL格式 \"/sections/posts/article\" 或文件路径 \"sections/posts/article.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "新的文章内容。根据 mode 参数决定是完整替换还是部分更新"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "replace",
+                      "append",
+                      "prepend",
+                      "insert"
+                    ],
+                    "description": "更新模式：replace（完整替换，默认）、append（追加到末尾）、prepend（插入到开头）、insert（插入到指定位置）"
+                  },
+                  "position": {
+                    "type": "number",
+                    "description": "插入位置（字符索引），仅在 mode=insert 时有效。0 表示开头，-1 表示末尾"
+                  },
+                  "after_section": {
+                    "type": "string",
+                    "description": "可选：指定在某个章节标题后插入内容。例如 \"## 引言\"，会找到该标题并在其后插入"
+                  },
+                  "preserve_frontmatter": {
+                    "type": "boolean",
+                    "description": "是否保留原有 frontmatter，默认true。设为false会用新内容的frontmatter替换"
+                  },
+                  "dry_run": {
+                    "type": "boolean",
+                    "description": "是否仅预览变更而不实际保存，默认false。设为true会返回预览内容供确认"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "delete_article",
+              "description": "删除文章或文件夹。当用户要求删除、移除文章时使用。\n\n重要警告：\n1. 此操作不可逆，删除后无法恢复\n2. 删除文件夹会同时删除其所有子文件和子文件夹\n3. 支持安全模式，删除前会要求二次确认\n4. 建议删除前先读取文章确认内容\n\n使用建议：\n- 删除单篇文章：提供文章路径\n- 删除整个文件夹：提供文件夹路径（以/结尾）\n- 批量删除：需多次调用或使用通配符（如支持）",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "要删除的文章或文件夹路径。支持：1）文章路径 \"/sections/posts/article\" 2）文件夹路径 \"/sections/knowledge/old-folder/\""
+                  },
+                  "confirm": {
+                    "type": "boolean",
+                    "description": "是否确认删除，默认false。作为安全机制，某些实现可能要求此参数为true才执行删除"
+                  },
+                  "delete_empty_parent": {
+                    "type": "boolean",
+                    "description": "删除后如果父文件夹为空，是否同时删除父文件夹，默认false"
+                  },
+                  "backup_first": {
+                    "type": "boolean",
+                    "description": "删除前是否创建备份，默认false。设为true会在删除前备份到 .trash 目录"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "read_file",
+              "description": "读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文件路径，例如 \"docs/readme.md\" 或 \"src/config.ts\""
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "write_file",
+              "description": "写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文件路径"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "要写入的文件内容"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_files",
+              "description": "列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "目录路径，默认为当前目录"
+                  },
+                  "recursive": {
+                    "type": "boolean",
+                    "description": "是否递归列出子目录，默认 false"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "web_search",
+              "description": "执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索关键词"
+                  },
+                  "num_results": {
+                    "type": "number",
+                    "description": "返回结果数量，默认 5"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "fetch_url",
+              "description": "获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n\n使用场景：\n1. 获取网页内容进行摘要分析\n2. 调用 REST API 获取数据\n3. 获取原始代码文件内容\n4. 获取文档、博客、新闻等内容\n\n支持自动内容类型识别：HTML、JSON、纯文本等。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "要获取的 URL，支持 http/https。例如：https://api.github.com/users/octocat"
+                  },
+                  "method": {
+                    "type": "string",
+                    "description": "HTTP 方法：GET、POST、PUT、DELETE 等，默认 GET",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "DELETE",
+                      "PATCH"
+                    ],
+                    "default": "GET"
+                  },
+                  "headers": {
+                    "type": "object",
+                    "description": "可选：自定义 HTTP 请求头，如 {\"Authorization\": \"Bearer token\"}"
+                  },
+                  "body": {
+                    "type": "string",
+                    "description": "可选：请求体内容，用于 POST/PUT/PATCH 请求"
+                  },
+                  "timeout": {
+                    "type": "number",
+                    "description": "请求超时时间（毫秒），默认 10000（10秒）"
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "返回内容最大长度（字符），默认 15000"
+                  }
+                },
+                "required": [
+                  "url"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "calculate",
+              "description": "执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "expression": {
+                    "type": "string",
+                    "description": "数学表达式，例如 \"2 + 2 * 3\" 或 \"sin(30)\""
+                  }
+                },
+                "required": [
+                  "expression"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "translate_text",
+              "description": "翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "要翻译的文本"
+                  },
+                  "target_language": {
+                    "type": "string",
+                    "description": "目标语言代码，如 \"zh\"（中文）、\"en\"（英文）、\"ja\"（日文）、\"ko\"（韩文）、\"fr\"（法文）、\"de\"（德文）等"
+                  },
+                  "source_language": {
+                    "type": "string",
+                    "description": "源语言代码（可选，自动检测）"
+                  }
+                },
+                "required": [
+                  "text",
+                  "target_language"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "summarize_text",
+              "description": "对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "需要摘要的原始文本"
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "摘要最大长度（字符数），默认200"
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "format_text",
+              "description": "将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "原始文本内容"
+                  },
+                  "format": {
+                    "type": "string",
+                    "description": "目标格式：markdown、json、yaml、table，默认markdown",
+                    "enum": [
+                      "markdown",
+                      "json",
+                      "yaml",
+                      "table"
+                    ]
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "execute_code",
+              "description": "执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "要执行的代码"
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "编程语言，如 \"python\", \"javascript\", \"bash\" 等"
+                  }
+                },
+                "required": [
+                  "code",
+                  "language"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "analyze_code",
+              "description": "分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "要分析的源代码"
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "编程语言"
+                  }
+                },
+                "required": [
+                  "code",
+                  "language"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "query_knowledge",
+              "description": "查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "查询内容"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_note",
+              "description": "创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "笔记标题"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "笔记内容"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "标签列表"
+                  }
+                },
+                "required": [
+                  "title",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_notes",
+              "description": "列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "tag": {
+                    "type": "string",
+                    "description": "按标签筛选（可选）"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_repo",
+              "description": "获取 GitHub 仓库信息。查看仓库详情、统计信息、最近更新等。\n\n使用场景：\n1. 了解一个开源项目的基本信息\n2. 查看仓库的 Star 数、Fork 数、语言分布\n3. 获取 README 内容摘要\n4. 查看最近的提交活动\n\n示例：\n- 查看 React 仓库：owner=\"facebook\", repo=\"react\"\n- 查看 VS Code：owner=\"microsoft\", repo=\"vscode\"",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者（用户名或组织名），例如 \"facebook\"、\"microsoft\"、\"vercel\""
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称，例如 \"react\"、\"vscode\"、\"next.js\""
+                  },
+                  "include_readme": {
+                    "type": "boolean",
+                    "description": "是否获取并返回 README 内容摘要，默认 true"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_list_repo_contents",
+              "description": "列出 GitHub 仓库的文件和目录内容。浏览代码结构、查找特定文件。\n\n使用场景：\n1. 浏览仓库的目录结构\n2. 查找特定的源代码文件\n3. 了解项目组织结构\n4. 定位配置文件（package.json、tsconfig.json 等）\n\n示例：\n- 查看根目录：owner=\"facebook\", repo=\"react\", path=\"\"\n- 查看 src 目录：owner=\"facebook\", repo=\"react\", path=\"src\"\n- 查看特定文件：owner=\"facebook\", repo=\"react\", path=\"README.md\"",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "目录或文件路径，默认空字符串（根目录）。例如 \"src\"、\"docs\"、\"package.json\""
+                  },
+                  "ref": {
+                    "type": "string",
+                    "description": "分支、标签或 commit SHA，默认主分支（main/master）"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_file_content",
+              "description": "获取 GitHub 仓库中特定文件的内容。读取源代码、配置文件等。\n\n使用场景：\n1. 查看源代码实现\n2. 读取配置文件（package.json、.gitignore 等）\n3. 学习优秀的代码示例\n4. 查看文档文件\n\n注意：\n- 文件路径需要包含完整的相对路径\n- 支持获取文件的原始内容（自动解码 base64）\n- 可以指定特定分支或 commit",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "文件路径，例如 \"src/index.ts\"、\"package.json\"、\"README.md\""
+                  },
+                  "ref": {
+                    "type": "string",
+                    "description": "分支、标签或 commit SHA，默认主分支"
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "返回内容最大长度，默认 10000 字符"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo",
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_search_code",
+              "description": "在 GitHub 上搜索代码。查找开源项目中的代码示例、特定实现。\n\n使用场景：\n1. 查找特定函数的代码实现示例\n2. 搜索开源项目中的最佳实践\n3. 查找特定语言/框架的使用示例\n4. 学习如何解决特定问题\n\n搜索语法：\n- 关键词搜索：\"useState hook\"\n- 限定语言：\"quickSort language:python\"\n- 限定仓库：\"apiCall repo:facebook/react\"\n- 限定路径：\"config path:src\"",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索查询，支持 GitHub 代码搜索语法。例如 \"useEffect cleanup\"、\"language:typescript react hooks\""
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "可选：限定编程语言，例如 \"javascript\"、\"python\"、\"typescript\"、\"go\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量，默认 5，最大 10"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_commit_history",
+              "description": "获取 GitHub 仓库的提交历史。查看最近的代码变更、提交信息。\n\n使用场景：\n1. 了解项目最近的发展动态\n2. 查看特定功能的实现历史\n3. 追踪 bug 修复记录\n4. 了解贡献者活动",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "可选：限定特定文件或目录的提交历史"
+                  },
+                  "per_page": {
+                    "type": "number",
+                    "description": "返回的提交数量，默认 10，最大 30"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_issues",
+              "description": "获取 GitHub 仓库的 Issues。查看问题、bug 报告、功能请求。\n\n使用场景：\n1. 了解项目已知的问题\n2. 查看功能请求和讨论\n3. 了解社区反馈\n4. 查看问题的解决方案",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "Issue 状态：open（开放）、closed（已关闭）、all（全部），默认 open",
+                    "enum": [
+                      "open",
+                      "closed",
+                      "all"
+                    ],
+                    "default": "open"
+                  },
+                  "per_page": {
+                    "type": "number",
+                    "description": "返回数量，默认 10，最大 30"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_current_time",
+              "description": "获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。",
+              "parameters": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_weather",
+              "description": "获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "city": {
+                    "type": "string",
+                    "description": "城市名称，如 \"北京\"、\"上海\"、\"New York\""
+                  },
+                  "days": {
+                    "type": "number",
+                    "description": "预报天数，默认 3 天"
+                  }
+                },
+                "required": [
+                  "city"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "test_echo",
+              "description": "【测试专用】回声工具，验证工具调用是否正常工作。当用户说\"测试工具\"时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "要回显的消息"
+                  },
+                  "repeat_count": {
+                    "type": "number",
+                    "description": "重复次数"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "humanNote": "【API请求】发送到DeepSeek"
+    },
+    {
+      "timestamp": "2026-02-23T17:55:23.163Z",
+      "type": "response",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 2,
+      "data": {
+        "id": "cc0a8aec-ebea-4bda-9169-fbd58b92f5a6",
+        "object": "chat.completion",
+        "created": 1771869317,
+        "model": "deepseek-reasoner",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "请求失败了，HTTP 504错误通常是网关超时。这可能是因为网络问题或者该网站暂时无法访问。让我再试一次，或者尝试不同的方法。有时候重试可能会成功。让我再次尝试，但也许可以加一个超时设置。再次使用fetch_url。",
+              "tool_calls": [
+                {
+                  "index": 0,
+                  "id": "call_00_63L0dAU6rDnDSiw7A6GDY5T1",
+                  "type": "function",
+                  "function": {
+                    "name": "fetch_url",
+                    "arguments": "{\"url\": \"https://api-docs.deepseek.com/zh-cn/guides/thinking_mode\", \"timeout\": 15000}"
+                  }
+                }
+              ]
+            },
+            "logprobs": null,
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 5763,
+          "completion_tokens": 135,
+          "total_tokens": 5898,
+          "prompt_tokens_details": {
+            "cached_tokens": 5568
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 57
+          },
+          "prompt_cache_hit_tokens": 5568,
+          "prompt_cache_miss_tokens": 195
+        },
+        "system_fingerprint": "fp_eaab8d114b_prod0820_fp8_kvcache"
+      },
+      "humanNote": "【API响应】DeepSeek返回"
+    },
+    {
+      "timestamp": "2026-02-23T17:55:23.177Z",
+      "type": "note",
+      "endpoint": "thinking",
+      "round": 2,
+      "data": {
+        "stepIndex": 3,
+        "content": "请求失败了，HTTP 504错误通常是网关超时。这可能是因为网络问题或者该网站暂时无法访问。让我再试一次，或者尝试不同的方法。有时候重试可能会成功。让我再次尝试，但也许可以加一个超时设置。再次使用fetch_url。"
+      },
+      "humanNote": "【UI展示】思考步骤",
+      "uiVisible": true
+    },
+    {
+      "timestamp": "2026-02-23T17:55:23.205Z",
+      "type": "note",
+      "endpoint": "tool_call",
+      "round": 2,
+      "data": {
+        "name": "fetch_url",
+        "args": {
+          "url": "https://api-docs.deepseek.com/zh-cn/guides/thinking_mode",
+          "timeout": 15000
+        },
+        "result": "❌ 请求失败: HTTP 504"
+      },
+      "humanNote": "【UI展示】工具调用步骤",
+      "uiVisible": true
+    },
+    {
+      "timestamp": "2026-02-23T17:55:23.206Z",
+      "type": "request",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 3,
+      "data": {
+        "model": "deepseek-reasoner",
+        "messages": [
+          {
+            "role": "system",
+            "content": "你是一个 helpful 的 AI 助手。"
+          },
+          {
+            "role": "user",
+            "content": "https://api-docs.deepseek.com/zh-cn/guides/thinking_mode 这个链接在讲什么?"
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+              {
+                "id": "call_00_nZfiwVVqSnxYxlycfSz08MAG",
+                "type": "function",
+                "function": {
+                  "name": "fetch_url",
+                  "arguments": "{\"url\": \"https://api-docs.deepseek.com/zh-cn/guides/thinking_mode\"}"
+                }
+              }
+            ],
+            "reasoning_content": "用户询问的是DeepSeek官方文档中关于\"thinking mode\"（思考模式）的指南页面。我需要获取这个URL的内容来了解它具体在讲什么。\n\n我应该使用`fetch_url`工具来获取该网页的内容。URL已经提供：https://api-docs.deepseek.com/zh-cn/guides/thinking_mode\n\n让我调用这个工具。"
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_00_nZfiwVVqSnxYxlycfSz08MAG",
+            "content": "❌ 请求失败: HTTP 504"
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+              {
+                "id": "call_00_63L0dAU6rDnDSiw7A6GDY5T1",
+                "type": "function",
+                "function": {
+                  "name": "fetch_url",
+                  "arguments": "{\"url\": \"https://api-docs.deepseek.com/zh-cn/guides/thinking_mode\", \"timeout\": 15000}"
+                }
+              }
+            ],
+            "reasoning_content": "请求失败了，HTTP 504错误通常是网关超时。这可能是因为网络问题或者该网站暂时无法访问。让我再试一次，或者尝试不同的方法。有时候重试可能会成功。让我再次尝试，但也许可以加一个超时设置。再次使用fetch_url。"
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_00_63L0dAU6rDnDSiw7A6GDY5T1",
+            "content": "❌ 请求失败: HTTP 504"
+          }
+        ],
+        "max_tokens": 8192,
+        "stream": false,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_article_content",
+              "description": "获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n\n路径格式支持：\n- URL格式：\"/sections/knowledge/folder/\"（文件夹以/结尾，自动读取index.md）\n- 文件格式：\"/sections/posts/article\"（文件路径）\n- 完整路径：\"sections/posts/article.md\"\n\n重要提示：\n1. 使用此工具前，建议先调用 list_articles 或 search_articles 获取文章路径\n2. 如果用户提供了文章标题，请先搜索获取正确的路径\n3. 支持可选的起止行号参数，用于读取文章片段",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径。支持：1）URL格式 \"/sections/knowledge/folder/\" 2）文件格式 \"/sections/posts/article\" 3）完整路径 \"sections/posts/article.md\""
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "最大返回字符数，默认8000，避免消息过长。如果文章超出此长度，会提示用户"
+                  },
+                  "start_line": {
+                    "type": "number",
+                    "description": "可选：起始行号（从1开始），用于读取文章片段。与 end_line 配合使用"
+                  },
+                  "end_line": {
+                    "type": "number",
+                    "description": "可选：结束行号，用于读取文章片段。不指定则读到文章末尾"
+                  },
+                  "include_metadata": {
+                    "type": "boolean",
+                    "description": "是否包含文章元数据（frontmatter），默认false"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_articles",
+              "description": "根据关键词搜索文章，支持全文检索和分类筛选。\n\n使用场景：\n1. 用户想找特定主题的文章\n2. 需要获取文章路径以便读取内容（配合 get_article_content 使用）\n3. 在特定分类下搜索文章\n\n返回结果包含文章路径，路径格式可直接用于 get_article_content 工具。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索关键词，例如 \"深度学习\"、\"Docker\"、\"Transformer\"。支持模糊匹配"
+                  },
+                  "section": {
+                    "type": "string",
+                    "description": "可选：限定搜索的分类，例如 \"knowledge\"、\"posts\"。不指定则搜索所有分类"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认5条，最大20条"
+                  },
+                  "include_folders": {
+                    "type": "boolean",
+                    "description": "是否包含文件夹结果，默认true。文件夹路径以/结尾"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_articles",
+              "description": "列出文章列表，支持分类筛选和层级浏览。\n\n使用场景：\n1. 用户询问\"有哪些文章\"、\"文章列表\"\n2. 需要获取文章路径以便读取内容（配合 get_article_content 使用）\n3. 浏览知识库的层级结构\n4. 查看特定分类下的所有文章\n\n返回结果说明：\n- 📄 表示文章文件，路径可直接用于 get_article_content\n- 📂 表示文件夹，路径以/结尾，进入文件夹需再次调用 list_articles 或使用 get_article_content 读取其中的 index.md",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "section": {
+                    "type": "string",
+                    "description": "可选：按分类筛选，例如 \"knowledge\"、\"posts\"。不指定则列出所有分类"
+                  },
+                  "folder_path": {
+                    "type": "string",
+                    "description": "可选：指定文件夹路径，列出该文件夹下的内容。例如 \"/sections/knowledge/ml/\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认20，最大100"
+                  },
+                  "recursive": {
+                    "type": "boolean",
+                    "description": "是否递归列出子文件夹内容，默认false。设为true会展开所有层级"
+                  },
+                  "sort_by": {
+                    "type": "string",
+                    "enum": [
+                      "name",
+                      "date",
+                      "category"
+                    ],
+                    "description": "排序方式：name（名称）、date（修改时间）、category（分类）。默认按分类分组"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_article",
+              "description": "创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n\n重要提示：\n1. 路径格式：\"section/filename.md\"，例如 \"knowledge/transformer-detailed.md\"\n2. 如果指定路径的文件夹不存在，系统会自动创建\n3. 支持 frontmatter 元数据，可通过 tags、category 等参数自动添加\n4. 如果用户没有指定 section，默认使用 \"knowledge\" 或 \"posts\"\n5. 不要主动调用此工具，除非用户明确要求创建文章\n6. 创建后可返回文章路径供用户确认",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "文章标题，例如 \"Transformer 详解\"。会同时用于 frontmatter 和文档 H1 标题"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "文章完整路径，格式为 \"section/filename.md\"，例如 \"knowledge/transformer-detailed.md\"。支持嵌套路径如 \"knowledge/ml/transformer.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "文章内容（支持 Markdown）。如不提供，会创建带标题的模板内容"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "可选：文章标签数组，例如 [\"AI\", \"深度学习\", \"Transformer\"]。会添加到 frontmatter"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "可选：文章分类，会添加到 frontmatter。例如 \"技术\", \"随笔\""
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "可选：文章作者，默认当前用户"
+                  },
+                  "create_parent_folders": {
+                    "type": "boolean",
+                    "description": "是否自动创建父文件夹，默认true。如设为false且父文件夹不存在会报错"
+                  },
+                  "overwrite": {
+                    "type": "boolean",
+                    "description": "如果文件已存在是否覆盖，默认false。设为true会覆盖原有内容，请谨慎使用"
+                  }
+                },
+                "required": [
+                  "title",
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "update_article",
+              "description": "更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n更新模式说明：\n1. 完整替换（默认）：replace=true，用新内容完全替换旧内容\n2. 增量更新：replace=false + position，在指定位置插入或追加内容\n3. 部分修改：配合 start_line/end_line 实现行级替换\n\n重要提示：\n- 更新前建议先读取文章确认内容\n- 大型文章更新建议先备份或分块修改\n- 更新后会保留原有 frontmatter（除非显式修改）",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径。支持URL格式 \"/sections/posts/article\" 或文件路径 \"sections/posts/article.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "新的文章内容。根据 mode 参数决定是完整替换还是部分更新"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "replace",
+                      "append",
+                      "prepend",
+                      "insert"
+                    ],
+                    "description": "更新模式：replace（完整替换，默认）、append（追加到末尾）、prepend（插入到开头）、insert（插入到指定位置）"
+                  },
+                  "position": {
+                    "type": "number",
+                    "description": "插入位置（字符索引），仅在 mode=insert 时有效。0 表示开头，-1 表示末尾"
+                  },
+                  "after_section": {
+                    "type": "string",
+                    "description": "可选：指定在某个章节标题后插入内容。例如 \"## 引言\"，会找到该标题并在其后插入"
+                  },
+                  "preserve_frontmatter": {
+                    "type": "boolean",
+                    "description": "是否保留原有 frontmatter，默认true。设为false会用新内容的frontmatter替换"
+                  },
+                  "dry_run": {
+                    "type": "boolean",
+                    "description": "是否仅预览变更而不实际保存，默认false。设为true会返回预览内容供确认"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "delete_article",
+              "description": "删除文章或文件夹。当用户要求删除、移除文章时使用。\n\n重要警告：\n1. 此操作不可逆，删除后无法恢复\n2. 删除文件夹会同时删除其所有子文件和子文件夹\n3. 支持安全模式，删除前会要求二次确认\n4. 建议删除前先读取文章确认内容\n\n使用建议：\n- 删除单篇文章：提供文章路径\n- 删除整个文件夹：提供文件夹路径（以/结尾）\n- 批量删除：需多次调用或使用通配符（如支持）",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "要删除的文章或文件夹路径。支持：1）文章路径 \"/sections/posts/article\" 2）文件夹路径 \"/sections/knowledge/old-folder/\""
+                  },
+                  "confirm": {
+                    "type": "boolean",
+                    "description": "是否确认删除，默认false。作为安全机制，某些实现可能要求此参数为true才执行删除"
+                  },
+                  "delete_empty_parent": {
+                    "type": "boolean",
+                    "description": "删除后如果父文件夹为空，是否同时删除父文件夹，默认false"
+                  },
+                  "backup_first": {
+                    "type": "boolean",
+                    "description": "删除前是否创建备份，默认false。设为true会在删除前备份到 .trash 目录"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "read_file",
+              "description": "读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文件路径，例如 \"docs/readme.md\" 或 \"src/config.ts\""
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "write_file",
+              "description": "写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文件路径"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "要写入的文件内容"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_files",
+              "description": "列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "目录路径，默认为当前目录"
+                  },
+                  "recursive": {
+                    "type": "boolean",
+                    "description": "是否递归列出子目录，默认 false"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "web_search",
+              "description": "执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索关键词"
+                  },
+                  "num_results": {
+                    "type": "number",
+                    "description": "返回结果数量，默认 5"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "fetch_url",
+              "description": "获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n\n使用场景：\n1. 获取网页内容进行摘要分析\n2. 调用 REST API 获取数据\n3. 获取原始代码文件内容\n4. 获取文档、博客、新闻等内容\n\n支持自动内容类型识别：HTML、JSON、纯文本等。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "要获取的 URL，支持 http/https。例如：https://api.github.com/users/octocat"
+                  },
+                  "method": {
+                    "type": "string",
+                    "description": "HTTP 方法：GET、POST、PUT、DELETE 等，默认 GET",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "DELETE",
+                      "PATCH"
+                    ],
+                    "default": "GET"
+                  },
+                  "headers": {
+                    "type": "object",
+                    "description": "可选：自定义 HTTP 请求头，如 {\"Authorization\": \"Bearer token\"}"
+                  },
+                  "body": {
+                    "type": "string",
+                    "description": "可选：请求体内容，用于 POST/PUT/PATCH 请求"
+                  },
+                  "timeout": {
+                    "type": "number",
+                    "description": "请求超时时间（毫秒），默认 10000（10秒）"
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "返回内容最大长度（字符），默认 15000"
+                  }
+                },
+                "required": [
+                  "url"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "calculate",
+              "description": "执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "expression": {
+                    "type": "string",
+                    "description": "数学表达式，例如 \"2 + 2 * 3\" 或 \"sin(30)\""
+                  }
+                },
+                "required": [
+                  "expression"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "translate_text",
+              "description": "翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "要翻译的文本"
+                  },
+                  "target_language": {
+                    "type": "string",
+                    "description": "目标语言代码，如 \"zh\"（中文）、\"en\"（英文）、\"ja\"（日文）、\"ko\"（韩文）、\"fr\"（法文）、\"de\"（德文）等"
+                  },
+                  "source_language": {
+                    "type": "string",
+                    "description": "源语言代码（可选，自动检测）"
+                  }
+                },
+                "required": [
+                  "text",
+                  "target_language"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "summarize_text",
+              "description": "对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "需要摘要的原始文本"
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "摘要最大长度（字符数），默认200"
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "format_text",
+              "description": "将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "原始文本内容"
+                  },
+                  "format": {
+                    "type": "string",
+                    "description": "目标格式：markdown、json、yaml、table，默认markdown",
+                    "enum": [
+                      "markdown",
+                      "json",
+                      "yaml",
+                      "table"
+                    ]
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "execute_code",
+              "description": "执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "要执行的代码"
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "编程语言，如 \"python\", \"javascript\", \"bash\" 等"
+                  }
+                },
+                "required": [
+                  "code",
+                  "language"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "analyze_code",
+              "description": "分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "要分析的源代码"
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "编程语言"
+                  }
+                },
+                "required": [
+                  "code",
+                  "language"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "query_knowledge",
+              "description": "查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "查询内容"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_note",
+              "description": "创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "笔记标题"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "笔记内容"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "标签列表"
+                  }
+                },
+                "required": [
+                  "title",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_notes",
+              "description": "列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "tag": {
+                    "type": "string",
+                    "description": "按标签筛选（可选）"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_repo",
+              "description": "获取 GitHub 仓库信息。查看仓库详情、统计信息、最近更新等。\n\n使用场景：\n1. 了解一个开源项目的基本信息\n2. 查看仓库的 Star 数、Fork 数、语言分布\n3. 获取 README 内容摘要\n4. 查看最近的提交活动\n\n示例：\n- 查看 React 仓库：owner=\"facebook\", repo=\"react\"\n- 查看 VS Code：owner=\"microsoft\", repo=\"vscode\"",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者（用户名或组织名），例如 \"facebook\"、\"microsoft\"、\"vercel\""
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称，例如 \"react\"、\"vscode\"、\"next.js\""
+                  },
+                  "include_readme": {
+                    "type": "boolean",
+                    "description": "是否获取并返回 README 内容摘要，默认 true"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_list_repo_contents",
+              "description": "列出 GitHub 仓库的文件和目录内容。浏览代码结构、查找特定文件。\n\n使用场景：\n1. 浏览仓库的目录结构\n2. 查找特定的源代码文件\n3. 了解项目组织结构\n4. 定位配置文件（package.json、tsconfig.json 等）\n\n示例：\n- 查看根目录：owner=\"facebook\", repo=\"react\", path=\"\"\n- 查看 src 目录：owner=\"facebook\", repo=\"react\", path=\"src\"\n- 查看特定文件：owner=\"facebook\", repo=\"react\", path=\"README.md\"",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "目录或文件路径，默认空字符串（根目录）。例如 \"src\"、\"docs\"、\"package.json\""
+                  },
+                  "ref": {
+                    "type": "string",
+                    "description": "分支、标签或 commit SHA，默认主分支（main/master）"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_file_content",
+              "description": "获取 GitHub 仓库中特定文件的内容。读取源代码、配置文件等。\n\n使用场景：\n1. 查看源代码实现\n2. 读取配置文件（package.json、.gitignore 等）\n3. 学习优秀的代码示例\n4. 查看文档文件\n\n注意：\n- 文件路径需要包含完整的相对路径\n- 支持获取文件的原始内容（自动解码 base64）\n- 可以指定特定分支或 commit",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "文件路径，例如 \"src/index.ts\"、\"package.json\"、\"README.md\""
+                  },
+                  "ref": {
+                    "type": "string",
+                    "description": "分支、标签或 commit SHA，默认主分支"
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "返回内容最大长度，默认 10000 字符"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo",
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_search_code",
+              "description": "在 GitHub 上搜索代码。查找开源项目中的代码示例、特定实现。\n\n使用场景：\n1. 查找特定函数的代码实现示例\n2. 搜索开源项目中的最佳实践\n3. 查找特定语言/框架的使用示例\n4. 学习如何解决特定问题\n\n搜索语法：\n- 关键词搜索：\"useState hook\"\n- 限定语言：\"quickSort language:python\"\n- 限定仓库：\"apiCall repo:facebook/react\"\n- 限定路径：\"config path:src\"",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索查询，支持 GitHub 代码搜索语法。例如 \"useEffect cleanup\"、\"language:typescript react hooks\""
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "可选：限定编程语言，例如 \"javascript\"、\"python\"、\"typescript\"、\"go\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量，默认 5，最大 10"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_commit_history",
+              "description": "获取 GitHub 仓库的提交历史。查看最近的代码变更、提交信息。\n\n使用场景：\n1. 了解项目最近的发展动态\n2. 查看特定功能的实现历史\n3. 追踪 bug 修复记录\n4. 了解贡献者活动",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "可选：限定特定文件或目录的提交历史"
+                  },
+                  "per_page": {
+                    "type": "number",
+                    "description": "返回的提交数量，默认 10，最大 30"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_issues",
+              "description": "获取 GitHub 仓库的 Issues。查看问题、bug 报告、功能请求。\n\n使用场景：\n1. 了解项目已知的问题\n2. 查看功能请求和讨论\n3. 了解社区反馈\n4. 查看问题的解决方案",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "Issue 状态：open（开放）、closed（已关闭）、all（全部），默认 open",
+                    "enum": [
+                      "open",
+                      "closed",
+                      "all"
+                    ],
+                    "default": "open"
+                  },
+                  "per_page": {
+                    "type": "number",
+                    "description": "返回数量，默认 10，最大 30"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_current_time",
+              "description": "获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。",
+              "parameters": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_weather",
+              "description": "获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "city": {
+                    "type": "string",
+                    "description": "城市名称，如 \"北京\"、\"上海\"、\"New York\""
+                  },
+                  "days": {
+                    "type": "number",
+                    "description": "预报天数，默认 3 天"
+                  }
+                },
+                "required": [
+                  "city"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "test_echo",
+              "description": "【测试专用】回声工具，验证工具调用是否正常工作。当用户说\"测试工具\"时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "要回显的消息"
+                  },
+                  "repeat_count": {
+                    "type": "number",
+                    "description": "重复次数"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "humanNote": "【API请求】发送到DeepSeek"
+    },
+    {
+      "timestamp": "2026-02-23T17:55:30.981Z",
+      "type": "response",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 3,
+      "data": {
+        "id": "853d4d72-5b92-4317-9996-d89d32a27cee",
+        "object": "chat.completion",
+        "created": 1771869321,
+        "model": "deepseek-reasoner",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "还是504错误。这可能是由于网络连接问题，或者DeepSeek的API文档站点暂时无法访问。不过，既然用户问的是这个链接在讲什么，我可以根据我对DeepSeek API的了解来回答。\n\n我知道DeepSeek的“思考模式”是API中的一个功能，允许模型在生成最终回复前进行内部“思考”或“推理”。这类似于链式思考（chain-of-thought）推理，但可能是在API层面实现的。不过，为了给出更准确的答案，我应该尝试其他方法。\n\n也许我可以尝试访问该网站的首页，或者使用其他工具。但考虑到用户明确询问的是这个具体链接，我应该基于我对该主题的了解来回答。我可以解释思考模式的概念，以及它在DeepSeek API中是如何工作的。\n\n或者，我可以建议用户稍后再试，因为网站可能暂时无法访问。但最好还是提供一些有用的信息。\n\n让我尝试访问该网站的其他部分，比如主域名，看看是否能够访问。使用fetch_url获取https://api-docs.deepseek.com/。",
+              "tool_calls": [
+                {
+                  "index": 0,
+                  "id": "call_00_BjYOQLwEj5XkcjKedvsjrrSA",
+                  "type": "function",
+                  "function": {
+                    "name": "fetch_url",
+                    "arguments": "{\"url\": \"https://api-docs.deepseek.com\", \"timeout\": 15000}"
+                  }
+                }
+              ]
+            },
+            "logprobs": null,
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 5924,
+          "completion_tokens": 281,
+          "total_tokens": 6205,
+          "prompt_tokens_details": {
+            "cached_tokens": 5760
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 212
+          },
+          "prompt_cache_hit_tokens": 5760,
+          "prompt_cache_miss_tokens": 164
+        },
+        "system_fingerprint": "fp_eaab8d114b_prod0820_fp8_kvcache"
+      },
+      "humanNote": "【API响应】DeepSeek返回"
+    },
+    {
+      "timestamp": "2026-02-23T17:55:30.994Z",
+      "type": "note",
+      "endpoint": "thinking",
+      "round": 3,
+      "data": {
+        "stepIndex": 5,
+        "content": "还是504错误。这可能是由于网络连接问题，或者DeepSeek的API文档站点暂时无法访问。不过，既然用户问的是这个链接在讲什么，我可以根据我对DeepSeek API的了解来回答。\n\n我知道DeepSeek的“思考模式”是API中的一个功能，允许模型在生成最终回复前进行内部“思考”或“推理”。这类似于链式思考（chain-of-thought）推理，但可能是在API层面实现的。不过，为了给出更准确的答案，我应该尝试其他方法。\n\n也许我可以尝试访问该网站的首页，或者使用其他工具。但考虑到用户明确询问的是这个具体链接，我应该基于我对该主题的了解来回答。我可以解释思考模式的概念，以及它在DeepSeek API中是如何工作的。\n\n或者，我可以建议用户稍后再试，因为网站可能暂时无法访问。但最好还是提供一些有用的信息。\n\n让我尝试访问该网站的其他部分，比如主域名，看看是否能够访问。使用fetch_url获取https://api-docs.deepseek.com/。"
+      },
+      "humanNote": "【UI展示】思考步骤",
+      "uiVisible": true
+    },
+    {
+      "timestamp": "2026-02-23T17:55:31.020Z",
+      "type": "note",
+      "endpoint": "tool_call",
+      "round": 3,
+      "data": {
+        "name": "fetch_url",
+        "args": {
+          "url": "https://api-docs.deepseek.com",
+          "timeout": 15000
+        },
+        "result": "❌ 请求失败: HTTP 504"
+      },
+      "humanNote": "【UI展示】工具调用步骤",
+      "uiVisible": true
+    },
+    {
+      "timestamp": "2026-02-23T17:55:31.021Z",
+      "type": "request",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 4,
+      "data": {
+        "model": "deepseek-reasoner",
+        "messages": [
+          {
+            "role": "system",
+            "content": "你是一个 helpful 的 AI 助手。"
+          },
+          {
+            "role": "user",
+            "content": "https://api-docs.deepseek.com/zh-cn/guides/thinking_mode 这个链接在讲什么?"
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+              {
+                "id": "call_00_nZfiwVVqSnxYxlycfSz08MAG",
+                "type": "function",
+                "function": {
+                  "name": "fetch_url",
+                  "arguments": "{\"url\": \"https://api-docs.deepseek.com/zh-cn/guides/thinking_mode\"}"
+                }
+              }
+            ],
+            "reasoning_content": "用户询问的是DeepSeek官方文档中关于\"thinking mode\"（思考模式）的指南页面。我需要获取这个URL的内容来了解它具体在讲什么。\n\n我应该使用`fetch_url`工具来获取该网页的内容。URL已经提供：https://api-docs.deepseek.com/zh-cn/guides/thinking_mode\n\n让我调用这个工具。"
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_00_nZfiwVVqSnxYxlycfSz08MAG",
+            "content": "❌ 请求失败: HTTP 504"
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+              {
+                "id": "call_00_63L0dAU6rDnDSiw7A6GDY5T1",
+                "type": "function",
+                "function": {
+                  "name": "fetch_url",
+                  "arguments": "{\"url\": \"https://api-docs.deepseek.com/zh-cn/guides/thinking_mode\", \"timeout\": 15000}"
+                }
+              }
+            ],
+            "reasoning_content": "请求失败了，HTTP 504错误通常是网关超时。这可能是因为网络问题或者该网站暂时无法访问。让我再试一次，或者尝试不同的方法。有时候重试可能会成功。让我再次尝试，但也许可以加一个超时设置。再次使用fetch_url。"
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_00_63L0dAU6rDnDSiw7A6GDY5T1",
+            "content": "❌ 请求失败: HTTP 504"
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+              {
+                "id": "call_00_BjYOQLwEj5XkcjKedvsjrrSA",
+                "type": "function",
+                "function": {
+                  "name": "fetch_url",
+                  "arguments": "{\"url\": \"https://api-docs.deepseek.com\", \"timeout\": 15000}"
+                }
+              }
+            ],
+            "reasoning_content": "还是504错误。这可能是由于网络连接问题，或者DeepSeek的API文档站点暂时无法访问。不过，既然用户问的是这个链接在讲什么，我可以根据我对DeepSeek API的了解来回答。\n\n我知道DeepSeek的“思考模式”是API中的一个功能，允许模型在生成最终回复前进行内部“思考”或“推理”。这类似于链式思考（chain-of-thought）推理，但可能是在API层面实现的。不过，为了给出更准确的答案，我应该尝试其他方法。\n\n也许我可以尝试访问该网站的首页，或者使用其他工具。但考虑到用户明确询问的是这个具体链接，我应该基于我对该主题的了解来回答。我可以解释思考模式的概念，以及它在DeepSeek API中是如何工作的。\n\n或者，我可以建议用户稍后再试，因为网站可能暂时无法访问。但最好还是提供一些有用的信息。\n\n让我尝试访问该网站的其他部分，比如主域名，看看是否能够访问。使用fetch_url获取https://api-docs.deepseek.com/。"
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_00_BjYOQLwEj5XkcjKedvsjrrSA",
+            "content": "❌ 请求失败: HTTP 504"
+          }
+        ],
+        "max_tokens": 8192,
+        "stream": false,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_article_content",
+              "description": "获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n\n路径格式支持：\n- URL格式：\"/sections/knowledge/folder/\"（文件夹以/结尾，自动读取index.md）\n- 文件格式：\"/sections/posts/article\"（文件路径）\n- 完整路径：\"sections/posts/article.md\"\n\n重要提示：\n1. 使用此工具前，建议先调用 list_articles 或 search_articles 获取文章路径\n2. 如果用户提供了文章标题，请先搜索获取正确的路径\n3. 支持可选的起止行号参数，用于读取文章片段",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径。支持：1）URL格式 \"/sections/knowledge/folder/\" 2）文件格式 \"/sections/posts/article\" 3）完整路径 \"sections/posts/article.md\""
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "最大返回字符数，默认8000，避免消息过长。如果文章超出此长度，会提示用户"
+                  },
+                  "start_line": {
+                    "type": "number",
+                    "description": "可选：起始行号（从1开始），用于读取文章片段。与 end_line 配合使用"
+                  },
+                  "end_line": {
+                    "type": "number",
+                    "description": "可选：结束行号，用于读取文章片段。不指定则读到文章末尾"
+                  },
+                  "include_metadata": {
+                    "type": "boolean",
+                    "description": "是否包含文章元数据（frontmatter），默认false"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_articles",
+              "description": "根据关键词搜索文章，支持全文检索和分类筛选。\n\n使用场景：\n1. 用户想找特定主题的文章\n2. 需要获取文章路径以便读取内容（配合 get_article_content 使用）\n3. 在特定分类下搜索文章\n\n返回结果包含文章路径，路径格式可直接用于 get_article_content 工具。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索关键词，例如 \"深度学习\"、\"Docker\"、\"Transformer\"。支持模糊匹配"
+                  },
+                  "section": {
+                    "type": "string",
+                    "description": "可选：限定搜索的分类，例如 \"knowledge\"、\"posts\"。不指定则搜索所有分类"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认5条，最大20条"
+                  },
+                  "include_folders": {
+                    "type": "boolean",
+                    "description": "是否包含文件夹结果，默认true。文件夹路径以/结尾"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_articles",
+              "description": "列出文章列表，支持分类筛选和层级浏览。\n\n使用场景：\n1. 用户询问\"有哪些文章\"、\"文章列表\"\n2. 需要获取文章路径以便读取内容（配合 get_article_content 使用）\n3. 浏览知识库的层级结构\n4. 查看特定分类下的所有文章\n\n返回结果说明：\n- 📄 表示文章文件，路径可直接用于 get_article_content\n- 📂 表示文件夹，路径以/结尾，进入文件夹需再次调用 list_articles 或使用 get_article_content 读取其中的 index.md",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "section": {
+                    "type": "string",
+                    "description": "可选：按分类筛选，例如 \"knowledge\"、\"posts\"。不指定则列出所有分类"
+                  },
+                  "folder_path": {
+                    "type": "string",
+                    "description": "可选：指定文件夹路径，列出该文件夹下的内容。例如 \"/sections/knowledge/ml/\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量限制，默认20，最大100"
+                  },
+                  "recursive": {
+                    "type": "boolean",
+                    "description": "是否递归列出子文件夹内容，默认false。设为true会展开所有层级"
+                  },
+                  "sort_by": {
+                    "type": "string",
+                    "enum": [
+                      "name",
+                      "date",
+                      "category"
+                    ],
+                    "description": "排序方式：name（名称）、date（修改时间）、category（分类）。默认按分类分组"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_article",
+              "description": "创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n\n重要提示：\n1. 路径格式：\"section/filename.md\"，例如 \"knowledge/transformer-detailed.md\"\n2. 如果指定路径的文件夹不存在，系统会自动创建\n3. 支持 frontmatter 元数据，可通过 tags、category 等参数自动添加\n4. 如果用户没有指定 section，默认使用 \"knowledge\" 或 \"posts\"\n5. 不要主动调用此工具，除非用户明确要求创建文章\n6. 创建后可返回文章路径供用户确认",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "文章标题，例如 \"Transformer 详解\"。会同时用于 frontmatter 和文档 H1 标题"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "文章完整路径，格式为 \"section/filename.md\"，例如 \"knowledge/transformer-detailed.md\"。支持嵌套路径如 \"knowledge/ml/transformer.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "文章内容（支持 Markdown）。如不提供，会创建带标题的模板内容"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "可选：文章标签数组，例如 [\"AI\", \"深度学习\", \"Transformer\"]。会添加到 frontmatter"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "可选：文章分类，会添加到 frontmatter。例如 \"技术\", \"随笔\""
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "可选：文章作者，默认当前用户"
+                  },
+                  "create_parent_folders": {
+                    "type": "boolean",
+                    "description": "是否自动创建父文件夹，默认true。如设为false且父文件夹不存在会报错"
+                  },
+                  "overwrite": {
+                    "type": "boolean",
+                    "description": "如果文件已存在是否覆盖，默认false。设为true会覆盖原有内容，请谨慎使用"
+                  }
+                },
+                "required": [
+                  "title",
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "update_article",
+              "description": "更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n更新模式说明：\n1. 完整替换（默认）：replace=true，用新内容完全替换旧内容\n2. 增量更新：replace=false + position，在指定位置插入或追加内容\n3. 部分修改：配合 start_line/end_line 实现行级替换\n\n重要提示：\n- 更新前建议先读取文章确认内容\n- 大型文章更新建议先备份或分块修改\n- 更新后会保留原有 frontmatter（除非显式修改）",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文章路径。支持URL格式 \"/sections/posts/article\" 或文件路径 \"sections/posts/article.md\""
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "新的文章内容。根据 mode 参数决定是完整替换还是部分更新"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "replace",
+                      "append",
+                      "prepend",
+                      "insert"
+                    ],
+                    "description": "更新模式：replace（完整替换，默认）、append（追加到末尾）、prepend（插入到开头）、insert（插入到指定位置）"
+                  },
+                  "position": {
+                    "type": "number",
+                    "description": "插入位置（字符索引），仅在 mode=insert 时有效。0 表示开头，-1 表示末尾"
+                  },
+                  "after_section": {
+                    "type": "string",
+                    "description": "可选：指定在某个章节标题后插入内容。例如 \"## 引言\"，会找到该标题并在其后插入"
+                  },
+                  "preserve_frontmatter": {
+                    "type": "boolean",
+                    "description": "是否保留原有 frontmatter，默认true。设为false会用新内容的frontmatter替换"
+                  },
+                  "dry_run": {
+                    "type": "boolean",
+                    "description": "是否仅预览变更而不实际保存，默认false。设为true会返回预览内容供确认"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "delete_article",
+              "description": "删除文章或文件夹。当用户要求删除、移除文章时使用。\n\n重要警告：\n1. 此操作不可逆，删除后无法恢复\n2. 删除文件夹会同时删除其所有子文件和子文件夹\n3. 支持安全模式，删除前会要求二次确认\n4. 建议删除前先读取文章确认内容\n\n使用建议：\n- 删除单篇文章：提供文章路径\n- 删除整个文件夹：提供文件夹路径（以/结尾）\n- 批量删除：需多次调用或使用通配符（如支持）",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "要删除的文章或文件夹路径。支持：1）文章路径 \"/sections/posts/article\" 2）文件夹路径 \"/sections/knowledge/old-folder/\""
+                  },
+                  "confirm": {
+                    "type": "boolean",
+                    "description": "是否确认删除，默认false。作为安全机制，某些实现可能要求此参数为true才执行删除"
+                  },
+                  "delete_empty_parent": {
+                    "type": "boolean",
+                    "description": "删除后如果父文件夹为空，是否同时删除父文件夹，默认false"
+                  },
+                  "backup_first": {
+                    "type": "boolean",
+                    "description": "删除前是否创建备份，默认false。设为true会在删除前备份到 .trash 目录"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "read_file",
+              "description": "读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文件路径，例如 \"docs/readme.md\" 或 \"src/config.ts\""
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "write_file",
+              "description": "写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "文件路径"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "要写入的文件内容"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_files",
+              "description": "列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "目录路径，默认为当前目录"
+                  },
+                  "recursive": {
+                    "type": "boolean",
+                    "description": "是否递归列出子目录，默认 false"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "web_search",
+              "description": "执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索关键词"
+                  },
+                  "num_results": {
+                    "type": "number",
+                    "description": "返回结果数量，默认 5"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "fetch_url",
+              "description": "获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n\n使用场景：\n1. 获取网页内容进行摘要分析\n2. 调用 REST API 获取数据\n3. 获取原始代码文件内容\n4. 获取文档、博客、新闻等内容\n\n支持自动内容类型识别：HTML、JSON、纯文本等。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "要获取的 URL，支持 http/https。例如：https://api.github.com/users/octocat"
+                  },
+                  "method": {
+                    "type": "string",
+                    "description": "HTTP 方法：GET、POST、PUT、DELETE 等，默认 GET",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "DELETE",
+                      "PATCH"
+                    ],
+                    "default": "GET"
+                  },
+                  "headers": {
+                    "type": "object",
+                    "description": "可选：自定义 HTTP 请求头，如 {\"Authorization\": \"Bearer token\"}"
+                  },
+                  "body": {
+                    "type": "string",
+                    "description": "可选：请求体内容，用于 POST/PUT/PATCH 请求"
+                  },
+                  "timeout": {
+                    "type": "number",
+                    "description": "请求超时时间（毫秒），默认 10000（10秒）"
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "返回内容最大长度（字符），默认 15000"
+                  }
+                },
+                "required": [
+                  "url"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "calculate",
+              "description": "执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "expression": {
+                    "type": "string",
+                    "description": "数学表达式，例如 \"2 + 2 * 3\" 或 \"sin(30)\""
+                  }
+                },
+                "required": [
+                  "expression"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "translate_text",
+              "description": "翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "要翻译的文本"
+                  },
+                  "target_language": {
+                    "type": "string",
+                    "description": "目标语言代码，如 \"zh\"（中文）、\"en\"（英文）、\"ja\"（日文）、\"ko\"（韩文）、\"fr\"（法文）、\"de\"（德文）等"
+                  },
+                  "source_language": {
+                    "type": "string",
+                    "description": "源语言代码（可选，自动检测）"
+                  }
+                },
+                "required": [
+                  "text",
+                  "target_language"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "summarize_text",
+              "description": "对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "需要摘要的原始文本"
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "摘要最大长度（字符数），默认200"
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "format_text",
+              "description": "将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "原始文本内容"
+                  },
+                  "format": {
+                    "type": "string",
+                    "description": "目标格式：markdown、json、yaml、table，默认markdown",
+                    "enum": [
+                      "markdown",
+                      "json",
+                      "yaml",
+                      "table"
+                    ]
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "execute_code",
+              "description": "执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "要执行的代码"
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "编程语言，如 \"python\", \"javascript\", \"bash\" 等"
+                  }
+                },
+                "required": [
+                  "code",
+                  "language"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "analyze_code",
+              "description": "分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "要分析的源代码"
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "编程语言"
+                  }
+                },
+                "required": [
+                  "code",
+                  "language"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "query_knowledge",
+              "description": "查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "查询内容"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "create_note",
+              "description": "创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "笔记标题"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "笔记内容"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "标签列表"
+                  }
+                },
+                "required": [
+                  "title",
+                  "content"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "list_notes",
+              "description": "列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "tag": {
+                    "type": "string",
+                    "description": "按标签筛选（可选）"
+                  }
+                },
+                "required": []
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_repo",
+              "description": "获取 GitHub 仓库信息。查看仓库详情、统计信息、最近更新等。\n\n使用场景：\n1. 了解一个开源项目的基本信息\n2. 查看仓库的 Star 数、Fork 数、语言分布\n3. 获取 README 内容摘要\n4. 查看最近的提交活动\n\n示例：\n- 查看 React 仓库：owner=\"facebook\", repo=\"react\"\n- 查看 VS Code：owner=\"microsoft\", repo=\"vscode\"",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者（用户名或组织名），例如 \"facebook\"、\"microsoft\"、\"vercel\""
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称，例如 \"react\"、\"vscode\"、\"next.js\""
+                  },
+                  "include_readme": {
+                    "type": "boolean",
+                    "description": "是否获取并返回 README 内容摘要，默认 true"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_list_repo_contents",
+              "description": "列出 GitHub 仓库的文件和目录内容。浏览代码结构、查找特定文件。\n\n使用场景：\n1. 浏览仓库的目录结构\n2. 查找特定的源代码文件\n3. 了解项目组织结构\n4. 定位配置文件（package.json、tsconfig.json 等）\n\n示例：\n- 查看根目录：owner=\"facebook\", repo=\"react\", path=\"\"\n- 查看 src 目录：owner=\"facebook\", repo=\"react\", path=\"src\"\n- 查看特定文件：owner=\"facebook\", repo=\"react\", path=\"README.md\"",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "目录或文件路径，默认空字符串（根目录）。例如 \"src\"、\"docs\"、\"package.json\""
+                  },
+                  "ref": {
+                    "type": "string",
+                    "description": "分支、标签或 commit SHA，默认主分支（main/master）"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_file_content",
+              "description": "获取 GitHub 仓库中特定文件的内容。读取源代码、配置文件等。\n\n使用场景：\n1. 查看源代码实现\n2. 读取配置文件（package.json、.gitignore 等）\n3. 学习优秀的代码示例\n4. 查看文档文件\n\n注意：\n- 文件路径需要包含完整的相对路径\n- 支持获取文件的原始内容（自动解码 base64）\n- 可以指定特定分支或 commit",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "文件路径，例如 \"src/index.ts\"、\"package.json\"、\"README.md\""
+                  },
+                  "ref": {
+                    "type": "string",
+                    "description": "分支、标签或 commit SHA，默认主分支"
+                  },
+                  "max_length": {
+                    "type": "number",
+                    "description": "返回内容最大长度，默认 10000 字符"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo",
+                  "path"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_search_code",
+              "description": "在 GitHub 上搜索代码。查找开源项目中的代码示例、特定实现。\n\n使用场景：\n1. 查找特定函数的代码实现示例\n2. 搜索开源项目中的最佳实践\n3. 查找特定语言/框架的使用示例\n4. 学习如何解决特定问题\n\n搜索语法：\n- 关键词搜索：\"useState hook\"\n- 限定语言：\"quickSort language:python\"\n- 限定仓库：\"apiCall repo:facebook/react\"\n- 限定路径：\"config path:src\"",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "搜索查询，支持 GitHub 代码搜索语法。例如 \"useEffect cleanup\"、\"language:typescript react hooks\""
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "可选：限定编程语言，例如 \"javascript\"、\"python\"、\"typescript\"、\"go\""
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "返回结果数量，默认 5，最大 10"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_commit_history",
+              "description": "获取 GitHub 仓库的提交历史。查看最近的代码变更、提交信息。\n\n使用场景：\n1. 了解项目最近的发展动态\n2. 查看特定功能的实现历史\n3. 追踪 bug 修复记录\n4. 了解贡献者活动",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "可选：限定特定文件或目录的提交历史"
+                  },
+                  "per_page": {
+                    "type": "number",
+                    "description": "返回的提交数量，默认 10，最大 30"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "github_get_issues",
+              "description": "获取 GitHub 仓库的 Issues。查看问题、bug 报告、功能请求。\n\n使用场景：\n1. 了解项目已知的问题\n2. 查看功能请求和讨论\n3. 了解社区反馈\n4. 查看问题的解决方案",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "description": "仓库所有者"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "仓库名称"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "Issue 状态：open（开放）、closed（已关闭）、all（全部），默认 open",
+                    "enum": [
+                      "open",
+                      "closed",
+                      "all"
+                    ],
+                    "default": "open"
+                  },
+                  "per_page": {
+                    "type": "number",
+                    "description": "返回数量，默认 10，最大 30"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "repo"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_current_time",
+              "description": "获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。",
+              "parameters": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_weather",
+              "description": "获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "city": {
+                    "type": "string",
+                    "description": "城市名称，如 \"北京\"、\"上海\"、\"New York\""
+                  },
+                  "days": {
+                    "type": "number",
+                    "description": "预报天数，默认 3 天"
+                  }
+                },
+                "required": [
+                  "city"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "test_echo",
+              "description": "【测试专用】回声工具，验证工具调用是否正常工作。当用户说\"测试工具\"时使用。",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "要回显的消息"
+                  },
+                  "repeat_count": {
+                    "type": "number",
+                    "description": "重复次数"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "humanNote": "【API请求】发送到DeepSeek"
+    },
+    {
+      "timestamp": "2026-02-23T17:55:46.205Z",
+      "type": "response",
+      "endpoint": "/chat/completions (non-stream)",
+      "round": 4,
+      "data": {
+        "id": "40c7e10e-37c1-4a5f-ae28-35fea3549860",
+        "object": "chat.completion",
+        "created": 1771869329,
+        "model": "deepseek-reasoner",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "根据您提供的链接，这应该是 **DeepSeek API 文档**中关于 **“思考模式 (Thinking Mode)”** 的指南页面。由于该链接目前无法访问（HTTP 504 错误），我将基于对 DeepSeek API 的了解，为您介绍这个功能的核心内容：\n\n## 🧠 什么是“思考模式”？\n- **内部推理过程外显**：思考模式允许模型在生成最终回复之前，先输出其内部的推理链条（类似“链式思考”）。\n- **提高透明度**：用户可以看到模型是如何一步步分析问题、推理并得出结论的。\n- **便于调试与优化**：对于复杂任务，思考过程可以帮助开发者理解模型的决策路径，调整提示或参数。\n\n## 🔧 主要功能与用途\n1. **复杂问题求解**：适用于数学计算、逻辑推理、代码调试等需要多步推理的场景。\n2. **提示工程优化**：通过观察思考过程，改进提示词设计。\n3. **可信度评估**：验证模型答案的合理性，避免“黑箱”输出。\n\n## 📖 指南可能包含的内容\n- **如何启用思考模式**：通过 API 参数（如 `thinking_mode`、`reasoning` 等）开启。\n- **请求与响应格式**：展示带有思考过程的 API 调用示例。\n- **最佳实践**：何时使用思考模式、如何解析思考内容、性能考量等。\n- **代码示例**：常见编程语言（Python、JavaScript 等）的调用示例。\n\n## 💡 典型应用场景\n- **教育/辅导**：展示解题步骤，帮助学生理解。\n- **代码审查**：逐步分析代码逻辑，指出潜在问题。\n- **数据分析**：解释数据推理过程，增强结论可信度。\n- **决策支持**：呈现多因素权衡的思考路径。\n\n> 注：由于 `api-docs.deepseek.com` 当前无法访问，以上内容基于对 DeepSeek API 功能的常规理解。如需查看最新、最准确的文档，建议稍后重试该链接，或查阅 DeepSeek 官方公告。",
+              "reasoning_content": "看起来整个域名都无法访问。可能是网络问题，或者是DeepSeek的API文档站点暂时宕机了。我可以基于我对DeepSeek API的了解来回答这个问题。\n\n我知道DeepSeek的API文档中，“思考模式”是一个功能，它允许模型在生成最终回复前，先输出内部的推理过程。这有助于提高透明度和调试。用户可以通过API参数来启用这个功能。该指南可能详细介绍了如何使用这个功能，它的优势，以及示例代码。\n\n我可以这样回答：这个链接是DeepSeek API文档中关于“思考模式”的指南页面。思考模式是DeepSeek API的一个功能，允许模型在生成最终答案前展示其内部推理过程。这有助于用户理解模型的思考链条，提高透明度和可信度。指南可能包括如何启用思考模式、API参数设置、使用示例以及最佳实践等内容。\n\n我还可以提到，思考模式对于复杂推理任务特别有用，比如数学问题、逻辑推理或代码调试。\n\n现在，我将基于这些理解来回答用户的问题。同时，我也会说明我无法直接访问该链接，因为网站暂时无法访问。让我用中文来回答。"
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 6231,
+          "completion_tokens": 671,
+          "total_tokens": 6902,
+          "prompt_tokens_details": {
+            "cached_tokens": 5888
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 232
+          },
+          "prompt_cache_hit_tokens": 5888,
+          "prompt_cache_miss_tokens": 343
+        },
+        "system_fingerprint": "fp_eaab8d114b_prod0820_fp8_kvcache"
+      },
+      "humanNote": "【API响应】DeepSeek返回"
+    },
+    {
+      "timestamp": "2026-02-23T17:55:46.219Z",
+      "type": "note",
+      "endpoint": "thinking",
+      "round": 4,
+      "data": {
+        "stepIndex": 7,
+        "content": "看起来整个域名都无法访问。可能是网络问题，或者是DeepSeek的API文档站点暂时宕机了。我可以基于我对DeepSeek API的了解来回答这个问题。\n\n我知道DeepSeek的API文档中，“思考模式”是一个功能，它允许模型在生成最终回复前，先输出内部的推理过程。这有助于提高透明度和调试。用户可以通过API参数来启用这个功能。该指南可能详细介绍了如何使用这个功能，它的优势，以及示例代码。\n\n我可以这样回答：这个链接是DeepSeek API文档中关于“思考模式”的指南页面。思考模式是DeepSeek API的一个功能，允许模型在生成最终答案前展示其内部推理过程。这有助于用户理解模型的思考链条，提高透明度和可信度。指南可能包括如何启用思考模式、API参数设置、使用示例以及最佳实践等内容。\n\n我还可以提到，思考模式对于复杂推理任务特别有用，比如数学问题、逻辑推理或代码调试。\n\n现在，我将基于这些理解来回答用户的问题。同时，我也会说明我无法直接访问该链接，因为网站暂时无法访问。让我用中文来回答。"
+      },
+      "humanNote": "【UI展示】思考步骤",
+      "uiVisible": true
+    },
+    {
+      "timestamp": "2026-02-23T17:55:46.219Z",
+      "type": "note",
+      "endpoint": "final_response",
+      "round": 4,
+      "data": {
+        "content": "根据您提供的链接，这应该是 **DeepSeek API 文档**中关于 **“思考模式 (Thinking Mode)”** 的指南页面。由于该链接目前无法访问（HTTP 504 错误），我将基于对 DeepSeek API 的了解，为您介绍这个功能的核心内容：\n\n## 🧠 什么是“思考模式”？\n- **内部推理过程外显**：思考模式允许模型在生成最终回复之前，先输出其内部的推理链条（类似“链式思考”）。\n- **提高透明度**：用户可以看到模型是如何一步步分析问题、推理并得出结论的。\n- **便于调试与优化**：对于复杂任务，思考过程可以帮助开发者理解模型的决策路径，调整提示或参数。\n\n## 🔧 主要功能与用途\n1. **复杂问题求解**：适用于数学计算、逻辑推理、代码调试等需要多步推理的场景。\n2. **提示工程优化**：通过观察思考过程，改进提示词设计。\n3. **可信度评估**：验证模型答案的合理性，避免“黑箱”输出。\n\n## 📖 指南可能包含的内容\n- **如何启用思考模式**：通过 API 参数（如 `thinking_mode`、`reasoning` 等）开启。\n- **请求与响应格式**：展示带有思考过程的 API 调用示例。\n- **最佳实践**：何时使用思考模式、如何解析思考内容、性能考量等。\n- **代码示例**：常见编程语言（Python、JavaScript 等）的调用示例。\n\n## 💡 典型应用场景\n- **教育/辅导**：展示解题步骤，帮助学生理解。\n- **代码审查**：逐步分析代码逻辑，指出潜在问题。\n- **数据分析**：解释数据推理过程，增强结论可信度。\n- **决策支持**：呈现多因素权衡的思考路径。\n\n> 注：由于 `api-docs.deepseek.com` 当前无法访问，以上内容基于对 DeepSeek API 功能的常规理解。如需查看最新、最准确的文档，建议稍后重试该链接，或查阅 DeepSeek 官方公告。"
+      },
+      "humanNote": "【UI展示】最终回复（立即显示）",
+      "uiVisible": true
+    }
+  ]
+}
