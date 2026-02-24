@@ -3,6 +3,8 @@ import { fileURLToPath, URL } from "node:url";
 import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
+import https from "https";
+import http from "http";
 import MarkdownIt from "markdown-it";
 import mathjax3 from "markdown-it-mathjax3";
 
@@ -2957,119 +2959,69 @@ ${content}`;
                     timeout,
                   });
 
-                  // 使用 AbortController 实现超时和客户端断开检测
-                  const controller = new AbortController();
-                  const timeoutId = setTimeout(
-                    () => controller.abort(),
-                    timeout,
-                  );
-
-                  // P0-3 修复：监听客户端断开连接
-                  const abortOnClose = () => {
-                    controller.abort();
-                    clearTimeout(timeoutId);
-                    structuredLog.info("proxy.fetch.aborted", `Client disconnected, aborted fetch ${url}`, { url });
+                  // 使用 https/http 模块请求（比 fetch 更可靠）
+                  const targetUrl = new URL(url);
+                  const httpModule = targetUrl.protocol === 'https:' ? https : http;
+                  
+                  const requestOptions = {
+                    hostname: targetUrl.hostname,
+                    port: targetUrl.port || (targetUrl.protocol === 'https:' ? 443 : 80),
+                    path: targetUrl.pathname + targetUrl.search,
+                    method: 'GET',
+                    headers: {
+                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                      'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                    },
+                    timeout: timeout,
                   };
-                  req.on("close", abortOnClose);
 
-                  try {
-                    structuredLog.info("proxy.fetch.node.start", `Node.js fetching ${url}`);
-                    
-                    const response = await fetch(url, {
-                      signal: controller.signal,
-                      headers: {
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.0.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.0",
-                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-                      },
+                  structuredLog.info("proxy.fetch.request", `Fetching ${url}`, { hostname: targetUrl.hostname });
+
+                  const proxyReq = httpModule.request(requestOptions, (proxyRes) => {
+                    let data = '';
+                    proxyRes.on('data', (chunk) => { data += chunk; });
+                    proxyRes.on('end', () => {
+                      if (proxyRes.statusCode && proxyRes.statusCode >= 200 && proxyRes.statusCode < 300) {
+                        structuredLog.success("proxy.fetch.completed", `Fetched ${url}`, { size: data.length });
+                        res.setHeader("Content-Type", proxyRes.headers['content-type'] || 'text/plain; charset=utf-8');
+                        res.end(data);
+                      } else {
+                        structuredLog.warn("proxy.fetch.failed", `Failed to fetch ${url}`, { status: proxyRes.statusCode });
+                        res.statusCode = proxyRes.statusCode || 500;
+                        res.end(JSON.stringify({ success: false, error: `HTTP ${proxyRes.statusCode}` }));
+                      }
                     });
-                    
-                    structuredLog.info("proxy.fetch.node.success", `Node.js fetched ${url}`, { status: response.status });
+                  });
 
-                    clearTimeout(timeoutId);
-                    req.removeListener("close", abortOnClose);
+                  proxyReq.on('error', (err) => {
+                    structuredLog.error("proxy.fetch.error", `Error fetching ${url}`, { error: err.message });
+                    res.statusCode = 502;
+                    res.end(JSON.stringify({ 
+                      success: false, 
+                      error: `请求失败: ${err.message}`,
+                      details: { url, hostname: targetUrl.hostname }
+                    }));
+                  });
 
-                    if (!response.ok) {
-                      structuredLog.warn(
-                        "proxy.fetch.failed",
-                        `Failed to fetch ${url}`,
-                        {
-                          url,
-                          status: response.status,
-                        },
-                      );
-                      res.statusCode = response.status;
-                      res.end(
-                        JSON.stringify({
-                          success: false,
-                          error: `HTTP ${response.status}: ${response.statusText}`,
-                        }),
-                      );
-                      return;
-                    }
+                  proxyReq.on('timeout', () => {
+                    proxyReq.destroy();
+                    structuredLog.error("proxy.fetch.timeout", `Timeout fetching ${url}`, { timeout });
+                    res.statusCode = 504;
+                    res.end(JSON.stringify({ 
+                      success: false, 
+                      error: `请求超时 (${timeout}ms)`,
+                      details: { url, timeout }
+                    }));
+                  });
 
-                    const content = await response.text();
+                  // 客户端断开时取消请求
+                  req.on('close', () => {
+                    proxyReq.destroy();
+                    structuredLog.info("proxy.fetch.aborted", `Client disconnected, aborted fetch ${url}`);
+                  });
 
-                    structuredLog.success(
-                      "proxy.fetch.completed",
-                      `Fetched ${url}`,
-                      {
-                        url,
-                        size: content.length,
-                      },
-                    );
-
-                    res.setHeader("Content-Type", "text/plain; charset=utf-8");
-                    res.end(content);
-                  } catch (fetchError) {
-                    clearTimeout(timeoutId);
-
-                    const isTimeout =
-                      fetchError instanceof Error &&
-                      fetchError.name === "AbortError";
-                    const isNetworkError =
-                      fetchError instanceof Error &&
-                      (fetchError.message?.includes('ECONNREFUSED') ||
-                       fetchError.message?.includes('ENOTFOUND') ||
-                       fetchError.message?.includes('ETIMEDOUT') ||
-                       fetchError.message?.includes('fetch failed'));
-                    
-                    // 获取详细错误信息
-                    const errorDetail = fetchError instanceof Error ? fetchError.message : String(fetchError);
-                    let errorMsg = isTimeout
-                      ? `请求超时 (${timeout}ms)`
-                      : errorDetail;
-                    
-                    // 提供更详细的错误信息
-                    if (isNetworkError) {
-                      errorMsg = `网络连接失败: ${errorDetail}\n\n可能原因:\n1. Node.js 无法访问外网（检查系统代理）\n2. DNS 解析失败\n3. 防火墙/安全软件拦截\n4. 目标网站有反爬虫机制`;
-                    }
-
-                    structuredLog.error(
-                      "proxy.fetch.error",
-                      `Error fetching ${url}`,
-                      {
-                        url,
-                        error: errorMsg,
-                        isTimeout,
-                        isNetworkError,
-                      },
-                    );
-
-                    res.statusCode = isTimeout ? 504 : (isNetworkError ? 502 : 500);
-                    res.end(
-                      JSON.stringify({
-                        success: false,
-                        error: errorMsg,
-                        details: {
-                          isTimeout,
-                          isNetworkError,
-                          url,
-                          timeout
-                        }
-                      }),
-                    );
-                  }
+                  proxyReq.end();
                 } catch (e) {
                   res.statusCode = 500;
                   res.end(JSON.stringify({ success: false, error: String(e) }));
