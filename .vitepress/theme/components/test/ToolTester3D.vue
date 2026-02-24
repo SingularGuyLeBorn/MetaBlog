@@ -1,11 +1,10 @@
 <template>
-  <div class="tool-tester-3d" :class="{ 'dark-mode': isDarkMode }">
+  <div class="tool-tester-3d light-theme">
     <!-- 背景效果 -->
     <div class="bg-effects">
       <div class="gradient-orb orb-1"></div>
       <div class="gradient-orb orb-2"></div>
       <div class="gradient-orb orb-3"></div>
-      <div class="grid-overlay"></div>
     </div>
 
     <!-- 头部 -->
@@ -20,22 +19,16 @@
         </div>
         <h1 class="title-3d">
           <span class="title-gradient">Tool</span>
-          <span class="title-outline">Tester</span>
+          <span class="title-normal">Tester</span>
         </h1>
       </div>
       <p class="subtitle">AI Agent 工具链测试平台</p>
       
       <!-- 控制按钮 -->
       <div class="controls">
-        <button class="btn-3d btn-theme" @click="toggleTheme">
-          <span class="btn-icon">{{ isDarkMode ? '☀️' : '🌙' }}</span>
-        </button>
         <button class="btn-3d btn-primary" @click="testAll" :disabled="testingAll">
-          <span class="btn-shine"></span>
-          <span class="btn-content">
-            <span class="btn-icon">🚀</span>
-            {{ testingAll ? '测试中...' : '一键测试' }}
-          </span>
+          <span class="btn-icon">🚀</span>
+          {{ testingAll ? '测试中...' : '一键测试' }}
         </button>
       </div>
     </header>
@@ -43,13 +36,12 @@
     <!-- 统计面板 -->
     <section class="stats-section">
       <div class="stat-cards">
-        <div class="stat-card-3d success" :class="{ 'pulse': passed > 0 }">
+        <div class="stat-card-3d success">
           <div class="stat-icon">✅</div>
           <div class="stat-value">{{ passed }}</div>
           <div class="stat-label">通过</div>
-          <div class="stat-progress" :style="{ width: passRate + '%' }"></div>
         </div>
-        <div class="stat-card-3d error" :class="{ 'pulse': failed > 0 }">
+        <div class="stat-card-3d error">
           <div class="stat-icon">❌</div>
           <div class="stat-value">{{ failed }}</div>
           <div class="stat-label">失败</div>
@@ -74,9 +66,6 @@
         <div class="category-header" @click="toggleCategory('mcp')">
           <div class="category-icon">📦</div>
           <h2>MCP 工具</h2>
-          <div class="category-progress">
-            <div class="progress-bar" :style="{ width: getCategoryProgress('mcp') + '%' }"></div>
-          </div>
           <span class="category-count">{{ getCategoryStats('mcp') }}</span>
           <span class="toggle-icon" :class="{ 'open': expanded.mcp }">▼</span>
         </div>
@@ -87,6 +76,7 @@
               :key="test.name"
               :test="test"
               @run="runTest(test)"
+              @click="openModal(test)"
             />
           </div>
         </Transition>
@@ -96,10 +86,7 @@
       <section class="category-section">
         <div class="category-header" @click="toggleCategory('network')">
           <div class="category-icon">🌐</div>
-          <h2>网络工具</h2>
-          <div class="category-progress">
-            <div class="progress-bar" :style="{ width: getCategoryProgress('network') + '%' }"></div>
-          </div>
+          <h2>网络工具 - 大模型厂商</h2>
           <span class="category-count">{{ getCategoryStats('network') }}</span>
           <span class="toggle-icon" :class="{ 'open': expanded.network }">▼</span>
         </div>
@@ -110,6 +97,7 @@
               :key="test.name"
               :test="test"
               @run="runTest(test)"
+              @click="openModal(test)"
             />
           </div>
         </Transition>
@@ -119,10 +107,7 @@
       <section class="category-section">
         <div class="category-header" @click="toggleCategory('article')">
           <div class="category-icon">📝</div>
-          <h2>文章工具</h2>
-          <div class="category-progress">
-            <div class="progress-bar" :style="{ width: getCategoryProgress('article') + '%' }"></div>
-          </div>
+          <h2>文章工具 - 完整CRUD</h2>
           <span class="category-count">{{ getCategoryStats('article') }}</span>
           <span class="toggle-icon" :class="{ 'open': expanded.article }">▼</span>
         </div>
@@ -133,6 +118,7 @@
               :key="test.name"
               :test="test"
               @run="runTest(test)"
+              @click="openModal(test)"
             />
           </div>
         </Transition>
@@ -143,9 +129,6 @@
         <div class="category-header" @click="toggleCategory('github')">
           <div class="category-icon">🐙</div>
           <h2>GitHub 工具</h2>
-          <div class="category-progress">
-            <div class="progress-bar" :style="{ width: getCategoryProgress('github') + '%' }"></div>
-          </div>
           <span class="category-count">{{ getCategoryStats('github') }}</span>
           <span class="toggle-icon" :class="{ 'open': expanded.github }">▼</span>
         </div>
@@ -156,6 +139,7 @@
               :key="test.name"
               :test="test"
               @run="runTest(test)"
+              @click="openModal(test)"
             />
           </div>
         </Transition>
@@ -183,10 +167,10 @@
     <!-- 日志面板 -->
     <aside class="log-panel" :class="{ 'open': showLogs }">
       <div class="log-toggle" @click="showLogs = !showLogs">
-        <span>📋 日志</span>
+        <span>📋 测试日志</span>
         <span class="log-count" v-if="logs.length > 0">{{ logs.length }}</span>
       </div>
-      <div class="log-content" ref="logContent">
+      <div class="log-content">
         <div 
           v-for="(log, i) in logs" 
           :key="i" 
@@ -199,6 +183,14 @@
         </div>
       </div>
     </aside>
+
+    <!-- 模态框 -->
+    <TestResultModal
+      :show="modalVisible"
+      :test="selectedTest"
+      @close="modalVisible = false"
+      @rerun="selectedTest && runTest(selectedTest)"
+    />
   </div>
 </template>
 
@@ -207,6 +199,7 @@ import { ref, computed, nextTick } from 'vue'
 import { mcpManager } from '../ai-chat/core/mcp'
 import TestCard3D from './TestCard3D.vue'
 import AIProjectCard from './AIProjectCard.vue'
+import TestResultModal from './TestResultModal.vue'
 import { aiProjectsData } from './ai-projects-data'
 
 const API_BASE = '/api'
@@ -216,19 +209,11 @@ interface TestCase {
   description: string
   status: 'pending' | 'running' | 'success' | 'error'
   result?: string
-  rawResult?: string  // 原始响应数据
+  rawResult?: string
   error?: boolean
   category: string
-  fn: () => Promise<{formatted: string, raw: string}>  // 返回格式化和原始数据
+  fn: () => Promise<{formatted: string, raw: string}>
 }
-
-// 主题切换
-const isDarkMode = ref(true)
-const toggleTheme = () => isDarkMode.value = !isDarkMode.value
-
-// 显示原始响应开关
-const showRawResponse = ref(false)
-const toggleRawResponse = () => showRawResponse.value = !showRawResponse.value
 
 // 展开状态
 const expanded = ref({
@@ -238,115 +223,78 @@ const expanded = ref({
   github: true,
   ai: false
 })
+
 const toggleCategory = (cat: string) => {
   expanded.value[cat as keyof typeof expanded.value] = !expanded.value[cat as keyof typeof expanded.value]
+}
+
+// 模态框
+const modalVisible = ref(false)
+const selectedTest = ref<TestCase | null>(null)
+
+const openModal = (test: TestCase) => {
+  selectedTest.value = test
+  modalVisible.value = true
 }
 
 // 日志
 const logs = ref<{type: string, time: string, message: string}[]>([])
 const showLogs = ref(false)
-const logContent = ref<HTMLElement>()
 
 function addLog(message: string, type: 'info' | 'success' | 'error' = 'info') {
   const now = new Date().toLocaleTimeString('zh-CN', { hour12: false })
   logs.value.unshift({ type, time: now, message })
   if (logs.value.length > 100) logs.value.pop()
-  nextTick(() => {
-    if (logContent.value) logContent.value.scrollTop = 0
-  })
 }
 
-// MCP 测试 - 带原始数据展示
+// MCP 测试
 const mcpTests = ref<TestCase[]>([
   { 
     category: 'mcp', 
     name: 'MCP Math', 
-    description: '数学计算工具 (calculate)', 
+    description: '数学计算工具', 
     status: 'pending', 
     fn: async () => {
       const expression = '123 + 456 * 2'
       const result = await mcpManager.execute('calculate', { expression })
       const raw = JSON.stringify(result, null, 2)
-      const formatted = `✅ 数学计算成功\n\n📝 输入表达式: ${expression}\n📊 计算结果: ${result.result}\n✨ 执行状态: 成功`
+      const formatted = `✅ 数学计算成功\n\n📝 输入: ${expression}\n📊 结果: ${result.result}`
       return { formatted, raw }
     }
   },
   { 
     category: 'mcp', 
     name: 'MCP Text Stats', 
-    description: '文本统计分析 (text_stats)', 
+    description: '文本统计工具', 
     status: 'pending', 
     fn: async () => {
-      const text = 'Hello World! 你好世界！这是一段测试文本。'
+      const text = 'Hello World! 你好世界！'
       const result = await mcpManager.execute('text_stats', { text })
       const raw = JSON.stringify(result, null, 2)
-      const formatted = `✅ 文本统计成功\n\n📝 原文: "${text.substring(0, 30)}..."\n📊 统计结果:\n  • 总字符数: ${result.length}\n  • 行数: ${result.lines}\n  • 单词数: ${result.words}\n  • 中文字符: ${result.chineseChars}`
+      const formatted = `✅ 文本统计成功\n\n📊 字符数: ${result.length}\n📊 行数: ${result.lines}\n📊 单词数: ${result.words}\n📊 中文字符: ${result.chineseChars}`
       return { formatted, raw }
     }
   },
   { 
     category: 'mcp', 
     name: 'MCP System Info', 
-    description: '系统信息查询 (get_system_info)', 
+    description: '系统信息查询', 
     status: 'pending', 
     fn: async () => {
       const result = await mcpManager.execute('get_system_info', {})
       const raw = JSON.stringify(result, null, 2)
-      const formatted = `✅ 系统信息获取成功\n\n🖥️ 平台: ${result.platform}\n🌐 语言: ${result.language}\n🌍 时区: ${result.timezone}\n⏰ 时间: ${new Date(result.timestamp).toLocaleString('zh-CN')}`
-      return { formatted, raw }
-    }
-  },
-  { 
-    category: 'mcp', 
-    name: 'MCP Memory', 
-    description: '内存使用查询 (get_memory_usage)', 
-    status: 'pending', 
-    fn: async () => {
-      const result = await mcpManager.execute('get_memory_usage', {})
-      const raw = JSON.stringify(result, null, 2)
-      if (result.error) {
-        const formatted = `⚠️ 内存信息: ${result.error}\n\n注: 浏览器安全限制可能阻止内存查询`
-        return { formatted, raw }
-      }
-      const formatted = `✅ 内存查询成功\n\n💾 JS 堆内存使用: ${result.usedJSHeapSize}\n💾 JS 堆内存总量: ${result.totalJSHeapSize}\n💾 JS 堆内存限制: ${result.jsHeapSizeLimit}`
-      return { formatted, raw }
-    }
-  },
-  { 
-    category: 'mcp', 
-    name: 'MCP Split Text', 
-    description: '文本分割工具 (split_text)', 
-    status: 'pending', 
-    fn: async () => {
-      const text = 'apple,banana,cherry,date'
-      const separator = ','
-      const result = await mcpManager.execute('split_text', { text, separator })
-      const raw = JSON.stringify(result, null, 2)
-      const formatted = `✅ 文本分割成功\n\n📝 原文: "${text}"\n✂️ 分隔符: "${separator}"\n📦 分割结果 (${result.count} 项):\n${result.parts.map((p: string, i: number) => `  ${i + 1}. ${p}`).join('\n')}`
-      return { formatted, raw }
-    }
-  },
-  { 
-    category: 'mcp', 
-    name: 'MCP Format JSON', 
-    description: 'JSON 格式化 (format_json)', 
-    status: 'pending', 
-    fn: async () => {
-      const json = '{"name":"AI Agent","version":"1.0","features":["chat","agent","tools"]}'
-      const result = await mcpManager.execute('format_json', { json, indent: 2 })
-      const raw = JSON.stringify(result, null, 2)
-      const formatted = `✅ JSON 格式化成功\n\n📝 原始 JSON:\n${json}\n\n✨ 格式化结果:\n${result.formatted}`
+      const formatted = `✅ 系统信息获取成功\n\n🖥️ 平台: ${result.platform}\n🌐 语言: ${result.language}\n🌍 时区: ${result.timezone}`
       return { formatted, raw }
     }
   },
 ])
 
-// 网络工具测试 - 大模型厂商 API
+// 网络工具测试
 const networkTests = ref<TestCase[]>([
   { 
     category: 'network', 
     name: 'DeepSeek API', 
-    description: '获取 DeepSeek API 状态', 
+    description: 'DeepSeek API 状态检查', 
     status: 'pending', 
     fn: async () => {
       const response = await fetch(`${API_BASE}/proxy/fetch`, {
@@ -354,23 +302,17 @@ const networkTests = ref<TestCase[]>([
         body: JSON.stringify({ url: 'https://api.deepseek.com/models', timeout: 10000 })
       })
       const text = await response.text()
-      const raw = `HTTP Status: ${response.status}\nHeaders: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}\n\nBody:\n${text}`
-      if (!response.ok) {
-        if (response.status === 401) {
-          const formatted = `✅ DeepSeek API 服务正常\n状态: ${response.status}\n说明: 需要 API Key 认证\n\n响应预览:\n${text.substring(0, 200)}`
-          return { formatted, raw }
-        }
-        throw new Error(`HTTP ${response.status}`)
+      const raw = `HTTP ${response.status}\n\n${text}`
+      if (response.status === 401) {
+        return { formatted: '✅ DeepSeek API 服务正常（需要认证）', raw }
       }
-      const json = JSON.parse(text)
-      const formatted = `✅ DeepSeek API\n模型列表:\n${JSON.stringify(json, null, 2).substring(0, 500)}`
-      return { formatted, raw }
+      return { formatted: `✅ 响应: ${text.substring(0, 200)}`, raw }
     }
   },
   { 
     category: 'network', 
     name: '智谱 AI API', 
-    description: '获取智谱 AI API 状态', 
+    description: '智谱 AI API 状态检查', 
     status: 'pending', 
     fn: async () => {
       const response = await fetch(`${API_BASE}/proxy/fetch`, {
@@ -378,131 +320,197 @@ const networkTests = ref<TestCase[]>([
         body: JSON.stringify({ url: 'https://open.bigmodel.cn/api/paas/v4/models', timeout: 10000 })
       })
       const text = await response.text()
-      const raw = `HTTP Status: ${response.status}\nHeaders: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}\n\nBody:\n${text}`
-      if (!response.ok) {
-        if (response.status === 401) {
-          const formatted = `✅ 智谱 AI API 服务正常\n状态: ${response.status}\n说明: 需要 API Key 认证`
-          return { formatted, raw }
-        }
-        throw new Error(`HTTP ${response.status}`)
-      }
-      const formatted = `✅ 智谱 AI API\n响应:\n${text.substring(0, 400)}`
-      return { formatted, raw }
-    }
-  },
-  { 
-    category: 'network', 
-    name: 'DeepSeek 文档', 
-    description: '抓取 DeepSeek 文档首页', 
-    status: 'pending', 
-    fn: async () => {
-      const response = await fetch(`${API_BASE}/proxy/fetch`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: 'https://platform.deepseek.com/api-docs/', timeout: 15000 })
-      })
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      const text = await response.text()
-      const raw = `HTTP Status: ${response.status}\nContent-Type: ${response.headers.get('content-type')}\nContent-Length: ${text.length}\n\nBody (first 2000 chars):\n${text.substring(0, 2000)}`
-      const titleMatch = text.match(/<title>(.*?)<\/title>/)
-      const title = titleMatch ? titleMatch[1] : '未知'
-      const formatted = `✅ DeepSeek 文档\n标题: ${title}\n内容长度: ${text.length} 字符\n\n内容预览:\n${text.replace(/<[^>]+>/g, ' ').substring(0, 300).trim()}...`
-      return { formatted, raw }
-    }
-  },
-  { 
-    category: 'network', 
-    name: '智谱 AI 文档', 
-    description: '抓取智谱 AI 文档', 
-    status: 'pending', 
-    fn: async () => {
-      const response = await fetch(`${API_BASE}/proxy/fetch`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: 'https://open.bigmodel.cn/dev/api', timeout: 15000 })
-      })
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      const text = await response.text()
-      const raw = `HTTP Status: ${response.status}\nContent-Type: ${response.headers.get('content-type')}\nContent-Length: ${text.length}\n\nBody (first 2000 chars):\n${text.substring(0, 2000)}`
-      const titleMatch = text.match(/<title>(.*?)<\/title>/)
-      const title = titleMatch ? titleMatch[1] : '未知'
-      const formatted = `✅ 智谱 AI 文档\n标题: ${title}\n内容长度: ${text.length} 字符\n\n内容预览:\n${text.replace(/<[^>]+>/g, ' ').substring(0, 300).trim()}...`
-      return { formatted, raw }
-    }
-  },
-  { 
-    category: 'network', 
-    name: 'OpenAI API', 
-    description: '检查 OpenAI API 状态', 
-    status: 'pending', 
-    fn: async () => {
-      const response = await fetch(`${API_BASE}/proxy/fetch`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: 'https://api.openai.com/v1/models', timeout: 10000 })
-      })
-      const text = await response.text()
-      const raw = `HTTP Status: ${response.status}\nHeaders: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}\n\nBody:\n${text}`
+      const raw = `HTTP ${response.status}\n\n${text}`
       if (response.status === 401) {
-        const formatted = `✅ OpenAI API 服务正常\n状态: ${response.status}\n说明: 需要 Bearer Token 认证\n\n这是预期的响应，证明 API 服务正在运行`
-        return { formatted, raw }
+        return { formatted: '✅ 智谱 AI API 服务正常（需要认证）', raw }
       }
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      const json = JSON.parse(text)
-      const formatted = `✅ OpenAI API\n模型数量: ${json.data?.length || 0}`
-      return { formatted, raw }
+      return { formatted: `✅ 响应: ${text.substring(0, 200)}`, raw }
     }
   },
 ])
 
-// 文章工具测试 - 带原始数据展示
+// 文章工具测试 - 完整CRUD
+const TEST_ARTICLE_PATH = 'sections/posts/test-tool-article.md'
+let createdArticlePath = ''
+
 const articleTests = ref<TestCase[]>([
+  // ====== 查询类工具 ======
   { 
     category: 'article', 
     name: 'List Articles', 
-    description: '获取文章列表', 
+    description: '查询所有文章列表', 
     status: 'pending', 
     fn: async () => {
       const response = await fetch(`${API_BASE}/articles/list-all`)
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const result = await response.json()
-      const data = result.data || []
       const raw = JSON.stringify(result, null, 2)
-      const formatted = `找到 ${data.length} 篇文章` + (data.length > 0 ? '
-
-前3篇文章:
-' + data.slice(0, 3).map((a: any, i: number) => `  ${i + 1}. ${a.title} (${a.path})`).join('
-') : '')
+      const data = result.data || []
+      const formatted = `✅ 查询成功\n\n📊 共找到 ${data.length} 篇文章${data.length > 0 ? '\n\n📄 前3篇:' + data.slice(0, 3).map((a: any, i: number) => `\n  ${i+1}. ${a.title}`).join('') : ''}`
       return { formatted, raw }
     }
   },
   { 
     category: 'article', 
-    name: 'Read Article', 
-    description: '读取文章内容', 
+    name: 'Search Articles', 
+    description: '搜索文章（关键词: AI）', 
     status: 'pending', 
     fn: async () => {
-      const response = await fetch(`${API_BASE}/articles/list-all`)
+      const response = await fetch(`${API_BASE}/articles/search?q=AI`)
       const result = await response.json()
+      const raw = JSON.stringify(result, null, 2)
       const data = result.data || []
+      const formatted = `✅ 搜索成功\n\n🔍 关键词: "AI"\n📊 找到 ${data.length} 篇相关文章`
+      return { formatted, raw }
+    }
+  },
+  { 
+    category: 'article', 
+    name: 'Get Article Detail', 
+    description: '获取单篇文章详情', 
+    status: 'pending', 
+    fn: async () => {
+      const listRes = await fetch(`${API_BASE}/articles/list-all`)
+      const listResult = await listRes.json()
+      const data = listResult.data || []
       if (data.length === 0) {
-        return { formatted: '暂无文章', raw: '[]' }
+        return { formatted: '⚠️ 暂无文章可供查询', raw: '[]' }
       }
-      const contentRes = await fetch(`${API_BASE}/articles/detail?path=${encodeURIComponent(data[0].path)}`)
-      const content = await contentRes.text()
-      const raw = `Path: ${data[0].path}
-
-Content:
-${content}`
-      const formatted = `读取成功
-路径: ${data[0].path}
-长度: ${content.length} 字符
-
-内容预览 (前500字符):
-${content.substring(0, 500)}${content.length > 500 ? '...' : ''}`
+      const path = data[0].path
+      const response = await fetch(`${API_BASE}/articles/detail?path=${encodeURIComponent(path)}`)
+      const content = await response.text()
+      const raw = `Path: ${path}\n\n${content}`
+      const formatted = `✅ 获取详情成功\n\n📄 路径: ${path}\n📏 长度: ${content.length} 字符\n\n📝 内容预览:\n${content.substring(0, 500)}${content.length > 500 ? '...' : ''}`
+      return { formatted, raw }
+    }
+  },
+  
+  // ====== 创建类工具 ======
+  { 
+    category: 'article', 
+    name: 'Create Article', 
+    description: '创建测试文章（带元数据）', 
+    status: 'pending', 
+    fn: async () => {
+      const timestamp = Date.now()
+      const content = `---\ntitle: 测试文章-${timestamp}\ndate: ${new Date().toISOString()}\ntags: [test, ai, automation]\ncategory: test\n---\n\n# 测试文章 ${timestamp}\n\n这是由 ToolTester 自动创建的测试文章。\n\n## 功能测试\n\n- 创建文章 ✅\n- 添加元数据 ✅\n- 设置标签 ✅\n\n生成时间: ${new Date().toLocaleString('zh-CN')}`
+      
+      const response = await fetch(`${API_BASE}/articles/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: TEST_ARTICLE_PATH, content })
+      })
+      const result = await response.json()
+      const raw = JSON.stringify(result, null, 2)
+      createdArticlePath = TEST_ARTICLE_PATH
+      const formatted = result.success 
+        ? `✅ 文章创建成功\n\n📄 路径: ${TEST_ARTICLE_PATH}\n📏 内容长度: ${content.length} 字符\n🏷️ 标签: test, ai, automation`
+        : `❌ 创建失败: ${result.error}`
+      return { formatted, raw }
+    }
+  },
+  { 
+    category: 'article', 
+    name: 'Create Article - Minimal', 
+    description: '创建极简文章（仅标题）', 
+    status: 'pending', 
+    fn: async () => {
+      const content = `# 极简测试文章\n\n内容: ${Date.now()}`
+      const path = 'sections/posts/test-minimal.md'
+      const response = await fetch(`${API_BASE}/articles/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path, content })
+      })
+      const result = await response.json()
+      const raw = JSON.stringify(result, null, 2)
+      const formatted = result.success 
+        ? `✅ 极简文章创建成功\n\n📄 路径: ${path}`
+        : `❌ 创建失败: ${result.error}`
+      return { formatted, raw }
+    }
+  },
+  
+  // ====== 更新类工具 ======
+  { 
+    category: 'article', 
+    name: 'Update Article', 
+    description: '更新文章内容（追加）', 
+    status: 'pending', 
+    fn: async () => {
+      const path = createdArticlePath || TEST_ARTICLE_PATH
+      const newContent = `\n\n## 更新记录\n\n更新时间: ${new Date().toLocaleString('zh-CN')}\n更新类型: 追加内容\n更新者: ToolTester`
+      
+      // 先读取原内容
+      const readRes = await fetch(`${API_BASE}/articles/detail?path=${encodeURIComponent(path)}`)
+      const originalContent = await readRes.text()
+      const updatedContent = originalContent + newContent
+      
+      const response = await fetch(`${API_BASE}/articles/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path, content: updatedContent })
+      })
+      const result = await response.json()
+      const raw = JSON.stringify(result, null, 2)
+      const formatted = result.success 
+        ? `✅ 文章更新成功\n\n📄 路径: ${path}\n📏 新增内容: ${newContent.length} 字符\n📏 总长度: ${updatedContent.length} 字符`
+        : `❌ 更新失败: ${result.error}`
+      return { formatted, raw }
+    }
+  },
+  { 
+    category: 'article', 
+    name: 'Update Article - Metadata', 
+    description: '更新文章元数据', 
+    status: 'pending', 
+    fn: async () => {
+      const path = createdArticlePath || TEST_ARTICLE_PATH
+      const content = `---\ntitle: 更新后的标题\ndate: ${new Date().toISOString()}\ntags: [updated, test, metadata]\ncategory: updated\nauthor: ToolTester\n---\n\n# 已更新的文章\n\n元数据已更新。`
+      
+      const response = await fetch(`${API_BASE}/articles/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path, content })
+      })
+      const result = await response.json()
+      const raw = JSON.stringify(result, null, 2)
+      const formatted = result.success 
+        ? `✅ 元数据更新成功\n\n📄 路径: ${path}\n🏷️ 新标签: updated, test, metadata\n✏️ 作者: ToolTester`
+        : `❌ 更新失败: ${result.error}`
+      return { formatted, raw }
+    }
+  },
+  
+  // ====== 删除类工具 ======
+  { 
+    category: 'article', 
+    name: 'Delete Test Articles', 
+    description: '清理所有测试文章', 
+    status: 'pending', 
+    fn: async () => {
+      const testPaths = [
+        TEST_ARTICLE_PATH,
+        'sections/posts/test-minimal.md'
+      ]
+      const results = []
+      for (const path of testPaths) {
+        const response = await fetch(`${API_BASE}/articles/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path })
+        })
+        const result = await response.json()
+        results.push({ path, success: result.success, error: result.error })
+      }
+      const raw = JSON.stringify(results, null, 2)
+      const successCount = results.filter((r: any) => r.success).length
+      const formatted = `✅ 清理完成\n\n📊 删除结果:\n${results.map((r: any, i: number) => `  ${i+1}. ${r.path.split('/').pop()} - ${r.success ? '✅' : '❌'}`).join('\n')}\n\n总计: ${successCount}/${results.length} 成功`
       return { formatted, raw }
     }
   },
 ])
 
-// GitHub 工具测试 - 带原始数据展示
+// GitHub 工具测试
 const githubTests = ref<TestCase[]>([
   { 
     category: 'github', 
@@ -511,10 +519,9 @@ const githubTests = ref<TestCase[]>([
     status: 'pending', 
     fn: async () => {
       const response = await fetch(`${API_BASE}/github/repo/microsoft/autogen`)
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const data = await response.json()
       const raw = JSON.stringify(data, null, 2)
-      const formatted = `✅ 仓库信息获取成功\n\n📦 ${data.full_name}\n📝 ${data.description?.substring(0, 100)}${data.description?.length > 100 ? '...' : ''}\n\n⭐ Stars: ${data.stargazers_count?.toLocaleString()}\n🍴 Forks: ${data.forks_count?.toLocaleString()}\n👁️ Watchers: ${data.watchers_count?.toLocaleString()}\n\n🔤 主要语言: ${data.language || '未知'}\n📄 License: ${data.license?.name || '未知'}`
+      const formatted = `✅ 仓库信息获取成功\n\n📦 ${data.full_name}\n⭐ Stars: ${data.stargazers_count?.toLocaleString()}\n🍴 Forks: ${data.forks_count?.toLocaleString()}\n🔤 语言: ${data.language}`
       return { formatted, raw }
     }
   },
@@ -525,44 +532,9 @@ const githubTests = ref<TestCase[]>([
     status: 'pending', 
     fn: async () => {
       const response = await fetch(`${API_BASE}/github/repo/foundationagents/metagpt`)
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const data = await response.json()
       const raw = JSON.stringify(data, null, 2)
-      const formatted = `✅ 仓库信息获取成功\n\n📦 ${data.full_name}\n📝 ${data.description?.substring(0, 100)}${data.description?.length > 100 ? '...' : ''}\n\n⭐ Stars: ${data.stargazers_count?.toLocaleString()}\n🍴 Forks: ${data.forks_count?.toLocaleString()}\n\n🔤 主要语言: ${data.language || '未知'}`
-      return { formatted, raw }
-    }
-  },
-  { 
-    category: 'github', 
-    name: 'README Content', 
-    description: '获取 AutoGen README 内容', 
-    status: 'pending', 
-    fn: async () => {
-      const response = await fetch(`${API_BASE}/github/file/microsoft/autogen/main/README.md`)
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      const data = await response.json()
-      const content = typeof window !== 'undefined' ? atob(data.content) : Buffer.from(data.content, 'base64').toString()
-      const lines = content.split('\n')
-      const raw = JSON.stringify(data, null, 2) + '\n\n--- Decoded Content ---\n\n' + content.substring(0, 3000)
-      const formatted = `✅ 文件内容获取成功\n\n📄 文件名: ${data.name}\n📦 大小: ${data.size} bytes\n📏 行数: ${lines.length}\n\n📝 内容预览 (前 15 行):\n${lines.slice(0, 15).join('\n')}${lines.length > 15 ? '\n...' : ''}`
-      return { formatted, raw }
-    }
-  },
-  { 
-    category: 'github', 
-    name: 'Recent Commits', 
-    description: '获取 AutoGen 最近提交', 
-    status: 'pending', 
-    fn: async () => {
-      const response = await fetch(`${API_BASE}/github/commits/microsoft/autogen/main?per_page=5`)
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      const data = await response.json()
-      const raw = JSON.stringify(data, null, 2)
-      const commits = data.map((c: any, i: number) => {
-        const msg = c.commit.message.split('\n')[0].substring(0, 60)
-        return `  ${i + 1}. ${c.sha.substring(0, 7)} - ${msg}${c.commit.message.split('\n')[0].length > 60 ? '...' : ''}\n     👤 ${c.commit.author.name} @ ${new Date(c.commit.author.date).toLocaleDateString('zh-CN')}`
-      }).join('\n')
-      const formatted = `✅ 提交历史获取成功\n\n最近 ${data.length} 条提交:\n\n${commits}`
+      const formatted = `✅ 仓库信息获取成功\n\n📦 ${data.full_name}\n⭐ Stars: ${data.stargazers_count?.toLocaleString()}\n🍴 Forks: ${data.forks_count?.toLocaleString()}`
       return { formatted, raw }
     }
   },
@@ -577,7 +549,6 @@ const passed = computed(() => allTests.value.filter(t => t.status === 'success')
 const failed = computed(() => allTests.value.filter(t => t.status === 'error').length)
 const pending = computed(() => allTests.value.filter(t => t.status === 'pending').length)
 const total = computed(() => allTests.value.length)
-const passRate = computed(() => total.value > 0 ? Math.round((passed.value / total.value) * 100) : 0)
 
 const testingAll = ref(false)
 
@@ -612,12 +583,6 @@ async function testAll() {
   addLog(`✅ 测试完成! 通过: ${passed.value}, 失败: ${failed.value}`, 'success')
 }
 
-function getCategoryProgress(cat: string) {
-  const tests = allTests.value.filter(t => t.category === cat)
-  const done = tests.filter(t => t.status !== 'pending').length
-  return tests.length > 0 ? (done / tests.length) * 100 : 0
-}
-
 function getCategoryStats(cat: string) {
   const tests = allTests.value.filter(t => t.category === cat)
   const done = tests.filter(t => t.status === 'success').length
@@ -631,22 +596,8 @@ function getCategoryStats(cat: string) {
   min-height: 100vh;
   padding: 2rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
-  color: #e4e4e7;
-  overflow-x: hidden;
-}
-
-.tool-tester-3d.dark-mode {
-  --bg-primary: #0a0a0f;
-  --bg-secondary: rgba(255, 255, 255, 0.05);
-  --border-color: rgba(255, 255, 255, 0.1);
-  --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
-  --accent-primary: #8b5cf6;
-  --accent-secondary: #06b6d4;
-  --success: #10b981;
-  --error: #ef4444;
-  --warning: #f59e0b;
+  background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #f1f5f9 100%);
+  color: #1e293b;
 }
 
 /* 背景效果 */
@@ -661,26 +612,23 @@ function getCategoryStats(cat: string) {
   position: absolute;
   border-radius: 50%;
   filter: blur(100px);
-  opacity: 0.4;
-  animation: float 20s ease-in-out infinite;
+  opacity: 0.3;
 }
 
 .orb-1 {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.5) 0%, transparent 70%);
   top: -200px;
   right: -200px;
-  animation-delay: 0s;
 }
 
 .orb-2 {
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, transparent 70%);
   bottom: -100px;
   left: -100px;
-  animation-delay: -5s;
 }
 
 .orb-3 {
@@ -690,31 +638,13 @@ function getCategoryStats(cat: string) {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  animation-delay: -10s;
-}
-
-@keyframes float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(50px, -50px) scale(1.1); }
-  50% { transform: translate(-30px, 30px) scale(0.95); }
-  75% { transform: translate(40px, 40px) scale(1.05); }
-}
-
-.grid-overlay {
-  position: absolute;
-  inset: 0;
-  background-image: 
-    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 50px 50px;
-  mask-image: radial-gradient(ellipse at center, black 40%, transparent 70%);
 }
 
 /* 头部 */
 .header-3d {
   position: relative;
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
   z-index: 1;
 }
 
@@ -727,30 +657,24 @@ function getCategoryStats(cat: string) {
 }
 
 .logo-icon {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #8b5cf6, #06b6d4);
-  border-radius: 16px;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 40px rgba(139, 92, 246, 0.3);
-  animation: logo-pulse 3s ease-in-out infinite;
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
 }
 
 .logo-icon svg {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   color: white;
 }
 
-@keyframes logo-pulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 10px 40px rgba(139, 92, 246, 0.3); }
-  50% { transform: scale(1.05); box-shadow: 0 15px 50px rgba(139, 92, 246, 0.5); }
-}
-
 .title-3d {
-  font-size: 3.5rem;
+  font-size: 3rem;
   font-weight: 800;
   margin: 0;
   display: flex;
@@ -758,21 +682,18 @@ function getCategoryStats(cat: string) {
 }
 
 .title-gradient {
-  background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
-.title-outline {
-  color: transparent;
-  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.8);
+.title-normal {
+  color: #1e293b;
 }
 
 .subtitle {
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 2rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
 }
 
 .controls {
@@ -782,140 +703,84 @@ function getCategoryStats(cat: string) {
 }
 
 .btn-3d {
-  position: relative;
-  padding: 1rem 2rem;
+  padding: 0.875rem 1.5rem;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  overflow: hidden;
   transition: all 0.3s ease;
-  transform-style: preserve-3d;
-}
-
-.btn-3d:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.02);
-}
-
-.btn-3d:active:not(:disabled) {
-  transform: translateY(-1px) scale(0.98);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #8b5cf6, #06b6d4);
-  color: white;
-  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
-}
-
-.btn-primary:hover:not(:disabled) {
-  box-shadow: 0 15px 40px rgba(139, 92, 246, 0.5);
-}
-
-.btn-shine {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-  transform: translateX(-100%);
-  transition: transform 0.6s;
-}
-
-.btn-3d:hover .btn-shine {
-  transform: translateX(100%);
-}
-
-.btn-theme {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  padding: 1rem;
-}
-
-.btn-content {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.btn-icon {
-  font-size: 1.2rem;
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* 统计面板 */
 .stats-section {
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
   position: relative;
   z-index: 1;
 }
 
 .stat-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1.5rem;
-  max-width: 800px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  max-width: 700px;
   margin: 0 auto;
 }
 
 .stat-card-3d {
-  position: relative;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 1.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
   text-align: center;
-  transition: all 0.3s ease;
-  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
 }
 
 .stat-card-3d:hover {
-  transform: translateY(-5px);
-  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
 }
 
-.stat-card-3d.success {
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
-}
-
-.stat-card-3d.error {
-  border-color: rgba(239, 68, 68, 0.3);
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.1);
-}
-
-.stat-card-3d.pulse {
-  animation: card-pulse 2s ease-in-out;
-}
-
-@keyframes card-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
+.stat-card-3d.success { border-top: 3px solid #10b981; }
+.stat-card-3d.error { border-top: 3px solid #ef4444; }
+.stat-card-3d.pending { border-top: 3px solid #f59e0b; }
+.stat-card-3d.total { border-top: 3px solid #3b82f6; }
 
 .stat-icon {
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin-bottom: 0.5rem;
 }
 
 .stat-value {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: white;
-  line-height: 1;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
 }
 
 .stat-label {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin-top: 0.5rem;
-}
-
-.stat-progress {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #8b5cf6, #06b6d4);
-  transition: width 0.5s ease;
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.25rem;
 }
 
 /* 分类区域 */
@@ -927,69 +792,53 @@ function getCategoryStats(cat: string) {
 }
 
 .category-section {
-  margin-bottom: 2rem;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
+  margin-bottom: 1.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
   overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.category-section:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .category-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.5rem 2rem;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s;
   user-select: none;
+  background: linear-gradient(to right, #f8fafc, #ffffff);
 }
 
 .category-header:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: #f1f5f9;
 }
 
 .category-icon {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
 }
 
 .category-header h2 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: 600;
   flex: 1;
-}
-
-.category-progress {
-  width: 100px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #8b5cf6, #06b6d4);
-  transition: width 0.5s ease;
+  color: #1e293b;
 }
 
 .category-count {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.5);
-  min-width: 50px;
-  text-align: right;
+  font-size: 0.875rem;
+  color: #64748b;
+  padding: 0.25rem 0.75rem;
+  background: #f1f5f9;
+  border-radius: 20px;
 }
 
 .toggle-icon {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
-  transition: transform 0.3s ease;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  transition: transform 0.3s;
 }
 
 .toggle-icon.open {
@@ -999,16 +848,16 @@ function getCategoryStats(cat: string) {
 /* 测试网格 */
 .test-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-  padding: 0 2rem 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
 }
 
 .projects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 1.5rem;
-  padding: 0 2rem 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
 }
 
 /* 展开动画 */
@@ -1030,15 +879,15 @@ function getCategoryStats(cat: string) {
 .log-panel {
   position: fixed;
   bottom: 0;
-  right: 2rem;
-  width: 450px;
-  max-height: 60vh;
-  background: rgba(10, 10, 15, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px 16px 0 0;
+  right: 1.5rem;
+  width: 400px;
+  max-height: 50vh;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
   z-index: 100;
-  transform: translateY(calc(100% - 50px));
+  transform: translateY(calc(100% - 48px));
   transition: transform 0.3s ease;
 }
 
@@ -1050,23 +899,24 @@ function getCategoryStats(cat: string) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
+  padding: 0.875rem 1.25rem;
   cursor: pointer;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #e2e8f0;
   font-weight: 600;
+  color: #374151;
 }
 
 .log-count {
-  background: #8b5cf6;
+  background: #3b82f6;
   color: white;
-  padding: 0.2rem 0.6rem;
+  padding: 0.125rem 0.5rem;
   border-radius: 10px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .log-content {
   padding: 1rem;
-  max-height: calc(60vh - 60px);
+  max-height: calc(50vh - 48px);
   overflow-y: auto;
 }
 
@@ -1074,34 +924,35 @@ function getCategoryStats(cat: string) {
   display: flex;
   gap: 0.5rem;
   padding: 0.5rem;
-  font-size: 0.85rem;
-  border-radius: 8px;
-  margin-bottom: 0.3rem;
+  font-size: 0.8125rem;
+  border-radius: 6px;
+  margin-bottom: 0.25rem;
 }
 
-.log-item.success { background: rgba(16, 185, 129, 0.1); }
-.log-item.error { background: rgba(239, 68, 68, 0.1); }
+.log-item.success { background: #f0fdf4; }
+.log-item.error { background: #fef2f2; }
 
 .log-time {
-  color: rgba(255, 255, 255, 0.4);
+  color: #94a3b8;
   font-family: monospace;
   font-size: 0.75rem;
 }
 
 .log-badge {
-  padding: 0.1rem 0.4rem;
+  padding: 0.125rem 0.375rem;
   border-radius: 4px;
-  font-size: 0.7rem;
+  font-size: 0.625rem;
   text-transform: uppercase;
+  font-weight: 600;
 }
 
-.log-badge.success { background: rgba(16, 185, 129, 0.3); color: #10b981; }
-.log-badge.error { background: rgba(239, 68, 68, 0.3); color: #ef4444; }
-.log-badge.info { background: rgba(139, 92, 246, 0.3); color: #8b5cf6; }
+.log-badge.success { background: #bbf7d0; color: #166534; }
+.log-badge.error { background: #fecaca; color: #991b1b; }
+.log-badge.info { background: #dbeafe; color: #1e40af; }
 
 .log-msg {
   flex: 1;
-  color: rgba(255, 255, 255, 0.8);
+  color: #374151;
 }
 
 @media (max-width: 768px) {
@@ -1116,7 +967,6 @@ function getCategoryStats(cat: string) {
   .test-grid,
   .projects-grid {
     grid-template-columns: 1fr;
-    padding: 0 1rem 1rem;
   }
   
   .log-panel {
