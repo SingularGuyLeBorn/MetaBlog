@@ -3125,14 +3125,16 @@ ${content}`;
           // ============================================
           
           // 获取仓库信息 - /api/github/repo/{owner}/{repo}
+          // URL 格式: /api/github/repo/facebook/react
           server.middlewares.use("/api/github/repo/", async (req, res, next) => {
-            if (req.method === "GET" && req.url) {
+            if (req.method === "GET") {
               try {
-                // req.url 是相对路径，如 "facebook/react" 或 "facebook/react?foo=bar"
-                const cleanUrl = req.url.split('?')[0]; // 移除 query string
+                // req.url 是相对路径，如 "facebook/react" 或 "/facebook/react"
+                const url = req.url || '';
+                const cleanUrl = url.split('?')[0].replace(/^\//, ''); // 移除 query string 和开头的 /
                 const parts = cleanUrl.split('/').filter(Boolean);
                 
-                structuredLog.info("github.repo.request", `Request: ${req.url}`, { parts });
+                structuredLog.info("github.repo.request", `Request: ${url}`, { cleanUrl, parts });
                 
                 if (parts.length < 2) {
                   res.statusCode = 400;
@@ -3170,31 +3172,26 @@ ${content}`;
             } else next();
           });
 
-          // 获取文件内容 - /api/github/file/{owner}/{repo}/{path}
+          // 获取文件内容 - /api/github/file/{owner}/{repo}/{ref}/{path}
+          // URL 格式: /api/github/file/octocat/Hello-World/main/README
           server.middlewares.use("/api/github/file/", async (req, res, next) => {
-            if (req.method === "GET" && req.url) {
+            if (req.method === "GET") {
               try {
-                // req.url 是相对路径，如 "facebook/react/main/README.md"
-                const cleanUrl = req.url.split('?')[0];
+                // req.url 是相对路径，如 "octocat/Hello-World/main/README"
+                const url = req.url || '';
+                const cleanUrl = url.split('?')[0].replace(/^\//, '');
                 const parts = cleanUrl.split('/').filter(Boolean);
                 
-                structuredLog.info("github.file.request", `Request: ${req.url}`, { parts });
+                structuredLog.info("github.file.request", `Request: ${url}`, { cleanUrl, parts });
                 
-                if (parts.length < 3) {
+                if (parts.length < 4) {
                   res.statusCode = 400;
-                  res.end(JSON.stringify({ success: false, error: 'Missing owner, repo or path' }));
+                  res.end(JSON.stringify({ success: false, error: 'Missing owner, repo, ref or path' }));
                   return;
                 }
                 // 格式: owner/repo/ref/path
-                // 但 ref 可能是分支名，可能有 /，所以前3部分是确定的
                 const [owner, repo, ref, ...pathParts] = parts;
                 const path = pathParts.join('/');
-                
-                if (!path) {
-                  res.statusCode = 400;
-                  res.end(JSON.stringify({ success: false, error: 'Missing file path' }));
-                  return;
-                }
                 
                 const response = await fetch(
                   `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${ref}`,
@@ -3229,14 +3226,16 @@ ${content}`;
           });
 
           // 获取提交历史 - /api/github/commits/{owner}/{repo}/{ref}
+          // URL 格式: /api/github/commits/octocat/Hello-World/main
           server.middlewares.use("/api/github/commits/", async (req, res, next) => {
-            if (req.method === "GET" && req.url) {
+            if (req.method === "GET") {
               try {
-                // req.url 是相对路径，如 "facebook/react/main" 或 "facebook/react"
-                const cleanUrl = req.url.split('?')[0];
+                // req.url 是相对路径，如 "octocat/Hello-World/main" 或 "octocat/Hello-World"
+                const url = req.url || '';
+                const cleanUrl = url.split('?')[0].replace(/^\//, '');
                 const parts = cleanUrl.split('/').filter(Boolean);
                 
-                structuredLog.info("github.commits.request", `Request: ${req.url}`, { parts });
+                structuredLog.info("github.commits.request", `Request: ${url}`, { cleanUrl, parts });
                 
                 if (parts.length < 2) {
                   res.statusCode = 400;
@@ -3245,8 +3244,7 @@ ${content}`;
                 }
                 // 格式: owner/repo 或 owner/repo/ref
                 const [owner, repo, ref = 'main'] = parts;
-                const url = new URL(req.url, `http://localhost`);
-                const per_page = url.searchParams.get('per_page') || '5';
+                const per_page = new URL(url, `http://localhost`).searchParams.get('per_page') || '5';
                 
                 const response = await fetch(
                   `https://api.github.com/repos/${owner}/${repo}/commits?sha=${ref}&per_page=${per_page}`,
