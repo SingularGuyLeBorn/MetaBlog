@@ -116,24 +116,21 @@ function formatStars(stars: number): string {
 .ai-project-card {
   position: relative;
   display: block;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  padding: 1.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
   text-decoration: none;
-  color: inherit;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #1e293b;
+  transition: all 0.3s ease;
   overflow: hidden;
-  transform-style: preserve-3d;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .ai-project-card:hover {
-  transform: translateY(-8px) rotateX(5deg);
-  border-color: rgba(139, 92, 246, 0.3);
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.3),
-    0 0 60px rgba(139, 92, 246, 0.1);
+  transform: translateY(-4px);
+  border-color: #cbd5e1;
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
 }
 
 .card-shine {
@@ -142,13 +139,14 @@ function formatStars(stars: number): string {
   background: linear-gradient(
     105deg,
     transparent 40%,
-    rgba(255, 255, 255, 0.05) 45%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.05) 55%,
+    rgba(255, 255, 255, 0.8) 45%,
+    rgba(255, 255, 255, 0.9) 50%,
+    rgba(255, 255, 255, 0.8) 55%,
     transparent 60%
   );
   transform: translateX(-100%);
   transition: transform 0.6s;
+  pointer-events: none;
 }
 
 .ai-project-card:hover .card-shine {
@@ -156,22 +154,7 @@ function formatStars(stars: number): string {
 }
 
 .card-glow {
-  position: absolute;
-  inset: -1px;
-  background: linear-gradient(135deg, 
-    rgba(139, 92, 246, 0.2), 
-    rgba(6, 182, 212, 0.2),
-    rgba(236, 72, 153, 0.2)
-  );
-  border-radius: 20px;
-  opacity: 0;
-  transition: opacity 0.3s;
-  z-index: -1;
-  filter: blur(20px);
-}
-
-.ai-project-card:hover .card-glow {
-  opacity: 1;
+  display: none;
 }
 
 /* Header */
@@ -211,7 +194,7 @@ function formatStars(stars: number): string {
 
 .project-author {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: #64748b;
 }
 
 /* Category & Stars */
@@ -224,12 +207,12 @@ function formatStars(stars: number): string {
 
 .category-badge {
   padding: 0.3rem 0.8rem;
-  background: rgba(139, 92, 246, 0.15);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: #ede9fe;
+  border: 1px solid #ddd6fe;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #a78bfa;
+  color: #7c3aed;
 }
 
 .stars-badge {
@@ -237,21 +220,21 @@ function formatStars(stars: number): string {
   align-items: center;
   gap: 0.3rem;
   padding: 0.3rem 0.8rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: #fef3c7;
   border-radius: 20px;
   font-size: 0.85rem;
 }
 
 .stars-count {
   font-weight: 600;
-  color: #fbbf24;
+  color: #d97706;
 }
 
 /* Description */
 .project-description {
   margin: 0 0 1rem;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: #475569;
   line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -269,11 +252,11 @@ function formatStars(stars: number): string {
 
 .feature-tag {
   padding: 0.25rem 0.6rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: #f1f5f9;
   border-radius: 6px;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #64748b;
+  border: 1px solid #e2e8f0;
 }
 
 /* Footer */
@@ -282,7 +265,7 @@ function formatStars(stars: number): string {
   align-items: center;
   justify-content: space-between;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid #e2e8f0;
 }
 
 .tech-stack {
@@ -293,20 +276,20 @@ function formatStars(stars: number): string {
 
 .tech-badge {
   padding: 0.2rem 0.5rem;
-  background: rgba(6, 182, 212, 0.1);
-  border: 1px solid rgba(6, 182, 212, 0.2);
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
   border-radius: 4px;
   font-size: 0.7rem;
   font-weight: 500;
-  color: #06b6d4;
+  color: #0284c7;
 }
 
 .license-badge {
   padding: 0.2rem 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: #f1f5f9;
   border-radius: 4px;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: #94a3b8;
 }
 
 /* Category specific styles */
