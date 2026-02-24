@@ -8,7 +8,7 @@ const sections = [
   {
     id: 'posts',
     title: '鏂囩珷鍒楄〃',
-    description: '娣卞叆鐨勬妧鏈枃绔犱笌鎬濊€?,
+    description: '娣卞叆鐨勬妧鏈枃绔犱笌鎬濊€?',
     path: '/sections/posts',
     icon: '馃摑',
     bgClass: 'bg-blue',
@@ -16,7 +16,7 @@ const sections = [
   },
   {
     id: 'knowledge',
-    title: '鐭ヨ瘑搴?,
+    title: '鐭ヨ瘑搴?',
     description: '绯荤粺鍖栫殑鐭ヨ瘑浣撶郴',
     path: '/sections/knowledge',
     icon: '馃摎',
@@ -34,7 +34,7 @@ const sections = [
   },
   {
     id: 'about',
-    title: '鍏充簬鎴?,
+    title: '鍏充簬鎴?',
     description: '浜嗚В鏇村鍏充簬浣滆€呯殑淇℃伅',
     path: '/sections/about',
     icon: '馃懁',

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useData, useRoute } from 'vitepress'
-import BatchExportModal from './BatchExportModal.vue'
+import BatchExportModal from '../editor/BatchExportModal.vue'
 
 const { frontmatter, page } = useData()
 const route = useRoute()
