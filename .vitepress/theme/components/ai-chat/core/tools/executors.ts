@@ -1123,13 +1123,25 @@ export const fetchUrl: ToolExecutor = async (args) => {
     clearTimeout(timeoutId)
     
     if (!response.ok) {
+      // 尝试解析详细的错误信息
+      let errorDetail = ''
+      try {
+        const errorJson = await response.json()
+        errorDetail = errorJson.error || errorJson.message || ''
+      } catch {
+        errorDetail = await response.text()
+      }
+      
       if (response.status === 404) {
         return `❌ 资源未找到 (404)\n\nURL: ${url}`
       }
       if (response.status === 401 || response.status === 403) {
         return `❌ 访问被拒绝 (${response.status})\n\nURL: ${url}\n\n可能需要身份验证或权限不足`
       }
-      throw new Error(`HTTP ${response.status}`)
+      if (response.status === 504 || response.status === 502) {
+        return `❌ 网关错误 (${response.status})\n\nURL: ${url}\n\n${errorDetail}\n\n排查建议:\n1. 检查目标网站是否可访问\n2. 尝试增加 timeout 参数（默认 10 秒）\n3. 检查本地网络连接\n4. 某些网站可能有反爬虫机制`
+      }
+      throw new Error(`HTTP ${response.status}: ${errorDetail || '未知错误'}`)
     }
     
     const contentType = response.headers.get('content-type') || ''

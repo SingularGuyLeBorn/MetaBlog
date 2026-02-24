@@ -27,6 +27,7 @@ import AboutProfile from './components/Dashboards/AboutProfile.vue'
 import KnowledgeGraph from './components/features/KnowledgeGraph.vue'
 import RAGSearch from './components/features/RAGSearch.vue'
 import EditFab from './components/EditFab.vue'
+import ToolTester from './components/ToolTester.vue'
 
 
 // Agent 组件已移除 - 使用 ai-chat 模块替代
@@ -71,6 +72,7 @@ export default {
     app.component('TocFab', TocFab)
     app.component('EditFab', EditFab)
     app.component('Breadcrumb', Breadcrumb)
+    app.component('ToolTester', ToolTester)
     
 
     // Agent 组件已移除

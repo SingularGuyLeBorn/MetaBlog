@@ -3022,9 +3022,20 @@ ${content}`;
                     const isTimeout =
                       fetchError instanceof Error &&
                       fetchError.name === "AbortError";
-                    const errorMsg = isTimeout
-                      ? "Request timeout"
+                    const isNetworkError =
+                      fetchError instanceof Error &&
+                      (fetchError.message?.includes('ECONNREFUSED') ||
+                       fetchError.message?.includes('ENOTFOUND') ||
+                       fetchError.message?.includes('ETIMEDOUT'));
+                    
+                    let errorMsg = isTimeout
+                      ? `请求超时 (${timeout}ms)`
                       : String(fetchError);
+                    
+                    // 提供更详细的错误信息
+                    if (isNetworkError) {
+                      errorMsg = `网络连接失败: ${fetchError.message}\n\n可能原因:\n1. 目标网站无法访问\n2. DNS 解析失败\n3. 本地网络限制\n4. 目标网站有反爬虫机制`;
+                    }
 
                     structuredLog.error(
                       "proxy.fetch.error",
@@ -3033,14 +3044,21 @@ ${content}`;
                         url,
                         error: errorMsg,
                         isTimeout,
+                        isNetworkError,
                       },
                     );
 
-                    res.statusCode = isTimeout ? 504 : 500;
+                    res.statusCode = isTimeout ? 504 : (isNetworkError ? 502 : 500);
                     res.end(
                       JSON.stringify({
                         success: false,
                         error: errorMsg,
+                        details: {
+                          isTimeout,
+                          isNetworkError,
+                          url,
+                          timeout
+                        }
                       }),
                     );
                   }
@@ -3049,6 +3067,216 @@ ${content}`;
                   res.end(JSON.stringify({ success: false, error: String(e) }));
                 }
               });
+            } else next();
+          });
+
+          // ============================================
+          // MCP API - 执行 MCP 工具
+          // ============================================
+          
+          // 列出所有 MCP 工具
+          server.middlewares.use("/api/mcp/tools", async (req, res, next) => {
+            if (req.method === "GET") {
+              try {
+                const { mcpManager } = await import("./theme/components/ai-chat/core/mcp/index.ts");
+                const tools = mcpManager.getAllTools();
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: tools }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ 
+                  success: false, 
+                  error: e instanceof Error ? e.message : String(e) 
+                }));
+              }
+            } else next();
+          });
+
+          // 执行 MCP 工具
+          server.middlewares.use("/api/mcp/execute", async (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", async () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { tool, args = {} } = body;
+
+                  // 获取 MCP Manager（从运行时模块）
+                  const { mcpManager } = await import("./theme/components/ai-chat/core/mcp/index.ts");
+                  
+                  const result = await mcpManager.execute(tool, args);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: result }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ 
+                    success: false, 
+                    error: e instanceof Error ? e.message : String(e) 
+                  }));
+                }
+              });
+            } else next();
+          });
+
+          // ============================================
+          // GitHub API 代理 - 避免前端直接调用
+          // ============================================
+          
+          // 获取仓库信息 - /api/github/repo/{owner}/{repo}
+          server.middlewares.use("/api/github/repo/", async (req, res, next) => {
+            if (req.method === "GET" && req.url) {
+              try {
+                // req.url 是相对路径，如 "facebook/react" 或 "facebook/react?foo=bar"
+                const cleanUrl = req.url.split('?')[0]; // 移除 query string
+                const parts = cleanUrl.split('/').filter(Boolean);
+                
+                structuredLog.info("github.repo.request", `Request: ${req.url}`, { parts });
+                
+                if (parts.length < 2) {
+                  res.statusCode = 400;
+                  res.end(JSON.stringify({ success: false, error: 'Missing owner or repo' }));
+                  return;
+                }
+                const [owner, repo] = parts;
+                
+                const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+                  headers: {
+                    "User-Agent": "MetaBlog-ToolTester/1.0",
+                    "Accept": "application/vnd.github.v3+json"
+                  }
+                });
+                
+                if (!response.ok) {
+                  res.statusCode = response.status;
+                  res.end(JSON.stringify({ 
+                    success: false, 
+                    error: `GitHub API error: ${response.status}` 
+                  }));
+                  return;
+                }
+                
+                const data = await response.json();
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify(data));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ 
+                  success: false, 
+                  error: e instanceof Error ? e.message : String(e) 
+                }));
+              }
+            } else next();
+          });
+
+          // 获取文件内容 - /api/github/file/{owner}/{repo}/{path}
+          server.middlewares.use("/api/github/file/", async (req, res, next) => {
+            if (req.method === "GET" && req.url) {
+              try {
+                // req.url 是相对路径，如 "facebook/react/main/README.md"
+                const cleanUrl = req.url.split('?')[0];
+                const parts = cleanUrl.split('/').filter(Boolean);
+                
+                structuredLog.info("github.file.request", `Request: ${req.url}`, { parts });
+                
+                if (parts.length < 3) {
+                  res.statusCode = 400;
+                  res.end(JSON.stringify({ success: false, error: 'Missing owner, repo or path' }));
+                  return;
+                }
+                // 格式: owner/repo/ref/path
+                // 但 ref 可能是分支名，可能有 /，所以前3部分是确定的
+                const [owner, repo, ref, ...pathParts] = parts;
+                const path = pathParts.join('/');
+                
+                if (!path) {
+                  res.statusCode = 400;
+                  res.end(JSON.stringify({ success: false, error: 'Missing file path' }));
+                  return;
+                }
+                
+                const response = await fetch(
+                  `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${ref}`,
+                  {
+                    headers: {
+                      "User-Agent": "MetaBlog-ToolTester/1.0",
+                      "Accept": "application/vnd.github.v3+json"
+                    }
+                  }
+                );
+                
+                if (!response.ok) {
+                  res.statusCode = response.status;
+                  res.end(JSON.stringify({ 
+                    success: false, 
+                    error: `GitHub API error: ${response.status}` 
+                  }));
+                  return;
+                }
+                
+                const data = await response.json();
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify(data));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ 
+                  success: false, 
+                  error: e instanceof Error ? e.message : String(e) 
+                }));
+              }
+            } else next();
+          });
+
+          // 获取提交历史 - /api/github/commits/{owner}/{repo}/{ref}
+          server.middlewares.use("/api/github/commits/", async (req, res, next) => {
+            if (req.method === "GET" && req.url) {
+              try {
+                // req.url 是相对路径，如 "facebook/react/main" 或 "facebook/react"
+                const cleanUrl = req.url.split('?')[0];
+                const parts = cleanUrl.split('/').filter(Boolean);
+                
+                structuredLog.info("github.commits.request", `Request: ${req.url}`, { parts });
+                
+                if (parts.length < 2) {
+                  res.statusCode = 400;
+                  res.end(JSON.stringify({ success: false, error: 'Missing owner or repo' }));
+                  return;
+                }
+                // 格式: owner/repo 或 owner/repo/ref
+                const [owner, repo, ref = 'main'] = parts;
+                const url = new URL(req.url, `http://localhost`);
+                const per_page = url.searchParams.get('per_page') || '5';
+                
+                const response = await fetch(
+                  `https://api.github.com/repos/${owner}/${repo}/commits?sha=${ref}&per_page=${per_page}`,
+                  {
+                    headers: {
+                      "User-Agent": "MetaBlog-ToolTester/1.0",
+                      "Accept": "application/vnd.github.v3+json"
+                    }
+                  }
+                );
+                
+                if (!response.ok) {
+                  res.statusCode = response.status;
+                  res.end(JSON.stringify({ 
+                    success: false, 
+                    error: `GitHub API error: ${response.status}` 
+                  }));
+                  return;
+                }
+                
+                const data = await response.json();
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify(data));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ 
+                  success: false, 
+                  error: e instanceof Error ? e.message : String(e) 
+                }));
+              }
             } else next();
           });
 

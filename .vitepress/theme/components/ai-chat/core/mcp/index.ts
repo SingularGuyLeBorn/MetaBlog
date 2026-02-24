@@ -11,7 +11,11 @@ import type { ToolDefinition } from '../tools/types'
 export interface MCPTool {
   name: string
   description: string
-  parameters: Record<string, any>
+  parameters: {
+    type: 'object'
+    properties: Record<string, any>
+    required?: string[]
+  }
 }
 
 // MCP Server 配置
