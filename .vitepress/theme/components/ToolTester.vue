@@ -335,8 +335,8 @@ const githubTests = ref<TestCase[]>([
     description: '测试获取文件内容',
     status: 'pending',
     fn: async () => {
-      // 使用 octocat/Hello-World 测试仓库
-      const response = await fetch(`${API_BASE}/github/file/octocat/Hello-World/main/README`)
+      // 使用 octocat/Hello-World 测试仓库，默认分支是 master
+      const response = await fetch(`${API_BASE}/github/file/octocat/Hello-World/master/README`)
       if (!response.ok) {
         const err = await response.json().catch(() => ({ error: 'Unknown' }))
         throw new Error(err.error || `HTTP ${response.status}`)
@@ -352,8 +352,8 @@ const githubTests = ref<TestCase[]>([
     description: '测试获取提交历史',
     status: 'pending',
     fn: async () => {
-      // 使用 octocat/Hello-World 测试仓库
-      const response = await fetch(`${API_BASE}/github/commits/octocat/Hello-World/main?per_page=3`)
+      // 使用 octocat/Hello-World 测试仓库，默认分支是 master
+      const response = await fetch(`${API_BASE}/github/commits/octocat/Hello-World/master?per_page=3`)
       if (!response.ok) {
         const err = await response.json().catch(() => ({ error: 'Unknown' }))
         throw new Error(err.error || `HTTP ${response.status}`)
