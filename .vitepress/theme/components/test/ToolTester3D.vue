@@ -251,54 +251,176 @@ function addLog(message: string, type: 'info' | 'success' | 'error' = 'info') {
   })
 }
 
-// MCP 测试
+// MCP 测试 - 带详细结果展示
 const mcpTests = ref<TestCase[]>([
-  { category: 'mcp', name: 'MCP Math', description: '数学计算工具', status: 'pending', fn: async () => {
-    const result = await mcpManager.execute('calculate', { expression: '123 + 456 * 2' })
-    return `✅ 计算结果: ${JSON.stringify(result, null, 2)}`
-  }},
-  { category: 'mcp', name: 'MCP Text Stats', description: '文本统计工具', status: 'pending', fn: async () => {
-    const result = await mcpManager.execute('text_stats', { text: 'Hello World! 你好世界！' })
-    return `✅ 统计结果:\n${JSON.stringify(result, null, 2)}`
-  }},
-  { category: 'mcp', name: 'MCP System Info', description: '系统信息工具', status: 'pending', fn: async () => {
-    const result = await mcpManager.execute('get_system_info', {})
-    return `✅ 系统信息:\n${JSON.stringify(result, null, 2)}`
-  }},
-  { category: 'mcp', name: 'MCP Memory', description: '内存查询工具', status: 'pending', fn: async () => {
-    const result = await mcpManager.execute('get_memory_usage', {})
-    return `✅ 内存使用:\n${JSON.stringify(result, null, 2)}`
-  }},
-  { category: 'mcp', name: 'MCP Split Text', description: '文本分割工具', status: 'pending', fn: async () => {
-    const result = await mcpManager.execute('split_text', { text: 'a,b,c,d', separator: ',' })
-    return `✅ 分割结果:\n${JSON.stringify(result, null, 2)}`
-  }},
-  { category: 'mcp', name: 'MCP Format JSON', description: 'JSON格式化工具', status: 'pending', fn: async () => {
-    const result = await mcpManager.execute('format_json', { json: '{"a":1,"b":2}', indent: 2 })
-    return `✅ 格式化结果:\n${JSON.stringify(result, null, 2)}`
-  }},
+  { 
+    category: 'mcp', 
+    name: 'MCP Math', 
+    description: '数学计算工具 (calculate)', 
+    status: 'pending', 
+    fn: async () => {
+      const expression = '123 + 456 * 2'
+      const result = await mcpManager.execute('calculate', { expression })
+      return `✅ 数学计算成功\n\n📝 输入表达式: ${expression}\n📊 计算结果: ${result.result}\n✨ 执行状态: 成功`
+    }
+  },
+  { 
+    category: 'mcp', 
+    name: 'MCP Text Stats', 
+    description: '文本统计分析 (text_stats)', 
+    status: 'pending', 
+    fn: async () => {
+      const text = 'Hello World! 你好世界！这是一段测试文本。'
+      const result = await mcpManager.execute('text_stats', { text })
+      return `✅ 文本统计成功\n\n📝 原文: "${text.substring(0, 30)}..."\n📊 统计结果:\n  • 总字符数: ${result.length}\n  • 行数: ${result.lines}\n  • 单词数: ${result.words}\n  • 中文字符: ${result.chineseChars}`
+    }
+  },
+  { 
+    category: 'mcp', 
+    name: 'MCP System Info', 
+    description: '系统信息查询 (get_system_info)', 
+    status: 'pending', 
+    fn: async () => {
+      const result = await mcpManager.execute('get_system_info', {})
+      return `✅ 系统信息获取成功\n\n🖥️ 平台: ${result.platform}\n🌐 语言: ${result.language}\n🌍 时区: ${result.timezone}\n⏰ 时间: ${new Date(result.timestamp).toLocaleString('zh-CN')}`
+    }
+  },
+  { 
+    category: 'mcp', 
+    name: 'MCP Memory', 
+    description: '内存使用查询 (get_memory_usage)', 
+    status: 'pending', 
+    fn: async () => {
+      const result = await mcpManager.execute('get_memory_usage', {})
+      if (result.error) {
+        return `⚠️ 内存信息: ${result.error}\n\n注: 浏览器安全限制可能阻止内存查询`
+      }
+      return `✅ 内存查询成功\n\n💾 JS 堆内存使用: ${result.usedJSHeapSize}\n💾 JS 堆内存总量: ${result.totalJSHeapSize}\n💾 JS 堆内存限制: ${result.jsHeapSizeLimit}`
+    }
+  },
+  { 
+    category: 'mcp', 
+    name: 'MCP Split Text', 
+    description: '文本分割工具 (split_text)', 
+    status: 'pending', 
+    fn: async () => {
+      const text = 'apple,banana,cherry,date'
+      const separator = ','
+      const result = await mcpManager.execute('split_text', { text, separator })
+      return `✅ 文本分割成功\n\n📝 原文: "${text}"\n✂️ 分隔符: "${separator}"\n📦 分割结果 (${result.count} 项):\n${result.parts.map((p: string, i: number) => `  ${i + 1}. ${p}`).join('\n')}`
+    }
+  },
+  { 
+    category: 'mcp', 
+    name: 'MCP Format JSON', 
+    description: 'JSON 格式化 (format_json)', 
+    status: 'pending', 
+    fn: async () => {
+      const json = '{"name":"AI Agent","version":"1.0","features":["chat","agent","tools"]}'
+      const result = await mcpManager.execute('format_json', { json, indent: 2 })
+      return `✅ JSON 格式化成功\n\n📝 原始 JSON:\n${json}\n\n✨ 格式化结果:\n${result.formatted}`
+    }
+  },
 ])
 
-// 网络工具测试
+// 网络工具测试 - 大模型厂商 API
 const networkTests = ref<TestCase[]>([
-  { category: 'network', name: 'Fetch URL', description: '网页抓取代理', status: 'pending', fn: async () => {
-    const response = await fetch(`${API_BASE}/proxy/fetch`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: 'https://httpbin.org/get', timeout: 15000 })
-    })
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    const text = await response.text()
-    return `✅ 代理正常\n${text.substring(0, 400)}...`
-  }},
-  { category: 'network', name: 'GitHub API', description: 'GitHub API代理', status: 'pending', fn: async () => {
-    const response = await fetch(`${API_BASE}/proxy/fetch`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: 'https://api.github.com/users/octocat', timeout: 15000 })
-    })
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    const json = JSON.parse(await response.text())
-    return `✅ GitHub API\n用户: ${json.login}\nID: ${json.id}`
-  }},
+  { 
+    category: 'network', 
+    name: 'DeepSeek API', 
+    description: '获取 DeepSeek API 状态', 
+    status: 'pending', 
+    fn: async () => {
+      const response = await fetch(`${API_BASE}/proxy/fetch`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: 'https://api.deepseek.com/models', timeout: 10000 })
+      })
+      const text = await response.text()
+      if (!response.ok) {
+        // 401 是预期的（需要认证），说明服务正常
+        if (response.status === 401) {
+          return `✅ DeepSeek API 服务正常\n状态: ${response.status}\n说明: 需要 API Key 认证\n\n响应预览:\n${text.substring(0, 200)}`
+        }
+        throw new Error(`HTTP ${response.status}`)
+      }
+      const json = JSON.parse(text)
+      return `✅ DeepSeek API\n模型列表:\n${JSON.stringify(json, null, 2).substring(0, 500)}`
+    }
+  },
+  { 
+    category: 'network', 
+    name: '智谱 AI API', 
+    description: '获取智谱 AI API 状态', 
+    status: 'pending', 
+    fn: async () => {
+      const response = await fetch(`${API_BASE}/proxy/fetch`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: 'https://open.bigmodel.cn/api/paas/v4/models', timeout: 10000 })
+      })
+      const text = await response.text()
+      if (!response.ok) {
+        if (response.status === 401) {
+          return `✅ 智谱 AI API 服务正常\n状态: ${response.status}\n说明: 需要 API Key 认证`
+        }
+        throw new Error(`HTTP ${response.status}`)
+      }
+      return `✅ 智谱 AI API\n响应:\n${text.substring(0, 400)}`
+    }
+  },
+  { 
+    category: 'network', 
+    name: 'DeepSeek 文档', 
+    description: '抓取 DeepSeek 文档首页', 
+    status: 'pending', 
+    fn: async () => {
+      const response = await fetch(`${API_BASE}/proxy/fetch`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: 'https://platform.deepseek.com/api-docs/', timeout: 15000 })
+      })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const text = await response.text()
+      // 提取标题
+      const titleMatch = text.match(/<title>(.*?)<\/title>/)
+      const title = titleMatch ? titleMatch[1] : '未知'
+      return `✅ DeepSeek 文档\n标题: ${title}\n内容长度: ${text.length} 字符\n\n内容预览:\n${text.replace(/<[^>]+>/g, ' ').substring(0, 300).trim()}...`
+    }
+  },
+  { 
+    category: 'network', 
+    name: '智谱 AI 文档', 
+    description: '抓取智谱 AI 文档', 
+    status: 'pending', 
+    fn: async () => {
+      const response = await fetch(`${API_BASE}/proxy/fetch`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: 'https://open.bigmodel.cn/dev/api', timeout: 15000 })
+      })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const text = await response.text()
+      const titleMatch = text.match(/<title>(.*?)<\/title>/)
+      const title = titleMatch ? titleMatch[1] : '未知'
+      return `✅ 智谱 AI 文档\n标题: ${title}\n内容长度: ${text.length} 字符\n\n内容预览:\n${text.replace(/<[^>]+>/g, ' ').substring(0, 300).trim()}...`
+    }
+  },
+  { 
+    category: 'network', 
+    name: 'OpenAI API', 
+    description: '检查 OpenAI API 状态', 
+    status: 'pending', 
+    fn: async () => {
+      const response = await fetch(`${API_BASE}/proxy/fetch`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: 'https://api.openai.com/v1/models', timeout: 10000 })
+      })
+      const text = await response.text()
+      if (response.status === 401) {
+        return `✅ OpenAI API 服务正常\n状态: ${response.status}\n说明: 需要 Bearer Token 认证\n\n这是预期的响应，证明 API 服务正在运行`
+      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const json = JSON.parse(text)
+      return `✅ OpenAI API\n模型数量: ${json.data?.length || 0}`
+    }
+  },
 ])
 
 // 文章工具测试
@@ -321,26 +443,62 @@ const articleTests = ref<TestCase[]>([
   }},
 ])
 
-// GitHub 工具测试
+// GitHub 工具测试 - 增强结果展示
 const githubTests = ref<TestCase[]>([
-  { category: 'github', name: 'Repo Info', description: '获取仓库信息', status: 'pending', fn: async () => {
-    const response = await fetch(`${API_BASE}/github/repo/microsoft/autogen`)
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    const data = await response.json()
-    return `✅ ${data.full_name}\n⭐ ${data.stargazers_count?.toLocaleString()} stars`
-  }},
-  { category: 'github', name: 'File Content', description: '获取文件内容', status: 'pending', fn: async () => {
-    const response = await fetch(`${API_BASE}/github/file/microsoft/autogen/main/README.md`)
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    const data = await response.json()
-    return `✅ ${data.name}\n大小: ${data.size} bytes`
-  }},
-  { category: 'github', name: 'Commits', description: '获取提交历史', status: 'pending', fn: async () => {
-    const response = await fetch(`${API_BASE}/github/commits/microsoft/autogen/main?per_page=3`)
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    const data = await response.json()
-    return `✅ 最近 ${data.length} 条提交`
-  }},
+  { 
+    category: 'github', 
+    name: 'AutoGen Repo', 
+    description: '获取微软 AutoGen 仓库信息', 
+    status: 'pending', 
+    fn: async () => {
+      const response = await fetch(`${API_BASE}/github/repo/microsoft/autogen`)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const data = await response.json()
+      return `✅ 仓库信息获取成功\n\n📦 ${data.full_name}\n📝 ${data.description?.substring(0, 100)}${data.description?.length > 100 ? '...' : ''}\n\n⭐ Stars: ${data.stargazers_count?.toLocaleString()}\n🍴 Forks: ${data.forks_count?.toLocaleString()}\n👁️ Watchers: ${data.watchers_count?.toLocaleString()}\n\n🔤 主要语言: ${data.language || '未知'}\n📄 License: ${data.license?.name || '未知'}`
+    }
+  },
+  { 
+    category: 'github', 
+    name: 'MetaGPT Repo', 
+    description: '获取 MetaGPT 仓库信息', 
+    status: 'pending', 
+    fn: async () => {
+      const response = await fetch(`${API_BASE}/github/repo/foundationagents/metagpt`)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const data = await response.json()
+      return `✅ 仓库信息获取成功\n\n📦 ${data.full_name}\n📝 ${data.description?.substring(0, 100)}${data.description?.length > 100 ? '...' : ''}\n\n⭐ Stars: ${data.stargazers_count?.toLocaleString()}\n🍴 Forks: ${data.forks_count?.toLocaleString()}\n\n🔤 主要语言: ${data.language || '未知'}`
+    }
+  },
+  { 
+    category: 'github', 
+    name: 'README Content', 
+    description: '获取 AutoGen README 内容', 
+    status: 'pending', 
+    fn: async () => {
+      const response = await fetch(`${API_BASE}/github/file/microsoft/autogen/main/README.md`)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const data = await response.json()
+      const content = typeof window !== 'undefined' ? atob(data.content) : Buffer.from(data.content, 'base64').toString()
+      const lines = content.split('\n')
+      return `✅ 文件内容获取成功\n\n📄 文件名: ${data.name}\n📦 大小: ${data.size} bytes\n📏 行数: ${lines.length}\n\n📝 内容预览 (前 15 行):\n${lines.slice(0, 15).join('\n')}${lines.length > 15 ? '\n...' : ''}`
+    }
+  },
+  { 
+    category: 'github', 
+    name: 'Recent Commits', 
+    description: '获取 AutoGen 最近提交', 
+    status: 'pending', 
+    fn: async () => {
+      const response = await fetch(`${API_BASE}/github/commits/microsoft/autogen/main?per_page=5`)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const data = await response.json()
+      const commits = data.map((c: any, i: number) => {
+        const msg = c.commit.message.split('\n')[0].substring(0, 60)
+        return `  ${i + 1}. ${c.sha.substring(0, 7)} - ${msg}${c.commit.message.split('\n')[0].length > 60 ? '...' : ''}\n     👤 ${c.commit.author.name} @ ${new Date(c.commit.author.date).toLocaleDateString('zh-CN')}`
+      }).join('\n')
+      return `✅ 提交历史获取成功\n\n最近 ${data.length} 条提交:\n\n${commits}`
+    }
+  },
 ])
 
 // AI 项目数据
