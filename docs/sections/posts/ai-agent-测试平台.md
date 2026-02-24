@@ -3,7 +3,7 @@
 > 一站式测试 AI 聊天系统中的各种工具，包括 MCP、网络、文章和 GitHub 工具。
 
 <script setup>
-import ToolTester3D from '../../../.vitepress/theme/components/ToolTester3D.vue'
+import ToolTester3D from '../../../.vitepress/theme/components/test/ToolTester3D.vue'
 </script>
 
 <ToolTester3D />
