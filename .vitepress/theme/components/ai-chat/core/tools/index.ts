@@ -1,5 +1,5 @@
 /**
- * 工具系统统一入口
+ * 工具系统统一入口 - 生产环境
  * 
  * 提供工具注册、执行、查询等功能的统一导出
  */
@@ -29,7 +29,51 @@ export {
   clearTools
 } from './registry'
 
-// 工具定义导出
+// 平台解析工具
+export {
+  platformParserDefinitions,
+  platformParserExecutors,
+  parseZhihuExecutor,
+  parseXiaohongshuExecutor,
+  parseWechatExecutor,
+  ocrImageExecutor
+} from './platform-parsers'
+
+// 为了向后兼容，保留原有导出
+export {
+  getArticleContent,
+  searchArticles,
+  listArticles,
+  createArticle,
+  updateArticle,
+  deleteArticle,
+  getCurrentTime,
+  testEcho,
+  summarizeText,
+  formatText,
+  readFile,
+  writeFile,
+  listFiles,
+  webSearch,
+  fetchUrl,
+  // GitHub 工具
+  githubGetRepo,
+  githubListRepoContents,
+  githubGetFileContent,
+  githubSearchCode,
+  githubGetCommitHistory,
+  githubGetIssues,
+  calculate,
+  translateText,
+  executeCode,
+  analyzeCode,
+  queryKnowledge,
+  getWeather,
+  createNote,
+  listNotes
+} from './executors-legacy'
+
+// 保留原有定义导出（向后兼容）
 export {
   getArticleContentDef,
   searchArticlesDef,
@@ -64,46 +108,14 @@ export {
   allToolDefinitions
 } from './definitions'
 
-// 执行器导出
-export {
-  getArticleContent,
-  searchArticles,
-  listArticles,
-  createArticle,
-  updateArticle,
-  deleteArticle,
-  getCurrentTime,
-  testEcho,
-  summarizeText,
-  formatText,
-  readFile,
-  writeFile,
-  listFiles,
-  webSearch,
-  fetchUrl,
-  // GitHub 工具
-  githubGetRepo,
-  githubListRepoContents,
-  githubGetFileContent,
-  githubSearchCode,
-  githubGetCommitHistory,
-  githubGetIssues,
-  calculate,
-  translateText,
-  executeCode,
-  analyzeCode,
-  queryKnowledge,
-  getWeather,
-  createNote,
-  listNotes
-} from './executors'
-
+// 导入
 import { registerTools } from './registry'
 import * as definitions from './definitions'
-import * as executors from './executors'
+import * as executors from './executors-legacy'
+import { platformParserDefinitions, platformParserExecutors } from './platform-parsers'
 
 /**
- * 初始化所有默认工具
+ * 初始化所有默认工具（向后兼容）
  * 在应用启动时调用，注册所有内置工具
  */
 export function initializeDefaultTools(): void {
@@ -151,7 +163,13 @@ export function initializeDefaultTools(): void {
     // 其他工具
     { name: 'get_current_time', definition: definitions.getCurrentTimeDef, executor: executors.getCurrentTime },
     { name: 'get_weather', definition: definitions.getWeatherDef, executor: executors.getWeather },
-    { name: 'test_echo', definition: definitions.testEchoDef, executor: executors.testEcho }
+    { name: 'test_echo', definition: definitions.testEchoDef, executor: executors.testEcho },
+    
+    // 平台解析工具
+    { name: 'parse_zhihu', definition: platformParserDefinitions[0], executor: platformParserExecutors.parse_zhihu },
+    { name: 'parse_xiaohongshu', definition: platformParserDefinitions[1], executor: platformParserExecutors.parse_xiaohongshu },
+    { name: 'parse_wechat', definition: platformParserDefinitions[2], executor: platformParserExecutors.parse_wechat },
+    { name: 'ocr_image', definition: platformParserDefinitions[3], executor: platformParserExecutors.ocr_image }
   ]
   
   registerTools(tools)

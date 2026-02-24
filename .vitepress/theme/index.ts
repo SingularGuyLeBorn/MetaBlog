@@ -41,12 +41,6 @@ import AboutProfile from './components/Dashboards/AboutProfile.vue'
 // ========== Editor Components ==========
 import EditFab from './components/editor/EditFab.vue'
 
-// ========== Test Components ==========
-import ToolTester3D from './components/test/ToolTester3D.vue'
-import TestCard3D from './components/test/TestCard3D.vue'
-import AIProjectCard from './components/test/AIProjectCard.vue'
-import TestResultModal from './components/test/TestResultModal.vue'
-
 // ========== UI Components ==========
 import AnimatedContainer from './components/ui/AnimatedContainer.vue'
 import AnimatedButton from './components/ui/AnimatedButton.vue'
@@ -96,12 +90,6 @@ export default {
     
     // ========== Register Editor ==========
     app.component('EditFab', EditFab)
-    
-    // ========== Register Test Components ==========
-    app.component('ToolTester3D', ToolTester3D)
-    app.component('TestCard3D', TestCard3D)
-    app.component('AIProjectCard', AIProjectCard)
-    app.component('TestResultModal', TestResultModal)
     
     // ========== Register UI ==========
     app.component('AnimatedContainer', AnimatedContainer)
