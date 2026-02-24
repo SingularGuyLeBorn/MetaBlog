@@ -28,6 +28,9 @@ import KnowledgeGraph from './components/features/KnowledgeGraph.vue'
 import RAGSearch from './components/features/RAGSearch.vue'
 import EditFab from './components/EditFab.vue'
 import ToolTester from './components/ToolTester.vue'
+import ToolTester3D from './components/ToolTester3D.vue'
+import TestCard3D from './components/TestCard3D.vue'
+import AIProjectCard from './components/AIProjectCard.vue'
 
 
 // Agent 组件已移除 - 使用 ai-chat 模块替代
@@ -73,6 +76,9 @@ export default {
     app.component('EditFab', EditFab)
     app.component('Breadcrumb', Breadcrumb)
     app.component('ToolTester', ToolTester)
+    app.component('ToolTester3D', ToolTester3D)
+    app.component('TestCard3D', TestCard3D)
+    app.component('AIProjectCard', AIProjectCard)
     
 
     // Agent 组件已移除
