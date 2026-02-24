@@ -2960,7 +2960,6 @@ ${content}`;
                   });
 
                   // 使用 https/http 模块请求（比 fetch 更可靠）
-                  const targetUrl = new URL(url);
                   const httpModule = targetUrl.protocol === 'https:' ? https : http;
                   
                   const requestOptions = {
