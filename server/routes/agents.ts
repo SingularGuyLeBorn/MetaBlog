@@ -125,6 +125,7 @@ export interface Agent {
   triggers?: Trigger[]
   createdAt: number
   updatedAt: number
+  isMaster?: boolean  // 标记是否为 Master Agent（不可删除）
   lastActiveAt: number
   lastRunAt?: number
   callCount: number
@@ -156,14 +157,112 @@ async function ensureDataDir() {
   }
 }
 
+// Master Agent 配置
+const MASTER_AGENT_CONFIG = {
+  id: 'master-agent',
+  name: 'Master Agent',
+  avatar: '👑',
+  avatarId: 0,
+  description: '系统级超级助手，拥有管理其他 Agent 和系统配置的特权。不可删除、不可修改。',
+  level: 'meta' as AgentLevel,
+  status: 'online' as AgentStatus,
+  seat: 0,
+  skills: ['sys_admin', 'agent_management', 'system_config'],
+  permissions: PERMISSION_TEMPLATES.map(p => ({ ...p, granted: true })),
+  systemPrompt: `你是 MetaBlog 系统的 Master Agent，拥有系统级特权。
+
+你的职责：
+1. 管理其他 Agent（创建、配置、删除）
+2. 监控系统状态
+3. 协助用户配置系统
+
+你可以使用的系统工具：
+- sys_list_agents: 列出所有 Agent
+- sys_create_agent: 创建新 Agent
+- sys_update_agent: 更新 Agent 配置
+- sys_delete_agent: 删除 Agent（不能删除 meta 级）
+- sys_update_trigger: 配置 Agent 触发器
+- sys_list_skills: 列出所有技能
+- sys_get_system_status: 获取系统状态
+
+请用专业、友好的态度帮助用户管理系统。`,
+  memoryEnabled: true,
+  memoryContent: '',
+  memory: {
+    shortTerm: { maxMessages: 50, ttl: 7200, messages: [] },
+    longTerm: { enabled: true, storagePath: '.memory/master-agent', entries: [] },
+    contextWindow: 8192
+  },
+  functionCall: {
+    enabled: true,
+    allowedTools: ['sys_list_agents', 'sys_create_agent', 'sys_update_agent', 'sys_delete_agent', 'sys_update_trigger', 'sys_list_skills', 'sys_get_system_status'],
+    customTools: [],
+    timeout: 60,
+    maxCallsPerRequest: 10
+  },
+  lifecycle: {
+    autoStart: true,
+    maxRunTime: 0,
+    idleTimeout: 0,
+    cleanupPolicy: 'keep' as const,
+    archiveAfter: 365
+  },
+  runtime: {
+    model: 'deepseek-chat',
+    temperature: 0.5,
+    maxTokens: 4096,
+    timeout: 120,
+    retryCount: 3,
+    retryDelay: 1
+  },
+  triggers: [{
+    id: 'master-trigger-default',
+    type: 'manual' as TriggerType,
+    name: '手动触发',
+    enabled: true,
+    config: {},
+    triggerCount: 0
+  }],
+  isDefault: false,
+  isMaster: true  // 标记为 Master Agent
+}
+
 // 读取所有 Agents
 async function readAgents(): Promise<Agent[]> {
   await ensureDataDir()
   try {
     const data = await fs.readFile(AGENTS_FILE, 'utf-8')
-    return JSON.parse(data)
+    const agents: Agent[] = JSON.parse(data)
+    
+    // 确保 Master Agent 存在
+    const hasMaster = agents.some(a => a.id === MASTER_AGENT_CONFIG.id || a.isMaster)
+    if (!hasMaster) {
+      const masterAgent: Agent = {
+        ...MASTER_AGENT_CONFIG,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        lastActiveAt: Date.now(),
+        callCount: 0,
+        totalRuns: 0,
+        errorCount: 0
+      }
+      agents.unshift(masterAgent)
+      await writeAgents(agents)
+    }
+    
+    return agents
   } catch {
-    // 文件不存在，返回默认 Agent
+    // 文件不存在，创建默认 Agents（包含 Master）
+    const now = Date.now()
+    const masterAgent: Agent = {
+      ...MASTER_AGENT_CONFIG,
+      createdAt: now,
+      updatedAt: now,
+      lastActiveAt: now,
+      callCount: 0,
+      totalRuns: 0,
+      errorCount: 0
+    }
     const defaultAgent: Agent = {
       id: 'default-assistant',
       name: 'Meta 助手',
@@ -206,23 +305,24 @@ async function readAgents(): Promise<Agent[]> {
         retryDelay: 1
       },
       triggers: [{
-        id: `trigger-${Date.now()}`,
+        id: `trigger-${now}`,
         type: 'manual',
         name: '手动触发',
         enabled: true,
         config: {},
         triggerCount: 0
       }],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      lastActiveAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
+      lastActiveAt: now,
       callCount: 0,
       totalRuns: 0,
       errorCount: 0,
       isDefault: true
     }
-    await writeAgents([defaultAgent])
-    return [defaultAgent]
+    const initialAgents = [masterAgent, defaultAgent]
+    await writeAgents(initialAgents)
+    return initialAgents
   }
 }
 
@@ -341,8 +441,25 @@ router.post('/update', async (req, res) => {
       } as ApiResponse)
     }
     
+    const existingAgent = agents[index]
+    
+    // 保护 meta 级 Agent 的关键字段
+    if (existingAgent.level === 'meta' || existingAgent.isMaster) {
+      // 不允许修改 level、isMaster、id 等关键字段
+      delete (updates as Partial<Agent>).level
+      delete (updates as Partial<Agent>).isMaster
+      delete (updates as Partial<Agent>).id
+      
+      // Master Agent 还有额外的保护字段
+      if (existingAgent.isMaster) {
+        delete (updates as Partial<Agent>).systemPrompt
+        delete (updates as Partial<Agent>).functionCall
+        delete (updates as Partial<Agent>).permissions
+      }
+    }
+    
     agents[index] = {
-      ...agents[index],
+      ...existingAgent,
       ...updates,
       id, // 确保 ID 不变
       updatedAt: Date.now()
@@ -365,14 +482,23 @@ router.post('/delete', async (req, res) => {
     const { id } = req.body
     const agents = await readAgents()
     
-    const filtered = agents.filter(a => a.id !== id)
-    if (filtered.length === agents.length) {
+    const agentToDelete = agents.find(a => a.id === id)
+    if (!agentToDelete) {
       return res.status(404).json({ 
         success: false, 
         error: 'Agent not found' 
       } as ApiResponse)
     }
     
+    // 保护 meta 级 Agent（包括 Master Agent）
+    if (agentToDelete.level === 'meta' || agentToDelete.isMaster) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Cannot delete meta-level or master agent' 
+      } as ApiResponse)
+    }
+    
+    const filtered = agents.filter(a => a.id !== id)
     await writeAgents(filtered)
     res.json({ success: true } as ApiResponse)
   } catch (error) {
