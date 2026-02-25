@@ -163,6 +163,23 @@ export interface AgentUpdateParams {
   lastActiveAt?: number
   callCount?: number
   status?: AgentStatus
+  triggers?: Array<{
+    id: string
+    type: 'manual' | 'scheduled' | 'event' | 'webhook'
+    name: string
+    enabled: boolean
+    config: Record<string, unknown>
+  }>
+  runtime?: {
+    model: string
+    temperature: number
+    maxTokens: number
+    topP?: number
+    frequencyPenalty?: number
+    timeout: number
+    retryCount: number
+    retryDelay: number
+  }
 }
 
 // ==================== 四种模式说明 ====================
