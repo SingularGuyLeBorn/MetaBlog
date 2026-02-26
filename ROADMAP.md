@@ -10,10 +10,57 @@
 |------|------|------|----------|
 | L1 | 静态博客 | ✅ 已完成 | VitePress + Markdown |
 | L2 | Chatbot | ✅ 已完成 | AI Chat + 流式响应 |
-| L3 | Agent 化 | 🟡 基本完成 | 22+ 工具 + Skills |
+| L3 | Agent 化 | ✅ 基本完成 | 41 工具 + Skills + 工具测试平台 |
 | L4 | 自主 Agent | 📝 待实现 | AgentScheduler |
 | L5 | Meta-Agent | 📝 待实现 | AgentFactory |
 | L6 | 状态监控 | 📝 待实现 | AgentMonitor |
+
+---
+
+## 🛠️ L3 工具系统完善计划
+
+### 当前工具状态（41个）
+
+| 类别 | 数量 | 工具列表 | 完成度 |
+|------|------|----------|--------|
+| 文章管理 | 6 | CRUD + 搜索 + 列表 | ✅ 100% |
+| GitHub | 6 | 仓库/文件/提交/Issues/搜索 | ✅ 100% |
+| 知识库 | 7 | KB CRUD + 文档管理 | ✅ 100%（内存存储） |
+| 文件操作 | 3 | read/write/list | ✅ 100% |
+| 文本处理 | 4 | 摘要/格式化/翻译 | ⚠️ translate 依赖 AI |
+| 代码工具 | 2 | 执行/分析 | ⚠️ execute 仅浏览器 |
+| 网络工具 | 3 | fetch/web_search/arxiv | ⚠️ web_search mock |
+| 系统工具 | 4 | 时间/天气/计算/回声 | ⚠️ weather mock |
+| 平台解析 | 4 | 知乎/小红书/微信/OCR | ⚠️ OCR mock |
+| 笔记工具 | 2 | 创建/列出 | ✅ 100% |
+
+### 需要修复的工具（高优先级）
+
+| 工具 | 当前问题 | 修复方案 | 预计工时 |
+|------|----------|----------|----------|
+| `web_search` | mock 数据 | 接入 SerpAPI/Google CSE | 1天 |
+| `get_weather` | mock 数据 | 接入和风/心知天气 API | 0.5天 |
+| `ocr_image` | 未实现 | 接入百度/腾讯 OCR API | 1天 |
+| `execute_code` | 浏览器执行 | 后端沙箱 (vm2/docker) | 2天 |
+| `fetch_url` | 简单 GET | 支持 JS 渲染 (puppeteer) | 1天 |
+
+### 计划新增工具（60+）
+
+#### 高优先级（核心工具）
+- [ ] 图片处理：compress_image, resize_image, crop_image
+- [ ] PDF 处理：read_pdf, merge_pdf, split_pdf
+- [ ] 数据库：query_database, backup_database
+- [ ] Git 操作：git_status, git_commit, git_push, git_clone
+- [ ] 邮件：send_email, read_email
+- [ ] RSS：fetch_rss, subscribe_feed
+
+#### 中优先级（扩展功能）
+- [ ] 图表：generate_chart, generate_mermaid
+- [ ] 视频：extract_audio, compress_video
+- [ ] 日历：create_event, list_events, delete_event
+- [ ] 社交：post_twitter, post_weibo
+- [ ] AI 增强：generate_image, enhance_text
+- [ ] 安全：encrypt_text, decrypt_text, hash_file
 
 ---
 
