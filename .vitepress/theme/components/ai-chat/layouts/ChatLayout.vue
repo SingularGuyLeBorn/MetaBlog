@@ -14,7 +14,6 @@
       @rename="handleRename"
       @delete="handleDelete"
       @manage="showSessionManager = true"
-      @toggle-collapse="leftCollapsed = !leftCollapsed"
     />
 
     <!-- 中间聊天区域 -->
@@ -212,7 +211,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { Teleport } from 'vue'
 import { SessionPanel, SessionManager } from '../modules/chat/session'
 import { MessageList } from '../modules/chat/messages'
@@ -253,7 +252,7 @@ const { buildSystemPrompt } = useAgentConfig()
 
 // UI 状态
 const leftCollapsed = ref(false)
-const rightCollapsed = ref(true)
+const rightCollapsed = ref(false)  // 默认打开右侧配置栏
 const inputText = ref('')
 const messageListRef = ref<InstanceType<typeof MessageList>>()
 const chatInputRef = ref<InstanceType<typeof ChatInput>>()
@@ -355,6 +354,31 @@ onUnmounted(() => {
 watch(() => activeAgent.value, (agent) => {
   if (agent && !selectedAgent.value) {
     selectedAgent.value = agent
+  }
+})
+
+// 监听当前选中 Agent 的配置变化（实时同步 systemPrompt）
+watchEffect(() => {
+  if (!selectedAgent.value || !currentSession.value) return
+  
+  // 获取当前 Agent 的最新配置
+  const currentAgent = allAgents.value.find(a => a.id === selectedAgent.value?.id)
+  if (!currentAgent) return
+  
+  // 如果会话没有自定义 systemPrompt，则同步 Agent 的配置
+  if (!currentSession.value.config._customSystemPrompt) {
+    const newSystemPrompt = currentAgent.systemPrompt || buildSystemPrompt(currentAgent)
+    const currentSystemPrompt = currentSession.value.config.systemPrompt
+    
+    // 只有当 systemPrompt 发生变化时才更新
+    if (newSystemPrompt !== currentSystemPrompt) {
+      updateSessionConfig(currentSession.value.id, { systemPrompt: newSystemPrompt })
+    }
+  }
+  
+  // 同步更新 selectedAgent 的引用
+  if (currentAgent !== selectedAgent.value) {
+    selectedAgent.value = currentAgent
   }
 })
 

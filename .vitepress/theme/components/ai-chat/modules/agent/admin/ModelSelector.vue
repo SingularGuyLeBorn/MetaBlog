@@ -492,7 +492,7 @@ watch(() => props.initialParams, (newParams) => {
 /* ===== 主布局 ===== */
 .model-layout {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: 1fr auto;
   gap: 20px;
   min-height: 400px;
 }
@@ -501,6 +501,7 @@ watch(() => props.initialParams, (newParams) => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0; /* 防止 flex item 溢出 */
 }
 
 .section-title {
@@ -938,6 +939,7 @@ watch(() => props.initialParams, (newParams) => {
 /* ===== 模型详细信息面板 - 液态玻璃 ===== */
 .model-detail-panel {
   position: relative;
+  width: 380px;
   min-height: 400px;
   background: linear-gradient(
     145deg,

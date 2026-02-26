@@ -103,6 +103,19 @@
         <polyline points="12 19 5 12 12 5"/>
       </template>
       
+      <!-- 右箭头 -->
+      <template v-else-if="name === 'arrow-right'">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </template>
+      
+      <!-- 图层/堆叠（管理会话） -->
+      <template v-else-if="name === 'layers'">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+        <polyline points="2 17 12 22 22 17"/>
+        <polyline points="2 12 12 17 22 12"/>
+      </template>
+      
       <!-- 闪光/AI -->
       <template v-else-if="name === 'sparkles'">
         <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>

@@ -9,10 +9,7 @@
     "seat": 1,
     "capabilities": {
       "mode": "skills-only",
-      "skillIds": [
-        "skill-1771864714590-2",
-        "skill-1771864714590-3"
-      ],
+      "skillIds": [],
       "toolIds": [],
       "customSystemPrompt": ""
     },
@@ -26,7 +23,57 @@
     "callCount": 0,
     "isDefault": true,
     "createdAt": 1771864714589,
-    "updatedAt": 1771866634292,
-    "lastActiveAt": 1771864714589
+    "updatedAt": 1772122663181,
+    "lastActiveAt": 1772121797966,
+    "runtime": {
+      "model": "deepseek-reasoner",
+      "temperature": 0.7,
+      "maxTokens": 2048,
+      "topP": 0.95,
+      "frequencyPenalty": 0,
+      "timeout": 60,
+      "retryCount": 3,
+      "retryDelay": 1
+    }
+  },
+  {
+    "id": "agent-1772117562518-c2smku9",
+    "name": "测试",
+    "avatar": "🧠",
+    "description": "很有意思",
+    "level": "custom",
+    "status": "online",
+    "seat": 1,
+    "capabilities": {
+      "mode": "hybrid",
+      "skillIds": [
+        "skill-1771864714590-1",
+        "skill-1771864714590-2"
+      ],
+      "toolIds": [],
+      "customSystemPrompt": ""
+    },
+    "memory": {
+      "enabled": true,
+      "content": "测试记忆",
+      "autoExtract": true,
+      "maxTokens": 2000
+    },
+    "permissions": [],
+    "callCount": 0,
+    "isDefault": false,
+    "createdAt": 1772117562518,
+    "updatedAt": 1772122686181,
+    "lastActiveAt": 1772122673666,
+    "runtime": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "maxTokens": 2048,
+      "topP": 0.95,
+      "frequencyPenalty": 0,
+      "timeout": 60,
+      "retryCount": 3,
+      "retryDelay": 1
+    }
   }
 ]

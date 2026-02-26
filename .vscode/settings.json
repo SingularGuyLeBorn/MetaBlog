@@ -6,5 +6,7 @@
     "jupyter.askForKernelRestart": false,
     "notebook.defaultKernel": "foundation-py310",
     "python.terminal.useEnvFile": true,
-    "python-envs.pythonProjects": []
+    "python-envs.pythonProjects": [],
+    "kimi.alwaysExpandThinking": true,
+    "kimi.useCtrlEnterToSend": true
 }

@@ -31,14 +31,16 @@
             class="search-input"
           >
         </div>
-        <button 
-          class="manage-sessions-btn"
-          title="管理所有会话"
-          @click="$emit('manage')"
-        >
-          <Icon name="settings" :size="16" />
-        </button>
       </div>
+      
+      <!-- 管理所有会话按钮 -->
+      <button 
+        class="manage-all-btn"
+        @click="$emit('manage')"
+      >
+        <Icon name="layers" :size="14" />
+        <span>管理所有会话</span>
+      </button>
 
       <div class="session-list ai-scroll">
         <div v-for="group in filteredGroups" :key="group.label" class="session-group">
@@ -88,9 +90,6 @@
       </div>
     </div>
 
-    <button class="collapse-btn-3d" @click="$emit('toggle-collapse')">
-      <Icon :name="collapsed ? 'chevron-right' : 'chevron-down'" :size="16" />
-    </button>
   </aside>
 </template>
 
@@ -118,7 +117,6 @@ const emit = defineEmits<{
   rename: [id: string, newTitle: string]
   delete: [id: string]
   manage: []
-  'toggle-collapse': []
 }>()
 
 // 搜索
@@ -321,31 +319,32 @@ function cancelRename() {
   color: #94a3b8;
 }
 
-/* 管理会话按钮 */
-.manage-sessions-btn {
-  width: 42px;
-  height: 42px;
+/* 管理所有会话按钮 */
+.manage-all-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+  width: calc(100% - 40px);
+  margin: 0 20px 16px;
+  padding: 10px 16px;
   background: linear-gradient(145deg, #ffffff, #f8fafc);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 12px;
   color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-  flex-shrink: 0;
 }
 
-.manage-sessions-btn:hover {
+.manage-all-btn:hover {
   background: linear-gradient(145deg, #eff6ff, #dbeafe);
   border-color: #3b82f6;
   color: #3b82f6;
-  transform: translateY(-2px);
-  box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.2),
-    0 0 0 3px rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
 /* 会话列表 */
@@ -548,33 +547,6 @@ function cancelRename() {
 }
 
 /* 3D 折叠按钮 */
-.collapse-btn-3d {
-  position: absolute;
-  right: -12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 24px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 0 12px 12px 0;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.06);
-  z-index: 10;
-}
-
-.collapse-btn-3d:hover {
-  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
-  color: #3b82f6;
-  width: 28px;
-  box-shadow: 4px 0 16px rgba(59, 130, 246, 0.15);
-}
-
 /* Agent 标识 */
 .agent-indicator {
   display: flex;

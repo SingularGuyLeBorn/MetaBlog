@@ -134,7 +134,7 @@
         <p class="section-desc-3d">控制回答的最大长度</p>
       </div>
 
-      <!-- 系统提示词 -->
+      <!-- 系统提示词 - 模态框形式 -->
       <div class="setting-section-3d">
         <div class="section-header-with-badge">
           <label class="section-label-3d">
@@ -149,35 +149,21 @@
           </span>
         </div>
         
-        <div class="prompt-input-wrapper-3d">
-          <textarea
-            v-model="config.systemPrompt"
-            class="prompt-input-3d"
-            :class="{ customized: isSystemPromptCustomized }"
-            rows="5"
-            placeholder="设置 AI 的角色和行为方式..."
-            @input="onSystemPromptInput"
-          ></textarea>
-          <div class="input-footer-3d">
-            <span class="char-count">{{ config.systemPrompt?.length || 0 }} 字符</span>
-            <div class="prompt-actions">
-              <button 
-                v-if="isSystemPromptCustomized" 
-                class="reset-btn-3d"
-                @click="resetToAgentPrompt"
-                title="重置为 Agent 默认"
-              >
-                <Icon name="refresh" :size="12" />
-                重置
-              </button>
-              <button 
-                v-if="config.systemPrompt" 
-                class="clear-btn-3d"
-                @click="clearSystemPrompt"
-              >
-                清空
-              </button>
-            </div>
+        <!-- 提示词预览卡片 -->
+        <div 
+          class="prompt-preview-card"
+          :class="{ customized: isSystemPromptCustomized }"
+          @click="openPromptModal"
+        >
+          <div class="preview-header">
+            <span class="preview-label">System instructions</span>
+            <button class="edit-btn" @click.stop="openPromptModal">
+              <Icon name="edit" :size="14" />
+              编辑
+            </button>
+          </div>
+          <div class="preview-content">
+            {{ config.systemPrompt || '点击编辑系统提示词...' }}
           </div>
         </div>
         
@@ -188,30 +174,49 @@
               : '使用 Agent 默认的系统提示词，修改后将仅影响当前会话' 
             }}
           </p>
-          <div v-if="agentSystemPrompt && !isSystemPromptCustomized" class="agent-prompt-preview">
-            <div class="preview-label">Agent 默认提示词：</div>
-            <div class="preview-text">{{ agentSystemPrompt.slice(0, 100) }}{{ agentSystemPrompt.length > 100 ? '...' : '' }}</div>
-          </div>
         </div>
       </div>
-
-      <!-- Agent 控制中心 -->
-      <div class="setting-section-3d">
-        <label class="section-label-3d">
-          <span class="label-icon">🤖</span>
-          Agent 管理
-        </label>
-        <button class="agent-center-btn-3d" @click="$emit('open-agent-center')">
-          <span class="btn-icon">⚡</span>
-          <div class="btn-content">
-            <span class="btn-title">打开控制中心</span>
-            <span class="btn-desc">管理 Agents、技能、触发器</span>
+      
+      <!-- 系统提示词编辑模态框 -->
+      <Teleport to="body">
+        <Transition name="modal-fade">
+          <div v-if="showPromptModal" class="prompt-modal-overlay" @click.self="closePromptModal">
+            <Transition name="modal-scale">
+              <div v-if="showPromptModal" class="prompt-modal">
+                <div class="modal-header">
+                  <h3>编辑系统提示词</h3>
+                  <button class="modal-close" @click="closePromptModal">
+                    <Icon name="close" :size="20" />
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <textarea
+                    v-model="editingPrompt"
+                    class="modal-textarea"
+                    rows="12"
+                    placeholder="定义 AI 助手的身份、性格和专长领域..."
+                  ></textarea>
+                  <div class="modal-footer">
+                    <span class="char-count">{{ editingPrompt?.length || 0 }} 字符</span>
+                    <div class="modal-actions">
+                      <button 
+                        v-if="isSystemPromptCustomized" 
+                        class="btn-reset"
+                        @click="resetInModal"
+                      >
+                        <Icon name="refresh" :size="14" />
+                        重置为 Agent 默认
+                      </button>
+                      <button class="btn-cancel" @click="closePromptModal">取消</button>
+                      <button class="btn-save" @click="savePrompt">保存</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Transition>
           </div>
-          <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-        </button>
-      </div>
+        </Transition>
+      </Teleport>
 
       <!-- 重置按钮 -->
       <div class="setting-section-3d">
@@ -228,7 +233,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { Teleport } from 'vue'
 import type { SessionConfig, ModelType } from '../../../core/types'
 
 interface ModelConfig {
@@ -329,6 +335,35 @@ function resetSettings() {
 }
 
 // System Prompt 相关方法
+// 模态框状态
+const showPromptModal = ref(false)
+const editingPrompt = ref('')
+
+// 监听配置变化，同步编辑内容
+watch(() => props.config.systemPrompt, (newVal) => {
+  if (!showPromptModal.value) {
+    editingPrompt.value = newVal || ''
+  }
+}, { immediate: true })
+
+function openPromptModal() {
+  editingPrompt.value = props.config.systemPrompt || ''
+  showPromptModal.value = true
+}
+
+function closePromptModal() {
+  showPromptModal.value = false
+}
+
+function savePrompt() {
+  emit('update:config', { systemPrompt: editingPrompt.value })
+  closePromptModal()
+}
+
+function resetInModal() {
+  editingPrompt.value = props.agentSystemPrompt
+}
+
 function onSystemPromptInput() {
   // 当用户手动输入时，标记为已自定义
   // 通过比较当前值与 Agent 默认值来判断是否自定义
@@ -989,6 +1024,248 @@ function resetToAgentPrompt() {
   background: linear-gradient(180deg, #94a3b8, #64748b);
 }
 
+/* ===== 提示词预览卡片 ===== */
+.prompt-preview-card {
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.prompt-preview-card:hover {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.prompt-preview-card.customized {
+  background: linear-gradient(145deg, #fffbeb, #fef3c7);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.preview-header .preview-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(59, 130, 246, 0.1);
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.preview-content {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  min-height: 60px;
+}
+
+/* ===== 模态框 ===== */
+.prompt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: 20px;
+}
+
+.prompt-modal {
+  width: 100%;
+  max-width: 600px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 20px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(241, 245, 249, 0.8);
+  border: none;
+  border-radius: 10px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-textarea {
+  width: 100%;
+  padding: 16px;
+  background: #ffffff;
+  border: 2px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1e293b;
+  resize: vertical;
+  min-height: 200px;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.modal-textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-cancel {
+  padding: 10px 20px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #e2e8f0;
+}
+
+.btn-save {
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-save:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+
+.btn-reset {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-reset:hover {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+/* 模态框过渡动画 */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-scale-enter-active {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-scale-leave-active {
+  transition: all 0.2s ease;
+}
+
+.modal-scale-enter-from {
+  opacity: 0;
+  transform: scale(0.95) translateY(20px);
+}
+
+.modal-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
 /* 响应式 */
 @media (max-width: 1024px) {
   .settings-panel-3d {
@@ -996,6 +1273,11 @@ function resetToAgentPrompt() {
     right: 0;
     height: 100%;
     box-shadow: -8px 0 32px rgba(0, 0, 0, 0.1);
+  }
+  
+  .prompt-modal {
+    max-width: 100%;
+    margin: 16px;
   }
 }
 </style>
