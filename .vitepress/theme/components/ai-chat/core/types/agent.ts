@@ -234,7 +234,7 @@ export const CONFIG_MODES: ConfigModeInfo[] = [
     useCases: ['专业写作', '代码开发', '数据分析'],
     showSkillSelector: true,
     showToolSelector: false,
-    showSystemPrompt: false
+    showSystemPrompt: true
   },
   {
     id: 'tools-only',
@@ -266,7 +266,7 @@ export const CONFIG_MODES: ConfigModeInfo[] = [
     useCases: ['复杂任务', '跨领域工作', '能力扩展'],
     showSkillSelector: true,
     showToolSelector: true,
-    showSystemPrompt: false
+    showSystemPrompt: true
   }
 ]
 

@@ -156,19 +156,40 @@
     <!-- 日志监控面板 -->
     <LogDashboard v-model:visible="showLogDashboard" />
     
-    <!-- 删除确认弹窗 -->
+    <!-- 删除确认弹窗 - 液态玻璃 3D 风格 -->
     <Teleport to="body">
-      <div v-if="showDeleteConfirm" class="confirm-overlay" @click.self="showDeleteConfirm = false">
-        <div class="confirm-modal">
-          <div class="confirm-icon">⚠️</div>
-          <h4>确认删除会话</h4>
-          <p class="confirm-hint">删除后无法恢复，该会话的所有消息都将被清除</p>
-          <div class="confirm-actions">
-            <button class="btn-secondary" @click="showDeleteConfirm = false">取消</button>
-            <button class="btn-danger" @click="executeDelete">确认删除</button>
+      <Transition name="glass-modal">
+        <div v-if="showDeleteConfirm" class="glass-overlay" @click.self="showDeleteConfirm = false">
+          <div class="glass-modal-3d">
+            <!-- 玻璃光效 -->
+            <div class="glass-shine"></div>
+            <div class="glass-glow"></div>
+            
+            <div class="glass-content">
+              <!-- 警告图标 -->
+              <div class="glass-icon-wrapper">
+                <div class="glass-icon">⚠️</div>
+                <div class="icon-ring"></div>
+              </div>
+              
+              <h4 class="glass-title">确认删除会话</h4>
+              <p class="glass-hint">删除后无法恢复，该会话的所有消息都将被清除</p>
+              
+              <div class="glass-actions">
+                <button class="glass-btn secondary" @click="showDeleteConfirm = false">
+                  <span class="btn-shine"></span>
+                  取消
+                </button>
+                <button class="glass-btn danger" @click="executeDelete">
+                  <span class="btn-shine"></span>
+                  <span class="danger-pulse"></span>
+                  确认删除
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </Transition>
     </Teleport>
   </div>
 </template>
@@ -754,79 +775,251 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   background: #a7f3d0;
 }
 
-/* 删除确认弹窗 */
-.confirm-overlay {
+/* ========== 液态玻璃 3D 弹窗 ========== */
+.glass-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  perspective: 1000px;
 }
 
-.confirm-modal {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
+.glass-modal-3d {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(248, 250, 252, 0.85) 50%,
+    rgba(241, 245, 249, 0.8) 100%
+  );
+  border-radius: 24px;
+  padding: 40px;
   text-align: center;
-  max-width: 360px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 90%;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.4) inset,
+    0 0 60px rgba(99, 102, 241, 0.1);
+  transform-style: preserve-3d;
+  animation: modal-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
 }
 
-.confirm-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(30px) rotateX(-10deg) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0) scale(1);
+  }
 }
 
-.confirm-modal h4 {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 8px;
-  color: var(--ai-text-primary);
+.glass-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shine 3s infinite;
 }
 
-.confirm-hint {
+@keyframes shine {
+  0%, 100% { left: -100%; }
+  50% { left: 100%; }
+}
+
+.glass-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(
+    circle,
+    rgba(99, 102, 241, 0.15) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.glass-content {
+  position: relative;
+  z-index: 1;
+}
+
+.glass-icon-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+.glass-icon {
+  font-size: 56px;
+  position: relative;
+  z-index: 1;
+  animation: icon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes icon-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.icon-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  border: 2px solid rgba(239, 68, 68, 0.2);
+  border-radius: 50%;
+  animation: ring-expand 2s ease-out infinite;
+}
+
+@keyframes ring-expand {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+.glass-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: #1e293b;
+  background: linear-gradient(135deg, #1e293b, #475569);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-hint {
   font-size: 14px;
-  color: var(--ai-text-secondary);
-  margin: 0 0 24px;
+  color: #64748b;
+  margin: 0 0 28px;
+  line-height: 1.6;
 }
 
-.confirm-actions {
+.glass-actions {
   display: flex;
   gap: 12px;
   justify-content: center;
 }
 
-.btn-secondary,
-.btn-danger {
-  padding: 10px 20px;
-  border-radius: 8px;
+.glass-btn {
+  position: relative;
+  padding: 12px 24px;
+  border-radius: 12px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  overflow: hidden;
 }
 
-.btn-secondary {
-  background: var(--ai-gray-100);
-  border: 1px solid var(--ai-border-light);
-  color: var(--ai-text-secondary);
+.glass-btn .btn-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.5s;
 }
 
-.btn-secondary:hover {
-  background: var(--ai-gray-200);
+.glass-btn:hover .btn-shine {
+  left: 100%;
 }
 
-.btn-danger {
-  background: #ef4444;
-  border: 1px solid #ef4444;
+.glass-btn.secondary {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  color: #475569;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.glass-btn.secondary:hover {
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.glass-btn.danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: white;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
 }
 
-.btn-danger:hover {
-  background: #dc2626;
+.glass-btn.danger:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+}
+
+.danger-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  border: 2px solid rgba(239, 68, 68, 0.5);
+  animation: danger-pulse 2s ease-out infinite;
+}
+
+@keyframes danger-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* 弹窗过渡动画 */
+.glass-modal-enter-active,
+.glass-modal-leave-active {
+  transition: all 0.3s ease;
+}
+
+.glass-modal-enter-from,
+.glass-modal-leave-to {
+  opacity: 0;
+}
+
+.glass-modal-enter-from .glass-modal-3d,
+.glass-modal-leave-to .glass-modal-3d {
+  transform: translateY(20px) scale(0.95);
+  opacity: 0;
 }
 
 /* 响应式 */

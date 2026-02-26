@@ -8,8 +8,15 @@
 -->
 <template>
   <div class="model-selector-liquid">
-    <!-- 模型选择卡片 -->
-    <div class="model-grid">
+    <!-- 主布局：模型选择 + 详细信息 -->
+    <div class="model-layout">
+      <!-- 左侧：模型选择卡片 -->
+      <div class="model-grid-section">
+        <h3 class="section-title">
+          <span class="title-icon">🤖</span>
+          选择模型
+        </h3>
+        <div class="model-grid">
       <label
         v-for="model in models"
         :key="model.id"
@@ -54,6 +61,80 @@
         <div class="model-shine" />
         <div class="model-ripple" />
       </label>
+    </div>
+      </div>
+      
+      <!-- 右侧：选中模型的详细信息 -->
+      <div class="model-detail-panel" :class="{ 'has-selection': selectedModel }">
+        <Transition name="detail-slide">
+          <div v-if="selectedModelData" class="detail-content">
+            <!-- 玻璃光效 -->
+            <div class="detail-glow"></div>
+            <div class="detail-shine"></div>
+            
+            <div class="detail-header">
+              <div class="detail-icon-wrapper">
+                <span class="detail-icon">{{ selectedModelData.icon }}</span>
+                <div class="icon-glow" :class="selectedModelData.tier"></div>
+              </div>
+              <div class="detail-title-group">
+                <h4 class="detail-name">{{ selectedModelData.name }}</h4>
+                <div class="detail-badges">
+                  <span class="detail-badge tier" :class="selectedModelData.tier">
+                    {{ tierLabel(selectedModelData.tier) }}
+                  </span>
+                  <span v-if="selectedModelData.isRecommended" class="detail-badge recommended">推荐</span>
+                  <span v-if="selectedModelData.isNew" class="detail-badge new">NEW</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="detail-description">
+              <p class="desc-main">{{ selectedModelData.description }}</p>
+            </div>
+            
+            <div class="detail-specs">
+              <div class="spec-card">
+                <div class="spec-icon-bg">📊</div>
+                <div class="spec-info">
+                  <span class="spec-label">上下文窗口</span>
+                  <span class="spec-value">{{ selectedModelData.contextWindow.toLocaleString() }} tokens</span>
+                </div>
+              </div>
+              <div class="spec-card">
+                <div class="spec-icon-bg">💰</div>
+                <div class="spec-info">
+                  <span class="spec-label">价格等级</span>
+                  <span class="spec-value">{{ selectedModelData.pricing }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="detail-features">
+              <h5 class="features-title">✨ 模型特点</h5>
+              <ul class="features-list">
+                <li v-for="(feature, index) in modelFeatures" :key="index" class="feature-item">
+                  <span class="feature-dot"></span>
+                  <span class="feature-text">{{ feature }}</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div class="detail-actions">
+              <button class="action-btn primary" @click="confirmSelection">
+                <span class="btn-glow"></span>
+                确认选择
+              </button>
+            </div>
+          </div>
+        </Transition>
+        
+        <!-- 空状态 -->
+        <div v-if="!selectedModelData" class="detail-empty">
+          <div class="empty-icon">🤖</div>
+          <p class="empty-text">选择左侧模型查看详细信息</p>
+        </div>
+      </div>
     </div>
 
     <!-- 高级参数配置 -->
@@ -317,13 +398,64 @@ const params = reactive<ModelParams>({
 })
 
 // 计算属性
+const selectedModelData = computed(() => {
+  return models.find(m => m.id === selectedModel.value)
+})
+
 const currentModelInfo = computed(() => {
   const model = models.find(m => m.id === selectedModel.value)
   if (!model) return ''
   return `${model.name} · ${model.contextWindow.toLocaleString()} tokens 上下文`
 })
 
+// 模型特点（基于模型类型生成）
+const modelFeatures = computed(() => {
+  const model = selectedModelData.value
+  if (!model) return []
+  
+  const features: string[] = []
+  
+  // 基于模型 ID 生成特点
+  if (model.id.includes('deepseek')) {
+    features.push('深度思考能力，擅长逻辑推理')
+    features.push('中文理解优秀，适合中文场景')
+    features.push('代码生成能力强')
+  } else if (model.id.includes('gpt')) {
+    features.push('多模态理解，支持图像输入')
+    features.push('知识覆盖面广，通用性强')
+    features.push('指令遵循能力强')
+  } else if (model.id.includes('claude')) {
+    features.push('超长上下文处理能力')
+    features.push('安全性高，内容审核严格')
+    features.push('擅长长文档分析和总结')
+  } else if (model.id.includes('gemini')) {
+    features.push('Google 原生多模态模型')
+    features.push('百万级超长上下文')
+    features.push('与 Google 生态深度集成')
+  } else if (model.id.includes('local')) {
+    features.push('数据隐私完全可控')
+    features.push('无需联网，离线可用')
+    features.push('可自定义模型和参数')
+  }
+  
+  return features
+})
+
 // 方法
+function tierLabel(tier: string): string {
+  const labels: Record<string, string> = {
+    'free': '免费',
+    'standard': '标准',
+    'premium': '高级'
+  }
+  return labels[tier] || tier
+}
+
+function confirmSelection() {
+  // 确认选择的动画效果
+  emit('change', selectedModel.value, { ...params })
+}
+
 function onModelChange() {
   emit('change', selectedModel.value, { ...params })
 }
@@ -355,6 +487,34 @@ watch(() => props.initialParams, (newParams) => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+/* ===== 主布局 ===== */
+.model-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  min-height: 400px;
+}
+
+.model-grid-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.title-icon {
+  font-size: 20px;
 }
 
 /* ===== 模型卡片网格 ===== */
@@ -775,7 +935,408 @@ watch(() => props.initialParams, (newParams) => {
   font-size: 14px;
 }
 
+/* ===== 模型详细信息面板 - 液态玻璃 ===== */
+.model-detail-panel {
+  position: relative;
+  min-height: 400px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(248, 250, 252, 0.85) 50%,
+    rgba(241, 245, 249, 0.8) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  padding: 24px;
+  overflow: hidden;
+  box-shadow: 
+    0 24px 48px rgba(0, 0, 0, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.04),
+    inset 0 1px 1px rgba(255, 255, 255, 0.9);
+}
+
+.model-detail-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.8),
+    transparent
+  );
+}
+
+.detail-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.detail-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(
+    circle,
+    rgba(99, 102, 241, 0.08) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.detail-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: detail-shine 3s infinite;
+}
+
+@keyframes detail-shine {
+  0%, 100% { left: -100%; }
+  50% { left: 100%; }
+}
+
+/* 详情头部 */
+.detail-header {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.detail-icon-wrapper {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9),
+    rgba(241, 245, 249, 0.8)
+  );
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.9);
+}
+
+.detail-icon {
+  font-size: 32px;
+  z-index: 1;
+}
+
+.icon-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 24px;
+  opacity: 0.5;
+  filter: blur(12px);
+}
+
+.icon-glow.free {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.icon-glow.standard {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+}
+
+.icon-glow.premium {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+}
+
+.detail-title-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.detail-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  background: linear-gradient(135deg, #1e293b, #475569);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.detail-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detail-badge {
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-badge.tier {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.detail-badge.tier.free {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.detail-badge.tier.premium {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.detail-badge.recommended {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+}
+
+.detail-badge.new {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: white;
+}
+
+/* 描述 */
+.detail-description {
+  margin-bottom: 20px;
+}
+
+.desc-main {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #475569;
+  margin: 0;
+}
+
+/* 规格卡片 */
+.detail-specs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.spec-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 14px;
+  transition: all 0.3s ease;
+}
+
+.spec-card:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateX(4px);
+}
+
+.spec-icon-bg {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  border-radius: 12px;
+  font-size: 18px;
+}
+
+.spec-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.spec-label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.spec-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* 特性列表 */
+.detail-features {
+  flex: 1;
+  margin-bottom: 20px;
+}
+
+.features-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 12px;
+}
+
+.features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.feature-dot {
+  width: 6px;
+  height: 6px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+}
+
+/* 操作按钮 */
+.detail-actions {
+  margin-top: auto;
+}
+
+.action-btn {
+  position: relative;
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  box-shadow: 
+    0 4px 14px rgba(99, 102, 241, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.action-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 24px rgba(99, 102, 241, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+.btn-glow {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.action-btn:hover .btn-glow {
+  left: 100%;
+}
+
+/* 空状态 */
+.detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* 过渡动画 */
+.detail-slide-enter-active {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.detail-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.detail-slide-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.detail-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
 /* ===== 响应式 ===== */
+@media (max-width: 1024px) {
+  .model-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .model-detail-panel {
+    min-height: auto;
+  }
+}
+
 @media (max-width: 640px) {
   .model-grid {
     grid-template-columns: 1fr;

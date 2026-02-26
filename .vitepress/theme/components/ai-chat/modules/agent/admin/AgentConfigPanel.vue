@@ -148,13 +148,18 @@
               </div>
             </div>
 
-            <!-- 系统提示词编辑器 -->
+            <!-- 系统提示词编辑器（所有模式都显示） -->
             <div v-if="modeInfo.showSystemPrompt" class="selection-section">
               <div class="section-header">
                 <h4>
                   <span class="section-icon">📝</span>
                   系统提示词
+                  <span v-if="config.mode !== 'raw'" class="optional-badge">可选</span>
+                  <span v-else class="required-badge">必填</span>
                 </h4>
+                <span class="header-hint">
+                  {{ config.mode === 'raw' ? '定义 AI 的核心角色和能力' : '用于补充或覆盖技能包的提示词' }}
+                </span>
               </div>
               <div class="prompt-editor">
                 <div class="prompt-templates">
@@ -921,6 +926,34 @@ watch(() => props.agent, (newAgent) => {
   font-size: 11px;
   font-weight: 600;
   border-radius: 100px;
+}
+
+.optional-badge,
+.required-badge {
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.optional-badge {
+  background: rgba(148, 163, 184, 0.15);
+  color: #64748b;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.required-badge {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.header-hint {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 400;
 }
 
 /* Skill 网格 */

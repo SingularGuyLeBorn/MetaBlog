@@ -116,15 +116,14 @@
             </p>
           </div>
           
+          <!-- 时区选择 - 液态玻璃 3D 下拉框 -->
           <div class="timezone-select">
             <label>时区</label>
-            <select v-model="config.scheduled.timezone" class="liquid-select">
-              <option value="Asia/Shanghai">北京时间 (Asia/Shanghai)</option>
-              <option value="Asia/Tokyo">东京时间 (Asia/Tokyo)</option>
-              <option value="America/New_York">纽约时间 (America/New_York)</option>
-              <option value="Europe/London">伦敦时间 (Europe/London)</option>
-              <option value="UTC">UTC</option>
-            </select>
+            <GlassSelect
+              v-model="config.scheduled.timezone"
+              :options="timezoneOptions"
+              placeholder="选择时区"
+            />
           </div>
           
           <div class="schedule-preview">
@@ -262,6 +261,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
+import GlassSelect from './GlassSelect.vue'
 
 interface TriggerConfig {
   type: 'manual' | 'scheduled' | 'event' | 'webhook'
@@ -339,6 +339,15 @@ const cronPresets = [
   { name: '工作日早9点', cron: '0 9 * * 1-5' },
   { name: '每周一', cron: '0 9 * * 1' },
   { name: '每月1日', cron: '0 9 1 * *' }
+]
+
+// 时区选项
+const timezoneOptions = [
+  { value: 'Asia/Shanghai', label: '北京时间', subLabel: 'Asia/Shanghai' },
+  { value: 'Asia/Tokyo', label: '东京时间', subLabel: 'Asia/Tokyo' },
+  { value: 'America/New_York', label: '纽约时间', subLabel: 'America/New_York' },
+  { value: 'Europe/London', label: '伦敦时间', subLabel: 'Europe/London' },
+  { value: 'UTC', label: 'UTC', subLabel: '协调世界时' }
 ]
 
 // 本地状态
@@ -826,8 +835,7 @@ validateCron()
   gap: 8px;
 }
 
-.liquid-input,
-.liquid-select {
+.liquid-input {
   flex: 1;
   padding: 12px 16px;
   background: rgba(255, 255, 255, 0.8);
@@ -839,8 +847,7 @@ validateCron()
   transition: all 0.3s ease;
 }
 
-.liquid-input:focus,
-.liquid-select:focus {
+.liquid-input:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
