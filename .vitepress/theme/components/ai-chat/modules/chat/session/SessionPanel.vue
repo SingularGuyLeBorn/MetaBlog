@@ -20,14 +20,24 @@
         <span class="agent-label">{{ agentName }}</span>
       </div>
 
-      <div class="search-box-3d">
-        <Icon name="search" :size="16" />
-        <input 
-          v-model="searchQuery" 
-          type="text" 
-          placeholder="搜索会话..."
-          class="search-input"
+      <!-- 搜索和管理 -->
+      <div class="search-manage-row">
+        <div class="search-box-3d">
+          <Icon name="search" :size="16" />
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            placeholder="搜索当前 Agent 的会话..."
+            class="search-input"
+          >
+        </div>
+        <button 
+          class="manage-sessions-btn"
+          title="管理所有会话"
+          @click="$emit('manage')"
         >
+          <Icon name="settings" :size="16" />
+        </button>
       </div>
 
       <div class="session-list ai-scroll">
@@ -107,6 +117,7 @@ const emit = defineEmits<{
   switch: [id: string]
   rename: [id: string, newTitle: string]
   delete: [id: string]
+  manage: []
   'toggle-collapse': []
 }>()
 
@@ -266,12 +277,20 @@ function cancelRename() {
   transform: translateY(0) rotateX(0);
 }
 
-/* 3D 搜索框 */
-.search-box-3d {
+/* 搜索和管理行 */
+.search-manage-row {
   display: flex;
   align-items: center;
   gap: 10px;
   margin: 16px 20px;
+}
+
+/* 3D 搜索框 */
+.search-box-3d {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 12px 16px;
   background: linear-gradient(145deg, #ffffff, #f8fafc);
   border: 1px solid rgba(226, 232, 240, 0.8);
@@ -300,6 +319,33 @@ function cancelRename() {
 
 .search-input::placeholder {
   color: #94a3b8;
+}
+
+/* 管理会话按钮 */
+.manage-sessions-btn {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  flex-shrink: 0;
+}
+
+.manage-sessions-btn:hover {
+  background: linear-gradient(145deg, #eff6ff, #dbeafe);
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 12px rgba(59, 130, 246, 0.2),
+    0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 /* 会话列表 */

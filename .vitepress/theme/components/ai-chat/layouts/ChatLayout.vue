@@ -13,6 +13,7 @@
       @switch="switchSession"
       @rename="handleRename"
       @delete="handleDelete"
+      @manage="showSessionManager = true"
       @toggle-collapse="leftCollapsed = !leftCollapsed"
     />
 
@@ -153,6 +154,19 @@
       @expand="handleExpandDialog"
     />
     
+    <!-- 会话管理器 -->
+    <SessionManager
+      v-model:visible="showSessionManager"
+      :sessions="sessions"
+      :agents="allAgents"
+      :current-session-id="currentSessionId"
+      :current-agent="selectedAgent"
+      @create="createSessionForCurrentAgent"
+      @switch="handleSwitchFromManager"
+      @rename="renameSession"
+      @delete="handleBatchDelete"
+    />
+    
     <!-- 日志监控面板 -->
     <LogDashboard v-model:visible="showLogDashboard" />
     
@@ -197,7 +211,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { Teleport } from 'vue'
-import { SessionPanel } from '../modules/chat/session'
+import { SessionPanel, SessionManager } from '../modules/chat/session'
 import { MessageList } from '../modules/chat/messages'
 import { ChatInput } from '../modules/chat/input'
 import { SettingsPanel } from '../modules/chat/settings'
@@ -256,6 +270,9 @@ const dialogAgent = ref<Agent | null>(null)
 // 删除确认状态
 const showDeleteConfirm = ref(false)
 const sessionToDelete = ref<string | null>(null)
+
+// 会话管理器
+const showSessionManager = ref(false)
 
 // 计算属性：按 Agent 过滤的会话列表
 const filteredSessions = computed(() => {
@@ -420,6 +437,29 @@ function handleRename(id: string, newTitle: string) {
 function handleDelete(id: string) {
   sessionToDelete.value = id
   showDeleteConfirm.value = true
+}
+
+// 从会话管理器切换会话
+function handleSwitchFromManager(sessionId: string) {
+  // 找到会话对应的 Agent
+  const session = sessions.value.find(s => s.id === sessionId)
+  if (session) {
+    const agentId = (session as any).agentId
+    if (agentId) {
+      const agent = allAgents.value.find(a => a.id === agentId)
+      if (agent) {
+        selectedAgent.value = agent
+        setActive(agent.id)
+      }
+    }
+  }
+  switchSession(sessionId)
+  showSessionManager.value = false
+}
+
+// 批量删除会话
+function handleBatchDelete(sessionIds: string[]) {
+  sessionIds.forEach(id => deleteSession(id))
 }
 
 function executeDelete() {

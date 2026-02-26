@@ -3,3 +3,4 @@
  */
 
 export { default as SessionPanel } from './SessionPanel.vue'
+export { default as SessionManager } from './SessionManager.vue'
