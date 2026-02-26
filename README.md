@@ -67,6 +67,18 @@ MetaBlog 不是一个普通的博客系统，它代表了内容管理系统向�
 - [x] 一键测试所有工具
 - [x] 批量执行报告（成功率统计）
 
+#### MCP 接入系统（新增）
+- [x] 完整的 MCP Client/Manager 架构
+- [x] 支持 HTTP/SSE/Stdio 传输协议
+- [x] 20+ 预设 MCP 配置：
+  - 代码平台：GitHub、GitLab、Bitbucket
+  - 社交媒体：知乎、小红书、微博、Twitter
+  - 开发工具：Puppeteer、Playwright、数据库、Docker、K8s
+  - 生产力：Slack、Notion、Google Drive、Brave Search
+- [x] MCPConfigPanel.vue 可视化管理面板
+- [x] MCP 工具自动注册到 Agent 系统
+- [x] 连接状态实时监控
+
 ---
 
 ### ⚠️ 当前存在的问题
@@ -253,6 +265,76 @@ AI 可以通过不同的 **Skills** 获得特定领域的能力：
 - **行内编辑**：直接在列表中重命名会话
 - **删除确认**：美观的确认弹窗，避免误操作
 - **消息版本**：支持重新生成并切换不同版本
+
+### 🔌 MCP 外部工具接入
+
+MCP (Model Context Protocol) 是 Anthropic 推出的开放协议，用于标准化 AI 与外部工具的交互。
+
+#### 已集成的 MCP 预设（20+）
+
+**代码平台**
+| 平台 | 功能 | 配置方式 |
+|------|------|----------|
+| GitHub | Issues、PRs、仓库管理、代码搜索 | Personal Access Token |
+| GitLab | 仓库、Issues、MR 管理 | Access Token + URL |
+| Bitbucket | 代码仓库管理 | Access Token |
+
+**社交媒体**
+| 平台 | 功能 | 配置方式 |
+|------|------|----------|
+| 知乎 | 搜索问题、获取回答、收藏夹管理 | Cookie |
+| 小红书 | 搜索笔记、获取详情、评论 | Cookie |
+| 微博 | 搜索微博、用户信息、评论 | Cookie |
+| Twitter/X | 推文搜索、用户信息 | Bearer Token |
+
+**开发工具**
+| 工具 | 功能 | 配置 |
+|------|------|------|
+| Puppeteer | 浏览器自动化、截图、PDF 生成 | 无需配置 |
+| Playwright | 浏览器自动化测试 | 无需配置 |
+| PostgreSQL | SQL 查询、数据库管理 | Database URL |
+| SQLite | 本地数据库操作 | 文件路径 |
+| Docker | 容器和镜像管理 | 无需配置 |
+| Kubernetes | K8s 集群资源管理 | 无需配置 |
+| Redis | 缓存数据操作 | Redis URL |
+
+**生产力工具**
+| 工具 | 功能 | 配置 |
+|------|------|------|
+| Slack | 发送消息、频道管理 | Bot Token |
+| Notion | 页面和数据库管理 | Integration Token |
+| Google Drive | 文件管理 | OAuth2 凭据 |
+| Brave Search | 隐私搜索引擎 | API Key |
+| Fetch | HTTP 请求 | 无需配置 |
+
+#### 使用方法
+
+```typescript
+// 通过预设快速添加
+import { mcpManager } from './core/mcp'
+
+// 添加 GitHub MCP
+await mcpManager.addServerFromPreset('github-official', {
+  GITHUB_PERSONAL_ACCESS_TOKEN: 'ghp_xxxxx'
+})
+
+// 添加知乎 MCP
+await mcpManager.addServerFromPreset('zhihu-mcp', {
+  ZHIHU_COOKIE: 'your_cookie_here'
+})
+
+// 连接后工具自动注册到 Agent
+// 工具名格式: {serverId}_{toolName}
+// 例如: github-official_search_issues, zhihu-mcp_search_questions
+```
+
+#### MCP 配置面板
+
+访问 `/chat` 页面的 MCP 面板，可以：
+- 一键添加预设 MCP
+- 查看连接状态和工具列表
+- 管理多个 MCP 连接
+- 导入/导出配置
 
 ---
 
