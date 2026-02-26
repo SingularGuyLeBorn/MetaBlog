@@ -138,6 +138,9 @@ export interface Agent {
   createdAt: number
   updatedAt: number
   lastActiveAt: number
+  
+  // 系统提示词（运行时计算或缓存）
+  systemPrompt?: string
 }
 
 /** Agent 创建参数 */

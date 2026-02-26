@@ -1,14 +1,15 @@
 <!--
-  ChatLayout - 聊天主布局（浅色主题）
+  ChatLayout - 聊天主布局（支持多 Agent 独立会话）
 -->
 <template>
   <div class="chat-layout">
     <!-- 左侧会话面板 -->
     <SessionPanel
-      :sessions="sessions"
+      :sessions="filteredSessions"
       :current-id="currentSessionId"
       :collapsed="leftCollapsed"
-      @create="createSession()"
+      :agent-name="selectedAgent?.name"
+      @create="createSessionForCurrentAgent"
       @switch="switchSession"
       @rename="handleRename"
       @delete="handleDelete"
@@ -25,13 +26,52 @@
           </button>
           <div class="header-info">
             <h1 class="session-title">{{ currentSession?.title || '新对话' }}</h1>
+            
+            <!-- Agent 选择下拉框 -->
+            <div class="agent-selector" ref="agentSelectorRef">
+              <button 
+                class="agent-select-trigger"
+                :class="{ 'open': showAgentDropdown }"
+                @click="showAgentDropdown = !showAgentDropdown"
+              >
+                <span class="selected-avatar">{{ selectedAgent?.avatar || '🤖' }}</span>
+                <span class="selected-name">{{ selectedAgent?.name || '选择 Agent' }}</span>
+                <Icon name="chevron-down" :size="14" class="dropdown-icon" />
+              </button>
+              
+              <!-- 下拉菜单 -->
+              <Transition name="dropdown">
+                <div v-if="showAgentDropdown" class="agent-dropdown">
+                  <div class="dropdown-header">
+                    <span>选择 Agent</span>
+                    <button class="manage-btn" @click="openAgentAdmin">
+                      <Icon name="settings" :size="12" />
+                      管理
+                    </button>
+                  </div>
+                  <div class="dropdown-divider"></div>
+                  <div class="agent-list">
+                    <button
+                      v-for="agent in allAgents"
+                      :key="agent.id"
+                      class="agent-option"
+                      :class="{ 'active': selectedAgent?.id === agent.id }"
+                      @click="selectAgent(agent)"
+                    >
+                      <span class="option-avatar">{{ agent.avatar }}</span>
+                      <div class="option-info">
+                        <span class="option-name">{{ agent.name }}</span>
+                        <span class="option-desc">{{ agent.description }}</span>
+                      </div>
+                      <span v-if="selectedAgent?.id === agent.id" class="check-icon">✓</span>
+                    </button>
+                  </div>
+                </div>
+              </Transition>
+            </div>
+            
             <span v-if="currentSession" class="model-tag">
               {{ currentSession.config.model }}
-            </span>
-            <!-- 当前激活的 Agent 标签 -->
-            <span v-if="activeAgent" class="agent-badge" @click="showAgentAdmin = true">
-              <span class="badge-avatar">{{ activeAgent.avatar }}</span>
-              <span class="badge-name">{{ activeAgent.name }}</span>
             </span>
           </div>
         </div>
@@ -70,6 +110,8 @@
         :message-groups="messageGroups"
         :session-id="currentSessionId"
         :is-streaming="isStreaming"
+        :agent-name="selectedAgent?.name"
+        :agent-avatar="selectedAgent?.avatar"
         @use-prompt="handleQuickPrompt"
         @regenerate="handleRegenerate"
         @switch-version="switchVersion"
@@ -81,6 +123,7 @@
         v-model="inputText"
         :is-streaming="isStreaming"
         :selected-skill="selectedSkill"
+        :placeholder="inputPlaceholder"
         @send="handleSend"
         @stop="interruptGeneration"
         @select-skill="handleSelectSkill"
@@ -100,6 +143,14 @@
     <AgentAdmin
       v-model:visible="showAgentAdmin"
       @agent-change="handleAgentChange"
+      @start-chat="handleStartChatFromAdmin"
+    />
+    
+    <!-- Agent 简易聊天对话框 -->
+    <AgentChatDialog
+      v-model:visible="showAgentChatDialog"
+      :agent="dialogAgent"
+      @expand="handleExpandDialog"
     />
     
     <!-- 日志监控面板 -->
@@ -123,18 +174,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { Teleport } from 'vue'
 import { SessionPanel } from '../modules/chat/session'
 import { MessageList } from '../modules/chat/messages'
 import { ChatInput } from '../modules/chat/input'
 import { SettingsPanel } from '../modules/chat/settings'
 import { AgentAdmin } from '../modules/agent'
+import { AgentChatDialog } from '../modules/agent/chat'
 import { LogDashboard } from '../modules/agent/admin'
 import { Icon } from '../ui'
 import { useAIChat, useAgents } from '../core/composables'
 import { useAgentConfig } from '../core/composables/useAgentConfig'
-import type { SessionConfig } from '../core/types'
+import type { SessionConfig, ChatSession } from '../core/types'
 import type { Skill } from '../core/composables/useSkills'
 import type { Agent } from '../core/types/agent'
 
@@ -158,9 +210,10 @@ const {
   updateSessionConfig
 } = useAIChat()
 
-const { activeAgent } = useAgents()
+const { activeAgent, agents: allAgents, setActive } = useAgentConfig()
 const { buildSystemPrompt } = useAgentConfig()
 
+// UI 状态
 const leftCollapsed = ref(false)
 const rightCollapsed = ref(true)
 const inputText = ref('')
@@ -170,9 +223,42 @@ const showAgentAdmin = ref(false)
 const showLogDashboard = ref(false)
 const selectedSkill = ref<Skill | undefined>(undefined)
 
+// Agent 选择相关
+const selectedAgent = ref<Agent | null>(null)
+const showAgentDropdown = ref(false)
+const agentSelectorRef = ref<HTMLElement>()
+
+// 对话框相关
+const showAgentChatDialog = ref(false)
+const dialogAgent = ref<Agent | null>(null)
+
 // 删除确认状态
 const showDeleteConfirm = ref(false)
 const sessionToDelete = ref<string | null>(null)
+
+// 计算属性：按 Agent 过滤的会话列表
+const filteredSessions = computed(() => {
+  if (!selectedAgent.value) return sessions.value
+  
+  // 筛选出当前选中 Agent 的会话
+  // 通过 agentId 字段来标识（需要在 Session 类型中添加）
+  return sessions.value.filter(s => {
+    // 如果会话有 agentId，则匹配
+    if ((s as any).agentId) {
+      return (s as any).agentId === selectedAgent.value?.id
+    }
+    // 如果没有 agentId，默认显示（兼容旧数据）
+    return true
+  })
+})
+
+// 输入框占位符
+const inputPlaceholder = computed(() => {
+  if (selectedAgent.value) {
+    return `给 ${selectedAgent.value.name} 发送消息...`
+  }
+  return '发送消息...'
+})
 
 // 键盘快捷键：Ctrl+L 打开日志面板
 function handleKeydown(e: KeyboardEvent) {
@@ -182,12 +268,33 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+// 点击外部关闭下拉框
+function handleClickOutside(e: MouseEvent) {
+  if (agentSelectorRef.value && !agentSelectorRef.value.contains(e.target as Node)) {
+    showAgentDropdown.value = false
+  }
+}
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
+  document.addEventListener('click', handleClickOutside)
+  
+  // 初始化：如果有活跃 Agent，选中它
+  if (activeAgent.value) {
+    selectedAgent.value = activeAgent.value
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('click', handleClickOutside)
+})
+
+// 监听活跃 Agent 变化
+watch(() => activeAgent.value, (agent) => {
+  if (agent && !selectedAgent.value) {
+    selectedAgent.value = agent
+  }
 })
 
 const currentConfig = computed({
@@ -196,6 +303,48 @@ const currentConfig = computed({
     // 更新配置
   }
 })
+
+// 选择 Agent
+async function selectAgent(agent: Agent) {
+  selectedAgent.value = agent
+  setActive(agent.id)
+  showAgentDropdown.value = false
+  
+  // 检查是否已有该 Agent 的会话
+  const agentSessions = sessions.value.filter(s => (s as any).agentId === agent.id)
+  
+  if (agentSessions.length === 0) {
+    // 没有会话，自动创建一个
+    await createSessionForCurrentAgent()
+  } else {
+    // 切换到最新的会话
+    const latestSession = agentSessions[agentSessions.length - 1]
+    switchSession(latestSession.id)
+  }
+}
+
+// 为当前 Agent 创建会话
+async function createSessionForCurrentAgent() {
+  const newSession = await createSession()
+  if (newSession && selectedAgent.value) {
+    // 标记会话属于哪个 Agent
+    ;(newSession as any).agentId = selectedAgent.value.id
+    ;(newSession as any).agentName = selectedAgent.value.name
+    
+    // 设置会话标题
+    renameSession(newSession.id, `与 ${selectedAgent.value.name} 的对话`)
+    
+    // 设置系统提示词
+    const systemPrompt = selectedAgent.value.systemPrompt || buildSystemPrompt(selectedAgent.value)
+    updateSessionConfig(newSession.id, { systemPrompt })
+  }
+}
+
+// 打开 Agent 管理
+function openAgentAdmin() {
+  showAgentDropdown.value = false
+  showAgentAdmin.value = true
+}
 
 async function handleRegenerate() {
   if (!currentSessionId.value) return
@@ -221,16 +370,16 @@ async function handleSend(content: string, skillInfo?: { id: string; name: strin
     chatInputRef.value?.focus()
   })
   
-  // 使用当前 Agent 的系统提示词 + 技能系统提示词
-  if (currentSessionId.value) {
-    let systemPrompt = activeAgent.value?.systemPrompt || '你是一个 helpful 的 AI 助手。'
+  // 使用当前选中的 Agent 的系统提示词
+  if (currentSessionId.value && selectedAgent.value) {
+    let systemPrompt = selectedAgent.value.systemPrompt || buildSystemPrompt(selectedAgent.value)
     if (skillInfo?.systemPrompt) {
       systemPrompt = skillInfo.systemPrompt
     }
     updateSessionConfig(currentSessionId.value, { systemPrompt })
   }
   
-  // 发送消息（包含技能信息用于UI显示）
+  // 发送消息
   await sendMessage(content, skillInfo)
 }
 
@@ -270,20 +419,31 @@ function handleSelectSkill(skill: Skill | undefined) {
   selectedSkill.value = skill
 }
 
+// 从 AgentAdmin 切换 Agent（旧版方式，保留兼容）
 async function handleAgentChange(agent: Agent) {
-  // Agent 切换后的处理
-  console.log('切换到 Agent:', agent.name)
+  await selectAgent(agent)
+  showAgentAdmin.value = false
+}
+
+// 从 AgentAdmin 点击聊天按钮 - 打开简易对话框
+function handleStartChatFromAdmin(agent: Agent) {
+  dialogAgent.value = agent
+  showAgentChatDialog.value = true
+  setActive(agent.id)
+}
+
+// 从对话框展开到完整界面
+async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
+  // 关闭对话框
+  showAgentChatDialog.value = false
   
-  // 创建一个新的会话，专门用于与该 Agent 对话
-  const newSession = await createSession()
-  if (newSession) {
-    // 更新会话标题为 Agent 名称
-    renameSession(newSession.id, `与 ${agent.name} 的对话`)
-    // 更新会话配置，使用该 Agent 的系统提示词
-    const systemPrompt = buildSystemPrompt(agent)
-    updateSessionConfig(newSession.id, { systemPrompt })
-    // 关闭 AgentAdmin
-    showAgentAdmin.value = false
+  // 在完整界面中选中该 Agent
+  await selectAgent(agent)
+  
+  // 如果对话框有消息，可以合并到新会话
+  if (dialogMessages.length > 1) { // 不止欢迎消息
+    // 可以在这里实现消息同步
+    console.log('同步对话框消息:', dialogMessages.length)
   }
 }
 </script>
@@ -371,37 +531,185 @@ async function handleAgentChange(agent: Agent) {
   font-weight: 500;
 }
 
-/* Agent 徽章 */
-.agent-badge {
+/* Agent 选择器 */
+.agent-selector {
+  position: relative;
+}
+
+.agent-select-trigger {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  gap: 8px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+  border: 1px solid rgba(99, 102, 241, 0.2);
   border-radius: 100px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.agent-badge:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
-  border-color: rgba(59, 130, 246, 0.4);
-  transform: translateY(-1px);
+.agent-select-trigger:hover,
+.agent-select-trigger.open {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+  border-color: rgba(99, 102, 241, 0.4);
 }
 
-.badge-avatar {
-  font-size: 14px;
+.selected-avatar {
+  font-size: 16px;
 }
 
-.badge-name {
-  font-size: 12px;
+.selected-name {
+  font-size: 13px;
   font-weight: 500;
   color: var(--vp-c-brand);
   max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.dropdown-icon {
+  color: var(--vp-c-brand);
+  transition: transform 0.2s;
+}
+
+.agent-select-trigger.open .dropdown-icon {
+  transform: rotate(180deg);
+}
+
+/* Agent 下拉菜单 */
+.agent-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 280px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--ai-border-light);
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ai-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.manage-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--vp-c-brand);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.manage-btn:hover {
+  background: var(--vp-c-brand-soft);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--ai-border-light);
+  margin: 0 16px;
+}
+
+.agent-list {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.agent-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.agent-option:hover {
+  background: var(--ai-gray-100);
+}
+
+.agent-option.active {
+  background: var(--vp-c-brand-soft);
+}
+
+.option-avatar {
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ai-gray-100);
+  border-radius: 10px;
+}
+
+.option-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.option-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ai-text-primary);
+}
+
+.option-desc {
+  font-size: 12px;
+  color: var(--ai-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.check-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--vp-c-brand);
+  color: white;
+  border-radius: 50%;
+  font-size: 11px;
+}
+
+/* 下拉动画 */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
 }
 
 .header-right {
@@ -446,26 +754,7 @@ async function handleAgentChange(agent: Agent) {
   background: #a7f3d0;
 }
 
-/* 响应式 */
-@media (max-width: 1024px) {
-  .chat-layout :deep(.session-panel),
-  .chat-layout :deep(.settings-panel) {
-    position: absolute;
-    z-index: 100;
-    height: 100%;
-    box-shadow: var(--ai-shadow-xl);
-  }
-  
-  .chat-layout :deep(.session-panel) {
-    left: 0;
-  }
-  
-  .chat-layout :deep(.settings-panel) {
-    right: 0;
-  }
-}
-
-/* 确认弹窗 */
+/* 删除确认弹窗 */
 .confirm-overlay {
   position: fixed;
   inset: 0;
@@ -474,18 +763,16 @@ async function handleAgentChange(agent: Agent) {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10002;
-  padding: 20px;
+  z-index: 1000;
 }
 
 .confirm-modal {
-  background: var(--vp-c-bg);
+  background: white;
   border-radius: 16px;
   padding: 32px;
-  max-width: 360px;
-  width: 100%;
   text-align: center;
-  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.25);
+  max-width: 360px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
 .confirm-icon {
@@ -494,17 +781,16 @@ async function handleAgentChange(agent: Agent) {
 }
 
 .confirm-modal h4 {
-  margin: 0 0 8px 0;
   font-size: 18px;
   font-weight: 600;
-  color: var(--vp-c-text-1);
+  margin: 0 0 8px;
+  color: var(--ai-text-primary);
 }
 
 .confirm-hint {
-  margin: 0 0 24px 0;
   font-size: 14px;
-  color: var(--vp-c-text-2);
-  line-height: 1.5;
+  color: var(--ai-text-secondary);
+  margin: 0 0 24px;
 }
 
 .confirm-actions {
@@ -513,34 +799,45 @@ async function handleAgentChange(agent: Agent) {
   justify-content: center;
 }
 
-.btn-secondary {
-  padding: 10px 20px;
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 8px;
-  font-size: 14px;
-  color: var(--vp-c-text-1);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-  background: var(--vp-c-bg-mute);
-}
-
+.btn-secondary,
 .btn-danger {
   padding: 10px 20px;
-  background: #dc2626;
-  border: none;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: white;
   cursor: pointer;
   transition: all 0.2s;
 }
 
+.btn-secondary {
+  background: var(--ai-gray-100);
+  border: 1px solid var(--ai-border-light);
+  color: var(--ai-text-secondary);
+}
+
+.btn-secondary:hover {
+  background: var(--ai-gray-200);
+}
+
+.btn-danger {
+  background: #ef4444;
+  border: 1px solid #ef4444;
+  color: white;
+}
+
 .btn-danger:hover {
-  background: #b91c1c;
+  background: #dc2626;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .selected-name {
+    max-width: 60px;
+  }
+  
+  .agent-dropdown {
+    left: auto;
+    right: 0;
+  }
 }
 </style>

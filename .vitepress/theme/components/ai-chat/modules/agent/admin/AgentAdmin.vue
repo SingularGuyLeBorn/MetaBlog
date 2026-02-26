@@ -297,6 +297,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:visible': [value: boolean]
   'agentChange': [agent: Agent]
+  'startChat': [agent: Agent]
 }>()
 
 const {
@@ -381,13 +382,13 @@ function activateAgent(agent: Agent) {
   emit('agentChange', agent)
 }
 
-// 与指定 Agent 开始对话
+// 与指定 Agent 开始对话 - 打开简易聊天对话框
 function startChatWithAgent(agent: Agent) {
-  // 1. 激活该 Agent
+  // 激活该 Agent
   setActive(agent.id)
-  // 2. 触发事件通知父组件
-  emit('agentChange', agent)
-  // 3. 关闭 AgentAdmin 面板
+  // 触发 startChat 事件，让父组件打开对话框
+  emit('startChat', agent)
+  // 关闭 AgentAdmin 面板
   close()
 }
 

@@ -13,6 +13,12 @@
           <span>新对话</span>
         </button>
       </div>
+      
+      <!-- Agent 标识 -->
+      <div v-if="agentName" class="agent-indicator">
+        <span class="agent-dot"></span>
+        <span class="agent-label">{{ agentName }}</span>
+      </div>
 
       <div class="search-box-3d">
         <Icon name="search" :size="16" />
@@ -88,10 +94,12 @@ interface Props {
   currentId: string | null
   collapsed: boolean
   streamingIds?: string[]
+  agentName?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  streamingIds: () => []
+  streamingIds: () => [],
+  agentName: ''
 })
 
 const emit = defineEmits<{
@@ -519,6 +527,32 @@ function cancelRename() {
   color: #3b82f6;
   width: 28px;
   box-shadow: 4px 0 16px rgba(59, 130, 246, 0.15);
+}
+
+/* Agent 标识 */
+.agent-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin: 0 12px 12px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 100px;
+}
+
+.agent-dot {
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+}
+
+.agent-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6366f1;
 }
 
 /* 响应式 */
