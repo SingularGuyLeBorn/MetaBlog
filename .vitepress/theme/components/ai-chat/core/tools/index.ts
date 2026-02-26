@@ -56,6 +56,8 @@ export {
   listFiles,
   webSearch,
   fetchUrl,
+  // ArXiv 工具
+  fetchArxiv,
   // GitHub 工具
   githubGetRepo,
   githubListRepoContents,
@@ -63,6 +65,14 @@ export {
   githubSearchCode,
   githubGetCommitHistory,
   githubGetIssues,
+  // Knowledge Base 工具
+  kbList,
+  kbCreate,
+  kbDelete,
+  kbQuery,
+  kbListDocuments,
+  kbDocumentAdd,
+  kbDocumentDelete,
   calculate,
   translateText,
   executeCode,
@@ -90,6 +100,8 @@ export {
   listFilesDef,
   webSearchDef,
   fetchUrlDef,
+  // ArXiv 工具
+  fetchArxivDef,
   // GitHub 工具
   githubGetRepoDef,
   githubListRepoContentsDef,
@@ -97,6 +109,14 @@ export {
   githubSearchCodeDef,
   githubGetCommitHistoryDef,
   githubGetIssuesDef,
+  // Knowledge Base 工具
+  kbListDef,
+  kbCreateDef,
+  kbDeleteDef,
+  kbQueryDef,
+  kbListDocumentsDef,
+  kbDocumentAddDef,
+  kbDocumentDeleteDef,
   calculateDef,
   translateTextDef,
   executeCodeDef,
@@ -136,6 +156,7 @@ export function initializeDefaultTools(): void {
     // 网络工具
     { name: 'web_search', definition: definitions.webSearchDef, executor: executors.webSearch },
     { name: 'fetch_url', definition: definitions.fetchUrlDef, executor: executors.fetchUrl },
+    { name: 'fetch_arxiv', definition: definitions.fetchArxivDef, executor: executors.fetchArxiv },
     
     // 计算与转换工具
     { name: 'calculate', definition: definitions.calculateDef, executor: executors.calculate },
@@ -159,6 +180,15 @@ export function initializeDefaultTools(): void {
     { name: 'github_search_code', definition: definitions.githubSearchCodeDef, executor: executors.githubSearchCode },
     { name: 'github_get_commit_history', definition: definitions.githubGetCommitHistoryDef, executor: executors.githubGetCommitHistory },
     { name: 'github_get_issues', definition: definitions.githubGetIssuesDef, executor: executors.githubGetIssues },
+    
+    // Knowledge Base 工具
+    { name: 'kb_list', definition: definitions.kbListDef, executor: executors.kbList },
+    { name: 'kb_create', definition: definitions.kbCreateDef, executor: executors.kbCreate },
+    { name: 'kb_delete', definition: definitions.kbDeleteDef, executor: executors.kbDelete },
+    { name: 'kb_query', definition: definitions.kbQueryDef, executor: executors.kbQuery },
+    { name: 'kb_list_documents', definition: definitions.kbListDocumentsDef, executor: executors.kbListDocuments },
+    { name: 'kb_document_add', definition: definitions.kbDocumentAddDef, executor: executors.kbDocumentAdd },
+    { name: 'kb_document_delete', definition: definitions.kbDocumentDeleteDef, executor: executors.kbDocumentDelete },
     
     // 其他工具
     { name: 'get_current_time', definition: definitions.getCurrentTimeDef, executor: executors.getCurrentTime },

@@ -133,7 +133,7 @@ export const getArticleContent: ToolExecutor = async (args) => {
    - /sections/knowledge/folder-name/ （文件夹）
    - /sections/posts/article-name （文件）`
       }
-      throw new Error(`HTTP ${response.status}`)
+      return `❌ HTTP 错误: ${response.status}\n\n请求 URL: ${response.url}\n建议：检查网络连接或稍后重试`
     }
     
     let content = await response.text()
@@ -373,12 +373,12 @@ export const listArticles: ToolExecutor = async (args) => {
     // 获取文章列表
     const response = await fetch(`${API_BASE}/sidebar`)
     if (!response.ok) {
-      throw new Error(`无法获取文章列表: HTTP ${response.status}`)
+      return `❌ 无法获取文章列表: HTTP ${response.status}\n\n建议：\n1. 检查网络连接\n2. 稍后重试\n3. 查看服务器日志获取详细信息`
     }
     
     const data = await response.json()
     if (!data.success) {
-      throw new Error(data.error || '获取文章列表失败')
+      return `❌ 获取文章列表失败: ${data.error || '未知错误'}\n\n建议：联系管理员查看服务器状态`
     }
     
     const sections = data.data || {}
@@ -568,7 +568,7 @@ export const createArticle: ToolExecutor = async (args) => {
       if (response.status === 409) {
         return `❌ 文件已存在: ${normalizedPath}\n\n如需覆盖，请设置 overwrite=true\n或选择其他路径`
       }
-      throw new Error(`HTTP ${response.status}`)
+      return `❌ HTTP 错误: ${response.status}\n\n请求 URL: ${response.url}\n建议：检查网络连接或稍后重试`
     }
     
     // 构建返回信息
@@ -704,7 +704,7 @@ export const updateArticle: ToolExecutor = async (args) => {
     })
     
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`)
+      return `❌ HTTP 错误: ${response.status}\n\n请求 URL: ${response.url}\n建议：检查网络连接或稍后重试`
     }
     
     // 构建返回信息
@@ -790,7 +790,7 @@ export const deleteArticle: ToolExecutor = async (args) => {
       if (response.status === 404) {
         return `❌ 文件不存在: ${normalizedPath}\n\n请检查路径是否正确`
       }
-      throw new Error(`HTTP ${response.status}`)
+      return `❌ HTTP 错误: ${response.status}\n\n请求 URL: ${response.url}\n建议：检查网络连接或稍后重试`
     }
     
     // 如果有备份内容，保存到备份目录
@@ -921,7 +921,7 @@ export const readFile: ToolExecutor = async (args) => {
 1. 使用 list_files 查看可用文件
 2. 使用 search_articles 搜索文件`
       }
-      throw new Error(`HTTP ${response.status}`)
+      return `❌ HTTP 错误: ${response.status}\n\n请求 URL: ${response.url}\n建议：检查网络连接或稍后重试`
     }
     const content = await response.text()
     return content
@@ -951,7 +951,7 @@ export const writeFile: ToolExecutor = async (args) => {
     })
     
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`)
+      return `❌ HTTP 错误: ${response.status}\n\n请求 URL: ${response.url}\n建议：检查网络连接或稍后重试`
     }
     
     return `✅ 文件写入成功!
@@ -972,12 +972,12 @@ export const listFiles: ToolExecutor = async (args) => {
     // 使用 sidebar API 获取文件列表
     const response = await fetch(`${API_BASE}/sidebar`)
     if (!response.ok) {
-      throw new Error(`无法获取文件列表: HTTP ${response.status}`)
+      return `❌ 无法获取文件列表: HTTP ${response.status}\n\n建议：检查网络连接或稍后重试`
     }
     
     const data = await response.json()
     if (!data.success) {
-      throw new Error(data.error || '获取文件列表失败')
+      return `❌ 获取文件列表失败: ${data.error || '未知错误'}\n\n建议：联系管理员查看服务器状态`
     }
     
     const sections = data.data || {}
@@ -1141,7 +1141,7 @@ export const fetchUrl: ToolExecutor = async (args) => {
       if (response.status === 504 || response.status === 502) {
         return `❌ 网关错误 (${response.status})\n\nURL: ${url}\n\n${errorDetail}\n\n排查建议:\n1. 检查目标网站是否可访问\n2. 尝试增加 timeout 参数（默认 10 秒）\n3. 检查本地网络连接\n4. 某些网站可能有反爬虫机制`
       }
-      throw new Error(`HTTP ${response.status}: ${errorDetail || '未知错误'}`)
+      return `❌ HTTP 错误: ${response.status}\n详细信息: ${errorDetail || '未知错误'}\n\n建议：\n1. 检查请求参数\n2. 确认服务是否正常\n3. 稍后重试`
     }
     
     const contentType = response.headers.get('content-type') || ''
@@ -1338,7 +1338,7 @@ export const createNote: ToolExecutor = async (args) => {
     })
     
     if (!response.ok) {
-      throw new Error(`Failed to save note: ${response.status}`)
+      return `❌ 保存笔记失败: HTTP ${response.status}\n\n建议：\n1. 检查网络连接\n2. 稍后重试`
     }
     
     return `笔记创建成功!\n标题: ${title}\n标签: ${tags.join(', ') || '无'}`
@@ -1383,12 +1383,12 @@ async function githubRequest(endpoint: string, options: RequestInit = {}) {
   
   if (!response.ok) {
     if (response.status === 404) {
-      throw new Error('资源未找到 (404)')
+      return `❌ GitHub API: 资源未找到 (404)\n\n可能原因：\n1. 仓库不存在\n2. 路径错误\n3. 需要身份验证\n\n建议：\n- 检查 owner 和 repo 参数\n- 确认仓库是否公开`
     }
     if (response.status === 403) {
-      throw new Error('API 速率限制 (403)，请稍后重试')
+      return `❌ GitHub API: 速率限制 (403)\n\nGitHub 对未认证的 API 请求有限制（每小时 60 次）。\n\n建议：\n1. 稍等几分钟后再试\n2. 使用 GitHub Token 进行认证\n3. 减少请求频率`
     }
-    throw new Error(`GitHub API 错误: ${response.status}`)
+      return `❌ GitHub API 错误: ${response.status}\n\n建议：\n1. 检查网络连接\n2. 确认 GitHub 服务状态\n3. 稍后重试`
   }
   
   return response.json()
@@ -1705,5 +1705,465 @@ export const githubGetIssues: ToolExecutor = async (args) => {
     return result
   } catch (error) {
     return `❌ 获取 Issues 失败: ${error instanceof Error ? error.message : String(error)}`
+  }
+}
+
+
+/**
+ * ============================================
+ * ArXiv 工具
+ * ============================================
+ */
+
+/**
+ * 获取 ArXiv 论文信息
+ */
+export const fetchArxiv: ToolExecutor = async (args) => {
+  const { paper_id, include_abstract = true, include_pdf = true } = args
+  
+  if (!paper_id) {
+    return `❌ 错误：paper_id 是必填参数
+
+示例：fetch_arxiv(paper_id="2401.12345")`
+  }
+  
+  // 清理 paper_id（移除版本号）
+  const cleanId = paper_id.toString().trim().toLowerCase().replace(/v\d+$/, '')
+  
+  try {
+    // 使用 ArXiv API 获取论文信息
+    const arxivUrl = `http://export.arxiv.org/api/query?search_query=id:${cleanId}&start=0&max_results=1`
+    
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000)
+    
+    const response = await fetch(arxivUrl, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/atom+xml'
+      }
+    })
+    
+    clearTimeout(timeoutId)
+    
+    if (!response.ok) {
+      return `❌ ArXiv API 返回错误: ${response.status}\n\n建议：\n1. 检查网络连接\n2. 确认论文 ID 是否正确\n3. 稍后重试`
+    }
+    
+    const xmlText = await response.text()
+    
+    // 解析 XML
+    const parser = new DOMParser()
+    const xmlDoc = parser.parseFromString(xmlText, 'text/xml')
+    
+    // 检查是否有条目
+    const entry = xmlDoc.querySelector('entry')
+    if (!entry) {
+      return `❌ 未找到论文: ${paper_id}\n\n请检查论文 ID 是否正确。`
+    }
+    
+    // 提取信息
+    const title = entry.querySelector('title')?.textContent?.trim() || '未知标题'
+    const summary = entry.querySelector('summary')?.textContent?.trim() || ''
+    const published = entry.querySelector('published')?.textContent || ''
+    const updated = entry.querySelector('updated')?.textContent || ''
+    
+    // 作者列表
+    const authors: string[] = []
+    entry.querySelectorAll('author name').forEach(author => {
+      const name = author.textContent?.trim()
+      if (name) authors.push(name)
+    })
+    
+    // 分类
+    const categories: string[] = []
+    entry.querySelectorAll('category').forEach(cat => {
+      const term = cat.getAttribute('term')
+      if (term) categories.push(term)
+    })
+    
+    // 链接
+    const links = entry.querySelectorAll('link')
+    let pdfUrl = ''
+    let absUrl = ''
+    links.forEach(link => {
+      const type = link.getAttribute('type')
+      const href = link.getAttribute('href')
+      const title = link.getAttribute('title')
+      if (type === 'application/pdf' || title === 'pdf') {
+        pdfUrl = href || ''
+      }
+      if (!type && href?.includes('/abs/')) {
+        absUrl = href || ''
+      }
+    })
+    
+    // 构建结果
+    let result = `📄 ArXiv 论文: ${paper_id}\n\n`
+    result += `📝 标题: ${title}\n\n`
+    
+    if (authors.length > 0) {
+      result += `👥 作者: ${authors.join(', ')}\n`
+    }
+    
+    if (categories.length > 0) {
+      result += `🏷️ 分类: ${categories.join(', ')}\n`
+    }
+    
+    if (published) {
+      const pubDate = new Date(published).toLocaleDateString('zh-CN')
+      result += `📅 发布: ${pubDate}\n`
+    }
+    
+    result += `\n`
+    
+    if (include_abstract && summary) {
+      const abstract = summary.replace(/\s+/g, ' ')
+      result += `📖 摘要:\n${abstract}\n\n`
+    }
+    
+    if (include_pdf) {
+      result += `🔗 链接:\n`
+      if (absUrl) result += `- 论文页面: ${absUrl}\n`
+      if (pdfUrl) result += `- PDF 下载: ${pdfUrl}\n`
+    }
+    
+    result += `\n💡 提示: 你可以通过以下方式获取更多论文信息：\n`
+    result += `- 搜索相关论文: 使用 web_search(query="arxiv ${categories[0] || 'machine learning'}")\n`
+    result += `- 获取 PDF 内容: 使用 fetch_url(url="${pdfUrl}")`
+    
+    return result
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return `❌ 请求超时: 无法连接到 ArXiv API\n\n请检查网络连接，或稍后再试。`
+    }
+    return `❌ 获取 ArXiv 论文失败: ${error instanceof Error ? error.message : String(error)}\n\n可能原因：\n1. 论文 ID 不存在\n2. 网络连接问题\n3. ArXiv 服务暂时不可用`
+  }
+}
+
+/**
+ * ============================================
+ * Knowledge Base 工具
+ * ============================================
+ */
+
+interface KnowledgeDocument {
+  id: string
+  title: string
+  content: string
+  tags: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+interface KnowledgeBase {
+  id: string
+  name: string
+  description: string
+  documents: KnowledgeDocument[]
+  createdAt: string
+  updatedAt: string
+}
+
+// 内存中的知识库存储（实际应用中应该使用后端存储）
+const knowledgeBaseStore: Map<string, KnowledgeBase> = new Map()
+
+/**
+ * 列出所有知识库
+ */
+export const kbList: ToolExecutor = async (_args) => {
+  try {
+    const bases = Array.from(knowledgeBaseStore.values())
+    
+    if (bases.length === 0) {
+      return `📚 知识库列表\n\n当前没有知识库。\n\n💡 创建一个: kb_create(name="my_kb", description="我的知识库")`
+    }
+    
+    let result = `📚 知识库列表 (${bases.length}个):\n\n`
+    
+    bases.forEach((kb, index) => {
+      const docCount = kb.documents.length
+      result += `${index + 1}. ${kb.name}\n`
+      result += `   📝 ${kb.description || '无描述'}\n`
+      result += `   📄 ${docCount} 个文档\n`
+      result += `   🕒 创建于 ${new Date(kb.createdAt).toLocaleDateString('zh-CN')}\n\n`
+    })
+    
+    result += `💡 操作提示:\n`
+    result += `- 查询知识库: kb_query(knowledge_base_name="${bases[0]?.name}", query="关键词")\n`
+    result += `- 删除知识库: kb_delete(name="${bases[0]?.name}")`
+    
+    return result
+  } catch (error) {
+    return `❌ 获取知识库列表失败: ${error instanceof Error ? error.message : String(error)}`
+  }
+}
+
+/**
+ * 创建知识库
+ */
+export const kbCreate: ToolExecutor = async (args) => {
+  const { name, description = '' } = args
+  
+  if (!name) {
+    return `❌ 错误：name 是必填参数
+
+示例：kb_create(name="my_kb", description="我的知识库")`
+  }
+  
+  // 验证名称格式
+  if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
+    return `❌ 错误：知识库名称只能包含字母、数字、下划线和连字符
+
+示例：my_kb, knowledge-base, docs2024`
+  }
+  
+  try {
+    if (knowledgeBaseStore.has(name)) {
+      return `❌ 知识库 "${name}" 已存在\n\n💡 使用其他名称或先删除现有知识库。`
+    }
+    
+    const newKb: KnowledgeBase = {
+      id: crypto.randomUUID(),
+      name,
+      description,
+      documents: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    
+    knowledgeBaseStore.set(name, newKb)
+    
+    let result = `✅ 知识库创建成功\n\n`
+    result += `📚 名称: ${name}\n`
+    result += `📝 描述: ${description || '无'}\n`
+    result += `🆔 ID: ${newKb.id}\n\n`
+    result += `💡 下一步:\n`
+    result += `- 添加文档: kb_document_add(knowledge_base_name="${name}", title="文档标题", content="内容...")\n`
+    result += `- 查询知识: kb_query(knowledge_base_name="${name}", query="关键词")`
+    
+    return result
+  } catch (error) {
+    return `❌ 创建知识库失败: ${error instanceof Error ? error.message : String(error)}`
+  }
+}
+
+/**
+ * 删除知识库
+ */
+export const kbDelete: ToolExecutor = async (args) => {
+  const { name } = args
+  
+  if (!name) {
+    return `❌ 错误：name 是必填参数
+
+示例：kb_delete(name="my_kb")`
+  }
+  
+  try {
+    if (!knowledgeBaseStore.has(name)) {
+      return `❌ 知识库 "${name}" 不存在\n\n💡 查看所有知识库: kb_list()`
+    }
+    
+    knowledgeBaseStore.delete(name)
+    
+    return `✅ 知识库 "${name}" 已删除\n\n💡 查看剩余知识库: kb_list()`
+  } catch (error) {
+    return `❌ 删除知识库失败: ${error instanceof Error ? error.message : String(error)}`
+  }
+}
+
+/**
+ * 查询知识库
+ */
+export const kbQuery: ToolExecutor = async (args) => {
+  const { knowledge_base_name, query, limit = 5 } = args
+  
+  if (!knowledge_base_name || !query) {
+    return `❌ 错误：knowledge_base_name 和 query 都是必填参数
+
+示例：kb_query(knowledge_base_name="my_kb", query="机器学习", limit=5)`
+  }
+  
+  try {
+    const kb = knowledgeBaseStore.get(knowledge_base_name)
+    if (!kb) {
+      return `❌ 知识库 "${knowledge_base_name}" 不存在\n\n💡 查看所有知识库: kb_list()`
+    }
+    
+    if (kb.documents.length === 0) {
+      return `📚 知识库 "${knowledge_base_name}" 是空的\n\n💡 添加文档: kb_document_add(knowledge_base_name="${knowledge_base_name}", title="文档标题", content="内容...")`
+    }
+    
+    // 简单的关键词匹配搜索
+    const queryLower = query.toLowerCase()
+    const results = kb.documents
+      .map(doc => {
+        const titleScore = doc.title.toLowerCase().includes(queryLower) ? 2 : 0
+        const contentScore = doc.content.toLowerCase().includes(queryLower) ? 1 : 0
+        const tagScore = doc.tags.some(tag => tag.toLowerCase().includes(queryLower)) ? 1.5 : 0
+        return {
+          doc,
+          score: titleScore + contentScore + tagScore
+        }
+      })
+      .filter(r => r.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+    
+    if (results.length === 0) {
+      return `🔍 在 "${knowledge_base_name}" 中未找到与 "${query}" 相关的内容\n\n💡 建议：\n1. 尝试不同的关键词\n2. 检查知识库中是否有相关文档: kb_list_documents(knowledge_base_name="${knowledge_base_name}")`
+    }
+    
+    let result = `🔍 查询结果 (${results.length}条):\n\n`
+    result += `知识库: ${knowledge_base_name}\n`
+    result += `查询: "${query}"\n\n`
+    
+    results.forEach((r, index) => {
+      const doc = r.doc
+      const preview = doc.content.slice(0, 200).replace(/\n/g, ' ')
+      const relevance = Math.min(100, Math.round(r.score / 4.5 * 100))
+      
+      result += `${index + 1}. ${doc.title} (相关度: ${relevance}%)\n`
+      if (doc.tags.length > 0) {
+        result += `   🏷️ ${doc.tags.join(', ')}\n`
+      }
+      result += `   📝 ${preview}${doc.content.length > 200 ? '...' : ''}\n\n`
+    })
+    
+    return result
+  } catch (error) {
+    return `❌ 查询知识库失败: ${error instanceof Error ? error.message : String(error)}`
+  }
+}
+
+/**
+ * 添加文档到知识库
+ */
+export const kbDocumentAdd: ToolExecutor = async (args) => {
+  const { knowledge_base_name, title, content, tags = [] } = args
+  
+  if (!knowledge_base_name || !title || !content) {
+    return `❌ 错误：knowledge_base_name、title 和 content 都是必填参数
+
+示例：kb_document_add(knowledge_base_name="my_kb", title="文档标题", content="文档内容...", tags=["标签1", "标签2"])`
+  }
+  
+  try {
+    const kb = knowledgeBaseStore.get(knowledge_base_name)
+    if (!kb) {
+      return `❌ 知识库 "${knowledge_base_name}" 不存在\n\n💡 先创建知识库: kb_create(name="${knowledge_base_name}", description="描述")`
+    }
+    
+    // 处理 tags
+    let processedTags: string[] = []
+    if (typeof tags === 'string') {
+      processedTags = tags.split(/[,，]/).map(t => t.trim()).filter(Boolean)
+    } else if (Array.isArray(tags)) {
+      processedTags = tags.map(t => String(t).trim()).filter(Boolean)
+    }
+    
+    const newDoc: KnowledgeDocument = {
+      id: crypto.randomUUID(),
+      title: title.toString(),
+      content: content.toString(),
+      tags: processedTags,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    
+    kb.documents.push(newDoc)
+    kb.updatedAt = new Date().toISOString()
+    
+    let result = `✅ 文档添加成功\n\n`
+    result += `📄 标题: ${title}\n`
+    result += `📚 知识库: ${knowledge_base_name}\n`
+    result += `🏷️ 标签: ${processedTags.join(', ') || '无'}\n`
+    result += `📝 内容长度: ${content.toString().length} 字符\n`
+    result += `🆔 文档 ID: ${newDoc.id}\n\n`
+    result += `💡 下一步:\n`
+    result += `- 查询知识: kb_query(knowledge_base_name="${knowledge_base_name}", query="关键词")\n`
+    result += `- 删除文档: kb_document_delete(knowledge_base_name="${knowledge_base_name}", document_id="${newDoc.id}")`
+    
+    return result
+  } catch (error) {
+    return `❌ 添加文档失败: ${error instanceof Error ? error.message : String(error)}`
+  }
+}
+
+/**
+ * 从知识库删除文档
+ */
+export const kbDocumentDelete: ToolExecutor = async (args) => {
+  const { knowledge_base_name, document_id } = args
+  
+  if (!knowledge_base_name || !document_id) {
+    return `❌ 错误：knowledge_base_name 和 document_id 都是必填参数
+
+示例：kb_document_delete(knowledge_base_name="my_kb", document_id="doc-uuid")`
+  }
+  
+  try {
+    const kb = knowledgeBaseStore.get(knowledge_base_name)
+    if (!kb) {
+      return `❌ 知识库 "${knowledge_base_name}" 不存在\n\n💡 查看所有知识库: kb_list()`
+    }
+    
+    const docIndex = kb.documents.findIndex(d => d.id === document_id)
+    if (docIndex === -1) {
+      return `❌ 文档不存在\n\n💡 查看知识库中的文档: kb_list_documents(knowledge_base_name="${knowledge_base_name}")`
+    }
+    
+    const deletedDoc = kb.documents[docIndex]
+    kb.documents.splice(docIndex, 1)
+    kb.updatedAt = new Date().toISOString()
+    
+    return `✅ 文档已删除\n\n📄 ${deletedDoc.title}\n🆔 ${document_id}\n\n💡 知识库 "${knowledge_base_name}" 现有 ${kb.documents.length} 个文档`
+  } catch (error) {
+    return `❌ 删除文档失败: ${error instanceof Error ? error.message : String(error)}`
+  }
+}
+
+/**
+ * 列出知识库中的所有文档
+ */
+export const kbListDocuments: ToolExecutor = async (args) => {
+  const { knowledge_base_name } = args
+  
+  if (!knowledge_base_name) {
+    return `❌ 错误：knowledge_base_name 是必填参数
+
+示例：kb_list_documents(knowledge_base_name="my_kb")`
+  }
+  
+  try {
+    const kb = knowledgeBaseStore.get(knowledge_base_name)
+    if (!kb) {
+      return `❌ 知识库 "${knowledge_base_name}" 不存在\n\n💡 查看所有知识库: kb_list()`
+    }
+    
+    if (kb.documents.length === 0) {
+      return `📚 知识库 "${knowledge_base_name}" 中没有文档\n\n💡 添加文档: kb_document_add(knowledge_base_name="${knowledge_base_name}", title="文档标题", content="内容...")`
+    }
+    
+    let result = `📄 "${knowledge_base_name}" 中的文档 (${kb.documents.length}个):\n\n`
+    
+    kb.documents.forEach((doc, index) => {
+      result += `${index + 1}. ${doc.title}\n`
+      result += `   🆔 ${doc.id}\n`
+      if (doc.tags.length > 0) {
+        result += `   🏷️ ${doc.tags.join(', ')}\n`
+      }
+      result += `   📝 ${doc.content.length} 字符\n`
+      result += `   🕒 ${new Date(doc.updatedAt).toLocaleDateString('zh-CN')}\n\n`
+    })
+    
+    result += `💡 操作:\n`
+    result += `- 添加文档: kb_document_add(knowledge_base_name="${knowledge_base_name}", ...)\n`
+    result += `- 查询知识: kb_query(knowledge_base_name="${knowledge_base_name}", query="关键词")`
+    
+    return result
+  } catch (error) {
+    return `❌ 获取文档列表失败: ${error instanceof Error ? error.message : String(error)}`
   }
 }

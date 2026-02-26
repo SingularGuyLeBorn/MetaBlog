@@ -142,6 +142,7 @@ async function flushLogs() {
 /** 延迟批量写入 */
 function scheduleFlush() {
   if (flushTimer) return
+  if (typeof window === 'undefined') return
   
   flushTimer = window.setTimeout(() => {
     flushLogs()
@@ -150,8 +151,11 @@ function scheduleFlush() {
 }
 
 /** 添加日志 */
-export function addLog(entry: Omit<LogEntry, 'id' | 'timestamp'>): LogEntry {
-  if (!isRecording.value) return null as any
+export function addLog(entry: Omit<LogEntry, 'id' | 'timestamp'>): LogEntry | null {
+  // SSR 环境下直接返回 null
+  if (typeof window === 'undefined') return null
+  
+  if (!isRecording.value) return null
   
   const fullEntry: LogEntry = {
     id: generateId(),

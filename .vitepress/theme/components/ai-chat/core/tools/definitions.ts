@@ -913,24 +913,239 @@ export const listNotesDef: ToolDefinition = {
   }
 }
 
+
+// ============ ArXiv 工具定义 ============
+
+export const fetchArxivDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'fetch_arxiv',
+    description: `获取 ArXiv 论文的详细信息。包括标题、作者、摘要、PDF链接等。
+
+使用场景：
+1. 获取学术论文的完整信息
+2. 查看论文摘要了解研究内容
+3. 下载 PDF 文件进行深度阅读
+4. 查找相关研究领域论文
+
+注意：需要提供 ArXiv 论文 ID（如 2401.12345）`,
+    parameters: {
+      type: 'object',
+      properties: {
+        paper_id: {
+          type: 'string',
+          description: 'ArXiv 论文 ID，例如 "2401.12345" 或 "2401.12345v2"'
+        },
+        include_abstract: {
+          type: 'boolean',
+          description: '是否包含论文摘要，默认 true',
+          default: true
+        },
+        include_pdf: {
+          type: 'boolean',
+          description: '是否返回 PDF 下载链接，默认 true',
+          default: true
+        }
+      },
+      required: ['paper_id']
+    }
+  }
+}
+
+// ============ Knowledge Base 工具定义 ============
+
+export const kbListDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'kb_list',
+    description: '列出所有知识库。查看当前可用的知识库列表。',
+    parameters: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
+  }
+}
+
+export const kbCreateDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'kb_create',
+    description: `创建一个新的知识库。知识库用于存储和管理相关文档。
+
+使用场景：
+1. 为特定项目创建知识库
+2. 建立分类文档存储
+3. 创建可搜索的知识集合
+
+注意：知识库名称只能包含字母、数字、下划线和连字符。`,
+    parameters: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: '知识库名称，只能包含字母、数字、下划线和连字符，例如 "my_kb", "docs-2024"'
+        },
+        description: {
+          type: 'string',
+          description: '知识库描述（可选）'
+        }
+      },
+      required: ['name']
+    }
+  }
+}
+
+export const kbDeleteDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'kb_delete',
+    description: '删除一个知识库及其所有文档。此操作不可恢复！',
+    parameters: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: '要删除的知识库名称'
+        }
+      },
+      required: ['name']
+    }
+  }
+}
+
+export const kbQueryDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'kb_query',
+    description: `在知识库中搜索相关文档。基于关键词匹配查找相关内容。
+
+使用场景：
+1. 在特定知识库中查找信息
+2. 基于关键词检索文档
+3. 发现相关知识和文档
+
+注意：搜索结果按相关度排序。`,
+    parameters: {
+      type: 'object',
+      properties: {
+        knowledge_base_name: {
+          type: 'string',
+          description: '知识库名称'
+        },
+        query: {
+          type: 'string',
+          description: '搜索关键词'
+        },
+        limit: {
+          type: 'number',
+          description: '返回结果数量限制，默认 5',
+          default: 5
+        }
+      },
+      required: ['knowledge_base_name', 'query']
+    }
+  }
+}
+
+export const kbListDocumentsDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'kb_list_documents',
+    description: '列出知识库中的所有文档。查看知识库包含的完整文档列表。',
+    parameters: {
+      type: 'object',
+      properties: {
+        knowledge_base_name: {
+          type: 'string',
+          description: '知识库名称'
+        }
+      },
+      required: ['knowledge_base_name']
+    }
+  }
+}
+
+export const kbDocumentAddDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'kb_document_add',
+    description: `向知识库添加新文档。文档可以包含标题、内容和标签。
+
+使用场景：
+1. 保存重要信息到知识库
+2. 创建可搜索的文档集合
+3. 构建个人或团队知识库
+
+注意：文档添加后可立即被搜索。`,
+    parameters: {
+      type: 'object',
+      properties: {
+        knowledge_base_name: {
+          type: 'string',
+          description: '目标知识库名称'
+        },
+        title: {
+          type: 'string',
+          description: '文档标题'
+        },
+        content: {
+          type: 'string',
+          description: '文档内容'
+        },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+          description: '文档标签列表（可选）'
+        }
+      },
+      required: ['knowledge_base_name', 'title', 'content']
+    }
+  }
+}
+
+export const kbDocumentDeleteDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'kb_document_delete',
+    description: '从知识库中删除指定文档。此操作不可恢复！',
+    parameters: {
+      type: 'object',
+      properties: {
+        knowledge_base_name: {
+          type: 'string',
+          description: '知识库名称'
+        },
+        document_id: {
+          type: 'string',
+          description: '文档 ID'
+        }
+      },
+      required: ['knowledge_base_name', 'document_id']
+    }
+  }
+}
+
+
 // ============ 所有工具定义列表 ============
 
 export const allToolDefinitions = [
+  // 文章管理工具
   getArticleContentDef,
   searchArticlesDef,
   listArticlesDef,
   createArticleDef,
   updateArticleDef,
   deleteArticleDef,
-  getCurrentTimeDef,
-  testEchoDef,
-  summarizeTextDef,
-  formatTextDef,
+  // 文件管理工具
   readFileDef,
   writeFileDef,
   listFilesDef,
+  // 网络工具
   webSearchDef,
   fetchUrlDef,
+  // ArXiv 工具
+  fetchArxivDef,
   // GitHub 工具
   githubGetRepoDef,
   githubListRepoContentsDef,
@@ -938,13 +1153,30 @@ export const allToolDefinitions = [
   githubSearchCodeDef,
   githubGetCommitHistoryDef,
   githubGetIssuesDef,
-  // 其他工具
+  // Knowledge Base 工具
+  kbListDef,
+  kbCreateDef,
+  kbDeleteDef,
+  kbQueryDef,
+  kbListDocumentsDef,
+  kbDocumentAddDef,
+  kbDocumentDeleteDef,
+  // 计算与转换工具
   calculateDef,
   translateTextDef,
+  // 代码工具
   executeCodeDef,
   analyzeCodeDef,
+  // 文本处理工具
+  summarizeTextDef,
+  formatTextDef,
+  // 知识与笔记工具
   queryKnowledgeDef,
-  getWeatherDef,
   createNoteDef,
-  listNotesDef
+  listNotesDef,
+  // 天气与时间工具
+  getWeatherDef,
+  getCurrentTimeDef,
+  // 其他工具
+  testEchoDef
 ]

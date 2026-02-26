@@ -66,17 +66,42 @@ export function hasTool(name: string): boolean {
  * 执行工具
  * @param name 工具名称
  * @param args 工具参数
+ * @returns 工具执行结果字符串，始终不会抛出异常
  */
 export async function executeTool(name: string, args: Record<string, any>): Promise<string> {
   const tool = tools.get(name)
   if (!tool) {
-    return `错误：工具 "${name}" 未找到`
+    return `❌ 错误：工具 "${name}" 未找到
+
+可能原因：
+1. 工具名称拼写错误
+2. 工具尚未注册到系统中
+3. 工具正在开发中
+
+建议：使用 ToolTester 查看所有可用工具列表`
   }
   
   try {
-    return await tool.executor(args)
+    const result = await tool.executor(args)
+    // 确保返回字符串
+    if (typeof result === 'string') {
+      return result
+    }
+    return JSON.stringify(result, null, 2)
   } catch (error) {
-    return `执行错误: ${error instanceof Error ? error.message : String(error)}`
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorStack = error instanceof Error ? error.stack : ''
+    
+    return `❌ 工具执行失败
+
+工具名称: ${name}
+错误信息: ${errorMessage}
+
+${errorStack ? `错误堆栈:\n${errorStack}\n\n` : ''}建议：
+1. 检查参数是否正确
+2. 查看工具文档了解参数要求
+3. 如果是网络工具，检查网络连接
+4. 如果是文件工具，检查文件路径是否存在`
   }
 }
 
