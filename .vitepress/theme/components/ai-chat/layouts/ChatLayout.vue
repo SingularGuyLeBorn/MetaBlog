@@ -135,9 +135,12 @@
     <SettingsPanel
       :config="currentConfig"
       :collapsed="rightCollapsed"
-      @update:config="updateConfig"
+      :agent-system-prompt="currentAgentSystemPrompt"
+      :is-system-prompt-customized="isSystemPromptCustomized"
+      @update:config="handleUpdateConfig"
       @toggle-collapse="rightCollapsed = !rightCollapsed"
       @open-agent-center="showAgentAdmin = true"
+      @reset-system-prompt="resetSystemPromptToAgent"
     />
 
     <!-- Agent 管理中心 -->
@@ -298,6 +301,26 @@ const inputPlaceholder = computed(() => {
   return '发送消息...'
 })
 
+// 当前 Agent 的系统提示词
+const currentAgentSystemPrompt = computed(() => {
+  if (!selectedAgent.value) return ''
+  return selectedAgent.value.systemPrompt || buildSystemPrompt(selectedAgent.value)
+})
+
+// System Prompt 是否已自定义（与会话初始值不同）
+const isSystemPromptCustomized = computed((): boolean => {
+  if (!currentSession.value) return false
+  // 如果会话有 _customSystemPrompt 标记，说明用户手动修改过
+  if (currentSession.value.config._customSystemPrompt) return true
+  
+  // 或者与会话创建时的 Agent systemPrompt 不同
+  const agentPrompt = currentAgentSystemPrompt.value
+  const sessionPrompt = currentSession.value.config.systemPrompt
+  
+  // 如果两者不同，且 sessionPrompt 不为空，说明被自定义了
+  return !!(sessionPrompt && sessionPrompt !== agentPrompt)
+})
+
 // 键盘快捷键：Ctrl+L 打开日志面板
 function handleKeydown(e: KeyboardEvent) {
   if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
@@ -358,6 +381,15 @@ async function selectAgent(agent: Agent) {
     // 切换到最新的会话
     const latestSession = agentSessions[agentSessions.length - 1]
     switchSession(latestSession.id)
+    
+    // 如果当前会话没有自定义 systemPrompt，更新为新 Agent 的
+    if (!latestSession.config._customSystemPrompt) {
+      const agentPrompt = agent.systemPrompt || buildSystemPrompt(agent)
+      updateSessionConfig(latestSession.id, { 
+        systemPrompt: agentPrompt
+      })
+      latestSession.config._customSystemPrompt = false
+    }
   }
 }
 
@@ -372,9 +404,10 @@ async function createSessionForCurrentAgent() {
     // 设置会话标题
     renameSession(newSession.id, `与 ${selectedAgent.value.name} 的对话`)
     
-    // 设置系统提示词
+    // 设置系统提示词为 Agent 的默认（未自定义）
     const systemPrompt = selectedAgent.value.systemPrompt || buildSystemPrompt(selectedAgent.value)
     updateSessionConfig(newSession.id, { systemPrompt })
+    newSession.config._customSystemPrompt = false // 标记为未自定义，跟随 Agent
   }
 }
 
@@ -408,13 +441,14 @@ async function handleSend(content: string, skillInfo?: { id: string; name: strin
     chatInputRef.value?.focus()
   })
   
-  // 使用当前选中的 Agent 的系统提示词
-  if (currentSessionId.value && selectedAgent.value) {
-    let systemPrompt = selectedAgent.value.systemPrompt || buildSystemPrompt(selectedAgent.value)
-    if (skillInfo?.systemPrompt) {
-      systemPrompt = skillInfo.systemPrompt
+  // 只有在使用了技能且技能有 systemPrompt 时才更新
+  // 保持用户自定义的 systemPrompt 不被覆盖
+  if (currentSessionId.value && skillInfo?.systemPrompt) {
+    updateSessionConfig(currentSessionId.value, { systemPrompt: skillInfo.systemPrompt })
+    const session = sessions.value.find(s => s.id === currentSessionId.value)
+    if (session) {
+      session.config._customSystemPrompt = true // 标记为用户自定义
     }
-    updateSessionConfig(currentSessionId.value, { systemPrompt })
   }
   
   // 发送消息
@@ -462,6 +496,17 @@ function handleBatchDelete(sessionIds: string[]) {
   sessionIds.forEach(id => deleteSession(id))
 }
 
+// 重置 System Prompt 到 Agent 默认
+function resetSystemPromptToAgent() {
+  if (!currentSessionId.value || !selectedAgent.value) return
+  
+  const agentPrompt = selectedAgent.value.systemPrompt || buildSystemPrompt(selectedAgent.value)
+  updateSessionConfig(currentSessionId.value, { 
+    systemPrompt: agentPrompt,
+    _customSystemPrompt: false 
+  })
+}
+
 function executeDelete() {
   if (sessionToDelete.value) {
     deleteSession(sessionToDelete.value)
@@ -472,8 +517,23 @@ function executeDelete() {
 
 function updateConfig(config: Partial<SessionConfig>) {
   if (currentSessionId.value) {
-    updateSessionConfig(currentSessionId.value, config)
+    // 如果修改了 systemPrompt，检查是否与会话初始值不同
+  if ('systemPrompt' in config) {
+    const newPrompt = config.systemPrompt
+    const agentPrompt = currentAgentSystemPrompt.value
+    const session = sessions.value.find(s => s.id === currentSessionId.value)
+    if (session && newPrompt !== undefined) {
+      session.config._customSystemPrompt = newPrompt !== agentPrompt
+    }
   }
+    
+  updateSessionConfig(currentSessionId.value, config)
+  }
+}
+
+// 包装 updateConfig 以处理 SettingsPanel 的事件
+function handleUpdateConfig(config: Partial<SessionConfig>) {
+  updateConfig(config)
 }
 
 function handleSelectSkill(skill: Skill | undefined) {

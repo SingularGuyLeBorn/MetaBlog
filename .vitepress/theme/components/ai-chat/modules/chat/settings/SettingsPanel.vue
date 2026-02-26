@@ -136,29 +136,63 @@
 
       <!-- 系统提示词 -->
       <div class="setting-section-3d">
-        <label class="section-label-3d">
-          <span class="label-icon">📝</span>
-          系统提示词
-        </label>
+        <div class="section-header-with-badge">
+          <label class="section-label-3d">
+            <span class="label-icon">📝</span>
+            系统提示词
+          </label>
+          <span 
+            class="customized-badge" 
+            :class="{ customized: isSystemPromptCustomized }"
+          >
+            {{ isSystemPromptCustomized ? '已自定义' : '跟随 Agent' }}
+          </span>
+        </div>
+        
         <div class="prompt-input-wrapper-3d">
           <textarea
             v-model="config.systemPrompt"
             class="prompt-input-3d"
+            :class="{ customized: isSystemPromptCustomized }"
             rows="5"
             placeholder="设置 AI 的角色和行为方式..."
+            @input="onSystemPromptInput"
           ></textarea>
           <div class="input-footer-3d">
-            <span class="char-count">{{ config.systemPrompt.length }} 字符</span>
-            <button 
-              v-if="config.systemPrompt" 
-              class="clear-btn-3d"
-              @click="config.systemPrompt = ''"
-            >
-              清空
-            </button>
+            <span class="char-count">{{ config.systemPrompt?.length || 0 }} 字符</span>
+            <div class="prompt-actions">
+              <button 
+                v-if="isSystemPromptCustomized" 
+                class="reset-btn-3d"
+                @click="resetToAgentPrompt"
+                title="重置为 Agent 默认"
+              >
+                <Icon name="refresh" :size="12" />
+                重置
+              </button>
+              <button 
+                v-if="config.systemPrompt" 
+                class="clear-btn-3d"
+                @click="clearSystemPrompt"
+              >
+                清空
+              </button>
+            </div>
           </div>
         </div>
-        <p class="section-desc-3d">定义 AI 助手的身份、性格和专长领域</p>
+        
+        <div class="prompt-info">
+          <p class="section-desc-3d">
+            {{ isSystemPromptCustomized 
+              ? '当前会话已自定义系统提示词，不再跟随 Agent 配置' 
+              : '使用 Agent 默认的系统提示词，修改后将仅影响当前会话' 
+            }}
+          </p>
+          <div v-if="agentSystemPrompt && !isSystemPromptCustomized" class="agent-prompt-preview">
+            <div class="preview-label">Agent 默认提示词：</div>
+            <div class="preview-text">{{ agentSystemPrompt.slice(0, 100) }}{{ agentSystemPrompt.length > 100 ? '...' : '' }}</div>
+          </div>
+        </div>
       </div>
 
       <!-- Agent 控制中心 -->
@@ -240,14 +274,20 @@ const modelConfigs: ModelConfig[] = [
 interface Props {
   config: SessionConfig
   collapsed: boolean
+  agentSystemPrompt?: string
+  isSystemPromptCustomized?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  agentSystemPrompt: '',
+  isSystemPromptCustomized: false
+})
 
 const emit = defineEmits<{
   'update:config': [config: Partial<SessionConfig>]
   'toggle-collapse': []
   'open-agent-center': []
+  'reset-system-prompt': []
 }>()
 
 const availableModels = modelConfigs
@@ -286,6 +326,23 @@ function resetSettings() {
     systemPrompt: '',
     enableReasoning: model.reasoningRequired || false
   })
+}
+
+// System Prompt 相关方法
+function onSystemPromptInput() {
+  // 当用户手动输入时，标记为已自定义
+  // 通过比较当前值与 Agent 默认值来判断是否自定义
+  if (!props.isSystemPromptCustomized && props.config.systemPrompt !== props.agentSystemPrompt) {
+    emit('update:config', { systemPrompt: props.config.systemPrompt })
+  }
+}
+
+function clearSystemPrompt() {
+  emit('update:config', { systemPrompt: '' })
+}
+
+function resetToAgentPrompt() {
+  emit('reset-system-prompt')
 }
 </script>
 
@@ -718,6 +775,89 @@ function resetSettings() {
   font-size: 12px;
   color: #94a3b8;
   font-weight: 500;
+}
+
+.prompt-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* System Prompt 自定义状态 */
+.section-header-with-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.customized-badge {
+  padding: 4px 10px;
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  transition: all 0.3s ease;
+}
+
+.customized-badge.customized {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.1));
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.prompt-input-3d.customized {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: linear-gradient(145deg, #fffbeb, #ffffff);
+}
+
+.reset-btn-3d {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: linear-gradient(145deg, #dbeafe, #bfdbfe);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-btn-3d:hover {
+  background: linear-gradient(145deg, #3b82f6, #2563eb);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.prompt-info {
+  margin-top: 12px;
+}
+
+.agent-prompt-preview {
+  margin-top: 10px;
+  padding: 12px;
+  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+  border-radius: 10px;
+  border-left: 3px solid #3b82f6;
+}
+
+.preview-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.preview-text {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
 }
 
 .clear-btn-3d {

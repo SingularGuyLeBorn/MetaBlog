@@ -126,6 +126,8 @@ export interface SessionConfig {
   systemPrompt: string
   enableReasoning: boolean
   streaming: boolean
+  /** 内部使用：标记 systemPrompt 是否已自定义 */
+  _customSystemPrompt?: boolean
 }
 
 /** 会话统计 */
