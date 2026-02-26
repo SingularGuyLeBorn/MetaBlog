@@ -133,6 +133,7 @@ import { AgentAdmin } from '../modules/agent'
 import { LogDashboard } from '../modules/agent/admin'
 import { Icon } from '../ui'
 import { useAIChat, useAgents } from '../core/composables'
+import { useAgentConfig } from '../core/composables/useAgentConfig'
 import type { SessionConfig } from '../core/types'
 import type { Skill } from '../core/composables/useSkills'
 import type { Agent } from '../core/types/agent'
@@ -158,6 +159,7 @@ const {
 } = useAIChat()
 
 const { activeAgent } = useAgents()
+const { buildSystemPrompt } = useAgentConfig()
 
 const leftCollapsed = ref(false)
 const rightCollapsed = ref(true)
@@ -268,9 +270,21 @@ function handleSelectSkill(skill: Skill | undefined) {
   selectedSkill.value = skill
 }
 
-function handleAgentChange(agent: Agent) {
+async function handleAgentChange(agent: Agent) {
   // Agent 切换后的处理
   console.log('切换到 Agent:', agent.name)
+  
+  // 创建一个新的会话，专门用于与该 Agent 对话
+  const newSession = await createSession()
+  if (newSession) {
+    // 更新会话标题为 Agent 名称
+    renameSession(newSession.id, `与 ${agent.name} 的对话`)
+    // 更新会话配置，使用该 Agent 的系统提示词
+    const systemPrompt = buildSystemPrompt(agent)
+    updateSessionConfig(newSession.id, { systemPrompt })
+    // 关闭 AgentAdmin
+    showAgentAdmin.value = false
+  }
 }
 </script>
 

@@ -122,6 +122,15 @@
                   
                   <!-- 悬浮操作 -->
                   <div class="card-actions" @click.stop>
+                    <!-- 开始对话按钮 -->
+                    <button 
+                      class="action-crystal chat"
+                      @click="startChatWithAgent(agent)"
+                      title="开始对话"
+                    >
+                      <span class="crystal-glow" />
+                      💬
+                    </button>
                     <button 
                       class="action-crystal"
                       :class="{ active: agent.id === activeAgentId }"
@@ -132,7 +141,7 @@
                       {{ agent.id === activeAgentId ? '●' : '○' }}
                     </button>
                     <button 
-                      v-if="!agent.isDefault"
+                      v-if="!agent.isDefault && agent.level !== 'meta'"
                       class="action-crystal danger"
                       @click="confirmDelete(agent)"
                       title="删除"
@@ -370,6 +379,16 @@ function selectAgent(agent: Agent) {
 function activateAgent(agent: Agent) {
   setActive(agent.id)
   emit('agentChange', agent)
+}
+
+// 与指定 Agent 开始对话
+function startChatWithAgent(agent: Agent) {
+  // 1. 激活该 Agent
+  setActive(agent.id)
+  // 2. 触发事件通知父组件
+  emit('agentChange', agent)
+  // 3. 关闭 AgentAdmin 面板
+  close()
 }
 
 async function saveAgentConfig(config: Agent['capabilities']) {
@@ -1027,6 +1046,18 @@ function modeLabel(mode: string): string {
 .action-crystal.danger:hover {
   background: #fee2e2;
   color: #ef4444;
+}
+
+.action-crystal.chat {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+}
+
+.action-crystal.chat:hover {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  transform: scale(1.15);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
 }
 
 /* ===== 配置视图 ===== */
