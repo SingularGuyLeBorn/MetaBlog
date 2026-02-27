@@ -295,7 +295,6 @@ export default defineConfig({
           
           // Agents API - 简化版（确保在第一个 configureServer hook 中注册）
           const AGENTS_FILE = path.join(process.cwd(), '.data', 'agents.json');
-          const SKILLS_FILE = path.join(process.cwd(), '.data', 'skills.json');
           
           function readAgents(): any[] {
             try {
@@ -328,12 +327,131 @@ export default defineConfig({
             return [];
           }
           
+          // Skills 目录路径
+          const SKILLS_DIR = path.join(process.cwd(), '.skills');
+          
+          // 解析 SKILL.md 文件
+          function parseSkillMd(content: string, skillId: string, dirName: string): any {
+            const lines = content.split('\n');
+            const skill: any = {
+              id: skillId,
+              name: dirName.replace(/-/g, ' '),
+              icon: '🔧',
+              description: '',
+              systemPrompt: '',
+              category: 'custom',
+              version: '1.0.0',
+              isBuiltIn: false,
+              enabled: true,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+              tags: [],
+              tools: [],
+              author: 'user'
+            };
+            
+            let section = '';
+            let promptLines: string[] = [];
+            let inPrompt = false;
+            
+            for (let i = 0; i < lines.length; i++) {
+              const line = lines[i];
+              
+              // 解析标题
+              if (line.startsWith('# ') && !line.startsWith('## ')) {
+                skill.name = line.substring(2).trim();
+                continue;
+              }
+              
+              // 解析章节
+              if (line.startsWith('## ')) {
+                section = line.substring(3).trim().toLowerCase();
+                inPrompt = false;
+                continue;
+              }
+              
+              // 解析元数据
+              if (section === '元数据' || section === 'metadata') {
+                if (line.startsWith('- **')) {
+                  const match = line.match(/- \*\*(\w+)\*\*:\s*`?(.+?)`?$/);
+                  if (match) {
+                    const [, key, value] = match;
+                    switch (key.toLowerCase()) {
+                      case 'id': skill.id = value; break;
+                      case '图标': case 'icon': skill.icon = value; break;
+                      case '分类': case 'category': skill.category = value; break;
+                      case '版本': case 'version': skill.version = value; break;
+                      case '标签': case 'tags': skill.tags = value.split(',').map(t => t.trim()); break;
+                      case '作者': case 'author': skill.author = value; break;
+                      case '内置': case 'built-in': skill.isBuiltIn = value === 'true'; break;
+                      case '启用': case 'enabled': skill.enabled = value !== 'false'; break;
+                    }
+                  }
+                }
+              }
+              
+              // 解析描述
+              if (section === '描述' || section === 'description') {
+                if (line.trim() && !line.startsWith('-')) {
+                  skill.description = line.trim();
+                }
+              }
+              
+              // 解析可用工具
+              if (section === '可用工具' || section === 'tools') {
+                if (line.startsWith('- ')) {
+                  skill.tools.push(line.substring(2).trim());
+                }
+              }
+              
+              // 解析 Prompt
+              if (section === 'prompt' || (line.startsWith('---') && section)) {
+                if (line.startsWith('---')) {
+                  inPrompt = true;
+                  continue;
+                }
+                if (inPrompt || section === 'prompt') {
+                  promptLines.push(line);
+                }
+              }
+            }
+            
+            skill.systemPrompt = promptLines.join('\n').trim();
+            return skill;
+          }
+          
+          // 从 .skills 目录读取所有 Skills
           function readSkills(): any[] {
             try {
-              if (fs.existsSync(SKILLS_FILE)) {
-                return JSON.parse(fs.readFileSync(SKILLS_FILE, 'utf-8'));
+              if (!fs.existsSync(SKILLS_DIR)) {
+                fs.mkdirSync(SKILLS_DIR, { recursive: true });
+                return [];
               }
-            } catch (e) { console.error('[API] Failed to read skills:', e); }
+              
+              const skills: any[] = [];
+              const dirs = fs.readdirSync(SKILLS_DIR, { withFileTypes: true });
+              
+              for (const dir of dirs) {
+                if (dir.isDirectory()) {
+                  const skillFile = path.join(SKILLS_DIR, dir.name, 'SKILL.md');
+                  if (fs.existsSync(skillFile)) {
+                    const content = fs.readFileSync(skillFile, 'utf-8');
+                    const stat = fs.statSync(skillFile);
+                    const skill = parseSkillMd(content, dir.name, dir.name);
+                    skill.createdAt = stat.birthtimeMs;
+                    skill.updatedAt = stat.mtimeMs;
+                    skills.push(skill);
+                  }
+                }
+              }
+              
+              if (skills.length > 0) {
+                console.log(`[API] Loaded ${skills.length} skills from .skills/`);
+              }
+              return skills.sort((a, b) => b.updatedAt - a.updatedAt);
+            } catch (e) {
+              console.error('[API] Failed to read skills:', e);
+            }
             return [];
           }
           
@@ -370,175 +488,6 @@ export default defineConfig({
               };
               fs.writeFileSync(AGENTS_FILE, JSON.stringify([defaultAgent], null, 2), 'utf-8');
               console.log('[API] Initialized default agent');
-            }
-            
-            // 初始化示例 Skills (10个)
-            if (!fs.existsSync(SKILLS_FILE) || readSkills().length === 0) {
-              const now = Date.now();
-              const defaultSkills = [
-                {
-                  id: `skill-${now}-1`,
-                  name: '代码工匠',
-                  icon: '💻',
-                  description: '专业编程助手，擅长代码审查、重构和最佳实践',
-                  systemPrompt: '你是一位经验丰富的程序员，精通多种编程语言。你的任务是帮助用户解决编程问题、审查代码、提供最佳实践建议、重构代码和调试错误。',
-                  category: 'coding',
-                  version: '1.0.0',
-                  isBuiltIn: true,
-                  enabled: true,
-                  createdAt: now,
-                  updatedAt: now,
-                  tags: ['编程', '代码审查', '重构', '调试'],
-                  tools: ['get_current_time', 'execute_code', 'analyze_code', 'read_file', 'write_file'],
-                  author: 'system'
-                },
-                {
-                  id: `skill-${now}-2`,
-                  name: '文章大师',
-                  icon: '✍️',
-                  description: '专业写作助手，擅长各类文本创作和编辑',
-                  systemPrompt: '你是一位专业的写作助手，擅长各类文本创作。你可以帮助用户撰写文章、编辑内容、改进文笔、检查语法错误、生成摘要和格式化文本。',
-                  category: 'writing',
-                  version: '1.0.0',
-                  isBuiltIn: true,
-                  enabled: true,
-                  createdAt: now,
-                  updatedAt: now,
-                  tags: ['写作', '编辑', '内容创作', '文案'],
-                  tools: ['summarize_text', 'format_text', 'translate_text', 'create_article', 'update_article'],
-                  author: 'system'
-                },
-                {
-                  id: `skill-${now}-3`,
-                  name: '数据分析师',
-                  icon: '📊',
-                  description: '数据分析专家，提供统计计算和商业智能洞察',
-                  systemPrompt: '你是一位数据分析师，擅长数据分析、统计计算和商业智能。你可以帮助用户理解数据、创建分析报告、提供数据驱动的洞察、执行数学计算。',
-                  category: 'analysis',
-                  version: '1.0.0',
-                  isBuiltIn: true,
-                  enabled: true,
-                  createdAt: now,
-                  updatedAt: now,
-                  tags: ['数据', '分析', '统计', '商业智能'],
-                  tools: ['calculate', 'summarize_text', 'format_text', 'query_knowledge'],
-                  author: 'system'
-                },
-                {
-                  id: `skill-${now}-4`,
-                  name: '翻译专家',
-                  icon: '🌐',
-                  description: '多语言翻译专家，支持多种语言互译',
-                  systemPrompt: '你是一位专业的翻译专家，精通多种语言。你可以帮助用户翻译文本、解释词汇、提供语言学习建议，并确保翻译的准确性和自然性。',
-                  category: 'general',
-                  version: '1.0.0',
-                  isBuiltIn: true,
-                  enabled: true,
-                  createdAt: now,
-                  updatedAt: now,
-                  tags: ['翻译', '语言', '多语言', '学习'],
-                  tools: ['translate_text', 'summarize_text', 'format_text'],
-                  author: 'system'
-                },
-                {
-                  id: `skill-${now}-5`,
-                  name: '研究助手',
-                  icon: '🔬',
-                  description: '学术研究助手，擅长信息检索和知识整理',
-                  systemPrompt: '你是一位研究助手，擅长信息检索、文献整理和知识管理。你可以帮助用户搜索信息、整理资料、创建笔记、管理知识库。',
-                  category: 'analysis',
-                  version: '1.0.0',
-                  isBuiltIn: true,
-                  enabled: true,
-                  createdAt: now,
-                  updatedAt: now,
-                  tags: ['研究', '学术', '信息检索', '知识管理'],
-                  tools: ['web_search', 'fetch_url', 'query_knowledge', 'create_note', 'list_notes', 'summarize_text'],
-                  author: 'system'
-                },
-                {
-                  id: `skill-${now}-6`,
-                  name: '文件管家',
-                  icon: '📁',
-                  description: '文件管理专家，帮助整理和管理文件系统',
-                  systemPrompt: '你是一位文件管理专家，擅长文件操作和系统管理。你可以帮助用户读取文件、写入文件、列出目录、搜索文件、管理文档。',
-                  category: 'general',
-                  version: '1.0.0',
-                  isBuiltIn: true,
-                  enabled: true,
-                  createdAt: now,
-                  updatedAt: now,
-                  tags: ['文件管理', '系统', '文档', '操作'],
-                  tools: ['read_file', 'write_file', 'list_files', 'get_article_content', 'list_articles'],
-                  author: 'system'
-                },
-                {
-                  id: `skill-${now}-7`,
-                  name: '创意设计师',
-                  icon: '🎨',
-                  description: '创意设计助手，提供设计灵感和创意建议',
-                  systemPrompt: '你是一位创意设计师，擅长提供设计灵感、创意建议和美学指导。你可以帮助用户生成创意想法、提供设计方案、优化视觉呈现。',
-                  category: 'creative',
-                  version: '1.0.0',
-                  isBuiltIn: true,
-                  enabled: true,
-                  createdAt: now,
-                  updatedAt: now,
-                  tags: ['设计', '创意', '美学', '灵感'],
-                  tools: ['get_current_time', 'summarize_text', 'format_text', 'web_search'],
-                  author: 'system'
-                },
-                {
-                  id: `skill-${now}-8`,
-                  name: '项目经理',
-                  icon: '📋',
-                  description: '项目管理专家，帮助规划和跟踪项目进度',
-                  systemPrompt: '你是一位项目经理，擅长项目规划、进度跟踪和任务管理。你可以帮助用户制定计划、分解任务、跟踪进度、管理笔记和待办事项。',
-                  category: 'general',
-                  version: '1.0.0',
-                  isBuiltIn: true,
-                  enabled: true,
-                  createdAt: now,
-                  updatedAt: now,
-                  tags: ['项目管理', '规划', '任务', '跟踪'],
-                  tools: ['get_current_time', 'create_note', 'list_notes', 'summarize_text', 'format_text'],
-                  author: 'system'
-                },
-                {
-                  id: `skill-${now}-9`,
-                  name: '天气助手',
-                  icon: '🌤️',
-                  description: '提供天气预报和生活建议',
-                  systemPrompt: '你是一位天气助手，提供准确的天气预报和实用的生活建议。你可以帮助用户查询天气、提供出行建议、推荐穿衣指南。',
-                  category: 'general',
-                  version: '1.0.0',
-                  isBuiltIn: true,
-                  enabled: true,
-                  createdAt: now,
-                  updatedAt: now,
-                  tags: ['天气', '生活', '出行', '建议'],
-                  tools: ['get_weather', 'get_current_time', 'web_search'],
-                  author: 'system'
-                },
-                {
-                  id: `skill-${now}-10`,
-                  name: '全栈开发者',
-                  icon: '🚀',
-                  description: '全栈开发专家，前后端技术全能',
-                  systemPrompt: '你是一位全栈开发专家，精通前后端技术栈。你可以帮助用户构建完整的应用程序、设计系统架构、解决技术难题、优化性能。',
-                  category: 'coding',
-                  version: '1.0.0',
-                  isBuiltIn: true,
-                  enabled: true,
-                  createdAt: now,
-                  updatedAt: now,
-                  tags: ['全栈', '前端', '后端', '架构'],
-                  tools: ['execute_code', 'analyze_code', 'read_file', 'write_file', 'list_files', 'web_search', 'fetch_url'],
-                  author: 'system'
-                }
-              ];
-              fs.writeFileSync(SKILLS_FILE, JSON.stringify(defaultSkills, null, 2), 'utf-8');
-              console.log('[API] Initialized 10 default skills');
             }
           }
           
