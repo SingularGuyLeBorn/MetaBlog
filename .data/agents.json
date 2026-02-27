@@ -10,11 +10,12 @@
     "capabilities": {
       "mode": "skills-only",
       "skillIds": [
-        "skill-1771864714590-7",
-        "skill-1771864714590-10"
+        "skill-1772212926610-7",
+        "skill-1772212926610-6"
       ],
       "toolIds": [],
-      "customSystemPrompt": ""
+      "baseRole": "你是 Meta 助手，基于 DeepSeek 大模型的通用 AI 助手，为您提供专业智能对话体验",
+      "roleSupplement": ""
     },
     "memory": {
       "enabled": true,
@@ -26,7 +27,7 @@
     "callCount": 0,
     "isDefault": true,
     "createdAt": 1771864714589,
-    "updatedAt": 1772204882135,
+    "updatedAt": 1772213024110,
     "lastActiveAt": 1772121797966,
     "runtime": {
       "model": "claude-3-5-sonnet",

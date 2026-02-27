@@ -238,6 +238,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { Teleport } from 'vue'
+import { Icon } from '../../../../ui'
 import type { SessionConfig, ModelType } from '../../../core/types'
 
 interface ModelConfig {
