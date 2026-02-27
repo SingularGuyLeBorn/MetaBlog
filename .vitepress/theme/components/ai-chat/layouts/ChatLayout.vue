@@ -76,6 +76,15 @@
           </div>
         </div>
         <div class="header-right">
+          <!-- MCP 配置按钮 -->
+          <button 
+            class="icon-btn mcp-btn" 
+            :class="{ active: showMCPPanel }"
+            title="MCP 服务管理"
+            @click="showMCPPanel = !showMCPPanel"
+          >
+            <Icon name="plug" :size="18" />
+          </button>
           <!-- 日志监控按钮 -->
           <button 
             class="icon-btn log-dashboard-btn" 
@@ -169,6 +178,17 @@
       @delete="handleBatchDelete"
     />
     
+    <!-- MCP 配置面板 -->
+    <Teleport to="body">
+      <Transition name="slide">
+        <div v-if="showMCPPanel" class="mcp-panel-overlay" @click.self="showMCPPanel = false">
+          <div class="mcp-panel">
+            <MCPConfigPanel />
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+    
     <!-- 日志监控面板 -->
     <LogDashboard v-model:visible="showLogDashboard" />
     
@@ -220,6 +240,7 @@ import { SettingsPanel } from '../modules/chat/settings'
 import { AgentAdmin } from '../modules/agent'
 import { AgentChatDialog } from '../modules/agent/chat'
 import { LogDashboard } from '../modules/agent/admin'
+import { MCPConfigPanel } from '../modules/mcp'
 import { Icon } from '../ui'
 import { useAIChat, useAgents } from '../core/composables'
 import { useAgentConfig } from '../core/composables/useAgentConfig'
@@ -258,6 +279,7 @@ const messageListRef = ref<InstanceType<typeof MessageList>>()
 const chatInputRef = ref<InstanceType<typeof ChatInput>>()
 const showAgentAdmin = ref(false)
 const showLogDashboard = ref(false)
+const showMCPPanel = ref(false)
 const selectedSkill = ref<Skill | undefined>(undefined)
 
 // Agent 选择相关
@@ -882,6 +904,57 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 
 .agent-admin-btn.active::after {
   opacity: 1;
+}
+
+/* MCP 按钮特殊样式 */
+.mcp-btn {
+  position: relative;
+}
+
+.mcp-btn:hover {
+  color: #7c3aed;
+  background: #ede9fe;
+}
+
+.mcp-btn.active {
+  color: #7c3aed;
+  background: #ddd6fe;
+}
+
+/* MCP 面板 */
+.mcp-panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mcp-panel {
+  width: 100%;
+  max-width: 600px;
+  height: 100%;
+  background: white;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-enter-from .mcp-panel,
+.slide-leave-to .mcp-panel {
+  transform: translateX(100%);
+}
+
+.slide-enter-active .mcp-panel,
+.slide-leave-active .mcp-panel {
+  transition: transform 0.3s ease;
 }
 
 /* 日志按钮特殊样式 */
