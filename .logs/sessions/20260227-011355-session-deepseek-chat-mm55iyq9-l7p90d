@@ -1,0 +1,68 @@
+{
+  "uuid": "cc203a51-3917-48cf-8156-c1d05b87faf0",
+  "sessionId": "session_1772212430580_20uo2pa6j",
+  "filename": "20260227-011355-session-deepseek-chat-mm55iyq9-l7p90d",
+  "startTime": "2026-02-27T17:13:55.281Z",
+  "model": "deepseek-chat",
+  "reasoningEnabled": false,
+  "entries": [
+    {
+      "timestamp": "2026-02-27T17:13:55.281Z",
+      "type": "system",
+      "title": "🚀 Session 开始",
+      "note": "UUID: cc203a51-3917-48cf-8156-c1d05b87faf0, 文件名: 20260227-011355-session-deepseek-chat-mm55iyq9-l7p90d, 模型: deepseek-chat, 思考模式: 关闭",
+      "metadata": {
+        "uuid": "cc203a51-3917-48cf-8156-c1d05b87faf0",
+        "filename": "20260227-011355-session-deepseek-chat-mm55iyq9-l7p90d",
+        "model": "deepseek-chat",
+        "reasoningEnabled": false
+      }
+    },
+    {
+      "timestamp": "2026-02-27T17:13:55.281Z",
+      "type": "user_input",
+      "title": "👤 用户输入",
+      "content": "你好哇",
+      "uiVisible": true,
+      "uiLocation": "chat_input",
+      "note": "用户在聊天界面输入的消息",
+      "metadata": {
+        "messageId": "msg_1772212435279_anliqboy0",
+        "sessionId": "session_1772212430580_20uo2pa6j"
+      }
+    },
+    {
+      "timestamp": "2026-02-27T17:14:14.929Z",
+      "type": "ai_content",
+      "title": "🤖 AI 回复",
+      "content": "你好！😊 很高兴见到你！\n\n我是你的AI助手，可以帮你处理各种任务：\n- 📝 **写作与编辑**：创建文章、博客、文档，编辑现有内容\n- 📚 **知识管理**：搜索、阅读、整理文章和笔记\n- 💻 **编程助手**：执行代码、分析代码质量、代码审查\n- 🔍 **信息检索**：网络搜索、获取网页内容、查询GitHub\n- 🌐 **翻译与格式化**：翻译文本、格式化内容、生成摘要\n- 📁 **文件操作**：读写文件、管理目录结构\n- 🕒 **实用工具**：获取时间、天气、计算等\n\n有什么我可以帮你的吗？比如：\n- 想创建一篇新文章？\n- 需要搜索某个主题的资料？\n- 想要运行一段代码？\n- 还是其他什么任务？\n\n请告诉我你想做什么！",
+      "note": "展示给用户的最终回复内容",
+      "uiVisible": true,
+      "uiLocation": "message_bubble",
+      "metadata": {
+        "round": 1,
+        "hasThinking": false,
+        "model": "deepseek-chat"
+      }
+    },
+    {
+      "timestamp": "2026-02-27T17:14:55.417Z",
+      "type": "system",
+      "title": "🏁 Session 结束",
+      "note": "总计 0 轮对话, 0 次工具调用",
+      "metadata": {
+        "stats": {
+          "totalRounds": 0,
+          "toolCallCount": 0,
+          "errorCount": 0
+        }
+      }
+    }
+  ],
+  "stats": {
+    "totalRounds": 0,
+    "toolCallCount": 0,
+    "errorCount": 0
+  },
+  "endTime": "2026-02-27T17:14:55.417Z"
+}

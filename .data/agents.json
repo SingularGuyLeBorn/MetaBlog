@@ -66,8 +66,8 @@
     "callCount": 0,
     "isDefault": false,
     "createdAt": 1772117562518,
-    "updatedAt": 1772122686181,
-    "lastActiveAt": 1772122673666,
+    "updatedAt": 1772212430619,
+    "lastActiveAt": 1772212430609,
     "runtime": {
       "model": "deepseek-chat",
       "temperature": 0.7,
