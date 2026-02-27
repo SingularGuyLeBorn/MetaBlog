@@ -1104,6 +1104,103 @@ export const kbDocumentAddDef: ToolDefinition = {
   }
 }
 
+// ============ 图片处理工具定义 ============
+
+export const processImageDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'process_image',
+    description: `处理用户上传的图片。分析图片内容、提取文字、生成描述等。
+
+使用场景：
+1. 用户上传图片并要求分析
+2. 提取图片中的文字（OCR）
+3. 描述图片内容
+4. 识别图片中的物体、场景、人物等
+
+注意：
+- 支持多种图片格式：PNG、JPG、GIF、WebP 等
+- 图片大小有限制，超大图片会被压缩
+- 可以要求特定的分析角度（如"描述画面氛围"、"提取所有文字"等）`,
+    parameters: {
+      type: 'object',
+      properties: {
+        image_url: {
+          type: 'string',
+          description: '图片的 URL 或 base64 编码数据'
+        },
+        operation: {
+          type: 'string',
+          description: '处理方式：describe（描述）、ocr（文字识别）、analyze（详细分析），默认 describe',
+          enum: ['describe', 'ocr', 'analyze'],
+          default: 'describe'
+        },
+        prompt: {
+          type: 'string',
+          description: '额外的处理提示，如"提取所有文字"、"描述画面氛围"、"识别图中人物"等'
+        }
+      },
+      required: ['image_url']
+    }
+  }
+}
+
+// ============ 平台链接解析工具定义 ============
+
+export const parsePlatformLinkDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'parse_platform_link',
+    description: `解析各平台链接，提取内容摘要、标题、作者等信息。
+
+支持的平台：
+- 社交媒体：Twitter/X、微博、小红书、抖音
+- 视频平台：YouTube、Bilibili、抖音
+- 技术社区：GitHub、知乎、CSDN、掘金、StackOverflow
+- 新闻资讯：公众号、今日头条、知乎专栏
+- 电商平台：淘宝、京东、拼多多
+- 其他：任何有公开元数据的网页链接
+
+使用场景：
+1. 用户分享链接要求总结内容
+2. 提取文章/视频的关键信息
+3. 获取链接的标题、作者、发布时间等元数据
+4. 分析链接内容并给出摘要
+
+返回信息：
+- 标题、作者、发布时间
+- 内容摘要或描述
+- 平台类型识别
+- 相关图片/视频封面`,
+    parameters: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          description: '要解析的平台链接 URL，例如：https://www.bilibili.com/video/BV1xx411c7mD、https://github.com/facebook/react'
+        },
+        extract_content: {
+          type: 'boolean',
+          description: '是否提取完整内容（如果平台支持），默认 true',
+          default: true
+        },
+        max_content_length: {
+          type: 'number',
+          description: '提取内容的最大长度，默认 5000 字符',
+          default: 5000
+        }
+      },
+      required: ['url']
+    }
+  }
+}
+        }
+      },
+      required: ['knowledge_base_name', 'title', 'content']
+    }
+  }
+}
+
 export const kbDocumentDeleteDef: ToolDefinition = {
   type: 'function',
   function: {
@@ -1178,5 +1275,9 @@ export const allToolDefinitions = [
   getWeatherDef,
   getCurrentTimeDef,
   // 其他工具
-  testEchoDef
+  testEchoDef,
+  // 图片处理工具
+  processImageDef,
+  // 平台链接解析工具
+  parsePlatformLinkDef
 ]

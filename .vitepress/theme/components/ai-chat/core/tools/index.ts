@@ -36,7 +36,9 @@ export {
   parseZhihuExecutor,
   parseXiaohongshuExecutor,
   parseWechatExecutor,
-  ocrImageExecutor
+  ocrImageExecutor,
+  parsePlatformLinkExecutor,
+  processImageExecutor
 } from './platform-parsers'
 
 // 为了向后兼容，保留原有导出
@@ -199,7 +201,9 @@ export function initializeDefaultTools(): void {
     { name: 'parse_zhihu', definition: platformParserDefinitions[0], executor: platformParserExecutors.parse_zhihu },
     { name: 'parse_xiaohongshu', definition: platformParserDefinitions[1], executor: platformParserExecutors.parse_xiaohongshu },
     { name: 'parse_wechat', definition: platformParserDefinitions[2], executor: platformParserExecutors.parse_wechat },
-    { name: 'ocr_image', definition: platformParserDefinitions[3], executor: platformParserExecutors.ocr_image }
+    { name: 'ocr_image', definition: platformParserDefinitions[3], executor: platformParserExecutors.ocr_image },
+    { name: 'parse_platform_link', definition: platformParserDefinitions[4], executor: platformParserExecutors.parse_platform_link },
+    { name: 'process_image', definition: platformParserDefinitions[5], executor: platformParserExecutors.process_image }
   ]
   
   registerTools(tools)
