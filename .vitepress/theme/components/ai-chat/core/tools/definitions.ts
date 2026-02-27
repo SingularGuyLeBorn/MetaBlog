@@ -1194,12 +1194,6 @@ export const parsePlatformLinkDef: ToolDefinition = {
     }
   }
 }
-        }
-      },
-      required: ['knowledge_base_name', 'title', 'content']
-    }
-  }
-}
 
 export const kbDocumentDeleteDef: ToolDefinition = {
   type: 'function',
