@@ -174,35 +174,51 @@ agent://{agent_id}/
 3. **引用追踪**：记录上下文来源，可追溯
 4. **自动清理**：临时数据自动过期
 
-### 3. 网页自动化工具
+### 3. 网页自动化工具 - Playwright CLI (非 MCP)
 
-整合 Agent-Browser 和 AgentQL 的优点：
+使用 Microsoft 最新推出的 **Playwright CLI**，专为 AI Agent 设计：
+
+**Playwright CLI vs MCP 对比：**
+
+| 特性 | MCP 版本 | Playwright CLI |
+|------|---------|----------------|
+| Token 使用 | 高（完整 DOM + 可访问性树）| 低（仅元素引用 e15, e21）|
+| 上下文压力 | 高 | 低 |
+| 长会话支持 | ❌ | ✅ |
+| AI 原生设计 | ⚠️ | ✅ |
+| 输出格式 | 冗长 | 精简 YAML |
 
 **工具集合：**
 ```typescript
-// 基础浏览器控制
-browser_navigate(url: string)
-browser_snapshot(options: { interactive?: boolean, depth?: number })
-browser_click(selector: string | Ref)
-browser_fill(selector: string | Ref, value: string)
-browser_screenshot(options?: { fullPage?: boolean, annotate?: boolean })
+// Playwright CLI 原生命令
+playwright_open(url: string)                    // 打开页面
+playwright_snapshot(options?: { interactive?: boolean })  // 获取快照（返回 @e1, @e2 引用）
+playwright_click(ref: string)                   // 点击元素（使用引用）
+playwright_fill(ref: string, value: string)     // 填充输入
+playwright_screenshot(path?: string)            // 截图
 
-// AgentQL 风格的智能查询
-browser_query<T>(query: string): Promise<T>
-// 示例: browser_query('{ products[] { name, price } }')
-
-// 流式监控
-browser_stream(callback: (frame: Frame) => void)
+// 高级功能
+playwright_record(filename: string)             // 录制 YAML 工作流
+playwright_replay(filename: string)             // 回放工作流
+playwright_export(filename: string, format: 'playwright' | 'yaml')  // 导出为测试代码
 
 // 状态管理
-browser_save_state(name: string)
-browser_load_state(name: string)
+playwright_save_auth(name: string)              // 保存登录态
+playwright_load_auth(name: string)              // 加载登录态
 ```
 
 **AI 友好设计：**
-1. **快照 + 引用模式**：先获取页面快照，AI 选择引用进行操作
-2. **自然语言查询**：AgentQL 风格的查询语言
-3. **状态持久化**：支持登录状态保存和恢复
+1. **快照 + 引用模式**：
+   ```
+   $ playwright snapshot
+   - button "Submit" [ref=e15]
+   - input "Email" [ref=e21]
+   
+   $ playwright click e15
+   ```
+2. **Token 高效**：每次交互只返回必要信息，不发送完整 DOM
+3. **YAML 工作流**：自动记录操作，可回放、可转换为 Playwright 测试代码
+4. **状态持久化**：支持登录状态保存和恢复
 
 ### 4. 多平台接入
 
@@ -291,36 +307,36 @@ interface PlatformAdapter {
 - [ ] 性能测试
 - [ ] Git commit
 
-### Phase 3: 网页自动化 (预计 4-5 天)
+### Phase 3: 网页自动化 - Playwright CLI (预计 4-5 天)
 
-**Day 1: 浏览器控制基础**
-- [ ] 集成 Playwright
-- [ ] 实现基础导航命令
-- [ ] 实现快照系统
-- [ ] 实现元素引用（Ref）系统
+**Day 1: Playwright CLI 集成**
+- [ ] 安装 Playwright CLI (`npm install -g playwright-cli`)
+- [ ] 封装 Node.js CLI 调用层
+- [ ] 实现基础命令：open, snapshot, click, fill
+- [ ] 实现元素引用（@e1, @e2）解析系统
 
-**Day 2: AgentQL 风格查询**
-- [ ] 设计查询语言
-- [ ] 实现查询解析器
-- [ ] 实现自然语言到选择器转换
-- [ ] 测试复杂查询
+**Day 2: 快照与 Token 优化**
+- [ ] 实现快照解析（获取精简的元素引用）
+- [ ] 实现快照缓存机制
+- [ ] 实现页面变化检测（diff）
+- [ ] 测试 Token 使用效率（对比 MCP 版本）
 
-**Day 3: 状态管理与安全**
-- [ ] 实现登录状态保存/恢复
-- [ ] 实现加密存储
-- [ ] 实现域名白名单
-- [ ] 实现动作确认机制
+**Day 3: YAML 工作流系统**
+- [ ] 实现 YAML 录制（自动记录操作）
+- [ ] 实现 YAML 回放功能
+- [ ] 实现工作流到 Playwright 测试转换
+- [ ] 实现工作流可视化编辑器
 
-**Day 4: 流式与 CDP**
-- [ ] 实现 WebSocket 流式传输
-- [ ] 实现 CDP 连接
-- [ ] 实现远程浏览器支持
-- [ ] 实现 iOS 模拟器支持
+**Day 4: 状态管理与高级功能**
+- [ ] 实现登录状态保存/恢复（auth save/load）
+- [ ] 实现加密存储（AES-256-GCM）
+- [ ] 实现域名白名单（--allowed-domains）
+- [ ] 实现流式截图（--stream 模式）
 
-**Day 5: 测试**
-- [ ] 浏览器控制测试
-- [ ] 查询语言测试
-- [ ] 安全测试
+**Day 5: 测试与优化**
+- [ ] CLI 命令测试（所有命令覆盖）
+- [ ] Token 效率测试（对比传统方式）
+- [ ] 长会话稳定性测试（100+ 步骤）
 - [ ] Git commit
 
 ### Phase 4: 多平台接入 (预计 3-4 天)
@@ -381,11 +397,13 @@ interface PlatformAdapter {
 
 | 组件 | 选型 | 理由 |
 |------|------|------|
-| 浏览器控制 | Playwright | 功能全面，支持多浏览器 |
+| 浏览器控制 | **Playwright CLI** | Token 高效，AI 原生设计，YAML 工作流 |
+| CLI 封装 | Node.js child_process | 调用 Playwright CLI 命令 |
 | 后端 | Node.js + TypeScript | 与现有代码一致 |
 | 存储 | SQLite + JSON | 简单，易于备份 |
 | 向量检索 | 可选 (初期用简单搜索) | 后期可接入 VikingDB |
-| 加密 | Node.js crypto | 内置，无需额外依赖 |
+| 加密 | Node.js crypto | 内置，AES-256-GCM |
+| 工作流 | YAML | Playwright CLI 原生支持 |
 
 ---
 
@@ -401,3 +419,65 @@ interface PlatformAdapter {
 ## 下一步行动
 
 请确认这个设计文档后，我将开始 Phase 1 的实现。
+
+---
+
+## 附录 A: Playwright CLI 快速参考
+
+### 安装
+
+```bash
+# 全局安装（推荐）
+npm install -g playwright-cli
+playwright install  # 下载 Chromium
+
+# 或使用 npx
+npx playwright-cli install
+```
+
+### 核心命令
+
+```bash
+# 基础操作
+playwright open <url>              # 打开页面
+playwright snapshot                # 获取快照（返回 @e1, @e2 引用）
+playwright click <ref>             # 点击元素（如: e15）
+playwright fill <ref> <text>       # 填充输入
+
+# 信息获取
+playwright get text <ref>          # 获取元素文本
+playwright get title               # 获取页面标题
+playwright get url                 # 获取当前 URL
+
+# 截图与录制
+playwright screenshot [path]       # 截图
+playwright screenshot --annotate   # 带元素标注的截图
+playwright record <filename>       # 录制 YAML 工作流
+
+# 状态管理
+playwright auth save <name>        # 保存登录态
+playwright auth load <name>        # 加载登录态
+
+# 安全选项
+playwright open <url> --allowed-domains "example.com,*.example.com"
+playwright open <url> --max-output 50000
+```
+
+### 快照输出示例
+
+```
+$ playwright snapshot -i
+- heading "Example Domain" [ref=e1]
+- button "Submit" [ref=e2]
+- textbox "Email" [ref=e3]
+- link "Learn more" [ref=e4]
+```
+
+### Token 效率对比
+
+| 操作 | MCP 版本 Token | Playwright CLI Token |
+|------|---------------|---------------------|
+| 打开页面 | ~5000 | ~100 |
+| 点击元素 | ~3000 | ~50 |
+| 获取快照 | ~8000 | ~500 |
+| 100 步工作流 | ~500k+ | ~10k |
