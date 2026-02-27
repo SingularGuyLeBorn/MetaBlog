@@ -13,12 +13,18 @@
 - **内置**: true
 - **启用**: true
 
-## 可用工具
-- get_current_time
-- execute_code
-- analyze_code
-- read_file
-- write_file
+## 相关工具
+- **read_file**: 读取指定文件的内容
+  - `path` (string, required): 文件路径
+- **write_file**: 写入内容到指定文件
+  - `path` (string, required): 文件路径
+  - `content` (string, required): 文件内容
+- **execute_code**: 执行代码片段并返回结果
+  - `code` (string, required): 代码内容
+  - `language` (string, optional): 编程语言
+- **analyze_code**: 分析代码质量和潜在问题
+  - `code` (string, required): 要分析的代码
+  - `language` (string, optional): 编程语言
 
 ---
 

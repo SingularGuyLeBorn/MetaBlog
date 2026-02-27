@@ -3,11 +3,11 @@
     "id": "session-1772200000000-xyz789",
     "title": "欢迎使用 MetaBlog AI",
     "config": {
-      "model": "deepseek-reasoner",
+      "model": "deepseek-chat",
       "temperature": 0.7,
       "maxTokens": 2048,
       "systemPrompt": "你是 Meta 助手，基于 DeepSeek 大模型的通用 AI 助手，为您提供专业智能对话体验",
-      "enableReasoning": true,
+      "enableReasoning": false,
       "streaming": true
     },
     "stats": {
@@ -15,7 +15,7 @@
       "totalTokens": 450
     },
     "createdAt": 1772200000000,
-    "updatedAt": 1772213551445
+    "updatedAt": 1772213574081
   },
   {
     "id": "session-1772263900000-abc123",

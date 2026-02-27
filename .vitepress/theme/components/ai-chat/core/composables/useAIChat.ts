@@ -11,6 +11,7 @@ import type { ChatSession, ChatMessage, SessionConfig, MessageGroup, ToolCallRec
 import { storage, convertGroupsToMessages } from '../services/storage'
 import { aiService } from '../services/aiService'
 import { logger, addLog } from '../services/logger'
+import { useAgentConfig } from './useAgentConfig'
 
 const DEFAULT_CONFIG: SessionConfig = {
   model: 'deepseek-chat',
@@ -32,6 +33,9 @@ const isInitialized = ref(false)
 const sessionControllers = new Map<string, AbortController>()
 
 export function useAIChat() {
+  // 获取 Agent 配置（用于工具权限校验）
+  const { activeAgent, skills, getEffectiveTools } = useAgentConfig()
+  
   // ==================== 初始化 ====================
   async function initialize() {
     if (isInitialized.value) return
@@ -222,6 +226,17 @@ export function useAIChat() {
       // 用于存储工具调用记录
       let toolRecords: ToolCallRecord[] = []
       
+      // 构建工具上下文（用于权限校验）
+      const agent = activeAgent.value
+      const toolContext = agent ? {
+        agentId: agent.id,
+        skillIds: agent.capabilities?.skillIds || [],
+        declaredTools: skills.value
+          .filter(s => agent.capabilities?.skillIds?.includes(s.id))
+          .flatMap(s => s.tools || []),
+        availableTools: getEffectiveTools(agent).map(t => t.name)
+      } : undefined
+      
       await aiService.chatStream(
         history,
         config,
@@ -360,7 +375,8 @@ export function useAIChat() {
         },
         controller.signal,
         10,
-        sessionId
+        sessionId,
+        toolContext
       )
       
       return true
@@ -454,6 +470,17 @@ export function useAIChat() {
       // 用于存储工具调用记录
       let toolRecords: ToolCallRecord[] = []
       
+      // 构建工具上下文（用于权限校验）
+      const agent = activeAgent.value
+      const toolContext = agent ? {
+        agentId: agent.id,
+        skillIds: agent.capabilities?.skillIds || [],
+        declaredTools: skills.value
+          .filter(s => agent.capabilities?.skillIds?.includes(s.id))
+          .flatMap(s => s.tools || []),
+        availableTools: getEffectiveTools(agent).map(t => t.name)
+      } : undefined
+      
       await aiService.chatStream(
         history,
         config,
@@ -505,7 +532,11 @@ export function useAIChat() {
             isStreaming.value = false
             storage.saveMessageGroups(sessionId, groups)
           }
-        }
+        },
+        undefined,  // signal
+        10,         // maxToolRounds
+        undefined,  // sessionId
+        toolContext
       )
       
       return true

@@ -347,12 +347,14 @@ export default defineConfig({
               updatedAt: Date.now(),
               tags: [],
               tools: [],
+              toolDefinitions: {}, // 工具的详细定义 { toolName: { description, params: [] } }
               author: 'user'
             };
             
             let section = '';
             let promptLines: string[] = [];
             let inPrompt = false;
+            let currentTool: any = null;
             
             for (let i = 0; i < lines.length; i++) {
               const line = lines[i];
@@ -367,6 +369,7 @@ export default defineConfig({
               if (line.startsWith('## ')) {
                 section = line.substring(3).trim().toLowerCase();
                 inPrompt = false;
+                currentTool = null;
                 continue;
               }
               
@@ -397,10 +400,43 @@ export default defineConfig({
                 }
               }
               
-              // 解析可用工具
-              if (section === '可用工具' || section === 'tools') {
-                if (line.startsWith('- ')) {
-                  skill.tools.push(line.substring(2).trim());
+              // 解析相关工具（带详细描述）
+              if (section === '相关工具' || section === 'tools' || section === '可用工具') {
+                // 工具主定义行: - **tool_name**: description
+                const toolMatch = line.match(/^- \*\*(\w+)\*\*:\s*(.+)$/);
+                if (toolMatch) {
+                  const [, toolName, description] = toolMatch;
+                  currentTool = {
+                    name: toolName,
+                    description: description.trim(),
+                    params: []
+                  };
+                  skill.toolDefinitions[toolName] = currentTool;
+                  skill.tools.push(toolName);
+                }
+                // 工具参数行（缩进）: - `param` (type, required): description
+                else if ((line.startsWith('  - ') || line.startsWith('    - ')) && currentTool) {
+                  const paramMatch = line.match(/- `?(\w+)`?\s*(?:\(([^)]+)\))?:\s*(.+)$/);
+                  if (paramMatch) {
+                    const [, paramName, typeInfo, paramDesc] = paramMatch;
+                    currentTool.params.push({
+                      name: paramName,
+                      type: typeInfo || 'any',
+                      description: paramDesc.trim()
+                    });
+                  }
+                }
+                // 简单工具列表（向后兼容）
+                else if (line.startsWith('- ') && !line.includes('**:')) {
+                  const toolName = line.substring(2).trim();
+                  if (!skill.tools.includes(toolName)) {
+                    skill.tools.push(toolName);
+                    skill.toolDefinitions[toolName] = {
+                      name: toolName,
+                      description: '',
+                      params: []
+                    };
+                  }
                 }
               }
               

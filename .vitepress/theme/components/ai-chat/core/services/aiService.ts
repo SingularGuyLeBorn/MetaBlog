@@ -528,7 +528,13 @@ export const aiService = {
     callbacks: StreamCallbacks,
     signal?: AbortSignal,
     maxToolRounds: number = 10,
-    sessionId?: string
+    sessionId?: string,
+    toolContext?: {
+      agentId?: string
+      skillIds?: string[]
+      declaredTools?: string[]
+      availableTools?: string[]
+    }
   ): Promise<{ toolRecords?: ToolCallRecord[] }> {
     const toolRecords: ToolCallRecord[] = []
     const startTime = Date.now()
@@ -715,6 +721,7 @@ export const aiService = {
           const { result, record } = await executeToolWithRecord(
             toolCall.function.name, 
             args,
+            toolContext,
             callbacks.onToolRecord
           )
           toolRecords.push(record)

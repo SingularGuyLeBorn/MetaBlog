@@ -246,13 +246,38 @@ export function useAgentConfig() {
     // 1. 基础角色 - "你是谁"
     sections.push(baseRole || `你是 ${agent.name}，${agent.description}`)
     
-    // 2. 可用工具列表（只包含名称和简短描述）
+    // 2. 可用工具列表（从 Skill 获取详细描述）
     const effectiveTools = getEffectiveTools(agent)
+    const skillToolDefs = getSkillToolDefinitions(agent)
+    
     if (effectiveTools.length > 0) {
       sections.push('\n\n你可以使用以下工具来完成任务：')
+      
       effectiveTools.forEach(tool => {
-        sections.push(`- ${tool.name}: ${tool.description}`)
+        // 优先使用 Skill 中定义的详细描述
+        const skillDef = skillToolDefs[tool.name]
+        if (skillDef && skillDef.description) {
+          sections.push(`\n- **${tool.name}**: ${skillDef.description}`)
+          // 添加参数说明
+          if (skillDef.params && skillDef.params.length > 0) {
+            skillDef.params.forEach((param: any) => {
+              sections.push(`  - \`${param.name}\` (${param.type}): ${param.description}`)
+            })
+          }
+        } else {
+          // 使用默认描述
+          sections.push(`- ${tool.name}: ${tool.description}`)
+        }
       })
+      
+      // 检查是否有 Skill 声明但 Agent 未启用的工具
+      const missingTools = getMissingTools(agent, skillToolDefs)
+      if (missingTools.length > 0) {
+        sections.push('\n\n⚠️ **注意**：以下工具被 Skills 声明但当前未启用：')
+        missingTools.forEach(toolName => {
+          sections.push(`- ${toolName}`)
+        })
+      }
     }
     
     // 3. 可用 Skills 列表（只包含 name 和 description，供 Agent 决策）
@@ -281,6 +306,41 @@ export function useAgentConfig() {
     }
     
     return sections.join('\n')
+  }
+  
+  // 获取 Skill 中定义的工具详细描述
+  function getSkillToolDefinitions(agent: Agent): Record<string, any> {
+    const { skillIds, mode } = agent.capabilities || {}
+    const definitions: Record<string, any> = {}
+    
+    if (!skillIds?.length || mode === 'raw') return definitions
+    
+    const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
+    agentSkills.forEach(skill => {
+      if (skill.toolDefinitions) {
+        Object.assign(definitions, skill.toolDefinitions)
+      }
+    })
+    
+    return definitions
+  }
+  
+  // 获取 Skills 声明但 Agent 未启用的工具
+  function getMissingTools(agent: Agent, skillToolDefs: Record<string, any>): string[] {
+    const { skillIds, toolIds, mode } = agent.capabilities || {}
+    if (!skillIds?.length) return []
+    
+    const missing: string[] = []
+    const effectiveToolNames = new Set(getEffectiveTools(agent).map(t => t.name))
+    
+    // 检查 Skill 声明的工具
+    Object.keys(skillToolDefs).forEach(toolName => {
+      if (!effectiveToolNames.has(toolName)) {
+        missing.push(toolName)
+      }
+    })
+    
+    return missing
   }
 
   // ==================== 工具管理 ====================

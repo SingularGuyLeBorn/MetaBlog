@@ -66,11 +66,53 @@ export function hasTool(name: string): boolean {
  * 执行工具
  * @param name 工具名称
  * @param args 工具参数
+ * @param context 执行上下文（用于校验工具权限）
  * @returns 工具执行结果字符串，始终不会抛出异常
  */
-export async function executeTool(name: string, args: Record<string, any>): Promise<string> {
+export async function executeTool(
+  name: string, 
+  args: Record<string, any>,
+  context?: {
+    agentId?: string
+    skillIds?: string[]
+    declaredTools?: string[]  // Skills 声明的工具列表
+    availableTools?: string[] // Agent 实际启用的工具列表
+  }
+): Promise<string> {
   const tool = tools.get(name)
+  
+  // 工具未找到，进行详细错误分析
   if (!tool) {
+    // 情况1：工具被 Skills 声明但 Agent 未启用
+    if (context?.declaredTools?.includes(name) && !context?.availableTools?.includes(name)) {
+      return `❌ 工具 "${name}" 被 Skill 声明但当前 Agent 未启用
+
+该工具在当前 Agent 配置中不可用。请：
+1. 进入 Agent 配置面板
+2. 在"工具"选项中启用 "${name}"
+3. 或者切换到包含该工具的 Agent
+
+被声明但未启用的工具：${context.declaredTools.filter(t => !context.availableTools?.includes(t)).join(', ')}`
+    }
+    
+    // 情况2：工具既未声明也未启用
+    if (!context?.declaredTools?.includes(name)) {
+      return `❌ 工具 "${name}" 未声明且不可用
+
+该工具未被任何激活的 Skill 声明，且当前 Agent 也未启用。
+
+可能原因：
+1. 工具名称拼写错误
+2. 需要激活声明该工具的 Skill
+3. 需要在 Agent 配置中启用该工具
+
+建议：
+- 检查工具名称拼写
+- 激活正确的 Skill（当前激活：${context?.skillIds?.join(', ') || '无'}）
+- 使用 ToolTester 查看所有可用工具`
+    }
+    
+    // 默认错误（无上下文时）
     return `❌ 错误：工具 "${name}" 未找到
 
 可能原因：
@@ -109,11 +151,18 @@ ${errorStack ? `错误堆栈:\n${errorStack}\n\n` : ''}建议：
  * 执行工具并创建完整记录
  * @param name 工具名称
  * @param args 工具参数
+ * @param context 执行上下文
  * @param onRecord 记录回调
  */
 export async function executeToolWithRecord(
   name: string, 
   args: Record<string, any>,
+  context?: {
+    agentId?: string
+    skillIds?: string[]
+    declaredTools?: string[]
+    availableTools?: string[]
+  },
   onRecord?: (record: ToolCallRecord) => void
 ): Promise<{ result: string; record: ToolCallRecord }> {
   const tool = tools.get(name)
@@ -140,10 +189,10 @@ export async function executeToolWithRecord(
       component: 'ToolRegistry',
       event: 'tool_call_start',
       message: `执行工具: ${name}`,
-      data: { toolName: name, arguments: args }
+      data: { toolName: name, arguments: args, context }
     })
     
-    const result = await executeTool(name, args)
+    const result = await executeTool(name, args, context)
     const duration = Date.now() - startTime
     
     record.status = 'success'

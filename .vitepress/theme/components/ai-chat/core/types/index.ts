@@ -128,6 +128,14 @@ export interface SessionConfig {
   streaming: boolean
   /** 内部使用：标记 systemPrompt 是否已自定义 */
   _customSystemPrompt?: boolean
+  /** Agent ID，用于工具权限校验 */
+  agentId?: string
+  /** 激活的 Skill IDs，用于工具权限校验 */
+  skillIds?: string[]
+  /** Skills 声明的工具列表 */
+  declaredTools?: string[]
+  /** Agent 实际可用的工具列表 */
+  availableTools?: string[]
 }
 
 /** 会话统计 */

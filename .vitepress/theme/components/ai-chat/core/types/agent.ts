@@ -70,10 +70,19 @@ export interface Skill {
   updatedAt: number
   tags: string[]
   /** 
-   * 该 Skill 需要的工具
+   * 该 Skill 需要的工具（工具名列表）
    * Agent 调用 Skill 时，这些工具必须可用
    */
   tools: string[]
+  /**
+   * 工具的详细定义（从 SKILL.md 解析）
+   * { toolName: { description, params: [{ name, type, description }] } }
+   */
+  toolDefinitions?: Record<string, {
+    name: string
+    description: string
+    params: { name: string; type: string; description: string }[]
+  }>
   /** 
    * 使用场景列表
    * 用于匹配用户意图，决定何时调用该 Skill
