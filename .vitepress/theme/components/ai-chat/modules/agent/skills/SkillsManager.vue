@@ -183,12 +183,39 @@
             </div>
 
             <div class="form-group">
-              <label>系统提示词 *</label>
+              <label>Skill 内容 * <span class="format-badge">SKILL.md</span></label>
+              <div class="form-hint">Markdown 格式，调用时注入对话上下文</div>
               <textarea 
-                v-model="editorForm.systemPrompt" 
+                v-model="editorForm.content" 
                 rows="8" 
-                placeholder="定义 AI 在这个技能下的角色、能力和行为方式..."
+                placeholder="# Skill 标题
+
+## 能力范围
+
+详细说明这个 Skill 的能力...
+
+## 工作流程
+
+1. 步骤一
+2. 步骤二
+
+## 注意事项
+
+- 要点1
+- 要点2"
                 class="code-input"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>使用场景</label>
+              <div class="form-hint">每行一个场景，用于匹配用户意图</div>
+              <textarea 
+                v-model="usageScenariosInput" 
+                rows="4" 
+                placeholder="例如：
+用户要求撰写文章
+需要内容创作帮助"
               />
             </div>
 
@@ -287,11 +314,23 @@ const editorForm = ref({
   icon: '🤖',
   category: 'custom' as Skill['category'],
   description: '',
-  systemPrompt: '',
+  content: '',
+  usageScenarios: [] as string[],
   tools: [] as string[]
 })
 
 const emojiOptions = ['🤖', '⚙️', '🔧', '💡', '🎯', '📦', '🔮', '⚡', '🧩', '🔗', '🧬', '🧠']
+
+// 使用场景输入（多行文本）
+const usageScenariosInput = computed({
+  get: () => editorForm.value.usageScenarios.join('\n'),
+  set: (val: string) => {
+    editorForm.value.usageScenarios = val
+      .split('\n')
+      .map(s => s.trim())
+      .filter(Boolean)
+  }
+})
 
 // 3D 卡片状态
 const cardStates = reactive<Record<string, {
@@ -338,7 +377,7 @@ const filteredSkills = computed(() => {
 const isFormValid = computed(() => {
   return editorForm.value.name.trim() && 
          editorForm.value.description.trim() &&
-         editorForm.value.systemPrompt.trim()
+         editorForm.value.content.trim()
 })
 
 // 获取工具详情
@@ -429,7 +468,8 @@ function openCreateDialog() {
     icon: '🔧',
     category: 'custom',
     description: '',
-    systemPrompt: '',
+    content: '',
+    usageScenarios: [],
     tools: []
   }
   showEditor.value = true
@@ -453,7 +493,8 @@ function saveSkill() {
     icon: editorForm.value.icon,
     category: editorForm.value.category,
     description: editorForm.value.description.trim(),
-    systemPrompt: editorForm.value.systemPrompt.trim(),
+    content: editorForm.value.content.trim(),
+    usageScenarios: editorForm.value.usageScenarios,
     tools: editorForm.value.tools,
     enabled: true,
     tags: [],
@@ -481,8 +522,9 @@ function editSkill(skill: Skill) {
     icon: skill.icon,
     category: skill.category,
     description: skill.description,
-    systemPrompt: skill.systemPrompt,
-    tools: [...skill.tools]
+    content: skill.content || '',
+    usageScenarios: [...(skill.usageScenarios || [])],
+    tools: [...(skill.tools || [])]
   }
   showEditor.value = true
 }

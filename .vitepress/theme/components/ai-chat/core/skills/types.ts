@@ -1,9 +1,14 @@
 /**
  * Skills System - 技能系统类型定义
  * 
+ * 设计原则：
+ * - Skill 不定义"你是谁"（身份），只定义"你能做什么"（能力）
+ * - Skill 提供工具使用场景、方法论、输入输出格式
+ * - 身份由 Agent 的 baseRole 定义
+ * 
  * 技能 vs 工具的区别：
  * - 工具（Tool）：AI可调用的功能函数，如获取文章、创建文件等
- * - 技能（Skill）：AI的角色配置，包含系统提示词和预设能力，影响AI的行为方式
+ * - 技能（Skill）：AI的能力模块，定义"在什么场景下使用什么工具"
  */
 
 /** 技能定义 */
@@ -14,10 +19,15 @@ export interface Skill {
   name: string
   /** 图标 */
   icon: string
-  /** 描述 */
+  /** 简短描述 - 用于列表展示 */
   description: string
-  /** 系统提示词（定义AI角色） */
-  systemPrompt: string
+  /** 
+   * 能力描述 - 告诉 AI 如何使用这项技能
+   * 不是身份定义，而是场景说明、工具使用指南、方法论
+   */
+  capabilityDescription: string
+  /** 使用场景示例 */
+  usageScenarios?: string[]
   /** 技能分类 */
   category: SkillCategory
   /** 是否内置 */
@@ -33,12 +43,9 @@ export interface Skill {
   /** 示例对话 */
   examples?: SkillExample[]
   /** 关联的工具 */
-  tools?: string[]
-  /** 模型配置覆盖 */
-  modelConfig?: {
-    temperature?: number
-    maxTokens?: number
-  }
+  tools: string[]
+  /** 作者 */
+  author?: string
 }
 
 /** 技能分类 */

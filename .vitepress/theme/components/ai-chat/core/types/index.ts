@@ -61,7 +61,7 @@ export interface MessageMetadata {
     id: string
     name: string
     icon: string
-    systemPrompt?: string
+    content?: string
   }
   /** 工具调用记录（用于展示完整调用过程） */
   toolRecords?: ToolCallRecord[]
@@ -268,6 +268,6 @@ export type {
   ConfigModeInfo
 } from './agent'
 
-export { CONFIG_MODES, STORAGE_KEYS } from './agent'
+export { CONFIG_MODES } from './agent'
 
 

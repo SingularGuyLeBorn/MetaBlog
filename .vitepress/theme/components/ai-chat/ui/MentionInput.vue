@@ -182,7 +182,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { useSkills, type Skill } from '../core/composables/useSkills'
+import { useSkills } from '../core/composables/useSkills'
+import type { Skill } from '../core/types/agent'
 
 // ==================== 类型定义 ====================
 interface Article {

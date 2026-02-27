@@ -33,8 +33,10 @@ const sessionControllers = new Map<string, AbortController>()
 
 export function useAIChat() {
   // ==================== 初始化 ====================
-  if (!isInitialized.value) {
-    const data = storage.load()
+  async function initialize() {
+    if (isInitialized.value) return
+    
+    const data = await storage.load()
     sessions.value = data.sessions
     messageGroups.value = data.messageGroups
     currentSessionId.value = data.lastSessionId
@@ -44,6 +46,9 @@ export function useAIChat() {
     }
     isInitialized.value = true
   }
+  
+  // 立即执行初始化
+  initialize()
 
   // ==================== Computed ====================
   const currentSession = computed(() => {
@@ -86,9 +91,7 @@ export function useAIChat() {
     
     storage.save({
       sessions: sessions.value,
-      messageGroups: messageGroups.value,
-      lastSessionId: currentSessionId.value,
-      version: 2
+      messageGroups: messageGroups.value
     })
     
     return session
@@ -140,7 +143,7 @@ export function useAIChat() {
   }
 
   // ==================== 消息发送 ====================
-  async function sendMessage(content: string, skillInfo?: { id: string; name: string; icon: string; systemPrompt: string }): Promise<boolean> {
+  async function sendMessage(content: string, skillInfo?: { id: string; name: string; icon: string; content: string }): Promise<boolean> {
     if (!currentSession.value || !content.trim()) return false
     
     const sessionId = currentSessionId.value!
@@ -567,15 +570,15 @@ export function useAIChat() {
   /**
    * 删除特定版本
    */
-  function deleteVersion(userMessageId: string, versionId: string): boolean {
+  async function deleteVersion(userMessageId: string, versionId: string): Promise<boolean> {
     if (!currentSessionId.value) return false
     
     const sessionId = currentSessionId.value
-    const result = storage.deleteVersion(sessionId, userMessageId, versionId)
+    const result = await storage.deleteVersion(sessionId, userMessageId, versionId)
     
     if (result) {
       // 重新加载
-      messageGroups.value[sessionId] = storage.loadMessageGroups(sessionId)
+      messageGroups.value[sessionId] = await storage.loadMessageGroups(sessionId)
     }
     
     return result

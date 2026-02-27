@@ -76,14 +76,13 @@
           </div>
         </div>
         <div class="header-right">
-          <!-- MCP 配置按钮 -->
+          <!-- 返回首页按钮 -->
           <button 
-            class="icon-btn mcp-btn" 
-            :class="{ active: showMCPPanel }"
-            title="MCP 服务管理"
-            @click="showMCPPanel = !showMCPPanel"
+            class="icon-btn home-btn" 
+            title="返回首页"
+            @click="goHome"
           >
-            <Icon name="plug" :size="18" />
+            <Icon name="home" :size="18" />
           </button>
           <!-- 日志监控按钮 -->
           <button 
@@ -178,17 +177,6 @@
       @delete="handleBatchDelete"
     />
     
-    <!-- MCP 配置面板 -->
-    <Teleport to="body">
-      <Transition name="slide">
-        <div v-if="showMCPPanel" class="mcp-panel-overlay" @click.self="showMCPPanel = false">
-          <div class="mcp-panel">
-            <MCPConfigPanel />
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
-    
     <!-- 日志监控面板 -->
     <LogDashboard v-model:visible="showLogDashboard" />
     
@@ -240,12 +228,11 @@ import { SettingsPanel } from '../modules/chat/settings'
 import { AgentAdmin } from '../modules/agent'
 import { AgentChatDialog } from '../modules/agent/chat'
 import { LogDashboard } from '../modules/agent/admin'
-import { MCPConfigPanel } from '../modules/mcp'
 import { Icon } from '../ui'
 import { useAIChat, useAgents } from '../core/composables'
 import { useAgentConfig } from '../core/composables/useAgentConfig'
 import type { SessionConfig, ChatSession } from '../core/types'
-import type { Skill } from '../core/composables/useSkills'
+import type { Skill } from '../core/types/agent'
 import type { Agent } from '../core/types/agent'
 
 const {
@@ -279,7 +266,6 @@ const messageListRef = ref<InstanceType<typeof MessageList>>()
 const chatInputRef = ref<InstanceType<typeof ChatInput>>()
 const showAgentAdmin = ref(false)
 const showLogDashboard = ref(false)
-const showMCPPanel = ref(false)
 const selectedSkill = ref<Skill | undefined>(undefined)
 
 // Agent 选择相关
@@ -463,6 +449,11 @@ function openAgentAdmin() {
   showAgentAdmin.value = true
 }
 
+// 返回首页
+function goHome() {
+  window.location.href = '/'
+}
+
 async function handleRegenerate() {
   if (!currentSessionId.value) return
   
@@ -476,7 +467,7 @@ async function handleRegenerate() {
   }
 }
 
-async function handleSend(content: string, skillInfo?: { id: string; name: string; icon: string; systemPrompt: string }) {
+async function handleSend(content: string, skillInfo?: Skill) {
   if (!content.trim() || isStreaming.value) return
   
   inputText.value = ''
@@ -487,10 +478,10 @@ async function handleSend(content: string, skillInfo?: { id: string; name: strin
     chatInputRef.value?.focus()
   })
   
-  // 只有在使用了技能且技能有 systemPrompt 时才更新
+  // 只有在使用了技能且技能有 content 时才更新
   // 保持用户自定义的 systemPrompt 不被覆盖
-  if (currentSessionId.value && skillInfo?.systemPrompt) {
-    updateSessionConfig(currentSessionId.value, { systemPrompt: skillInfo.systemPrompt })
+  if (currentSessionId.value && skillInfo?.content) {
+    updateSessionConfig(currentSessionId.value, { systemPrompt: skillInfo.content })
     const session = sessions.value.find(s => s.id === currentSessionId.value)
     if (session) {
       session.config._customSystemPrompt = true // 标记为用户自定义
@@ -906,55 +897,14 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   opacity: 1;
 }
 
-/* MCP 按钮特殊样式 */
-.mcp-btn {
-  position: relative;
+/* 首页按钮特殊样式 */
+.home-btn {
+  color: var(--ai-text-secondary);
 }
 
-.mcp-btn:hover {
-  color: #7c3aed;
-  background: #ede9fe;
-}
-
-.mcp-btn.active {
-  color: #7c3aed;
-  background: #ddd6fe;
-}
-
-/* MCP 面板 */
-.mcp-panel-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.mcp-panel {
-  width: 100%;
-  max-width: 600px;
-  height: 100%;
-  background: white;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.slide-enter-active,
-.slide-leave-active {
-  transition: all 0.3s ease;
-}
-
-.slide-enter-from .mcp-panel,
-.slide-leave-to .mcp-panel {
-  transform: translateX(100%);
-}
-
-.slide-enter-active .mcp-panel,
-.slide-leave-active .mcp-panel {
-  transition: transform 0.3s ease;
+.home-btn:hover {
+  color: var(--vp-c-brand);
+  background: var(--vp-c-brand-soft);
 }
 
 /* 日志按钮特殊样式 */

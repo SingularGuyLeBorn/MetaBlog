@@ -30,11 +30,7 @@ export type {
   RuntimeConfig
 } from './useAgentsUnified'
 
-export type {
-  Skill,
-  SkillCreateParams,
-  SkillCategory
-} from './useSkills'
+// Skill types now re-exported from types/agent below
 
 // 新的统一类型
 export type {

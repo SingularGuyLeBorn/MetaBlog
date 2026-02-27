@@ -196,6 +196,7 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useAgentConfig } from '../../../core/composables/useAgentConfig'
 import type { Agent } from '../../../core/types/agent'
+import * as agentChatStorage from '../../../core/services/agentChatStorage'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -342,45 +343,41 @@ async function switchAgent(agent: Agent) {
   }
 
   // 保存当前会话
-  saveCurrentSession()
+  await saveCurrentSession()
 
   // 切换 Agent
   currentAgentId.value = agent.id
   await setActive(agent.id)
   
   // 加载新 Agent 的会话
-  loadAgentSession(agent.id)
+  await loadAgentSession(agent.id)
   
   showAgentDropdown.value = false
   emit('agent-change', agent)
 }
 
-function saveCurrentSession() {
+async function saveCurrentSession() {
   if (settings.value.rememberHistory && currentAgentId.value) {
-    localStorage.setItem(`chat-session-${currentAgentId.value}`, JSON.stringify(messages.value))
+    await agentChatStorage.saveAgentChatMessages(currentAgentId.value, messages.value as any)
   }
 }
 
-function loadAgentSession(agentId: string) {
+async function loadAgentSession(agentId: string) {
   if (settings.value.rememberHistory) {
-    const saved = localStorage.getItem(`chat-session-${agentId}`)
-    if (saved) {
-      try {
-        messages.value = JSON.parse(saved)
-        return
-      } catch {
-        // ignore
-      }
+    const saved = await agentChatStorage.getAgentChatMessages(agentId)
+    if (saved && saved.length > 0) {
+      messages.value = saved as any
+      return
     }
   }
   messages.value = []
 }
 
-function clearChat() {
+async function clearChat() {
   if (confirm('确定要清空当前对话吗？')) {
     messages.value = []
     if (currentAgentId.value) {
-      localStorage.removeItem(`chat-session-${currentAgentId.value}`)
+      await agentChatStorage.clearAgentChatSession(currentAgentId.value)
     }
   }
 }
@@ -439,9 +436,9 @@ watch(() => props.initialAgentId, (newId) => {
 })
 
 // 页面加载时恢复会话
-onMounted(() => {
+onMounted(async () => {
   if (currentAgentId.value) {
-    loadAgentSession(currentAgentId.value)
+    await loadAgentSession(currentAgentId.value)
   }
 })
 </script>

@@ -3052,12 +3052,12 @@ ${content}`;
               req.on("end", async () => {
                 try {
                   const body = JSON.parse(Buffer.concat(chunks).toString());
-                  const { tool, args = {} } = body;
+                  const { serverId, toolName, args = {} } = body;
 
                   // 获取 MCP Manager（从运行时模块）
                   const { mcpManager } = await import("./theme/components/ai-chat/core/mcp/index");
                   
-                  const result = await mcpManager.execute(tool, args);
+                  const result = await mcpManager.execute(serverId, toolName, args);
                   
                   res.setHeader("Content-Type", "application/json");
                   res.end(JSON.stringify({ success: true, data: result }));

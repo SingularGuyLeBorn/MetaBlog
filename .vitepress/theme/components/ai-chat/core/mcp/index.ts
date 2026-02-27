@@ -140,6 +140,7 @@ export function getMCPStats() {
 // ============================================
 
 import { initializeMCP as initMCP } from './manager'
+import { allMCPPresets } from './presets'
 
 /** 初始化 MCP 系统 */
 export function initializeMCPServers(): void {

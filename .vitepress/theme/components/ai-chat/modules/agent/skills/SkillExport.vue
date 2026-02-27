@@ -181,11 +181,15 @@ const exportContent = computed(() => {
 
 ${skill.description}
 
-## 系统提示词
+## 内容
 
 \`\`\`
-${skill.systemPrompt}
+${skill.content || ''}
 \`\`\`
+
+## 使用场景
+
+${skill.usageScenarios?.map(s => `- ${s}`).join('\n') || '无'}
 
 ## 关联工具
 
@@ -206,8 +210,10 @@ ${skill.tools.map(t => `- ${t}`).join('\n')}
   version: "${skill.version}"
   isBuiltIn: ${skill.isBuiltIn}
   enabled: ${skill.enabled}
-  systemPrompt: |
-    ${skill.systemPrompt.replace(/\n/g, '\n    ')}
+  content: |
+    ${(skill.content || '').replace(/\n/g, '\n    ')}
+  usageScenarios:
+${skill.usageScenarios?.map(s => `    - ${s}`).join('\n') || '    # 无'}
   tools:
 ${skill.tools.map(t => `    - ${t}`).join('\n')}
   tags:

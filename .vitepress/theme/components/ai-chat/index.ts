@@ -42,8 +42,7 @@ export type {
 
 // ===== Core Types（新统一 Agent 类型） =====
 export {
-  CONFIG_MODES,
-  STORAGE_KEYS
+  CONFIG_MODES
 } from './core/types/agent'
 
 export type {

@@ -300,7 +300,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
 import SkillManager from './skills/SkillManager.vue'
-import type { Skill } from '../../core/composables/useSkills'
+import type { Skill } from '../../core/types/agent'
 
 const props = defineProps<{
   visible: boolean
@@ -357,10 +357,10 @@ const config = reactive<AgentConfig>({ ...defaultConfig, ...props.modelValue })
 
 // 快捷技能（内置常用技能）
 const quickSkills: Skill[] = [
-  { id: 'write', name: '写作助手', description: '基于提示词生成文章', icon: '✍️', category: 'content', version: '1.0', author: 'system', systemPrompt: '你是一个专业的写作助手...' },
-  { id: 'code', name: '代码生成', description: '生成代码示例和解释', icon: '💻', category: 'development', version: '1.0', author: 'system', systemPrompt: '你是一个编程专家...' },
-  { id: 'summarize', name: '文章总结', description: '总结文章内容，提取要点', icon: '📋', category: 'analysis', version: '1.0', author: 'system', systemPrompt: '你是一个总结专家...' },
-  { id: 'translate', name: '中英翻译', description: '将内容翻译为英文或中文', icon: '🌐', category: 'language', version: '1.0', author: 'system', systemPrompt: '你是一个专业翻译...' }
+  { id: 'write', name: '写作助手', description: '基于提示词生成文章', icon: '✍️', category: 'writing', version: '1.0.0', author: 'system', content: '你是一个专业的写作助手...', usageScenarios: ['用户要求撰写文章'], tools: [], isBuiltIn: true, enabled: true, createdAt: Date.now(), updatedAt: Date.now(), tags: [] },
+  { id: 'code', name: '代码生成', description: '生成代码示例和解释', icon: '💻', category: 'coding', version: '1.0.0', author: 'system', content: '你是一个编程专家...', usageScenarios: ['用户要求编写代码'], tools: [], isBuiltIn: true, enabled: true, createdAt: Date.now(), updatedAt: Date.now(), tags: [] },
+  { id: 'summarize', name: '文章总结', description: '总结文章内容，提取要点', icon: '📋', category: 'analysis', version: '1.0.0', author: 'system', content: '你是一个总结专家...', usageScenarios: ['用户要求总结文章'], tools: [], isBuiltIn: true, enabled: true, createdAt: Date.now(), updatedAt: Date.now(), tags: [] },
+  { id: 'translate', name: '中英翻译', description: '将内容翻译为英文或中文', icon: '🌐', category: 'general', version: '1.0.0', author: 'system', content: '你是一个专业翻译...', usageScenarios: ['用户要求翻译内容'], tools: [], isBuiltIn: true, enabled: true, createdAt: Date.now(), updatedAt: Date.now(), tags: [] }
 ]
 
 const currentSkill = ref<Skill | null>(null)

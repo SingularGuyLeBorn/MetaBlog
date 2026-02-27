@@ -148,34 +148,54 @@
               </div>
             </div>
 
-            <!-- 系统提示词编辑器（所有模式都显示） -->
-            <div v-if="modeInfo.showSystemPrompt" class="selection-section">
+            <!-- 基础角色定义（所有模式都显示） -->
+            <div class="selection-section">
               <div class="section-header">
                 <h4>
-                  <span class="section-icon">📝</span>
-                  系统提示词
-                  <span v-if="config.mode !== 'raw'" class="optional-badge">可选</span>
-                  <span v-else class="required-badge">必填</span>
+                  <span class="section-icon">👤</span>
+                  基础角色
+                  <span class="required-badge">必填</span>
                 </h4>
                 <span class="header-hint">
-                  {{ config.mode === 'raw' ? '定义 AI 的核心角色和能力' : '用于补充或覆盖技能包的提示词' }}
+                  定义 AI 的身份、性格和行为准则（"你是谁"）
                 </span>
               </div>
               <div class="prompt-editor">
                 <div class="prompt-templates">
                   <button
-                    v-for="tpl in promptTemplates"
+                    v-for="tpl in baseRoleTemplates"
                     :key="tpl.id"
                     class="template-chip"
-                    @click="applyTemplate(tpl)"
+                    @click="applyBaseRoleTemplate(tpl)"
                   >
                     {{ tpl.name }}
                   </button>
                 </div>
                 <textarea
-                  v-model="config.customSystemPrompt"
-                  rows="6"
-                  placeholder="定义 AI 的角色、行为和回答风格..."
+                  v-model="config.baseRole"
+                  rows="4"
+                  placeholder="例如：你是一位专业的写作助手，性格耐心细致，善于用清晰简洁的语言解释复杂概念..."
+                />
+              </div>
+            </div>
+
+            <!-- 角色补充说明（可选） -->
+            <div class="selection-section">
+              <div class="section-header">
+                <h4>
+                  <span class="section-icon">✨</span>
+                  补充说明
+                  <span class="optional-badge">可选</span>
+                </h4>
+                <span class="header-hint">
+                  微调角色行为、添加特殊要求或约束条件
+                </span>
+              </div>
+              <div class="prompt-editor">
+                <textarea
+                  v-model="config.roleSupplement"
+                  rows="3"
+                  placeholder="例如：回答时请使用中文，保持友好但专业的语气，遇到不确定的问题时请坦诚告知..."
                 />
               </div>
             </div>
@@ -381,7 +401,8 @@ const config = ref({
   mode: props.agent.capabilities?.mode || 'raw',
   skillIds: [...(props.agent.capabilities?.skillIds || [])],
   toolIds: [...(props.agent.capabilities?.toolIds || [])],
-  customSystemPrompt: props.agent.capabilities?.customSystemPrompt || ''
+  baseRole: props.agent.capabilities?.baseRole || `你是 ${props.agent.name}，${props.agent.description}`,
+  roleSupplement: props.agent.capabilities?.roleSupplement || ''
 })
 
 // 触发器配置
@@ -477,12 +498,14 @@ const previewSystemPrompt = computed(() => {
   return buildSystemPrompt(mockAgent)
 })
 
-// 提示词模板
-const promptTemplates = [
-  { id: 'default', name: '默认助手', prompt: '你是一个 helpful 的 AI 助手。' },
-  { id: 'expert', name: '领域专家', prompt: '你是该领域的资深专家，拥有丰富的实践经验。请提供专业、深入的回答。' },
-  { id: 'teacher', name: '耐心导师', prompt: '你是一位耐心的导师，善于用简单易懂的方式解释复杂概念。' },
-  { id: 'creative', name: '创意伙伴', prompt: '你是一个富有创意的伙伴，善于头脑风暴和提出新颖的想法。' }
+// 基础角色模板
+const baseRoleTemplates = [
+  { id: 'default', name: '通用助手', prompt: '你是 Kimi，一个有帮助的 AI 助手。性格友好，回答简洁专业。' },
+  { id: 'expert', name: '领域专家', prompt: '你是该领域的资深专家，拥有丰富的实践经验。性格严谨，注重细节，善于提供深入的专业见解。' },
+  { id: 'teacher', name: '耐心导师', prompt: '你是一位耐心的导师，善于用简单易懂的方式解释复杂概念。性格温和，善于引导，不直接给答案而是帮助用户自己理解。' },
+  { id: 'creative', name: '创意伙伴', prompt: '你是一个富有创意的伙伴，善于头脑风暴和提出新颖的想法。性格活泼开放，思维跳跃，喜欢从不同角度思考问题。' },
+  { id: 'analyst', name: '数据分析师', prompt: '你是数据分析师，擅长从数据中发现洞察。性格理性，逻辑清晰，注重事实和证据，善于用数据支撑观点。' },
+  { id: 'writer', name: '写作专家', prompt: '你是专业的写作专家，擅长各类文本创作。性格细腻，对语言敏感，注重表达的准确性和感染力。' }
 ]
 
 // 方法
@@ -511,7 +534,6 @@ async function selectMode(mode: AgentConfigMode) {
     config.value.toolIds = []
   } else if (mode === 'skills-only') {
     config.value.toolIds = []
-    config.value.customSystemPrompt = ''
   } else if (mode === 'tools-only') {
     config.value.skillIds = []
   }
@@ -562,8 +584,8 @@ async function toggleTool(toolName: string) {
   await persistConfig()
 }
 
-function applyTemplate(tpl: typeof promptTemplates[0]) {
-  config.value.customSystemPrompt = tpl.prompt
+function applyBaseRoleTemplate(tpl: typeof baseRoleTemplates[0]) {
+  config.value.baseRole = tpl.prompt
 }
 
 async function copyPrompt() {
@@ -647,7 +669,8 @@ watch(() => props.agent, (newAgent) => {
     mode: newAgent.capabilities.mode,
     skillIds: [...newAgent.capabilities.skillIds],
     toolIds: [...newAgent.capabilities.toolIds],
-    customSystemPrompt: newAgent.capabilities.customSystemPrompt || ''
+    baseRole: newAgent.capabilities.baseRole || `你是 ${newAgent.name}，${newAgent.description}`,
+    roleSupplement: newAgent.capabilities.roleSupplement || ''
   }
   memoryConfig.value = {
     enabled: newAgent.memory?.enabled || false,

@@ -214,54 +214,73 @@ export function useAgentConfig() {
 
   // ==================== 系统提示词构建 ====================
 
+  /**
+   * 构建系统提示词
+   * 
+   * 参考 Claude Code Skills 设计：
+   * - 系统提示词只包含 Skills 列表（name + description）
+   * - Skill 详细内容在调用时注入对话上下文
+   * - 工具定义通过 JSON Schema 传递，不在提示词中重复
+   */
   function buildSystemPrompt(agent: Agent): string {
     const capabilities = agent.capabilities
     if (!capabilities) {
       return '你是一个 helpful 的 AI 助手。'
     }
-    const { mode, skillIds, toolIds, customSystemPrompt } = capabilities
     
-    // RAW 模式：直接使用自定义提示词
+    const { mode, skillIds, toolIds, baseRole, roleSupplement } = capabilities
+    
+    // RAW 模式：只使用基础角色 + 补充
     if (mode === 'raw') {
-      return customSystemPrompt || '你是一个 helpful 的 AI 助手。'
+      const parts = [baseRole || '你是一个 helpful 的 AI 助手。']
+      if (roleSupplement) {
+        parts.push('\n## 补充说明')
+        parts.push(roleSupplement)
+      }
+      return parts.join('\n')
     }
     
     // 收集系统提示词
-    const prompts: string[] = []
+    const sections: string[] = []
     
-    // 基础身份
-    prompts.push(`你是 ${agent.name}，${agent.description}`)
-    prompts.push('')
+    // 1. 基础角色 - "你是谁"
+    sections.push(baseRole || `你是 ${agent.name}，${agent.description}`)
     
-    // 技能提示词
-    if (skillIds.length > 0 && (mode === 'skills-only' || mode === 'hybrid')) {
-      const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
-      if (agentSkills.length > 0) {
-        prompts.push('## 你的能力')
-        agentSkills.forEach(skill => {
-          prompts.push(`\n### ${skill.name}`)
-          prompts.push(skill.systemPrompt)
-        })
-      }
-    }
-    
-    // 工具说明
+    // 2. 可用工具列表（只包含名称和简短描述）
     const effectiveTools = getEffectiveTools(agent)
     if (effectiveTools.length > 0) {
-      prompts.push('\n## 可用工具')
-      prompts.push('你可以使用以下工具来完成任务：')
+      sections.push('\n\n你可以使用以下工具来完成任务：')
       effectiveTools.forEach(tool => {
-        prompts.push(`- ${tool.name}: ${tool.description}`)
+        sections.push(`- ${tool.name}: ${tool.description}`)
       })
     }
     
-    // 自定义提示词补充
-    if (customSystemPrompt) {
-      prompts.push('\n## 额外说明')
-      prompts.push(customSystemPrompt)
+    // 3. 可用 Skills 列表（只包含 name 和 description，供 Agent 决策）
+    if (skillIds.length > 0 && (mode === 'skills-only' || mode === 'hybrid')) {
+      const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
+      if (agentSkills.length > 0) {
+        sections.push('\n\n<available_skills>')
+        sections.push('当你需要执行特定任务时，可以调用以下 Skills：')
+        
+        agentSkills.forEach(skill => {
+          sections.push(`\n  <skill>`)
+          sections.push(`    <name>${skill.id}</name>`)
+          sections.push(`    <description>${skill.description}</description>`)
+          sections.push(`  </skill>`)
+        })
+        
+        sections.push('\n</available_skills>')
+        sections.push('\n当你判断需要使用某个 Skill 时，请先调用该 Skill 获取详细指导。')
+      }
     }
     
-    return prompts.join('\n')
+    // 4. 角色补充 - 用户自定义微调
+    if (roleSupplement) {
+      sections.push('\n# 补充说明')
+      sections.push(roleSupplement)
+    }
+    
+    return sections.join('\n')
   }
 
   // ==================== 工具管理 ====================
@@ -387,6 +406,60 @@ export function useAgentConfig() {
     return { nodes, edges }
   }
 
+  // ==================== Skill 调用/注入 ====================
+  
+  /**
+   * 调用 Skill - 获取要在对话中注入的内容
+   * 
+   * 根据 Claude Code Skills 设计：
+   * - Skill 内容不放入系统提示词
+   * - 在需要时通过 invokeSkill 获取内容
+   * - 将内容作为用户消息注入对话上下文
+   */
+  function invokeSkill(skillId: string): { role: 'user' | 'system', content: string } | null {
+    const skill = skills.value.find(s => s.id === skillId)
+    if (!skill || !skill.enabled) return null
+    
+    return {
+      role: 'user',
+      content: skill.content
+    }
+  }
+  
+  /**
+   * 根据用户输入匹配应该调用的 Skills
+   * 
+   * 简单实现：检查用户输入是否包含 usageScenarios 中的关键词
+   * 实际可以使用更复杂的语义匹配
+   */
+  function matchSkills(userInput: string, agent: Agent): string[] {
+    const { skillIds, mode } = agent.capabilities || { skillIds: [], mode: 'raw' }
+    
+    // RAW 模式或没有 Skills
+    if (mode === 'raw' || skillIds.length === 0) return []
+    
+    const input = userInput.toLowerCase()
+    const matchedSkillIds: string[] = []
+    
+    const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
+    
+    for (const skill of agentSkills) {
+      if (!skill.enabled) continue
+      
+      // 检查是否匹配任何使用场景
+      const matches = skill.usageScenarios.some(scenario => {
+        const keywords = scenario.toLowerCase().split(/\s+/)
+        return keywords.some(keyword => input.includes(keyword))
+      })
+      
+      if (matches) {
+        matchedSkillIds.push(skill.id)
+      }
+    }
+    
+    return matchedSkillIds
+  }
+
   // ==================== 导出 ====================
 
   return {
@@ -424,6 +497,10 @@ export function useAgentConfig() {
     
     // System Prompt
     buildSystemPrompt,
+    
+    // Skill Invocation
+    invokeSkill,
+    matchSkills,
     
     // Graph
     generateCapabilityGraph

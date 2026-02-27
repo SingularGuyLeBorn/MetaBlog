@@ -2,6 +2,7 @@
  * MCP Manager
  * 
  * 统一管理多个 MCP Server 的连接和工具调用
+ * 数据源：后端API（唯一数据源）
  */
 
 import type {
@@ -12,7 +13,6 @@ import type {
   MCPPrompt,
   MCPEvent,
   MCPEventCallback,
-  MCPConnectionStatus,
   MCPStorageData,
   MCPPreset
 } from './types'
@@ -20,6 +20,7 @@ import { MCPClient, type MCPClientOptions } from './client'
 import { getPresetById } from './presets'
 import type { ToolDefinition, ToolExecutor } from '../tools/types'
 import { registerTool } from '../tools/registry'
+import * as mcpStorage from '../services/mcpStorage'
 
 /** MCP 工具包装器选项 */
 interface MCPToolWrapperOptions {
@@ -75,10 +76,29 @@ export class MCPManager {
   private servers: Map<string, MCPServerState> = new Map()
   private clients: Map<string, MCPClient> = new Map()
   private eventListeners: Set<MCPEventCallback> = new Set()
-  private storageKey = 'metablog_mcp_servers'
+  private initialized = false
 
   constructor() {
-    this.loadFromStorage()
+    // 不再从 localStorage 加载，改为异步初始化
+  }
+
+  /** 异步初始化 - 从后端加载 */
+  async init(): Promise<void> {
+    if (this.initialized) return
+    
+    try {
+      const servers = await mcpStorage.getMCPServers()
+      this.servers.clear()
+      
+      servers.forEach(state => {
+        this.servers.set(state.id, state)
+      })
+      
+      this.initialized = true
+      console.log(`[MCP] 从后端加载了 ${servers.length} 个 Server 配置`)
+    } catch (error) {
+      console.error('[MCP] 初始化失败:', error)
+    }
   }
 
   // ============================================
@@ -102,22 +122,20 @@ export class MCPManager {
 
   /** 添加 MCP Server */
   async addServer(config: MCPServerConfig): Promise<MCPServerState> {
-    const state: MCPServerState = {
-      id: config.id,
-      config,
-      status: 'disconnected',
-      tools: [],
-      resources: [],
-      prompts: [],
-      connectAttempts: 0
+    const state = await mcpStorage.createMCPServer({
+      ...config,
+      enabled: false
+    })
+    
+    if (!state) {
+      throw new Error('创建 MCP Server 失败')
     }
 
-    this.servers.set(config.id, state)
-    this.saveToStorage()
+    this.servers.set(state.id, state)
 
     this.emit({
       type: 'server.disconnected',
-      serverId: config.id,
+      serverId: state.id,
       timestamp: Date.now(),
       data: { state }
     })
@@ -132,252 +150,77 @@ export class MCPManager {
       throw new Error(`预设不存在: ${presetId}`)
     }
 
-    const config: MCPServerConfig = {
+    const config: Omit<MCPServerConfig, 'id' | 'createdAt' | 'updatedAt'> = {
       ...preset.config,
-      id: `${presetId}_${Date.now()}`,
       name: preset.name,
       description: preset.description,
       icon: preset.icon,
       category: preset.category,
       enabled: false
-    } as MCPServerConfig
+    }
 
     // 应用自定义配置
     if (customConfig && config.transport === 'stdio') {
-      config.env = { ...config.env, ...customConfig }
+      (config as any).env = { ...(config as any).env, ...customConfig }
     } else if (customConfig && (config.transport === 'sse' || config.transport === 'http')) {
       Object.entries(customConfig).forEach(([key, value]) => {
         if (key === 'url') {
           (config as any).url = value
-        } else {
-          config.headers = config.headers || {}
-          config.headers[key] = value
         }
       })
     }
 
-    return this.addServer(config)
-  }
-
-  /** 移除 MCP Server */
-  async removeServer(serverId: string): Promise<void> {
-    // 断开连接
-    await this.disconnectServer(serverId)
-
-    // 移除状态
-    this.servers.delete(serverId)
-    this.clients.delete(serverId)
-
-    this.saveToStorage()
+    return this.addServer(config as MCPServerConfig)
   }
 
   /** 更新 Server 配置 */
-  async updateServer(serverId: string, updates: Partial<MCPServerConfig>): Promise<MCPServerState> {
-    const state = this.servers.get(serverId)
-    if (!state) {
-      throw new Error(`Server 不存在: ${serverId}`)
+  async updateServer(serverId: string, updates: Partial<MCPServerConfig>): Promise<MCPServerState | null> {
+    const state = await mcpStorage.updateMCPServer(serverId, updates)
+    
+    if (state) {
+      this.servers.set(serverId, state)
+      
+      this.emit({
+        type: 'server.configUpdated',
+        serverId,
+        timestamp: Date.now(),
+        data: { state, updates }
+      })
     }
-
-    // 如果正在运行，先断开
-    if (state.status === 'connected') {
-      await this.disconnectServer(serverId)
-    }
-
-    state.config = { ...state.config, ...updates } as MCPServerConfig
-    this.servers.set(serverId, state)
-    this.saveToStorage()
-
+    
     return state
   }
 
-  // ============================================
-  // 连接管理
-  // ============================================
+  /** 删除 Server */
+  async removeServer(serverId: string): Promise<boolean> {
+    // 先断开连接
+    await this.disconnect(serverId)
 
-  /** 连接 Server */
-  async connectServer(serverId: string): Promise<void> {
-    const state = this.servers.get(serverId)
-    if (!state) {
-      throw new Error(`Server 不存在: ${serverId}`)
-    }
-
-    if (state.status === 'connected' || state.status === 'connecting') {
-      return
-    }
-
-    state.status = 'connecting'
-    state.connectAttempts++
-    this.servers.set(serverId, state)
-
-    this.emit({
-      type: 'server.disconnected',
-      serverId,
-      timestamp: Date.now(),
-      data: { state }
-    })
-
-    try {
-      // 目前只支持 HTTP/SSE 传输
-      if (state.config.transport === 'stdio') {
-        throw new Error('Stdio 传输类型需要在后端支持')
-      }
-
-      const clientOptions: MCPClientOptions = {
-        name: 'metablog-mcp-client',
-        version: '1.0.0',
-        timeout: state.config.timeout || 30000
-      }
-
-      const client = new MCPClient(state.config, clientOptions)
-      
-      // 监听状态变化
-      client.onStatus((status, error) => {
-        this.updateServerStatus(serverId, status, error)
-      })
-
-      await client.connect()
-      this.clients.set(serverId, client)
-
-      // 获取工具并注册到系统
-      const tools = client.getTools()
-      state.tools = tools
-      
-      // 注册工具到 Agent 系统
-      this.registerToolsToAgent(serverId, tools, client)
-
-      state.status = 'connected'
-      state.lastConnectedAt = Date.now()
-      this.servers.set(serverId, state)
-      this.saveToStorage()
-
-      this.emit({
-        type: 'server.connected',
-        serverId,
-        timestamp: Date.now(),
-        data: { state, toolCount: tools.length }
-      })
-
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error)
-      state.status = 'error'
-      state.error = errorMsg
-      state.lastErrorAt = Date.now()
-      this.servers.set(serverId, state)
-      this.saveToStorage()
-
-      this.emit({
-        type: 'server.error',
-        serverId,
-        timestamp: Date.now(),
-        data: { error: errorMsg }
-      })
-
-      throw error
-    }
-  }
-
-  /** 断开 Server */
-  async disconnectServer(serverId: string): Promise<void> {
-    const client = this.clients.get(serverId)
-    if (client) {
-      client.disconnect()
-      this.clients.delete(serverId)
-    }
-
-    const state = this.servers.get(serverId)
-    if (state) {
-      state.status = 'disconnected'
-      state.tools = []
-      state.resources = []
-      state.prompts = []
-      this.servers.set(serverId, state)
-      this.saveToStorage()
-
-      // 注销已注册的工具
-      this.unregisterToolsFromAgent(serverId)
-    }
-
-    this.emit({
-      type: 'server.disconnected',
-      serverId,
-      timestamp: Date.now(),
-      data: {}
-    })
-  }
-
-  /** 更新 Server 状态 */
-  private updateServerStatus(serverId: string, status: MCPConnectionStatus, error?: string): void {
-    const state = this.servers.get(serverId)
-    if (!state) return
-
-    state.status = status
-    if (error) state.error = error
-    this.servers.set(serverId, state)
-
-    if (status === 'error') {
-      this.emit({
-        type: 'server.error',
-        serverId,
-        timestamp: Date.now(),
-        data: { error }
-      })
-    }
-  }
-
-  // ============================================
-  // 工具集成
-  // ============================================
-
-  /** 注册 MCP 工具到 Agent 系统 */
-  private registerToolsToAgent(serverId: string, tools: MCPTool[], client: MCPClient): void {
-    tools.forEach(tool => {
-      const definition = createMCPToolDefinition({ serverId, tool, client })
-      const executor = createMCPToolExecutor({ serverId, tool, client })
-      
-      // 注册到工具系统
-      registerTool(definition.function.name, definition, executor)
-    })
-
-    console.log(`[MCP] 已注册 ${tools.length} 个工具: ${serverId}`)
-  }
-
-  /** 注销 MCP 工具 */
-  private unregisterToolsFromAgent(serverId: string): void {
-    // 注意：这里需要工具系统支持注销工具
-    // 目前简单处理，实际实现需要添加 unregisterTool 函数
-    console.log(`[MCP] Server 断开，工具已失效: ${serverId}`)
-  }
-
-  /** 获取所有可用的 MCP 工具定义 */
-  getAllToolDefinitions(): ToolDefinition[] {
-    const definitions: ToolDefinition[] = []
+    const success = await mcpStorage.deleteMCPServer(serverId)
     
-    this.servers.forEach((state, serverId) => {
-      if (state.status !== 'connected') return
-      
-      const client = this.clients.get(serverId)
-      if (!client) return
+    if (success) {
+      this.servers.delete(serverId)
+      this.clients.delete(serverId)
 
-      state.tools.forEach(tool => {
-        definitions.push(createMCPToolDefinition({ serverId, tool, client }))
+      this.emit({
+        type: 'server.disconnected',
+        serverId,
+        timestamp: Date.now(),
+        data: {}
       })
-    })
+    }
 
-    return definitions
+    return success
   }
 
-  // ============================================
-  // 查询
-  // ============================================
-
-  /** 获取所有 Server 状态 */
-  getAllServers(): MCPServerState[] {
-    return Array.from(this.servers.values())
-  }
-
-  /** 获取指定 Server */
+  /** 获取单个 Server */
   getServer(serverId: string): MCPServerState | undefined {
     return this.servers.get(serverId)
+  }
+
+  /** 获取所有 Servers */
+  getAllServers(): MCPServerState[] {
+    return Array.from(this.servers.values())
   }
 
   /** 获取已连接的 Servers */
@@ -391,55 +234,200 @@ export class MCPManager {
   }
 
   // ============================================
-  // 存储
+  // 连接管理
   // ============================================
 
-  /** 保存到本地存储 */
-  private saveToStorage(): void {
-    if (typeof localStorage === 'undefined') return
-
-    const data: MCPStorageData = {
-      servers: Array.from(this.servers.values()).map(s => s.config),
-      version: '1.0.0',
-      lastUpdated: Date.now()
+  /** 连接到 Server */
+  async connect(serverId: string): Promise<MCPServerState> {
+    const state = this.servers.get(serverId)
+    if (!state) {
+      throw new Error(`Server 不存在: ${serverId}`)
     }
 
-    localStorage.setItem(this.storageKey, JSON.stringify(data))
-  }
+    if (state.status === 'connected') {
+      return state
+    }
 
-  /** 从本地存储加载 */
-  private loadFromStorage(): void {
-    if (typeof localStorage === 'undefined') return
+    // 更新状态为 connecting
+    this.updateServerState(serverId, { status: 'connecting' })
 
     try {
-      const raw = localStorage.getItem(this.storageKey)
-      if (!raw) return
-
-      const data: MCPStorageData = JSON.parse(raw)
+      // 调用后端连接
+      const updatedState = await mcpStorage.connectMCPServer(serverId)
       
-      data.servers.forEach(config => {
-        const state: MCPServerState = {
-          id: config.id,
-          config,
-          status: 'disconnected',
-          tools: [],
-          resources: [],
-          prompts: [],
-          connectAttempts: 0
+      if (!updatedState) {
+        throw new Error('连接失败')
+      }
+
+      this.servers.set(serverId, updatedState)
+
+      // 注册工具到系统
+      updatedState.tools.forEach(tool => {
+        const wrapper: MCPToolWrapperOptions = {
+          serverId,
+          tool,
+          client: null as any // 后端执行，前端不需要 client
         }
-        this.servers.set(config.id, state)
+
+        registerTool(
+          `${serverId}_${tool.name}`,
+          createMCPToolDefinition(wrapper),
+          async (args) => {
+            // 通过后端执行工具
+            const result = await mcpStorage.executeMCPTool(serverId, tool.name, args)
+            if (!result.success) {
+              throw new Error(result.error || '工具执行失败')
+            }
+            return result.result || ''
+          }
+        )
       })
 
-      console.log(`[MCP] 从存储加载了 ${data.servers.length} 个 Server 配置`)
+      this.emit({
+        type: 'server.connected',
+        serverId,
+        timestamp: Date.now(),
+        data: { 
+          state: updatedState,
+          toolCount: updatedState.tools.length,
+          resourceCount: updatedState.resources.length
+        }
+      })
+
+      return updatedState
     } catch (error) {
-      console.error('[MCP] 加载存储失败:', error)
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      this.updateServerState(serverId, { 
+        status: 'error', 
+        error: errorMsg 
+      })
+
+      this.emit({
+        type: 'server.error',
+        serverId,
+        timestamp: Date.now(),
+        data: { error: errorMsg }
+      })
+
+      throw error
     }
   }
 
+  /** 断开 Server 连接 */
+  async disconnect(serverId: string): Promise<void> {
+    const state = this.servers.get(serverId)
+    if (!state || state.status === 'disconnected') {
+      return
+    }
+
+    try {
+      await mcpStorage.disconnectMCPServer(serverId)
+      
+      // 注销工具
+      state.tools.forEach(tool => {
+        // 从注册表中移除
+        const toolName = `${serverId}_${tool.name}`
+        // TODO: 实现 unregisterTool
+      })
+
+      this.updateServerState(serverId, { status: 'disconnected', error: undefined })
+
+      this.emit({
+        type: 'server.disconnected',
+        serverId,
+        timestamp: Date.now()
+      })
+    } catch (error) {
+      console.error(`[MCP] 断开连接失败 ${serverId}:`, error)
+    }
+  }
+
+  /** 断开所有 Server */
+  async disconnectAll(): Promise<void> {
+    await Promise.all(
+      this.getConnectedServers().map(s => this.disconnect(s.id))
+    )
+  }
+
+  /** 重新连接 Server */
+  async reconnect(serverId: string): Promise<MCPServerState> {
+    await this.disconnect(serverId)
+    return this.connect(serverId)
+  }
+
+  /** 更新 Server 状态 */
+  private updateServerState(serverId: string, updates: Partial<MCPServerState>): void {
+    const state = this.servers.get(serverId)
+    if (state) {
+      Object.assign(state, updates)
+    }
+  }
+
+  // ============================================
+  // 工具调用
+  // ============================================
+
+  /** 调用工具 */
+  async callTool(serverId: string, toolName: string, args: Record<string, any>): Promise<string> {
+    const result = await mcpStorage.executeMCPTool(serverId, toolName, args)
+    
+    if (!result.success) {
+      throw new Error(result.error || '工具执行失败')
+    }
+    
+    return result.result || ''
+  }
+
+  /** 获取所有可用工具 */
+  getAllTools(): MCPTool[] {
+    const tools: MCPTool[] = []
+    this.getConnectedServers().forEach(server => {
+      server.tools.forEach(tool => {
+        tools.push({
+          ...tool,
+          name: `${server.id}_${tool.name}`
+        })
+      })
+    })
+    return tools
+  }
+
+  /** 获取所有工具定义（兼容旧接口） */
+  getAllToolDefinitions(): ToolDefinition[] {
+    return this.getAllTools().map(tool => ({
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.inputSchema
+      }
+    }))
+  }
+
+  /** 执行工具（兼容旧接口） */
+  async execute(serverId: string, toolName: string, args: Record<string, any>): Promise<string> {
+    return this.callTool(serverId, toolName, args)
+  }
+
+  /** 连接服务器（兼容旧接口） */
+  async connectServer(serverId: string): Promise<MCPServerState> {
+    return this.connect(serverId)
+  }
+
+  /** 断开服务器（兼容旧接口） */
+  async disconnectServer(serverId: string): Promise<void> {
+    return this.disconnect(serverId)
+  }
+
+  // ============================================
+  // 导入/导出
+  // ============================================
+
   /** 导出配置 */
-  exportConfig(): string {
+  async exportConfig(): Promise<string> {
+    const servers = await mcpStorage.getMCPServers()
     const data: MCPStorageData = {
-      servers: Array.from(this.servers.values()).map(s => s.config),
+      servers: servers.map(s => s.config),
       version: '1.0.0',
       lastUpdated: Date.now()
     }
@@ -447,29 +435,26 @@ export class MCPManager {
   }
 
   /** 导入配置 */
-  importConfig(json: string): void {
+  async importConfig(json: string): Promise<void> {
     try {
       const data: MCPStorageData = JSON.parse(json)
       
       // 清空现有配置
-      this.servers.clear()
-      this.clients.clear()
+      await Promise.all(
+        this.getAllServers().map(s => mcpStorage.deleteMCPServer(s.id))
+      )
 
       // 加载新配置
-      data.servers.forEach(config => {
-        const state: MCPServerState = {
-          id: config.id,
-          config,
-          status: 'disconnected',
-          tools: [],
-          resources: [],
-          prompts: [],
-          connectAttempts: 0
-        }
-        this.servers.set(config.id, state)
-      })
+      for (const config of data.servers) {
+        await mcpStorage.createMCPServer({
+          ...config,
+          enabled: false
+        })
+      }
 
-      this.saveToStorage()
+      // 重新加载
+      await this.init()
+      
       console.log(`[MCP] 导入了 ${data.servers.length} 个 Server 配置`)
     } catch (error) {
       throw new Error('导入配置失败: ' + (error instanceof Error ? error.message : String(error)))
@@ -481,7 +466,11 @@ export class MCPManager {
 export const mcpManager = new MCPManager()
 
 /** 初始化 MCP 系统 */
-export function initializeMCP(): void {
+export async function initializeMCP(): Promise<void> {
+  await mcpManager.init()
   console.log('[MCP] 系统已初始化')
   console.log(`[MCP] 已加载 ${mcpManager.getAllServers().length} 个 Server 配置`)
 }
+
+// 重新导出存储服务
+export { mcpStorage }

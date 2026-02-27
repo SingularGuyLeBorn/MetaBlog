@@ -336,29 +336,18 @@ const thinkingSteps = computed(() => {
   return [...steps].sort((a, b) => a.index - b.index)
 })
 
-// 从 localStorage 加载已显示打字机效果的消息ID
-function getShownMessageIds(): Set<string> {
-  try {
-    const saved = localStorage.getItem('ai-chat-typewriter-shown')
-    if (saved) {
-      return new Set(JSON.parse(saved))
-    }
-  } catch (e) {
-    console.error('[MessageBubble] Failed to load shown message IDs:', e)
-  }
-  return new Set()
-}
+// 内存中存储已显示打字机效果的消息ID（页面刷新后重置）
+const shownMessageIds = new Set<string>()
 
-// 保存已显示打字机效果的消息ID到 localStorage
+// 保存已显示打字机效果的消息ID到内存
 function saveShownMessageId(messageId: string): void {
-  try {
-    const ids = getShownMessageIds()
-    ids.add(messageId)
-    // 只保留最近100条记录，防止 localStorage 过大
-    const idsArray = Array.from(ids).slice(-100)
-    localStorage.setItem('ai-chat-typewriter-shown', JSON.stringify(idsArray))
-  } catch (e) {
-    console.error('[MessageBubble] Failed to save shown message ID:', e)
+  shownMessageIds.add(messageId)
+  // 只保留最近100条记录，防止内存过大
+  if (shownMessageIds.size > 100) {
+    const firstId = shownMessageIds.values().next().value
+    if (firstId) {
+      shownMessageIds.delete(firstId)
+    }
   }
 }
 
@@ -373,13 +362,12 @@ const shouldUseTypewriter = computed(() => {
   // 消息状态不是已完成 -> 不使用
   if (props.message.status !== 'completed') return false
   
-  // 检查 localStorage 是否已记录该消息显示过打字机效果
-  const shownIds = getShownMessageIds()
-  if (shownIds.has(props.message.id)) {
+  // 检查内存中是否已记录该消息显示过打字机效果
+  if (shownMessageIds.has(props.message.id)) {
     return false
   }
   
-  // 首次显示，记录到 localStorage
+  // 首次显示，记录到内存
   saveShownMessageId(props.message.id)
   return true
 })

@@ -37,9 +37,32 @@ export const API_ENDPOINTS = {
   SESSION_DETAIL: (id: string) => `/api/sessions/${id}`,
   MESSAGES: (sessionId: string) => `/api/sessions/${sessionId}/messages`,
   
+  // Memory (用户记忆)
+  MEMORIES: '/api/memories',                                // GET / POST
+  MEMORY_DETAIL: (id: string) => `/api/memories/${id}`,     // GET
+  MEMORY_UPDATE: '/api/memories/update',                    // POST {id, ...updates}
+  MEMORY_DELETE: '/api/memories/delete',                    // POST {id}
+  MEMORY_SEARCH: '/api/memories/search',                    // POST {query, category, limit}
+  MEMORY_STATS: '/api/memories/stats',                      // GET
+  MEMORY_CLEAR: '/api/memories/clear',                      // POST
+  
+  // MCP Servers
+  MCP_SERVERS: '/api/mcp/servers',                          // GET / POST
+  MCP_SERVER_DETAIL: (id: string) => `/api/mcp/servers/${id}`,
+  MCP_SERVER_CREATE: '/api/mcp/servers',                    // POST
+  MCP_SERVER_UPDATE: '/api/mcp/servers/update',             // POST {id, ...updates}
+  MCP_SERVER_DELETE: '/api/mcp/servers/delete',             // POST {id}
+  MCP_SERVER_CONNECT: (id: string) => `/api/mcp/servers/${id}/connect`,
+  MCP_SERVER_DISCONNECT: (id: string) => `/api/mcp/servers/${id}/disconnect`,
+  
   // Chat
   CHAT: '/api/chat',
   CHAT_STREAM: '/api/chat/stream',
+  
+  // Agent Chat Sessions
+  AGENT_CHAT_SESSIONS: '/api/agent-chat/sessions',                    // GET / POST
+  AGENT_CHAT_SESSION: (agentId: string) => `/api/agent-chat/sessions/${agentId}`,
+  AGENT_CHAT_MESSAGES: (agentId: string) => `/api/agent-chat/sessions/${agentId}/messages`,
   
   // Tools
   TOOLS: '/api/tools',

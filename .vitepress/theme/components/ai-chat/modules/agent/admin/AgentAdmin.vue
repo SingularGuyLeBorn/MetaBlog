@@ -181,6 +181,11 @@
             <div v-else-if="currentView === 'memory'" class="view-memory">
               <MemoryManager :agent="activeAgent" />
             </div>
+            
+            <!-- MCP 管理 -->
+            <div v-else-if="currentView === 'mcp'" class="view-mcp">
+              <MCPConfigPanel />
+            </div>
           </main>
         </div>
         
@@ -289,6 +294,7 @@ import type { Agent } from '../../../core/types/agent'
 import AgentConfigPanel from './AgentConfigPanel.vue'
 import SkillsManager from '../skills/SkillsManager.vue'
 import MemoryManager from '../memory/MemoryManager.vue'
+import MCPConfigPanel from '../../mcp/MCPConfigPanel.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -315,11 +321,12 @@ const {
 } = useAgentConfig()
 
 // 当前视图
-const currentView = ref<'agents' | 'skills' | 'memory'>('agents')
+const currentView = ref<'agents' | 'skills' | 'memory' | 'mcp'>('agents')
 const navItems = computed(() => [
   { id: 'agents' as const, label: 'Agents', icon: '🎭', badge: agents.value.length },
   { id: 'skills' as const, label: 'Skills', icon: '🎯', badge: skills.value.length },
-  { id: 'memory' as const, label: 'Memory', icon: '🧠' }
+  { id: 'memory' as const, label: 'Memory', icon: '🧠' },
+  { id: 'mcp' as const, label: 'MCP', icon: '🔌' }
 ])
 
 // 选中的 Agent
@@ -368,7 +375,7 @@ function close() {
   selectedAgent.value = null
 }
 
-function switchView(view: 'agents' | 'skills' | 'memory') {
+function switchView(view: 'agents' | 'skills' | 'memory' | 'mcp') {
   currentView.value = view
   selectedAgent.value = null
 }
@@ -1109,11 +1116,18 @@ function modeLabel(mode: string): string {
   color: #1e293b;
 }
 
-/* ===== Skills 和 Memory 视图 ===== */
+/* ===== Skills、Memory 和 MCP 视图 ===== */
 .view-skills,
-.view-memory {
+.view-memory,
+.view-mcp {
   height: 100%;
   overflow-y: auto;
+}
+
+/* MCP 视图特殊样式 */
+.view-mcp {
+  padding: 24px;
+  background: rgba(248, 250, 252, 0.5);
 }
 
 /* ===== 弹窗 - 液态玻璃效果 ===== */

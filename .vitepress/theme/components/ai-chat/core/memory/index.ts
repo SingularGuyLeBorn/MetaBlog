@@ -16,11 +16,8 @@ export type {
 
 // 功能导出
 export {
-  loadMemories,
-  saveMemories,
-  getAllMemories,
-  getEnabledMemories,
-  getMemoriesByCategory,
+  getMemories,
+  getMemory,
   createMemory,
   updateMemory,
   deleteMemory,
@@ -29,5 +26,7 @@ export {
   getMemoryPrompt,
   clearAllMemories,
   getMemoryStats,
+  clearCache,
+  initializeStorage,
   extractMemoryFromMessage
 } from './store'

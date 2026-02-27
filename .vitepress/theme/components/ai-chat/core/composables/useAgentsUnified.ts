@@ -9,6 +9,7 @@
  */
 
 import { ref, computed, type Ref } from 'vue'
+import { getActiveAgentId, setActiveAgentId } from '../services/agentStorage'
 
 // ==================== 类型定义 ====================
 
@@ -474,8 +475,6 @@ async function triggerAgentAPI(agentId: string, triggerId: string): Promise<void
 
 // ==================== Composable ====================
 
-const ACTIVE_AGENT_KEY = 'ai-active-agent-id'
-
 export function useAgentsUnified() {
   // 状态
   const agents: Ref<Agent[]> = ref([])
@@ -557,14 +556,12 @@ export function useAgentsUnified() {
         agents.value[0].isDefault = true
       }
 
-      // 加载活跃 Agent ID（仅 UI 状态）
-      if (typeof localStorage !== 'undefined') {
-        const stored = localStorage.getItem(ACTIVE_AGENT_KEY)
-        if (stored && agents.value.find(a => a.id === stored)) {
-          activeAgentId.value = stored
-        } else {
-          activeAgentId.value = agents.value[0]?.id || null
-        }
+      // 加载活跃 Agent ID
+      const stored = await getActiveAgentId()
+      if (stored && agents.value.find(a => a.id === stored)) {
+        activeAgentId.value = stored
+      } else {
+        activeAgentId.value = agents.value[0]?.id || null
       }
 
       // 启动定时调度器
@@ -653,19 +650,14 @@ export function useAgentsUnified() {
     
     if (activeAgentId.value === id) {
       activeAgentId.value = agents.value[0]?.id || null
-      if (typeof localStorage !== 'undefined' && activeAgentId.value) {
-        localStorage.setItem(ACTIVE_AGENT_KEY, activeAgentId.value)
-      }
     }
     
     return true
   }
 
-  function setActive(id: string) {
+  async function setActive(id: string) {
     activeAgentId.value = id
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(ACTIVE_AGENT_KEY, id)
-    }
+    await setActiveAgentId(id)
   }
 
   // 状态管理

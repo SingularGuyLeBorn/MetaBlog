@@ -55,7 +55,7 @@
 import { ref, computed, watch } from 'vue'
 import { Icon } from '../../../ui'
 import MentionInput, { type Mention } from '../../../ui/MentionInput.vue'
-import type { Skill } from '../../../core/composables/useSkills'
+import type { Skill } from '../../../core/types/agent'
 
 const props = defineProps<{
   modelValue: string
@@ -119,7 +119,7 @@ async function handleSend() {
     id: effectiveSkill.value.id,
     name: effectiveSkill.value.name,
     icon: effectiveSkill.value.icon,
-    systemPrompt: effectiveSkill.value.systemPrompt
+    content: effectiveSkill.value.content
   } as Skill : undefined
   
   emit('send', finalContent, skillInfo)

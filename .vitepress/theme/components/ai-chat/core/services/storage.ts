@@ -1,57 +1,35 @@
 /**
- * Storage Service - 本地存储（支持消息版本 v2）
+ * Storage Service - 后端API数据源（支持消息版本 v2）
  * 
- * 数据格式升级：v1 → v2
- * v1: Record<sessionId, ChatMessage[]> 一对一关系
- * v2: Record<sessionId, MessageGroup[]> 一对多关系
+ * 数据格式：v2 - 消息组版本化管理
+ * 数据源：后端API（唯一数据源）
  */
+
 import type { ChatSession, ChatMessage, MessageGroup } from '../types'
+import * as chatStorage from './chatStorage'
 
-const STORAGE_KEY = 'ai-chat:v2'
-const LEGACY_KEY = 'ai-chat:v1'
+// 重新导出 API 函数
+export {
+  getSessions,
+  getSession,
+  createSession,
+  updateSession,
+  deleteSession,
+  getMessageGroups,
+  saveMessageGroup,
+  updateMessageGroup,
+  deleteMessageGroup,
+  saveAllMessageGroups,
+  clearCache,
+  initializeStorage,
+} from './chatStorage'
 
-interface StorageDataV2 {
-  sessions: ChatSession[]
-  /** 按会话存储的消息组（版本化管理） */
-  messageGroups: Record<string, MessageGroup[]>
-  lastSessionId: string | null
-  version: 2
-}
-
-/** 旧版数据结构 */
-interface StorageDataV1 {
-  sessions: ChatSession[]
-  messages: Record<string, ChatMessage[]>
-  lastSessionId: string | null
-  version: 1
-}
-
-function isClient(): boolean {
-  return typeof window !== 'undefined'
-}
-
-/**
- * 将 v1 消息数组转换为 v2 消息组
- */
-function migrateV1ToV2(v1Data: StorageDataV1): StorageDataV2 {
-  const messageGroups: Record<string, MessageGroup[]> = {}
-  
-  for (const [sessionId, messages] of Object.entries(v1Data.messages)) {
-    messageGroups[sessionId] = convertMessagesToGroups(messages)
-  }
-  
-  return {
-    sessions: v1Data.sessions,
-    messageGroups,
-    lastSessionId: v1Data.lastSessionId,
-    version: 2
-  }
-}
+// ==================== 工具函数 ====================
 
 /**
  * 将消息列表转换为消息组
  */
-function convertMessagesToGroups(messages: ChatMessage[]): MessageGroup[] {
+export function convertMessagesToGroups(messages: ChatMessage[]): MessageGroup[] {
   const groups: MessageGroup[] = []
   let currentUserMsg: ChatMessage | null = null
   let currentAiVersions: ChatMessage[] = []
@@ -109,94 +87,83 @@ export function convertGroupsToMessages(groups: MessageGroup[]): ChatMessage[] {
   return messages
 }
 
+// ==================== 兼容层（保留 storage 对象接口）====================
+
 export const storage = {
-  /** 保存完整数据 */
-  save(data: StorageDataV2): boolean {
-    if (!isClient()) return false
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-      return true
-    } catch {
-      return false
-    }
+  /** 
+   * 保存完整数据 - 不再使用，保留兼容
+   * @deprecated 使用各个 save 方法替代
+   */
+  save(data: { sessions: ChatSession[]; messageGroups: Record<string, MessageGroup[]> }): boolean {
+    // 异步保存所有数据
+    Promise.all([
+      // 会话单独保存
+      ...data.sessions.map(s => chatStorage.updateSession(s.id, s)),
+      // 消息组批量保存
+      ...Object.entries(data.messageGroups).map(([sessionId, groups]) => 
+        chatStorage.saveAllMessageGroups(sessionId, groups)
+      )
+    ]).catch(e => console.error('[Storage] Batch save failed:', e))
+    
+    return true
   },
 
-  /** 加载数据（自动迁移旧版本） */
-  load(): StorageDataV2 {
-    if (!isClient()) {
-      return { sessions: [], messageGroups: {}, lastSessionId: null, version: 2 }
+  /** 
+   * 加载数据 - 从后端加载
+   */
+  async load(): Promise<{ sessions: ChatSession[]; messageGroups: Record<string, MessageGroup[]>; lastSessionId: string | null; version: 2 }> {
+    const sessions = await chatStorage.getSessions()
+    const messageGroups: Record<string, MessageGroup[]> = {}
+    
+    // 加载所有会话的消息组
+    for (const session of sessions) {
+      const groups = await chatStorage.getMessageGroups(session.id)
+      if (groups.length > 0) {
+        messageGroups[session.id] = groups
+      }
     }
     
-    try {
-      // 尝试加载 v2
-      const v2Data = localStorage.getItem(STORAGE_KEY)
-      if (v2Data) {
-        return JSON.parse(v2Data)
-      }
-      
-      // 尝试迁移 v1
-      const v1Data = localStorage.getItem(LEGACY_KEY)
-      if (v1Data) {
-        const parsed = JSON.parse(v1Data) as StorageDataV1
-        const migrated = migrateV1ToV2(parsed)
-        // 保存迁移后的数据
-        this.save(migrated)
-        return migrated
-      }
-    } catch (e) {
-      console.error('[Storage] Failed to load data:', e)
+    return { 
+      sessions, 
+      messageGroups, 
+      lastSessionId: sessions[0]?.id || null, 
+      version: 2 
     }
-    
-    return { sessions: [], messageGroups: {}, lastSessionId: null, version: 2 }
   },
 
   /** 保存会话 */
-  saveSession(session: ChatSession): boolean {
-    const data = this.load()
-    const index = data.sessions.findIndex(s => s.id === session.id)
-    if (index >= 0) {
-      data.sessions[index] = session
-    } else {
-      data.sessions.unshift(session)
+  async saveSession(session: ChatSession): Promise<boolean> {
+    const existing = await chatStorage.getSession(session.id)
+    if (existing) {
+      await chatStorage.updateSession(session.id, session)
     }
-    return this.save(data)
+    return true
   },
 
   /** 删除会话 */
-  deleteSession(sessionId: string): boolean {
-    const data = this.load()
-    data.sessions = data.sessions.filter(s => s.id !== sessionId)
-    delete data.messageGroups[sessionId]
-    if (data.lastSessionId === sessionId) {
-      data.lastSessionId = data.sessions[0]?.id || null
-    }
-    return this.save(data)
+  async deleteSession(sessionId: string): Promise<boolean> {
+    return chatStorage.deleteSession(sessionId)
   },
 
   /** 保存消息组 */
-  saveMessageGroups(sessionId: string, groups: MessageGroup[]): boolean {
-    const data = this.load()
-    data.messageGroups[sessionId] = groups
-    return this.save(data)
+  async saveMessageGroups(sessionId: string, groups: MessageGroup[]): Promise<boolean> {
+    return chatStorage.saveAllMessageGroups(sessionId, groups)
   },
 
   /** 加载消息组 */
-  loadMessageGroups(sessionId: string): MessageGroup[] {
-    const data = this.load()
-    return data.messageGroups[sessionId] || []
+  async loadMessageGroups(sessionId: string): Promise<MessageGroup[]> {
+    return chatStorage.getMessageGroups(sessionId)
   },
 
-  /** 保存最后活跃的会话 */
+  /** 保存最后活跃的会话 - 不再使用 localStorage */
   saveLastSession(sessionId: string | null): boolean {
-    const data = this.load()
-    data.lastSessionId = sessionId
-    return this.save(data)
+    // 后端自动管理，无需手动保存
+    return true
   },
 
   /** 添加 AI 响应版本 */
-  addAiVersion(sessionId: string, userMessageId: string, aiMessage: ChatMessage): boolean {
-    const data = this.load()
-    const groups = data.messageGroups[sessionId] || []
+  async addAiVersion(sessionId: string, userMessageId: string, aiMessage: ChatMessage): Promise<boolean> {
+    const groups = await chatStorage.getMessageGroups(sessionId)
     
     // 找到对应的用户消息组
     const group = groups.find(g => g.userMessage.id === userMessageId)
@@ -217,14 +184,12 @@ export const storage = {
       })
     }
     
-    data.messageGroups[sessionId] = groups
-    return this.save(data)
+    return chatStorage.saveAllMessageGroups(sessionId, groups)
   },
 
   /** 切换当前显示的版本 */
-  switchVersion(sessionId: string, userMessageId: string, versionIndex: number): boolean {
-    const data = this.load()
-    const groups = data.messageGroups[sessionId] || []
+  async switchVersion(sessionId: string, userMessageId: string, versionIndex: number): Promise<boolean> {
+    const groups = await chatStorage.getMessageGroups(sessionId)
     
     const group = groups.find(g => g.userMessage.id === userMessageId)
     if (group && versionIndex >= 0 && versionIndex < group.aiVersions.length) {
@@ -232,16 +197,15 @@ export const storage = {
       group.aiVersions.forEach((v, i) => {
         v.isActiveVersion = (i === versionIndex)
       })
-      return this.save(data)
+      return chatStorage.saveAllMessageGroups(sessionId, groups)
     }
     
     return false
   },
 
   /** 删除特定版本 */
-  deleteVersion(sessionId: string, userMessageId: string, versionId: string): boolean {
-    const data = this.load()
-    const groups = data.messageGroups[sessionId] || []
+  async deleteVersion(sessionId: string, userMessageId: string, versionId: string): Promise<boolean> {
+    const groups = await chatStorage.getMessageGroups(sessionId)
     
     const group = groups.find(g => g.userMessage.id === userMessageId)
     if (group) {
@@ -261,7 +225,7 @@ export const storage = {
           group.aiVersions[group.currentVersionIndex].isActiveVersion = true
         }
         
-        return this.save(data)
+        return chatStorage.saveAllMessageGroups(sessionId, groups)
       }
     }
     
@@ -269,9 +233,8 @@ export const storage = {
   },
 
   /** 获取消息统计 */
-  getStats(sessionId: string): { totalVersions: number; currentIndex: number } | null {
-    const data = this.load()
-    const groups = data.messageGroups[sessionId] || []
+  async getStats(sessionId: string): Promise<{ totalVersions: number; currentIndex: number } | null> {
+    const groups = await chatStorage.getMessageGroups(sessionId)
     
     let totalVersions = 0
     let currentIndex = 0

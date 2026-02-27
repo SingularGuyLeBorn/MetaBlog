@@ -29,8 +29,8 @@
         </div>
         
         <div class="prompt-preview">
-          <h5>📝 系统提示词</h5>
-          <pre class="prompt-content">{{ skill.systemPrompt }}</pre>
+          <h5>📝 Skill 内容</h5>
+          <pre class="prompt-content">{{ skill.content }}</pre>
         </div>
       </div>
       
@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Skill } from '../../../core/composables/useSkills'
+import type { Skill } from '../../../core/types/agent'
 
 const props = defineProps<{
   skill: Skill

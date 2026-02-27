@@ -31,14 +31,31 @@
           <div class="modal-body">
             <!-- 查看模式 -->
             <template v-if="!isEditing">
-              <!-- 系统提示词 -->
+              <!-- Skill 内容 -->
               <div class="detail-section">
                 <div class="section-header">
                   <span class="section-icon">📝</span>
-                  <h4>系统提示词</h4>
+                  <h4>Skill 内容 <span class="format-badge">SKILL.md</span></h4>
                 </div>
                 <div class="prompt-box">
-                  <pre>{{ displaySkill?.systemPrompt }}</pre>
+                  <pre>{{ displaySkill?.content }}</pre>
+                </div>
+              </div>
+
+              <!-- 使用场景 -->
+              <div class="detail-section" v-if="displaySkill?.usageScenarios?.length">
+                <div class="section-header">
+                  <span class="section-icon">🎯</span>
+                  <h4>使用场景</h4>
+                </div>
+                <div class="scenarios-list">
+                  <span 
+                    v-for="scenario in displaySkill.usageScenarios" 
+                    :key="scenario"
+                    class="scenario-tag"
+                  >
+                    {{ scenario }}
+                  </span>
                 </div>
               </div>
               
@@ -133,12 +150,25 @@
                 </div>
 
                 <div class="form-group">
-                  <label>系统提示词 *</label>
+                  <label>Skill 内容 * <span class="format-badge">SKILL.md</span></label>
                   <textarea 
-                    v-model="editForm.systemPrompt" 
+                    v-model="editForm.content" 
                     rows="6" 
-                    placeholder="定义 AI 在这个技能下的角色、能力和行为方式..."
+                    placeholder="# Skill 标题
+
+## 能力范围
+
+详细说明这个 Skill 的能力..."
                     class="code-input"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>使用场景</label>
+                  <textarea 
+                    v-model="usageScenariosInput" 
+                    rows="3" 
+                    placeholder="每行一个触发场景，例如：&#10;用户要求撰写文章&#10;需要内容创作帮助"
                   />
                 </div>
 
@@ -223,7 +253,8 @@ const editForm = ref({
   icon: '🤖',
   category: 'custom' as Skill['category'],
   description: '',
-  systemPrompt: '',
+  content: '',
+  usageScenarios: [] as string[],
   tools: [] as string[]
 })
 
@@ -260,7 +291,18 @@ const toolDetails = computed(() => {
 const isFormValid = computed(() => {
   return editForm.value.name.trim() && 
          editForm.value.description.trim() && 
-         editForm.value.systemPrompt.trim()
+         editForm.value.content.trim()
+})
+
+// 使用场景输入处理
+const usageScenariosInput = computed({
+  get: () => editForm.value.usageScenarios.join('\n'),
+  set: (val: string) => {
+    editForm.value.usageScenarios = val
+      .split('\n')
+      .map(s => s.trim())
+      .filter(Boolean)
+  }
 })
 
 function close() {
@@ -276,8 +318,9 @@ function startEdit() {
     icon: displaySkill.value.icon,
     category: displaySkill.value.category,
     description: displaySkill.value.description,
-    systemPrompt: displaySkill.value.systemPrompt,
-    tools: [...displaySkill.value.tools]
+    content: displaySkill.value.content || '',
+    usageScenarios: [...(displaySkill.value.usageScenarios || [])],
+    tools: [...(displaySkill.value.tools || [])]
   }
   isEditing.value = true
 }
@@ -297,7 +340,8 @@ async function saveEdit() {
       icon: editForm.value.icon,
       category: editForm.value.category,
       description: editForm.value.description.trim(),
-      systemPrompt: editForm.value.systemPrompt.trim(),
+      content: editForm.value.content.trim(),
+      usageScenarios: editForm.value.usageScenarios,
       tools: editForm.value.tools
     })
     
@@ -593,6 +637,32 @@ function formatDate(timestamp: number | undefined): string {
   border-radius: 100px;
   font-size: 12px;
   color: var(--vp-c-text-2);
+}
+
+/* 使用场景 */
+.scenarios-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scenario-tag {
+  padding: 6px 12px;
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand);
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.format-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand);
+  border-radius: 4px;
+  font-weight: 600;
+  margin-left: 8px;
 }
 
 /* 编辑表单 */

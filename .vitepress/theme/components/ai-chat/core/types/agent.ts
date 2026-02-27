@@ -1,11 +1,15 @@
 /**
  * Agent 系统 - 统一类型定义
  * 
- * 架构设计：
- * - Capability（能力）：Skills 和 Tools 的统称
- * - Skill（技能包）：角色定义 + 关联工具集合
- * - Tool（工具）：可执行的功能函数
- * - Agent：通过四种模式组合 Capability
+ * 架构设计（参考 Claude Code Skills）：
+ * - Agent Identity: "你是谁"（baseRole 定义）
+ * - Skills: "你能做什么"（按需加载的能力模块）
+ * - Tools: "你有什么工具"（可执行函数）
+ * 
+ * Skill 设计原则：
+ * - Skill 不是身份定义，而是能力扩展
+ * - Skill 详细内容在调用时注入对话上下文
+ * - 系统提示词只包含 Skills 列表（name + description）
  */
 
 import type { ToolDefinition } from '../tools/types'
@@ -29,14 +33,35 @@ export type SkillCategory =
 
 // ==================== Skill 定义 ====================
 
-/** 技能定义 - 能力的集合 */
+/**
+ * Skill 定义 - 能力扩展模块
+ * 
+ * 参考 Claude Code Skills 设计：
+ * - description: 简短描述，用于列表展示和意图匹配
+ * - content: SKILL.md 完整内容，调用时注入对话
+ * - tools: 该 Skill 需要的工具
+ */
 export interface Skill {
   id: string
   name: string
   icon: string
+  /** 
+   * 简短描述 - 用于：
+   * 1. UI 列表展示
+   * 2. Agent 判断是否需要调用该 Skill
+   * 3. 系统提示词中的 Skills 列表
+   */
   description: string
-  /** 系统提示词 - 定义 AI 角色 */
-  systemPrompt: string
+  /** 
+   * SKILL.md 完整内容 - 包含：
+   * - 详细使用说明
+   * - 场景示例
+   * - 工具调用指南
+   * - 脚本引用等
+   * 
+   * 调用时动态注入到对话上下文
+   */
+  content: string
   category: SkillCategory
   version: string
   isBuiltIn: boolean
@@ -44,21 +69,47 @@ export interface Skill {
   createdAt: number
   updatedAt: number
   tags: string[]
-  /** 关联的工具列表 */
+  /** 
+   * 该 Skill 需要的工具
+   * Agent 调用 Skill 时，这些工具必须可用
+   */
   tools: string[]
+  /** 
+   * 使用场景列表
+   * 用于匹配用户意图，决定何时调用该 Skill
+   */
+  usageScenarios: string[]
+  /** 
+   * 资源基路径
+   * 用于定位 Skill 关联的脚本、模板等资源
+   */
+  basePath?: string
   /** 作者 */
   author?: string
 }
 
-/** Skill 创建参数 */
+/** 
+ * Skill 创建参数
+ */
 export interface SkillCreateParams {
   name: string
   icon?: string
   description: string
-  systemPrompt: string
+  content: string
   category?: SkillCategory
   tags?: string[]
   tools?: string[]
+  basePath?: string
+}
+
+/** 
+ * Skill 元数据（用于系统提示词）
+ * 只包含基本信息，不包含详细内容
+ */
+export interface SkillMetadata {
+  id: string
+  name: string
+  description: string
 }
 
 // ==================== Tool 定义 ====================
@@ -99,18 +150,26 @@ export interface AgentMemory {
 /** 
  * Agent 能力配置 - 核心数据结构
  * 
- * 四种模式：
- * 1. RAW: skillIds=[], toolIds=[], customSystemPrompt 必须提供
- * 2. SKILLS_ONLY: skillIds=[...], toolIds=[] - 工具从 skills 继承
- * 3. TOOLS_ONLY: skillIds=[], toolIds=[...] - 纯工具模式
- * 4. HYBRID: skillIds=[...], toolIds=[...] - 技能 + 额外工具
+ * 参考 Claude Code 设计：
+ * - baseRole: 定义"你是谁"（身份、性格）
+ * - skillIds: 可用的 Skills（系统提示词只展示列表）
+ * - toolIds: 额外的工具
+ * - roleSupplement: 角色微调说明
  */
 export interface AgentCapabilities {
   mode: AgentConfigMode
   skillIds: string[]
   toolIds: string[]
-  /** 自定义系统提示词（可选，用于 RAW 和补充模式） */
-  customSystemPrompt?: string
+  /** 
+   * 基础角色定义 - "你是谁"
+   * 定义 AI 的身份、性格、行为准则
+   */
+  baseRole: string
+  /** 
+   * 角色补充说明 - 可选
+   * 用于微调角色行为
+   */
+  roleSupplement?: string
 }
 
 /** Agent 完整定义 */
@@ -139,7 +198,7 @@ export interface Agent {
   updatedAt: number
   lastActiveAt: number
   
-  // 系统提示词（运行时计算或缓存）
+  // 系统提示词（运行时计算）
   systemPrompt?: string
 }
 
@@ -174,124 +233,34 @@ export interface AgentUpdateParams {
     config: Record<string, unknown>
   }>
   runtime?: {
-    model: string
-    temperature: number
-    maxTokens: number
+    model?: string
+    temperature?: number
+    maxTokens?: number
     topP?: number
     frequencyPenalty?: number
-    timeout: number
-    retryCount: number
-    retryDelay: number
+    timeout?: number
+    retryCount?: number
+    retryDelay?: number
   }
 }
 
-// ==================== 四种模式说明 ====================
+// ==================== 能力图谱 ====================
 
-export interface ConfigModeInfo {
-  id: AgentConfigMode
-  name: string
-  icon: string
-  shortDesc: string
-  description: string
-  features: string[]
-  useCases: string[]
-  /** 是否显示 skill 选择器 */
-  showSkillSelector: boolean
-  /** 是否显示 tool 选择器 */
-  showToolSelector: boolean
-  /** 是否显示系统提示词编辑器 */
-  showSystemPrompt: boolean
-}
-
-export const CONFIG_MODES: ConfigModeInfo[] = [
-  {
-    id: 'raw',
-    name: '纯提示词模式',
-    icon: '📝',
-    shortDesc: '仅使用自定义提示词',
-    description: '不使用任何预设技能和工具，完全通过自定义系统提示词定义 AI 角色',
-    features: [
-      '完全自定义角色定义',
-      '无工具调用能力',
-      '适合创意写作、简单问答'
-    ],
-    useCases: ['创意写作', '角色扮演', '简单问答'],
-    showSkillSelector: false,
-    showToolSelector: false,
-    showSystemPrompt: true
-  },
-  {
-    id: 'skills-only',
-    name: '纯技能模式',
-    icon: '🎯',
-    shortDesc: '选择预设技能包',
-    description: '选择一个或多个技能包，AI 将继承技能包中定义的角色和关联工具',
-    features: [
-      '标准化能力组合',
-      '自动继承技能工具',
-      '适合特定专业场景'
-    ],
-    useCases: ['专业写作', '代码开发', '数据分析'],
-    showSkillSelector: true,
-    showToolSelector: false,
-    showSystemPrompt: true
-  },
-  {
-    id: 'tools-only',
-    name: '纯工具模式',
-    icon: '🔧',
-    shortDesc: '直接配置工具',
-    description: '不通过技能包，直接选择要使用的工具，灵活组合',
-    features: [
-      '细粒度工具控制',
-      '灵活组合实验',
-      '自定义提示词可选'
-    ],
-    useCases: ['工具实验', '自定义工作流', '特定任务'],
-    showSkillSelector: false,
-    showToolSelector: true,
-    showSystemPrompt: true
-  },
-  {
-    id: 'hybrid',
-    name: '混合模式',
-    icon: '⚡',
-    shortDesc: '技能 + 额外工具',
-    description: '选择技能包作为基础，再额外添加特定工具进行能力扩展',
-    features: [
-      '技能包作为基础',
-      '额外工具扩展',
-      '最灵活的配置方式'
-    ],
-    useCases: ['复杂任务', '跨领域工作', '能力扩展'],
-    showSkillSelector: true,
-    showToolSelector: true,
-    showSystemPrompt: true
-  }
-]
-
-// ==================== 能力图谱类型 ====================
-
-/** 能力节点 - 用于神经网络可视化 */
+/** 能力节点 */
 export interface CapabilityNode {
   id: string
-  type: 'skill' | 'tool' | 'root'
+  type: 'root' | 'skill' | 'tool'
   name: string
-  icon: string
-  description: string
-  /** 父节点 ID（skill 的 tools 为子节点） */
+  icon?: string
+  description?: string
   parentId?: string
-  /** 层级 */
   level: number
-  /** 横向位置 */
   x: number
-  /** 纵向位置 */
   y: number
-  /** 是否为额外工具（混合模式下） */
   isExtra?: boolean
 }
 
-/** 能力连接 */
+/** 能力边 */
 export interface CapabilityEdge {
   from: string
   to: string
@@ -304,21 +273,86 @@ export interface CapabilityGraph {
   edges: CapabilityEdge[]
 }
 
-// ==================== 系统提示词构建 ====================
+// ==================== 配置模式 ====================
 
-export interface SystemPromptContext {
-  agentName: string
-  mode: AgentConfigMode
-  skills: Skill[]
-  tools: Tool[]
-  customSystemPrompt?: string
+/** 配置模式信息 */
+export interface ConfigModeInfo {
+  id: AgentConfigMode
+  name: string
+  icon: string
+  shortDesc: string
+  description: string
+  showSkillSelector: boolean
+  showToolSelector: boolean
+  showSystemPrompt: boolean
 }
 
-// ==================== 存储键名 ====================
+/** 配置模式常量 */
+export const CONFIG_MODES: ConfigModeInfo[] = [
+  {
+    id: 'raw',
+    name: '纯提示词',
+    icon: '📝',
+    shortDesc: '仅使用基础角色',
+    description: 'Agent 只使用基础角色定义，不使用任何 Skills 或工具',
+    showSkillSelector: false,
+    showToolSelector: false,
+    showSystemPrompt: true
+  },
+  {
+    id: 'skills-only',
+    name: '技能模式',
+    icon: '🎯',
+    shortDesc: '通过 Skills 使用工具',
+    description: '选择 Skills，自动继承其中的工具和能力',
+    showSkillSelector: true,
+    showToolSelector: false,
+    showSystemPrompt: true
+  },
+  {
+    id: 'tools-only',
+    name: '工具模式',
+    icon: '🔧',
+    shortDesc: '直接选择工具',
+    description: '直接选择需要的工具，不通过 Skills',
+    showSkillSelector: false,
+    showToolSelector: true,
+    showSystemPrompt: true
+  },
+  {
+    id: 'hybrid',
+    name: '混合模式',
+    icon: '⚡',
+    shortDesc: 'Skills + 额外工具',
+    description: '选择 Skills 并添加额外的工具',
+    showSkillSelector: true,
+    showToolSelector: true,
+    showSystemPrompt: true
+  }
+]
 
-export const STORAGE_KEYS = {
-  AGENTS: 'ai-agents-v2',
-  ACTIVE_AGENT: 'ai-active-agent-id',
-  SKILLS: 'ai-skills-v2',
-  MEMORY_PREFIX: 'ai-memory-'
-} as const
+// ==================== Skill 调用相关 ====================
+
+/** 
+ * Skill 调用上下文
+ * 当 Agent 决定调用 Skill 时，将 Skill 内容注入到对话中
+ */
+export interface SkillInvocation {
+  skillId: string
+  skillName: string
+  content: string
+  basePath?: string
+  tools: string[]
+  invokedAt: number
+}
+
+/** 
+ * 系统提示词上下文
+ * 用于构建最终发送给 LLM 的系统提示词
+ */
+export interface SystemPromptContext {
+  agent: Agent
+  availableSkills: SkillMetadata[]
+  activeSkills?: Skill[]  // 已调用的 Skills（完整内容）
+  availableTools: Tool[]
+}

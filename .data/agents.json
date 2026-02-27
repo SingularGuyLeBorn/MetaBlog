@@ -9,7 +9,10 @@
     "seat": 1,
     "capabilities": {
       "mode": "skills-only",
-      "skillIds": [],
+      "skillIds": [
+        "skill-1771864714590-7",
+        "skill-1771864714590-10"
+      ],
       "toolIds": [],
       "customSystemPrompt": ""
     },
@@ -23,10 +26,10 @@
     "callCount": 0,
     "isDefault": true,
     "createdAt": 1771864714589,
-    "updatedAt": 1772122663181,
+    "updatedAt": 1772204882135,
     "lastActiveAt": 1772121797966,
     "runtime": {
-      "model": "deepseek-reasoner",
+      "model": "claude-3-5-sonnet",
       "temperature": 0.7,
       "maxTokens": 2048,
       "topP": 0.95,

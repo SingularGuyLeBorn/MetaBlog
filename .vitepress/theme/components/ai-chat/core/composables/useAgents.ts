@@ -188,9 +188,6 @@ sections/readflow/YYYY-MM/category/文件名.md
   isDefault: true
 }
 
-// 存储键（仅用于活跃 Agent ID）
-const ACTIVE_AGENT_KEY = 'ai-active-agent-id'
-
 // 状态
 const agents = ref<Agent[]>([])
 const activeAgentId = ref<string | null>(null)
@@ -311,15 +308,8 @@ export function useAgents() {
       
       agents.value = completeData
       
-      // 加载活跃 Agent ID（从 localStorage，这只是 UI 状态）
-      if (typeof localStorage !== 'undefined') {
-        const stored = localStorage.getItem(ACTIVE_AGENT_KEY)
-        if (stored && agents.value.find(a => a.id === stored)) {
-          activeAgentId.value = stored
-        } else {
-          activeAgentId.value = agents.value[0]?.id || null
-        }
-      }
+      // 设置默认活跃 Agent
+      activeAgentId.value = agents.value[0]?.id || null
     } catch (e) {
       error.value = String(e)
       console.error('[useAgents] Failed to load:', e)
@@ -379,18 +369,12 @@ export function useAgents() {
     // 如果删除的是活跃 Agent，重置
     if (activeAgentId.value === id) {
       activeAgentId.value = agents.value[0]?.id || null
-      if (typeof localStorage !== 'undefined' && activeAgentId.value) {
-        localStorage.setItem(ACTIVE_AGENT_KEY, activeAgentId.value)
-      }
     }
   }
 
   // 设置活跃 Agent
   function setActive(id: string) {
     activeAgentId.value = id
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(ACTIVE_AGENT_KEY, id)
-    }
   }
 
   // 获取统计

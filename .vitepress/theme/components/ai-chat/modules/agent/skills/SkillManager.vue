@@ -155,7 +155,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useSkills, type Skill, type SkillCreateParams } from '../../../core/composables/useSkills'
+import { useSkills } from '../../../core/composables/useSkills'
+import type { Skill, SkillCreateParams } from '../../../core/types/agent'
 import SkillEditor from './SkillEditor.vue'
 import SkillImport from './SkillImport.vue'
 import SkillPreview from './SkillPreview.vue'
