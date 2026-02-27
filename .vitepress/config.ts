@@ -4416,7 +4416,712 @@ ${content}`;
               });
             } else next();
           });
-        },
+          
+          // ============================================
+          // Memory API - 记忆管理
+          // ============================================
+          
+          const MEMORIES_FILE = path.join(process.cwd(), '.data', 'memories.json');
+          
+          function readMemories(): any[] {
+            try {
+              if (fs.existsSync(MEMORIES_FILE)) {
+                return JSON.parse(fs.readFileSync(MEMORIES_FILE, 'utf-8'));
+              }
+            } catch (e) {
+              console.error('[API] Failed to read memories:', e);
+            }
+            return [];
+          }
+          
+          function writeMemories(memories: any[]) {
+            try {
+              fs.writeFileSync(MEMORIES_FILE, JSON.stringify(memories, null, 2), 'utf-8');
+            } catch (e) {
+              console.error('[API] Failed to write memories:', e);
+            }
+          }
+          
+          // GET /api/memories - 获取所有记忆
+          // POST /api/memories - 创建记忆
+          server.middlewares.use("/api/memories", (req, res, next) => {
+            const url = req.url || '';
+            if (url !== '/' && url !== '' && !url.startsWith('?')) {
+              return next();
+            }
+            
+            if (req.method === "GET") {
+              const memories = readMemories();
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ success: true, data: memories }));
+            } else if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const memories = readMemories();
+                  
+                  const newMemory = {
+                    id: `mem-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                    ...body,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                  };
+                  
+                  memories.push(newMemory);
+                  writeMemories(memories);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: newMemory }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // GET /api/memories/:id - 获取单个记忆
+          server.middlewares.use("/api/memories/", (req, res, next) => {
+            const url = req.url || '';
+            const parts = url.split('/');
+            if (parts.length < 2 || parts[1].includes('update') || parts[1].includes('delete') || parts[1].includes('search') || parts[1].includes('stats') || parts[1].includes('clear')) {
+              return next();
+            }
+            
+            if (req.method === "GET") {
+              const id = parts[1].split('?')[0];
+              try {
+                const memories = readMemories();
+                const memory = memories.find((m: any) => m.id === id);
+                
+                if (!memory) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ success: false, error: 'Memory not found' }));
+                  return;
+                }
+                
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: memory }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+          
+          // POST /api/memories/update - 更新记忆
+          server.middlewares.use("/api/memories/update", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { id, ...updates } = body;
+                  
+                  const memories = readMemories();
+                  const index = memories.findIndex((m: any) => m.id === id);
+                  
+                  if (index === -1) {
+                    res.statusCode = 404;
+                    res.end(JSON.stringify({ success: false, error: 'Memory not found' }));
+                    return;
+                  }
+                  
+                  memories[index] = { ...memories[index], ...updates, updatedAt: Date.now() };
+                  writeMemories(memories);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: memories[index] }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // POST /api/memories/delete - 删除记忆
+          server.middlewares.use("/api/memories/delete", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { id } = body;
+                  
+                  let memories = readMemories();
+                  memories = memories.filter((m: any) => m.id !== id);
+                  writeMemories(memories);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // POST /api/memories/search - 搜索记忆
+          server.middlewares.use("/api/memories/search", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { query, category, minImportance, limit = 50 } = body;
+                  
+                  let memories = readMemories();
+                  
+                  if (category) {
+                    memories = memories.filter((m: any) => m.category === category);
+                  }
+                  
+                  if (minImportance !== undefined) {
+                    memories = memories.filter((m: any) => m.importance >= minImportance);
+                  }
+                  
+                  if (query) {
+                    const q = query.toLowerCase();
+                    memories = memories.filter((m: any) => m.content.toLowerCase().includes(q));
+                  }
+                  
+                  memories = memories.slice(0, limit);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: memories }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // GET /api/memories/stats - 获取记忆统计
+          server.middlewares.use("/api/memories/stats", (req, res, next) => {
+            if (req.method === "GET") {
+              try {
+                const memories = readMemories();
+                const byCategory: Record<string, number> = {};
+                
+                memories.forEach((m: any) => {
+                  byCategory[m.category] = (byCategory[m.category] || 0) + 1;
+                });
+                
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({
+                  success: true,
+                  data: {
+                    total: memories.length,
+                    enabled: memories.filter((m: any) => m.enabled).length,
+                    byCategory
+                  }
+                }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+          
+          // POST /api/memories/clear - 清空所有记忆
+          server.middlewares.use("/api/memories/clear", (req, res, next) => {
+            if (req.method === "POST") {
+              try {
+                writeMemories([]);
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+          
+          // ============================================
+          // MCP Servers API - MCP 服务器管理
+          // ============================================
+          
+          const MCP_SERVERS_FILE = path.join(process.cwd(), '.data', 'mcp-servers.json');
+          
+          function readMCPServers(): any[] {
+            try {
+              if (fs.existsSync(MCP_SERVERS_FILE)) {
+                return JSON.parse(fs.readFileSync(MCP_SERVERS_FILE, 'utf-8'));
+              }
+            } catch (e) {
+              console.error('[API] Failed to read MCP servers:', e);
+            }
+            return [];
+          }
+          
+          function writeMCPServers(servers: any[]) {
+            try {
+              fs.writeFileSync(MCP_SERVERS_FILE, JSON.stringify(servers, null, 2), 'utf-8');
+            } catch (e) {
+              console.error('[API] Failed to write MCP servers:', e);
+            }
+          }
+          
+          // GET /api/mcp/servers - 获取所有 MCP 服务器
+          // POST /api/mcp/servers - 创建 MCP 服务器
+          server.middlewares.use("/api/mcp/servers", (req, res, next) => {
+            const url = req.url || '';
+            if (url !== '/' && url !== '' && !url.startsWith('?')) {
+              return next();
+            }
+            
+            if (req.method === "GET") {
+              const servers = readMCPServers();
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ success: true, data: servers }));
+            } else if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const servers = readMCPServers();
+                  
+                  const newServer = {
+                    id: `mcp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                    config: { ...body, id: `mcp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}` },
+                    status: 'disconnected',
+                    tools: [],
+                    resources: [],
+                    prompts: [],
+                    connectAttempts: 0
+                  };
+                  
+                  servers.push(newServer);
+                  writeMCPServers(servers);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: newServer }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // GET /api/mcp/servers/:id - 获取单个 MCP 服务器
+          server.middlewares.use("/api/mcp/servers/", (req, res, next) => {
+            const url = req.url || '';
+            const parts = url.split('/');
+            if (parts.length < 2 || parts[1].includes('update') || parts[1].includes('delete') || parts[1].includes('connect') || parts[1].includes('disconnect')) {
+              return next();
+            }
+            
+            if (req.method === "GET") {
+              const id = parts[1].split('?')[0];
+              try {
+                const servers = readMCPServers();
+                const server = servers.find((s: any) => s.id === id);
+                
+                if (!server) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ success: false, error: 'Server not found' }));
+                  return;
+                }
+                
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: server }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+          
+          // POST /api/mcp/servers/update - 更新 MCP 服务器
+          server.middlewares.use("/api/mcp/servers/update", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { id, ...updates } = body;
+                  
+                  const servers = readMCPServers();
+                  const index = servers.findIndex((s: any) => s.id === id);
+                  
+                  if (index === -1) {
+                    res.statusCode = 404;
+                    res.end(JSON.stringify({ success: false, error: 'Server not found' }));
+                    return;
+                  }
+                  
+                  servers[index] = { 
+                    ...servers[index], 
+                    config: { ...servers[index].config, ...updates },
+                    updatedAt: Date.now() 
+                  };
+                  writeMCPServers(servers);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: servers[index] }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // POST /api/mcp/servers/delete - 删除 MCP 服务器
+          server.middlewares.use("/api/mcp/servers/delete", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { id } = body;
+                  
+                  let servers = readMCPServers();
+                  servers = servers.filter((s: any) => s.id !== id);
+                  writeMCPServers(servers);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // ============================================
+          // Chat Sessions API - 聊天会话管理
+          // ============================================
+          
+          const SESSIONS_FILE = path.join(process.cwd(), '.data', 'sessions.json');
+          const SESSION_MESSAGES_FILE = path.join(process.cwd(), '.data', 'session-messages.json');
+          
+          function readSessions(): any[] {
+            try {
+              if (fs.existsSync(SESSIONS_FILE)) {
+                return JSON.parse(fs.readFileSync(SESSIONS_FILE, 'utf-8'));
+              }
+            } catch (e) {
+              console.error('[API] Failed to read sessions:', e);
+            }
+            return [];
+          }
+          
+          function writeSessions(sessions: any[]) {
+            try {
+              fs.writeFileSync(SESSIONS_FILE, JSON.stringify(sessions, null, 2), 'utf-8');
+            } catch (e) {
+              console.error('[API] Failed to write sessions:', e);
+            }
+          }
+          
+          function readSessionMessages(): Record<string, any[]> {
+            try {
+              if (fs.existsSync(SESSION_MESSAGES_FILE)) {
+                return JSON.parse(fs.readFileSync(SESSION_MESSAGES_FILE, 'utf-8'));
+              }
+            } catch (e) {
+              console.error('[API] Failed to read session messages:', e);
+            }
+            return {};
+          }
+          
+          function writeSessionMessages(messages: Record<string, any[]>) {
+            try {
+              fs.writeFileSync(SESSION_MESSAGES_FILE, JSON.stringify(messages, null, 2), 'utf-8');
+            } catch (e) {
+              console.error('[API] Failed to write session messages:', e);
+            }
+          }
+          
+          // GET /api/sessions - 获取所有会话
+          // POST /api/sessions - 创建会话
+          server.middlewares.use("/api/sessions", (req, res, next) => {
+            const url = req.url || '';
+            if (url !== '/' && url !== '' && !url.startsWith('?')) {
+              return next();
+            }
+            
+            if (req.method === "GET") {
+              const sessions = readSessions();
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ success: true, data: sessions }));
+            } else if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const sessions = readSessions();
+                  
+                  const newSession = {
+                    id: `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                    title: body.title || '新对话',
+                    config: body.config || {
+                      model: 'deepseek-chat',
+                      temperature: 0.7,
+                      maxTokens: 2048,
+                      enableReasoning: false,
+                      streaming: true
+                    },
+                    stats: { messageCount: 0, totalTokens: 0 },
+                    createdAt: Date.now(),
+                    updatedAt: Date.now()
+                  };
+                  
+                  sessions.unshift(newSession);
+                  writeSessions(sessions);
+                  
+                  // 初始化消息组
+                  const messages = readSessionMessages();
+                  messages[newSession.id] = [];
+                  writeSessionMessages(messages);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: newSession }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // GET /api/sessions/:id - 获取单个会话
+          // PUT /api/sessions/:id - 更新会话
+          // DELETE /api/sessions/:id - 删除会话
+          server.middlewares.use("/api/sessions/", (req, res, next) => {
+            const url = req.url || '';
+            const parts = url.split('/');
+            if (parts.length < 2) return next();
+            
+            const id = parts[1].split('?')[0];
+            
+            if (req.method === "GET") {
+              try {
+                const sessions = readSessions();
+                const session = sessions.find((s: any) => s.id === id);
+                
+                if (!session) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ success: false, error: 'Session not found' }));
+                  return;
+                }
+                
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: session }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else if (req.method === "PUT") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const sessions = readSessions();
+                  const index = sessions.findIndex((s: any) => s.id === id);
+                  
+                  if (index === -1) {
+                    res.statusCode = 404;
+                    res.end(JSON.stringify({ success: false, error: 'Session not found' }));
+                    return;
+                  }
+                  
+                  sessions[index] = { ...sessions[index], ...body, updatedAt: Date.now() };
+                  writeSessions(sessions);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: sessions[index] }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else if (req.method === "DELETE") {
+              try {
+                let sessions = readSessions();
+                sessions = sessions.filter((s: any) => s.id !== id);
+                writeSessions(sessions);
+                
+                // 同时删除消息
+                const messages = readSessionMessages();
+                delete messages[id];
+                writeSessionMessages(messages);
+                
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+          
+          // GET /api/sessions/:id/messages - 获取会话消息
+          // POST /api/sessions/:id/messages - 保存会话消息
+          server.middlewares.use("/api/sessions/", (req, res, next) => {
+            const url = req.url || '';
+            const parts = url.split('/');
+            if (parts.length < 3 || parts[2] !== 'messages') return next();
+            
+            const sessionId = parts[1];
+            
+            if (req.method === "GET") {
+              try {
+                const messages = readSessionMessages();
+                const sessionMessages = messages[sessionId] || [];
+                
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: sessionMessages }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const messages = readSessionMessages();
+                  
+                  if (body.groups) {
+                    messages[sessionId] = body.groups;
+                  } else if (body.group) {
+                    if (!messages[sessionId]) messages[sessionId] = [];
+                    messages[sessionId].push(body.group);
+                  }
+                  
+                  writeSessionMessages(messages);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // ============================================
+          // Agent Chat Sessions API - Agent 独立会话
+          // ============================================
+          
+          const AGENT_CHAT_SESSIONS_FILE = path.join(process.cwd(), '.data', 'agent-chat-sessions.json');
+          
+          function readAgentChatSessions(): Record<string, any[]> {
+            try {
+              if (fs.existsSync(AGENT_CHAT_SESSIONS_FILE)) {
+                return JSON.parse(fs.readFileSync(AGENT_CHAT_SESSIONS_FILE, 'utf-8'));
+              }
+            } catch (e) {
+              console.error('[API] Failed to read agent chat sessions:', e);
+            }
+            return {};
+          }
+          
+          function writeAgentChatSessions(sessions: Record<string, any[]>) {
+            try {
+              fs.writeFileSync(AGENT_CHAT_SESSIONS_FILE, JSON.stringify(sessions, null, 2), 'utf-8');
+            } catch (e) {
+              console.error('[API] Failed to write agent chat sessions:', e);
+            }
+          }
+          
+          // GET /api/agent-chat/sessions - 获取所有 Agent 会话列表
+          server.middlewares.use("/api/agent-chat/sessions", (req, res, next) => {
+            const url = req.url || '';
+            if (url !== '/' && url !== '' && !url.startsWith('?')) {
+              return next();
+            }
+            
+            if (req.method === "GET") {
+              try {
+                const sessions = readAgentChatSessions();
+                const list = Object.entries(sessions).map(([agentId, messages]) => ({
+                  agentId,
+                  messageCount: messages.length,
+                  lastUpdated: messages.length > 0 ? messages[messages.length - 1].timestamp : 0
+                }));
+                
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: list }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+          
+          // GET /api/agent-chat/sessions/:agentId - 获取 Agent 会话消息
+          // POST /api/agent-chat/sessions/:agentId - 保存 Agent 会话消息
+          // DELETE /api/agent-chat/sessions/:agentId - 清空 Agent 会话
+          server.middlewares.use("/api/agent-chat/sessions/", (req, res, next) => {
+            const url = req.url || '';
+            const parts = url.split('/');
+            if (parts.length < 2) return next();
+            
+            const agentId = parts[1].split('?')[0];
+            
+            if (req.method === "GET") {
+              try {
+                const sessions = readAgentChatSessions();
+                const messages = sessions[agentId] || [];
+                
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: messages }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const sessions = readAgentChatSessions();
+                  
+                  sessions[agentId] = body.messages || [];
+                  writeAgentChatSessions(sessions);
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else if (req.method === "DELETE") {
+              try {
+                const sessions = readAgentChatSessions();
+                delete sessions[agentId];
+                writeAgentChatSessions(sessions);
+                
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
       },
     ],
     define: {

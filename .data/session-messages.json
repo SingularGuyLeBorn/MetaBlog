@@ -1,0 +1,82 @@
+{
+  "session-1772200000000-xyz789": [
+    {
+      "userMessage": {
+        "id": "msg-user-001",
+        "sessionId": "session-1772200000000-xyz789",
+        "role": "user",
+        "content": "你好，请介绍一下你自己",
+        "status": "completed",
+        "createdAt": 1772200000000,
+        "updatedAt": 1772200000000
+      },
+      "aiVersions": [
+        {
+          "id": "msg-ai-001",
+          "sessionId": "session-1772200000000-xyz789",
+          "role": "assistant",
+          "content": "你好！我是 MetaBlog 的 AI 助手。我可以帮助你：\n\n1. 📝 编写和优化文章\n2. 💻 编写代码和技术咨询\n3. 🔧 使用 MCP 工具处理文件、浏览网页等\n4. 💭 解答各种问题和讨论\n\n有什么我可以帮你的吗？",
+          "status": "completed",
+          "createdAt": 1772200000010,
+          "updatedAt": 1772200000010,
+          "parentMessageId": "msg-user-001",
+          "isActiveVersion": true
+        }
+      ],
+      "currentVersionIndex": 0
+    },
+    {
+      "userMessage": {
+        "id": "msg-user-002",
+        "sessionId": "session-1772200000000-xyz789",
+        "role": "user",
+        "content": "MetaBlog 是什么项目？",
+        "status": "completed",
+        "createdAt": 1772264000000,
+        "updatedAt": 1772264000000
+      },
+      "aiVersions": [
+        {
+          "id": "msg-ai-002",
+          "sessionId": "session-1772200000000-xyz789",
+          "role": "assistant",
+          "content": "MetaBlog 是一个基于 VitePress 构建的现代化博客系统，集成了强大的 AI 功能：\n\n✨ 核心特性：\n- 🚀 VitePress 驱动的高性能博客\n- 🤖 多 Agent AI 助手系统\n- 🔧 MCP (Model Context Protocol) 工具集成\n- 💾 智能记忆系统\n- 🎨 可定制的 AI 技能 (Skills)\n\n你可以创建多个 AI Agent，每个都有独立的配置和记忆。",
+          "status": "completed",
+          "createdAt": 1772264005000,
+          "updatedAt": 1772264005000,
+          "parentMessageId": "msg-user-002",
+          "isActiveVersion": true
+        }
+      ],
+      "currentVersionIndex": 0
+    }
+  ],
+  "session-1772263900000-abc123": [
+    {
+      "userMessage": {
+        "id": "msg-user-101",
+        "sessionId": "session-1772263900000-abc123",
+        "role": "user",
+        "content": "如何优化 Vue 3 项目的性能？",
+        "status": "completed",
+        "createdAt": 1772263900000,
+        "updatedAt": 1772263900000
+      },
+      "aiVersions": [
+        {
+          "id": "msg-ai-101",
+          "sessionId": "session-1772263900000-abc123",
+          "role": "assistant",
+          "content": "Vue 3 性能优化的关键点：\n\n1. **组件懒加载**\n   ```js\n   const Home = defineAsyncComponent(() => import('./views/Home.vue'))\n   ```\n\n2. **合理使用 v-show vs v-if**\n   - v-show 适合频繁切换\n   - v-if 适合条件渲染\n\n3. **使用 computed 缓存计算**\n   - 避免在模板中复杂计算\n\n4. **虚拟列表处理大数据**\n   - 使用 vue-virtual-scroller\n\n需要具体代码示例吗？",
+          "status": "completed",
+          "createdAt": 1772263910000,
+          "updatedAt": 1772263910000,
+          "parentMessageId": "msg-user-101",
+          "isActiveVersion": true
+        }
+      ],
+      "currentVersionIndex": 0
+    }
+  ],
+  "session-1772263960000-def456": []
+}
