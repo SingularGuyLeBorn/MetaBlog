@@ -1,13 +1,13 @@
 /**
- * AI Service - DeepSeek API (简化稳定的 Function Call 实现)
+ * AI Service - DeepSeek/Kimi API (支持多模态的 Function Call 实现)
  * 
  * 核心流程：
- * 1. 发送用户消息 + tools 定义
+ * 1. 发送用户消息 + tools 定义（支持图片/视频）
  * 2. AI 返回 tool_calls（非流式）
  * 3. 执行工具函数
  * 4. 发送 tool 结果（流式）获取最终回复
  * 
- * 工具系统已拆分到 ../tools/ 目录
+ * 更新：增加Kimi多模态支持（图片/视频理解）
  */
 import type { ChatMessage, SessionConfig, MessageRole, ToolCallRecord, ThinkingStep } from '../types'
 import { addLog } from './logger'
@@ -32,6 +32,7 @@ import {
   type ToolDefinition,
   type ToolCall
 } from '../tools'
+import { fileToBase64, detectMediaType, buildKimiImageContent, buildKimiVideoContent } from './multimediaService'
 
 // 初始化默认工具
 initializeDefaultTools()
@@ -44,9 +45,7 @@ interface ApiDebugEntry {
   endpoint: string
   round: number
   data: any
-  /** UI展示标记：true表示此内容会显示在UI上 */
   uiVisible?: boolean
-  /** 人类可读注释 */
   humanNote?: string
 }
 
@@ -144,19 +143,24 @@ const apiDebugLogger = new ApiDebugLogger()
 // ==================== 日志辅助函数 ====================
 
 function logApiRequest(endpoint: string, data: any) {
-  apiDebugLogger.logRequest(endpoint, data, '【API请求】发送到DeepSeek')
+  apiDebugLogger.logRequest(endpoint, data, '【API请求】发送到AI服务')
   
   const bodySize = JSON.stringify(data).length
   const simplifiedMessages = data.messages?.map((m: any) => {
-    const msg: any = { role: m.role, content_length: m.content?.length || 0 }
+    const msg: any = { role: m.role }
+    if (Array.isArray(m.content)) {
+      // 多模态消息
+      msg.content_type = 'multimodal'
+      msg.content_parts = m.content.map((c: any) => c.type)
+    } else {
+      msg.content_length = m.content?.length || 0
+      msg.content_preview = m.content?.substring(0, 200) + (m.content?.length > 200 ? '...' : '')
+    }
     if (m.tool_calls) {
       msg.tool_calls = m.tool_calls.map((tc: any) => ({ id: tc.id, name: tc.function?.name }))
     }
     if (m.tool_call_id) {
       msg.tool_call_id = m.tool_call_id
-      msg.content_preview = m.content?.substring(0, 100) + (m.content?.length > 100 ? '...' : '')
-    } else {
-      msg.content_preview = m.content?.substring(0, 200) + (m.content?.length > 200 ? '...' : '')
     }
     if (m.reasoning_content) {
       msg.has_reasoning = true
@@ -183,7 +187,7 @@ function logApiRequest(endpoint: string, data: any) {
 }
 
 function logApiResponse(endpoint: string, data: any, duration: number) {
-  apiDebugLogger.logResponse(endpoint, data, '【API响应】DeepSeek返回')
+  apiDebugLogger.logResponse(endpoint, data, '【API响应】AI服务返回')
   
   const message = data.choices?.[0]?.message
   const responseSize = JSON.stringify(data).length
@@ -252,19 +256,21 @@ export interface ModelConfig {
   baseURL: string
   apiKey: string
   supportsVision: boolean
+  supportsVideo: boolean
   supportsFunctionCalling: boolean
   maxTokens: number
 }
 
 // 支持的模型配置
 const MODEL_CONFIGS: Record<string, ModelConfig> = {
-  // DeepSeek 模型
+  // DeepSeek 模型 - 纯文本
   'deepseek-chat': {
     provider: 'deepseek',
     model: 'deepseek-chat',
     baseURL: 'https://api.deepseek.com/v1',
     apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || '',
     supportsVision: false,
+    supportsVideo: false,
     supportsFunctionCalling: true,
     maxTokens: 8192
   },
@@ -274,6 +280,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     baseURL: 'https://api.deepseek.com/v1',
     apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || '',
     supportsVision: false,
+    supportsVideo: false,
     supportsFunctionCalling: true,
     maxTokens: 8192
   },
@@ -284,6 +291,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     baseURL: 'https://api.moonshot.cn/v1',
     apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
+    supportsVideo: true,
     supportsFunctionCalling: true,
     maxTokens: 8192
   },
@@ -293,6 +301,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     baseURL: 'https://api.moonshot.cn/v1',
     apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
+    supportsVideo: true,
     supportsFunctionCalling: true,
     maxTokens: 8192
   },
@@ -302,6 +311,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     baseURL: 'https://api.moonshot.cn/v1',
     apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
+    supportsVideo: false, // k1.5不支持视频
     supportsFunctionCalling: true,
     maxTokens: 8192
   }
@@ -322,6 +332,7 @@ function getModelConfig(modelName: string): ModelConfig {
       baseURL: 'https://api.moonshot.cn/v1',
       apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
       supportsVision: true,
+      supportsVideo: modelName.includes('k2'), // k2系列支持视频
       supportsFunctionCalling: true,
       maxTokens: 8192
     }
@@ -334,6 +345,7 @@ function getModelConfig(modelName: string): ModelConfig {
     baseURL: 'https://api.deepseek.com/v1',
     apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || '',
     supportsVision: false,
+    supportsVideo: false,
     supportsFunctionCalling: true,
     maxTokens: 8192
   }
@@ -357,6 +369,119 @@ export interface StreamCallbacks {
   onThinkingStep?: (step: ThinkingStep) => void
 }
 
+// ==================== 多模态消息处理 ====================
+
+/**
+ * 将ChatMessage转换为API消息格式
+ * 支持多模态内容（图片、视频）
+ */
+async function convertMessageToApiFormat(
+  message: ChatMessage,
+  modelConfig: ModelConfig
+): Promise<any> {
+  const baseMsg: any = { role: message.role }
+  
+  // 检查是否有附件
+  if (message.attachments && message.attachments.length > 0) {
+    // 模型支持多模态
+    if (modelConfig.supportsVision) {
+      const contentParts: any[] = []
+      
+      // 添加文本内容
+      if (message.content) {
+        contentParts.push({ type: 'text', text: message.content })
+      }
+      
+      // 处理附件
+      for (const attachment of message.attachments) {
+        if (attachment.type === 'image' && modelConfig.supportsVision) {
+          try {
+            // 如果是本地文件，转换为base64
+            if (attachment.url.startsWith('blob:') || attachment.url.startsWith('data:')) {
+              const response = await fetch(attachment.url)
+              const blob = await response.blob()
+              const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader()
+                reader.onload = () => {
+                  const result = reader.result as string
+                  resolve(result.split(',')[1])
+                }
+                reader.onerror = reject
+                reader.readAsDataURL(blob)
+              })
+              contentParts.push(buildKimiImageContent(base64, attachment.mimeType || 'image/jpeg'))
+            } else {
+              // 外部URL
+              contentParts.push({
+                type: 'image_url',
+                image_url: { url: attachment.url }
+              })
+            }
+          } catch (error) {
+            console.error('处理图片失败:', error)
+          }
+        } else if (attachment.type === 'video' && modelConfig.supportsVideo) {
+          try {
+            if (attachment.url.startsWith('blob:') || attachment.url.startsWith('data:')) {
+              const response = await fetch(attachment.url)
+              const blob = await response.blob()
+              const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader()
+                reader.onload = () => {
+                  const result = reader.result as string
+                  resolve(result.split(',')[1])
+                }
+                reader.onerror = reject
+                reader.readAsDataURL(blob)
+              })
+              contentParts.push(buildKimiVideoContent(base64, attachment.mimeType || 'video/mp4'))
+            } else {
+              contentParts.push({
+                type: 'video_url',
+                video_url: { url: attachment.url }
+              })
+            }
+          } catch (error) {
+            console.error('处理视频失败:', error)
+          }
+        }
+      }
+      
+      baseMsg.content = contentParts
+    } else {
+      // 模型不支持多模态，只发送文本和附件链接
+      let textContent = message.content || ''
+      if (message.attachments.length > 0) {
+        textContent += '\n\n[附件]\n'
+        message.attachments.forEach((att, i) => {
+          textContent += `${i + 1}. ${att.type}: ${att.url}\n`
+        })
+        textContent += '\n注意：当前模型不支持直接理解多媒体内容，请描述或分析这些附件。'
+      }
+      baseMsg.content = textContent
+    }
+  } else {
+    // 纯文本消息
+    baseMsg.content = message.content
+  }
+  
+  // 处理工具调用相关字段
+  if (message.role === 'assistant') {
+    if (message.reasoning?.content) {
+      baseMsg.reasoning_content = message.reasoning.content
+    }
+    if (message.metadata?.toolCalls?.length) {
+      baseMsg.tool_calls = message.metadata.toolCalls
+    }
+  }
+  
+  if (message.role === 'tool' && message.metadata?.toolCallId) {
+    baseMsg.tool_call_id = message.metadata.toolCallId
+  }
+  
+  return baseMsg
+}
+
 // ==================== 工具函数 ====================
 
 function cleanAIOutput(content: string): string {
@@ -374,11 +499,14 @@ function cleanAIOutput(content: string): string {
 
 /**
  * 截断过长的消息内容，防止请求体过大
- * 工具结果消息可能包含大量内容（如完整文件），需要截断
  */
 function truncateMessages(messages: any[], maxContentLength: number = 8000): any[] {
   return messages.map(m => {
-    // 如果是工具结果消息，截断内容
+    // 处理多模态消息
+    if (Array.isArray(m.content)) {
+      return m
+    }
+    
     if (m.role === 'tool' && m.content && m.content.length > maxContentLength) {
       const truncated = m.content.substring(0, maxContentLength)
       const truncatedLength = m.content.length - maxContentLength
@@ -387,7 +515,6 @@ function truncateMessages(messages: any[], maxContentLength: number = 8000): any
         content: truncated + `\n\n... [内容已截断，省略 ${truncatedLength} 字符]`
       }
     }
-    // 如果是 assistant 的 tool_calls 响应，也检查内容长度
     if (m.role === 'assistant' && m.content && m.content.length > maxContentLength * 2) {
       return {
         ...m,
@@ -444,15 +571,22 @@ async function chatNonStream(
     requestBody.thinking = { type: 'enabled' }
   }
   
-  // Kimi 模型需要特定的工具格式
+  // Kimi K2.5的思考模式需要特殊处理（与内置工具冲突）
+  if (config.model === 'kimi-k2.5' && config.enableReasoning) {
+    // 如果启用了思考模式且使用了内置工具，需要禁用思考模式
+    const hasBuiltinTools = includeTools && getToolDefinitions().some((t: ToolDefinition) => 
+      t.function.name.startsWith('$')
+    )
+    if (hasBuiltinTools) {
+      requestBody.thinking = { type: 'disabled' }
+    } else {
+      requestBody.thinking = { type: 'enabled' }
+    }
+  }
+  
   if (includeTools && modelConfig.supportsFunctionCalling) {
     const toolDefs = getToolDefinitions()
-    // Kimi 使用 functions 而不是 tools
-    if (modelConfig.provider === 'kimi') {
-      requestBody.tools = toolDefs
-    } else {
-      requestBody.tools = toolDefs
-    }
+    requestBody.tools = toolDefs
   }
 
   logApiRequest('/chat/completions (non-stream)', requestBody)
@@ -521,7 +655,6 @@ async function chatStreamInternal(
   
   let processedMessages = messages
   
-  // 处理 reasoning_content
   if (isThinkingEnabled && !isToolContinuation) {
     processedMessages = processedMessages.map((m: any) => {
       if (m.role === 'assistant' && m.reasoning_content) {
@@ -532,7 +665,6 @@ async function chatStreamInternal(
     })
   }
   
-  // 截断过长的消息，防止请求体过大
   processedMessages = truncateMessages(processedMessages, 6000)
   
   const requestBody: any = {
@@ -643,6 +775,7 @@ export const aiService = {
     const startTime = Date.now()
     
     const debugSessionId = sessionId || `session_${startTime}`
+    const modelConfig = getModelConfig(config.model)
     const isReasoningModel = config.model === 'deepseek-reasoner'
     const isThinkingEnabled = config.enableReasoning && config.model === 'deepseek-chat'
     const isReasoningMode = isReasoningModel || isThinkingEnabled
@@ -652,15 +785,20 @@ export const aiService = {
     // 启动 Session 日志
     startSessionLog(debugSessionId, {
       model: config.model,
-      reasoningEnabled: isReasoningModel || config.enableReasoning
+      reasoningEnabled: isReasoningModel || config.enableReasoning,
+      supportsVision: modelConfig.supportsVision,
+      supportsVideo: modelConfig.supportsVideo
     })
     
     // 记录用户输入
     const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
     if (lastUserMessage) {
+      const hasAttachments = lastUserMessage.attachments && lastUserMessage.attachments.length > 0
       logUserInput(lastUserMessage.content, {
         messageId: lastUserMessage.id,
-        sessionId: debugSessionId
+        sessionId: debugSessionId,
+        hasAttachments,
+        attachmentTypes: hasAttachments ? lastUserMessage.attachments?.map(a => a.type) : undefined
       })
     }
     
@@ -668,30 +806,43 @@ export const aiService = {
       level: 'info', category: 'chat', component: 'aiService',
       event: 'message_start',
       message: `开始新对话，模型: ${config.model}`,
-      data: { model: config.model, messageCount: messages.length, hasSystemPrompt: !!config.systemPrompt, debugSessionId }
+      data: { 
+        model: config.model, 
+        messageCount: messages.length, 
+        hasSystemPrompt: !!config.systemPrompt, 
+        debugSessionId,
+        supportsVision: modelConfig.supportsVision,
+        supportsVideo: modelConfig.supportsVideo
+      }
     })
     
     try {
-      const currentMessages = messages.slice(-10)
+      // 转换消息格式，支持多模态
+      const apiMessages: any[] = []
       
-      let apiMessages: any[] = [
-        ...(config.systemPrompt ? [{ role: 'system', content: config.systemPrompt }] : []),
-        ...currentMessages.map(m => {
-          const baseMsg: any = { role: m.role, content: m.content }
-          if (m.role === 'assistant') {
-            if (m.reasoning?.content) baseMsg.reasoning_content = m.reasoning.content
-            if (m.metadata?.toolCalls?.length) baseMsg.tool_calls = m.metadata.toolCalls
-          }
-          if (m.role === 'tool' && m.metadata?.toolCallId) {
-            baseMsg.tool_call_id = m.metadata.toolCallId
-          }
-          return baseMsg
-        })
-      ]
+      // 添加系统提示词
+      if (config.systemPrompt) {
+        // 为多模态模型添加提示
+        let enhancedPrompt = config.systemPrompt
+        if (modelConfig.supportsVision && messages.some(m => m.attachments?.some(a => a.type === 'image'))) {
+          enhancedPrompt += '\n\n你可以理解用户上传的图片内容。'
+        }
+        if (modelConfig.supportsVideo && messages.some(m => m.attachments?.some(a => a.type === 'video'))) {
+          enhancedPrompt += '\n\n你可以理解用户上传的视频内容。'
+        }
+        apiMessages.push({ role: 'system', content: enhancedPrompt })
+      }
       
-      apiMessages = apiMessages.filter((m: any) => {
+      // 转换每条消息
+      for (const message of messages.slice(-10)) {
+        const apiMsg = await convertMessageToApiFormat(message, modelConfig)
+        apiMessages.push(apiMsg)
+      }
+      
+      // 过滤空消息
+      const filteredMessages = apiMessages.filter((m: any) => {
         if (m.role === 'assistant') {
-          const hasContent = m.content?.trim().length > 0
+          const hasContent = m.content?.trim().length > 0 || Array.isArray(m.content)
           const hasReasoning = m.reasoning_content?.trim().length > 0
           const hasToolCalls = m.tool_calls?.length > 0
           return hasContent || hasReasoning || hasToolCalls
@@ -700,7 +851,7 @@ export const aiService = {
       })
       
       if (isReasoningModel) {
-        apiMessages = apiMessages.map((m: any) => {
+        processedMessages: filteredMessages.map((m: any) => {
           if (m.role === 'assistant') {
             return { ...m, reasoning_content: m.reasoning_content || '' }
           }
@@ -722,7 +873,7 @@ export const aiService = {
           data: { round: toolRound }
         })
         
-        const response = await chatNonStream(apiMessages, config, true, toolRound > 1)
+        const response = await chatNonStream(filteredMessages, config, true, toolRound > 1)
         
         if (response.error) {
           callbacks.onError(new Error(response.error))
@@ -750,13 +901,11 @@ export const aiService = {
           }
           callbacks.onThinkingStep?.(thinkingStep)
           
-          // 记录思考步骤到 Session 日志
           logThinkingStep(toolRound, 'thinking', currentThinking, {
             stepId: thinkingStep.id,
             stepIndex: thinkingStep.index
           })
           
-          // 记录UI可见性
           apiDebugLogger.logNote('thinking', '【UI展示】思考步骤', { stepIndex, content: currentThinking }, true)
         }
         
@@ -768,7 +917,6 @@ export const aiService = {
             const cleanedContent = cleanAIOutput(response.content)
             callbacks.onContent(cleanedContent)
             
-            // 记录 AI 内容到 Session 日志
             logAIContent(cleanedContent, {
               round: toolRound,
               hasThinking: !!response.reasoningContent,
@@ -841,7 +989,6 @@ export const aiService = {
           }
           callbacks.onThinkingStep?.(toolStep)
           
-          // 记录UI可见性
           apiDebugLogger.logNote('tool_call', '【UI展示】工具调用步骤', { 
             name: toolCall.function.name, 
             args,
@@ -871,8 +1018,8 @@ export const aiService = {
           assistantMessage.reasoning_content = response.reasoningContent
         }
         
-        apiMessages.push(assistantMessage)
-        apiMessages.push(...toolResultMessages)
+        filteredMessages.push(assistantMessage)
+        filteredMessages.push(...toolResultMessages)
         
         addLog({
           level: 'info', category: 'tool', component: 'aiService',
@@ -888,7 +1035,6 @@ export const aiService = {
         data: { duration, toolRounds: toolRound, toolCount: toolRecords.length }
       })
       
-      // 结束 Session 日志
       endSessionLog()
       
       await apiDebugLogger.flush()
@@ -899,7 +1045,6 @@ export const aiService = {
       const errorName = (error as Error).name
       const errorMessage = (error as Error).message
       
-      // 记录错误到 Session 日志
       logError(error as Error, '对话处理过程中发生错误')
       endSessionLog()
       
@@ -929,5 +1074,17 @@ export const aiService = {
   getRegisteredTools(): string[] {
     const { getRegisteredToolNames } = require('../tools')
     return getRegisteredToolNames()
+  },
+  
+  // 获取模型配置信息（用于UI展示）
+  getModelCapabilities(modelName: string) {
+    const config = getModelConfig(modelName)
+    return {
+      provider: config.provider,
+      supportsVision: config.supportsVision,
+      supportsVideo: config.supportsVideo,
+      supportsFunctionCalling: config.supportsFunctionCalling,
+      maxTokens: config.maxTokens
+    }
   }
 }

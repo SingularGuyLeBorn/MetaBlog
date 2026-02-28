@@ -15,7 +15,13 @@ export type MessageRole = 'user' | 'assistant' | 'system' | 'tool'
 export type MessageStatus = 'pending' | 'streaming' | 'completed' | 'error' | 'interrupted'
 
 /** 模型类型 */
-export type ModelType = 'deepseek-chat' | 'deepseek-reasoner' | 'deepseek-coder'
+export type ModelType = 
+  | 'deepseek-chat' 
+  | 'deepseek-reasoner' 
+  | 'deepseek-coder'
+  | 'kimi-k2.5'
+  | 'kimi-k2'
+  | 'kimi-k1.5'
 
 /** 深度思考内容 */
 export interface ReasoningContent {
@@ -27,12 +33,33 @@ export interface ReasoningContent {
 // 消息类型
 // ═══════════════════════════════════════════════════════════════
 
+/** 消息附件类型 */
+export type AttachmentType = 'file' | 'image' | 'video' | 'audio' | 'link'
+
 /** 消息附件 */
 export interface MessageAttachment {
-  type: 'file' | 'image' | 'link'
+  /** 附件类型 */
+  type: AttachmentType
+  /** 文件名/标题 */
   name: string
+  /** 文件URL（本地blob URL或远程URL） */
   url: string
+  /** 文件大小（字节） */
   size?: number
+  /** MIME类型 */
+  mimeType?: string
+  /** 图片/视频宽度 */
+  width?: number
+  /** 图片/视频高度 */
+  height?: number
+  /** 视频时长（秒） */
+  duration?: number
+  /** 视频缩略图 */
+  thumbnail?: string
+  /** 上传状态 */
+  uploadStatus?: 'pending' | 'uploading' | 'completed' | 'error'
+  /** 错误信息 */
+  error?: string
 }
 
 /** Token 使用统计 */

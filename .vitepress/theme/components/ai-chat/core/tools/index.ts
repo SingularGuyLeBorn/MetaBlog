@@ -41,6 +41,30 @@ export {
   processImageExecutor
 } from './platform-parsers'
 
+// 扩展平台解析工具
+export {
+  extendedPlatformParserDefinitions,
+  extendedPlatformParserExecutors,
+  parseBilibiliExecutor,
+  parseDouyinExecutor,
+  parseCSDNExecutor,
+  parseJuejinExecutor,
+  parseWeiboExecutor,
+  parseTwitterExecutor,
+  parseYoutubeExecutor,
+  parseMultipleLinksExecutor
+} from './platform-parsers-extended'
+
+// 富文本文章工具
+export {
+  richArticleDefinitions,
+  richArticleExecutors,
+  createRichArticleExecutor,
+  insertImagesExecutor,
+  createLinkedArticleExecutor,
+  formatRichMediaExecutor
+} from './rich-article'
+
 // 为了向后兼容，保留原有导出
 export {
   getArticleContent,
@@ -135,6 +159,14 @@ import { registerTools } from './registry'
 import * as definitions from './definitions'
 import * as executors from './executors-legacy'
 import { platformParserDefinitions, platformParserExecutors } from './platform-parsers'
+import { 
+  extendedPlatformParserDefinitions, 
+  extendedPlatformParserExecutors 
+} from './platform-parsers-extended'
+import {
+  richArticleDefinitions,
+  richArticleExecutors
+} from './rich-article'
 
 /**
  * 初始化所有默认工具（向后兼容）
@@ -203,7 +235,23 @@ export function initializeDefaultTools(): void {
     { name: 'parse_wechat', definition: platformParserDefinitions[2], executor: platformParserExecutors.parse_wechat },
     { name: 'ocr_image', definition: platformParserDefinitions[3], executor: platformParserExecutors.ocr_image },
     { name: 'parse_platform_link', definition: platformParserDefinitions[4], executor: platformParserExecutors.parse_platform_link },
-    { name: 'process_image', definition: platformParserDefinitions[5], executor: platformParserExecutors.process_image }
+    { name: 'process_image', definition: platformParserDefinitions[5], executor: platformParserExecutors.process_image },
+    
+    // 扩展平台解析工具
+    { name: 'parse_bilibili', definition: extendedPlatformParserDefinitions[0], executor: extendedPlatformParserExecutors.parse_bilibili },
+    { name: 'parse_douyin', definition: extendedPlatformParserDefinitions[1], executor: extendedPlatformParserExecutors.parse_douyin },
+    { name: 'parse_csdn', definition: extendedPlatformParserDefinitions[2], executor: extendedPlatformParserExecutors.parse_csdn },
+    { name: 'parse_juejin', definition: extendedPlatformParserDefinitions[3], executor: extendedPlatformParserExecutors.parse_juejin },
+    { name: 'parse_weibo', definition: extendedPlatformParserDefinitions[4], executor: extendedPlatformParserExecutors.parse_weibo },
+    { name: 'parse_twitter', definition: extendedPlatformParserDefinitions[5], executor: extendedPlatformParserExecutors.parse_twitter },
+    { name: 'parse_youtube', definition: extendedPlatformParserDefinitions[6], executor: extendedPlatformParserExecutors.parse_youtube },
+    { name: 'parse_multiple_links', definition: extendedPlatformParserDefinitions[7], executor: extendedPlatformParserExecutors.parse_multiple_links },
+    
+    // 富文本文章工具
+    { name: 'create_rich_article', definition: richArticleDefinitions[0], executor: richArticleExecutors.create_rich_article },
+    { name: 'insert_images', definition: richArticleDefinitions[1], executor: richArticleExecutors.insert_images },
+    { name: 'create_linked_article', definition: richArticleDefinitions[2], executor: richArticleExecutors.create_linked_article },
+    { name: 'format_rich_media', definition: richArticleDefinitions[3], executor: richArticleExecutors.format_rich_media }
   ]
   
   registerTools(tools)
