@@ -12,7 +12,7 @@ import json
 
 client = OpenAI(
     api_key="your-api-key",
-    base_url="https://api.moonshot.ai/v1",
+    base_url="https://api.moonshot.cn/v1",
 )
 
 response = client.chat.completions.create(
@@ -56,7 +56,7 @@ import json
 
 client = OpenAI(
     api_key="your-api-key",
-    base_url="https://api.moonshot.ai/v1",
+    base_url="https://api.moonshot.cn/v1",
 )
 
 def extract_entities(text: str) -> dict:
@@ -99,7 +99,7 @@ import json
 
 client = OpenAI(
     api_key="your-api-key",
-    base_url="https://api.moonshot.ai/v1",
+    base_url="https://api.moonshot.cn/v1",
 )
 
 def generate_function_spec(description: str) -> dict:
@@ -151,7 +151,7 @@ import json
 
 client = OpenAI(
     api_key="your-api-key",
-    base_url="https://api.moonshot.ai/v1",
+    base_url="https://api.moonshot.cn/v1",
 )
 
 class StructuredChat:
@@ -160,7 +160,7 @@ class StructuredChat:
     def __init__(self, api_key: str):
         self.client = OpenAI(
             api_key=api_key,
-            base_url="https://api.moonshot.ai/v1",
+            base_url="https://api.moonshot.cn/v1",
         )
         self.messages = []
     
@@ -232,7 +232,7 @@ import json
 
 client = OpenAI(
     api_key="your-api-key",
-    base_url="https://api.moonshot.ai/v1",
+    base_url="https://api.moonshot.cn/v1",
 )
 
 response = client.chat.completions.create(
