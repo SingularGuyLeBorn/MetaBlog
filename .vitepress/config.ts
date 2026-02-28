@@ -558,6 +558,139 @@ export default defineConfig({
             }
           });
 
+          // ============================================
+          // MCP Servers API - MCP Server 管理
+          // ============================================
+          
+          const MCP_SERVERS_FILE = path.join(DATA_DIR, 'mcp-servers.json');
+          
+          function readMCPServers(): any[] {
+            try {
+              if (fs.existsSync(MCP_SERVERS_FILE)) {
+                return JSON.parse(fs.readFileSync(MCP_SERVERS_FILE, 'utf-8'));
+              }
+            } catch (e) {
+              console.error('[API] Failed to read MCP servers:', e);
+            }
+            return [];
+          }
+          
+          function writeMCPServers(servers: any[]): void {
+            try {
+              if (!fs.existsSync(DATA_DIR)) {
+                fs.mkdirSync(DATA_DIR, { recursive: true });
+              }
+              fs.writeFileSync(MCP_SERVERS_FILE, JSON.stringify(servers, null, 2), 'utf-8');
+            } catch (e) {
+              console.error('[API] Failed to write MCP servers:', e);
+            }
+          }
+          
+          // GET /api/mcp/servers - 获取所有 MCP Servers
+          server.middlewares.use('/api/mcp/servers', (req, res, next) => {
+            const url = req.url || '';
+            // 只处理精确路径，子路由留给后续中间件
+            if (url !== '/' && url !== '' && !url.startsWith('?')) {
+              return next();
+            }
+            if (req.method === 'GET') {
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: true, data: readMCPServers() }));
+            } else if (req.method === 'POST') {
+              const chunks: Buffer[] = [];
+              req.on('data', chunk => chunks.push(chunk));
+              req.on('end', () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const servers = readMCPServers();
+                  const newServer = {
+                    id: body.id || `mcp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    name: body.name || '未命名 MCP Server',
+                    description: body.description || '',
+                    icon: body.icon || 'server',
+                    category: body.category || 'custom',
+                    transport: body.transport || 'stdio',
+                    command: body.command,
+                    args: body.args || [],
+                    env: body.env || {},
+                    url: body.url,
+                    headers: body.headers || {},
+                    enabled: body.enabled ?? false,
+                    autoConnect: body.autoConnect ?? false,
+                    timeout: body.timeout || 30000,
+                    retryCount: body.retryCount || 3,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now()
+                  };
+                  servers.push(newServer);
+                  writeMCPServers(servers);
+                  console.log(`[API] Created MCP server: ${newServer.name}`);
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ success: true, data: newServer }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else {
+              next();
+            }
+          });
+          
+          // POST /api/mcp/servers/update - 更新 MCP Server
+          server.middlewares.use('/api/mcp/servers/update', (req, res, next) => {
+            if (req.method === 'POST') {
+              const chunks: Buffer[] = [];
+              req.on('data', chunk => chunks.push(chunk));
+              req.on('end', () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { id, ...updates } = body;
+                  const servers = readMCPServers();
+                  const index = servers.findIndex((s: any) => s.id === id);
+                  
+                  if (index === -1) {
+                    res.statusCode = 404;
+                    res.end(JSON.stringify({ success: false, error: 'MCP server not found' }));
+                    return;
+                  }
+                  
+                  servers[index] = { ...servers[index], ...updates, updatedAt: Date.now() };
+                  writeMCPServers(servers);
+                  console.log(`[API] Updated MCP server: ${servers[index].name}`);
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ success: true, data: servers[index] }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+          
+          // POST /api/mcp/servers/delete - 删除 MCP Server
+          server.middlewares.use('/api/mcp/servers/delete', (req, res, next) => {
+            if (req.method === 'POST') {
+              const chunks: Buffer[] = [];
+              req.on('data', chunk => chunks.push(chunk));
+              req.on('end', () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const { id } = body;
+                  const servers = readMCPServers();
+                  const filtered = servers.filter((s: any) => s.id !== id);
+                  writeMCPServers(filtered);
+                  console.log(`[API] Deleted MCP server: ${id}`);
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ success: true }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
+            } else next();
+          });
+
           // 辅助函数：检查路径是否是 folder-note 模式，返回实际文件路径
           function getFolderNoteInfo(
             urlPath: string,

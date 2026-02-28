@@ -104,7 +104,7 @@ export const socialMediaPresets: MCPPreset[] = [
   {
     id: 'zhihu-mcp',
     name: '知乎',
-    description: '知乎 MCP Server，支持搜索问题、获取回答、收藏夹管理等',
+    description: '知乎 MCP Server，支持搜索问题、获取回答、收藏夹管理、用户动态等',
     icon: 'zhihu',
     category: 'social',
     config: {
@@ -125,7 +125,7 @@ export const socialMediaPresets: MCPPreset[] = [
   {
     id: 'xiaohongshu-mcp',
     name: '小红书',
-    description: '小红书 MCP Server，支持搜索笔记、获取详情、评论等',
+    description: '小红书 MCP Server，支持搜索笔记、获取详情、评论、用户主页等',
     icon: 'xiaohongshu',
     category: 'social',
     config: {
@@ -146,7 +146,7 @@ export const socialMediaPresets: MCPPreset[] = [
   {
     id: 'weibo-mcp',
     name: '微博',
-    description: '微博 MCP Server，支持搜索微博、获取用户信息、评论等',
+    description: '微博 MCP Server，支持搜索微博、获取用户信息、评论、热搜榜等',
     icon: 'weibo',
     category: 'social',
     config: {
@@ -159,14 +159,15 @@ export const socialMediaPresets: MCPPreset[] = [
       {
         key: 'WEIBO_COOKIE',
         label: '微博 Cookie',
-        type: 'password'
+        type: 'password',
+        description: '登录微博后从浏览器开发者工具获取 Cookie'
       }
     ]
   },
   {
     id: 'twitter-mcp',
     name: 'Twitter/X',
-    description: 'Twitter API MCP Server',
+    description: 'Twitter API MCP Server，支持搜索推文、获取用户信息、时间线等',
     icon: 'twitter',
     category: 'social',
     config: {
@@ -181,6 +182,138 @@ export const socialMediaPresets: MCPPreset[] = [
         label: 'Twitter Bearer Token',
         type: 'password',
         description: '从 Twitter Developer Portal 获取'
+      }
+    ]
+  },
+  {
+    id: 'bilibili-mcp',
+    name: 'B站 (哔哩哔哩)',
+    description: 'Bilibili MCP Server，支持搜索视频、获取视频详情、弹幕、评论、UP主信息等',
+    icon: 'bilibili',
+    category: 'social',
+    config: {
+      transport: 'stdio',
+      command: 'npx',
+      args: ['-y', 'bilibili-mcp-server'],
+      env: {}
+    },
+    requiredConfig: [
+      {
+        key: 'BILIBILI_SESSDATA',
+        label: 'B站 SESSDATA',
+        type: 'password',
+        description: '登录B站后从浏览器 Cookie 中获取 SESSDATA'
+      }
+    ]
+  },
+  {
+    id: 'douyin-mcp',
+    name: '抖音',
+    description: '抖音 MCP Server，支持搜索视频、获取视频详情、评论、用户信息等',
+    icon: 'douyin',
+    category: 'social',
+    config: {
+      transport: 'stdio',
+      command: 'npx',
+      args: ['-y', 'douyin-mcp-server'],
+      env: {}
+    },
+    requiredConfig: [
+      {
+        key: 'DOUYIN_COOKIE',
+        label: '抖音 Cookie',
+        type: 'password',
+        description: '登录抖音后从浏览器开发者工具获取 Cookie'
+      }
+    ]
+  },
+  {
+    id: 'wechat-mcp',
+    name: '微信公众号',
+    description: '微信公众号 MCP Server，支持搜索文章、获取文章详情、公众号信息等',
+    icon: 'wechat',
+    category: 'social',
+    config: {
+      transport: 'stdio',
+      command: 'npx',
+      args: ['-y', 'wechat-mcp-server'],
+      env: {}
+    },
+    requiredConfig: [
+      {
+        key: 'WECHAT_COOKIE',
+        label: '微信 Cookie',
+        type: 'password',
+        description: '登录微信后从浏览器开发者工具获取 Cookie'
+      },
+      {
+        key: 'WECHAT_TOKEN',
+        label: '微信 Token',
+        type: 'password',
+        description: '从微信公众平台获取 Token'
+      }
+    ]
+  },
+  {
+    id: 'csdn-mcp',
+    name: 'CSDN',
+    description: 'CSDN MCP Server，支持搜索博客、获取文章详情、用户信息、评论等',
+    icon: 'csdn',
+    category: 'social',
+    config: {
+      transport: 'stdio',
+      command: 'npx',
+      args: ['-y', 'csdn-mcp-server'],
+      env: {}
+    },
+    requiredConfig: [
+      {
+        key: 'CSDN_COOKIE',
+        label: 'CSDN Cookie',
+        type: 'password',
+        description: '登录CSDN后从浏览器开发者工具获取 Cookie'
+      }
+    ]
+  },
+  {
+    id: 'juejin-mcp',
+    name: '掘金',
+    description: '掘金 MCP Server，支持搜索文章、获取文章详情、用户信息、沸点等',
+    icon: 'juejin',
+    category: 'social',
+    config: {
+      transport: 'stdio',
+      command: 'npx',
+      args: ['-y', 'juejin-mcp-server'],
+      env: {}
+    },
+    requiredConfig: [
+      {
+        key: 'JUEJIN_COOKIE',
+        label: '掘金 Cookie',
+        type: 'password',
+        description: '登录掘金后从浏览器开发者工具获取 Cookie'
+      }
+    ]
+  },
+  {
+    id: 'jianshu-mcp',
+    name: '简书',
+    description: '简书 MCP Server，支持搜索文章、获取文章详情、专题、作者信息等',
+    icon: 'jianshu',
+    category: 'social',
+    config: {
+      transport: 'stdio',
+      command: 'npx',
+      args: ['-y', 'jianshu-mcp-server'],
+      env: {}
+    },
+    requiredConfig: [
+      {
+        key: 'JIANSHU_COOKIE',
+        label: '简书 Cookie',
+        type: 'password',
+        description: '登录简书后从浏览器开发者工具获取 Cookie'
       }
     ]
   }

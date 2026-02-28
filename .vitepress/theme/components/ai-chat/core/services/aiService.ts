@@ -242,16 +242,108 @@ function logApiError(endpoint: string, error: any, duration?: number, requestDat
   })
 }
 
-// ==================== 配置 ====================
+// ==================== 多模型配置 ====================
 
-const API_BASE_URL = 'https://api.deepseek.com/v1'
+export type ModelProvider = 'deepseek' | 'kimi' | 'openai' | 'anthropic' | 'custom'
 
-function getApiKey(): string {
-  const key = import.meta.env.VITE_DEEPSEEK_API_KEY
-  if (key && !key.includes('your-api-key')) {
-    return key
+export interface ModelConfig {
+  provider: ModelProvider
+  model: string
+  baseURL: string
+  apiKey: string
+  supportsVision: boolean
+  supportsFunctionCalling: boolean
+  maxTokens: number
+}
+
+// 支持的模型配置
+const MODEL_CONFIGS: Record<string, ModelConfig> = {
+  // DeepSeek 模型
+  'deepseek-chat': {
+    provider: 'deepseek',
+    model: 'deepseek-chat',
+    baseURL: 'https://api.deepseek.com/v1',
+    apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || '',
+    supportsVision: false,
+    supportsFunctionCalling: true,
+    maxTokens: 8192
+  },
+  'deepseek-reasoner': {
+    provider: 'deepseek',
+    model: 'deepseek-reasoner',
+    baseURL: 'https://api.deepseek.com/v1',
+    apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || '',
+    supportsVision: false,
+    supportsFunctionCalling: true,
+    maxTokens: 8192
+  },
+  // Kimi (Moonshot) 模型 - 支持多模态
+  'kimi-k2.5': {
+    provider: 'kimi',
+    model: 'kimi-k2.5',
+    baseURL: 'https://api.moonshot.cn/v1',
+    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
+    supportsVision: true,
+    supportsFunctionCalling: true,
+    maxTokens: 8192
+  },
+  'kimi-k2': {
+    provider: 'kimi',
+    model: 'kimi-k2',
+    baseURL: 'https://api.moonshot.cn/v1',
+    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
+    supportsVision: true,
+    supportsFunctionCalling: true,
+    maxTokens: 8192
+  },
+  'kimi-k1.5': {
+    provider: 'kimi',
+    model: 'kimi-k1.5',
+    baseURL: 'https://api.moonshot.cn/v1',
+    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
+    supportsVision: true,
+    supportsFunctionCalling: true,
+    maxTokens: 8192
   }
-  throw new Error('DeepSeek API Key not configured')
+}
+
+// 获取模型配置
+function getModelConfig(modelName: string): ModelConfig {
+  const config = MODEL_CONFIGS[modelName]
+  if (config) {
+    return config
+  }
+  
+  // 如果找不到配置，尝试基于模型名称推断
+  if (modelName.startsWith('kimi')) {
+    return {
+      provider: 'kimi',
+      model: modelName,
+      baseURL: 'https://api.moonshot.cn/v1',
+      apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
+      supportsVision: true,
+      supportsFunctionCalling: true,
+      maxTokens: 8192
+    }
+  }
+  
+  // 默认使用 DeepSeek
+  return {
+    provider: 'deepseek',
+    model: modelName,
+    baseURL: 'https://api.deepseek.com/v1',
+    apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || '',
+    supportsVision: false,
+    supportsFunctionCalling: true,
+    maxTokens: 8192
+  }
+}
+
+// 验证 API Key
+function validateApiKey(config: ModelConfig): void {
+  if (!config.apiKey || config.apiKey.includes('your-api-key')) {
+    throw new Error(`${config.provider} API Key not configured`)
+  }
 }
 
 // ==================== 类型定义 ====================
@@ -314,7 +406,9 @@ async function chatNonStream(
   includeTools: boolean,
   isToolContinuation: boolean = false
 ): Promise<{ content?: string; toolCalls?: ToolCall[]; reasoningContent?: string; error?: string }> {
-  const apiKey = getApiKey()
+  const modelConfig = getModelConfig(config.model)
+  validateApiKey(modelConfig)
+  
   const startTime = Date.now()
   
   const isReasoningModel = config.model === 'deepseek-reasoner'
@@ -336,9 +430,9 @@ async function chatNonStream(
   processedMessages = truncateMessages(processedMessages, 6000)
   
   const requestBody: any = {
-    model: config.model,
+    model: modelConfig.model,
     messages: processedMessages,
-    max_tokens: config.maxTokens,
+    max_tokens: Math.min(config.maxTokens, modelConfig.maxTokens),
     stream: false
   }
   
@@ -350,18 +444,25 @@ async function chatNonStream(
     requestBody.thinking = { type: 'enabled' }
   }
   
-  if (includeTools) {
-    requestBody.tools = getToolDefinitions()
+  // Kimi 模型需要特定的工具格式
+  if (includeTools && modelConfig.supportsFunctionCalling) {
+    const toolDefs = getToolDefinitions()
+    // Kimi 使用 functions 而不是 tools
+    if (modelConfig.provider === 'kimi') {
+      requestBody.tools = toolDefs
+    } else {
+      requestBody.tools = toolDefs
+    }
   }
 
   logApiRequest('/chat/completions (non-stream)', requestBody)
 
   try {
-    const response = await fetch(`${API_BASE_URL}/chat/completions`, {
+    const response = await fetch(`${modelConfig.baseURL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${modelConfig.apiKey}`
       },
       body: JSON.stringify(requestBody)
     })
@@ -410,7 +511,9 @@ async function chatStreamInternal(
   signal?: AbortSignal,
   isToolContinuation: boolean = false
 ): Promise<void> {
-  const apiKey = getApiKey()
+  const modelConfig = getModelConfig(config.model)
+  validateApiKey(modelConfig)
+  
   const startTime = Date.now()
   
   const isReasoningModel = config.model === 'deepseek-reasoner'
@@ -433,9 +536,9 @@ async function chatStreamInternal(
   processedMessages = truncateMessages(processedMessages, 6000)
   
   const requestBody: any = {
-    model: config.model,
+    model: modelConfig.model,
     messages: processedMessages,
-    max_tokens: config.maxTokens,
+    max_tokens: Math.min(config.maxTokens, modelConfig.maxTokens),
     stream: true
   }
   
@@ -456,11 +559,11 @@ async function chatStreamInternal(
   let chunkCount = 0
 
   try {
-    const response = await fetch(`${API_BASE_URL}/chat/completions`, {
+    const response = await fetch(`${modelConfig.baseURL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${modelConfig.apiKey}`
       },
       body: JSON.stringify(requestBody),
       signal
