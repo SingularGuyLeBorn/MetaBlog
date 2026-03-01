@@ -174,48 +174,139 @@ interface Skill {
 }
 ```
 
-**示例 Skill**
+**Skill 目录结构**
 
-```typescript
-const writerSkill = {
-  id: 'writer',
-  name: '文章管理',
-  description: '知识库文章的管理和写作能力',
-  icon: '✍️',
-  category: 'content',
-  content: `
-## 工作流程
-1. 使用 search_articles 搜索文章
-2. 使用 get_article_content 读取内容
-3. 使用 create_article 创建新文章
-4. 使用 update_article 更新文章
-  `,
-  tools: ['search_articles', 'get_article_content', 'create_article', 'update_article'],
-  usageScenarios: ['用户要求创建文章', '用户要求搜索文章'],
-  isBuiltIn: true
-}
+```
+.skills/
+└── writing-master/           # Skill 目录
+    └── SKILL.md              # Skill 定义文件
 ```
 
-### 2.2 Skill 绑定
+**SKILL.md 格式**
 
-**Agent 配置中的 Skill 使用**
+```markdown
+# 文章大师
+
+## 描述
+专业写作助手，擅长各类文本创作和编辑
+
+## 元数据
+- **ID**: skill-writing-master
+- **图标**: ✍️
+- **分类**: writing
+- **版本**: 1.0.0
+
+## 可用工具
+- summarize_text: 生成文本摘要
+- format_text: 格式化文本
+- create_article: 创建文章
+- update_article: 更新文章
+
+---
+
+## Prompt
+
+你是一位专业的写作助手，擅长各类文本创作。
+
+### 职责范围
+1. 文章撰写和润色
+2. 文案创作
+3. 内容编辑和校对
+
+### 工具使用指南
+
+**create_article**
+- 何时使用：用户明确要求创建文章时
+- 参数说明：
+  - title: 文章标题（简洁明了）
+  - path: 文件路径（如 "knowledge/my-article.md"）
+  - content: 文章内容（Markdown 格式）
+  - tags: 标签数组（可选）
+- 示例：
+  ```
+  title: "React 最佳实践"
+  path: "frontend/react-best-practices.md"
+  content: "# React 最佳实践..."
+  tags: ["React", "前端"]
+  ```
+
+### 输出风格
+- 流畅自然的语言表达
+- 符合目标受众的语气
+- 结构清晰，逻辑连贯
+```
+
+**重要说明**
+
+- `---` 分隔线以上的内容是**元数据**，用于 Skill 列表展示
+- `---` 分隔线以下的内容是**Prompt**，在 Skill 被调用时注入对话
+- Prompt 中应包含**详细的工具使用说明**，帮助 AI 正确使用工具
+
+### 2.2 Skill 加载机制（Claude Code 模式）
+
+**核心设计原则**
+
+采用 Claude Code 的 Skills 模式：
+1. Agent 只配置**可用 Skills 列表**（名称 + 描述）
+2. **不预加载**任何 Skill 的详细内容
+3. AI 根据对话上下文**自行判断**何时加载哪个 Skill
+4. Skill 的详细内容（包括工具定义）在调用时**动态注入**
+
+**Agent 配置**
 
 ```typescript
 interface AgentCapabilities {
-  mode: 'raw' | 'tools-only' | 'skills-only' | 'hybrid'
-  skillIds: string[]      // 选中的 Skills
-  toolIds: string[]       // 额外选择的工具（hybrid 模式）
+  // 基础身份定义
+  baseRole: string
+  
+  // 可用 Skills 列表（仅名称和描述）
+  availableSkills: Array<{
+    name: string
+    description: string
+  }>
 }
 ```
 
-**模式说明**
+**系统提示词构建**
 
-| 模式 | 说明 | 使用场景 |
-|------|------|---------|
-| raw | 纯提示词，无工具 | 简单对话 |
-| tools-only | 手动选择工具 | 精确控制 |
-| skills-only | 只使用 Skill 绑定的工具 | 推荐方式 |
-| hybrid | Skill + 额外工具 | 灵活组合 |
+```typescript
+function buildSystemPrompt(agent: Agent): string {
+  let prompt = `## 身份\n${agent.baseRole}\n\n`
+  
+  // 只列出可用 Skills，不加载详细内容
+  prompt += `## 可用 Skills\n\n`
+  for (const skill of agent.availableSkills) {
+    prompt += `### ${skill.name}\n${skill.description}\n\n`
+  }
+  
+  prompt += `## 使用说明\n`
+  prompt += `请根据用户需求，自行判断是否需要调用某个 Skill。\n`
+  prompt += `如果需要，请说明你要使用哪个 Skill，我会为你加载详细能力。`
+  
+  return prompt
+}
+```
+
+**Skill 动态加载**
+
+```typescript
+// 当 AI 表示要使用某个 Skill 时
+async function loadSkill(skillId: string): Promise<string> {
+  const skillPath = `.skills/${skillId}/SKILL.md`
+  const content = fs.readFileSync(skillPath, 'utf-8')
+  
+  // 提取 Prompt 部分（--- 之后的内容）
+  const promptMatch = content.match(/---\s*\n([\s\S]+)/)
+  return promptMatch ? promptMatch[1] : content
+}
+
+// 注入到对话上下文
+const skillContent = await loadSkill('writing-master')
+messages.push({
+  role: 'system',
+  content: `[加载 Skill: 文章大师]\n\n${skillContent}`
+})
+```
 
 ---
 
