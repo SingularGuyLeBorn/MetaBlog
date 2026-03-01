@@ -8,6 +8,9 @@ import http from "http";
 import MarkdownIt from "markdown-it";
 import mathjax3 from "markdown-it-mathjax3";
 
+// 数据目录
+const DATA_DIR = path.join(process.cwd(), '.data');
+
 // 加载 .env 文件
 const env = loadEnv('', process.cwd(), 'VITE_');
 const serverEnv = loadEnv('', process.cwd(), 'LLM_');
