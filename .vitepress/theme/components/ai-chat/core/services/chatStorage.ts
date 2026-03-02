@@ -28,6 +28,16 @@ const cache = {
 
 let apiAvailable = true
 
+// 端点级别的404（如特定session不存在）不应该禁用整个API
+// 只有基础API端点不存在时才禁用
+function isEndpointNotFound(url: string, status: number): boolean {
+  if (status !== 404) return false
+  // 检查是否是基础端点（如 /api/sessions）而不是特定资源（如 /api/sessions/xxx）
+  const baseEndpoints = ['/api/sessions', '/api/agents', '/api/skills']
+  const isBaseEndpoint = baseEndpoints.some(endpoint => url === endpoint || url.startsWith(`${endpoint}?`))
+  return isBaseEndpoint
+}
+
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
   if (!apiAvailable) {
     throw new Error('API not available')
@@ -49,9 +59,11 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
     clearTimeout(timeoutId)
     
     if (!response.ok) {
-      if (response.status === 404) {
+      // 只有基础API端点返回404时才禁用API
+      // 特定资源不存在（如某个session ID不存在）是正常的业务逻辑，不应禁用API
+      if (response.status === 404 && isEndpointNotFound(url, response.status)) {
         apiAvailable = false
-        console.warn('[ChatStorage] API not available (404)')
+        console.warn('[ChatStorage] API endpoint not available (404):', url)
       }
       throw new Error(`API Error: ${response.status} ${response.statusText}`)
     }
@@ -105,7 +117,11 @@ export async function getSessions(): Promise<ChatSession[]> {
 export async function getSession(id: string): Promise<ChatSession | null> {
   try {
     return await apiRequest<ChatSession>(API_ENDPOINTS.SESSION_DETAIL(id))
-  } catch (e) {
+  } catch (e: any) {
+    // 404 表示 session 不存在，这是正常的业务逻辑，不记录为错误
+    if (e.message?.includes('404')) {
+      return null
+    }
     console.error('[ChatStorage] Failed to get session:', e)
     return null
   }
@@ -135,7 +151,11 @@ export async function updateSession(id: string, updates: Partial<ChatSession>): 
     
     cache.sessions = null
     return session
-  } catch (e) {
+  } catch (e: any) {
+    // 404 表示 session 不存在，可能已被删除
+    if (e.message?.includes('404')) {
+      return null
+    }
     console.error('[ChatStorage] Failed to update session:', e)
     return null
   }
@@ -180,7 +200,11 @@ export async function saveMessageGroup(sessionId: string, group: MessageGroup): 
     
     cache.messageGroups[sessionId] = null as any
     return true
-  } catch (e) {
+  } catch (e: any) {
+    // 404 表示 session 不存在
+    if (e.message?.includes('404')) {
+      return false
+    }
     console.error('[ChatStorage] Failed to save message group:', e)
     return false
   }
@@ -226,7 +250,11 @@ export async function saveAllMessageGroups(sessionId: string, groups: MessageGro
     
     cache.messageGroups[sessionId] = groups
     return true
-  } catch (e) {
+  } catch (e: any) {
+    // 404 表示 session 不存在，可能已被删除
+    if (e.message?.includes('404')) {
+      return false
+    }
     console.error('[ChatStorage] Failed to save message groups:', e)
     return false
   }
