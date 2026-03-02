@@ -46,7 +46,7 @@ export function useAIChat() {
     currentSessionId.value = data.lastSessionId
     
     if (sessions.value.length === 0) {
-      createSession('新对话')
+      await createSession('新对话')
     }
     isInitialized.value = true
   }
@@ -78,7 +78,7 @@ export function useAIChat() {
   })
 
   // ==================== 会话管理 ====================
-  function createSession(title: string = '新对话') {
+  async function createSession(title: string = '新对话') {
     const now = Date.now()
     const session: ChatSession = {
       id: `session_${now}_${Math.random().toString(36).substr(2, 9)}`,
@@ -93,10 +93,8 @@ export function useAIChat() {
     currentSessionId.value = session.id
     messageGroups.value[session.id] = []
     
-    storage.save({
-      sessions: sessions.value,
-      messageGroups: messageGroups.value
-    })
+    // 异步保存到服务器
+    await storage.saveSession(session)
     
     return session
   }
@@ -106,16 +104,16 @@ export function useAIChat() {
     storage.saveLastSession(id)
   }
 
-  function renameSession(id: string, newTitle: string) {
+  async function renameSession(id: string, newTitle: string) {
     const session = sessions.value.find(s => s.id === id)
     if (session) {
       session.title = newTitle
       session.updatedAt = Date.now()
-      storage.saveSession(session)
+      await storage.saveSession(session)
     }
   }
 
-  function deleteSession(id: string) {
+  async function deleteSession(id: string) {
     const index = sessions.value.findIndex(s => s.id === id)
     if (index === -1) return
     
@@ -126,14 +124,14 @@ export function useAIChat() {
       currentSessionId.value = sessions.value[0]?.id || null
     }
     
-    storage.deleteSession(id)
+    await storage.deleteSession(id)
     
     if (sessions.value.length === 0) {
-      createSession('新对话')
+      await createSession('新对话')
     }
   }
 
-  function autoRenameSession(sessionId: string, firstMessage: string) {
+  async function autoRenameSession(sessionId: string, firstMessage: string) {
     const session = sessions.value.find(s => s.id === sessionId)
     if (!session || session.title !== '新对话') return
     
@@ -143,7 +141,7 @@ export function useAIChat() {
     
     session.title = title
     session.updatedAt = Date.now()
-    storage.saveSession(session)
+    await storage.saveSession(session)
   }
 
   // ==================== 消息发送 ====================
@@ -156,7 +154,7 @@ export function useAIChat() {
     
     // 自动重命名（第一条消息）
     if (groups.length === 0) {
-      autoRenameSession(sessionId, content.trim())
+      await autoRenameSession(sessionId, content.trim())
     }
     
     // 创建用户消息（@引用已经直接包含在 content 中）
@@ -681,12 +679,12 @@ export function useAIChat() {
     storage.saveMessageGroups(currentSessionId.value, [])
   }
 
-  function updateSessionConfig(id: string, config: Partial<SessionConfig>) {
+  async function updateSessionConfig(id: string, config: Partial<SessionConfig>) {
     const session = sessions.value.find(s => s.id === id)
     if (session) {
       session.config = { ...session.config, ...config }
       session.updatedAt = Date.now()
-      storage.saveSession(session)
+      await storage.saveSession(session)
     }
   }
 

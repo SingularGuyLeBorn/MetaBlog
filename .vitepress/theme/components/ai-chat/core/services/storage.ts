@@ -94,18 +94,32 @@ export const storage = {
    * 保存完整数据 - 不再使用，保留兼容
    * @deprecated 使用各个 save 方法替代
    */
-  save(data: { sessions: ChatSession[]; messageGroups: Record<string, MessageGroup[]> }): boolean {
+  async save(data: { sessions: ChatSession[]; messageGroups: Record<string, MessageGroup[]> }): Promise<boolean> {
     // 异步保存所有数据
-    Promise.all([
-      // 会话单独保存
-      ...data.sessions.map(s => chatStorage.updateSession(s.id, s)),
-      // 消息组批量保存
-      ...Object.entries(data.messageGroups).map(([sessionId, groups]) => 
-        chatStorage.saveAllMessageGroups(sessionId, groups)
-      )
-    ]).catch(e => console.error('[Storage] Batch save failed:', e))
-    
-    return true
+    try {
+      await Promise.all([
+        // 会话单独保存 - 不存在则创建
+        ...data.sessions.map(async s => {
+          const existing = await chatStorage.getSession(s.id)
+          if (existing) {
+            return chatStorage.updateSession(s.id, s)
+          } else {
+            return chatStorage.createSession({
+              title: s.title,
+              config: s.config
+            })
+          }
+        }),
+        // 消息组批量保存
+        ...Object.entries(data.messageGroups).map(([sessionId, groups]) => 
+          chatStorage.saveAllMessageGroups(sessionId, groups)
+        )
+      ])
+      return true
+    } catch (e) {
+      console.error('[Storage] Batch save failed:', e)
+      return false
+    }
   },
 
   /** 
@@ -136,6 +150,12 @@ export const storage = {
     const existing = await chatStorage.getSession(session.id)
     if (existing) {
       await chatStorage.updateSession(session.id, session)
+    } else {
+      // 会话不存在，创建新会话
+      await chatStorage.createSession({
+        title: session.title,
+        config: session.config
+      })
     }
     return true
   },
