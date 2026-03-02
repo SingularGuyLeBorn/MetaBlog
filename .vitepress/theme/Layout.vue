@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, provide, nextTick, defineAsyncComponent } from 'vue'
+import { ref, onMounted, computed, watch, provide, nextTick, defineAsyncComponent, onUnmounted } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import { useData, useRoute } from 'vitepress'
 import GlobalSidebar from './components/layout/GlobalSidebar.vue'
@@ -319,6 +319,10 @@ watch(() => route.path, () => {
 </template>
 
 <style>
+/* ═══════════════════════════════════════════════════════════════
+   Layout Liquid Glass V3 Styles
+   ═══════════════════════════════════════════════════════════════ */
+
 /* Reset VitePress default layout constraints */
 .metablog-layout {
   --vp-layout-max-width: 100%;
@@ -334,28 +338,48 @@ watch(() => route.path, () => {
   padding-top: var(--vp-nav-height, 64px);
 }
 
-/* Left Sidebar - fixed width */
+/* Left Sidebar - 液态玻璃效果 */
 .sidebar-left {
   position: fixed;
   left: 0;
   top: var(--vp-nav-height, 64px);
   height: calc(100vh - var(--vp-nav-height, 64px));
   overflow: hidden;
-  background: var(--vp-c-bg-alt, #fafafa);
-  border-right: 1px solid var(--vp-c-divider, #e8e8e8);
+  background: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(24px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.5) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
   z-index: 100;
+  transition: 
+    background 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Right Sidebar - fixed width */
+.dark .sidebar-left {
+  background: rgba(30, 30, 35, 0.70) !important;
+  border-right-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Right Sidebar - 液态玻璃效果 */
 .sidebar-right {
   position: fixed;
   right: 0;
   top: var(--vp-nav-height, 64px);
   height: calc(100vh - var(--vp-nav-height, 64px));
   overflow: hidden;
-  background: var(--vp-c-bg-alt, #fafafa);
-  border-left: 1px solid var(--vp-c-divider, #e8e8e8);
+  background: rgba(255, 255, 255, 0.60) !important;
+  backdrop-filter: blur(24px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.5) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
   z-index: 100;
+  transition: 
+    background 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dark .sidebar-right {
+  background: rgba(30, 30, 35, 0.65) !important;
+  border-left-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Main Content - takes remaining space with proper margins */
@@ -368,19 +392,19 @@ watch(() => route.path, () => {
   transition: margin-left 200ms ease, margin-right 200ms ease;
 }
 
-/* Resizers */
+/* Resizers - 液态玻璃风格 */
 .resizer {
   position: fixed;
   top: var(--vp-nav-height, 64px);
   height: calc(100vh - var(--vp-nav-height, 64px));
-  width: 4px;
+  width: 6px;
   cursor: col-resize;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   z-index: 101;
-  transition: background 0.2s;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .left-resizer {
@@ -394,21 +418,27 @@ watch(() => route.path, () => {
 .resizer:hover,
 .metablog-layout.is-resizing-left .left-resizer,
 .metablog-layout.is-resizing-right .right-resizer {
-  background: var(--vp-c-brand, #1677ff);
+  background: rgba(168, 85, 247, 0.08);
 }
 
 .resizer-handle {
-  width: 2px;
-  height: 48px;
-  background: var(--vp-c-divider, #d9d9d9);
-  border-radius: 1px;
-  transition: background-color 200ms ease;
+  width: 3px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  transition: 
+    background-color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .resizer:hover .resizer-handle,
 .metablog-layout.is-resizing-left .left-resizer .resizer-handle,
 .metablog-layout.is-resizing-right .right-resizer .resizer-handle {
-  background: var(--vp-c-brand, #1677ff);
+  background: linear-gradient(180deg, rgba(168, 85, 247, 0.6), rgba(96, 165, 250, 0.6));
+  height: 60px;
+  width: 4px;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
 }
 
 /* Override VitePress default layout styles - REDUCE PADDING */

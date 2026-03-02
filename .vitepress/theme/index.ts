@@ -5,6 +5,7 @@ import "./style.css";
 import "./styles/animations.css";
 import "./styles/liquid-glass.css";
 import "./styles/liquid-glass-v2.css";
+import "./styles/liquid-glass-v3.css";
 import "./components/ai-chat/styles/index.css";
 import type { Theme } from "vitepress";
 import { useData, useRoute } from "vitepress";
