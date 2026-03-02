@@ -5077,6 +5077,73 @@ ${skill.systemPrompt}
             } else next();
           });
           
+          // POST /api/mcp/servers/:id/connect - 连接 MCP Server
+          server.middlewares.use('/api/mcp/servers/', (req, res, next) => {
+            const url = req.url || '';
+            const parts = url.split('/');
+            if (parts.length < 3 || parts[2] !== 'connect') return next();
+            
+            const id = parts[1].split('?')[0];
+            
+            if (req.method === 'POST') {
+              try {
+                const servers = readMCPServers();
+                const index = servers.findIndex((s: any) => s.id === id);
+                
+                if (index === -1) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ success: false, error: 'MCP server not found' }));
+                  return;
+                }
+                
+                // 更新连接状态为 connected
+                servers[index].status = 'connected';
+                servers[index].lastConnectedAt = Date.now();
+                writeMCPServers(servers);
+                
+                console.log(`[API] MCP server connected: ${servers[index].name}`);
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ success: true, data: servers[index] }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+          
+          // POST /api/mcp/servers/:id/disconnect - 断开 MCP Server
+          server.middlewares.use('/api/mcp/servers/', (req, res, next) => {
+            const url = req.url || '';
+            const parts = url.split('/');
+            if (parts.length < 3 || parts[2] !== 'disconnect') return next();
+            
+            const id = parts[1].split('?')[0];
+            
+            if (req.method === 'POST') {
+              try {
+                const servers = readMCPServers();
+                const index = servers.findIndex((s: any) => s.id === id);
+                
+                if (index === -1) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ success: false, error: 'MCP server not found' }));
+                  return;
+                }
+                
+                // 更新连接状态为 disconnected
+                servers[index].status = 'disconnected';
+                writeMCPServers(servers);
+                
+                console.log(`[API] MCP server disconnected: ${servers[index].name}`);
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ success: true, data: servers[index] }));
+              } catch (e) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+          
           // ============================================
           // Chat Sessions API - 聊天会话管理
           // ============================================
@@ -5244,6 +5311,38 @@ ${skill.systemPrompt}
                 res.statusCode = 500;
                 res.end(JSON.stringify({ success: false, error: String(e) }));
               }
+            } else next();
+          });
+          
+          // POST /api/sessions/:id/messages/batch - 批量保存消息组
+          server.middlewares.use("/api/sessions/", (req, res, next) => {
+            const url = req.url || '';
+            const parts = url.split('/');
+            // 处理 /:id/messages/batch 路径
+            if (parts.length < 4 || parts[2] !== 'messages' || parts[3] !== 'batch') return next();
+            
+            const sessionId = parts[1];
+            
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", chunk => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const messages = readSessionMessages();
+                  
+                  if (body.groups) {
+                    messages[sessionId] = body.groups;
+                    writeSessionMessages(messages);
+                  }
+                  
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true }));
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, error: String(e) }));
+                }
+              });
             } else next();
           });
           

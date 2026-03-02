@@ -52,8 +52,8 @@ export const API_ENDPOINTS = {
   MCP_SERVER_CREATE: '/api/mcp/servers',                    // POST
   MCP_SERVER_UPDATE: '/api/mcp/servers/update',             // POST {id, ...updates}
   MCP_SERVER_DELETE: '/api/mcp/servers/delete',             // POST {id}
-  MCP_SERVER_CONNECT: (id: string) => `/api/mcp/servers/${id}/connect`,
-  MCP_SERVER_DISCONNECT: (id: string) => `/api/mcp/servers/${id}/disconnect`,
+  MCP_SERVER_CONNECT: (id: string) => `/api/mcp/servers/${id}/connect`,     // POST
+  MCP_SERVER_DISCONNECT: (id: string) => `/api/mcp/servers/${id}/disconnect`, // POST
   
   // Chat
   CHAT: '/api/chat',

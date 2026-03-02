@@ -81,7 +81,7 @@ export function useAIChat() {
   async function createSession(title: string = '新对话') {
     const now = Date.now()
     const session: ChatSession = {
-      id: `session_${now}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `session-${now}-${Math.random().toString(36).slice(2, 9)}`,
       title,
       config: { ...DEFAULT_CONFIG },
       stats: { messageCount: 0, totalTokens: 0 },

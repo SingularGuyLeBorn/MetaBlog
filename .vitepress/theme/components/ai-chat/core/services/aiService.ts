@@ -774,7 +774,7 @@ export const aiService = {
     const toolRecords: ToolCallRecord[] = []
     const startTime = Date.now()
     
-    const debugSessionId = sessionId || `session_${startTime}`
+    const debugSessionId = sessionId || `session-${startTime}`
     const modelConfig = getModelConfig(config.model)
     const isReasoningModel = config.model === 'deepseek-reasoner'
     const isThinkingEnabled = config.enableReasoning && config.model === 'deepseek-chat'
