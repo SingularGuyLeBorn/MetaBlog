@@ -29,6 +29,14 @@ const cache = {
 
 let apiAvailable = true
 
+// 端点级别的404不应该禁用整个API
+function isEndpointNotFound(url: string, status: number): boolean {
+  if (status !== 404) return false
+  const baseEndpoints = ['/api/memories']
+  const isBaseEndpoint = baseEndpoints.some(endpoint => url === endpoint || url.startsWith(`${endpoint}?`))
+  return isBaseEndpoint
+}
+
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
   if (!apiAvailable) {
     throw new Error('API not available')
@@ -50,9 +58,9 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
     clearTimeout(timeoutId)
     
     if (!response.ok) {
-      if (response.status === 404) {
+      if (response.status === 404 && isEndpointNotFound(url, response.status)) {
         apiAvailable = false
-        console.warn('[MemoryStorage] API not available (404), falling back to empty data')
+        console.warn('[MemoryStorage] API endpoint not available (404):', url)
       }
       throw new Error(`API Error: ${response.status} ${response.statusText}`)
     }
