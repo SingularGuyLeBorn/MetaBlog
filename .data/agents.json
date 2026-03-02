@@ -8,14 +8,21 @@
     "status": "online",
     "seat": 1,
     "capabilities": {
-      "mode": "skills-only",
-      "skillIds": [
-        "skill-1772212926610-7",
-        "skill-1772212926610-6"
-      ],
-      "toolIds": [],
-      "baseRole": "你是 Meta 助手，基于 DeepSeek 大模型的通用 AI 助手，为您提供专业智能对话体验",
-      "roleSupplement": ""
+      "baseRole": "你是数据分析师，逻辑清晰。",
+      "roleSupplement": "",
+      "availableSkills": [
+        "code-craft",
+        "fullstack-developer",
+        "weather-assistant",
+        "project-manager",
+        "creative-designer",
+        "file-manager",
+        "research-assistant",
+        "translate-expert",
+        "data-analyst",
+        "writing-master",
+        "content-analyst"
+      ]
     },
     "memory": {
       "enabled": true,
@@ -27,7 +34,7 @@
     "callCount": 0,
     "isDefault": true,
     "createdAt": 1771864714589,
-    "updatedAt": 1772213024110,
+    "updatedAt": 1772351553185,
     "lastActiveAt": 1772121797966,
     "runtime": {
       "model": "claude-3-5-sonnet",
@@ -49,13 +56,21 @@
     "status": "online",
     "seat": 1,
     "capabilities": {
-      "mode": "hybrid",
-      "skillIds": [
-        "skill-1771864714590-1",
-        "skill-1771864714590-2"
-      ],
-      "toolIds": [],
-      "customSystemPrompt": ""
+      "baseRole": "你是专业的写作专家，对语言敏感。",
+      "roleSupplement": "",
+      "availableSkills": [
+        "creative-designer",
+        "code-craft",
+        "translate-expert",
+        "content-analyst",
+        "fullstack-developer",
+        "data-analyst",
+        "weather-assistant",
+        "file-manager",
+        "writing-master",
+        "project-manager",
+        "research-assistant"
+      ]
     },
     "memory": {
       "enabled": true,
@@ -67,14 +82,15 @@
     "callCount": 0,
     "isDefault": false,
     "createdAt": 1772117562518,
-    "updatedAt": 1772212430619,
+    "updatedAt": 1772341465701,
     "lastActiveAt": 1772212430609,
     "runtime": {
-      "model": "deepseek-chat",
+      "model": "gpt-4o",
       "temperature": 0.7,
       "maxTokens": 2048,
       "topP": 0.95,
       "frequencyPenalty": 0,
+      "enableReasoning": false,
       "timeout": 60,
       "retryCount": 3,
       "retryDelay": 1

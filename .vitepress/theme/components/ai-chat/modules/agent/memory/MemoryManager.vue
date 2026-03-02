@@ -1,603 +1,491 @@
-<!--
-  MemoryManager - 记忆管理组件
-  
-  功能：
-  1. 会话记忆开关
-  2. 长期记忆编辑
-  3. 自动提取开关
--->
 <template>
   <div class="memory-manager">
-    <div class="memory-layout">
-      <!-- 左侧：配置选项 -->
-      <div class="memory-config">
-        <!-- 会话记忆 -->
-        <div class="config-card">
-          <div class="card-header">
-            <div class="header-icon">💬</div>
-            <div class="header-info">
-              <h4>会话记忆</h4>
-              <p>记住对话历史，保持上下文连贯性</p>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" v-model="config.enabled" />
-              <span class="toggle-slider"></span>
-            </label>
+    <!-- 头部 -->
+    <div class="manager-header">
+      <div class="header-title">
+        <Icon name="database" class="title-icon" />
+        <div>
+          <h2 class="title-text">记忆管理</h2>
+          <p class="title-desc">管理 Agents 的长期记忆数据</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+      <LiquidGlass
+        v-for="(stat, idx) in stats"
+        :key="stat.id"
+        class="stat-card-glass"
+        :glow-color="stat.glowColor"
+        :intensity="0.3"
+      >
+        <div class="stat-card">
+          <div class="stat-icon" :style="{ background: stat.gradient }">
+            <Icon :name="stat.icon" />
           </div>
-          <div class="card-content" v-if="config.enabled">
-            <div class="setting-item">
-              <label>最大记忆 Tokens</label>
-              <div class="token-input">
-                <input 
-                  type="number" 
-                  v-model.number="config.maxTokens"
-                  min="500"
-                  max="8000"
-                  step="500"
-                />
-                <span class="token-hint">约 {{ Math.floor(config.maxTokens / 4) }} 字</span>
-              </div>
-            </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ stat.value }}</div>
+            <div class="stat-label">{{ stat.label }}</div>
           </div>
         </div>
+      </LiquidGlass>
+    </div>
 
-        <!-- 长期记忆 -->
-        <div class="config-card">
-          <div class="card-header">
-            <div class="header-icon">🧠</div>
-            <div class="header-info">
-              <h4>长期记忆</h4>
-              <p>AI 需要永久记住的信息</p>
-            </div>
+    <!-- 记忆列表 -->
+    <LiquidGlass class="list-glass" glow-color="#8b5cf6" :intensity="0.2">
+      <div class="memory-list-header">
+        <h3>记忆条目</h3>
+        <div class="list-actions">
+          <div class="search-box">
+            <Icon name="search" class="search-icon" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="搜索记忆..."
+              class="search-input"
+            />
           </div>
-          <div class="card-content">
-            <div class="memory-editor">
-              <div class="editor-toolbar">
-                <button 
-                  v-for="template in memoryTemplates"
-                  :key="template.id"
-                  class="template-btn"
-                  @click="applyTemplate(template)"
-                >
-                  {{ template.name }}
-                </button>
-              </div>
-              <textarea
-                v-model="config.content"
-                rows="10"
-                placeholder="输入 AI 需要记住的长期信息，例如：
-- 用户的编程语言偏好
-- 用户的业务领域
-- 特定的术语定义
-- 个人喜好和习惯..."
-              />
-              <div class="editor-stats">
-                <span>{{ config.content.length }} 字符</span>
-                <button class="btn-save" @click="saveMemory">
-                  <span>💾</span>
-                  保存记忆
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 自动提取 -->
-        <div class="config-card">
-          <div class="card-header">
-            <div class="header-icon">🔍</div>
-            <div class="header-info">
-              <h4>智能提取</h4>
-              <p>自动从对话中提取重要信息</p>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" v-model="config.autoExtract" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="card-content" v-if="config.autoExtract">
-            <p class="hint-text">
-              开启后，AI 会自动识别对话中的重要信息（如偏好、事实、决定等）并保存到长期记忆。
-            </p>
-          </div>
+          <LiquidGlass glow-color="#ef4444" :intensity="0.3">
+            <button class="clear-btn" @click="clearAll">
+              <Icon name="trash-2" />
+              清空全部
+            </button>
+          </LiquidGlass>
         </div>
       </div>
 
-      <!-- 右侧：预览 -->
-      <div class="memory-preview">
-        <div class="preview-card">
-          <div class="preview-header">
-            <h4>
-              <span>👁️</span>
-              记忆预览
-            </h4>
-          </div>
-          <div class="preview-content">
-            <div v-if="!config.enabled && !config.content" class="empty-state">
-              <span class="empty-icon">📝</span>
-              <p>记忆功能未启用</p>
+      <div class="memory-list">
+        <LiquidGlass
+          v-for="(memory, idx) in filteredMemories"
+          :key="memory.id"
+          class="memory-item-glass"
+          :glow-color="memory.agentColor"
+          :intensity="0.2"
+        >
+          <div class="memory-item">
+            <div class="memory-avatar">{{ memory.agentAvatar }}</div>
+            <div class="memory-content">
+              <div class="memory-header">
+                <span class="memory-agent">{{ memory.agentName }}</span>
+                <span class="memory-time">{{ memory.time }}</span>
+              </div>
+              <p class="memory-text">{{ memory.content }}</p>
             </div>
-            <template v-else>
-              <div v-if="config.enabled" class="preview-section">
-                <span class="section-label">会话记忆</span>
-                <div class="preview-box">
-                  <span class="status-badge" :class="{ active: config.enabled }">
-                    {{ config.enabled ? '已启用' : '已禁用' }}
-                  </span>
-                  <span v-if="config.enabled" class="token-badge">
-                    最大 {{ config.maxTokens }} tokens
-                  </span>
-                </div>
-              </div>
-              
-              <div v-if="config.content" class="preview-section">
-                <span class="section-label">长期记忆</span>
-                <div class="memory-content-preview">
-                  <pre>{{ config.content }}</pre>
-                </div>
-              </div>
-              
-              <div v-if="config.autoExtract" class="preview-section">
-                <span class="section-label">智能提取</span>
-                <span class="status-badge active">已启用</span>
-              </div>
-            </template>
+            <button class="delete-btn" @click="deleteMemory(memory.id)">
+              <Icon name="x" />
+            </button>
           </div>
-        </div>
+        </LiquidGlass>
 
-        <!-- 记忆使用提示 -->
-        <div class="tips-card">
-          <h5>💡 使用建议</h5>
-          <ul>
-            <li>长期记忆适合保存用户偏好、业务背景等稳定信息</li>
-            <li>避免存储敏感信息（密码、密钥等）</li>
-            <li>定期清理过期记忆以保持效率</li>
-            <li>使用结构化格式（列表、段落）更易被 AI 理解</li>
-          </ul>
+        <!-- 空状态 -->
+        <div v-if="filteredMemories.length === 0" class="empty-state">
+          <Icon name="database" class="empty-icon" />
+          <p>暂无记忆数据</p>
+          <span>Agent 会在对话中自动学习和存储记忆</span>
         </div>
       </div>
+    </LiquidGlass>
+
+    <!-- 导出按钮 -->
+    <div class="export-section">
+      <LiquidGlass glow-color="#10b981" :intensity="0.3">
+        <button class="export-btn" @click="exportMemories">
+          <Icon name="download" />
+          导出记忆数据
+        </button>
+      </LiquidGlass>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import type { Agent } from '../../../core/types/agent'
+import { ref, computed } from 'vue'
+import Icon from '../../../shared/Icon.vue'
+import LiquidGlass from '../../../shared/LiquidGlass.vue'
 
-const props = defineProps<{
-  agent: Agent | null
-}>()
+const searchQuery = ref('')
 
-// 本地配置
-const config = ref({
-  enabled: props.agent?.memory.enabled ?? true,
-  content: props.agent?.memory.content ?? '',
-  autoExtract: props.agent?.memory.autoExtract ?? false,
-  maxTokens: props.agent?.memory.maxTokens ?? 2000
-})
-
-// 记忆模板
-const memoryTemplates = [
-  {
-    id: 'dev',
-    name: '开发者偏好',
-    content: `## 开发偏好
-- 主要编程语言: 
-- 技术栈: 
-- 代码风格偏好: 
-- 注释语言: 中文/英文`
-  },
-  {
-    id: 'writer',
-    name: '写作偏好',
-    content: `## 写作偏好
-- 写作领域: 
-- 目标读者: 
-- 语言风格: 专业/ casual
-- 常用格式: Markdown`
-  },
-  {
-    id: 'business',
-    name: '业务背景',
-    content: `## 业务背景
-- 行业领域: 
-- 公司/组织: 
-- 主要职责: 
-- 专业术语: `
-  }
+const stats = [
+  { id: 'total', label: '总记忆数', value: '128', icon: 'layers', gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', glowColor: '#8b5cf6' },
+  { id: 'agents', label: '涉及 Agents', value: '6', icon: 'users', gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)', glowColor: '#3b82f6' },
+  { id: 'size', label: '存储大小', value: '2.4MB', icon: 'hard-drive', gradient: 'linear-gradient(135deg, #10b981, #059669)', glowColor: '#10b981' },
+  { id: 'today', label: '今日新增', value: '12', icon: 'trending-up', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', glowColor: '#f59e0b' }
 ]
 
-// 监听 agent 变化
-watch(() => props.agent, (newAgent) => {
-  if (newAgent) {
-    config.value = {
-      enabled: newAgent.memory.enabled,
-      content: newAgent.memory.content,
-      autoExtract: newAgent.memory.autoExtract,
-      maxTokens: newAgent.memory.maxTokens
-    }
-  }
-}, { deep: true })
+const memories = ref([
+  { id: '1', agentName: '代码助手', agentAvatar: '👨‍💻', agentColor: '#3b82f6', content: '用户偏好使用 TypeScript 和 Vue 3 组合式 API', time: '2小时前' },
+  { id: '2', agentName: '写作专家', agentAvatar: '✍️', agentColor: '#ec4899', content: '用户喜欢简洁明了的文风，避免冗长描述', time: '5小时前' },
+  { id: '3', agentName: '数据分析师', agentAvatar: '📊', agentColor: '#10b981', content: '用户经常请求 CSV 格式的数据导出', time: '昨天' },
+  { id: '4', agentName: '通用助手', agentAvatar: '🤖', agentColor: '#8b5cf6', content: '用户对 AI 伦理话题感兴趣，经常询问相关问题', time: '2天前' },
+])
 
-function applyTemplate(template: typeof memoryTemplates[0]) {
-  config.value.content = template.content
+const filteredMemories = computed(() => {
+  if (!searchQuery.value) return memories.value
+  const q = searchQuery.value.toLowerCase()
+  return memories.value.filter(m => 
+    m.content.toLowerCase().includes(q) ||
+    m.agentName.toLowerCase().includes(q)
+  )
+})
+
+function deleteMemory(id: string) {
+  if (confirm('确定要删除这条记忆吗？')) {
+    memories.value = memories.value.filter(m => m.id !== id)
+  }
 }
 
-function saveMemory() {
-  // TODO: 调用 updateAgent 保存记忆
-  console.log('Save memory:', config.value)
+function clearAll() {
+  if (confirm('确定要清空所有记忆吗？此操作不可恢复。')) {
+    memories.value = []
+  }
+}
+
+function exportMemories() {
+  const data = JSON.stringify(memories.value, null, 2)
+  const blob = new Blob([data], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `memories-${Date.now()}.json`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 </script>
 
 <style scoped>
+@import '../../../styles/liquid-glass-theme.css';
+
 .memory-manager {
-  height: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 8px;
 }
 
-.memory-layout {
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 24px;
-  height: 100%;
-}
-
-/* 左侧配置 */
-.memory-config {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-}
-
-.config-card {
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.card-header {
+/* 头部 */
+.manager-header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
-  background: var(--vp-c-bg);
-  border-bottom: 1px solid var(--vp-c-divider);
+  justify-content: space-between;
+  margin-bottom: 24px;
 }
 
-.header-icon {
-  width: 40px;
-  height: 40px;
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-icon {
+  width: 48px;
+  height: 48px;
+  color: #8b5cf6;
+}
+
+.title-text {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.title-desc {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* 统计网格 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card-glass {
+  border-radius: 20px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--vp-c-brand-soft), var(--vp-c-brand));
-  border-radius: 10px;
-  font-size: 20px;
+  color: white;
 }
 
-.header-info {
+.stat-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.stat-info {
   flex: 1;
 }
 
-.header-info h4 {
-  margin: 0 0 2px 0;
-  font-size: 15px;
-  font-weight: 600;
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 2px;
 }
 
-.header-info p {
-  margin: 0;
+.stat-label {
   font-size: 13px;
-  color: var(--vp-c-text-2);
+  color: #64748b;
 }
 
-.card-content {
-  padding: 16px 20px;
+/* 列表 */
+.list-glass {
+  border-radius: 28px;
+  margin-bottom: 24px;
 }
 
-/* Toggle Switch */
-.toggle-switch {
-  position: relative;
-  width: 48px;
-  height: 26px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  inset: 0;
-  background: var(--vp-c-divider);
-  border-radius: 26px;
-  transition: 0.3s;
-}
-
-.toggle-slider::before {
-  content: '';
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  left: 2px;
-  top: 2px;
-  background: white;
-  border-radius: 50%;
-  transition: 0.3s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.toggle-switch input:checked + .toggle-slider {
-  background: var(--vp-c-brand);
-}
-
-.toggle-switch input:checked + .toggle-slider::before {
-  transform: translateX(22px);
-}
-
-/* 设置项 */
-.setting-item {
+.memory-list-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  padding: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.setting-item label {
-  font-size: 13px;
-  font-weight: 500;
+.memory-list-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
 }
 
-.token-input {
+.list-actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.token-input input {
-  width: 100px;
-  padding: 8px 12px;
-  background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 8px;
+.search-box {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
+}
+
+.search-input {
+  width: 240px;
+  padding: 10px 14px 10px 40px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
   font-size: 14px;
-  text-align: center;
-}
-
-.token-hint {
-  font-size: 12px;
-  color: var(--vp-c-text-3);
-}
-
-/* 记忆编辑器 */
-.memory-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.editor-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.template-btn {
-  padding: 6px 12px;
-  background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 6px;
-  font-size: 12px;
-  color: var(--vp-c-text-2);
-  cursor: pointer;
+  color: #1e293b;
   transition: all 0.2s;
 }
 
-.template-btn:hover {
-  border-color: var(--vp-c-brand);
-  color: var(--vp-c-brand);
-}
-
-.memory-editor textarea {
-  width: 100%;
-  padding: 14px;
-  background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
-  font-size: 13px;
-  line-height: 1.7;
-  resize: vertical;
-  min-height: 160px;
-}
-
-.memory-editor textarea:focus {
+.search-input:hover,
+.search-input:focus {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(139, 92, 246, 0.3);
   outline: none;
-  border-color: var(--vp-c-brand);
 }
 
-.editor-stats {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.editor-stats span {
-  font-size: 12px;
-  color: var(--vp-c-text-3);
-}
-
-.btn-save {
+.clear-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
-  background: var(--vp-c-brand);
+  padding: 10px 16px;
+  background: rgba(239, 68, 68, 0.1);
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
+  color: #ef4444;
   font-size: 13px;
   font-weight: 600;
-  color: white;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.btn-save:hover {
-  background: var(--vp-c-brand-dark);
+.clear-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
 }
 
-.hint-text {
-  margin: 0;
-  font-size: 13px;
-  color: var(--vp-c-text-2);
-  line-height: 1.5;
+.clear-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
-/* 右侧预览 */
-.memory-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.preview-card {
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.preview-header {
-  padding: 16px 20px;
-  background: var(--vp-c-bg);
-  border-bottom: 1px solid var(--vp-c-divider);
-}
-
-.preview-header h4 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.preview-content {
+/* 记忆列表 */
+.memory-list {
   padding: 20px;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--vp-c-text-3);
-}
-
-.empty-icon {
-  font-size: 48px;
+.memory-item-glass {
+  border-radius: 16px;
   margin-bottom: 12px;
 }
 
-.preview-section {
-  margin-bottom: 16px;
-}
-
-.preview-section:last-child {
-  margin-bottom: 0;
-}
-
-.section-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--vp-c-text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-}
-
-.preview-box {
+.memory-item {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
 }
 
-.status-badge {
-  padding: 4px 10px;
-  background: var(--vp-c-bg);
-  border-radius: 6px;
-  font-size: 12px;
-  color: var(--vp-c-text-3);
-}
-
-.status-badge.active {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.token-badge {
-  padding: 4px 10px;
-  background: #dbeafe;
-  color: #1e40af;
-  border-radius: 6px;
-  font-size: 12px;
-}
-
-.memory-content-preview {
-  max-height: 200px;
-  overflow-y: auto;
-  background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.memory-content-preview pre {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--vp-c-text-2);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-/* 提示卡片 */
-.tips-card {
-  padding: 16px 20px;
-  background: linear-gradient(145deg, #fef3c7, #fde68a);
+.memory-avatar {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: rgba(0, 0, 0, 0.05);
   border-radius: 12px;
 }
 
-.tips-card h5 {
-  margin: 0 0 10px 0;
-  font-size: 13px;
+.memory-content {
+  flex: 1;
+}
+
+.memory-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.memory-agent {
   font-weight: 600;
-  color: #92400e;
+  font-size: 14px;
+  color: #1e293b;
 }
 
-.tips-card ul {
-  margin: 0;
-  padding-left: 16px;
+.memory-time {
   font-size: 12px;
-  color: #a16207;
-  line-height: 1.6;
+  color: #94a3b8;
 }
 
-.tips-card li {
-  margin-bottom: 4px;
+.memory-text {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
 }
 
-/* 响应式 */
-@media (max-width: 1024px) {
-  .memory-layout {
-    grid-template-columns: 1fr;
+.delete-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s;
+}
+
+.memory-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.delete-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  color: #cbd5e1;
+}
+
+.empty-state p {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.empty-state span {
+  font-size: 14px;
+}
+
+/* 导出区 */
+.export-section {
+  display: flex;
+  justify-content: center;
+}
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.export-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   
-  .memory-preview {
-    order: -1;
+  .memory-list-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .search-input {
+    width: 100%;
   }
 }
 </style>

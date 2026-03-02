@@ -228,11 +228,12 @@ export function useAIChat() {
       
       // 构建工具上下文（用于权限校验）
       const agent = activeAgent.value
+      const availableSkills = agent?.capabilities?.availableSkills || []
       const toolContext = agent ? {
         agentId: agent.id,
-        skillIds: agent.capabilities?.skillIds || [],
+        availableSkills,
         declaredTools: skills.value
-          .filter(s => agent.capabilities?.skillIds?.includes(s.id))
+          .filter(s => availableSkills.includes(s.id))
           .flatMap(s => s.tools || []),
         availableTools: getEffectiveTools(agent).map(t => t.name)
       } : undefined
@@ -472,11 +473,12 @@ export function useAIChat() {
       
       // 构建工具上下文（用于权限校验）
       const agent = activeAgent.value
+      const availableSkills = agent?.capabilities?.availableSkills || []
       const toolContext = agent ? {
         agentId: agent.id,
-        skillIds: agent.capabilities?.skillIds || [],
+        availableSkills,
         declaredTools: skills.value
-          .filter(s => agent.capabilities?.skillIds?.includes(s.id))
+          .filter(s => availableSkills.includes(s.id))
           .flatMap(s => s.tools || []),
         availableTools: getEffectiveTools(agent).map(t => t.name)
       } : undefined

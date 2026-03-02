@@ -40,6 +40,5 @@ export type {
   Skill as SkillV2,
   Tool,
   CapabilityGraph,
-  CapabilityNode,
-  ConfigModeInfo
+  CapabilityNode
 } from '../types/agent'

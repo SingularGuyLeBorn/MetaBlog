@@ -157,8 +157,8 @@ export interface SessionConfig {
   _customSystemPrompt?: boolean
   /** Agent ID，用于工具权限校验 */
   agentId?: string
-  /** 激活的 Skill IDs，用于工具权限校验 */
-  skillIds?: string[]
+  /** 可用的 Skill IDs */
+  availableSkills?: string[]
   /** Skills 声明的工具列表 */
   declaredTools?: string[]
   /** Agent 实际可用的工具列表 */
@@ -299,10 +299,7 @@ export type {
   CapabilityNode,
   CapabilityEdge,
   CapabilityGraph,
-  SystemPromptContext,
-  ConfigModeInfo
+  SystemPromptContext
 } from './agent'
-
-export { CONFIG_MODES } from './agent'
 
 

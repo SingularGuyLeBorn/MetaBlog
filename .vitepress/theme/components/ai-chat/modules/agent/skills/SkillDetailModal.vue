@@ -1,876 +1,480 @@
-<!--
-  SkillDetailModal - Skill 详情弹窗（支持内联编辑）
-  
-  功能：
-  - 展示 Skill 完整信息
-  - 点击编辑切换到编辑模式
-  - 直接调用后端 API 保存修改
--->
 <template>
   <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="visible" class="skill-detail-overlay" @click.self="close">
-        <div class="skill-detail-modal">
+    <div class="modal-overlay" @click.self="emit('close')">
+      <LiquidGlass class="modal-glass" glow-color="#8b5cf6" :intensity="0.4">
+        <div class="skill-modal">
           <!-- 头部 -->
-          <div class="modal-header" :class="displaySkill?.category">
-            <div class="header-bg-icon">{{ displaySkill?.icon }}</div>
-            <div class="header-content">
-              <div class="skill-badge">{{ categoryLabel }}</div>
-              <h2 class="skill-name">{{ displaySkill?.name }}</h2>
-              <p class="skill-desc">{{ displaySkill?.description }}</p>
+          <div class="modal-header">
+            <div class="skill-title">
+              <span class="skill-icon-lg">{{ skill.icon }}</span>
+              <div class="skill-title-info">
+                <h3>{{ skill.name }}</h3>
+                <span class="skill-category">{{ skill.category }}</span>
+              </div>
             </div>
-            <button class="close-btn" @click.stop="close" type="button">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
+            <button class="close-btn" @click="emit('close')">
+              <Icon name="x" />
             </button>
           </div>
-          
-          <!-- 内容区 -->
+
+          <!-- 标签栏 -->
+          <div class="modal-tabs">
+            <button
+              v-for="tab in tabs"
+              :key="tab.id"
+              class="modal-tab"
+              :class="{ active: currentTab === tab.id }"
+              @click="currentTab = tab.id"
+            >
+              <Icon :name="tab.icon" />
+              {{ tab.label }}
+            </button>
+          </div>
+
+          <!-- 内容 -->
           <div class="modal-body">
-            <!-- 查看模式 -->
-            <template v-if="!isEditing">
-              <!-- Skill 内容 -->
-              <div class="detail-section">
-                <div class="section-header">
-                  <span class="section-icon">📝</span>
-                  <h4>Skill 内容 <span class="format-badge">SKILL.md</span></h4>
-                </div>
-                <div class="prompt-box">
-                  <pre>{{ displaySkill?.content }}</pre>
-                </div>
+            <!-- 概览 -->
+            <div v-show="currentTab === 'overview'" class="tab-content">
+              <p class="skill-desc-lg">{{ skill.description }}</p>
+              
+              <div class="meta-grid">
+                <LiquidGlass
+                  v-for="meta in metaItems"
+                  :key="meta.label"
+                  class="meta-glass"
+                  glow-color="#64748b"
+                  :intensity="0.2"
+                >
+                  <div class="meta-item">
+                    <span class="meta-label">{{ meta.label }}</span>
+                    <code v-if="meta.isCode" class="meta-value code">{{ meta.value }}</code>
+                    <span v-else class="meta-value">{{ meta.value }}</span>
+                  </div>
+                </LiquidGlass>
               </div>
 
               <!-- 使用场景 -->
-              <div class="detail-section" v-if="displaySkill?.usageScenarios?.length">
-                <div class="section-header">
-                  <span class="section-icon">🎯</span>
-                  <h4>使用场景</h4>
-                </div>
-                <div class="scenarios-list">
-                  <span 
-                    v-for="scenario in displaySkill.usageScenarios" 
-                    :key="scenario"
-                    class="scenario-tag"
+              <div v-if="skill.usageScenarios?.length" class="scenarios">
+                <h4 class="section-title">
+                  <Icon name="target" />
+                  使用场景
+                </h4>
+                <div class="scenario-list">
+                  <LiquidGlass
+                    v-for="(scene, idx) in skill.usageScenarios"
+                    :key="idx"
+                    class="scenario-glass"
+                    glow-color="#f59e0b"
+                    :intensity="0.2"
                   >
-                    {{ scenario }}
-                  </span>
-                </div>
-              </div>
-              
-              <!-- 关联工具 -->
-              <div class="detail-section">
-                <div class="section-header">
-                  <span class="section-icon">🔧</span>
-                  <h4>关联工具</h4>
-                  <span class="tool-count">{{ displaySkill?.tools?.length || 0 }} 个</span>
-                </div>
-                <div class="tools-grid">
-                  <div 
-                    v-for="tool in toolDetails" 
-                    :key="tool.name"
-                    class="tool-card"
-                  >
-                    <span class="tool-icon">{{ tool.icon }}</span>
-                    <div class="tool-info">
-                      <span class="tool-name">{{ tool.name }}</span>
-                      <span class="tool-desc">{{ tool.description }}</span>
+                    <div class="scenario-item">
+                      <span class="scenario-num">{{ idx + 1 }}</span>
+                      <span class="scenario-text">{{ scene }}</span>
                     </div>
-                  </div>
+                  </LiquidGlass>
                 </div>
               </div>
-              
-              <!-- 元信息 -->
-              <div class="detail-section meta-section">
-                <div class="meta-grid">
-                  <div class="meta-item">
-                    <span class="meta-label">版本</span>
-                    <span class="meta-value">{{ displaySkill?.version }}</span>
-                  </div>
-                  <div class="meta-item">
-                    <span class="meta-label">类型</span>
-                    <span class="meta-value">{{ displaySkill?.isBuiltIn ? '内置' : '自定义' }}</span>
-                  </div>
-                  <div class="meta-item">
-                    <span class="meta-label">创建时间</span>
-                    <span class="meta-value">{{ formatDate(displaySkill?.createdAt) }}</span>
-                  </div>
-                  <div v-if="displaySkill?.tags?.length" class="meta-item full-width">
-                    <span class="meta-label">标签</span>
-                    <div class="tags-list">
-                      <span v-for="tag in displaySkill?.tags" :key="tag" class="tag">
-                        {{ tag }}
-                      </span>
+            </div>
+
+            <!-- 内容 -->
+            <div v-show="currentTab === 'content'" class="tab-content">
+              <LiquidGlass class="code-glass" glow-color="#06b6d4" :intensity="0.2">
+                <pre class="code-block"><code>{{ skill.content }}</code></pre>
+              </LiquidGlass>
+            </div>
+
+            <!-- 工具 -->
+            <div v-show="currentTab === 'tools'" class="tab-content">
+              <div v-if="skill.tools?.length" class="tools-list">
+                <LiquidGlass
+                  v-for="(tool, idx) in skill.tools"
+                  :key="idx"
+                  class="tool-glass"
+                  :glow-color="getToolColor(idx)"
+                  :intensity="0.3"
+                >
+                  <div class="tool-card">
+                    <div class="tool-header">
+                      <code class="tool-name">{{ tool.name || tool }}</code>
+                      <span class="tool-type">Function</span>
                     </div>
+                    <p class="tool-desc">{{ tool.description || '无描述' }}</p>
                   </div>
-                </div>
+                </LiquidGlass>
               </div>
-            </template>
-            
-            <!-- 编辑模式 -->
-            <template v-else>
-              <div class="edit-form">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>名称 *</label>
-                    <input v-model="editForm.name" type="text" placeholder="技能名称" />
-                  </div>
-                  <div class="form-group">
-                    <label>图标</label>
-                    <div class="emoji-picker">
-                      <button
-                        v-for="emoji in emojiOptions"
-                        :key="emoji"
-                        class="emoji-btn"
-                        :class="{ active: editForm.icon === emoji }"
-                        @click="editForm.icon = emoji"
-                      >
-                        {{ emoji }}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label>分类</label>
-                  <select v-model="editForm.category">
-                    <option value="general">通用</option>
-                    <option value="writing">写作</option>
-                    <option value="coding">编程</option>
-                    <option value="analysis">分析</option>
-                    <option value="creative">创意</option>
-                    <option value="custom">自定义</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label>描述 *</label>
-                  <textarea v-model="editForm.description" rows="2" placeholder="一句话描述这个技能的能力..." />
-                </div>
-
-                <div class="form-group">
-                  <label>Skill 内容 * <span class="format-badge">SKILL.md</span></label>
-                  <textarea 
-                    v-model="editForm.content" 
-                    rows="6" 
-                    placeholder="# Skill 标题
-
-## 能力范围
-
-详细说明这个 Skill 的能力..."
-                    class="code-input"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label>使用场景</label>
-                  <textarea 
-                    v-model="usageScenariosInput" 
-                    rows="3" 
-                    placeholder="每行一个触发场景，例如：&#10;用户要求撰写文章&#10;需要内容创作帮助"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label>关联工具 ({{ editForm.tools.length }} 个)</label>
-                  <div class="tools-selector">
-                    <label
-                      v-for="tool in allTools"
-                      :key="tool.name"
-                      class="tool-checkbox"
-                      :class="{ checked: editForm.tools.includes(tool.name) }"
-                    >
-                      <input
-                        type="checkbox"
-                        :value="tool.name"
-                        v-model="editForm.tools"
-                      />
-                      <span class="tool-icon">{{ tool.icon || '🔧' }}</span>
-                      <div class="tool-info">
-                        <span class="tool-name">{{ tool.name }}</span>
-                        <span class="tool-desc">{{ tool.description }}</span>
-                      </div>
-                    </label>
-                  </div>
-                </div>
+              <div v-else class="empty-state">
+                <Icon name="tool" class="empty-icon" />
+                <span>该 Skill 没有关联工具</span>
               </div>
-            </template>
-          </div>
-          
-          <!-- 底部操作 -->
-          <div class="modal-footer">
-            <template v-if="!isEditing">
-              <button class="btn-secondary" @click="close">关闭</button>
-              <button 
-                class="btn-primary"
-                @click="startEdit"
-              >
-                ✏️ 编辑
-              </button>
-            </template>
-            <template v-else>
-              <button class="btn-secondary" @click="cancelEdit">取消</button>
-              <button 
-                class="btn-primary"
-                @click="saveEdit"
-                :disabled="!isFormValid || isSaving"
-              >
-                {{ isSaving ? '保存中...' : '保存修改' }}
-              </button>
-            </template>
+            </div>
           </div>
         </div>
-      </div>
-    </Transition>
+      </LiquidGlass>
+    </div>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import type { Skill, Tool } from '../../../core/types/agent'
-import { updateSkill } from '../../../core/services/agentStorage'
+import { ref, computed } from 'vue'
+import type { Skill } from '../../../core/types/agent'
+import Icon from '../../../shared/Icon.vue'
+import LiquidGlass from '../../../shared/LiquidGlass.vue'
 
-const props = defineProps<{
-  visible: boolean
-  skill: Skill | null
-  allTools: Tool[]
-}>()
+const props = defineProps<{ skill: Skill }>()
+const emit = defineEmits<{ close: [] }>()
 
-const emit = defineEmits<{
-  close: []
-  saved: [skill: Skill]
-}>()
+const tabs = [
+  { id: 'overview', label: '概览', icon: 'bar-chart' },
+  { id: 'content', label: '内容', icon: 'file-text' },
+  { id: 'tools', label: '工具', icon: 'tool' }
+]
 
-// 本地状态
-const isEditing = ref(false)
-const isSaving = ref(false)
-const displaySkill = ref<Skill | null>(props.skill)
+const currentTab = ref('overview')
 
-// 编辑表单
-const editForm = ref({
-  name: '',
-  icon: '🤖',
-  category: 'custom' as Skill['category'],
-  description: '',
-  content: '',
-  usageScenarios: [] as string[],
-  tools: [] as string[]
-})
+const metaItems = computed(() => [
+  { label: 'ID', value: props.skill.id, isCode: true },
+  { label: '版本', value: props.skill.version || '1.0.0' },
+  { label: '作者', value: props.skill.author || 'System' },
+  { label: '工具数', value: props.skill.tools?.length || 0 }
+])
 
-const emojiOptions = ['💻', '✍️', '📊', '🌐', '🔬', '📁', '🎨', '📋', '🌤️', '🚀', '🤖', '⚙️', '🔧', '💡', '🎯', '📦', '🔮', '⚡', '🧩', '🔗']
+const toolColors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899']
 
-// 监听 skill 变化
-watch(() => props.skill, (newSkill) => {
-  displaySkill.value = newSkill
-  isEditing.value = false
-}, { immediate: true })
-
-// 分类标签
-const categoryLabel = computed(() => {
-  const labels: Record<string, string> = {
-    general: '通用',
-    writing: '写作',
-    coding: '编程',
-    analysis: '分析',
-    creative: '创意',
-    custom: '自定义'
-  }
-  return labels[displaySkill.value?.category || ''] || displaySkill.value?.category
-})
-
-// 工具详情
-const toolDetails = computed(() => {
-  if (!displaySkill.value) return []
-  return displaySkill.value.tools
-    .map(name => props.allTools.find(t => t.name === name))
-    .filter(Boolean) as Tool[]
-})
-
-// 表单验证
-const isFormValid = computed(() => {
-  return editForm.value.name.trim() && 
-         editForm.value.description.trim() && 
-         editForm.value.content.trim()
-})
-
-// 使用场景输入处理
-const usageScenariosInput = computed({
-  get: () => editForm.value.usageScenarios.join('\n'),
-  set: (val: string) => {
-    editForm.value.usageScenarios = val
-      .split('\n')
-      .map(s => s.trim())
-      .filter(Boolean)
-  }
-})
-
-function close() {
-  isEditing.value = false
-  emit('close')
-}
-
-function startEdit() {
-  if (!displaySkill.value) return
-  
-  editForm.value = {
-    name: displaySkill.value.name,
-    icon: displaySkill.value.icon,
-    category: displaySkill.value.category,
-    description: displaySkill.value.description,
-    content: displaySkill.value.content || '',
-    usageScenarios: [...(displaySkill.value.usageScenarios || [])],
-    tools: [...(displaySkill.value.tools || [])]
-  }
-  isEditing.value = true
-}
-
-function cancelEdit() {
-  isEditing.value = false
-}
-
-async function saveEdit() {
-  if (!isFormValid.value || !displaySkill.value) return
-  
-  isSaving.value = true
-  
-  try {
-    const updated = await updateSkill(displaySkill.value.id, {
-      name: editForm.value.name.trim(),
-      icon: editForm.value.icon,
-      category: editForm.value.category,
-      description: editForm.value.description.trim(),
-      content: editForm.value.content.trim(),
-      usageScenarios: editForm.value.usageScenarios,
-      tools: editForm.value.tools
-    })
-    
-    if (updated) {
-      displaySkill.value = updated
-      emit('saved', updated)
-      isEditing.value = false
-    }
-  } catch (e) {
-    console.error('Failed to save skill:', e)
-    alert('保存失败，请重试')
-  } finally {
-    isSaving.value = false
-  }
-}
-
-function formatDate(timestamp: number | undefined): string {
-  if (!timestamp) return '-'
-  const date = new Date(timestamp)
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
+function getToolColor(idx: number) {
+  return toolColors[idx % toolColors.length]
 }
 </script>
 
 <style scoped>
-.skill-detail-overlay {
+@import '../../../styles/liquid-glass-theme.css';
+
+.modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10002;
-  padding: 20px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px);
+  z-index: 1200;
+  padding: 24px;
 }
 
-.skill-detail-modal {
-  width: 100%;
+.modal-glass {
+  width: 90%;
   max-width: 640px;
-  max-height: 85vh;
-  background: var(--vp-c-bg);
-  border-radius: 20px;
-  box-shadow: 
-    0 32px 64px -16px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  max-height: 80vh;
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+.skill-modal {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  max-height: 80vh;
 }
 
 /* 头部 */
 .modal-header {
-  position: relative;
-  padding: 32px;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.modal-header.general { background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); }
-.modal-header.writing { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); }
-.modal-header.coding { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); }
-.modal-header.analysis { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); }
-.modal-header.creative { background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); }
-.modal-header.custom { background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); }
-
-.header-bg-icon {
-  position: absolute;
-  right: -20px;
-  top: -20px;
-  font-size: 180px;
-  opacity: 0.08;
-  transform: rotate(-15deg);
-  pointer-events: none;
+.skill-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.header-content {
-  position: relative;
-  z-index: 1;
-}
-
-.skill-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--vp-c-text-2);
-  margin-bottom: 12px;
-  backdrop-filter: blur(8px);
-}
-
-.skill-name {
-  margin: 0 0 8px 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--vp-c-text-1);
-}
-
-.skill-desc {
-  margin: 0;
-  font-size: 15px;
-  color: var(--vp-c-text-2);
-  line-height: 1.5;
-}
-
-.close-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 44px;
-  height: 44px;
+.skill-icon-lg {
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(0,0,0,0.05);
+  font-size: 28px;
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  border-radius: 18px;
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.15);
+}
+
+.skill-title-info h3 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.skill-category {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+}
+
+.close-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
   border-radius: 12px;
-  color: var(--vp-c-text-2);
+  color: #64748b;
   cursor: pointer;
   transition: all 0.2s;
-  backdrop-filter: blur(8px);
-  z-index: 10;
 }
 
 .close-btn:hover {
-  background: white;
-  color: var(--vp-c-text-1);
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  transform: rotate(90deg);
 }
 
 .close-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
+}
+
+/* 标签栏 */
+.modal-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px 24px;
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.modal-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-tab:hover {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+}
+
+.modal-tab.active {
+  background: #8b5cf6;
+  color: white;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+}
+
+.modal-tab svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* 内容区 */
 .modal-body {
   flex: 1;
-  overflow-y: auto;
+  overflow: auto;
   padding: 24px;
 }
 
-.detail-section {
+.tab-content {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.skill-desc-lg {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #475569;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 16px;
+  border-left: 4px solid #8b5cf6;
+}
+
+/* 元数据网格 */
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
   margin-bottom: 24px;
 }
 
-.detail-section:last-child {
-  margin-bottom: 0;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.section-icon {
-  font-size: 18px;
-}
-
-.section-header h4 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  flex: 1;
-}
-
-.tool-count {
-  padding: 2px 10px;
-  background: var(--vp-c-brand-soft);
-  color: var(--vp-c-brand);
-  border-radius: 100px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-/* 提示词盒子 */
-.prompt-box {
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 12px;
-  padding: 16px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.prompt-box pre {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--vp-c-text-2);
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: inherit;
-}
-
-/* 工具网格 */
-.tools-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 10px;
-}
-
-.tool-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
-  transition: all 0.2s;
-}
-
-.tool-card:hover {
-  border-color: var(--vp-c-brand);
-  background: var(--vp-c-brand-soft);
-}
-
-.tool-icon {
-  font-size: 20px;
-}
-
-.tool-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.tool-name {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 2px;
-}
-
-.tool-desc {
-  display: block;
-  font-size: 11px;
-  color: var(--vp-c-text-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 元信息 */
-.meta-section {
-  padding: 16px;
-  background: var(--vp-c-bg-soft);
-  border-radius: 12px;
-}
-
-.meta-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+.meta-glass {
+  border-radius: 14px;
 }
 
 .meta-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.meta-item.full-width {
-  grid-column: 1 / -1;
+  padding: 16px;
 }
 
 .meta-label {
-  font-size: 12px;
-  color: var(--vp-c-text-3);
+  display: block;
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
 }
 
 .meta-value {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  color: #1e293b;
 }
 
-.tags-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.tag {
-  padding: 3px 10px;
-  background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 100px;
-  font-size: 12px;
-  color: var(--vp-c-text-2);
+.meta-value.code {
+  font-family: 'JetBrains Mono', monospace;
+  color: #7c3aed;
 }
 
 /* 使用场景 */
-.scenarios-list {
+.section-title {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
-}
-
-.scenario-tag {
-  padding: 6px 12px;
-  background: var(--vp-c-brand-soft);
-  color: var(--vp-c-brand);
-  border-radius: 100px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.format-badge {
-  font-size: 11px;
-  padding: 2px 8px;
-  background: var(--vp-c-brand-soft);
-  color: var(--vp-c-brand);
-  border-radius: 4px;
+  margin: 0 0 16px;
+  font-size: 15px;
   font-weight: 600;
-  margin-left: 8px;
+  color: #1e293b;
 }
 
-/* 编辑表单 */
-.edit-form {
+.section-title svg {
+  width: 18px;
+  height: 18px;
+  color: #f59e0b;
+}
+
+.scenario-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 16px;
+.scenario-glass {
+  border-radius: 12px;
 }
 
-.form-group {
+.scenario-item {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
 }
 
-.form-group label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--vp-c-text-2);
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  padding: 10px 14px;
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
-  font-size: 14px;
-  color: var(--vp-c-text-1);
-  transition: all 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: var(--vp-c-brand);
-  box-shadow: 0 0 0 3px var(--vp-c-brand-soft);
-}
-
-.form-group textarea {
-  resize: vertical;
-  font-family: inherit;
-}
-
-.form-group textarea.code-input {
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-}
-
-/* Emoji 选择器 */
-.emoji-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px;
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
-  max-height: 100px;
-  overflow-y: auto;
-}
-
-.emoji-btn {
-  width: 36px;
-  height: 36px;
+.scenario-num {
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  background: transparent;
-  border: 2px solid transparent;
+  background: #f59e0b;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
   border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.emoji-btn:hover {
-  background: var(--vp-c-bg);
+.scenario-text {
+  font-size: 14px;
+  color: #475569;
 }
 
-.emoji-btn.active {
-  background: var(--vp-c-brand-soft);
-  border-color: var(--vp-c-brand);
+/* 代码块 */
+.code-glass {
+  border-radius: 16px;
 }
 
-/* 工具选择器 */
-.tools-selector {
+.code-block {
+  margin: 0;
+  padding: 20px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #e2e8f0;
+  background: #1e293b;
+  border-radius: 16px;
+  overflow: auto;
+  max-height: 400px;
+}
+
+/* 工具列表 */
+.tools-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 300px;
-  overflow-y: auto;
-  padding: 4px;
+  gap: 12px;
 }
 
-.tool-checkbox {
+.tool-glass {
+  border-radius: 14px;
+}
+
+.tool-card {
+  padding: 18px;
+}
+
+.tool-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
-.tool-checkbox:hover {
-  border-color: var(--vp-c-brand);
-}
-
-.tool-checkbox.checked {
-  background: var(--vp-c-brand-soft);
-  border-color: var(--vp-c-brand);
-}
-
-.tool-checkbox input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--vp-c-brand);
-}
-
-.tool-checkbox .tool-icon {
-  font-size: 20px;
-}
-
-.tool-checkbox .tool-info {
-  flex: 1;
-}
-
-.tool-checkbox .tool-name {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.tool-checkbox .tool-desc {
-  font-size: 12px;
-  color: var(--vp-c-text-3);
-}
-
-/* 底部 */
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  background: var(--vp-c-bg-soft);
-  border-top: 1px solid var(--vp-c-divider);
-}
-
-.btn-secondary {
-  padding: 10px 20px;
-  background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
-  font-size: 14px;
-  color: var(--vp-c-text-1);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-  background: var(--vp-c-bg-mute);
-}
-
-.btn-primary {
-  padding: 10px 20px;
-  background: var(--vp-c-brand);
-  border: none;
-  border-radius: 10px;
+.tool-name {
   font-size: 14px;
   font-weight: 600;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
+  color: #1e293b;
+  background: rgba(139, 92, 246, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--vp-c-brand-dark);
+.tool-type {
+  font-size: 11px;
+  color: #94a3b8;
+  padding: 2px 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
 }
 
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.tool-desc {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
 }
 
-/* 动画 */
-.modal-enter-active,
-.modal-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px;
+  color: #94a3b8;
 }
 
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
-.modal-enter-from .skill-detail-modal,
-.modal-leave-to .skill-detail-modal {
-  transform: scale(0.95) translateY(10px);
-  opacity: 0;
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  color: #cbd5e1;
 }
 </style>

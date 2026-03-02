@@ -19,8 +19,11 @@ import type { ToolDefinition } from '../tools/types'
 /** 能力类型 */
 export type CapabilityType = 'skill' | 'tool'
 
-/** Agent 配置模式 */
-export type AgentConfigMode = 'raw' | 'skills-only' | 'tools-only' | 'hybrid'
+/** 
+ * Agent 配置模式（Claude Code 模式）
+ * Agent 定义 availableSkills，AI 自行判断调用
+ */
+export type AgentConfigMode = 'claude-code'
 
 /** 技能分类 */
 export type SkillCategory = 
@@ -157,18 +160,19 @@ export interface AgentMemory {
 }
 
 /** 
- * Agent 能力配置 - 核心数据结构
+ * Agent 能力配置 - 核心数据结构（Claude Code 模式）
  * 
- * 参考 Claude Code 设计：
+ * 架构设计：
  * - baseRole: 定义"你是谁"（身份、性格）
- * - skillIds: 可用的 Skills（系统提示词只展示列表）
- * - toolIds: 额外的工具
+ * - availableSkills: AI 可自行调用的 Skills 列表
  * - roleSupplement: 角色微调说明
+ * 
+ * Claude Code 模式特点：
+ * - AI 根据对话内容自行判断使用哪个 Skill
+ * - 系统提示词只展示 Skills 列表（name + description）
+ * - Skill 详细内容在调用时动态注入
  */
 export interface AgentCapabilities {
-  mode: AgentConfigMode
-  skillIds: string[]
-  toolIds: string[]
   /** 
    * 基础角色定义 - "你是谁"
    * 定义 AI 的身份、性格、行为准则
@@ -179,6 +183,11 @@ export interface AgentCapabilities {
    * 用于微调角色行为
    */
   roleSupplement?: string
+  /**
+   * 可用的 Skills 列表
+   * AI 可以根据对话需要自行判断调用这些 Skills
+   */
+  availableSkills: string[]
 }
 
 /** Agent 完整定义 */
@@ -284,61 +293,7 @@ export interface CapabilityGraph {
 
 // ==================== 配置模式 ====================
 
-/** 配置模式信息 */
-export interface ConfigModeInfo {
-  id: AgentConfigMode
-  name: string
-  icon: string
-  shortDesc: string
-  description: string
-  showSkillSelector: boolean
-  showToolSelector: boolean
-  showSystemPrompt: boolean
-}
 
-/** 配置模式常量 */
-export const CONFIG_MODES: ConfigModeInfo[] = [
-  {
-    id: 'raw',
-    name: '纯提示词',
-    icon: '📝',
-    shortDesc: '仅使用基础角色',
-    description: 'Agent 只使用基础角色定义，不使用任何 Skills 或工具',
-    showSkillSelector: false,
-    showToolSelector: false,
-    showSystemPrompt: true
-  },
-  {
-    id: 'skills-only',
-    name: '技能模式',
-    icon: '🎯',
-    shortDesc: '通过 Skills 使用工具',
-    description: '选择 Skills，自动继承其中的工具和能力',
-    showSkillSelector: true,
-    showToolSelector: false,
-    showSystemPrompt: true
-  },
-  {
-    id: 'tools-only',
-    name: '工具模式',
-    icon: '🔧',
-    shortDesc: '直接选择工具',
-    description: '直接选择需要的工具，不通过 Skills',
-    showSkillSelector: false,
-    showToolSelector: true,
-    showSystemPrompt: true
-  },
-  {
-    id: 'hybrid',
-    name: '混合模式',
-    icon: '⚡',
-    shortDesc: 'Skills + 额外工具',
-    description: '选择 Skills 并添加额外的工具',
-    showSkillSelector: true,
-    showToolSelector: true,
-    showSystemPrompt: true
-  }
-]
 
 // ==================== Skill 调用相关 ====================
 

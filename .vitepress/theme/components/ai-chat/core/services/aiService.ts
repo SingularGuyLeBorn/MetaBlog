@@ -766,7 +766,7 @@ export const aiService = {
     sessionId?: string,
     toolContext?: {
       agentId?: string
-      skillIds?: string[]
+      availableSkills?: string[]
       declaredTools?: string[]
       availableTools?: string[]
     }

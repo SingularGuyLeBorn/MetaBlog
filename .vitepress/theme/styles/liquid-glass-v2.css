@@ -1,0 +1,886 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ *  LIQUID GLASS DESIGN SYSTEM v2.0
+ *  液态毛玻璃设计系统 - 固态的光，凝固的风，数字世界的液态梦境
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
+ * 核心设计理念：
+ * - 视觉本质：半透明玻璃背景（90%透明+10%乳白色雾感）+ 液态折射效果
+ * - 触觉幻觉：鼠标悬停时的有机形变（凹陷效果）+ 粘稠涟漪传播 + 3D透视倾斜
+ * - 空间存在感：悬浮效果（零重力舱中的冰晶）+ 视差深度 + 彩色焦散光斑阴影
+ * - 生命节律：呼吸动画（4-6秒周期）+ 随机气泡效果
+ * - 交互叙事：接触时的轻微抵抗（0.3秒收缩）+ 高亮态下的神经光丝
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 1. 设计令牌 - CSS 自定义属性
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── 液态玻璃核心色板 ── */
+  --lg-glass-bg: rgba(255, 255, 255, 0.72);
+  --lg-glass-bg-hover: rgba(255, 255, 255, 0.85);
+  --lg-glass-bg-active: rgba(255, 255, 255, 0.92);
+  --lg-glass-frost: rgba(255, 255, 255, 0.1);
+  --lg-glass-fog: rgba(255, 255, 255, 0.06);
+  
+  /* 边框颜色 */
+  --lg-border-light: rgba(255, 255, 255, 0.5);
+  --lg-border-default: rgba(255, 255, 255, 0.3);
+  --lg-border-hover: rgba(255, 255, 255, 0.6);
+  
+  /* ── 霓虹辉光色谱 ── */
+  --lg-glow-purple: rgba(168, 85, 247, 0.45);
+  --lg-glow-purple-light: rgba(168, 85, 247, 0.2);
+  --lg-glow-mint: rgba(52, 211, 153, 0.4);
+  --lg-glow-blue: rgba(96, 165, 250, 0.4);
+  --lg-glow-pink: rgba(244, 114, 182, 0.35);
+  --lg-glow-gold: rgba(251, 191, 36, 0.35);
+  
+  /* ── 焦散折射色 ── */
+  --lg-caustic-1: rgba(168, 85, 247, 0.12);
+  --lg-caustic-2: rgba(52, 211, 153, 0.1);
+  --lg-caustic-3: rgba(96, 165, 250, 0.1);
+  
+  /* ── 液态缓动函数 ── */
+  --lg-ease-viscous: cubic-bezier(0.22, 1, 0.36, 1);      /* 粘稠流体 - 默认 */
+  --lg-ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);   /* 弹性果冻 */
+  --lg-ease-decel: cubic-bezier(0, 0, 0.2, 1);            /* 阻尼衰减 */
+  --lg-ease-organic: cubic-bezier(0.25, 0.8, 0.25, 1);    /* 有机运动 */
+  --lg-ease-breathe: cubic-bezier(0.45, 0.05, 0.55, 0.95);/* 呼吸节奏 */
+  --lg-ease-float: cubic-bezier(0.4, 0, 0.2, 1);          /* 悬浮上升 */
+  
+  /* ── 时间变量 ── */
+  --lg-duration-instant: 100ms;
+  --lg-duration-fast: 200ms;
+  --lg-duration-normal: 400ms;
+  --lg-duration-slow: 600ms;
+  --lg-duration-morph: 500ms;
+  --lg-duration-float: 800ms;
+  --lg-duration-breathe: 5s;
+  --lg-duration-bubble: 12s;
+  --lg-duration-resist: 300ms;
+  
+  /* ── 模糊与折射 ── */
+  --lg-blur-light: 12px;
+  --lg-blur-base: 20px;
+  --lg-blur-heavy: 32px;
+  --lg-blur-extreme: 48px;
+  
+  /* ── 圆角系统 ── */
+  --lg-radius-sm: 8px;
+  --lg-radius-md: 12px;
+  --lg-radius-lg: 16px;
+  --lg-radius-xl: 24px;
+  --lg-radius-2xl: 32px;
+  --lg-radius-full: 9999px;
+  
+  /* ── 阴影系统 ── */
+  --lg-shadow-sm: 
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.02);
+  --lg-shadow-md: 
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.03);
+  --lg-shadow-lg: 
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 4px 8px rgba(0, 0, 0, 0.04);
+  --lg-shadow-float: 
+    0 20px 50px -10px rgba(0, 0, 0, 0.15),
+    0 10px 20px -5px rgba(0, 0, 0, 0.08);
+  --lg-shadow-glow-purple: 
+    0 0 20px rgba(168, 85, 247, 0.3),
+    0 0 40px rgba(168, 85, 247, 0.15);
+  --lg-shadow-glow-mint: 
+    0 0 20px rgba(52, 211, 153, 0.3),
+    0 0 40px rgba(52, 211, 153, 0.15);
+  
+  /* ── 悬浮距离 ── */
+  --lg-float-distance: -8px;
+  --lg-float-distance-sm: -4px;
+  --lg-float-distance-lg: -12px;
+  
+  /* ── 形变系数 ── */
+  --lg-indent-scale: 0.985;
+  --lg-press-scale: 0.975;
+}
+
+/* Dark mode */
+.dark {
+  --lg-glass-bg: rgba(255, 255, 255, 0.05);
+  --lg-glass-bg-hover: rgba(255, 255, 255, 0.1);
+  --lg-glass-bg-active: rgba(255, 255, 255, 0.15);
+  --lg-glass-frost: rgba(255, 255, 255, 0.05);
+  --lg-glass-fog: rgba(255, 255, 255, 0.03);
+  --lg-border-light: rgba(255, 255, 255, 0.2);
+  --lg-border-default: rgba(255, 255, 255, 0.1);
+  --lg-border-hover: rgba(255, 255, 255, 0.25);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 2. 关键帧动画 - 生命节律
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 呼吸动画 - 4-6秒周期，像沉睡中生物的胸膛起伏 */
+@keyframes lg-breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.003);
+    opacity: 0.98;
+  }
+}
+
+/* 悬浮动画 - 零重力舱中的冰晶摇曳 */
+@keyframes lg-levitate {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-6px) rotate(0.3deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(-0.2deg);
+  }
+  75% {
+    transform: translateY(-8px) rotate(0.15deg);
+  }
+}
+
+/* 霓虹辉光流动 - 边缘的柔和生物荧光 */
+@keyframes lg-glow-flow {
+  0% {
+    box-shadow: 
+      0 0 20px rgba(168, 85, 247, 0.3),
+      0 0 40px rgba(168, 85, 247, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  33% {
+    box-shadow: 
+      0 0 20px rgba(52, 211, 153, 0.3),
+      0 0 40px rgba(52, 211, 153, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  66% {
+    box-shadow: 
+      0 0 20px rgba(96, 165, 250, 0.3),
+      0 0 40px rgba(96, 165, 250, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  100% {
+    box-shadow: 
+      0 0 20px rgba(168, 85, 247, 0.3),
+      0 0 40px rgba(168, 85, 247, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* 表面折射流动 - 缓慢潮汐 */
+@keyframes lg-refraction {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
+/* 粘稠涟漪扩散 */
+@keyframes lg-ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.6;
+    border-width: 3px;
+  }
+  50% {
+    opacity: 0.2;
+    border-width: 1.5px;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.5);
+    opacity: 0;
+    border-width: 0.5px;
+  }
+}
+
+/* 气泡上升 - 从内部深处缓缓升起 */
+@keyframes lg-bubble {
+  0% {
+    transform: translateY(100%) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.5;
+    transform: translateY(80%) scale(0.5);
+  }
+  80% {
+    opacity: 0.3;
+    transform: translateY(10%) scale(1);
+  }
+  100% {
+    transform: translateY(-10%) scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* 焦散光斑 - 游泳池底的破碎彩虹 */
+@keyframes lg-caustic {
+  0%, 100% {
+    background-position: 0% 0%, 50% 50%, 100% 0%;
+    opacity: 0.4;
+  }
+  33% {
+    background-position: 30% 70%, 80% 20%, 20% 80%;
+    opacity: 0.5;
+  }
+  66% {
+    background-position: 70% 30%, 20% 80%, 60% 40%;
+    opacity: 0.35;
+  }
+}
+
+/* 闪烁高光 - 光带掠过玻璃表面 */
+@keyframes lg-sheen {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+    opacity: 0;
+  }
+}
+
+/* 神经光丝 - 枝状闪电 */
+@keyframes lg-synapse {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  20% {
+    opacity: 1;
+    transform: scaleX(0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+/* 苏醒动画 - 从沉睡态恢复 */
+@keyframes lg-awaken {
+  0% {
+    opacity: 0.6;
+    filter: blur(4px) saturate(0.5);
+    transform: scale(0.98) translateY(4px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0) saturate(1.1);
+    transform: scale(1.002);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0) saturate(1);
+    transform: scale(1);
+  }
+}
+
+/* 入场动画 - 从雾中凝聚 */
+@keyframes lg-materialize {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 3. 基础原子类 - 液态玻璃核心
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 基础玻璃面板 ── */
+.lg-glass {
+  position: relative;
+  background: var(--lg-glass-bg);
+  backdrop-filter: blur(var(--lg-blur-base)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--lg-blur-base)) saturate(1.4);
+  border: 1px solid var(--lg-border-default);
+  border-radius: var(--lg-radius-lg);
+  transition: 
+    background var(--lg-duration-morph) var(--lg-ease-viscous),
+    border-color var(--lg-duration-morph) var(--lg-ease-viscous),
+    box-shadow var(--lg-duration-morph) var(--lg-ease-viscous),
+    transform var(--lg-duration-float) var(--lg-ease-float);
+  will-change: transform, box-shadow, background;
+}
+
+/* 呼吸的玻璃 */
+.lg-glass-alive {
+  animation: lg-breathe var(--lg-duration-breathe) var(--lg-ease-breathe) infinite;
+}
+
+/* 悬浮的玻璃 */
+.lg-glass-levitate {
+  animation: 
+    lg-breathe var(--lg-duration-breathe) var(--lg-ease-breathe) infinite,
+    lg-levitate 8s var(--lg-ease-organic) infinite;
+}
+
+/* 霓虹边缘 */
+.lg-glass-glow {
+  animation: lg-glow-flow 6s linear infinite;
+}
+
+/* ── 液态玻璃卡片 - 核心组件 ── */
+.lg-card {
+  position: relative;
+  background: var(--lg-glass-bg);
+  backdrop-filter: blur(var(--lg-blur-base)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--lg-blur-base)) saturate(1.4);
+  border: 1px solid var(--lg-border-default);
+  border-radius: var(--lg-radius-xl);
+  padding: 24px;
+  overflow: hidden;
+  transition: 
+    background var(--lg-duration-morph) var(--lg-ease-viscous),
+    border-color var(--lg-duration-morph) var(--lg-ease-viscous),
+    box-shadow var(--lg-duration-float) var(--lg-ease-float),
+    transform var(--lg-duration-float) var(--lg-ease-float);
+  animation: lg-breathe var(--lg-duration-breathe) var(--lg-ease-breathe) infinite;
+  will-change: transform, box-shadow;
+}
+
+.lg-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.02) 100%
+  );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* 卡片悬浮效果 - 慢慢浮上来，不是跳 */
+.lg-card-hover:hover {
+  background: var(--lg-glass-bg-hover);
+  border-color: var(--lg-border-hover);
+  box-shadow: 
+    var(--lg-shadow-float),
+    0 0 30px rgba(168, 85, 247, 0.1);
+  transform: translateY(var(--lg-float-distance)) scale(1.005);
+}
+
+/* 卡片按压效果 */
+.lg-card-hover:active {
+  transform: translateY(-2px) scale(0.99);
+  transition-duration: var(--lg-duration-instant);
+  box-shadow: var(--lg-shadow-md);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 4. 按钮组件 - 液态玻璃按钮
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.lg-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--lg-glass-bg);
+  backdrop-filter: blur(var(--lg-blur-light)) saturate(1.3);
+  -webkit-backdrop-filter: blur(var(--lg-blur-light)) saturate(1.3);
+  border: 1px solid var(--lg-border-default);
+  border-radius: var(--lg-radius-md);
+  color: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  transition: 
+    transform var(--lg-duration-normal) var(--lg-ease-viscous),
+    background var(--lg-duration-normal) var(--lg-ease-viscous),
+    border-color var(--lg-duration-normal) var(--lg-ease-viscous),
+    box-shadow var(--lg-duration-normal) var(--lg-ease-viscous);
+  will-change: transform;
+}
+
+/* 按钮光泽层 */
+.lg-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  opacity: 0;
+  transition: opacity var(--lg-duration-fast) var(--lg-ease-viscous);
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+/* 按钮闪烁效果 */
+.lg-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transform: translateX(-100%) skewX(-15deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 按钮悬浮 - 慢慢浮上来 */
+.lg-btn:hover {
+  background: var(--lg-glass-bg-hover);
+  border-color: rgba(168, 85, 247, 0.3);
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    0 0 20px rgba(168, 85, 247, 0.15);
+  transform: translateY(var(--lg-float-distance-sm));
+}
+
+.lg-btn:hover::before {
+  opacity: 1;
+}
+
+.lg-btn:hover::after {
+  animation: lg-sheen 1s var(--lg-ease-viscous);
+}
+
+/* 按钮按压 - 凹陷效果 */
+.lg-btn:active {
+  transform: translateY(0) scale(0.97);
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    inset 0 2px 8px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.04);
+  transition-duration: var(--lg-duration-instant);
+}
+
+/* 主要按钮 */
+.lg-btn-primary {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.85) 0%,
+    rgba(96, 165, 250, 0.85) 100%
+  );
+  border-color: rgba(139, 92, 246, 0.4);
+  color: white;
+}
+
+.lg-btn-primary:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.95) 0%,
+    rgba(96, 165, 250, 0.95) 100%
+  );
+  box-shadow: 
+    0 8px 24px rgba(139, 92, 246, 0.25),
+    0 0 30px rgba(139, 92, 246, 0.2);
+}
+
+.lg-btn-primary:active {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.75) 0%,
+    rgba(96, 165, 250, 0.75) 100%
+  );
+}
+
+/* 次要按钮 */
+.lg-btn-secondary {
+  background: var(--lg-glass-bg);
+  border-color: var(--lg-border-light);
+}
+
+/* Ghost 按钮 */
+.lg-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+}
+
+.lg-btn-ghost:hover {
+  background: var(--lg-glass-frost);
+  border-color: var(--lg-border-default);
+}
+
+/* 按钮尺寸 */
+.lg-btn-sm {
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: var(--lg-radius-sm);
+}
+
+.lg-btn-lg {
+  padding: 16px 32px;
+  font-size: 15px;
+  border-radius: var(--lg-radius-lg);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 5. 输入框 - 液态玻璃输入
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.lg-input {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--lg-glass-frost);
+  backdrop-filter: blur(var(--lg-blur-light));
+  -webkit-backdrop-filter: blur(var(--lg-blur-light));
+  border: 1px solid var(--lg-border-default);
+  border-radius: var(--lg-radius-md);
+  color: inherit;
+  font-size: 15px;
+  transition: 
+    background var(--lg-duration-normal) var(--lg-ease-viscous),
+    border-color var(--lg-duration-normal) var(--lg-ease-viscous),
+    box-shadow var(--lg-duration-normal) var(--lg-ease-viscous),
+    transform var(--lg-duration-normal) var(--lg-ease-viscous);
+  outline: none;
+}
+
+.lg-input:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(168, 85, 247, 0.25);
+}
+
+.lg-input:focus {
+  background: var(--lg-glass-bg-hover);
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow: 
+    0 0 0 4px rgba(168, 85, 247, 0.1),
+    0 0 20px rgba(168, 85, 247, 0.08);
+  transform: translateY(-1px);
+}
+
+.lg-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 6. 标签页 - 液态玻璃标签
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.lg-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  background: var(--lg-glass-frost);
+  backdrop-filter: blur(var(--lg-blur-base));
+  border: 1px solid var(--lg-border-default);
+  border-radius: var(--lg-radius-lg);
+}
+
+.lg-tab {
+  position: relative;
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  border-radius: var(--lg-radius-md);
+  color: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 
+    background var(--lg-duration-normal) var(--lg-ease-viscous),
+    color var(--lg-duration-normal) var(--lg-ease-viscous),
+    transform var(--lg-duration-normal) var(--lg-ease-viscous);
+  overflow: hidden;
+}
+
+.lg-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.lg-tab.active {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.8) 0%,
+    rgba(96, 165, 250, 0.8) 100%
+  );
+  color: white;
+  box-shadow: 
+    0 4px 12px rgba(139, 92, 246, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 7. 列表项 - 液态玻璃列表
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.lg-list-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--lg-glass-frost);
+  border: 1px solid var(--lg-border-default);
+  border-radius: var(--lg-radius-lg);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: 
+    background var(--lg-duration-normal) var(--lg-ease-viscous),
+    border-color var(--lg-duration-normal) var(--lg-ease-viscous),
+    box-shadow var(--lg-duration-normal) var(--lg-ease-viscous),
+    transform var(--lg-duration-float) var(--lg-ease-float);
+  animation: lg-breathe var(--lg-duration-breathe) var(--lg-ease-breathe) infinite;
+  animation-delay: calc(var(--index, 0) * 0.2s);
+}
+
+.lg-list-item:hover {
+  background: var(--lg-glass-bg);
+  border-color: rgba(168, 85, 247, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transform: translateX(4px) translateY(-2px);
+}
+
+.lg-list-item:active {
+  transform: translateX(2px) translateY(0);
+  transition-duration: var(--lg-duration-instant);
+}
+
+.lg-list-item.active {
+  background: rgba(168, 85, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 8. 导航栏与侧边栏
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.lg-navbar {
+  background: var(--lg-glass-bg) !important;
+  backdrop-filter: blur(var(--lg-blur-heavy)) saturate(1.6) !important;
+  -webkit-backdrop-filter: blur(var(--lg-blur-heavy)) saturate(1.6) !important;
+  border-bottom: 1px solid var(--lg-border-default) !important;
+  box-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.04),
+    0 4px 30px rgba(0, 0, 0, 0.06) !important;
+}
+
+.lg-sidebar {
+  background: var(--lg-glass-frost) !important;
+  backdrop-filter: blur(var(--lg-blur-base)) saturate(1.3) !important;
+  -webkit-backdrop-filter: blur(var(--lg-blur-base)) saturate(1.3) !important;
+  border-right: 1px solid var(--lg-border-default) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 9. 伪元素层 - 效果增强
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 折射光层 */
+.lg-refraction::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 30%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 70%,
+    transparent 100%
+  );
+  background-size: 200% 200%;
+  animation: lg-refraction 10s var(--lg-ease-organic) infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 焦散阴影层 */
+.lg-caustic::after {
+  content: '';
+  position: absolute;
+  bottom: -16px;
+  left: 10%;
+  right: 10%;
+  height: 32px;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 30% 50%, var(--lg-caustic-1), transparent 50%),
+    radial-gradient(ellipse at 70% 50%, var(--lg-caustic-2), transparent 50%),
+    radial-gradient(ellipse at 50% 50%, var(--lg-caustic-3), transparent 60%);
+  background-size: 60% 100%, 50% 100%, 80% 100%;
+  animation: lg-caustic var(--lg-duration-breathe) var(--lg-ease-organic) infinite;
+  filter: blur(8px);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 10. 3D 透视与悬浮效果
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.lg-3d {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.lg-tilt {
+  transition: transform var(--lg-duration-float) var(--lg-ease-viscous);
+}
+
+.lg-tilt:hover {
+  transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) translateY(-6px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 11. 入场动画工具类
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.lg-enter {
+  animation: lg-materialize 0.6s var(--lg-ease-viscous) both;
+}
+
+.lg-enter-bounce {
+  animation: lg-breathe 0.7s var(--lg-ease-elastic) both;
+}
+
+/* 交错动画 */
+.lg-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.lg-stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.lg-stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.lg-stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.lg-stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.lg-stagger > *:nth-child(6) { animation-delay: 0.3s; }
+.lg-stagger > *:nth-child(7) { animation-delay: 0.35s; }
+.lg-stagger > *:nth-child(8) { animation-delay: 0.4s; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 12. 气泡系统
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.lg-bubbles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+.lg-bubble {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4), transparent);
+  border-radius: 50%;
+  animation: lg-bubble var(--lg-duration-bubble) var(--lg-ease-organic) infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 13. 涟漪效果
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.lg-ripple-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.lg-ripple {
+  position: absolute;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  animation: lg-ripple 1.5s var(--lg-ease-viscous) forwards;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 14. 滚动条美化
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.lg-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.lg-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lg-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  transition: background var(--lg-duration-fast);
+}
+
+.lg-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   § 15. 响应式与可访问性
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-glass,
+  .lg-glass-alive,
+  .lg-glass-levitate,
+  .lg-card,
+  .lg-btn,
+  .lg-list-item,
+  .lg-tab {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .lg-refraction::before,
+  .lg-caustic::after {
+    animation: none !important;
+  }
+}
+
+/* 触摸设备优化 */
+@media (pointer: coarse) {
+  .lg-card-hover:hover,
+  .lg-btn:hover,
+  .lg-list-item:hover {
+    transform: none;
+  }
+  
+  .lg-card-hover:active,
+  .lg-btn:active,
+  .lg-list-item:active {
+    transform: scale(0.98);
+  }
+}

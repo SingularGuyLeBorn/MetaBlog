@@ -21,7 +21,7 @@ export interface Skill {
   name: string
   icon: string
   description: string
-  systemPrompt: string
+  content: string  // SKILL.md 完整内容
   category: SkillCategory
   version: string
   isBuiltIn: boolean
@@ -30,6 +30,7 @@ export interface Skill {
   updatedAt: number
   tags: string[]
   tools: string[]
+  usageScenarios: string[]
   author?: string
 }
 
@@ -116,7 +117,7 @@ router.post('/', async (req, res) => {
       name: params.name || '未命名技能',
       icon: params.icon || '🔧',
       description: params.description || '',
-      systemPrompt: params.systemPrompt || '',
+      content: params.content || '',
       category: params.category || 'custom',
       version: params.version || '1.0.0',
       isBuiltIn: false,
@@ -125,6 +126,7 @@ router.post('/', async (req, res) => {
       updatedAt: now,
       tags: params.tags || [],
       tools: params.tools || [],
+      usageScenarios: params.usageScenarios || [],
       author: params.author
     }
     

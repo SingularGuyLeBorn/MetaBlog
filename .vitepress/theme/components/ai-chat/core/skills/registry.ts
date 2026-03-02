@@ -427,8 +427,8 @@ export function onSkillSelect(callback: (event: SkillSelectEvent) => void): () =
  * 获取多个技能的组合能力描述
  * 用于构建系统提示词
  */
-export function getCombinedCapabilityDescription(skillIds: string[]): string {
-  const selectedSkills = skillState.skills.filter(s => skillIds.includes(s.id))
+export function getCombinedCapabilityDescription(availableSkills: string[]): string {
+  const selectedSkills = skillState.skills.filter(s => availableSkills.includes(s.id))
   
   if (selectedSkills.length === 0) {
     return ''

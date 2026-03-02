@@ -65,20 +65,18 @@ export const masterToolDefinitions: ToolDefinition[] = [
             type: 'object',
             description: '能力配置',
             properties: {
-              mode: {
+              availableSkills: {
+                type: 'array',
+                items: { type: 'string' },
+                description: '可用的 Skills 列表（Claude Code 模式）'
+              },
+              baseRole: {
                 type: 'string',
-                enum: ['raw', 'skills-only', 'tools-only', 'hybrid'],
-                description: '配置模式'
+                description: '基础角色定义'
               },
-              skillIds: {
-                type: 'array',
-                items: { type: 'string' },
-                description: '技能ID列表'
-              },
-              toolIds: {
-                type: 'array',
-                items: { type: 'string' },
-                description: '工具ID列表（tools-only 或 hybrid 模式使用）'
+              roleSupplement: {
+                type: 'string',
+                description: '角色补充说明'
               },
               customSystemPrompt: {
                 type: 'string',
@@ -135,10 +133,9 @@ export const masterToolDefinitions: ToolDefinition[] = [
               capabilities: {
                 type: 'object',
                 properties: {
-                  mode: { type: 'string' },
-                  skillIds: { type: 'array', items: { type: 'string' } },
-                  toolIds: { type: 'array', items: { type: 'string' } },
-                  customSystemPrompt: { type: 'string' }
+                  baseRole: { type: 'string' },
+                  roleSupplement: { type: 'string' },
+                  availableSkills: { type: 'array', items: { type: 'string' } }
                 }
               },
               status: {
@@ -284,8 +281,8 @@ export const masterToolExecutors: Record<string, MasterToolExecutor> = {
       level: a.level,
       status: a.status,
       description: a.description.slice(0, 50) + '...',
-      skillCount: a.capabilities?.skillIds?.length || 0,
-      toolCount: a.capabilities?.toolIds?.length || 0,
+      skillCount: a.capabilities?.availableSkills?.length || 0,
+      toolCount: 0, // Claude Code 模式：工具通过 Skill 包含
       isDefault: a.isDefault
     }))
     
@@ -299,10 +296,9 @@ export const masterToolExecutors: Record<string, MasterToolExecutor> = {
       avatar?: string
       level?: AgentLevel
       capabilities?: {
-        mode: string
-        skillIds?: string[]
-        toolIds?: string[]
-        customSystemPrompt?: string
+        baseRole?: string
+        roleSupplement?: string
+        availableSkills?: string[]
       }
       triggers?: Array<{
         type: string
@@ -320,7 +316,7 @@ export const masterToolExecutors: Record<string, MasterToolExecutor> = {
       description,
       avatar,
       level,
-      capabilities: capabilities || { mode: 'raw', skillIds: [], toolIds: [] }
+      capabilities: capabilities || { baseRole: `你是 ${name}，${description}`, availableSkills: [] }
     })
 
     if (!agent) {

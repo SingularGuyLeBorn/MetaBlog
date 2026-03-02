@@ -41,10 +41,6 @@ export type {
 } from './core/types'
 
 // ===== Core Types（新统一 Agent 类型） =====
-export {
-  CONFIG_MODES
-} from './core/types/agent'
-
 export type {
   Agent,
   AgentLevel,
@@ -58,8 +54,7 @@ export type {
   SkillCreateParams,
   Tool,
   CapabilityGraph,
-  CapabilityNode,
-  ConfigModeInfo
+  CapabilityNode
 } from './core/types/agent'
 
 // ===== Modules - Agent =====

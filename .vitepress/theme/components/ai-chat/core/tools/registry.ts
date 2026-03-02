@@ -74,9 +74,9 @@ export async function executeTool(
   args: Record<string, any>,
   context?: {
     agentId?: string
-    skillIds?: string[]
-    declaredTools?: string[]  // Skills 声明的工具列表
-    availableTools?: string[] // Agent 实际启用的工具列表
+    availableSkills?: string[]
+    declaredTools?: string[]
+    availableTools?: string[]
   }
 ): Promise<string> {
   const tool = tools.get(name)
@@ -108,7 +108,7 @@ export async function executeTool(
 
 建议：
 - 检查工具名称拼写
-- 激活正确的 Skill（当前激活：${context?.skillIds?.join(', ') || '无'}）
+- 激活正确的 Skill（当前可用：${context?.availableSkills?.join(', ') || '无'}）
 - 使用 ToolTester 查看所有可用工具`
     }
     
@@ -159,7 +159,7 @@ export async function executeToolWithRecord(
   args: Record<string, any>,
   context?: {
     agentId?: string
-    skillIds?: string[]
+    availableSkills?: string[]
     declaredTools?: string[]
     availableTools?: string[]
   },

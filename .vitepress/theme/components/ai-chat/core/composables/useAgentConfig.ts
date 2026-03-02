@@ -15,13 +15,10 @@ import type {
   Tool,
   AgentCreateParams, 
   AgentUpdateParams,
-  AgentConfigMode,
   CapabilityNode,
   CapabilityEdge,
-  CapabilityGraph,
-  SystemPromptContext
+  CapabilityGraph
 } from '../types/agent'
-import { CONFIG_MODES } from '../types/agent'
 import { 
   getAgents, 
   createAgent as createAgentStorage,
@@ -215,12 +212,13 @@ export function useAgentConfig() {
   // ==================== 系统提示词构建 ====================
 
   /**
-   * 构建系统提示词
+   * 构建系统提示词（Claude Code 模式）
    * 
-   * 参考 Claude Code Skills 设计：
-   * - 系统提示词只包含 Skills 列表（name + description）
-   * - Skill 详细内容在调用时注入对话上下文
-   * - 工具定义通过 JSON Schema 传递，不在提示词中重复
+   * 架构：
+   * - Agent 有自己的 baseRole（来自 agent.md）定义"你是谁"
+   * - 系统提示词列出 availableSkills（名称+描述）
+   * - AI 根据对话自主决定调用哪个 Skill
+   * - Skill 详细内容在调用时动态注入
    */
   function buildSystemPrompt(agent: Agent): string {
     const capabilities = agent.capabilities
@@ -228,120 +226,47 @@ export function useAgentConfig() {
       return '你是一个 helpful 的 AI 助手。'
     }
     
-    const { mode, skillIds, toolIds, baseRole, roleSupplement } = capabilities
+    const { baseRole, roleSupplement } = capabilities
+    const availableSkills = capabilities.availableSkills || []
     
-    // RAW 模式：只使用基础角色 + 补充
-    if (mode === 'raw') {
-      const parts = [baseRole || '你是一个 helpful 的 AI 助手。']
-      if (roleSupplement) {
-        parts.push('\n## 补充说明')
-        parts.push(roleSupplement)
-      }
-      return parts.join('\n')
-    }
-    
-    // 收集系统提示词
     const sections: string[] = []
     
-    // 1. 基础角色 - "你是谁"
+    // 1. 基础角色 - "你是谁"（来自 agent.md）
     sections.push(baseRole || `你是 ${agent.name}，${agent.description}`)
     
-    // 2. 可用工具列表（从 Skill 获取详细描述）
-    const effectiveTools = getEffectiveTools(agent)
-    const skillToolDefs = getSkillToolDefinitions(agent)
-    
-    if (effectiveTools.length > 0) {
-      sections.push('\n\n你可以使用以下工具来完成任务：')
-      
-      effectiveTools.forEach(tool => {
-        // 优先使用 Skill 中定义的详细描述
-        const skillDef = skillToolDefs[tool.name]
-        if (skillDef && skillDef.description) {
-          sections.push(`\n- **${tool.name}**: ${skillDef.description}`)
-          // 添加参数说明
-          if (skillDef.params && skillDef.params.length > 0) {
-            skillDef.params.forEach((param: any) => {
-              sections.push(`  - \`${param.name}\` (${param.type}): ${param.description}`)
-            })
-          }
-        } else {
-          // 使用默认描述
-          sections.push(`- ${tool.name}: ${tool.description}`)
-        }
-      })
-      
-      // 检查是否有 Skill 声明但 Agent 未启用的工具
-      const missingTools = getMissingTools(agent, skillToolDefs)
-      if (missingTools.length > 0) {
-        sections.push('\n\n⚠️ **注意**：以下工具被 Skills 声明但当前未启用：')
-        missingTools.forEach(toolName => {
-          sections.push(`- ${toolName}`)
-        })
-      }
-    }
-    
-    // 3. 可用 Skills 列表（只包含 name 和 description，供 Agent 决策）
-    if (skillIds.length > 0 && (mode === 'skills-only' || mode === 'hybrid')) {
-      const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
+    // 2. 可用 Skills 列表（Claude Code 模式核心）
+    if (availableSkills.length > 0) {
+      const agentSkills = skills.value.filter(s => availableSkills.includes(s.id))
       if (agentSkills.length > 0) {
-        sections.push('\n\n<available_skills>')
-        sections.push('当你需要执行特定任务时，可以调用以下 Skills：')
+        sections.push('\n\n## 可用 Skills')
+        sections.push('你可以根据对话需要，自主决定调用以下 Skills：\n')
         
         agentSkills.forEach(skill => {
-          sections.push(`\n  <skill>`)
-          sections.push(`    <name>${skill.id}</name>`)
-          sections.push(`    <description>${skill.description}</description>`)
-          sections.push(`  </skill>`)
+          sections.push(`- ${skill.icon} **${skill.name}** (ID: \`${skill.id}\`): ${skill.description}`)
         })
         
-        sections.push('\n</available_skills>')
-        sections.push('\n当你判断需要使用某个 Skill 时，请先调用该 Skill 获取详细指导。')
+        sections.push('\n## 如何加载 Skills')
+        sections.push('当你需要使用某个 Skill 时，请在你的回复中明确说明：')
+        sections.push('```')
+        sections.push('[使用 Skill: <skill-id>]')
+        sections.push('```')
+        sections.push('例如：`[使用 Skill: write]` 或 `[使用 Skill: code-review]`')
+        sections.push('系统会自动为你加载该 Skill 的详细内容和可用工具。')
+        sections.push('\n你也可以一次加载多个 Skills：')
+        sections.push('`[使用 Skill: write,code-review]`')
       }
     }
     
-    // 4. 角色补充 - 用户自定义微调
+    // 3. 角色补充
     if (roleSupplement) {
-      sections.push('\n# 补充说明')
+      sections.push('\n\n## 补充说明')
       sections.push(roleSupplement)
     }
     
     return sections.join('\n')
   }
   
-  // 获取 Skill 中定义的工具详细描述
-  function getSkillToolDefinitions(agent: Agent): Record<string, any> {
-    const { skillIds, mode } = agent.capabilities || {}
-    const definitions: Record<string, any> = {}
-    
-    if (!skillIds?.length || mode === 'raw') return definitions
-    
-    const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
-    agentSkills.forEach(skill => {
-      if (skill.toolDefinitions) {
-        Object.assign(definitions, skill.toolDefinitions)
-      }
-    })
-    
-    return definitions
-  }
-  
-  // 获取 Skills 声明但 Agent 未启用的工具
-  function getMissingTools(agent: Agent, skillToolDefs: Record<string, any>): string[] {
-    const { skillIds, toolIds, mode } = agent.capabilities || {}
-    if (!skillIds?.length) return []
-    
-    const missing: string[] = []
-    const effectiveToolNames = new Set(getEffectiveTools(agent).map(t => t.name))
-    
-    // 检查 Skill 声明的工具
-    Object.keys(skillToolDefs).forEach(toolName => {
-      if (!effectiveToolNames.has(toolName)) {
-        missing.push(toolName)
-      }
-    })
-    
-    return missing
-  }
+
 
   // ==================== 工具管理 ====================
 
@@ -349,21 +274,14 @@ export function useAgentConfig() {
     const capabilities = agent.capabilities
     if (!capabilities) return []
     
-    const { mode, skillIds, toolIds } = capabilities
+    const availableSkills = capabilities.availableSkills || []
     const effectiveToolNames = new Set<string>()
     
-    // 从技能继承工具
-    if (mode === 'skills-only' || mode === 'hybrid' || mode === 'raw') {
-      const agentSkills = skills.value.filter(s => skillIds?.includes(s.id))
-      agentSkills.forEach(skill => {
-        skill.tools?.forEach((toolName: string) => effectiveToolNames.add(toolName))
-      })
-    }
-    
-    // 直接配置的工具
-    if (mode === 'tools-only' || mode === 'hybrid') {
-      toolIds?.forEach((toolName: string) => effectiveToolNames.add(toolName))
-    }
+    // 从启用的 Skills 继承工具
+    const agentSkills = skills.value.filter(s => availableSkills.includes(s.id))
+    agentSkills.forEach(skill => {
+      skill.tools?.forEach((toolName: string) => effectiveToolNames.add(toolName))
+    })
     
     return allTools.value.filter(t => effectiveToolNames.has(t.name))
   }
@@ -399,13 +317,11 @@ export function useAgentConfig() {
     })
     
     const capabilities = agent.capabilities
-    const mode = capabilities?.mode || 'raw'
-    const skillIds = capabilities?.skillIds || []
-    const toolIds = capabilities?.toolIds || []
+    const { availableSkills } = capabilities || { availableSkills: [] }
     
     // 技能节点
-    if (mode === 'skills-only' || mode === 'hybrid' || mode === 'raw') {
-      const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
+    if (availableSkills.length > 0) {
+      const agentSkills = skills.value.filter(s => availableSkills.includes(s.id))
       agentSkills.forEach((skill, index) => {
         const skillNode: CapabilityNode = {
           id: skill.id,
@@ -442,26 +358,7 @@ export function useAgentConfig() {
       })
     }
     
-    // 额外工具节点（混合模式）
-    if ((mode === 'tools-only' || mode === 'hybrid') && toolIds.length > 0) {
-      toolIds.forEach((toolName, index) => {
-        const tool = allTools.value.find(t => t.name === toolName)
-        if (tool) {
-          nodes.push({
-            id: `extra-${toolName}`,
-            type: 'tool',
-            name: toolName,
-            icon: tool.icon || '🔧',
-            description: tool.description,
-            level: 1,
-            x: 100 + index * 120,
-            y: mode === 'hybrid' ? 280 : 150,
-            isExtra: true
-          })
-          edges.push({ from: agent.id, to: `extra-${toolName}`, type: 'extends' })
-        }
-      })
-    }
+    // Claude Code 模式：工具通过 Skill 包含，不单独显示
     
     return { nodes, edges }
   }
@@ -493,15 +390,15 @@ export function useAgentConfig() {
    * 实际可以使用更复杂的语义匹配
    */
   function matchSkills(userInput: string, agent: Agent): string[] {
-    const { skillIds, mode } = agent.capabilities || { skillIds: [], mode: 'raw' }
+    const availableSkills = agent.capabilities?.availableSkills || []
     
-    // RAW 模式或没有 Skills
-    if (mode === 'raw' || skillIds.length === 0) return []
+    // 没有可用 Skills
+    if (availableSkills.length === 0) return []
     
     const input = userInput.toLowerCase()
     const matchedSkillIds: string[] = []
     
-    const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
+    const agentSkills = skills.value.filter(s => availableSkills.includes(s.id))
     
     for (const skill of agentSkills) {
       if (!skill.enabled) continue
