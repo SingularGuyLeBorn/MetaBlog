@@ -281,7 +281,7 @@ export const masterToolExecutors: Record<string, MasterToolExecutor> = {
       level: a.level,
       status: a.status,
       description: a.description.slice(0, 50) + '...',
-      skillCount: a.capabilities?.availableSkills?.length || 0,
+      skillCount: a.capabilities?.skillIds?.length || 0,
       toolCount: 0, // Claude Code 模式：工具通过 Skill 包含
       isDefault: a.isDefault
     }))
@@ -316,7 +316,7 @@ export const masterToolExecutors: Record<string, MasterToolExecutor> = {
       description,
       avatar,
       level,
-      capabilities: capabilities || { baseRole: `你是 ${name}，${description}`, availableSkills: [] }
+      capabilities: capabilities || { baseRole: `你是 ${name}，${description}`, skillIds: [] }
     })
 
     if (!agent) {

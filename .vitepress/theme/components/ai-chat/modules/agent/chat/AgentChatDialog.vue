@@ -187,7 +187,7 @@ async function handleSend() {
         config: {
           model: 'deepseek-chat',
           temperature: 0.7,
-          systemPrompt: props.agent.systemPrompt || `你是 ${props.agent.name}，${props.agent.description}`
+          systemPrompt: props.agent.capabilities?.customSystemPrompt || `你是 ${props.agent.name}，${props.agent.description}`
         }
       })
     })

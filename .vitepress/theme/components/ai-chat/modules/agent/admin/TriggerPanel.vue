@@ -221,7 +221,8 @@ watch(() => props.agent, (a) => {
     if (t.config) {
       triggerConfig.value.cron = t.config.cron || '0 9 * * *'
       triggerConfig.value.eventName = t.config.eventName || ''
-      triggerConfig.value.filter = t.config.filter || ''
+      // config 中的字段是 eventFilter 而不是 filter
+      triggerConfig.value.filter = (t.config as any).filter || t.config.eventFilter || ''
     }
   }
 }, { immediate: true })

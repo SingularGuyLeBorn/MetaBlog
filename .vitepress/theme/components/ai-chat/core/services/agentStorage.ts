@@ -126,9 +126,49 @@ export async function getAgent(id: string): Promise<Agent | null> {
 
 export async function createAgent(params: AgentCreateParams): Promise<Agent | null> {
   try {
-    const agent = await apiRequest<Agent>(API_ENDPOINTS.AGENT_CREATE, {
+    // 转换前端字段为后端期望格式
+    // 前端: skills -> 后端: capabilities.skillIds
+    // 前端: systemPrompt -> 后端: capabilities.customSystemPrompt
+    // 前端: memoryEnabled/memoryContent -> 后端: memory.enabled/memory.content
+    const body: any = {
+      name: params.name,
+      avatar: params.avatar,
+      description: params.description,
+      level: params.level,
+      status: params.status || 'online',
+      seat: params.seat || 1,
+      isDefault: params.isDefault || false,
+      permissions: params.permissions || [],
+    }
+    
+    // 映射 capabilities（支持两种字段名）
+    const skillIds = (params as any).skills ?? params.capabilities?.skillIds ?? []
+    const customSystemPrompt = (params as any).systemPrompt ?? params.capabilities?.customSystemPrompt ?? ''
+    const toolIds = params.capabilities?.toolIds ?? []
+    
+    body.capabilities = {
+      mode: 'raw' as const,
+      skillIds,
+      toolIds,
+      customSystemPrompt,
+    }
+    
+    // 映射 memory（支持两种字段名）
+    const memoryEnabled = (params as any).memoryEnabled ?? params.memory?.enabled ?? true
+    const memoryContent = (params as any).memoryContent ?? params.memory?.content ?? ''
+    const autoExtract = params.memory?.autoExtract ?? true
+    const maxTokens = params.memory?.maxTokens ?? 2000
+    
+    body.memory = {
+      enabled: memoryEnabled,
+      content: memoryContent,
+      autoExtract,
+      maxTokens,
+    }
+    
+    const agent = await apiRequest<Agent>(API_ENDPOINTS.AGENTS, {
       method: 'POST',
-      body: JSON.stringify(params),
+      body: JSON.stringify(body),
     })
     
     // 刷新缓存
@@ -142,9 +182,60 @@ export async function createAgent(params: AgentCreateParams): Promise<Agent | nu
 
 export async function updateAgent(id: string, updates: AgentUpdateParams): Promise<Agent | null> {
   try {
+    // 转换前端字段为后端期望格式（与 createAgent 一致）
+    const body: any = { id }
+    
+    // 复制基本字段
+    if (updates.name !== undefined) body.name = updates.name
+    if (updates.avatar !== undefined) body.avatar = updates.avatar
+    if (updates.description !== undefined) body.description = updates.description
+    if (updates.level !== undefined) body.level = updates.level
+    if (updates.status !== undefined) body.status = updates.status
+    if (updates.seat !== undefined) body.seat = updates.seat
+    if (updates.isDefault !== undefined) body.isDefault = updates.isDefault
+    if (updates.permissions !== undefined) body.permissions = updates.permissions
+    if (updates.lastActiveAt !== undefined) body.lastActiveAt = updates.lastActiveAt
+    if (updates.callCount !== undefined) body.callCount = updates.callCount
+    
+    // 映射 capabilities（支持两种字段名）
+    const hasCapabilityUpdates = (updates as any).skills !== undefined || 
+                                 (updates as any).systemPrompt !== undefined ||
+                                 updates.capabilities !== undefined
+    
+    if (hasCapabilityUpdates) {
+      const skillIds = (updates as any).skills ?? updates.capabilities?.skillIds
+      const customSystemPrompt = (updates as any).systemPrompt ?? updates.capabilities?.customSystemPrompt
+      const toolIds = updates.capabilities?.toolIds
+      
+      body.capabilities = {
+        mode: 'raw' as const,
+      }
+      if (skillIds !== undefined) body.capabilities.skillIds = skillIds
+      if (customSystemPrompt !== undefined) body.capabilities.customSystemPrompt = customSystemPrompt
+      if (toolIds !== undefined) body.capabilities.toolIds = toolIds
+    }
+    
+    // 映射 memory（支持两种字段名）
+    const hasMemoryUpdates = (updates as any).memoryEnabled !== undefined ||
+                            (updates as any).memoryContent !== undefined ||
+                            updates.memory !== undefined
+    
+    if (hasMemoryUpdates) {
+      body.memory = {}
+      const enabled = (updates as any).memoryEnabled ?? updates.memory?.enabled
+      const content = (updates as any).memoryContent ?? updates.memory?.content
+      const autoExtract = updates.memory?.autoExtract
+      const maxTokens = updates.memory?.maxTokens
+      
+      if (enabled !== undefined) body.memory.enabled = enabled
+      if (content !== undefined) body.memory.content = content
+      if (autoExtract !== undefined) body.memory.autoExtract = autoExtract
+      if (maxTokens !== undefined) body.memory.maxTokens = maxTokens
+    }
+    
     const agent = await apiRequest<Agent>(API_ENDPOINTS.AGENT_UPDATE, {
       method: 'POST',
-      body: JSON.stringify({ id, ...updates }),
+      body: JSON.stringify(body),
     })
     
     // 刷新缓存
@@ -226,7 +317,7 @@ export async function getSkill(id: string): Promise<Skill | null> {
 
 export async function createSkill(skillData: Omit<Skill, 'id' | 'createdAt' | 'updatedAt' | 'isBuiltIn'>): Promise<Skill | null> {
   try {
-    const skill = await apiRequest<Skill>(API_ENDPOINTS.SKILL_CREATE, {
+    const skill = await apiRequest<Skill>(API_ENDPOINTS.SKILLS, {
       method: 'POST',
       body: JSON.stringify(skillData),
     })

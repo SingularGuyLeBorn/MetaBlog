@@ -83,7 +83,11 @@ export function useAIChat() {
     const session: ChatSession = {
       id: `session-${now}-${Math.random().toString(36).slice(2, 9)}`,
       title,
-      config: { ...DEFAULT_CONFIG },
+      config: { 
+        ...DEFAULT_CONFIG,
+        // 如果有激活的 Agent，自动绑定
+        agentId: activeAgent.value?.id 
+      },
       stats: { messageCount: 0, totalTokens: 0 },
       createdAt: now,
       updatedAt: now
@@ -226,12 +230,12 @@ export function useAIChat() {
       
       // 构建工具上下文（用于权限校验）
       const agent = activeAgent.value
-      const availableSkills = agent?.capabilities?.availableSkills || []
+      const skillIds = agent?.capabilities?.skillIds || []
       const toolContext = agent ? {
         agentId: agent.id,
-        availableSkills,
+        availableSkills: skillIds,
         declaredTools: skills.value
-          .filter(s => availableSkills.includes(s.id))
+          .filter(s => skillIds.includes(s.id))
           .flatMap(s => s.tools || []),
         availableTools: getEffectiveTools(agent).map(t => t.name)
       } : undefined
@@ -241,12 +245,16 @@ export function useAIChat() {
         config,
         {
           onContent: (text) => {
-            const targetMsg = groups[groups.length - 1].aiVersions[0]
+            const currentProxyGroups = messageGroups.value[sessionId]
+            if (!currentProxyGroups) return
+            const targetMsg = currentProxyGroups[currentProxyGroups.length - 1].aiVersions[0]
             targetMsg.content = text
             targetMsg.updatedAt = Date.now()
           },
           onReasoning: (text) => {
-            const targetMsg = groups[groups.length - 1].aiVersions[0]
+            const currentProxyGroups = messageGroups.value[sessionId]
+            if (!currentProxyGroups) return
+            const targetMsg = currentProxyGroups[currentProxyGroups.length - 1].aiVersions[0]
             // 如果已经有 thinkingSteps，不再更新传统 reasoning（避免覆盖串行显示）
             if (!targetMsg.metadata?.thinkingSteps?.length) {
               targetMsg.reasoning = { content: text, isVisible: true }
@@ -254,7 +262,9 @@ export function useAIChat() {
             targetMsg.updatedAt = Date.now()
           },
           onThinkingStep: (step: ThinkingStep) => {
-            const targetMsg = groups[groups.length - 1].aiVersions[0]
+            const currentProxyGroups = messageGroups.value[sessionId]
+            if (!currentProxyGroups) return
+            const targetMsg = currentProxyGroups[currentProxyGroups.length - 1].aiVersions[0]
             if (!targetMsg.metadata) {
               targetMsg.metadata = {}
             }
@@ -271,7 +281,9 @@ export function useAIChat() {
             targetMsg.updatedAt = Date.now()
           },
           onComplete: () => {
-            const targetMsg = groups[groups.length - 1].aiVersions[0]
+            const currentProxyGroups = messageGroups.value[sessionId]
+            if (!currentProxyGroups) return
+            const targetMsg = currentProxyGroups[currentProxyGroups.length - 1].aiVersions[0]
             targetMsg.status = 'completed'
             targetMsg.updatedAt = Date.now()
             // 保留现有的 metadata（包括 thinkingSteps），只添加新字段
@@ -284,7 +296,7 @@ export function useAIChat() {
             if (sessionId === currentSessionId.value) {
               isStreaming.value = false
             }
-            storage.saveMessageGroups(sessionId, groups)
+            storage.saveMessageGroups(sessionId, currentProxyGroups)
             // 清理 controller
             sessionControllers.delete(sessionId)
             
@@ -303,7 +315,9 @@ export function useAIChat() {
             })
           },
           onError: (err) => {
-            const targetMsg = groups[groups.length - 1].aiVersions[0]
+            const currentProxyGroups = messageGroups.value[sessionId]
+            if (!currentProxyGroups) return
+            const targetMsg = currentProxyGroups[currentProxyGroups.length - 1].aiVersions[0]
             const hasToolCalls = toolRecords.length > 0
             const errorMessage = err.message || String(err)
             
@@ -328,7 +342,7 @@ export function useAIChat() {
             }
             // 清理 controller
             sessionControllers.delete(sessionId)
-            storage.saveMessageGroups(sessionId, groups)
+            storage.saveMessageGroups(sessionId, currentProxyGroups)
             
             // 记录错误日志
             addLog({
@@ -471,12 +485,12 @@ export function useAIChat() {
       
       // 构建工具上下文（用于权限校验）
       const agent = activeAgent.value
-      const availableSkills = agent?.capabilities?.availableSkills || []
+      const skillIds = agent?.capabilities?.skillIds || []
       const toolContext = agent ? {
         agentId: agent.id,
-        availableSkills,
+        availableSkills: skillIds,
         declaredTools: skills.value
-          .filter(s => availableSkills.includes(s.id))
+          .filter(s => skillIds.includes(s.id))
           .flatMap(s => s.tools || []),
         availableTools: getEffectiveTools(agent).map(t => t.name)
       } : undefined

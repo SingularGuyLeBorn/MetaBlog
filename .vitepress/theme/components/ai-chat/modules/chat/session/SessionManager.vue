@@ -374,7 +374,7 @@ function countSessionsByAgent(agentId: string): number {
 }
 
 function getSessionAgentId(session: ChatSession): string {
-  return (session as any).agentId || ''
+  return (session.config as any)?.agentId || ''
 }
 
 function getAgentById(agentId: string): Agent | undefined {
@@ -483,20 +483,16 @@ function executeDelete() {
   max-width: 900px;
   height: 80vh;
   max-height: 700px;
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(248, 250, 252, 0.92) 50%,
-    rgba(241, 245, 249, 0.9) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 28px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   box-shadow: 
-    0 32px 64px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    0 32px 64px rgba(31, 38, 135, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 }
 
 .manager-glow {
@@ -507,7 +503,7 @@ function executeDelete() {
   height: 300px;
   background: radial-gradient(
     circle,
-    rgba(99, 102, 241, 0.12) 0%,
+    rgba(59, 130, 246, 0.1) 0%,
     transparent 70%
   );
   pointer-events: none;
@@ -546,10 +542,11 @@ function executeDelete() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 14px;
-  color: white;
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+  color: #3b82f6;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
 }
 
 .title-text h3 {
@@ -676,20 +673,21 @@ function executeDelete() {
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border: none;
+  background: linear-gradient(135deg, #6366f1, #3b82f6);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 10px;
   color: white;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .btn-create:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
 /* ===== 内容区 ===== */
@@ -737,18 +735,18 @@ function executeDelete() {
 
 .session-row:hover {
   background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(99, 102, 241, 0.2);
+  border-color: rgba(59, 130, 246, 0.2);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .session-row.active {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.04));
-  border-color: rgba(99, 102, 241, 0.3);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.04));
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
 .session-row.selected {
-  background: rgba(99, 102, 241, 0.12);
-  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.4);
 }
 
 /* 复选框 */
@@ -779,7 +777,7 @@ function executeDelete() {
 
 .header-checkbox input:checked + .check-box,
 .row-checkbox input:checked + .check-box {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
   border-color: transparent;
 }
 
@@ -813,7 +811,7 @@ function executeDelete() {
 
 .current-badge {
   padding: 2px 8px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
   border-radius: 100px;
   color: white;
   font-size: 10px;
@@ -829,6 +827,7 @@ function executeDelete() {
   border-radius: 8px;
   font-size: 14px;
   outline: none;
+  color: #1e293b;
 }
 
 /* Agent 列 */
@@ -870,8 +869,8 @@ function executeDelete() {
 }
 
 .action-btn:hover {
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
 }
 
 .action-btn.switch:hover {

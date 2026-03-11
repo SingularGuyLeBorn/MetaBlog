@@ -152,6 +152,7 @@ export async function updateMemory(
   updates: Partial<Omit<Memory, 'id' | 'createdAt'>>
 ): Promise<Memory | null> {
   try {
+    // FIX: 后端期望 { id, ...updates } 格式，id 在 body 中
     const memory = await apiRequest<Memory>(API_ENDPOINTS.MEMORY_UPDATE, {
       method: 'POST',
       body: JSON.stringify({ id, ...updates }),
@@ -169,6 +170,7 @@ export async function updateMemory(
 
 export async function deleteMemory(id: string): Promise<boolean> {
   try {
+    // FIX: 后端期望 { id } 格式，id 在 body 中
     await apiRequest(API_ENDPOINTS.MEMORY_DELETE, {
       method: 'POST',
       body: JSON.stringify({ id }),

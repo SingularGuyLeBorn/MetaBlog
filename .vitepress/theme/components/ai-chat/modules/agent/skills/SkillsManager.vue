@@ -179,12 +179,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useAgentConfig } from '../../../core/composables/useAgentConfig'
-import type { Skill } from '../../../core/types/agent'
+import type { Skill, SkillCategory } from '../../../core/types/agent'
 import SkillDetailModal from './SkillDetailModal.vue'
 import Icon from '../../../shared/Icon.vue'
 import LiquidGlass from '../../../shared/LiquidGlass.vue'
 
-const { skills, addSkill, updateSkill: updateSkillApi, deleteSkill: deleteSkillApi } = useAgentConfig()
+const { skills, createSkill, updateSkill: updateSkillApi, deleteSkill: deleteSkillApi } = useAgentConfig()
 
 const searchQuery = ref('')
 const selectedCategory = ref('all')
@@ -194,11 +194,12 @@ const viewingSkill = ref<Skill | null>(null)
 
 const categories = [
   { id: 'all', name: '全部' },
-  { id: '通用', name: '通用' },
-  { id: '写作', name: '写作' },
-  { id: '编程', name: '编程' },
-  { id: '分析', name: '分析' },
-  { id: '搜索', name: '搜索' }
+  { id: 'general', name: '通用' },
+  { id: 'writing', name: '写作' },
+  { id: 'coding', name: '编程' },
+  { id: 'analysis', name: '分析' },
+  { id: 'creative', name: '创意' },
+  { id: 'custom', name: '自定义' }
 ]
 
 const filteredSkills = computed(() => {
@@ -216,13 +217,23 @@ const filteredSkills = computed(() => {
   return result
 })
 
-const form = ref({
+// 显式声明 form 类型，避免使用 as 断言
+interface SkillForm {
+  name: string
+  icon: string
+  category: SkillCategory
+  description: string
+  content: string
+  tools: string[]
+}
+
+const form = ref<SkillForm>({
   name: '',
   icon: '🎯',
-  category: '通用',
+  category: 'general',
   description: '',
   content: '',
-  tools: [] as string[]
+  tools: []
 })
 const toolsInput = ref('')
 
@@ -252,19 +263,21 @@ function closeModal() {
 }
 
 function resetForm() {
-  form.value = { name: '', icon: '🎯', category: '通用', description: '', content: '', tools: [] }
+  form.value = { name: '', icon: '🎯', category: 'general', description: '', content: '', tools: [] }
   toolsInput.value = ''
 }
 
 function editSkill(skill: Skill) {
   editingSkill.value = skill
+  // 使用类型安全的默认值
+  const category: SkillCategory = skill.category ?? 'general'
   form.value = {
     name: skill.name,
     icon: skill.icon,
-    category: skill.category || '通用',
+    category,
     description: skill.description,
-    content: skill.content || '',
-    tools: [...(skill.tools || [])]
+    content: skill.content ?? '',
+    tools: [...(skill.tools ?? [])]
   }
   toolsInput.value = skill.tools?.join(', ') || ''
 }
@@ -282,7 +295,7 @@ async function saveSkill() {
   if (editingSkill.value) {
     await updateSkillApi(editingSkill.value.id, data)
   } else {
-    await addSkill(data as Omit<Skill, 'id' | 'createdAt' | 'updatedAt'>)
+    await createSkill(data as Omit<Skill, 'id' | 'createdAt' | 'updatedAt' | 'isBuiltIn'>)
   }
   closeModal()
 }

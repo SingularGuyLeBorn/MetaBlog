@@ -34,8 +34,8 @@
     "callCount": 0,
     "isDefault": true,
     "createdAt": 1771864714589,
-    "updatedAt": 1772351553185,
-    "lastActiveAt": 1772121797966,
+    "updatedAt": 1772852150082,
+    "lastActiveAt": 1772852150082,
     "runtime": {
       "model": "claude-3-5-sonnet",
       "temperature": 0.7,
@@ -82,10 +82,10 @@
     "callCount": 0,
     "isDefault": false,
     "createdAt": 1772117562518,
-    "updatedAt": 1772341465701,
-    "lastActiveAt": 1772212430609,
+    "updatedAt": 1772852147775,
+    "lastActiveAt": 1772852147774,
     "runtime": {
-      "model": "gpt-4o",
+      "model": "kimi-k1.5-pro",
       "temperature": 0.7,
       "maxTokens": 2048,
       "topP": 0.95,
@@ -95,5 +95,31 @@
       "retryCount": 3,
       "retryDelay": 1
     }
+  },
+  {
+    "id": "agent-1772816557101-xxsvzuf",
+    "name": "测试agent",
+    "avatar": "🔮",
+    "description": "废物一个啥也不会",
+    "level": "custom",
+    "status": "online",
+    "seat": 1,
+    "capabilities": {
+      "mode": "raw",
+      "skillIds": [],
+      "customSystemPrompt": "你是 测试agent"
+    },
+    "memory": {
+      "enabled": true,
+      "content": "",
+      "autoExtract": true,
+      "maxTokens": 2000
+    },
+    "permissions": [],
+    "callCount": 0,
+    "isDefault": false,
+    "createdAt": 1772816557101,
+    "updatedAt": 1772820901012,
+    "lastActiveAt": 1772820901011
   }
 ]

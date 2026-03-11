@@ -87,7 +87,7 @@
                         <div class="card-stats">
                           <span class="stat-badge">
                             <Icon name="zap" />
-                            {{ agent.capabilities?.availableSkills?.length || 0 }} 技能
+                            {{ agent.capabilities?.skillIds?.length || 0 }} 技能
                           </span>
                           <span class="stat-badge">
                             <Icon name="tool" />
@@ -359,7 +359,8 @@ async function createNewAgent() {
   const agent = await createAgent({
     name: newAgentForm.value.name,
     description: newAgentForm.value.description,
-    avatar: newAgentForm.value.avatar
+    avatar: newAgentForm.value.avatar,
+    level: 'custom'
   })
   
   if (agent) {

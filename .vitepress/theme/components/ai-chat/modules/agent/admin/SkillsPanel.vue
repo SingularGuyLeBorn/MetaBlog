@@ -151,11 +151,12 @@
                 <div class="form-group-3d">
                   <label>分类</label>
                   <select v-model="form.category" class="form-select-3d">
-                    <option value="通用">通用</option>
-                    <option value="写作">写作</option>
-                    <option value="编程">编程</option>
-                    <option value="分析">分析</option>
-                    <option value="搜索">搜索</option>
+                    <option value="general">通用</option>
+                    <option value="writing">写作</option>
+                    <option value="coding">编程</option>
+                    <option value="analysis">分析</option>
+                    <option value="creative">创意</option>
+                    <option value="custom">自定义</option>
                   </select>
                 </div>
               </div>
@@ -194,11 +195,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useAgentConfig } from '../../../core/composables/useAgentConfig'
-import type { Skill } from '../../../core/types/agent'
+import { useAgentConfig } from '../../../core/composables'
+import type { Skill, SkillCategory } from '../../../core/types'
 import SkillDetailModal from './SkillDetailModal.vue'
 
-const { skills, addSkill, updateSkill: updateSkillApi, deleteSkill: deleteSkillApi } = useAgentConfig()
+const { skills, createSkill, updateSkill: updateSkillApi, deleteSkill: deleteSkillApi } = useAgentConfig()
 
 const searchQuery = ref('')
 const selectedCategory = ref('all')
@@ -210,11 +211,12 @@ const viewingSkill = ref<Skill | null>(null)
 
 const categories = [
   { id: 'all', name: '全部' },
-  { id: '通用', name: '通用' },
-  { id: '写作', name: '写作' },
-  { id: '编程', name: '编程' },
-  { id: '分析', name: '分析' },
-  { id: '搜索', name: '搜索' }
+  { id: 'general', name: '通用' },
+  { id: 'writing', name: '写作' },
+  { id: 'coding', name: '编程' },
+  { id: 'analysis', name: '分析' },
+  { id: 'creative', name: '创意' },
+  { id: 'custom', name: '自定义' }
 ]
 
 const filteredSkills = computed(() => {
@@ -235,7 +237,7 @@ const filteredSkills = computed(() => {
 const form = ref({
   name: '',
   icon: '🎯',
-  category: '通用',
+  category: 'general' as SkillCategory,
   description: '',
   content: '',
   tools: [] as string[]
@@ -303,7 +305,7 @@ function closeModal() {
 }
 
 function resetForm() {
-  form.value = { name: '', icon: '🎯', category: '通用', description: '', content: '', tools: [] }
+  form.value = { name: '', icon: '🎯', category: 'general' as SkillCategory, description: '', content: '', tools: [] }
   toolsInput.value = ''
 }
 
@@ -312,7 +314,7 @@ function editSkill(skill: Skill) {
   form.value = {
     name: skill.name,
     icon: skill.icon,
-    category: skill.category || '通用',
+    category: skill.category || 'general',
     description: skill.description,
     content: skill.content || '',
     tools: [...(skill.tools || [])]
@@ -335,7 +337,7 @@ async function saveSkill() {
   if (editingSkill.value) {
     await updateSkillApi(editingSkill.value.id, data)
   } else {
-    await addSkill(data as Omit<Skill, 'id' | 'createdAt' | 'updatedAt'>)
+    await createSkill(data as Omit<Skill, 'id' | 'createdAt' | 'updatedAt' | 'isBuiltIn'>)
   }
   closeModal()
 }
@@ -867,15 +869,4 @@ async function deleteSkill(skill: Skill) {
   box-shadow: 0 15px 35px rgba(139,92,246,0.4);
 }
 
-/* Transition */
-.modal-3d-enter-active,
-.modal-3d-leave-active {
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.modal-3d-enter-from,
-.modal-3d-leave-to {
-  opacity: 0;
-  transform: scale(0.9) translateY(20px);
-}
 </style>

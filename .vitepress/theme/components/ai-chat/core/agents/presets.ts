@@ -3,7 +3,7 @@
  * 一键创建专门用途的 Agent
  */
 
-import type { AgentCreateParams } from '../composables/useAgents'
+import type { AgentCreateParams } from '../types/agent'
 
 /**
  * 稍后阅读助手 - 保存网页内容到知识库
@@ -18,8 +18,9 @@ export const readLaterAgentPreset: AgentCreateParams = {
   avatar: '📚',
   description: '自动保存网页内容到知识库。支持知乎、小红书、公众号等平台，生成阅读笔记并分类归档。',
   level: 'custom',
-  skills: ['content_extract', 'note_create', 'knowledge_manage'],
-  systemPrompt: `你是稍后阅读助手，帮助用户收集和整理网络内容。
+  capabilities: {
+    skillIds: ['content_extract', 'note_create', 'knowledge_manage'],
+    customSystemPrompt: `你是稍后阅读助手，帮助用户收集和整理网络内容。
 
 ## 核心能力
 1. 链接解析：识别知乎、小红书、公众号等平台的链接，提取完整内容
@@ -80,6 +81,7 @@ sections/readflow/YYYY-MM/文章标题.md
 - 生成有意义的文件名（使用文章标题的拼音或英文）
 - 如果内容很长，在笔记中标记"完整内容见原文"
 - 如果解析失败，告知用户并提供备用方案`
+  }
 }
 
 /**
@@ -90,8 +92,9 @@ export const knowledgeCleanerAgentPreset: AgentCreateParams = {
   avatar: '🧹',
   description: '自动检查知识库文章的格式问题，修复错误，整理分类，生成索引。',
   level: 'custom',
-  skills: ['file_manage', 'content_check', 'auto_fix'],
-  systemPrompt: `你是知识库整理助手，帮助用户维护高质量的笔记系统。
+  capabilities: {
+    skillIds: ['file_manage', 'content_check', 'auto_fix'],
+    customSystemPrompt: `你是知识库整理助手，帮助用户维护高质量的笔记系统。
 
 ## 核心能力
 1. 格式检查：检查 frontmatter 完整性、Markdown 语法错误
@@ -118,6 +121,7 @@ export const knowledgeCleanerAgentPreset: AgentCreateParams = {
 
 ## 输出格式
 生成整理报告保存到 sections/knowledge/maintenance-report-YYYY-MM-DD.md`
+  }
 }
 
 /**
@@ -128,8 +132,9 @@ export const researchAssistantAgentPreset: AgentCreateParams = {
   avatar: '🔬',
   description: '深度阅读指定主题的内容，整合多篇文章，生成研究报告。',
   level: 'custom',
-  skills: ['deep_reading', 'multi_source', 'report_generation'],
-  systemPrompt: `你是研究助手，帮助用户进行主题式深度阅读。
+  capabilities: {
+    skillIds: ['deep_reading', 'multi_source', 'report_generation'],
+    customSystemPrompt: `你是研究助手，帮助用户进行主题式深度阅读。
 
 ## 核心能力
 1. 主题检索：在知识库中搜索相关内容
@@ -166,6 +171,7 @@ sources: 5
 
 ## 结论与建议
 ...`
+  }
 }
 
 /**

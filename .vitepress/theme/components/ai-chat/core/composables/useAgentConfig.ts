@@ -212,13 +212,8 @@ export function useAgentConfig() {
   // ==================== 系统提示词构建 ====================
 
   /**
-   * 构建系统提示词（Claude Code 模式）
-   * 
-   * 架构：
-   * - Agent 有自己的 baseRole（来自 agent.md）定义"你是谁"
-   * - 系统提示词列出 availableSkills（名称+描述）
-   * - AI 根据对话自主决定调用哪个 Skill
-   * - Skill 详细内容在调用时动态注入
+   * 构建系统提示词
+   * 使用后端定义的数据结构：capabilities.customSystemPrompt 和 skillIds
    */
   function buildSystemPrompt(agent: Agent): string {
     const capabilities = agent.capabilities
@@ -226,17 +221,17 @@ export function useAgentConfig() {
       return '你是一个 helpful 的 AI 助手。'
     }
     
-    const { baseRole, roleSupplement } = capabilities
-    const availableSkills = capabilities.availableSkills || []
+    const customSystemPrompt = capabilities.customSystemPrompt
+    const skillIds = capabilities.skillIds || []
     
     const sections: string[] = []
     
-    // 1. 基础角色 - "你是谁"（来自 agent.md）
-    sections.push(baseRole || `你是 ${agent.name}，${agent.description}`)
+    // 1. 基础角色 - 使用后端的 customSystemPrompt
+    sections.push(customSystemPrompt || `你是 ${agent.name}，${agent.description}`)
     
-    // 2. 可用 Skills 列表（Claude Code 模式核心）
-    if (availableSkills.length > 0) {
-      const agentSkills = skills.value.filter(s => availableSkills.includes(s.id))
+    // 2. 可用 Skills 列表
+    if (skillIds.length > 0) {
+      const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
       if (agentSkills.length > 0) {
         sections.push('\n\n## 可用 Skills')
         sections.push('你可以根据对话需要，自主决定调用以下 Skills：\n')
@@ -257,12 +252,6 @@ export function useAgentConfig() {
       }
     }
     
-    // 3. 角色补充
-    if (roleSupplement) {
-      sections.push('\n\n## 补充说明')
-      sections.push(roleSupplement)
-    }
-    
     return sections.join('\n')
   }
   
@@ -274,11 +263,11 @@ export function useAgentConfig() {
     const capabilities = agent.capabilities
     if (!capabilities) return []
     
-    const availableSkills = capabilities.availableSkills || []
+    const skillIds = capabilities.skillIds || []
     const effectiveToolNames = new Set<string>()
     
     // 从启用的 Skills 继承工具
-    const agentSkills = skills.value.filter(s => availableSkills.includes(s.id))
+    const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
     agentSkills.forEach(skill => {
       skill.tools?.forEach((toolName: string) => effectiveToolNames.add(toolName))
     })
@@ -317,11 +306,11 @@ export function useAgentConfig() {
     })
     
     const capabilities = agent.capabilities
-    const { availableSkills } = capabilities || { availableSkills: [] }
+    const skillIds = capabilities?.skillIds || []
     
     // 技能节点
-    if (availableSkills.length > 0) {
-      const agentSkills = skills.value.filter(s => availableSkills.includes(s.id))
+    if (skillIds.length > 0) {
+      const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
       agentSkills.forEach((skill, index) => {
         const skillNode: CapabilityNode = {
           id: skill.id,
@@ -358,8 +347,6 @@ export function useAgentConfig() {
       })
     }
     
-    // Claude Code 模式：工具通过 Skill 包含，不单独显示
-    
     return { nodes, edges }
   }
 
@@ -390,15 +377,15 @@ export function useAgentConfig() {
    * 实际可以使用更复杂的语义匹配
    */
   function matchSkills(userInput: string, agent: Agent): string[] {
-    const availableSkills = agent.capabilities?.availableSkills || []
+    const skillIds = agent.capabilities?.skillIds || []
     
     // 没有可用 Skills
-    if (availableSkills.length === 0) return []
+    if (skillIds.length === 0) return []
     
     const input = userInput.toLowerCase()
     const matchedSkillIds: string[] = []
     
-    const agentSkills = skills.value.filter(s => availableSkills.includes(s.id))
+    const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
     
     for (const skill of agentSkills) {
       if (!skill.enabled) continue

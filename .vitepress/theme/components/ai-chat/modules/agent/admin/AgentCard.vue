@@ -111,6 +111,7 @@
 import { ref, computed } from 'vue'
 import type { Agent } from '../../../core/composables/useAgents'
 import { LEVEL_CONFIG } from '../../../core/composables/useAgents'
+import { useSkills } from '../../../core/composables'
 
 const props = defineProps<{
   agent: Agent
@@ -192,14 +193,18 @@ const statusText = computed(() => {
 })
 
 // 技能显示
+const { getSkillById } = useSkills()
 const maxSkills = 3
-const displayedSkills = computed(() => (props.agent.skills || []).slice(0, maxSkills))
-const remainingSkills = computed(() => Math.max(0, (props.agent.skills?.length || 0) - maxSkills))
+const skillIds = computed(() => props.agent.capabilities?.skillIds || [])
+const displayedSkills = computed(() => 
+  skillIds.value.slice(0, maxSkills).map(id => getSkillById(id)?.name || id)
+)
+const remainingSkills = computed(() => Math.max(0, skillIds.value.length - maxSkills))
 
 // 统计数据
 const stats = computed(() => [
   { value: formatNumber(props.agent.callCount || 0), label: '调用' },
-  { value: props.agent.skills?.length || 0, label: '技能' },
+  { value: skillIds.value.length, label: '技能' },
   { value: (props.agent.permissions || []).filter(p => p.granted).length, label: '权限' }
 ])
 

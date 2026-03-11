@@ -10,45 +10,17 @@
  */
 
 import { ref, computed } from 'vue'
+import type { 
+  Agent, 
+  AgentCreateParams, 
+  AgentLevel, 
+  AgentStatus,
+  AgentPermission,
+  AgentCapabilities,
+  AgentMemory
+} from '../types'
 
-export type AgentLevel = 'meta' | 'core' | 'fixed' | 'custom' | 'temp'
-export type AgentStatus = 'online' | 'offline' | 'busy' | 'idle'
-
-export interface AgentPermission {
-  id: string
-  name: string
-  description: string
-  granted: boolean
-}
-
-export interface Agent {
-  id: string
-  name: string
-  avatar: string
-  description: string
-  level: AgentLevel
-  status: AgentStatus
-  seat: number
-  skills: string[]
-  permissions: AgentPermission[]
-  systemPrompt: string
-  memoryEnabled: boolean
-  memoryContent: string
-  createdAt: number
-  updatedAt: number
-  lastActiveAt: number
-  callCount: number
-  isDefault: boolean
-}
-
-export interface AgentCreateParams {
-  name: string
-  avatar?: string
-  description: string
-  level: AgentLevel
-  skills?: string[]
-  systemPrompt?: string
-}
+export type { Agent, AgentCreateParams, AgentLevel, AgentStatus, AgentPermission }
 
 // 权限模板
 export const PERMISSION_TEMPLATES: Omit<AgentPermission, 'granted'>[] = [
@@ -82,9 +54,11 @@ const DEFAULT_AGENT: Agent = {
   level: 'meta',
   status: 'online',
   seat: 1,
-  skills: ['readlater', 'knowledge_manage', 'content_extract', 'note_create'],
-  permissions: PERMISSION_TEMPLATES.map(p => ({ ...p, granted: true })),
-  systemPrompt: `你是 Meta 助手，用户的个人知识管家。你的核心使命是帮用户收集、整理和管理知识。
+  capabilities: {
+    mode: 'raw',
+    skillIds: ['readlater', 'knowledge_manage', 'content_extract', 'note_create'],
+    toolIds: [],
+    customSystemPrompt: `你是 Meta 助手，用户的个人知识管家。你的核心使命是帮用户收集、整理和管理知识。
 
 ## 🎯 核心能力
 
@@ -178,9 +152,15 @@ sections/readflow/YYYY-MM/category/文件名.md
 → 调用 ocr_image → 如果识别到链接 → parse_zhihu → create_article
 
 用户："整理一下我的知识库"
-→ 调用 list_articles → 逐一检查 → 生成报告 → 询问是否修复`,
-  memoryEnabled: true,
-  memoryContent: '',
+→ 调用 list_articles → 逐一检查 → 生成报告 → 询问是否修复`
+  },
+  permissions: [],
+  memory: {
+    enabled: true,
+    content: '',
+    autoExtract: true,
+    maxTokens: 2000
+  },
   createdAt: Date.now(),
   updatedAt: Date.now(),
   lastActiveAt: Date.now(),
@@ -262,7 +242,7 @@ export function useAgents() {
     })
   })
 
-  // 初始化 - 从后端加载
+  // 初始化 - 从后端加载（字段映射转换）
   async function init() {
     isLoading.value = true
     error.value = null
@@ -273,8 +253,8 @@ export function useAgents() {
       // 过滤掉无效数据（缺少必要字段的）
       const validData = data.filter((a: any) => a.name && a.id)
       
-      // 确保每个 Agent 都有完整的属性
-      const completeData = validData.map((a: Partial<Agent>) => ({
+      // 将后端数据映射为前端期望的格式
+      const completeData: Agent[] = validData.map((a: any) => ({
         ...DEFAULT_AGENT,
         ...a,
         id: a.id || `agent-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
@@ -284,11 +264,19 @@ export function useAgents() {
         level: (a.level || 'custom') as AgentLevel,
         status: (a.status || 'idle') as AgentStatus,
         seat: a.seat ?? 999,
-        skills: a.skills || [],
+        capabilities: {
+          mode: a.capabilities?.mode || 'raw',
+          skillIds: a.capabilities?.skillIds || [],
+          toolIds: a.capabilities?.toolIds || [],
+          customSystemPrompt: a.capabilities?.customSystemPrompt || ''
+        },
+        memory: {
+          enabled: a.memory?.enabled ?? true,
+          content: a.memory?.content || '',
+          autoExtract: a.memory?.autoExtract ?? true,
+          maxTokens: a.memory?.maxTokens || 2000
+        },
         permissions: a.permissions || PERMISSION_TEMPLATES.map(p => ({ ...p, granted: p.id === 'chat' })),
-        systemPrompt: a.systemPrompt || '',
-        memoryEnabled: a.memoryEnabled ?? false,
-        memoryContent: a.memoryContent || '',
         callCount: a.callCount ?? 0,
         isDefault: a.isDefault ?? false,
         createdAt: a.createdAt ?? Date.now(),
@@ -321,21 +309,29 @@ export function useAgents() {
   // 创建 Agent
   async function create(params: AgentCreateParams): Promise<Agent> {
     const now = Date.now()
-    const newAgentData = {
+    const newAgentData: Omit<Agent, 'id' | 'createdAt' | 'updatedAt'> = {
       name: params.name,
       avatar: params.avatar || '🤖',
       description: params.description,
       level: params.level,
-      status: 'idle' as AgentStatus,
+      status: 'idle',
       seat: 999,
-      skills: params.skills || [],
+      capabilities: {
+        mode: params.capabilities?.mode || 'raw',
+        skillIds: params.capabilities?.skillIds || [],
+        toolIds: params.capabilities?.toolIds || [],
+        customSystemPrompt: params.capabilities?.customSystemPrompt || ''
+      },
+      memory: {
+        enabled: params.memory?.enabled ?? true,
+        content: params.memory?.content || '',
+        autoExtract: params.memory?.autoExtract ?? true,
+        maxTokens: params.memory?.maxTokens || 2000
+      },
       permissions: PERMISSION_TEMPLATES.map(p => ({
         ...p,
         granted: p.id === 'chat'
       })),
-      systemPrompt: params.systemPrompt || '',
-      memoryEnabled: false,
-      memoryContent: '',
       lastActiveAt: now,
       callCount: 0,
       isDefault: false

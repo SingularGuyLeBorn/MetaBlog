@@ -215,6 +215,13 @@
         </div>
       </Transition>
     </Teleport>
+    
+    <!-- Toast 提示 -->
+    <Teleport to="body">
+      <Transition name="toast">
+        <div v-if="toastVisible" class="chat-toast">{{ toastMessage }}</div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -268,6 +275,18 @@ const showAgentAdmin = ref(false)
 const showLogDashboard = ref(false)
 const selectedSkill = ref<Skill | undefined>(undefined)
 
+// Toast 状态
+const toastMessage = ref('')
+const toastVisible = ref(false)
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+
+function showToast(msg: string, duration = 2000) {
+  toastMessage.value = msg
+  toastVisible.value = true
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { toastVisible.value = false }, duration)
+}
+
 // Agent 选择相关
 const selectedAgent = ref<Agent | null>(null)
 const showAgentDropdown = ref(false)
@@ -288,15 +307,13 @@ const showSessionManager = ref(false)
 const filteredSessions = computed(() => {
   if (!selectedAgent.value) return sessions.value
   
-  // 筛选出当前选中 Agent 的会话
-  // 通过 agentId 字段来标识（需要在 Session 类型中添加）
+  const agentId = selectedAgent.value.id
   return sessions.value.filter(s => {
-    // 如果会话有 agentId，则匹配
-    if ((s as any).agentId) {
-      return (s as any).agentId === selectedAgent.value?.id
-    }
-    // 如果没有 agentId，默认显示（兼容旧数据）
-    return true
+    const sid = (s.config as any)?.agentId
+    // 匹配当前 Agent 的会话
+    if (sid) return sid === agentId
+    // 没有 agentId 的旧数据 → 不显示（避免所有 Agent 都看到同一批旧会话）
+    return false
   })
 })
 
@@ -404,19 +421,19 @@ async function selectAgent(agent: Agent) {
   showAgentDropdown.value = false
   
   // 检查是否已有该 Agent 的会话
-  const agentSessions = sessions.value.filter(s => (s as any).agentId === agent.id)
+  const agentSessions = sessions.value.filter(s => (s.config as any)?.agentId === agent.id)
   
   if (agentSessions.length === 0) {
     // 没有会话，自动创建一个
     await createSessionForCurrentAgent()
   } else {
-    // 切换到最新的会话
-    const latestSession = agentSessions[agentSessions.length - 1]
+    // 切换到最新的会话 (因为 sessions 是最新的在前面，所以取 [0])
+    const latestSession = agentSessions[0]
     switchSession(latestSession.id)
     
     // 如果当前会话没有自定义 systemPrompt，更新为新 Agent 的
     if (!latestSession.config._customSystemPrompt) {
-      const agentPrompt = agent.systemPrompt || buildSystemPrompt(agent)
+      const agentPrompt = agent.capabilities?.customSystemPrompt || buildSystemPrompt(agent)
       updateSessionConfig(latestSession.id, { 
         systemPrompt: agentPrompt
       })
@@ -427,19 +444,43 @@ async function selectAgent(agent: Agent) {
 
 // 为当前 Agent 创建会话
 async function createSessionForCurrentAgent() {
+  // 严格拦截：如果当前已经在空会话中，绝不重复新建空会话（直接转给新选的Agent用就行了）
+  if (currentSessionId.value) {
+    const sid = currentSessionId.value
+    const currentGroups = messageGroups.value
+    
+    if (currentGroups.length === 0) {
+      showToast('已经在新会话中了')
+      
+      // 直接把当前空会话分配给选中的 Agent
+      if (selectedAgent.value) {
+        updateSessionConfig(sid, {
+          agentId: selectedAgent.value.id,
+          agentName: selectedAgent.value.name,
+          systemPrompt: selectedAgent.value.systemPrompt || buildSystemPrompt(selectedAgent.value),
+          _customSystemPrompt: false
+        } as any)
+      }
+      return
+    }
+  }
+  
   const newSession = await createSession()
   if (newSession && selectedAgent.value) {
-    // 标记会话属于哪个 Agent
-    ;(newSession as any).agentId = selectedAgent.value.id
-    ;(newSession as any).agentName = selectedAgent.value.name
-    
     // 设置会话标题
     renameSession(newSession.id, `与 ${selectedAgent.value.name} 的对话`)
     
-    // 设置系统提示词为 Agent 的默认（未自定义）
+    // 持久化 agentId + systemPrompt 到 config（会随会话保存到后端）
     const systemPrompt = selectedAgent.value.systemPrompt || buildSystemPrompt(selectedAgent.value)
-    updateSessionConfig(newSession.id, { systemPrompt })
-    newSession.config._customSystemPrompt = false // 标记为未自定义，跟随 Agent
+    updateSessionConfig(newSession.id, {
+      agentId: selectedAgent.value.id,
+      agentName: selectedAgent.value.name,
+      systemPrompt,
+      _customSystemPrompt: false, // 标记为未自定义，跟随 Agent
+    } as any)
+    
+    // 强制切换到新创建的会话
+    switchSession(newSession.id)
   }
 }
 
@@ -515,7 +556,7 @@ function handleSwitchFromManager(sessionId: string) {
   // 找到会话对应的 Agent
   const session = sessions.value.find(s => s.id === sessionId)
   if (session) {
-    const agentId = (session as any).agentId
+    const agentId = (session.config as any)?.agentId
     if (agentId) {
       const agent = allAgents.value.find(a => a.id === agentId)
       if (agent) {
@@ -613,6 +654,12 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   height: calc(100vh - var(--vp-nav-height, 64px));
   background: var(--ai-bg-body);
   overflow: hidden;
+  font-family: 'Urbanist', sans-serif;
+  
+  /* 添加微弱的光晕背景 */
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.03) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 40%);
 }
 
 /* 主聊天区 */
@@ -621,7 +668,8 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: var(--ai-bg-body);
+  background: transparent;
+  position: relative;
 }
 
 /* 顶部栏 */
@@ -630,9 +678,9 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   align-items: center;
   justify-content: space-between;
   padding: var(--ai-space-3) var(--ai-space-5);
-  background: var(--ai-bg-sidebar);
+  background: transparent;
   border-bottom: 1px solid var(--ai-border-light);
-  box-shadow: var(--ai-shadow-sm);
+  z-index: 10;
 }
 
 .header-left {
@@ -699,17 +747,19 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 100px;
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .agent-select-trigger:hover,
 .agent-select-trigger.open {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
-  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
 }
 
 .selected-avatar {
@@ -738,13 +788,14 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 /* Agent 下拉菜单 */
 .agent-dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 12px);
   left: 0;
   min-width: 280px;
-  background: rgba(255, 255, 255, 0.98);
-  border: 1px solid var(--ai-border-light);
-  border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  background: rgba(0, 11, 26, 0.85);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.3);
   z-index: 100;
   overflow: hidden;
 }
@@ -806,11 +857,11 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 }
 
 .agent-option:hover {
-  background: var(--ai-gray-100);
+  background: rgba(107, 231, 142, 0.05);
 }
 
 .agent-option.active {
-  background: var(--vp-c-brand-soft);
+  background: rgba(107, 231, 142, 0.1);
 }
 
 .option-avatar {
@@ -820,8 +871,9 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--ai-gray-100);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .option-info {
@@ -834,13 +886,13 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 
 .option-name {
   font-size: 14px;
-  font-weight: 500;
-  color: var(--ai-text-primary);
+  font-weight: 600;
+  color: #FFFFFF;
 }
 
 .option-desc {
   font-size: 12px;
-  color: var(--ai-text-tertiary);
+  color: rgba(255, 255, 255, 0.6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -852,8 +904,8 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--vp-c-brand);
-  color: white;
+  background: #6BE78E;
+  color: #000B1A;
   border-radius: 50%;
   font-size: 11px;
 }
@@ -926,7 +978,7 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 .glass-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(241, 245, 249, 0.6);
   backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
@@ -937,24 +989,20 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 
 .glass-modal-3d {
   position: relative;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.9) 0%,
-    rgba(248, 250, 252, 0.85) 50%,
-    rgba(241, 245, 249, 0.8) 100%
-  );
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
   border-radius: 24px;
   padding: 40px;
   text-align: center;
   max-width: 400px;
   width: 90%;
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   box-shadow: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgba(255, 255, 255, 0.4) inset,
-    0 0 60px rgba(99, 102, 241, 0.1);
+    0 25px 50px -12px rgba(31, 38, 135, 0.1),
+    0 0 60px rgba(59, 130, 246, 0.1);
   transform-style: preserve-3d;
   animation: modal-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
   overflow: hidden;
 }
 
@@ -1179,5 +1227,35 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
     left: auto;
     right: 0;
   }
+}
+
+/* Toast 提示 */
+.chat-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 24px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #1e293b;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 10000;
+  pointer-events: none;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-12px);
 }
 </style>

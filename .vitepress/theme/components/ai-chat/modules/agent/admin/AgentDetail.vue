@@ -116,7 +116,7 @@
           
           <div class="form-group-3d">
             <textarea 
-              v-model="form.systemPrompt" 
+              v-model="form.capabilities.customSystemPrompt" 
               rows="20" 
               class="form-textarea-3d code"
               placeholder="你是一个 helpful 的 AI 助手..."
@@ -146,13 +146,13 @@
               v-for="(skill, index) in availableSkills"
               :key="skill.id"
               class="skill-checkbox-3d"
-              :class="{ checked: form.skills.includes(skill.id) }"
+              :class="{ checked: form.capabilities.skillIds.includes(skill.id) }"
               :style="{ animationDelay: `${index * 0.05}s` }"
             >
               <input
                 type="checkbox"
                 :value="skill.id"
-                v-model="form.skills"
+                v-model="form.capabilities.skillIds"
               />
               <span class="skill-icon-3d">{{ skill.icon }}</span>
               <div class="skill-info-3d">
@@ -170,15 +170,15 @@
           <div class="form-group-3d inline">
             <label>启用长期记忆</label>
             <label class="toggle-switch-3d">
-              <input type="checkbox" v-model="form.memoryEnabled" />
+              <input type="checkbox" v-model="form.memory.enabled" />
               <span class="toggle-slider-3d"></span>
             </label>
           </div>
           
-          <div v-if="form.memoryEnabled" class="form-group-3d">
+          <div v-if="form.memory.enabled" class="form-group-3d">
             <label>记忆内容</label>
             <textarea 
-              v-model="form.memoryContent" 
+              v-model="form.memory.content" 
               rows="10" 
               class="form-textarea-3d"
               placeholder="输入 Agent 需要记住的信息..."
@@ -253,7 +253,7 @@
             </div>
             <div class="preview-stat-3d">
               <span class="stat-label">技能数</span>
-              <span class="stat-value">{{ form.skills.length }}</span>
+              <span class="stat-value">{{ form.capabilities.skillIds.length }}</span>
             </div>
             <div class="preview-stat-3d">
               <span class="stat-label">权限数</span>
@@ -319,10 +319,18 @@ const form = reactive({
   avatar: props.agent.avatar,
   description: props.agent.description,
   level: props.agent.level,
-  systemPrompt: props.agent.systemPrompt,
-  skills: [...props.agent.skills],
-  memoryEnabled: props.agent.memoryEnabled,
-  memoryContent: props.agent.memoryContent,
+  capabilities: {
+    mode: props.agent.capabilities?.mode || 'raw',
+    skillIds: [...(props.agent.capabilities?.skillIds || [])],
+    toolIds: [...(props.agent.capabilities?.toolIds || [])],
+    customSystemPrompt: props.agent.capabilities?.customSystemPrompt || ''
+  },
+  memory: {
+    enabled: props.agent.memory?.enabled ?? true,
+    content: props.agent.memory?.content || '',
+    autoExtract: props.agent.memory?.autoExtract ?? true,
+    maxTokens: props.agent.memory?.maxTokens || 2000
+  },
   seat: props.agent.seat,
   permissions: JSON.parse(JSON.stringify(props.agent.permissions)) as AgentPermission[]
 })
@@ -332,10 +340,18 @@ watch(() => props.agent, (newAgent) => {
   form.avatar = newAgent.avatar
   form.description = newAgent.description
   form.level = newAgent.level
-  form.systemPrompt = newAgent.systemPrompt
-  form.skills = [...newAgent.skills]
-  form.memoryEnabled = newAgent.memoryEnabled
-  form.memoryContent = newAgent.memoryContent
+  form.capabilities = {
+    mode: newAgent.capabilities?.mode || 'raw',
+    skillIds: [...(newAgent.capabilities?.skillIds || [])],
+    toolIds: [...(newAgent.capabilities?.toolIds || [])],
+    customSystemPrompt: newAgent.capabilities?.customSystemPrompt || ''
+  }
+  form.memory = {
+    enabled: newAgent.memory?.enabled ?? true,
+    content: newAgent.memory?.content || '',
+    autoExtract: newAgent.memory?.autoExtract ?? true,
+    maxTokens: newAgent.memory?.maxTokens || 2000
+  }
   form.seat = newAgent.seat
   form.permissions = JSON.parse(JSON.stringify(newAgent.permissions))
 }, { deep: true })
@@ -384,10 +400,14 @@ const hasChanges = computed(() => {
     form.avatar !== props.agent.avatar ||
     form.description !== props.agent.description ||
     form.level !== props.agent.level ||
-    form.systemPrompt !== props.agent.systemPrompt ||
-    JSON.stringify(form.skills) !== JSON.stringify(props.agent.skills) ||
-    form.memoryEnabled !== props.agent.memoryEnabled ||
-    form.memoryContent !== props.agent.memoryContent ||
+    form.capabilities.mode !== (props.agent.capabilities?.mode || 'raw') ||
+    JSON.stringify(form.capabilities.skillIds) !== JSON.stringify(props.agent.capabilities?.skillIds || []) ||
+    JSON.stringify(form.capabilities.toolIds) !== JSON.stringify(props.agent.capabilities?.toolIds || []) ||
+    form.capabilities.customSystemPrompt !== (props.agent.capabilities?.customSystemPrompt || '') ||
+    form.memory.enabled !== (props.agent.memory?.enabled ?? true) ||
+    form.memory.content !== (props.agent.memory?.content || '') ||
+    form.memory.autoExtract !== (props.agent.memory?.autoExtract ?? true) ||
+    form.memory.maxTokens !== (props.agent.memory?.maxTokens || 2000) ||
     form.seat !== props.agent.seat ||
     JSON.stringify(form.permissions) !== JSON.stringify(props.agent.permissions)
   )
@@ -406,10 +426,8 @@ function saveChanges() {
     avatar: form.avatar,
     description: form.description,
     level: form.level,
-    systemPrompt: form.systemPrompt,
-    skills: form.skills,
-    memoryEnabled: form.memoryEnabled,
-    memoryContent: form.memoryContent,
+    capabilities: form.capabilities,
+    memory: form.memory,
     seat: form.seat,
     permissions: form.permissions
   })
@@ -428,7 +446,7 @@ function togglePermission(id: string) {
 }
 
 function applyPromptTemplate(tpl: { name: string; content: string }) {
-  form.systemPrompt = tpl.content
+  form.capabilities.customSystemPrompt = tpl.content
 }
 
 function confirmDelete() {

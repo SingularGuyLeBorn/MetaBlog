@@ -209,6 +209,23 @@
   </div>
 </template>
 
+<script lang="ts">
+// 内存中存储已显示打字机效果的消息ID，跨组件实例共享（页面刷新后重置）
+const shownMessageIds = new Set<string>()
+
+// 保存已显示打字机效果的消息ID到内存
+function saveShownMessageId(messageId: string): void {
+  shownMessageIds.add(messageId)
+  // 只保留最近100条记录，防止内存过大
+  if (shownMessageIds.size > 100) {
+    const firstId = shownMessageIds.values().next().value
+    if (firstId) {
+      shownMessageIds.delete(firstId)
+    }
+  }
+}
+</script>
+
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { marked } from 'marked'
@@ -223,21 +240,21 @@ interface VersionInfo {
   userMessageId: string
 }
 
-interface Props {
+interface MessageBubbleProps {
   message: ChatMessage
   isStreaming: boolean
   isLast: boolean
   versions?: VersionInfo | null
 }
 
-const props = defineProps<Props>()
+const props = defineProps<MessageBubbleProps>()
 
 const emit = defineEmits<{
   regenerate: []
   'switch-version': [payload: { userMessageId: string; versionIndex: number }]
 }>()
 
-const isExpanded = ref(false) // 传统思考框默认折叠
+const isExpanded = ref(true) // 传统思考框默认展开，让用户看到正在思考
 const copied = ref(false)
 const showToolRecords = ref(false) // 工具调用面板默认折叠
 const expandedTools = ref<boolean[]>([]) // 每个工具的详情默认折叠
@@ -336,21 +353,6 @@ const thinkingSteps = computed(() => {
   return [...steps].sort((a, b) => a.index - b.index)
 })
 
-// 内存中存储已显示打字机效果的消息ID（页面刷新后重置）
-const shownMessageIds = new Set<string>()
-
-// 保存已显示打字机效果的消息ID到内存
-function saveShownMessageId(messageId: string): void {
-  shownMessageIds.add(messageId)
-  // 只保留最近100条记录，防止内存过大
-  if (shownMessageIds.size > 100) {
-    const firstId = shownMessageIds.values().next().value
-    if (firstId) {
-      shownMessageIds.delete(firstId)
-    }
-  }
-}
-
 // 是否使用打字机效果：只在消息首次完成时显示一次
 const shouldUseTypewriter = computed(() => {
   // 不是助手消息 -> 不使用
@@ -432,23 +434,22 @@ async function copyContent() {
   position: relative;
   max-width: 70%;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
-  color: white;
-  border-radius: 20px 20px 4px 20px;
+  background: rgba(107, 231, 142, 0.15);
+  backdrop-filter: blur(24px);
+  color: #1e293b;
+  border-radius: 20px;
+  border: 1px solid rgba(107, 231, 142, 0.4);
   box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.3),
-    0 8px 24px rgba(59, 130, 246, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 8px 32px rgba(0, 0, 0, 0.05),
+    inset 0 0 12px rgba(107, 231, 142, 0.2);
   transition: all 0.3s ease;
-  transform-style: preserve-3d;
 }
 
 .user-message-3d .message-content-3d:hover {
-  transform: translateY(-2px) rotateX(2deg);
+  transform: translateY(-2px);
   box-shadow: 
-    0 8px 20px rgba(59, 130, 246, 0.4),
-    0 16px 40px rgba(59, 130, 246, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    0 12px 40px rgba(0, 0, 0, 0.08),
+    inset 0 0 24px rgba(107, 231, 142, 0.3);
 }
 
 .user-message-3d .message-text {
@@ -463,13 +464,13 @@ async function copyContent() {
   gap: 6px;
   padding: 6px 12px;
   margin-bottom: 10px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(10px);
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .skill-icon {
@@ -487,15 +488,12 @@ async function copyContent() {
   gap: 4px;
   padding: 4px 12px;
   margin: 0 3px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
-  color: #2563eb;
+  background: rgba(107, 231, 142, 0.15);
+  color: #059669;
   border-radius: 16px;
   font-size: 13px;
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(107, 231, 142, 0.4);
   vertical-align: middle;
   cursor: default;
   user-select: none;
@@ -504,9 +502,7 @@ async function copyContent() {
 
 :deep(.mention-capsule-3d:hover) {
   transform: translateY(-1px);
-  box-shadow: 
-    0 4px 8px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: rgba(107, 231, 142, 0.25);
 }
 
 /* ========== AI 消息 ========== */
@@ -523,33 +519,28 @@ async function copyContent() {
 /* 思考过程 - 3D 卡片 */
 .reasoning-box-3d {
   margin-bottom: 16px;
-  background: linear-gradient(145deg, #f0fdf4, #dcfce7);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
   overflow: hidden;
-  box-shadow: 
-    0 4px 12px rgba(16, 185, 129, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   transition: all 0.3s ease;
 }
 
 .reasoning-box-3d:hover {
   transform: translateY(-1px);
-  box-shadow: 
-    0 8px 20px rgba(16, 185, 129, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.04);
 }
 
 /* 思考步骤面板样式 */
 .thinking-steps-panel {
   margin-bottom: 16px;
-  background: linear-gradient(145deg, #f0fdf4, #dcfce7);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
   overflow: hidden;
-  box-shadow: 
-    0 4px 12px rgba(16, 185, 129, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .thinking-steps-header {
@@ -563,7 +554,7 @@ async function copyContent() {
 }
 
 .thinking-steps-header:hover {
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(248, 250, 252, 0.8);
 }
 
 .thinking-steps-icon {
@@ -574,11 +565,11 @@ async function copyContent() {
   flex: 1;
   font-size: 14px;
   font-weight: 600;
-  color: #065f46;
+  color: #64748b;
 }
 
 .thinking-steps-list {
-  border-top: 1px solid rgba(16, 185, 129, 0.2);
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .reasoning-header {
@@ -588,7 +579,7 @@ async function copyContent() {
   padding: 10px 16px;
   font-size: 13px;
   font-weight: 600;
-  color: #059669;
+  color: #64748b;
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -598,7 +589,6 @@ async function copyContent() {
   margin-bottom: 12px;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: all 0.3s ease;
   animation: step-fade-in 0.4s ease-out;
 }
@@ -615,13 +605,13 @@ async function copyContent() {
 }
 
 .thinking-step.thinking {
-  background: linear-gradient(145deg, #f0fdf4, #dcfce7);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: rgba(107, 231, 142, 0.05);
+  border: 1px solid rgba(107, 231, 142, 0.2);
 }
 
 .thinking-step.tool_call {
-  background: linear-gradient(145deg, #fefce8, #fef9c3);
-  border: 1px solid rgba(234, 179, 8, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .thinking-step.last {
@@ -789,13 +779,11 @@ async function copyContent() {
 /* 工具调用 Panel - 简洁设计 */
 .tool-panel {
   margin-bottom: 16px;
-  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  background: rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .tool-panel-header {
@@ -805,14 +793,14 @@ async function copyContent() {
   padding: 10px 14px;
   font-size: 13px;
   font-weight: 600;
-  color: #475569;
+  color: #64748b;
   cursor: pointer;
   transition: all 0.2s;
-  background: linear-gradient(145deg, #f1f5f9, #e8ecf1);
+  background: rgba(248, 250, 252, 0.5);
 }
 
 .tool-panel-header:hover {
-  background: linear-gradient(145deg, #e2e8f0, #d1d5db);
+  background: rgba(241, 245, 249, 0.8);
 }
 
 .tool-panel-title {
@@ -826,8 +814,8 @@ async function copyContent() {
 }
 
 .tool-count {
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
+  background: rgba(107, 231, 142, 0.15);
+  color: #6BE78E;
   font-size: 11px;
   font-weight: 700;
   padding: 2px 8px;
@@ -852,11 +840,10 @@ async function copyContent() {
 /* 单个工具项 */
 .tool-item {
   margin-bottom: 8px;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(226, 232, 240, 0.6);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   transition: all 0.2s ease;
 }
 
@@ -866,7 +853,8 @@ async function copyContent() {
 
 .tool-item:hover {
   border-color: rgba(59, 130, 246, 0.3);
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
 .tool-item-header {
@@ -890,8 +878,8 @@ async function copyContent() {
 }
 
 .tool-round-num {
-  background: linear-gradient(145deg, #e0e7ff, #c7d2fe);
-  color: #4338ca;
+  background: rgba(107, 231, 142, 0.1);
+  color: #6BE78E;
   font-size: 10px;
   font-weight: 700;
   padding: 2px 6px;
@@ -1014,17 +1002,17 @@ async function copyContent() {
   margin: 0;
 }
 
-/* 3D 消息气泡 */
+/* 3D 消息气泡 AI */
 .message-bubble-3d {
   position: relative;
   padding: 20px 24px;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 4px 20px 20px 20px;
   box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.04),
-    0 8px 24px rgba(0, 0, 0, 0.02),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    0 8px 32px rgba(31, 38, 135, 0.05),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
   font-size: 15px;
   line-height: 1.8;
   color: #1e293b;
@@ -1035,9 +1023,8 @@ async function copyContent() {
 .message-bubble-3d:hover {
   transform: translateY(-2px);
   box-shadow: 
-    0 8px 20px rgba(0, 0, 0, 0.06),
-    0 16px 40px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    0 12px 40px rgba(31, 38, 135, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8);
 }
 
 /* 打字机效果 */
@@ -1121,7 +1108,7 @@ async function copyContent() {
 .message-bubble-3d :deep(h2),
 .message-bubble-3d :deep(h3) {
   margin: 24px 0 14px;
-  color: #1e293b;
+  color: #0f172a;
   font-weight: 700;
 }
 
@@ -1139,7 +1126,7 @@ async function copyContent() {
 
 .message-bubble-3d :deep(a:hover) {
   border-bottom-color: #3b82f6;
-  background: rgba(59, 130, 246, 0.05);
+  background: rgba(59, 130, 246, 0.1);
 }
 
 /* 3D 操作按钮 */
@@ -1162,7 +1149,7 @@ async function copyContent() {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 10px;
   font-size: 12px;
@@ -1178,7 +1165,7 @@ async function copyContent() {
   color: #3b82f6;
   border-color: rgba(59, 130, 246, 0.3);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.1);
 }
 
 .action-btn-3d.copied {

@@ -95,10 +95,9 @@
                 >
                   <div class="tool-card">
                     <div class="tool-header">
-                      <code class="tool-name">{{ tool.name || tool }}</code>
+                      <code class="tool-name">{{ tool }}</code>
                       <span class="tool-type">Function</span>
                     </div>
-                    <p class="tool-desc">{{ tool.description || '无描述' }}</p>
                   </div>
                 </LiquidGlass>
               </div>

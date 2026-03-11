@@ -391,11 +391,10 @@ function resetToAgentPrompt() {
   width: 340px;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
   border-left: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 
-    -8px 0 32px rgba(0, 0, 0, 0.06),
-    -4px 0 16px rgba(0, 0, 0, 0.04);
+  box-shadow: -8px 0 32px rgba(31, 38, 135, 0.1);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
   overflow: hidden;
@@ -413,7 +412,7 @@ function resetToAgentPrompt() {
   inset: 0;
   background: 
     radial-gradient(ellipse at 100% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 100% 100%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+    radial-gradient(ellipse at 100% 100%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -424,9 +423,8 @@ function resetToAgentPrompt() {
   align-items: center;
   justify-content: space-between;
   padding: 24px;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  background: transparent;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
   z-index: 1;
 }
 
@@ -442,16 +440,16 @@ function resetToAgentPrompt() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: rgba(59, 130, 246, 0.1);
   border-radius: 12px;
-  color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.2);
   transition: all 0.3s ease;
 }
 
 .header-icon-3d:hover {
   transform: translateY(-2px) rotate(10deg);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
 }
 
 .header-icon-3d svg {
@@ -472,20 +470,18 @@ function resetToAgentPrompt() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(241, 245, 249, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.6);
   border-radius: 10px;
   color: #64748b;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .close-btn-3d:hover {
-  background: linear-gradient(145deg, #fee2e2, #fecaca);
-  color: #ef4444;
+  background: rgba(226, 232, 240, 0.8);
+  color: #1e293b;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.15);
 }
 
 .close-btn-3d svg {
@@ -524,7 +520,7 @@ function resetToAgentPrompt() {
   gap: 8px;
   font-size: 14px;
   font-weight: 700;
-  color: #374151;
+  color: #1e293b;
   margin-bottom: 14px;
 }
 
@@ -535,13 +531,12 @@ function resetToAgentPrompt() {
 .value-badge-3d {
   margin-left: auto;
   padding: 4px 12px;
-  background: linear-gradient(145deg, #eff6ff, #dbeafe);
-  color: #2563eb;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 700;
   border: 1px solid rgba(59, 130, 246, 0.2);
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
 }
 
 .section-desc-3d {
@@ -564,14 +559,13 @@ function resetToAgentPrompt() {
   align-items: center;
   gap: 14px;
   padding: 16px;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  background: rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
   animation: slide-in-left 0.4s ease-out backwards;
 }
 
@@ -588,24 +582,20 @@ function resetToAgentPrompt() {
 
 .model-option-3d:hover {
   transform: translateY(-2px);
-  box-shadow: 
-    0 8px 20px rgba(0, 0, 0, 0.06),
-    0 0 0 1px rgba(59, 130, 246, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1), inset 0 0 16px rgba(59, 130, 246, 0.05);
 }
 
 .model-option-3d.active {
   background: linear-gradient(145deg, #eff6ff, #dbeafe);
-  border-color: #3b82f6;
-  box-shadow: 
-    0 4px 16px rgba(59, 130, 246, 0.2),
-    0 0 0 1px rgba(59, 130, 246, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15), inset 0 0 16px rgba(59, 130, 246, 0.05);
 }
 
 .model-glow {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+  background: radial-gradient(ellipse, rgba(59, 130, 246, 0.1), transparent);
   opacity: 0;
   transition: opacity 0.3s;
 }
@@ -633,19 +623,19 @@ function resetToAgentPrompt() {
 
 .model-badge-3d {
   padding: 4px 10px;
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-  color: white;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
   border-radius: 20px;
   font-size: 10px;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .check-icon-3d {
   width: 24px;
   height: 24px;
   color: #3b82f6;
-  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.2));
 }
 
 .check-icon-3d svg {
@@ -671,37 +661,33 @@ function resetToAgentPrompt() {
   width: 52px;
   height: 28px;
   padding: 2px;
-  background: linear-gradient(145deg, #e2e8f0, #cbd5e1);
-  border: none;
+  background: rgba(241, 245, 249, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s;
   position: relative;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .toggle-btn-3d.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  box-shadow: 
-    0 2px 8px rgba(59, 130, 246, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+  box-shadow: inset 0 0 12px rgba(59, 130, 246, 0.1);
 }
 
 .toggle-btn-3d.disabled {
-  background: linear-gradient(145deg, #93c5fd, #bfdbfe);
+  background: rgba(241, 245, 249, 0.5);
   cursor: not-allowed;
 }
 
 .toggle-slider-3d {
   display: block;
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  width: 22px;
+  height: 22px;
+  background: #FFFFFF;
   border-radius: 50%;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
-    0 2px 6px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .toggle-btn-3d.active .toggle-slider-3d {
@@ -720,7 +706,7 @@ function resetToAgentPrompt() {
   align-items: center;
   gap: 14px;
   padding: 10px 14px;
-  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  background: rgba(255, 255, 255, 0.6);
   border-radius: 12px;
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
@@ -738,31 +724,29 @@ function resetToAgentPrompt() {
   flex: 1;
   height: 8px;
   -webkit-appearance: none;
-  background: linear-gradient(90deg, #e2e8f0, #cbd5e1);
+  appearance: none;
+  background: rgba(226, 232, 240, 0.8);
   border-radius: 4px;
   outline: none;
   cursor: pointer;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(203, 213, 225, 0.5);
 }
 
 .slider-3d::-webkit-slider-thumb {
   -webkit-appearance: none;
+  appearance: none;
   width: 22px;
   height: 22px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: #3b82f6;
   border-radius: 50%;
-  border: 3px solid white;
-  box-shadow: 
-    0 2px 8px rgba(59, 130, 246, 0.4),
-    0 4px 12px rgba(59, 130, 246, 0.2);
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
   transition: all 0.2s ease;
 }
 
 .slider-3d::-webkit-slider-thumb:hover {
   transform: scale(1.15);
-  box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.5),
-    0 8px 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
 }
 
 /* 3D 系统提示词输入 */
@@ -926,8 +910,8 @@ function resetToAgentPrompt() {
   gap: 14px;
   width: 100%;
   padding: 18px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.08));
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.08));
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -936,12 +920,12 @@ function resetToAgentPrompt() {
 }
 
 .agent-center-btn-3d:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.12));
-  border-color: rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(99, 102, 241, 0.12));
+  border-color: rgba(59, 130, 246, 0.3);
   transform: translateY(-2px);
   box-shadow: 
-    0 8px 20px rgba(59, 130, 246, 0.2),
-    0 0 0 1px rgba(59, 130, 246, 0.1);
+    0 8px 20px rgba(59, 130, 246, 0.15),
+    0 0 0 1px rgba(59, 130, 246, 0.05);
 }
 
 .btn-icon {
@@ -1091,6 +1075,7 @@ function resetToAgentPrompt() {
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   min-height: 60px;
 }
@@ -1099,7 +1084,7 @@ function resetToAgentPrompt() {
 .prompt-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(241, 245, 249, 0.6);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;

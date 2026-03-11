@@ -160,34 +160,53 @@ export interface AgentMemory {
 }
 
 /** 
- * Agent 能力配置 - 核心数据结构（Claude Code 模式）
- * 
- * 架构设计：
- * - baseRole: 定义"你是谁"（身份、性格）
- * - availableSkills: AI 可自行调用的 Skills 列表
- * - roleSupplement: 角色微调说明
- * 
- * Claude Code 模式特点：
- * - AI 根据对话内容自行判断使用哪个 Skill
- * - 系统提示词只展示 Skills 列表（name + description）
- * - Skill 详细内容在调用时动态注入
+ * Agent 能力配置 - 与后端完全一致的数据结构
  */
 export interface AgentCapabilities {
-  /** 
-   * 基础角色定义 - "你是谁"
-   * 定义 AI 的身份、性格、行为准则
-   */
-  baseRole: string
-  /** 
-   * 角色补充说明 - 可选
-   * 用于微调角色行为
-   */
-  roleSupplement?: string
-  /**
-   * 可用的 Skills 列表
-   * AI 可以根据对话需要自行判断调用这些 Skills
-   */
-  availableSkills: string[]
+  /** 配置模式 */
+  mode: 'raw'
+  /** 技能ID列表 */
+  skillIds: string[]
+  /** 工具ID列表 */
+  toolIds: string[]
+  /** 自定义系统提示词 */
+  customSystemPrompt: string
+}
+
+/** Agent 触发器 */
+export interface AgentTrigger {
+  id: string
+  type: 'manual' | 'scheduled' | 'event' | 'webhook' | 'mention'
+  name: string
+  enabled: boolean
+  config: {
+    cron?: string
+    timezone?: string
+    eventName?: string
+    eventFilter?: Record<string, any>
+    webhookUrl?: string
+    webhookSecret?: string
+    mentionKeywords?: string[]
+  }
+  lastTriggered?: string
+  triggerCount: number
+}
+
+/** Agent 运行时配置 */
+export interface AgentRuntime {
+  model?: string
+  temperature?: number
+  maxTokens?: number
+  topP?: number
+  frequencyPenalty?: number
+  enableReasoning?: boolean
+  timeout?: number
+  retryCount?: number
+  retryDelay?: number
+  context?: string
+  state?: Record<string, any>
+  /** Manager决策循环定时器ID */
+  decisionIntervalId?: number
 }
 
 /** Agent 完整定义 */
@@ -218,19 +237,31 @@ export interface Agent {
   
   // 系统提示词（运行时计算）
   systemPrompt?: string
+  
+  // 运行时配置
+  runtime?: AgentRuntime
+  
+  // 触发器
+  triggers?: AgentTrigger[]
 }
 
-/** Agent 创建参数 */
+/** Agent 创建参数 - 与后端完全一致 */
 export interface AgentCreateParams {
   name: string
   avatar?: string
   description: string
   level: AgentLevel
+  status?: AgentStatus
+  seat?: number
   capabilities?: Partial<AgentCapabilities>
   memory?: Partial<AgentMemory>
+  isDefault?: boolean
+  runtime?: Partial<AgentRuntime>
+  triggers?: AgentTrigger[]
+  permissions?: AgentPermission[]
 }
 
-/** Agent 更新参数 */
+/** Agent 更新参数 - 与后端完全一致 */
 export interface AgentUpdateParams {
   name?: string
   avatar?: string
@@ -243,23 +274,7 @@ export interface AgentUpdateParams {
   lastActiveAt?: number
   callCount?: number
   status?: AgentStatus
-  triggers?: Array<{
-    id: string
-    type: 'manual' | 'scheduled' | 'event' | 'webhook'
-    name: string
-    enabled: boolean
-    config: Record<string, unknown>
-  }>
-  runtime?: {
-    model?: string
-    temperature?: number
-    maxTokens?: number
-    topP?: number
-    frequencyPenalty?: number
-    timeout?: number
-    retryCount?: number
-    retryDelay?: number
-  }
+  isDefault?: boolean
 }
 
 // ==================== 能力图谱 ====================

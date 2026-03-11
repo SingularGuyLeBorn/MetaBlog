@@ -103,10 +103,9 @@
                   @mouseleave="hoveredTool = null"
                 >
                   <div class="tool-header-3d">
-                    <code class="tool-name-3d">{{ tool.name || tool }}</code>
+                    <code class="tool-name-3d">{{ tool }}</code>
                     <span class="tool-type-3d">Function</span>
                   </div>
-                  <p class="tool-desc-3d">{{ tool.description || '无描述' }}</p>
                 </div>
               </div>
               <div v-else class="empty-3d">

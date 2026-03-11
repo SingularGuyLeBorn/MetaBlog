@@ -87,7 +87,8 @@ export function convertGroupsToMessages(groups: MessageGroup[]): ChatMessage[] {
   return messages
 }
 
-// ==================== 兼容层（保留 storage 对象接口）====================
+// 已知存在的会话 ID 集合（避免 GET 检查的 404，也避免 POST 造成重复）
+const knownSessionIds = new Set<string>()
 
 export const storage = {
   /** 
@@ -95,22 +96,23 @@ export const storage = {
    * @deprecated 使用各个 save 方法替代
    */
   async save(data: { sessions: ChatSession[]; messageGroups: Record<string, MessageGroup[]> }): Promise<boolean> {
-    // 异步保存所有数据
     try {
       await Promise.all([
-        // 会话单独保存 - 不存在则创建
         ...data.sessions.map(async s => {
-          const existing = await chatStorage.getSession(s.id)
-          if (existing) {
+          if (knownSessionIds.has(s.id)) {
             return chatStorage.updateSession(s.id, s)
-          } else {
-            return chatStorage.createSession({
-              title: s.title,
-              config: s.config
-            })
           }
+          const created = await chatStorage.createSession({
+            id: s.id,
+            title: s.title,
+            config: s.config
+          })
+          if (created) {
+            knownSessionIds.add(s.id)
+            return created
+          }
+          return chatStorage.updateSession(s.id, s)
         }),
-        // 消息组批量保存
         ...Object.entries(data.messageGroups).map(([sessionId, groups]) => 
           chatStorage.saveAllMessageGroups(sessionId, groups)
         )
@@ -128,6 +130,9 @@ export const storage = {
   async load(): Promise<{ sessions: ChatSession[]; messageGroups: Record<string, MessageGroup[]>; lastSessionId: string | null; version: 2 }> {
     const sessions = await chatStorage.getSessions()
     const messageGroups: Record<string, MessageGroup[]> = {}
+    
+    // 标记所有已加载的会话为已知
+    sessions.forEach(s => knownSessionIds.add(s.id))
     
     // 加载所有会话的消息组
     for (const session of sessions) {
@@ -147,17 +152,26 @@ export const storage = {
 
   /** 保存会话 */
   async saveSession(session: ChatSession): Promise<boolean> {
-    const existing = await chatStorage.getSession(session.id)
-    if (existing) {
-      await chatStorage.updateSession(session.id, session)
-    } else {
-      // 会话不存在，创建新会话
-      await chatStorage.createSession({
-        title: session.title,
-        config: session.config
-      })
+    // 已知会话 → 直接更新
+    if (knownSessionIds.has(session.id)) {
+      const updated = await chatStorage.updateSession(session.id, session)
+      return !!updated
     }
-    return true
+    
+    // 未知会话 → 创建
+    const created = await chatStorage.createSession({
+      id: session.id,
+      title: session.title,
+      config: session.config
+    })
+    if (created) {
+      knownSessionIds.add(session.id)
+      return true
+    }
+    
+    // 创建失败（罕见），尝试更新
+    const updated = await chatStorage.updateSession(session.id, session)
+    return !!updated
   },
 
   /** 删除会话 */

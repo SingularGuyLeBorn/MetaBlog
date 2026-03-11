@@ -65,6 +65,10 @@ export interface SessionLog {
   model: string
   /** 是否启用思考模式 */
   reasoningEnabled: boolean
+  /** 是否支持视觉 */
+  supportsVision?: boolean
+  /** 是否支持视频 */
+  supportsVideo?: boolean
   /** 日志条目 */
   entries: SessionLogEntry[]
   /** 统计信息 */
@@ -82,7 +86,7 @@ let currentSessionLog: SessionLog | null = null
 /**
  * 开始新的 Session 日志
  */
-export function startSessionLog(sessionId: string, config: { model: string; reasoningEnabled: boolean }): void {
+export function startSessionLog(sessionId: string, config: { model: string; reasoningEnabled: boolean; supportsVision?: boolean; supportsVideo?: boolean }): void {
   // 如果之前有未完成的日志，先保存
   if (currentSessionLog) {
     endSessionLog()
@@ -98,6 +102,8 @@ export function startSessionLog(sessionId: string, config: { model: string; reas
     startTime: new Date().toISOString(),
     model: config.model,
     reasoningEnabled: config.reasoningEnabled,
+    supportsVision: config.supportsVision,
+    supportsVideo: config.supportsVideo,
     entries: [],
     stats: {
       totalRounds: 0,

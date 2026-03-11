@@ -244,7 +244,7 @@ defineExpose({ scrollToBottom })
 .orb-1 {
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.3), transparent 70%);
+  background: radial-gradient(circle, rgba(107, 231, 142, 0.2), transparent 70%);
   top: 20%;
   left: 20%;
 }
@@ -252,7 +252,7 @@ defineExpose({ scrollToBottom })
 .orb-2 {
   width: 250px;
   height: 250px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.25), transparent 70%);
+  background: radial-gradient(circle, rgba(255, 31, 34, 0.15), transparent 70%);
   bottom: 30%;
   right: 20%;
   animation-delay: -3s;
@@ -261,7 +261,7 @@ defineExpose({ scrollToBottom })
 .orb-3 {
   width: 200px;
   height: 200px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.2), transparent 70%);
+  background: radial-gradient(circle, rgba(107, 231, 142, 0.15), transparent 70%);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -287,7 +287,7 @@ defineExpose({ scrollToBottom })
 .logo-glow {
   position: absolute;
   inset: -20px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(107, 231, 142, 0.2) 0%, transparent 70%);
   border-radius: 50%;
   animation: pulse-glow 3s ease-in-out infinite;
 }
@@ -305,13 +305,13 @@ defineExpose({ scrollToBottom })
 
 .ring-1 {
   inset: -10px;
-  border-color: rgba(59, 130, 246, 0.4);
+  border-color: rgba(107, 231, 142, 0.3);
   animation: spin 15s linear infinite;
 }
 
 .ring-2 {
   inset: -20px;
-  border-color: rgba(139, 92, 246, 0.2);
+  border-color: rgba(255, 31, 34, 0.2);
   animation: spin-reverse 20s linear infinite;
 }
 
@@ -321,7 +321,7 @@ defineExpose({ scrollToBottom })
 .logo-icon {
   position: relative;
   font-size: 64px;
-  filter: drop-shadow(0 4px 20px rgba(59, 130, 246, 0.4));
+  filter: drop-shadow(0 4px 20px rgba(107, 231, 142, 0.4));
   animation: icon-float 3s ease-in-out infinite;
   z-index: 1;
 }
@@ -341,11 +341,11 @@ defineExpose({ scrollToBottom })
 }
 
 .gradient-text-3d {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+  background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.2));
+  filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.1));
 }
 
 .welcome-desc-3d {
@@ -373,13 +373,13 @@ defineExpose({ scrollToBottom })
   align-items: center;
   gap: 14px;
   padding: 20px 24px;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  background: rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 16px;
   text-align: left;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
   animation: card-fade-in 0.5s ease backwards;
 }
 
@@ -396,7 +396,8 @@ defineExpose({ scrollToBottom })
 
 .quick-action-btn-3d:hover {
   border-color: rgba(59, 130, 246, 0.4);
-  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.1), inset 0 0 16px rgba(59, 130, 246, 0.05);
   transform: translateY(-4px) rotateX(5deg);
 }
 
@@ -425,7 +426,8 @@ defineExpose({ scrollToBottom })
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 50%;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
@@ -436,11 +438,11 @@ defineExpose({ scrollToBottom })
 }
 
 .scroll-to-bottom-3d:hover {
-  background: linear-gradient(145deg, #eff6ff, #dbeafe);
+  background: rgba(241, 245, 249, 0.95);
   border-color: rgba(59, 130, 246, 0.4);
   color: #3b82f6;
   transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.15), inset 0 0 12px rgba(59, 130, 246, 0.05);
 }
 
 .new-messages-dot-3d {
@@ -449,11 +451,11 @@ defineExpose({ scrollToBottom })
   right: -2px;
   width: 12px;
   height: 12px;
-  background: linear-gradient(135deg, #10b981, #34d399);
+  background: #6BE78E;
   border-radius: 50%;
-  border: 2px solid white;
+  border: 2px solid #000B1A;
   animation: pulse-dot 1.5s ease-in-out infinite;
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 12px rgba(107, 231, 142, 0.5);
 }
 
 @keyframes pulse-dot {

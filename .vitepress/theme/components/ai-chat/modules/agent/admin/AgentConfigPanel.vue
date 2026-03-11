@@ -242,7 +242,7 @@ const currentTab = ref('capabilities')
 const config = ref({
   baseRole: '',
   roleSupplement: '',
-  availableSkills: [] as string[]
+  skillIds: [] as string[]
 })
 
 const memoryConfig = ref({
@@ -255,13 +255,13 @@ const viewingSkill = ref<Skill | null>(null)
 
 function initConfig() {
   config.value = {
-    baseRole: props.agent.capabilities?.baseRole || `你是 ${props.agent.name}`,
-    roleSupplement: props.agent.capabilities?.roleSupplement || '',
-    availableSkills: [...(props.agent.capabilities?.availableSkills || skills.value?.map(s => s.id) || [])]
+    baseRole: props.agent.capabilities?.customSystemPrompt || `你是 ${props.agent.name}`,
+    roleSupplement: '',
+    skillIds: [...(props.agent.capabilities?.skillIds || skills.value?.map(s => s.id) || [])]
   }
 }
 
-const enabledSkills = computed(() => skills.value.filter(s => config.value.availableSkills.includes(s.id)))
+const enabledSkills = computed(() => skills.value.filter(s => config.value.skillIds.includes(s.id)))
 const totalToolsCount = computed(() => enabledSkills.value.reduce((sum, s) => sum + (s.tools?.length || 0), 0))
 
 const previewSystemPrompt = computed(() => {
@@ -288,18 +288,17 @@ async function persistConfig() {
   if (!props.agent?.id) return
   await updateAgent(props.agent.id, {
     capabilities: { 
-      baseRole: config.value.baseRole,
-      roleSupplement: config.value.roleSupplement,
-      availableSkills: config.value.availableSkills
+      customSystemPrompt: config.value.baseRole,
+      skillIds: config.value.skillIds
     }
   })
 }
 
-function isSkillEnabled(id: string) { return config.value.availableSkills.includes(id) }
+function isSkillEnabled(id: string) { return config.value.skillIds.includes(id) }
 
 async function toggleSkill(id: string) {
-  const i = config.value.availableSkills.indexOf(id)
-  i > -1 ? config.value.availableSkills.splice(i, 1) : config.value.availableSkills.push(id)
+  const i = config.value.skillIds.indexOf(id)
+  i > -1 ? config.value.skillIds.splice(i, 1) : config.value.skillIds.push(id)
   await persistConfig()
 }
 
@@ -318,19 +317,23 @@ function showSkillDetail(s: Skill) { viewingSkill.value = s }
 
 function onTriggerSave(data: { type: string; config: any }) {
   const names: Record<string, string> = { manual: '手动', scheduled: '定时', event: '事件', webhook: 'Webhook' }
-  updateAgent(props.agent.id, {
+  // triggers 不在 AgentUpdateParams 中，需要类型断言
+  const updates: any = {
     triggers: [{ id: `trigger-${Date.now()}`, type: data.type as any, name: names[data.type], enabled: true, config: data.config }]
-  })
+  }
+  updateAgent(props.agent.id, updates)
   currentTab.value = 'capabilities'
 }
 
 function onModelChange(id: string, p: any) {
-  updateAgent(props.agent.id, {
+  // runtime 不在 AgentUpdateParams 中，需要类型断言
+  const updates: any = {
     runtime: { model: id, temperature: p.temperature, maxTokens: p.maxTokens, topP: p.topP, frequencyPenalty: p.frequencyPenalty, enableReasoning: p.enableReasoning, timeout: 60, retryCount: 3, retryDelay: 1 }
-  })
+  }
+  updateAgent(props.agent.id, updates)
 }
 
-function save() { emit('save', { baseRole: config.value.baseRole, roleSupplement: config.value.roleSupplement, availableSkills: config.value.availableSkills }) }
+function save() { emit('save', { mode: 'raw' as const, customSystemPrompt: config.value.baseRole, skillIds: config.value.skillIds, toolIds: [] }) }
 async function saveMemory() {
   await updateAgent(props.agent.id, { memory: { ...props.agent.memory, enabled: memoryConfig.value.enabled, content: memoryConfig.value.content } })
 }

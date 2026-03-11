@@ -249,20 +249,20 @@ const statusText = computed(() => {
 
 const agentSkills = computed(() => {
   if (!currentAgent.value) return []
-  const availableSkills = currentAgent.value.capabilities?.availableSkills || []
-  return skills.value.filter(s => availableSkills.includes(s.id))
+  const skillIds = currentAgent.value.capabilities?.skillIds || []
+  return skills.value.filter(s => skillIds.includes(s.id))
 })
 
 const quickStartPrompts = computed(() => {
   const agent = currentAgent.value
   if (!agent) return ['你好！', '请介绍一下你自己']
   
-  const availableSkills = agent.capabilities?.availableSkills || []
+  const skillIds = agent.capabilities?.skillIds || []
   const prompts = ['你好！', '请介绍一下你自己']
-  if (availableSkills.includes('write')) {
+  if (skillIds.includes('write')) {
     prompts.push('帮我写一篇文章')
   }
-  if (availableSkills.includes('code')) {
+  if (skillIds.includes('code')) {
     prompts.push('帮我审查这段代码')
   }
   return prompts.slice(0, 4)

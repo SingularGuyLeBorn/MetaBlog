@@ -107,12 +107,12 @@
                   v-for="skill in availableSkills" 
                   :key="skill.id"
                   class="skill-checkbox"
-                  :class="{ checked: form.skills.includes(skill.id) }"
+                  :class="{ checked: form.capabilities.skillIds.includes(skill.id) }"
                 >
                   <input 
                     type="checkbox" 
                     :value="skill.id"
-                    v-model="form.skills"
+                    v-model="form.capabilities.skillIds"
                   />
                   <span class="check-icon">{{ skill.icon }}</span>
                   <div class="check-info">
@@ -138,7 +138,7 @@
                 </button>
               </div>
               <textarea 
-                v-model="form.systemPrompt" 
+                v-model="form.capabilities.customSystemPrompt" 
                 rows="6"
                 placeholder="定义这个 Agent 的角色和行为方式..."
                 class="form-textarea"
@@ -230,8 +230,12 @@ const form = ref({
   level: 'custom' as AgentLevel,
   seat: 1,
   description: '',
-  skills: [] as string[],
-  systemPrompt: '',
+  capabilities: {
+    mode: 'raw' as const,
+    skillIds: [] as string[],
+    toolIds: [] as string[],
+    customSystemPrompt: ''
+  },
   permissions: PERMISSION_TEMPLATES.map(p => ({ ...p, granted: false }))
 })
 
@@ -244,8 +248,12 @@ watch(() => props.agent, (agent) => {
       level: agent.level,
       seat: agent.seat,
       description: agent.description,
-      skills: [...agent.skills],
-      systemPrompt: agent.systemPrompt,
+      capabilities: {
+        mode: agent.capabilities?.mode || 'raw',
+        skillIds: [...(agent.capabilities?.skillIds || [])],
+        toolIds: [...(agent.capabilities?.toolIds || [])],
+        customSystemPrompt: agent.capabilities?.customSystemPrompt || ''
+      },
       permissions: agent.permissions.map(p => ({ ...p }))
     }
   } else {
@@ -255,8 +263,12 @@ watch(() => props.agent, (agent) => {
       level: 'custom',
       seat: 1,
       description: '',
-      skills: [],
-      systemPrompt: '',
+      capabilities: {
+        mode: 'raw',
+        skillIds: [],
+        toolIds: [],
+        customSystemPrompt: ''
+      },
       permissions: PERMISSION_TEMPLATES.map(p => ({ ...p, granted: p.id === 'chat' }))
     }
   }
@@ -283,7 +295,7 @@ function selectLevel(level: string) {
 }
 
 function applyTemplate(tpl: typeof promptTemplates[0]) {
-  form.value.systemPrompt = tpl.prompt
+  form.value.capabilities.customSystemPrompt = tpl.prompt
 }
 
 function close() {
@@ -299,8 +311,12 @@ function save() {
     level: form.value.level,
     seat: form.value.seat,
     description: form.value.description.trim(),
-    skills: form.value.skills,
-    systemPrompt: form.value.systemPrompt.trim(),
+    capabilities: {
+      mode: form.value.capabilities.mode,
+      skillIds: form.value.capabilities.skillIds,
+      toolIds: form.value.capabilities.toolIds,
+      customSystemPrompt: form.value.capabilities.customSystemPrompt.trim()
+    },
     permissions: form.value.permissions
   })
 }

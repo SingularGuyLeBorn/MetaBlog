@@ -1,0 +1,43 @@
+{
+  "sessionId": "session-1772818768769",
+  "startTime": "2026-03-06T17:39:28.769Z",
+  "endTime": "2026-03-06T17:39:33.458Z",
+  "totalRounds": 1,
+  "entryCount": 2,
+  "entries": [
+    {
+      "timestamp": "2026-03-06T17:39:28.784Z",
+      "type": "request",
+      "endpoint": "/chat/completions (stream)",
+      "round": 1,
+      "data": {
+        "model": "deepseek-chat",
+        "messages": [
+          {
+            "role": "system",
+            "content": "你是 测试agent"
+          },
+          {
+            "role": "user",
+            "content": "你好"
+          }
+        ],
+        "max_tokens": 8192,
+        "stream": true,
+        "temperature": 0.7
+      },
+      "humanNote": "【API请求】发送到AI服务"
+    },
+    {
+      "timestamp": "2026-03-06T17:39:33.456Z",
+      "type": "note",
+      "endpoint": "final_response",
+      "round": 1,
+      "data": {
+        "content": "你好！我是DeepSeek，很高兴见到你！😊\n\n我是一个AI助手，可以帮你解答各种问题，无论是学习、工作、生活中的疑问，还是需要创作、分析、编程等方面的帮助，我都很乐意为你提供支持。\n\n有什么我可以帮助你的吗？请随时告诉我你需要什么！"
+      },
+      "humanNote": "【UI展示】最终回复（流式输出完毕）",
+      "uiVisible": true
+    }
+  ]
+}

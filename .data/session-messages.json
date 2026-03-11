@@ -1,83 +1,43 @@
 {
-  "session-1772200000000-xyz789": [
+  "session_1772212430580_20uo2pa6j": [],
+  "session_1772462392173_r1wns8l20": [],
+  "session_1772462570188_qxkbfuqjn": [],
+  "session_1772462577275_t4bfmvtqs": [],
+  "session_1772462579483_rlbsvyya2": [],
+  "session_1772462580640_5hatgd1xg": [],
+  "session_1772462580932_51kyrw5ca": [],
+  "session_1772462581096_v8n6g4g1j": [],
+  "session_1772462581240_elj8cl4nl": [],
+  "session-1772467887518-34qx25a": [
     {
       "userMessage": {
-        "id": "msg-user-001",
-        "sessionId": "session-1772200000000-xyz789",
+        "id": "msg_1772468017138_snfw6r17f",
+        "sessionId": "session-1772467887518-34qx25a",
         "role": "user",
-        "content": "你好，请介绍一下你自己",
+        "content": "chatStorage.ts:50 \n GET http://localhost:5175/api/sessions/session-1772467887518-34qx25a 404 (Not Found)\n\nchatStorage.ts:50 \n GET http://localhost:5175/api/sessions/session-1772467887518-34qx25a 404 (Not Found)",
         "status": "completed",
-        "createdAt": 1772200000000,
-        "updatedAt": 1772200000000
+        "createdAt": 1772468017138,
+        "updatedAt": 1772468017138
       },
       "aiVersions": [
         {
-          "id": "msg-ai-001",
-          "sessionId": "session-1772200000000-xyz789",
+          "id": "msg_1772468017139_2g79ha9h6",
+          "sessionId": "session-1772467887518-34qx25a",
           "role": "assistant",
-          "content": "你好！我是 MetaBlog 的 AI 助手。我可以帮助你：\n\n1. 📝 编写和优化文章\n2. 💻 编写代码和技术咨询\n3. 🔧 使用 MCP 工具处理文件、浏览网页等\n4. 💭 解答各种问题和讨论\n\n有什么我可以帮你的吗？",
+          "content": "看起来你在开发过程中遇到了一个 HTTP 404 错误。这个错误表明你的前端应用正在尝试访问一个不存在的 API 端点。\n\n让我帮你分析一下这个问题：\n\n## 问题分析\n\n1. **错误信息**：`GET http://localhost:5175/api/sessions/session-1772467887518-34qx25a 404 (Not Found)`\n2. **文件位置**：`chatStorage.ts:50`\n3. **问题**：前端代码在尝试获取一个会话数据，但后端没有对应的 API 端点\n\n## 可能的解决方案\n\n### 方案1：检查后端 API 实现\n首先，你需要确认后端是否实现了这个 API 端点：\n\n```typescript\n// 检查你的后端路由配置\n// 应该有一个类似这样的路由：\napp.get('/api/sessions/:sessionId', getSessionHandler);\n```\n\n### 方案2：检查前端代码\n查看 `chatStorage.ts` 第 50 行附近的代码：\n\n```typescript\n// chatStorage.ts 可能包含类似这样的代码：\nconst response = await fetch(`/api/sessions/${sessionId}`);\n```\n\n### 方案3：临时解决方案\n如果你正在开发阶段，可以暂时修改前端代码，避免这个错误：\n\n1. **添加错误处理**：\n```typescript\ntry {\n  const response = await fetch(`/api/sessions/${sessionId}`);\n  if (!response.ok) {\n    console.warn(`Session ${sessionId} not found, creating new session`);\n    return createNewSession();\n  }\n  return await response.json();\n} catch (error) {\n  console.warn('Failed to fetch session, using default:', error);\n  return createNewSession();\n}\n```\n\n2. **使用本地存储替代**：\n```typescript\n// 暂时使用 localStorage 存储会话数据\nconst getSession = (sessionId: string) => {\n  const sessionData = localStorage.getItem(`session_${sessionId}`);\n  if (sessionData) {\n    return JSON.parse(sessionData);\n  }\n  return createNewSession();\n};\n```\n\n### 方案4：创建模拟 API\n如果你还没有实现后端，可以创建一个简单的模拟 API：\n\n```typescript\n// 在开发服务器中添加一个模拟端点\n// 例如在 Vite 中：\nexport default defineConfig({\n  server: {\n    proxy: {\n      '/api/sessions': {\n        target: 'http://localhost:3000',\n        changeOrigin: true,\n        // 或者使用自定义函数\n        bypass: (req, res, options) => {\n          if (req.method === 'GET' && req.url.includes('/api/sessions/')) {\n            // 返回模拟数据\n            res.setHeader('Content-Type', 'application/json');\n            res.end(JSON.stringify({\n              id: req.url.split('/').pop(),\n              messages: [],\n              createdAt: new Date().toISOString()\n            }));\n            return true;\n          }\n        }\n      }\n    }\n  }\n});\n```\n\n## 调试建议\n\n1. **检查网络请求**：\n   - 打开浏览器开发者工具\n   - 查看 Network 标签页\n   - 确认请求的 URL 是否正确\n\n2. **检查后端服务**：\n   - 确认后端服务是否正在运行\n   - 检查后端日志是否有错误\n\n3. **检查端口配置**：\n   - 前端运行在 `localhost:5175`\n   - 后端可能运行在其他端口（如 `3000`）\n   - 确保代理配置正确\n\n你需要我帮你查看具体的代码文件吗？或者你可以告诉我更多关于你的项目结构信息，我可以提供更具体的帮助。",
           "status": "completed",
-          "createdAt": 1772200000010,
-          "updatedAt": 1772200000010,
-          "parentMessageId": "msg-user-001",
-          "isActiveVersion": true
-        }
-      ],
-      "currentVersionIndex": 0
-    },
-    {
-      "userMessage": {
-        "id": "msg-user-002",
-        "sessionId": "session-1772200000000-xyz789",
-        "role": "user",
-        "content": "MetaBlog 是什么项目？",
-        "status": "completed",
-        "createdAt": 1772264000000,
-        "updatedAt": 1772264000000
-      },
-      "aiVersions": [
-        {
-          "id": "msg-ai-002",
-          "sessionId": "session-1772200000000-xyz789",
-          "role": "assistant",
-          "content": "MetaBlog 是一个基于 VitePress 构建的现代化博客系统，集成了强大的 AI 功能：\n\n✨ 核心特性：\n- 🚀 VitePress 驱动的高性能博客\n- 🤖 多 Agent AI 助手系统\n- 🔧 MCP (Model Context Protocol) 工具集成\n- 💾 智能记忆系统\n- 🎨 可定制的 AI 技能 (Skills)\n\n你可以创建多个 AI Agent，每个都有独立的配置和记忆。",
-          "status": "completed",
-          "createdAt": 1772264005000,
-          "updatedAt": 1772264005000,
-          "parentMessageId": "msg-user-002",
-          "isActiveVersion": true
+          "createdAt": 1772468017138,
+          "updatedAt": 1772468054638,
+          "parentMessageId": "msg_1772468017138_snfw6r17f",
+          "isActiveVersion": true,
+          "metadata": {
+            "model": "deepseek-chat",
+            "toolRecords": []
+          }
         }
       ],
       "currentVersionIndex": 0
     }
   ],
-  "session-1772263900000-abc123": [
-    {
-      "userMessage": {
-        "id": "msg-user-101",
-        "sessionId": "session-1772263900000-abc123",
-        "role": "user",
-        "content": "如何优化 Vue 3 项目的性能？",
-        "status": "completed",
-        "createdAt": 1772263900000,
-        "updatedAt": 1772263900000
-      },
-      "aiVersions": [
-        {
-          "id": "msg-ai-101",
-          "sessionId": "session-1772263900000-abc123",
-          "role": "assistant",
-          "content": "Vue 3 性能优化的关键点：\n\n1. **组件懒加载**\n   ```js\n   const Home = defineAsyncComponent(() => import('./views/Home.vue'))\n   ```\n\n2. **合理使用 v-show vs v-if**\n   - v-show 适合频繁切换\n   - v-if 适合条件渲染\n\n3. **使用 computed 缓存计算**\n   - 避免在模板中复杂计算\n\n4. **虚拟列表处理大数据**\n   - 使用 vue-virtual-scroller\n\n需要具体代码示例吗？",
-          "status": "completed",
-          "createdAt": 1772263910000,
-          "updatedAt": 1772263910000,
-          "parentMessageId": "msg-user-101",
-          "isActiveVersion": true
-        }
-      ],
-      "currentVersionIndex": 0
-    }
-  ],
-  "session-1772263960000-def456": [],
-  "session_1772212430580_20uo2pa6j": []
+  "session-1772820893959-eypvtad": []
 }

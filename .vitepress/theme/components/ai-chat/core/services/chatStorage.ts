@@ -85,8 +85,12 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
     }
     
     return result.data as T
-  } catch (error) {
+  } catch (error: any) {
     clearTimeout(timeoutId)
+    // 处理超时错误
+    if (error.name === 'AbortError') {
+      throw new Error(`Request timeout after ${API_CONFIG.timeout}ms: ${url}`)
+    }
     throw error
   }
 }
@@ -127,7 +131,7 @@ export async function getSession(id: string): Promise<ChatSession | null> {
   }
 }
 
-export async function createSession(params?: { title?: string; config?: Partial<SessionConfig> }): Promise<ChatSession | null> {
+export async function createSession(params?: { id?: string; title?: string; config?: Partial<SessionConfig> }): Promise<ChatSession | null> {
   try {
     const session = await apiRequest<ChatSession>(API_ENDPOINTS.SESSIONS, {
       method: 'POST',
@@ -195,7 +199,7 @@ export async function saveMessageGroup(sessionId: string, group: MessageGroup): 
   try {
     await apiRequest(API_ENDPOINTS.MESSAGES(sessionId), {
       method: 'POST',
-      body: JSON.stringify(group),
+      body: JSON.stringify({ group }),
     })
     
     cache.messageGroups[sessionId] = null as any
@@ -210,40 +214,43 @@ export async function saveMessageGroup(sessionId: string, group: MessageGroup): 
   }
 }
 
+// 注意：后端不支持单个消息组的 PUT/DELETE 操作
+// 这些操作通过 saveAllMessageGroups 批量替换实现
+
 export async function updateMessageGroup(sessionId: string, groupId: string, updates: Partial<MessageGroup>): Promise<boolean> {
-  try {
-    await apiRequest(`${API_ENDPOINTS.MESSAGES(sessionId)}/${groupId}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    })
-    
-    cache.messageGroups[sessionId] = null as any
-    return true
-  } catch (e) {
-    console.error('[ChatStorage] Failed to update message group:', e)
-    return false
-  }
+  // 先获取当前所有消息组
+  const groups = await getMessageGroups(sessionId)
+  
+  // 找到并更新指定的消息组
+  const index = groups.findIndex(g => g.userMessage.id === groupId || g.aiVersions.some(v => v.id === groupId))
+  if (index === -1) return false
+  
+  // 应用更新
+  groups[index] = { ...groups[index], ...updates } as MessageGroup
+  
+  // 批量保存所有消息组
+  return saveAllMessageGroups(sessionId, groups)
 }
 
 export async function deleteMessageGroup(sessionId: string, groupId: string): Promise<boolean> {
-  try {
-    await apiRequest(`${API_ENDPOINTS.MESSAGES(sessionId)}/${groupId}`, {
-      method: 'DELETE',
-    })
-    
-    cache.messageGroups[sessionId] = null as any
-    return true
-  } catch (e) {
-    console.error('[ChatStorage] Failed to delete message group:', e)
-    return false
-  }
+  // 先获取当前所有消息组
+  const groups = await getMessageGroups(sessionId)
+  
+  // 过滤掉要删除的消息组
+  const filteredGroups = groups.filter(g => g.userMessage.id !== groupId && !g.aiVersions.some(v => v.id === groupId))
+  
+  // 如果数量没变，说明没找到
+  if (filteredGroups.length === groups.length) return false
+  
+  // 批量保存剩余的消息组
+  return saveAllMessageGroups(sessionId, filteredGroups)
 }
 
 // ==================== 批量操作 ====================
 
 export async function saveAllMessageGroups(sessionId: string, groups: MessageGroup[]): Promise<boolean> {
   try {
-    await apiRequest(`${API_ENDPOINTS.MESSAGES(sessionId)}/batch`, {
+    await apiRequest(API_ENDPOINTS.MESSAGES_BATCH(sessionId), {
       method: 'POST',
       body: JSON.stringify({ groups }),
     })

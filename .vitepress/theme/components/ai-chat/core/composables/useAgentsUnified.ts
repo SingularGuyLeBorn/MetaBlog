@@ -148,6 +148,8 @@ export interface AgentCreateParams {
   avatarId?: number
   description?: string
   level?: AgentLevel
+  status?: AgentStatus
+  seat?: number
   skills?: string[]
   systemPrompt?: string
   triggers?: Trigger[]
@@ -157,6 +159,8 @@ export interface AgentCreateParams {
   runtime?: RuntimeConfig
   permissions?: AgentPermission[]
   memoryEnabled?: boolean
+  memoryContent?: string
+  isDefault?: boolean
 }
 
 // ==================== 常量 ====================
@@ -432,10 +436,40 @@ async function fetchAgents(): Promise<Agent[]> {
 }
 
 async function createAgentAPI(params: AgentCreateParams): Promise<Agent> {
+  // 字段映射：将前端字段转换为后端期望的格式
+  const apiParams: any = {
+    name: params.name,
+    avatar: params.avatar,
+    description: params.description,
+    level: params.level,
+    status: params.status || 'idle',
+    seat: params.seat,
+    // 转换为 capabilities 对象
+    capabilities: {
+      mode: 'raw',
+      skillIds: params.skills || [],
+      toolIds: params.functionCall?.allowedTools || [],
+      customSystemPrompt: params.systemPrompt || ''
+    },
+    // 使用 memory 配置
+    memory: params.memory || {
+      enabled: params.memoryEnabled ?? false,
+      content: params.memoryContent || '',
+      autoExtract: true,
+      maxTokens: 2000
+    },
+    permissions: params.permissions,
+    triggers: params.triggers,
+    functionCall: params.functionCall,
+    lifecycle: params.lifecycle,
+    runtime: params.runtime,
+    isDefault: params.isDefault ?? false
+  }
+  
   const response = await fetch('/api/agents', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params)
+    body: JSON.stringify(apiParams)
   })
   const result = await response.json()
   if (!result.success) throw new Error(result.error)
@@ -443,10 +477,47 @@ async function createAgentAPI(params: AgentCreateParams): Promise<Agent> {
 }
 
 async function updateAgentAPI(id: string, updates: Partial<Agent>): Promise<Agent> {
+  // 字段映射：将前端字段转换为后端期望的格式
+  const apiParams: any = { id }
+  
+  // 复制非嵌套字段
+  if (updates.name !== undefined) apiParams.name = updates.name
+  if (updates.avatar !== undefined) apiParams.avatar = updates.avatar
+  if (updates.description !== undefined) apiParams.description = updates.description
+  if (updates.level !== undefined) apiParams.level = updates.level
+  if (updates.status !== undefined) apiParams.status = updates.status
+  if (updates.seat !== undefined) apiParams.seat = updates.seat
+  if (updates.permissions !== undefined) apiParams.permissions = updates.permissions
+  if (updates.triggers !== undefined) apiParams.triggers = updates.triggers
+  if (updates.functionCall !== undefined) apiParams.functionCall = updates.functionCall
+  if (updates.lifecycle !== undefined) apiParams.lifecycle = updates.lifecycle
+  if (updates.runtime !== undefined) apiParams.runtime = updates.runtime
+  if (updates.isDefault !== undefined) apiParams.isDefault = updates.isDefault
+  
+  // 转换 capabilities 字段
+  if (updates.skills !== undefined || updates.systemPrompt !== undefined) {
+    apiParams.capabilities = {
+      mode: 'raw',
+      skillIds: updates.skills || [],
+      toolIds: updates.functionCall?.allowedTools || [],
+      customSystemPrompt: updates.systemPrompt || ''
+    }
+  }
+  
+  // 转换 memory 字段
+  if (updates.memory !== undefined || updates.memoryEnabled !== undefined || updates.memoryContent !== undefined) {
+    apiParams.memory = updates.memory || {
+      enabled: updates.memoryEnabled ?? false,
+      content: updates.memoryContent || '',
+      autoExtract: true,
+      maxTokens: 2000
+    }
+  }
+  
   const response = await fetch('/api/agents/update', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, ...updates })
+    body: JSON.stringify(apiParams)
   })
   const result = await response.json()
   if (!result.success) throw new Error(result.error)
@@ -544,11 +615,22 @@ export function useAgentsUnified() {
     try {
       const data = await fetchAgents()
       
-      // 确保数据完整性
-      agents.value = data.map((a: Partial<Agent>) => ({
-        ...createDefaultAgent(a.id || `agent-${Date.now()}`, {}, 999),
-        ...a
-      }))
+      // 将后端数据映射为前端格式
+      agents.value = data.map((a: any) => {
+        const capabilities = a.capabilities || {}
+        const memory = a.memory || {}
+        
+        return {
+          ...createDefaultAgent(a.id || `agent-${Date.now()}`, {}, 999),
+          ...a,
+          // 从 capabilities 提取前端字段
+          skills: capabilities.skillIds || a.skills || [],
+          systemPrompt: capabilities.customSystemPrompt || a.systemPrompt || '',
+          // 从 memory 提取前端字段
+          memoryEnabled: memory.enabled ?? a.memoryEnabled ?? false,
+          memoryContent: memory.content || a.memoryContent || ''
+        }
+      })
 
       // 确保有默认 Agent
       const hasDefault = agents.value.some(a => a.isDefault)

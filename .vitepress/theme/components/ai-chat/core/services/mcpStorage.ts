@@ -221,7 +221,7 @@ export async function executeMCPTool(
 ): Promise<{ success: boolean; result?: string; error?: string }> {
   try {
     return await apiRequest<{ success: boolean; result?: string; error?: string }>(
-      `${API_ENDPOINTS.MCP_SERVER_DETAIL(serverId)}/tools/${toolName}/execute`,
+      API_ENDPOINTS.MCP_SERVER_EXECUTE(serverId, toolName),
       {
         method: 'POST',
         body: JSON.stringify(args),

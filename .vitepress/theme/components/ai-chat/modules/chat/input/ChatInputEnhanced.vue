@@ -360,12 +360,12 @@ async function handleFileSelect(event: Event, expectedType: 'image' | 'video' | 
 // 模拟上传
 function simulateUpload(attachment: MessageAttachment) {
   attachment.uploadStatus = 'uploading'
-  let progress = 0
+  attachment.progress = 0
   
   const interval = setInterval(() => {
-    progress += Math.random() * 30
-    if (progress >= 100) {
-      progress = 100
+    attachment.progress = (attachment.progress || 0) + Math.random() * 30
+    if (attachment.progress >= 100) {
+      attachment.progress = 100
       clearInterval(interval)
       attachment.uploadStatus = 'completed'
     }

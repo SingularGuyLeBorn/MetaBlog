@@ -38,6 +38,8 @@ export type AttachmentType = 'file' | 'image' | 'video' | 'audio' | 'link'
 
 /** 消息附件 */
 export interface MessageAttachment {
+  /** 附件唯一标识 */
+  id?: string
   /** 附件类型 */
   type: AttachmentType
   /** 文件名/标题 */
@@ -58,6 +60,8 @@ export interface MessageAttachment {
   thumbnail?: string
   /** 上传状态 */
   uploadStatus?: 'pending' | 'uploading' | 'completed' | 'error'
+  /** 上传进度（0-100） */
+  progress?: number
   /** 错误信息 */
   error?: string
 }

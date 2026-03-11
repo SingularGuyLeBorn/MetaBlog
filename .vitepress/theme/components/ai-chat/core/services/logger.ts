@@ -24,6 +24,7 @@ export type LogCategory =
   | 'api'          // API 请求
   | 'error'        // 错误
   | 'performance'  // 性能
+  | 'media'        // 多媒体/文件上传
 
 /** 组件生命周期事件 */
 export type LifecycleEvent = 

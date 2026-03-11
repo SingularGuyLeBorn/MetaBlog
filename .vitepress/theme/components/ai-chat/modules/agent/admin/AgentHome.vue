@@ -150,7 +150,7 @@
               
               <div class="form-group">
                 <label>系统提示词</label>
-                <textarea v-model="form.systemPrompt" rows="5" class="form-textarea-3d code" />
+                <textarea v-model="form.capabilities.customSystemPrompt" rows="5" class="form-textarea-3d code" />
               </div>
             </div>
             
@@ -217,7 +217,12 @@ const form = reactive({
   avatar: '🤖',
   description: '',
   level: 'custom' as AgentLevel,
-  systemPrompt: ''
+  capabilities: {
+    mode: 'raw' as const,
+    skillIds: [] as string[],
+    toolIds: [] as string[],
+    customSystemPrompt: ''
+  }
 })
 
 const avatarOptions = ['🤖', '👩‍💻', '👨‍💻', '🎨', '✍️', '🔬', '📊', '💼', '🎭', '🔮']
@@ -247,7 +252,7 @@ const filteredAgents = computed(() => {
 const statsList = computed(() => [
   { icon: '🤖', value: agents.value.length, label: '总 Agent', type: 'total' },
   { icon: '🟢', value: agents.value.filter(a => a.status === 'online').length, label: '在线', type: 'online' },
-  { icon: '🎯', value: agents.value.reduce((sum, a) => sum + (a.skills?.length || 0), 0), label: '技能总数', type: 'skills' },
+  { icon: '🎯', value: agents.value.reduce((sum, a) => sum + (a.capabilities?.skillIds?.length || 0), 0), label: '技能总数', type: 'skills' },
   { icon: '📞', value: formatNumber(agents.value.reduce((sum, a) => sum + (a.callCount || 0), 0)), label: '总调用', type: 'calls' }
 ])
 
@@ -271,7 +276,12 @@ function openCreateDialog() {
   form.avatar = '🤖'
   form.description = ''
   form.level = 'custom'
-  form.systemPrompt = ''
+  form.capabilities = {
+    mode: 'raw',
+    skillIds: [],
+    toolIds: [],
+    customSystemPrompt: ''
+  }
   showDialog.value = true
 }
 
@@ -281,7 +291,12 @@ function openEditDialog(agent: Agent) {
   form.avatar = agent.avatar
   form.description = agent.description
   form.level = agent.level
-  form.systemPrompt = agent.systemPrompt
+  form.capabilities = {
+    mode: agent.capabilities?.mode || 'raw',
+    skillIds: [...(agent.capabilities?.skillIds || [])],
+    toolIds: [...(agent.capabilities?.toolIds || [])],
+    customSystemPrompt: agent.capabilities?.customSystemPrompt || ''
+  }
   showDialog.value = true
 }
 
@@ -301,7 +316,7 @@ async function saveAgent() {
         avatar: form.avatar,
         description: form.description.trim(),
         level: form.level as AgentCreateParams['level'],
-        systemPrompt: form.systemPrompt.trim()
+        capabilities: form.capabilities
       })
     } else {
       const newAgent = await create({
@@ -309,7 +324,7 @@ async function saveAgent() {
         avatar: form.avatar,
         description: form.description.trim(),
         level: form.level as AgentCreateParams['level'],
-        systemPrompt: form.systemPrompt.trim()
+        capabilities: form.capabilities
       })
       emit('agent-change', newAgent)
     }

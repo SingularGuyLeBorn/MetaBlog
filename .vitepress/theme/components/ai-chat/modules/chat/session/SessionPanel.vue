@@ -209,10 +209,10 @@ function cancelRename() {
   width: 280px;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-  border-right: 1px solid rgba(226, 232, 240, 0.8);
+  background: transparent;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  border-right: none;
 }
 
 .session-panel-3d.collapsed {
@@ -224,8 +224,8 @@ function cancelRename() {
   position: absolute;
   inset: 0;
   background: 
-    radial-gradient(ellipse at 0% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 100% 100%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+    radial-gradient(ellipse at 0% 0%, rgba(16, 185, 129, 0.1) 0%, transparent 60%),
+    radial-gradient(ellipse at 100% 100%, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -250,25 +250,22 @@ function cancelRename() {
   gap: 10px;
   width: 100%;
   padding: 14px 20px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  color: white;
-  border: none;
-  border-radius: 14px;
+  background: rgba(107, 231, 142, 0.1);
+  color: #6BE78E;
+  border: 1px solid rgba(107, 231, 142, 0.2);
+  border-radius: 16px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.4),
-    0 8px 24px rgba(59, 130, 246, 0.2);
+  box-shadow: inset 0 0 12px rgba(107, 231, 142, 0);
   transform-style: preserve-3d;
 }
 
 .btn-new-chat-3d:hover {
-  transform: translateY(-2px) rotateX(5deg);
-  box-shadow: 
-    0 8px 20px rgba(59, 130, 246, 0.5),
-    0 16px 40px rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+  background: rgba(107, 231, 142, 0.2);
+  box-shadow: inset 0 0 12px rgba(107, 231, 142, 0.1), 0 0 24px rgba(107, 231, 142, 0.15);
 }
 
 .btn-new-chat-3d:active {
@@ -290,20 +287,16 @@ function cancelRename() {
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  background: rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 12px;
-  color: #94a3b8;
+  border-radius: 14px;
+  color: #64748b;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .search-box-3d:focus-within {
-  border-color: #3b82f6;
-  box-shadow: 
-    0 0 0 3px rgba(59, 130, 246, 0.1),
-    0 4px 12px rgba(59, 130, 246, 0.1);
-  transform: translateY(-1px);
+  border-color: #6BE78E;
+  box-shadow: 0 0 16px rgba(107, 231, 142, 0.1);
 }
 
 .search-input {
@@ -328,7 +321,7 @@ function cancelRename() {
   width: calc(100% - 40px);
   margin: 0 20px 16px;
   padding: 10px 16px;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  background: rgba(255, 255, 255, 0.4);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 12px;
   color: #64748b;
@@ -336,15 +329,13 @@ function cancelRename() {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .manage-all-btn:hover {
-  background: linear-gradient(145deg, #eff6ff, #dbeafe);
-  border-color: #3b82f6;
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(59, 130, 246, 0.3);
   color: #3b82f6;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
 /* 会话列表 */
@@ -362,7 +353,7 @@ function cancelRename() {
   padding: 10px 14px;
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -374,43 +365,34 @@ function cancelRename() {
   gap: 12px;
   padding: 14px;
   margin-bottom: 6px;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid transparent;
+  border-radius: 16px;
   cursor: pointer;
   color: #475569;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
   position: relative;
 }
 
 .session-item-3d:hover {
-  background: linear-gradient(145deg, #ffffff, #eff6ff);
-  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(255, 255, 255, 0.8);
   color: #1e293b;
-  transform: translateY(-1px);
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(59, 130, 246, 0.1);
 }
 
 .session-item-3d.active {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-color: #3b82f6;
-  color: #1d4ed8;
-  box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.2),
-    0 0 0 1px rgba(59, 130, 246, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  background: rgba(107, 231, 142, 0.1);
+  border-color: rgba(107, 231, 142, 0.3);
+  color: #6BE78E;
+  box-shadow: inset 0 0 12px rgba(107, 231, 142, 0.05);
 }
 
 .session-item-3d.active :deep(.icon) {
-  color: #3b82f6;
+  color: #6BE78E;
 }
 
 .session-item-3d.streaming {
-  border-color: rgba(16, 185, 129, 0.4);
-  background: linear-gradient(145deg, #ffffff, #f0fdf4);
+  border-color: rgba(107, 231, 142, 0.5);
+  background: rgba(107, 231, 142, 0.05);
 }
 
 /* 会话图标 */
@@ -421,23 +403,22 @@ function cancelRename() {
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
-  border-radius: 10px;
+  background: rgba(241, 245, 249, 0.8);
+  border-radius: 12px;
   transition: all 0.3s ease;
 }
 
 .session-item-3d:hover .session-icon-3d {
-  background: linear-gradient(145deg, #dbeafe, #bfdbfe);
-  transform: scale(1.1);
+  background: rgba(226, 232, 240, 0.8);
 }
 
 .session-item-3d.active .session-icon-3d {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: rgba(107, 231, 142, 0.2);
+  box-shadow: 0 0 16px rgba(107, 231, 142, 0.2);
 }
 
 .session-item-3d.active .session-icon-3d :deep(.icon) {
-  color: white;
+  color: #6BE78E;
 }
 
 /* 流式生成指示器 */
@@ -447,23 +428,23 @@ function cancelRename() {
   right: -2px;
   width: 10px;
   height: 10px;
-  background: linear-gradient(135deg, #10b981, #34d399);
+  background: #6BE78E;
   border-radius: 50%;
-  border: 2px solid #f8fafc;
+  border: 2px solid #000B1A;
   animation: pulse-glow 1.5s ease-in-out infinite;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  box-shadow: 0 0 8px rgba(107, 231, 142, 0.6);
 }
 
 @keyframes pulse-glow {
   0%, 100% { 
     opacity: 1; 
     transform: scale(1);
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+    box-shadow: 0 0 8px rgba(107, 231, 142, 0.6);
   }
   50% { 
     opacity: 0.7; 
     transform: scale(1.2);
-    box-shadow: 0 0 16px rgba(16, 185, 129, 0.8);
+    box-shadow: 0 0 16px rgba(107, 231, 142, 0.8);
   }
 }
 
@@ -478,6 +459,7 @@ function cancelRename() {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #1e293b;
 }
 
 .session-title-edit {
@@ -504,7 +486,7 @@ function cancelRename() {
 }
 
 .session-item-3d.active .session-time {
-  color: #60a5fa;
+  color: rgba(107, 231, 142, 0.8);
 }
 
 /* 操作按钮 */
@@ -525,25 +507,23 @@ function cancelRename() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  color: #64748b;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #94a3b8;
   cursor: pointer;
   transition: all 0.15s ease;
   flex-shrink: 0;
 }
 
 .action-btn-3d:hover {
-  background: #f1f5f9;
-  color: #334155;
-  border-color: #cbd5e1;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
 }
 
 .action-btn-3d.delete:hover {
-  background: #fef2f2;
-  border-color: #fca5a5;
-  color: #dc2626;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
 }
 
 /* 3D 折叠按钮 */
@@ -554,23 +534,23 @@ function cancelRename() {
   gap: 8px;
   padding: 8px 16px;
   margin: 0 12px 12px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: rgba(107, 231, 142, 0.05);
+  border: 1px solid rgba(107, 231, 142, 0.1);
   border-radius: 100px;
 }
 
 .agent-dot {
   width: 8px;
   height: 8px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: #6BE78E;
   border-radius: 50%;
-  box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 8px rgba(107, 231, 142, 0.5);
 }
 
 .agent-label {
   font-size: 12px;
   font-weight: 500;
-  color: #6366f1;
+  color: #6BE78E;
 }
 
 /* 响应式 */

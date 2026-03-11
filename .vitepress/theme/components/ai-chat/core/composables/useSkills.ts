@@ -487,7 +487,7 @@ async function parseSkillFile(filename: string): Promise<Skill | null> {
 }
 
 /**
- * 创建新的 skill
+ * 创建新的 skill（使用后端 API）
  */
 async function createSkill(params: {
   name: string
@@ -508,46 +508,13 @@ async function createSkill(params: {
     
     const now = Date.now()
     
-    const frontmatter = `---
-name: "${params.name}"
-description: "${params.description}"
-icon: "${params.icon || '🔧'}"
-category: "${params.category || 'custom'}"
-version: "1.0.0"
-createdAt: ${now}
-updatedAt: ${now}
-usageScenarios:
-${(params.usageScenarios || []).map(s => `  - "${s}"`).join('\n')}
-tools:
-${(params.tools || []).map(t => `  - "${t}"`).join('\n')}
-tags:
-${(params.tags || []).map(t => `  - "${t}"`).join('\n')}
----
-
-${params.content}`
-    
-    // 保存到文件系统
-    const response = await fetch('/api/files/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        path: `.skills/${id}.md`,
-        content: frontmatter,
-        overwrite: false
-      })
-    })
-    
-    if (!response.ok) {
-      const error = await response.text()
-      throw new Error(error)
-    }
-    
-    const skill: Skill = {
+    // 构建符合后端 API 期望的 skill 数据
+    const skillData = {
       id,
       name: params.name,
       description: params.description,
       icon: params.icon || '🔧',
-      category: (params.category || 'custom') as SkillCategory,
+      category: params.category || 'custom',
       content: params.content,
       usageScenarios: params.usageScenarios || [],
       tools: params.tools || [],
@@ -561,6 +528,26 @@ ${params.content}`
       enabled: true
     }
     
+    // 调用后端 API 创建 skill
+    const response = await fetch('/api/skills', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(skillData)
+    })
+    
+    if (!response.ok) {
+      const error = await response.text()
+      throw new Error(error)
+    }
+    
+    const result = await response.json()
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to create skill')
+    }
+    
+    // 使用后端返回的数据
+    const skill: Skill = result.data
+    
     // 添加到列表
     skills.value.push(skill)
     
@@ -572,7 +559,7 @@ ${params.content}`
 }
 
 /**
- * 更新 skill
+ * 更新 skill（使用后端 API）
  */
 async function updateSkill(id: string, updates: Partial<Skill>): Promise<boolean> {
   try {
@@ -592,41 +579,28 @@ async function updateSkill(id: string, updates: Partial<Skill>): Promise<boolean
       updatedAt: Date.now()
     }
     
-    // 重新生成文件内容
-    const frontmatter = `---
-name: "${updatedSkill.name}"
-description: "${updatedSkill.description}"
-icon: "${updatedSkill.icon}"
-category: "${updatedSkill.category}"
-version: "${updatedSkill.version}"
-author: "${updatedSkill.author || ''}"
-createdAt: ${updatedSkill.createdAt}
-updatedAt: ${updatedSkill.updatedAt}
-usageScenarios:
-${(updatedSkill.usageScenarios || []).map(s => `  - "${s}"`).join('\n')}
-tools:
-${(updatedSkill.tools || []).map(t => `  - "${t}"`).join('\n')}
-tags:
-${(updatedSkill.tags || []).map(t => `  - "${t}"`).join('\n')}
----
-
-${updatedSkill.content}`
-    
-    const response = await fetch('/api/files/save', {
+    // 调用后端 API 更新 skill
+    const response = await fetch('/api/skills/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        path: updatedSkill.basePath || `.skills/${id}.md`,
-        content: frontmatter,
-        overwrite: true
+        id,
+        ...updates,
+        updatedAt: Date.now()
       })
     })
     
     if (!response.ok) {
-      throw new Error('Failed to save skill file')
+      throw new Error('Failed to update skill')
     }
     
-    skills.value[index] = updatedSkill
+    const result = await response.json()
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update skill')
+    }
+    
+    // 使用后端返回的最新数据
+    skills.value[index] = result.data || updatedSkill
     return true
   } catch (e) {
     console.error('[useSkills] Failed to update skill:', e)
@@ -635,7 +609,7 @@ ${updatedSkill.content}`
 }
 
 /**
- * 删除 skill
+ * 删除 skill（使用后端 API）
  */
 async function deleteSkill(id: string): Promise<boolean> {
   try {
@@ -647,17 +621,20 @@ async function deleteSkill(id: string): Promise<boolean> {
       throw new Error('Cannot delete built-in skills')
     }
     
-    // 删除文件
-    const response = await fetch('/api/files/delete', {
+    // 调用后端 API 删除 skill
+    const response = await fetch('/api/skills/delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        path: skill.basePath || `.skills/${id}.md`
-      })
+      body: JSON.stringify({ id })
     })
     
     if (!response.ok) {
-      throw new Error('Failed to delete skill file')
+      throw new Error('Failed to delete skill')
+    }
+    
+    const result = await response.json()
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to delete skill')
     }
     
     // 从列表移除
@@ -670,29 +647,74 @@ async function deleteSkill(id: string): Promise<boolean> {
 }
 
 /**
- * 导入 skill 文件
+ * 导入 skill 文件（使用后端 API）
  */
 async function importSkillFile(file: File): Promise<Skill | null> {
   try {
-    const content = await file.text()
+    const fileContent = await file.text()
     
     // 验证格式
-    if (!content.match(/^---\n[\s\S]*?\n---/)) {
+    if (!fileContent.match(/^---\n[\s\S]*?\n---/)) {
       throw new Error('Invalid skill file format: missing frontmatter')
     }
     
-    // 生成文件名
-    const id = file.name.replace('.md', '')
+    // 解析 frontmatter
+    const frontmatterMatch = fileContent.match(/^---\n([\s\S]*?)\n---/)
+    if (!frontmatterMatch) return null
     
-    // 上传文件
-    const response = await fetch('/api/files/save', {
+    const frontmatter = frontmatterMatch[1]
+    const content = fileContent.replace(/^---\n[\s\S]*?\n---\n*/, '').trim()
+    
+    // 解析字段
+    const parseField = (name: string, defaultValue: string = ''): string => {
+      const match = frontmatter.match(new RegExp(`^${name}:\\s*(.+)$`, 'm'))
+      return match ? match[1].trim().replace(/^["']|["']$/g, '') : defaultValue
+    }
+    
+    const parseArray = (name: string): string[] => {
+      const indentMatch = frontmatter.match(new RegExp(`^${name}:\\s*\\n((?:\\s+-\\s+.+\\n?)+)`, 'm'))
+      if (indentMatch) {
+        return indentMatch[1]
+          .trim()
+          .split('\\n')
+          .map(line => line.replace(/^\\s+-\\s+/, '').trim().replace(/^["']|["']$/g, ''))
+          .filter(Boolean)
+      }
+      const inlineMatch = frontmatter.match(new RegExp(`^${name}:\\s*\\[(.+?)\\]`, 'm'))
+      if (inlineMatch) {
+        return inlineMatch[1].split(',').map(s => s.trim().replace(/^["']|["']$/g, ''))
+      }
+      return []
+    }
+    
+    const id = file.name.replace('.md', '')
+    const now = Date.now()
+    
+    // 构建 skill 数据
+    const skillData = {
+      id,
+      name: parseField('name', id),
+      description: parseField('description'),
+      icon: parseField('icon', '🔧'),
+      category: parseField('category', 'custom'),
+      content: content,
+      usageScenarios: parseArray('usageScenarios'),
+      tools: parseArray('tools'),
+      version: parseField('version', '1.0.0'),
+      author: parseField('author'),
+      basePath: `.skills/${id}.md`,
+      createdAt: now,
+      updatedAt: now,
+      tags: parseArray('tags'),
+      isBuiltIn: false,
+      enabled: true
+    }
+    
+    // 调用后端 API 创建 skill
+    const response = await fetch('/api/skills', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        path: `.skills/${id}.md`,
-        content,
-        overwrite: false
-      })
+      body: JSON.stringify(skillData)
     })
     
     if (!response.ok) {
@@ -700,16 +722,19 @@ async function importSkillFile(file: File): Promise<Skill | null> {
       throw new Error(error)
     }
     
-    // 解析并返回
-    const skill = await parseSkillFile(`${id}.md`)
-    if (skill) {
-      // 检查是否已存在
-      const existingIndex = skills.value.findIndex(s => s.id === skill.id)
-      if (existingIndex >= 0) {
-        skills.value[existingIndex] = skill
-      } else {
-        skills.value.push(skill)
-      }
+    const result = await response.json()
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to import skill')
+    }
+    
+    const skill: Skill = result.data
+    
+    // 检查是否已存在，更新或添加
+    const existingIndex = skills.value.findIndex(s => s.id === skill.id)
+    if (existingIndex >= 0) {
+      skills.value[existingIndex] = skill
+    } else {
+      skills.value.push(skill)
     }
     
     return skill
@@ -804,31 +829,37 @@ function matchSkills(userInput: string, availableSkillIds: string[]): string[] {
 }
 
 /**
- * 初始化：加载所有 skills
+ * 初始化：从后端 API 加载所有 skills
  */
 async function initSkills() {
   isLoading.value = true
   error.value = null
   
   try {
-    // 先确保 skills 目录存在
-    await fetch('/api/files/mkdir', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: '.skills' })
-    }).catch(() => {/* 目录可能已存在 */})
+    // 调用后端 API 加载 skills
+    const response = await fetch('/api/skills')
+    if (!response.ok) {
+      throw new Error('Failed to fetch skills')
+    }
     
-    // 加载文件系统的 skills
-    const fileSkills = await loadSkillsFromFilesystem()
+    const result = await response.json()
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to load skills')
+    }
     
-    // 合并：内置 skills + 文件 skills（文件 skills 优先级更高）
+    // 后端返回的自定义 skills
+    const apiSkills: Skill[] = result.data || []
+    
+    // 合并：内置 skills + 后端 skills（后端 skills 优先级更高）
     const builtinIds = new Set(BUILTIN_SKILLS.map(s => s.id))
-    const customSkills = fileSkills.filter(s => !builtinIds.has(s.id))
+    const customSkills = apiSkills.filter(s => !builtinIds.has(s.id))
     
     skills.value = [...BUILTIN_SKILLS, ...customSkills]
   } catch (e) {
     error.value = 'Failed to load skills'
     console.error(e)
+    // 如果加载失败，至少显示内置 skills
+    skills.value = [...BUILTIN_SKILLS]
   } finally {
     isLoading.value = false
   }
@@ -857,7 +888,7 @@ export function useSkills() {
     deleteSkill,
     importSkillFile,
     exportSkill,
-    refreshSkills: loadSkillsFromFilesystem,
+    refreshSkills: initSkills,  // 使用同样的函数从后端刷新
     
     // Invocation
     invokeSkill,

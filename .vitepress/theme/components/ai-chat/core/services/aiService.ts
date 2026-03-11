@@ -643,8 +643,15 @@ async function chatStreamInternal(
   config: SessionConfig,
   callbacks: StreamCallbacks,
   signal?: AbortSignal,
-  isToolContinuation: boolean = false
-): Promise<void> {
+  isToolContinuation: boolean = false,
+  includeTools: boolean = false,
+  toolContext?: {
+    agentId?: string
+    availableSkills?: string[]
+    declaredTools?: string[]
+    availableTools?: string[]
+  }
+): Promise<{ content?: string; toolCalls?: ToolCall[]; reasoningContent?: string; error?: string }> {
   const modelConfig = getModelConfig(config.model)
   validateApiKey(modelConfig)
   
@@ -682,6 +689,28 @@ async function chatStreamInternal(
     requestBody.thinking = { type: 'enabled' }
   }
   
+  if (config.model === 'kimi-k2.5' && config.enableReasoning) {
+    const hasBuiltinTools = includeTools && getToolDefinitions().some((t: ToolDefinition) => 
+      t.function.name.startsWith('$')
+    )
+    if (hasBuiltinTools) {
+      requestBody.thinking = { type: 'disabled' }
+    } else {
+      requestBody.thinking = { type: 'enabled' }
+    }
+  }
+
+  if (includeTools && modelConfig.supportsFunctionCalling) {
+    const allDefs = getToolDefinitions()
+    let activeDefs = allDefs
+    if (toolContext?.availableTools) {
+      activeDefs = allDefs.filter(d => toolContext.availableTools!.includes(d.function.name))
+    }
+    if (activeDefs.length > 0) {
+      requestBody.tools = activeDefs
+    }
+  }
+  
   logApiRequest('/chat/completions (stream)', requestBody)
 
   const decoder = new TextDecoder()
@@ -689,6 +718,7 @@ async function chatStreamInternal(
   let fullContent = ''
   let fullReasoning = ''
   let chunkCount = 0
+  let toolCalls: any[] = []
 
   try {
     const response = await fetch(`${modelConfig.baseURL}/chat/completions`, {
@@ -703,7 +733,9 @@ async function chatStreamInternal(
 
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`HTTP ${response.status}: ${errorText}`)
+      const errorStr = `HTTP ${response.status}: ${errorText}`
+      logApiError('/chat/completions (stream)', new Error(errorStr), Date.now() - startTime, requestBody)
+      return { error: errorStr }
     }
 
     const reader = response.body?.getReader()
@@ -723,13 +755,32 @@ async function chatStreamInternal(
         
         const data = line.slice(6).trim()
         if (data === '[DONE]') {
-          callbacks.onComplete()
-          return
+          return {
+            content: fullContent,
+            reasoningContent: fullReasoning,
+            toolCalls: toolCalls.length > 0 ? toolCalls.filter(Boolean) : undefined
+          }
         }
 
         try {
           const chunk = JSON.parse(data)
           const delta = chunk.choices?.[0]?.delta
+          
+          if (delta?.tool_calls) {
+            for (const tc of delta.tool_calls) {
+              const idx = tc.index
+              if (!toolCalls[idx]) {
+                toolCalls[idx] = {
+                  id: tc.id,
+                  type: tc.type || 'function',
+                  function: { name: tc.function?.name || '', arguments: tc.function?.arguments || '' }
+                }
+              } else {
+                if (tc.function?.name) toolCalls[idx].function.name += tc.function.name
+                if (tc.function?.arguments) toolCalls[idx].function.arguments += tc.function.arguments
+              }
+            }
+          }
           
           if (delta?.reasoning_content) {
             fullReasoning += delta.reasoning_content
@@ -745,13 +796,18 @@ async function chatStreamInternal(
         }
       }
     }
+    
+    // 返回最终在流结束时积累的数据（防由于网络结束但未发送[DONE]）
+    return {
+      content: fullContent,
+      reasoningContent: fullReasoning,
+      toolCalls: toolCalls.length > 0 ? toolCalls.filter(Boolean) : undefined
+    }
   } catch (error) {
     const errorObj = error instanceof Error ? error : new Error(String(error))
     logApiError('/chat/completions (stream)', errorObj, Date.now() - startTime, requestBody)
-    throw errorObj
+    return { error: errorObj.message }
   }
-
-  callbacks.onComplete()
 }
 
 // ==================== 主服务 ====================
@@ -873,7 +929,8 @@ export const aiService = {
           data: { round: toolRound }
         })
         
-        const response = await chatNonStream(filteredMessages, config, true, toolRound > 1)
+        const hasAnyTools = !!(toolContext?.availableTools?.length)
+        const response = await chatStreamInternal(filteredMessages, config, callbacks, signal, toolRound > 1, hasAnyTools, toolContext)
         
         if (response.error) {
           callbacks.onError(new Error(response.error))
@@ -914,15 +971,7 @@ export const aiService = {
         if (!toolCalls || toolCalls.length === 0) {
           // 没有工具调用，直接显示最终回复
           if (response.content) {
-            const cleanedContent = cleanAIOutput(response.content)
-            callbacks.onContent(cleanedContent)
-            
-            logAIContent(cleanedContent, {
-              round: toolRound,
-              hasThinking: !!response.reasoningContent,
-              model: config.model
-            })
-            apiDebugLogger.logNote('final_response', '【UI展示】最终回复（立即显示）', { content: response.content }, true)
+            apiDebugLogger.logNote('final_response', '【UI展示】最终回复（流式输出完毕）', { content: response.content }, true)
           }
           if (isReasoningMode && response.reasoningContent) {
             callbacks.onReasoning(fullThinking || response.reasoningContent)

@@ -150,10 +150,9 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 <style scoped>
 .chat-input-3d {
   position: relative;
-  padding: 20px 28px 24px;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.9) 0%, #f1f5f9 100%);
-  border-top: 1px solid rgba(226, 232, 240, 0.8);
-  backdrop-filter: blur(10px);
+  padding: 12px 28px 24px;
+  background: transparent;
+  border-top: none;
 }
 
 /* 3D 输入容器 - 液态玻璃效果 */
@@ -162,32 +161,31 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   display: flex;
   align-items: flex-end;
   gap: 12px;
-  padding: 14px 16px;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
   border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 20px;
+  border-radius: 32px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.04),
-    0 8px 24px rgba(0, 0, 0, 0.02),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  transform-style: preserve-3d;
+    0 8px 32px rgba(31, 38, 135, 0.05),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 }
 
 .input-container-3d:hover {
   transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.95);
   box-shadow: 
-    0 8px 20px rgba(0, 0, 0, 0.06),
-    0 16px 40px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    0 12px 40px rgba(31, 38, 135, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8);
 }
 
 .input-container-3d.focused {
-  border-color: rgba(59, 130, 246, 0.5);
+  border-color: rgba(107, 231, 142, 0.5);
   box-shadow: 
-    0 0 0 4px rgba(59, 130, 246, 0.1),
-    0 12px 32px rgba(59, 130, 246, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    0 0 0 4px rgba(107, 231, 142, 0.1),
+    0 12px 32px rgba(107, 231, 142, 0.15),
+    inset 0 0 12px rgba(107, 231, 142, 0.05);
   transform: translateY(-4px);
 }
 
@@ -198,22 +196,19 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 14px;
+  background: rgba(241, 245, 249, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 50%;
   color: #64748b;
   cursor: pointer;
   transition: all 0.3s ease;
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .attach-btn-3d:hover {
-  background: linear-gradient(145deg, #eff6ff, #dbeafe);
-  color: #3b82f6;
-  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(226, 232, 240, 0.8);
+  color: #1e293b;
   transform: translateY(-2px) rotate(-5deg);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 .attach-btn-3d:active {
@@ -232,24 +227,20 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
-  border: none;
-  border-radius: 14px;
-  color: white;
+  background: rgba(107, 231, 142, 0.15);
+  border: 1px solid rgba(107, 231, 142, 0.3);
+  border-radius: 50%;
+  color: #6BE78E;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
-  box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.4),
-    0 8px 24px rgba(59, 130, 246, 0.2);
-  transform-style: preserve-3d;
+  box-shadow: inset 0 0 12px rgba(107, 231, 142, 0);
 }
 
 .send-btn-3d:hover:not(:disabled) {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 
-    0 8px 20px rgba(59, 130, 246, 0.5),
-    0 16px 40px rgba(59, 130, 246, 0.3);
+  background: rgba(107, 231, 142, 0.25);
+  box-shadow: inset 0 0 12px rgba(107, 231, 142, 0.2), 0 0 24px rgba(107, 231, 142, 0.2);
 }
 
 .send-btn-3d:disabled {
@@ -260,17 +251,16 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 }
 
 .send-btn-3d.stop {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  box-shadow: 
-    0 4px 12px rgba(239, 68, 68, 0.4),
-    0 8px 24px rgba(239, 68, 68, 0.2);
+  background: rgba(255, 31, 34, 0.15);
+  color: #FF1F22;
+  border-color: rgba(255, 31, 34, 0.3);
+  box-shadow: inset 0 0 12px rgba(255, 31, 34, 0.1);
   animation: pulse-stop 1.5s ease-in-out infinite;
 }
 
 .send-btn-3d.stop:hover {
-  box-shadow: 
-    0 8px 20px rgba(239, 68, 68, 0.5),
-    0 16px 40px rgba(239, 68, 68, 0.3);
+  background: rgba(255, 31, 34, 0.25);
+  box-shadow: 0 0 24px rgba(255, 31, 34, 0.2);
 }
 
 @keyframes pulse-stop {
@@ -297,13 +287,12 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   display: inline-block;
   padding: 2px 8px;
   margin: 0 2px;
-  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+  background: rgba(241, 245, 249, 0.8);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 6px;
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  color: #475569;
 }
 
 /* 背景装饰光效 */
@@ -314,7 +303,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   left: -10%;
   width: 40%;
   height: 200%;
-  background: radial-gradient(ellipse, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
+  background: radial-gradient(ellipse, rgba(16, 185, 129, 0.05) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -325,7 +314,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   right: -10%;
   width: 40%;
   height: 200%;
-  background: radial-gradient(ellipse, rgba(139, 92, 246, 0.05) 0%, transparent 70%);
+  background: radial-gradient(ellipse, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
   pointer-events: none;
 }
 </style>

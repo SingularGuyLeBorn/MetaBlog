@@ -1,0 +1,70 @@
+{
+  "uuid": "2fb80c88-ff48-4f11-bddb-d9abb1ad19f1",
+  "sessionId": "session-1772818160440",
+  "filename": "20260306-012920-session-deepseek-chat-mmf65r94-zbwor9",
+  "startTime": "2026-03-06T17:29:20.440Z",
+  "model": "deepseek-chat",
+  "reasoningEnabled": false,
+  "supportsVision": false,
+  "supportsVideo": false,
+  "entries": [
+    {
+      "timestamp": "2026-03-06T17:29:20.441Z",
+      "type": "system",
+      "title": "🚀 Session 开始",
+      "note": "UUID: 2fb80c88-ff48-4f11-bddb-d9abb1ad19f1, 文件名: 20260306-012920-session-deepseek-chat-mmf65r94-zbwor9, 模型: deepseek-chat, 思考模式: 关闭",
+      "metadata": {
+        "uuid": "2fb80c88-ff48-4f11-bddb-d9abb1ad19f1",
+        "filename": "20260306-012920-session-deepseek-chat-mmf65r94-zbwor9",
+        "model": "deepseek-chat",
+        "reasoningEnabled": false
+      }
+    },
+    {
+      "timestamp": "2026-03-06T17:29:20.441Z",
+      "type": "user_input",
+      "title": "👤 用户输入",
+      "content": "你好",
+      "uiVisible": true,
+      "uiLocation": "chat_input",
+      "note": "用户在聊天界面输入的消息",
+      "metadata": {
+        "messageId": "msg_1772818100717_tuanua83z",
+        "sessionId": "session-1772818160440"
+      }
+    },
+    {
+      "timestamp": "2026-03-06T17:29:29.637Z",
+      "type": "ai_content",
+      "title": "🤖 AI 回复",
+      "content": "你好！我是你的AI助手，很高兴为你服务！\n\n我可以帮助你处理各种任务，包括：\n\n📚 **知识库管理**\n- 搜索、阅读、创建、编辑文章\n- 管理知识库和文档\n\n🌐 **网络搜索与解析**\n- 搜索最新信息\n- 解析各种平台链接（知乎、B站、小红书、GitHub等）\n- 获取网页内容\n\n💻 **代码与开发**\n- 执行代码片段\n- 分析代码质量\n- 查询GitHub仓库信息\n\n📝 **内容处理**\n- 翻译文本\n- 总结文章\n- 格式化输出\n- 创建富媒体文章\n\n🛠️ **实用工具**\n- 数学计算\n- 获取天气信息\n- 文件操作\n- OCR图片识别\n\n请告诉我你需要什么帮助，我会尽力为你提供支持！",
+      "note": "展示给用户的最终回复内容",
+      "uiVisible": true,
+      "uiLocation": "message_bubble",
+      "metadata": {
+        "round": 1,
+        "hasThinking": false,
+        "model": "deepseek-chat"
+      }
+    },
+    {
+      "timestamp": "2026-03-06T17:33:41.746Z",
+      "type": "system",
+      "title": "🏁 Session 结束",
+      "note": "总计 0 轮对话, 0 次工具调用",
+      "metadata": {
+        "stats": {
+          "totalRounds": 0,
+          "toolCallCount": 0,
+          "errorCount": 0
+        }
+      }
+    }
+  ],
+  "stats": {
+    "totalRounds": 0,
+    "toolCallCount": 0,
+    "errorCount": 0
+  },
+  "endTime": "2026-03-06T17:33:41.746Z"
+}
