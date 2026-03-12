@@ -28,31 +28,14 @@
       </div>
     </section>
 
-    <!-- Filter Tags -->
-    <div class="filter-section">
-      <div class="filter-tags">
-        <button 
-          v-for="(filter, index) in filters" 
-          :key="filter.value"
-          class="filter-tag neu-btn magnetic-btn ripple-btn"
-          :class="{ active: currentFilter === filter.value }"
-          @click="switchFilter(filter.value)"
-        >
-          <span class="filter-icon">{{ filter.icon }}</span>
-          {{ filter.label }}
-        </button>
-      </div>
-    </div>
-
     <!-- Resources Grid -->
     <main class="resources-main">
       <TransitionGroup name="resource-list" tag="div" class="resources-grid sr-grid sr-grid-2">
         <a 
-          v-for="(resource, index) in filteredResources" 
+          v-for="(resource, index) in displayResources" 
           :key="resource.title"
           :href="resource.link"
           class="resource-card glass-card glass-card-hover tilt-card fade-up"
-          :class="{ 'resource-exit': isSwitching }"
           :style="{ transitionDelay: `${index * 0.08}s` }"
         >
           <!-- Card Header -->
@@ -83,13 +66,6 @@
           </div>
         </a>
       </TransitionGroup>
-      
-      <!-- Empty State -->
-      <div v-if="filteredResources.length === 0" class="empty-state glass-card">
-        <div class="empty-icon">🔍</div>
-        <h3>暂无相关资源</h3>
-        <p>请尝试其他筛选条件</p>
-      </div>
     </main>
 
     <!-- Projects Showcase -->
@@ -175,7 +151,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { initInteractiveEffects } from '../../composables/useInteractiveEffects'
 
 interface Resource {
   title: string
@@ -235,18 +210,8 @@ const resources: Resource[] = [
   }
 ]
 
-const filters = [
-  { label: '全部', value: 'all', icon: '✦' },
-  { label: '文档', value: 'doc', icon: '◇' },
-  { label: '目录', value: 'folder', icon: '◆' }
-]
-
-const currentFilter = ref('all')
-
-const filteredResources = computed(() => {
-  if (currentFilter.value === 'all') return resources
-  return resources.filter(r => r.typeClass === currentFilter.value)
-})
+// All resources (no filter)
+const displayResources = resources
 
 // Projects Data
 const projects = [
@@ -302,7 +267,24 @@ const switchFilter = (value: string) => {
 
 onMounted(() => {
   nextTick(() => {
-    initInteractiveEffects()
+    // 初始化卡片倾斜效果
+    const cards = document.querySelectorAll('.tilt-card')
+    cards.forEach(card => {
+      const htmlCard = card as HTMLElement
+      htmlCard.addEventListener('mousemove', (e) => {
+        const rect = htmlCard.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        const centerX = rect.width / 2
+        const centerY = rect.height / 2
+        const rotateX = (y - centerY) / centerY * -8
+        const rotateY = (x - centerX) / centerX * 8
+        htmlCard.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`
+      })
+      htmlCard.addEventListener('mouseleave', () => {
+        htmlCard.style.transform = ''
+      })
+    })
   })
 })
 </script>

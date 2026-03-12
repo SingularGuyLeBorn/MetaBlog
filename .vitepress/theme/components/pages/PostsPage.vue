@@ -44,31 +44,13 @@
       </div>
     </div>
 
-    <!-- Filter Bar — 新拟物 -->
-    <div class="filter-bar">
-      <div class="filter-tabs">
-        <button 
-          v-for="(tab, index) in filterTabs" 
-          :key="tab.value"
-          class="filter-tab neu-btn magnetic-btn ripple-btn"
-          :class="{ active: currentFilter === tab.value }"
-          :style="{ animationDelay: `${index * 0.05}s` }"
-          @click="switchFilter(tab.value)"
-        >
-          <span class="tab-icon">{{ tab.icon }}</span>
-          <span class="tab-text">{{ tab.label }}</span>
-        </button>
-      </div>
-    </div>
-
     <!-- Posts Grid -->
     <main class="posts-main">
       <TransitionGroup name="post-list" tag="div" class="posts-grid sr-grid">
         <article 
-          v-for="(post, index) in filteredPosts" 
+          v-for="(post, index) in displayPosts" 
           :key="post.title" 
           class="post-card glass-card glass-card-hover tilt-card fade-up"
-          :class="{ 'post-exit': isSwitching }"
           :style="{ transitionDelay: `${index * 0.08}s` }"
         >
           <a :href="post.link" class="post-link">
@@ -102,10 +84,7 @@
       </TransitionGroup>
       
       <!-- Empty State -->
-      <div v-if="filteredPosts.length === 0" class="empty-state glass-card">
-        <div class="empty-icon">🔍</div>
-        <p>暂无相关文章</p>
-      </div>
+
     </main>
 
     <!-- Article Collections -->
@@ -175,7 +154,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { initInteractiveEffects } from '../../composables/useInteractiveEffects'
 
 interface Post {
   title: string
@@ -227,13 +205,6 @@ const posts: Post[] = [
     excerpt: '另一篇测试文章，展示多级目录结构下的文章展示效果，探索内容组织的最佳实践...',
     link: '/sections/posts/leaf-1-2/'
   }
-]
-
-const filterTabs = [
-  { label: '全部', value: 'all', icon: '✦' },
-  { label: 'AI', value: 'AI', icon: '◈' },
-  { label: '强化学习', value: '强化学习', icon: '◇' },
-  { label: '系列', value: '系列', icon: '◆' }
 ]
 
 const trendingTags = [
@@ -312,12 +283,8 @@ const extendedReading = [
   }
 ]
 
-const currentFilter = ref('all')
-
-const filteredPosts = computed(() => {
-  if (currentFilter.value === 'all') return posts
-  return posts.filter(post => post.tag === currentFilter.value)
-})
+// All posts (no filter)
+const displayPosts = posts
 
 const uniqueTags = computed(() => {
   return new Set(posts.map(p => p.tag)).size
@@ -328,20 +295,26 @@ function formatDate(dateStr: string): string {
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
 }
 
-// 切换过滤器动画
-const isSwitching = ref(false)
-const switchFilter = (value: string) => {
-  if (currentFilter.value === value) return
-  isSwitching.value = true
-  setTimeout(() => {
-    currentFilter.value = value
-    isSwitching.value = false
-  }, 200)
-}
-
 onMounted(() => {
   nextTick(() => {
-    initInteractiveEffects()
+    // 初始化卡片倾斜效果
+    const cards = document.querySelectorAll('.tilt-card')
+    cards.forEach(card => {
+      const htmlCard = card as HTMLElement
+      htmlCard.addEventListener('mousemove', (e) => {
+        const rect = htmlCard.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        const centerX = rect.width / 2
+        const centerY = rect.height / 2
+        const rotateX = (y - centerY) / centerY * -8
+        const rotateY = (x - centerX) / centerX * 8
+        htmlCard.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`
+      })
+      htmlCard.addEventListener('mouseleave', () => {
+        htmlCard.style.transform = ''
+      })
+    })
   })
 })
 </script>

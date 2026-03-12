@@ -346,7 +346,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import { initInteractiveEffects } from '../../composables/useInteractiveEffects'
 
 // Loading state
 const isLoaded = ref(false)
@@ -590,8 +589,26 @@ onMounted(() => {
   observeSection('.highlights-section', highlightsVisible)
   observeSection('.recent-section', recentVisible)
   
-  // 初始化交互效果
-  useInteractiveEffects()
+  // 初始化卡片倾斜效果
+  nextTick(() => {
+    const cards = document.querySelectorAll('.tilt-card')
+    cards.forEach(card => {
+      const htmlCard = card as HTMLElement
+      htmlCard.addEventListener('mousemove', (e) => {
+        const rect = htmlCard.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        const centerX = rect.width / 2
+        const centerY = rect.height / 2
+        const rotateX = (y - centerY) / centerY * -8
+        const rotateY = (x - centerX) / centerX * 8
+        htmlCard.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`
+      })
+      htmlCard.addEventListener('mouseleave', () => {
+        htmlCard.style.transform = ''
+      })
+    })
+  })
 })
 
 onUnmounted(() => {

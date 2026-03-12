@@ -1,23 +1,5 @@
 <template>
   <div class="knowledge-page">
-    <!-- 铠甲合体加载动画 -->
-    <ArmorTransform v-if="showTransform" @complete="onTransformComplete" />
-    
-    <!-- 双龙戏珠 + 凤凰涅槃装饰 -->
-    <DragonPhoenix />
-    
-    <!-- Floating Decorations -->
-    <div class="floating-shapes">
-      <div class="shape shape-1">◆</div>
-      <div class="shape shape-2">◇</div>
-      <div class="shape shape-3">◈</div>
-      <div class="shape shape-4">◎</div>
-      <div class="shape shape-5">✦</div>
-    </div>
-    
-    <!-- Background Grid -->
-    <div class="bg-grid"></div>
-    
     <!-- Hero Section — 极简 -->
     <section class="hero-section fade-up">
       <div class="hero-content">
@@ -233,9 +215,6 @@
 
 <script setup lang="ts">
 import { onMounted, nextTick, ref, computed } from 'vue'
-import { initInteractiveEffects } from '../../composables/useInteractiveEffects'
-import ArmorTransform from '../effects/ArmorTransform.vue'
-import DragonPhoenix from '../effects/DragonPhoenix.vue'
 
 interface Topic {
   icon: string
@@ -375,20 +354,26 @@ const relatedResources = [
   }
 ]
 
-// 铠甲合体动画控制
-const showTransform = ref(true)
-
-const onTransformComplete = () => {
-  showTransform.value = false
-}
-
 onMounted(() => {
   nextTick(() => {
-    initInteractiveEffects()
-    // 5秒后自动隐藏合体动画
-    setTimeout(() => {
-      showTransform.value = false
-    }, 5000)
+    // 初始化卡片倾斜效果
+    const cards = document.querySelectorAll('.tilt-card')
+    cards.forEach(card => {
+      const htmlCard = card as HTMLElement
+      htmlCard.addEventListener('mousemove', (e) => {
+        const rect = htmlCard.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        const centerX = rect.width / 2
+        const centerY = rect.height / 2
+        const rotateX = (y - centerY) / centerY * -8
+        const rotateY = (x - centerX) / centerX * 8
+        htmlCard.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`
+      })
+      htmlCard.addEventListener('mouseleave', () => {
+        htmlCard.style.transform = ''
+      })
+    })
   })
 })
 </script>
