@@ -1,5 +1,11 @@
 <template>
   <div class="knowledge-page">
+    <!-- 铠甲合体加载动画 -->
+    <ArmorTransform v-if="showTransform" @complete="onTransformComplete" />
+    
+    <!-- 双龙戏珠 + 凤凰涅槃装饰 -->
+    <DragonPhoenix />
+    
     <!-- Floating Decorations -->
     <div class="floating-shapes">
       <div class="shape shape-1">◆</div>
@@ -228,6 +234,8 @@
 <script setup lang="ts">
 import { onMounted, nextTick, ref, computed } from 'vue'
 import { useInteractiveEffects } from '../../composables/useInteractiveEffects'
+import ArmorTransform from '../effects/ArmorTransform.vue'
+import DragonPhoenix from '../effects/DragonPhoenix.vue'
 
 interface Topic {
   icon: string
@@ -367,9 +375,20 @@ const relatedResources = [
   }
 ]
 
+// 铠甲合体动画控制
+const showTransform = ref(true)
+
+const onTransformComplete = () => {
+  showTransform.value = false
+}
+
 onMounted(() => {
   nextTick(() => {
     useInteractiveEffects()
+    // 5秒后自动隐藏合体动画
+    setTimeout(() => {
+      showTransform.value = false
+    }, 5000)
   })
 })
 </script>
