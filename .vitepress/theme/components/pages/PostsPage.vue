@@ -15,17 +15,17 @@
           深入的技术文章与学习思考，探索编程与人工智能的无限可能
         </p>
 
-        <!-- Stats — Glass Cards with Animation -->
+        <!-- Stats — Glass Cards -->
         <div class="hero-stats">
           <div class="stat-card glass-card tilt-card scale-in" style="transition-delay: 0.1s">
-            <span class="stat-num count-up-number">{{ postCountAnim.current.value }}</span>
+            <span class="stat-num">{{ posts.length }}</span>
             <span class="stat-label">篇文章</span>
           </div>
           <div class="stat-card glass-card tilt-card scale-in" style="transition-delay: 0.2s">
-            <span class="stat-num count-up-number">{{ tagCountAnim.current.value }}</span>
+            <span class="stat-num">{{ uniqueTags }}</span>
             <span class="stat-label">个分类</span>
           </div>
-          <div class="stat-card glass-card tilt-card scale-in breathe-animation" style="transition-delay: 0.3s">
+          <div class="stat-card glass-card tilt-card scale-in" style="transition-delay: 0.3s">
             <span class="stat-num">2024</span>
             <span class="stat-label">持续更新</span>
           </div>
@@ -107,12 +107,75 @@
         <p>暂无相关文章</p>
       </div>
     </main>
+
+    <!-- Article Collections -->
+    <section class="collections-section fade-up">
+      <div class="collections-header">
+        <h2 class="collections-title">
+          <span class="title-icon">📚</span>
+          文章集合
+        </h2>
+        <p class="collections-desc">按主题整理的系列文章，便于系统学习</p>
+      </div>
+      
+      <div class="collections-grid">
+        <a 
+          v-for="(collection, index) in collections" 
+          :key="collection.title"
+          :href="collection.link"
+          class="collection-card glass-card glass-card-hover tilt-card fade-up"
+          :style="{ transitionDelay: `${index * 100}ms` }"
+        >
+          <div class="collection-cover" :style="{ background: collection.gradient }">
+            <span class="collection-emoji">{{ collection.emoji }}</span>
+          </div>
+          <div class="collection-info">
+            <h3 class="collection-name">{{ collection.title }}</h3>
+            <p class="collection-count">{{ collection.count }} 篇文章</p>
+            <p class="collection-desc">{{ collection.desc }}</p>
+          </div>
+          <svg class="collection-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- Extended Reading -->
+    <section class="extended-reading-section fade-up">
+      <div class="section-header-row">
+        <h2 class="section-title-sm">
+          <span class="title-icon">🌟</span>
+          扩展阅读
+        </h2>
+      </div>
+      
+      <div class="extended-list">
+        <a 
+          v-for="(article, index) in extendedReading" 
+          :key="article.title" 
+          :href="article.link"
+          class="extended-card glass-card micro-interaction fade-up"
+          :style="{ transitionDelay: `${index * 60}ms` }"
+        >
+          <div class="extended-marker" :class="article.type"></div>
+          <div class="extended-content">
+            <span class="extended-tag" :class="article.tagClass">{{ article.tag }}</span>
+            <h4 class="extended-title">{{ article.title }}</h4>
+            <p class="extended-excerpt">{{ article.excerpt }}</p>
+          </div>
+          <svg class="extended-arrow-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { useInteractiveEffects, useCountUp } from '../../composables/useInteractiveEffects'
+import { useInteractiveEffects } from '../../composables/useInteractiveEffects'
 
 interface Post {
   title: string
@@ -177,6 +240,78 @@ const trendingTags = [
   'DeepSeek-R1', 'RLHF', 'Diffusion Models', 'Transformer', 'Agentic Workflow', 'Vector DB', 'Prompt Engineering', 'LangChain', 'Ollama'
 ]
 
+// Article Collections
+const collections = [
+  {
+    title: 'DeepSeek 技术解析',
+    emoji: '🐋',
+    count: 3,
+    desc: '深入解析 DeepSeek 系列模型的核心技术与创新点',
+    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    link: '/sections/posts/DeepSeek-V3核心技术：MoE与MLA简明解析.html'
+  },
+  {
+    title: 'Docker 实践指南',
+    emoji: '🐳',
+    count: 2,
+    desc: '容器化部署的完整指南，从入门到生产实践',
+    gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    link: '/sections/posts/docker.html'
+  },
+  {
+    title: 'Transformer 系列',
+    emoji: '⚡',
+    count: 2,
+    desc: 'Transformer 架构深度解析与实现细节',
+    gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    link: '/sections/posts/Transformer-详解.html'
+  },
+  {
+    title: '架构设计模式',
+    emoji: '🏗️',
+    count: 1,
+    desc: '微服务与分布式系统设计模式探讨',
+    gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+    link: '/sections/posts/微服务架构设计模式详解.html'
+  }
+]
+
+// Extended Reading
+const extendedReading = [
+  {
+    title: '《DeepSeek-V3核心技术》文章点评',
+    excerpt: '对 DeepSeek-V3 技术文章的深度点评与修改建议',
+    link: '/sections/posts/《DeepSeek-V3核心技术：MoE与MLA简明解析》文章点评与修改建议.html',
+    type: 'review',
+    tag: '点评',
+    tagClass: 'sr-tag-morandi-purple'
+  },
+  {
+    title: 'Docker 文章修改意见',
+    excerpt: 'Docker 文章的专业点评与改进建议',
+    link: '/sections/posts/Docker文章修改意见与点评.html',
+    type: 'review',
+    tag: '点评',
+    tagClass: 'sr-tag-morandi-blue'
+  },
+  {
+    title: '工具测试指南',
+    excerpt: '开发工具与测试方法的最佳实践',
+    link: '/sections/posts/tool-tester-guide.html',
+    type: 'guide',
+    tag: '指南',
+    tagClass: 'sr-tag-morandi-green'
+  },
+  {
+    title: '工具参考手册',
+    excerpt: '常用开发工具的参考手册与使用技巧',
+    link: '/sections/posts/tools-reference.html',
+    type: 'reference',
+    tag: '参考',
+    tagClass: 'sr-tag-morandi-pink'
+  }
+]
+
 const currentFilter = ref('all')
 
 const filteredPosts = computed(() => {
@@ -187,10 +322,6 @@ const filteredPosts = computed(() => {
 const uniqueTags = computed(() => {
   return new Set(posts.map(p => p.tag)).size
 })
-
-// 数字滚动
-const postCountAnim = useCountUp(posts.length, 1500)
-const tagCountAnim = useCountUp(uniqueTags.value, 1500)
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr)
@@ -211,10 +342,6 @@ const switchFilter = (value: string) => {
 onMounted(() => {
   nextTick(() => {
     useInteractiveEffects()
-    setTimeout(() => {
-      postCountAnim.start()
-      tagCountAnim.start()
-    }, 300)
   })
 })
 </script>
@@ -584,6 +711,224 @@ onMounted(() => {
 
   .post-link {
     padding: 24px;
+  }
+}
+
+/* ── Collections Section ── */
+.collections-section {
+  margin-top: 80px;
+  padding-top: 40px;
+  border-top: 1px solid var(--sr-glass-border);
+}
+
+.collections-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.collections-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-family: var(--sr-font-primary);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  margin: 0 0 8px;
+}
+
+.title-icon {
+  font-size: 28px;
+}
+
+.collections-desc {
+  font-size: 15px;
+  color: var(--sr-text-secondary);
+  margin: 0;
+}
+
+.collections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.collection-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+.collection-cover {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.collection-emoji {
+  font-size: 48px;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
+}
+
+.collection-info {
+  padding: 20px;
+  flex: 1;
+}
+
+.collection-name {
+  font-family: var(--sr-font-primary);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  margin: 0 0 6px;
+}
+
+.collection-count {
+  font-size: 13px;
+  color: var(--sr-accent-star);
+  margin: 0 0 10px;
+  font-weight: 500;
+}
+
+.collection-desc {
+  font-size: 13px;
+  color: var(--sr-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.collection-arrow {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 18px;
+  height: 18px;
+  color: var(--sr-text-muted);
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s var(--sr-spring-bounce);
+}
+
+.collection-card:hover .collection-arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--sr-accent-star);
+}
+
+/* ── Extended Reading Section ── */
+.extended-reading-section {
+  margin-top: 60px;
+}
+
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.section-title-sm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--sr-font-primary);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  margin: 0;
+}
+
+.extended-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.extended-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.extended-marker {
+  width: 4px;
+  height: 36px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.extended-marker.review { background: linear-gradient(180deg, #b8a090, #9a8b7a); }
+.extended-marker.guide { background: linear-gradient(180deg, #7c9a92, #5a7c70); }
+.extended-marker.reference { background: linear-gradient(180deg, #9aa6b2, #7a8a9a); }
+
+.extended-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.extended-tag {
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.extended-title {
+  font-family: var(--sr-font-primary);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  margin: 0 0 4px;
+  transition: color 0.2s ease;
+}
+
+.extended-card:hover .extended-title {
+  color: var(--sr-accent-star);
+}
+
+.extended-excerpt {
+  font-size: 13px;
+  color: var(--sr-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.extended-arrow-sm {
+  width: 16px;
+  height: 16px;
+  color: var(--sr-text-muted);
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: all 0.3s var(--sr-spring-bounce);
+}
+
+.extended-card:hover .extended-arrow-sm {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--sr-accent-star);
+}
+
+@media (max-width: 768px) {
+  .collections-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .collection-arrow,
+  .extended-arrow-sm {
+    opacity: 1;
+    transform: none;
   }
 }
 </style>

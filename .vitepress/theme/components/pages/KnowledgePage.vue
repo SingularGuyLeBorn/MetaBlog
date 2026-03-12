@@ -15,17 +15,17 @@
           系统化的知识整理，从理论到实践，构建完整的学习路径
         </p>
 
-        <!-- Stats with Animation -->
+        <!-- Stats -->
         <div class="hero-stats">
           <div class="stat-card glass-card tilt-card scale-in" style="transition-delay: 0.1s">
-            <span class="stat-num count-up-number">{{ topicCountAnim.current.value }}</span>
+            <span class="stat-num">{{ topics.length + 1 }}</span>
             <span class="stat-label">核心专题</span>
           </div>
           <div class="stat-card glass-card tilt-card scale-in" style="transition-delay: 0.2s">
-            <span class="stat-num count-up-number">{{ articleCountAnim.current.value }}</span>
+            <span class="stat-num">{{ articles.length }}</span>
             <span class="stat-label">知识节点</span>
           </div>
-          <div class="stat-card glass-card tilt-card scale-in breathe-animation" style="transition-delay: 0.3s">
+          <div class="stat-card glass-card tilt-card scale-in" style="transition-delay: 0.3s">
             <span class="stat-num">∞</span>
             <span class="stat-label">探索深度</span>
           </div>
@@ -147,13 +147,75 @@
           </a>
         </div>
       </section>
+
+      <!-- Learning Path -->
+      <section class="learning-path-section fade-up">
+        <div class="section-header-row">
+          <h2 class="section-title-sm">
+            <span class="title-icon">🎯</span>
+            学习路径
+          </h2>
+        </div>
+        
+        <div class="learning-path-timeline">
+          <div 
+            v-for="(step, index) in learningPath" 
+            :key="step.title"
+            class="path-step glass-card fade-up"
+            :style="{ transitionDelay: `${index * 100}ms` }"
+          >
+            <div class="path-number">{{ index + 1 }}</div>
+            <div class="path-content">
+              <h4 class="path-title">{{ step.title }}</h4>
+              <p class="path-desc">{{ step.desc }}</p>
+              <div class="path-tags">
+                <span v-for="tag in step.tags" :key="tag" class="path-tag">{{ tag }}</span>
+              </div>
+            </div>
+            <a :href="step.link" class="path-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Related Resources -->
+      <section class="related-resources-section fade-up">
+        <div class="section-header-row">
+          <h2 class="section-title-sm">
+            <span class="title-icon">🔗</span>
+            相关资源
+          </h2>
+        </div>
+        
+        <div class="resources-cards">
+          <a 
+            v-for="(resource, index) in relatedResources" 
+            :key="resource.title" 
+            :href="resource.link"
+            class="resource-card-mini glass-card glass-card-hover tilt-card fade-up"
+            :style="{ transitionDelay: `${index * 80}ms` }"
+          >
+            <div class="resource-icon-mini">{{ resource.icon }}</div>
+            <div class="resource-info-mini">
+              <h4>{{ resource.title }}</h4>
+              <p>{{ resource.desc }}</p>
+            </div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+      </section>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, nextTick, ref, computed } from 'vue'
-import { useInteractiveEffects, useCountUp } from '../../composables/useInteractiveEffects'
+import { useInteractiveEffects } from '../../composables/useInteractiveEffects'
 
 interface Topic {
   icon: string
@@ -237,19 +299,65 @@ const articles: Article[] = [
   }
 ]
 
-// Count up animations
-const topicsCount = computed(() => topics.length + 1)
-const articlesCount = computed(() => articles.length)
-const topicCountAnim = useCountUp(topicsCount.value, 1500)
-const articleCountAnim = useCountUp(articlesCount.value, 1500)
+// Learning Path Data
+const learningPath = [
+  {
+    title: '测度论基础',
+    desc: '从集合论出发，建立严格的测度与积分理论，为概率论和随机过程奠定基础',
+    tags: ['测度论', '概率论', '数学基础'],
+    link: './rl-math-principle/00_Foundations/01_Theory_Derivation'
+  },
+  {
+    title: '概率与随机过程',
+    desc: '掌握条件期望、鞅论等核心概念，理解随机过程的演化规律',
+    tags: ['随机过程', '鞅论', '条件期望'],
+    link: './rl-math-principle/00_Foundations/02_Implementation.py'
+  },
+  {
+    title: '贝尔曼方程理论',
+    desc: '深入理解动态规划与最优控制的核心——贝尔曼最优性原理',
+    tags: ['动态规划', '最优控制', '贝尔曼方程'],
+    link: './rl-math-principle/01_Bellman_Equation/01_Theory_Derivation'
+  },
+  {
+    title: '策略梯度方法',
+    desc: '从 REINFORCE 到 PPO，掌握策略优化的核心算法与数学推导',
+    tags: ['策略梯度', 'PPO', 'TRPO'],
+    link: './rl-math-principle/02_Policy_Gradient/01_Theory_Derivation'
+  }
+]
+
+// Related Resources
+const relatedResources = [
+  {
+    icon: '📄',
+    title: 'AI 论文阅读',
+    desc: '精选 AI 领域重要论文解读',
+    link: '/sections/posts/ai-paper-reading-2024/'
+  },
+  {
+    icon: '🎮',
+    title: 'RL 应用案例',
+    desc: '强化学习在游戏与机器人中的应用',
+    link: '/sections/posts/rl-from-game-to-reality/'
+  },
+  {
+    icon: '💻',
+    title: '代码实现',
+    desc: '算法对应的 PyTorch 实现',
+    link: './rl-math-principle/00_Foundations/02_Implementation.py'
+  },
+  {
+    icon: '📊',
+    title: '可视化工具',
+    desc: '交互式学习工具与可视化',
+    link: '/sections/resources/'
+  }
+]
 
 onMounted(() => {
   nextTick(() => {
     useInteractiveEffects()
-    setTimeout(() => {
-      topicCountAnim.start()
-      articleCountAnim.start()
-    }, 300)
   })
 })
 </script>
@@ -587,6 +695,163 @@ onMounted(() => {
   background: var(--sr-glass-bg-hover);
 }
 
+/* Learning Path Section */
+.learning-path-section {
+  margin-top: 60px;
+}
+
+.learning-path-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.path-step {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 28px;
+  position: relative;
+}
+
+.path-number {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sr-glass-bg);
+  border: 2px solid var(--sr-accent-star);
+  border-radius: 50%;
+  font-family: var(--sr-font-primary);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--sr-accent-star);
+  flex-shrink: 0;
+}
+
+.path-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.path-title {
+  font-family: var(--sr-font-primary);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  margin: 0 0 6px;
+}
+
+.path-desc {
+  font-size: 14px;
+  color: var(--sr-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 10px;
+}
+
+.path-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.path-tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  background: var(--sr-glass-bg);
+  border: 1px solid var(--sr-glass-border);
+  border-radius: var(--sr-radius-sm);
+  color: var(--sr-text-muted);
+}
+
+.path-link {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sr-glass-bg);
+  border: 1px solid var(--sr-glass-border);
+  border-radius: 50%;
+  color: var(--sr-text-muted);
+  flex-shrink: 0;
+  transition: all 0.3s var(--sr-spring-bounce);
+}
+
+.path-link svg { width: 16px; height: 16px; }
+
+.path-step:hover .path-link {
+  color: var(--sr-accent-star);
+  border-color: var(--sr-accent-star);
+  transform: translateX(3px);
+}
+
+/* Related Resources Section */
+.related-resources-section {
+  margin-top: 60px;
+}
+
+.resources-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.resource-card-mini {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.resource-icon-mini {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sr-glass-bg);
+  border: 1px solid var(--sr-glass-border);
+  border-radius: var(--sr-radius-md);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.resource-info-mini {
+  flex: 1;
+  min-width: 0;
+}
+
+.resource-info-mini h4 {
+  font-family: var(--sr-font-primary);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  margin: 0 0 3px;
+}
+
+.resource-info-mini p {
+  font-size: 12px;
+  color: var(--sr-text-muted);
+  margin: 0;
+}
+
+.resource-card-mini svg {
+  width: 14px;
+  height: 14px;
+  color: var(--sr-text-muted);
+  flex-shrink: 0;
+  transition: all 0.3s var(--sr-spring-bounce);
+}
+
+.resource-card-mini:hover svg {
+  color: var(--sr-accent-star);
+  transform: translateX(3px);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .knowledge-page { padding: 60px 16px 60px; }
@@ -597,5 +862,18 @@ onMounted(() => {
   .article-card { flex-direction: column; align-items: flex-start; }
   .article-marker { width: 40px; height: 3px; }
   .article-arrow { align-self: flex-end; }
+  
+  .path-step {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .path-link {
+    align-self: flex-end;
+  }
+  
+  .resources-cards {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

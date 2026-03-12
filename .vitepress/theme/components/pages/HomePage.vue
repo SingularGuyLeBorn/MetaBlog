@@ -41,7 +41,7 @@
         <div class="orb orb-3"></div>
       </div>
       
-      <!-- Stats - Glass Cards with Count Up -->
+      <!-- Stats - Glass Cards -->
       <div class="hero-stats" :class="{ 'visible': isLoaded }">
         <div 
           v-for="(stat, i) in stats" 
@@ -50,8 +50,7 @@
           :style="{ transitionDelay: `${0.4 + i * 0.1}s` }"
         >
           <span class="stat-icon">{{ stat.icon }}</span>
-          <span class="stat-num count-up-number">{{ statValues[i]?.current.value || stat.num }}</span>
-          <span class="stat-suffix">{{ stat.suffix }}</span>
+          <span class="stat-num">{{ stat.num }}</span>
           <span class="stat-label">{{ stat.label }}</span>
         </div>
       </div>
@@ -237,9 +236,95 @@
       </div>
     </section>
 
+    <!-- Projects Section -->
+    <section class="projects-section sr-section fade-up" :class="{ 'visible': recentVisible }">
+      <div class="sr-container">
+        <div class="section-header">
+          <span class="section-badge">🚀 开源项目</span>
+          <h2 class="section-title-lg">技术实践</h2>
+          <p class="section-desc sr-body">将理论知识转化为实际项目，探索技术的无限可能</p>
+        </div>
+        
+        <div class="projects-grid sr-grid sr-grid-2">
+          <a 
+            v-for="(project, index) in projects" 
+            :key="project.title"
+            :href="project.link"
+            class="project-card glass-card glass-card-hover tilt-card fade-up"
+            :class="{ 'visible': recentVisible }"
+            :style="{ transitionDelay: `${index * 100}ms` }"
+          >
+            <div class="project-header">
+              <div class="project-icon-wrapper">
+                <span class="project-icon">{{ project.icon }}</span>
+              </div>
+              <div class="project-tags">
+                <span v-for="tag in project.tags" :key="tag" class="project-tag">{{ tag }}</span>
+              </div>
+            </div>
+            
+            <h3 class="project-title">{{ project.title }}</h3>
+            <p class="project-desc">{{ project.desc }}</p>
+            
+            <div class="project-stats">
+              <span class="project-stat">
+                <span class="stat-dot" :style="{ background: project.statusColor }"></span>
+                {{ project.status }}
+              </span>
+              <span class="project-stat">⭐ {{ project.stars }}</span>
+            </div>
+            
+            <div class="project-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Extended Knowledge Section -->
+    <section class="extended-section sr-section fade-up" :class="{ 'visible': recentVisible }">
+      <div class="sr-container">
+        <div class="section-header">
+          <span class="section-badge">📚 扩展知识</span>
+          <h2 class="section-title-lg">深度阅读</h2>
+          <p class="section-desc sr-body">精选的技术文章和教程，助你深入理解复杂概念</p>
+        </div>
+        
+        <div class="extended-list">
+          <a 
+            v-for="(item, index) in extendedArticles" 
+            :key="item.title" 
+            :href="item.link"
+            class="extended-item glass-card glass-card-hover tilt-card fade-up"
+            :class="{ 'visible': recentVisible }"
+            :style="{ transitionDelay: `${index * 80}ms` }"
+          >
+            <div class="extended-marker" :class="item.type"></div>
+            <div class="extended-content">
+              <div class="extended-meta">
+                <span class="extended-type">{{ item.typeLabel }}</span>
+                <span class="extended-date">{{ item.date }}</span>
+              </div>
+              <h4 class="extended-title">{{ item.title }}</h4>
+              <p class="extended-excerpt">{{ item.excerpt }}</p>
+              <div class="extended-tags">
+                <span v-for="tag in item.tags" :key="tag" class="extended-tag">{{ tag }}</span>
+              </div>
+            </div>
+            <svg class="extended-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
     <!-- Bottom CTA — immersive -->
     <section class="cta-section sr-section fade-up" :class="{ 'visible': recentVisible }">
-      <div class="cta-card glass-card">
+      <div class="cta-card glass-card tilt-card">
         <div class="cta-visual">
           <div class="cta-glow"></div>
           <span class="cta-icon">✦</span>
@@ -261,7 +346,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import { useInteractiveEffects, useCountUp } from '../../composables/useInteractiveEffects'
+import { useInteractiveEffects } from '../../composables/useInteractiveEffects'
 
 // Loading state
 const isLoaded = ref(false)
@@ -301,11 +386,11 @@ const techStack3 = [
   'Rust', 'Go', 'WebAssembly', 'OpenAI', 'Anthropic', 'Gemini'
 ]
 
-// Stats data (for count up animation)
+// Stats data
 const stats = [
-  { num: 200, suffix: '+', label: '知识节点', icon: '◈' },
-  { num: 20, suffix: '+', label: '技术文章', icon: '◎' },
-  { num: 10000, suffix: '+', label: '总阅读', icon: '✦' }
+  { num: '200+', label: '知识节点', icon: '◈' },
+  { num: '20+', label: '技术文章', icon: '◎' },
+  { num: '10K+', label: '总阅读', icon: '✦' }
 ]
 
 // Features data
@@ -386,6 +471,99 @@ const recentItems = [
   }
 ]
 
+// Projects data
+const projects = [
+  {
+    icon: '🧠',
+    title: 'MetaBlog 知识系统',
+    desc: 'AI 驱动的智能博客系统，支持知识图谱、RAG 检索、Agent 工作流',
+    tags: ['Vue 3', 'VitePress', 'AI'],
+    status: '持续开发',
+    statusColor: '#10b981',
+    stars: '128',
+    link: '/sections/about/'
+  },
+  {
+    icon: '📊',
+    title: 'RL-Notebooks',
+    desc: '强化学习算法实现集合，包含 DQN、PPO、SAC 等算法的 PyTorch 实现',
+    tags: ['PyTorch', 'RL', 'Jupyter'],
+    status: '开源维护',
+    statusColor: '#3b82f6',
+    stars: '256',
+    link: '/sections/knowledge/'
+  },
+  {
+    icon: '🤖',
+    title: 'LLM-Toolkit',
+    desc: '大语言模型工具包，支持多种模型接入、Prompt 管理、对话导出',
+    tags: ['Python', 'LLM', 'CLI'],
+    status: '版本迭代',
+    statusColor: '#f59e0b',
+    stars: '89',
+    link: '/chat'
+  },
+  {
+    icon: '🔍',
+    title: 'PaperLens',
+    desc: 'AI 论文阅读助手，自动摘要、关键概念提取、相关论文推荐',
+    tags: ['NLP', 'RAG', 'Streamlit'],
+    status: '原型开发',
+    statusColor: '#8b5cf6',
+    stars: '45',
+    link: '/sections/posts/ai-paper-reading-2024/'
+  }
+]
+
+// Extended articles data
+const extendedArticles = [
+  {
+    title: 'DeepSeek-V3 核心技术解析：MoE 与 MLA 机制',
+    excerpt: '深入解析 DeepSeek-V3 中的混合专家模型（MoE）和多头潜在注意力机制（MLA），理解其高效训练与推理的技术原理...',
+    link: '/sections/posts/DeepSeek-V3中的MoE与MLA：混合专家与多头潜在注意力机制详解.html',
+    type: 'paper',
+    typeLabel: '论文解读',
+    date: '2024-12',
+    tags: ['DeepSeek', 'MoE', 'Attention']
+  },
+  {
+    title: 'Transformer 架构详解',
+    excerpt: '从自注意力机制到多头注意力，从编码器到解码器，全面解析 Transformer 架构的设计原理与实现细节...',
+    link: '/sections/posts/Transformer-详解.html',
+    type: 'tutorial',
+    typeLabel: '技术教程',
+    date: '2024-11',
+    tags: ['Transformer', 'NLP', 'Deep Learning']
+  },
+  {
+    title: 'Docker 容器化部署实战',
+    excerpt: '从 Dockerfile 编写到多容器编排，掌握 Docker Compose 和容器网络配置，实现应用的容器化部署...',
+    link: '/sections/posts/docker.html',
+    type: 'guide',
+    typeLabel: '实践指南',
+    date: '2024-10',
+    tags: ['Docker', 'DevOps', 'Deployment']
+  },
+  {
+    title: '微服务架构设计模式',
+    excerpt: '探讨微服务架构的核心设计模式，包括服务发现、负载均衡、熔断降级、分布式追踪等关键概念...',
+    link: '/sections/posts/微服务架构设计模式详解.html',
+    type: 'architecture',
+    typeLabel: '架构设计',
+    date: '2024-09',
+    tags: ['Microservices', 'Architecture', 'Cloud']
+  },
+  {
+    title: '李白生平解析：诗仙的传奇人生',
+    excerpt: '穿越千年时光，探寻李白的人生轨迹，解读其诗歌创作背后的历史背景与情感世界...',
+    link: '/sections/posts/李白生平解析：诗仙的传奇人生.html',
+    type: 'culture',
+    typeLabel: '人文历史',
+    date: '2024-08',
+    tags: ['History', 'Poetry', 'Culture']
+  }
+]
+
 // Intersection observers
 let observers: IntersectionObserver[] = []
 
@@ -405,26 +583,12 @@ const observeSection = (selector: string, ref: { value: boolean }) => {
   }
 }
 
-// 数字滚动动画
-const statValues = [
-  useCountUp(200, 2000),
-  useCountUp(20, 2000),
-  useCountUp(10000, 2500)
-]
-
 onMounted(() => {
   requestAnimationFrame(() => { isLoaded.value = true })
   observeSection('.features-section', featuresVisible)
   observeSection('.community-section', communityVisible)
   observeSection('.highlights-section', highlightsVisible)
   observeSection('.recent-section', recentVisible)
-  
-  // 初始化数字滚动
-  nextTick(() => {
-    setTimeout(() => {
-      statValues.forEach(s => s.start())
-    }, 500)
-  })
   
   // 初始化交互效果
   useInteractiveEffects()
@@ -1142,5 +1306,244 @@ onUnmounted(() => {
   .home-page-star-river { padding: 0 16px 60px; }
   .stat-card { padding: 24px 32px; min-width: 120px; }
   .stat-num { font-size: 28px; }
+}
+
+/* ── Projects Section ── */
+.projects-section { padding-top: 80px; }
+
+.projects-grid { gap: 24px; }
+
+.project-card {
+  display: flex;
+  flex-direction: column;
+  padding: 28px;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+}
+
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.project-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sr-glass-bg);
+  border: 1px solid var(--sr-glass-border);
+  border-radius: var(--sr-radius-md);
+  font-size: 24px;
+  transition: transform 0.3s var(--sr-spring-bounce);
+}
+
+.project-card:hover .project-icon-wrapper {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.project-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.project-tag {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--sr-glass-bg);
+  border: 1px solid var(--sr-glass-border);
+  border-radius: var(--sr-radius-sm);
+  color: var(--sr-text-secondary);
+}
+
+.project-title {
+  font-family: var(--sr-font-primary);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  margin: 0 0 10px;
+}
+
+.project-desc {
+  font-size: 14px;
+  color: var(--sr-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 16px;
+  flex: 1;
+}
+
+.project-stats {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: auto;
+}
+
+.project-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--sr-text-muted);
+}
+
+.stat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.project-arrow {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  width: 20px;
+  height: 20px;
+  color: var(--sr-text-muted);
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s var(--sr-spring-bounce);
+}
+
+.project-card:hover .project-arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--sr-accent-star);
+}
+
+/* ── Extended Articles Section ── */
+.extended-section { padding-top: 80px; }
+
+.extended-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.extended-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 28px;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+}
+
+.extended-marker {
+  width: 4px;
+  height: 40px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.extended-marker.paper { background: linear-gradient(180deg, #b8a090, #9a8b7a); }
+.extended-marker.tutorial { background: linear-gradient(180deg, #7c9a92, #5a7c70); }
+.extended-marker.guide { background: linear-gradient(180deg, #9aa6b2, #7a8a9a); }
+.extended-marker.architecture { background: linear-gradient(180deg, #a69ab6, #867a9a); }
+.extended-marker.culture { background: linear-gradient(180deg, #c4a99a, #a4897a); }
+
+.extended-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.extended-meta {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.extended-type {
+  font-size: 12px;
+  color: var(--sr-accent-star);
+  font-weight: 500;
+}
+
+.extended-date {
+  font-size: 12px;
+  color: var(--sr-text-muted);
+}
+
+.extended-title {
+  font-family: var(--sr-font-primary);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  margin: 0 0 8px;
+  transition: color 0.2s ease;
+}
+
+.extended-item:hover .extended-title {
+  color: var(--sr-accent-star);
+}
+
+.extended-excerpt {
+  font-size: 14px;
+  color: var(--sr-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.extended-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.extended-tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  background: var(--sr-glass-bg);
+  border: 1px solid var(--sr-glass-border);
+  border-radius: var(--sr-radius-sm);
+  color: var(--sr-text-muted);
+}
+
+.extended-arrow {
+  width: 20px;
+  height: 20px;
+  color: var(--sr-text-muted);
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s var(--sr-spring-bounce);
+}
+
+.extended-item:hover .extended-arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--sr-accent-star);
+}
+
+@media (max-width: 768px) {
+  .projects-grid { grid-template-columns: 1fr; }
+  
+  .extended-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .extended-marker {
+    width: 40px;
+    height: 4px;
+  }
+  
+  .project-arrow,
+  .extended-arrow {
+    opacity: 1;
+    transform: none;
+  }
 }
 </style>

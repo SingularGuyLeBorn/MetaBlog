@@ -106,6 +106,63 @@
         </a>
       </div>
     </section>
+
+    <!-- Projects Showcase -->
+    <section class="projects-section fade-up">
+      <h2 class="section-heading">🚀 项目展示</h2>
+      <div class="projects-grid">
+        <a 
+          v-for="(project, index) in myProjects" 
+          :key="project.title" 
+          :href="project.link"
+          class="project-card-about glass-card glass-card-hover tilt-card fade-up"
+          :style="{ transitionDelay: `${index * 100}ms` }"
+        >
+          <div class="project-header-about">
+            <span class="project-icon-about">{{ project.icon }}</span>
+            <div class="project-tech">
+              <span v-for="t in project.tech" :key="t" class="tech-tag">{{ t }}</span>
+            </div>
+          </div>
+          <h3 class="project-title-about">{{ project.title }}</h3>
+          <p class="project-desc-about">{{ project.desc }}</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- Achievements -->
+    <section class="achievements-section fade-up">
+      <h2 class="section-heading">🏆 成就统计</h2>
+      <div class="achievements-grid">
+        <div 
+          v-for="(ach, index) in achievements" 
+          :key="ach.label" 
+          class="achievement-card glass-card scale-in"
+          :style="{ transitionDelay: `${index * 100}ms` }"
+        >
+          <span class="achievement-icon">{{ ach.icon }}</span>
+          <span class="achievement-value">{{ ach.value }}</span>
+          <span class="achievement-label">{{ ach.label }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interests -->
+    <section class="interests-section fade-up">
+      <h2 class="section-heading">💡 兴趣领域</h2>
+      <div class="interests-grid">
+        <div 
+          v-for="(interest, index) in interests" 
+          :key="interest.title" 
+          class="interest-card glass-card glass-card-hover tilt-card fade-up"
+          :style="{ transitionDelay: `${index * 80}ms` }"
+        >
+          <span class="interest-icon">{{ interest.icon }}</span>
+          <h4 class="interest-title">{{ interest.title }}</h4>
+          <p class="interest-desc">{{ interest.desc }}</p>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -128,6 +185,47 @@ const contacts = [
   { icon: '📧', title: 'Email', value: 'hello@example.com', link: 'mailto:hello@example.com' },
   { icon: '🐙', title: 'GitHub', value: '@metauniverse', link: 'https://github.com' },
   { icon: '💬', title: '微信', value: 'metauniverse', link: '#' }
+]
+
+// Projects showcase
+const myProjects = [
+  {
+    icon: '🧠',
+    title: 'MetaBlog',
+    desc: 'AI 驱动的智能博客系统，支持知识图谱、RAG 检索',
+    tech: ['Vue 3', 'VitePress', 'AI'],
+    link: '/'
+  },
+  {
+    icon: '📊',
+    title: 'RL-Notebooks',
+    desc: '强化学习算法 PyTorch 实现集合',
+    tech: ['PyTorch', 'Jupyter', 'RL'],
+    link: '/sections/knowledge/'
+  },
+  {
+    icon: '🤖',
+    title: 'LLM-Toolkit',
+    desc: '大语言模型工具包，支持多模型接入',
+    tech: ['Python', 'CLI', 'LLM'],
+    link: '/chat'
+  }
+]
+
+// Achievements
+const achievements = [
+  { icon: '📝', value: '50+', label: '技术文章' },
+  { icon: '⭐', value: '1K+', label: 'GitHub Stars' },
+  { icon: '📚', value: '10+', label: '开源项目' },
+  { icon: '🎓', value: '5+', label: '年经验' }
+]
+
+// Interests
+const interests = [
+  { icon: '🤖', title: '大语言模型', desc: 'LLM 架构、训练与部署' },
+  { icon: '🎮', title: '强化学习', desc: 'RL 算法与游戏 AI' },
+  { icon: '🧠', title: '知识图谱', desc: 'RAG 与语义搜索' },
+  { icon: '🎨', title: 'UI/UX 设计', desc: '界面设计与用户体验' }
 ]
 
 onMounted(() => {
@@ -491,6 +589,167 @@ onMounted(() => {
   
   .quote-box blockquote {
     font-size: 16px;
+  }
+}
+
+/* Projects Section */
+.projects-section {
+  margin-top: 48px;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.project-card-about {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.project-header-about {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.project-icon-about {
+  font-size: 32px;
+}
+
+.project-tech {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tech-tag {
+  font-size: 10px;
+  padding: 3px 8px;
+  background: var(--sr-glass-bg);
+  border: 1px solid var(--sr-glass-border);
+  border-radius: var(--sr-radius-sm);
+  color: var(--sr-text-muted);
+}
+
+.project-title-about {
+  font-family: var(--sr-font-primary);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  margin: 0 0 8px;
+  transition: color 0.2s ease;
+}
+
+.project-card-about:hover .project-title-about {
+  color: var(--sr-accent-star);
+}
+
+.project-desc-about {
+  font-size: 14px;
+  color: var(--sr-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Achievements Section */
+.achievements-section {
+  margin-top: 48px;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+.achievement-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.achievement-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.achievement-value {
+  font-family: var(--sr-font-primary);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--sr-accent-star);
+  margin-bottom: 4px;
+}
+
+.achievement-label {
+  font-size: 13px;
+  color: var(--sr-text-secondary);
+}
+
+/* Interests Section */
+.interests-section {
+  margin-top: 48px;
+  margin-bottom: 40px;
+}
+
+.interests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.interest-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px;
+  text-align: center;
+}
+
+.interest-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+  transition: transform 0.3s var(--sr-spring-bounce);
+}
+
+.interest-card:hover .interest-icon {
+  transform: scale(1.1);
+}
+
+.interest-title {
+  font-family: var(--sr-font-primary);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  margin: 0 0 6px;
+}
+
+.interest-desc {
+  font-size: 13px;
+  color: var(--sr-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .achievements-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .interests-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>
