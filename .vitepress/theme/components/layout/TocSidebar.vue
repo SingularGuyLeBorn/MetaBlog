@@ -12,12 +12,12 @@
         <div 
           v-for="(header, index) in localHeaders" 
           :key="header.slug"
-          class="toc-item fade-up"
+          class="toc-item"
           :class="{ 
             'is-active': activeHash === '#' + header.slug,
             [`is-level-${header.level}`]: true
           }"
-          :style="{ ...getItemStyle(header), transitionDelay: `${index * 30}ms` }"
+          :style="getItemStyle(header)"
         >
           <a 
             :href="'#' + header.slug" 
