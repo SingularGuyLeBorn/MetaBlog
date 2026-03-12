@@ -1,0 +1,113 @@
+[
+  {
+    "id": "agent-1771864714589-mpgyp1p",
+    "name": "Meta 助手",
+    "avatar": "🤖",
+    "description": "基于 DeepSeek 大模型的通用 AI 助手，为您提供专业智能对话体验",
+    "tier": "system",
+    "mode": "passive",
+    "runtimeStatus": "idle",
+    "capabilities": {
+      "baseRole": "你是数据分析师，逻辑清晰。",
+      "roleSupplement": "",
+      "availableSkills": [
+        "code-craft",
+        "fullstack-developer",
+        "weather-assistant",
+        "project-manager",
+        "creative-designer",
+        "file-manager",
+        "research-assistant",
+        "translate-expert",
+        "data-analyst",
+        "writing-master",
+        "content-analyst"
+      ]
+    },
+    "memory": {
+      "enabled": true,
+      "content": "",
+      "autoExtract": true,
+      "maxTokens": 2000
+    },
+    "stats": {
+      "totalTasks": 0,
+      "successfulTasks": 0,
+      "failedTasks": 0,
+      "totalExecutionTime": 0
+    },
+    "createdAt": 1771864714589,
+    "updatedAt": 1772852150082,
+    "createdBy": "user"
+  },
+  {
+    "id": "agent-1772117562518-c2smku9",
+    "name": "测试",
+    "avatar": "🧠",
+    "description": "很有意思",
+    "tier": "worker",
+    "mode": "passive",
+    "runtimeStatus": "idle",
+    "capabilities": {
+      "baseRole": "你是专业的写作专家，对语言敏感。",
+      "roleSupplement": "",
+      "availableSkills": [
+        "creative-designer",
+        "code-craft",
+        "translate-expert",
+        "content-analyst",
+        "fullstack-developer",
+        "data-analyst",
+        "weather-assistant",
+        "file-manager",
+        "writing-master",
+        "project-manager",
+        "research-assistant"
+      ]
+    },
+    "memory": {
+      "enabled": true,
+      "content": "测试记忆",
+      "autoExtract": true,
+      "maxTokens": 2000
+    },
+    "stats": {
+      "totalTasks": 0,
+      "successfulTasks": 0,
+      "failedTasks": 0,
+      "totalExecutionTime": 0
+    },
+    "createdAt": 1772117562518,
+    "updatedAt": 1772852147775,
+    "createdBy": "user"
+  },
+  {
+    "id": "agent-1772816557101-xxsvzuf",
+    "name": "测试agent",
+    "avatar": "🔮",
+    "description": "废物一个啥也不会",
+    "tier": "worker",
+    "mode": "passive",
+    "runtimeStatus": "idle",
+    "capabilities": {
+      "mode": "raw",
+      "skillIds": [],
+      "customSystemPrompt": "你是 测试agent"
+    },
+    "memory": {
+      "enabled": true,
+      "content": "",
+      "autoExtract": true,
+      "maxTokens": 2000
+    },
+    "stats": {
+      "totalTasks": 0,
+      "successfulTasks": 0,
+      "failedTasks": 0,
+      "totalExecutionTime": 0
+    },
+    "createdAt": 1772816557101,
+    "updatedAt": 1772820901012,
+    "createdBy": "user"
+  }
+]

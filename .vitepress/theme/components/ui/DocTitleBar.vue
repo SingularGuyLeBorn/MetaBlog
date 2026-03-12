@@ -136,7 +136,7 @@ const processAndExportContent = async (content: string, format: 'md' | 'pdf' | '
         <title>${displayTitle.value}</title>
         <style>
           body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
-          h1 { color: #333; border-bottom: 2px solid #1677ff; padding-bottom: 10px; }
+          h1 { color: #333; border-bottom: 2px solid #b8a090; padding-bottom: 10px; }
           h2 { color: #444; margin-top: 30px; }
           code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
           pre { background: #f4f4f4; padding: 16px; border-radius: 8px; overflow-x: auto; }
@@ -250,7 +250,7 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
         <h1 class="doc-title" @click="startEdit">
           <span class="title-icon">[DOC]</span>
           <span class="title-text">{{ displayTitle }}</span>
-          <span class="edit-hint" title="Click to edit">[EDIT]</span>
+          <span class="edit-hint">[EDIT]</span>
         </h1>
       </template>
     </div>
@@ -320,15 +320,21 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
 </template>
 
 <style scoped>
+/* ═══════════════════════════════════════════════════════════════
+   DocTitleBar — Star River Style
+   ═══════════════════════════════════════════════════════════════ */
+
 .doc-title-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid #e2e8f0;
+  padding: 16px 24px;
+  background: var(--sr-glass-bg, rgba(255, 255, 255, 0.6));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
   gap: 16px;
-  min-height: 80px;
+  min-height: 64px;
 }
 
 .title-section {
@@ -341,21 +347,26 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
   align-items: center;
   gap: 12px;
   margin: 0;
-  font-size: 24px;
+  font-family: var(--sr-font-primary, 'Inter', sans-serif);
+  font-size: 20px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
   line-height: 1.4;
-  padding: 8px 0;
+  padding: 4px 0;
+  letter-spacing: -0.02em;
 }
 
 .doc-title:hover {
-  color: #1677ff;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .title-icon {
-  font-size: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sr-text-muted, #94a3b8);
+  letter-spacing: 0.02em;
 }
 
 .title-text {
@@ -367,98 +378,74 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
 }
 
 .edit-hint {
-  font-size: 12px;
+  font-size: 11px;
+  color: var(--sr-text-muted, #94a3b8);
   opacity: 0;
   transition: opacity 0.2s;
+  font-weight: 400;
 }
 
 .doc-title:hover .edit-hint {
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 .title-input {
   width: 100%;
   padding: 8px 16px;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
-  color: #1e293b;
-  background: white;
-  border: 2px solid #1677ff;
-  border-radius: 8px;
+  color: var(--sr-text-primary, #1a1a2e);
+  background: var(--sr-bg-primary, #faf8f5);
+  border: 2px solid var(--sr-accent-star, #b8a090);
+  border-radius: var(--sr-radius-md, 10px);
   outline: none;
+  font-family: var(--sr-font-primary, 'Inter', sans-serif);
 }
 
 .export-section {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
-.export-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  color: #374151;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.export-btn:hover {
-  background: #f9fafb;
-}
-
-.export-btn.primary {
-  background: #1677ff;
-  color: white;
-  border-color: #1677ff;
-}
-
-.export-btn.primary:hover {
-  background: #0958d9;
-}
-
-/* Icon button style for top buttons */
+/* Icon buttons — neumorphic style */
 .export-btn.icon-btn {
   width: 36px;
   height: 36px;
   padding: 0;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  background: white;
-  border: 1px solid #e5e7eb;
-  color: #6b7280;
+  background: var(--sr-bg-elevated, #f5f0eb);
+  border: none;
+  border-radius: var(--sr-radius-sm, 8px);
+  color: var(--sr-text-muted, #94a3b8);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow:
+    3px 3px 6px var(--sr-neu-shadow-dark, rgba(0, 0, 0, 0.06)),
+    -3px -3px 6px var(--sr-neu-shadow-light, rgba(255, 255, 255, 0.8));
 }
 
 .export-btn.icon-btn:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-  color: #374151;
+  color: var(--sr-accent-star, #b8a090);
+  transform: scale(1.06);
+}
+
+.export-btn.icon-btn:active {
+  box-shadow:
+    inset 2px 2px 4px var(--sr-neu-shadow-dark, rgba(0, 0, 0, 0.08)),
+    inset -2px -2px 4px var(--sr-neu-shadow-light, rgba(255, 255, 255, 0.6));
+  transform: scale(0.96);
 }
 
 .export-btn.icon-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
-.arrow {
-  transition: transform 0.2s;
-}
-
-.arrow.open {
-  transform: rotate(180deg);
-}
-
-.batch-btn {
-  background: #f3f4f6;
-  border-color: #e5e7eb;
-}
-
+/* Dropdown menu — glass card style */
 .export-dropdown {
   position: relative;
 }
@@ -468,44 +455,21 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
   top: calc(100% + 8px);
   right: 0;
   min-width: 260px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  background: var(--sr-glass-bg, rgba(255, 255, 255, 0.85));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
+  border-radius: var(--sr-radius-lg, 16px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
   padding: 12px;
   z-index: 1000;
 }
 
-.export-info {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
-}
-
-.info-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 8px;
-}
-
-.info-content {
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.5;
-}
-
-.info-content p {
-  margin: 4px 0;
-}
-
 .export-option-row {
-  padding: 12px;
+  padding: 10px 12px;
   margin-bottom: 8px;
-  background: #fafafa;
-  border-radius: 8px;
+  background: var(--sr-bg-secondary, rgba(0, 0, 0, 0.02));
+  border-radius: var(--sr-radius-sm, 8px);
 }
 
 .checkbox-label {
@@ -515,30 +479,21 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
   cursor: pointer;
 }
 
-.checkbox-label input {
-  display: none;
-}
+.checkbox-label input { display: none; }
 
 .check-icon {
-  color: #1677ff;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .label-text {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: #374151;
-}
-
-.option-hint {
-  margin-top: 4px;
-  margin-left: 26px;
-  font-size: 11px;
-  color: #9ca3af;
+  color: var(--sr-text-secondary, #64748b);
 }
 
 .menu-divider {
   height: 1px;
-  background: #e5e7eb;
+  background: var(--sr-glass-border, rgba(0, 0, 0, 0.06));
   margin: 8px 0;
 }
 
@@ -546,19 +501,17 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border-radius: var(--sr-radius-sm, 8px);
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .menu-item:hover {
-  background: #f3f4f6;
+  background: var(--sr-bg-secondary, rgba(0, 0, 0, 0.03));
 }
 
-.menu-icon {
-  font-size: 16px;
-}
+.menu-icon { font-size: 16px; }
 
 .menu-content {
   display: flex;
@@ -567,23 +520,23 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
 }
 
 .menu-label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: #1f2937;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .menu-desc {
-  font-size: 12px;
-  color: #6b7280;
+  font-size: 11px;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .menu-enter-active, .menu-leave-active {
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .menu-enter-from, .menu-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-8px);
 }
 
 @media (max-width: 768px) {
@@ -593,13 +546,8 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
     padding: 12px 16px;
   }
   
-  .doc-title {
-    font-size: 20px;
-  }
-  
-  .title-input {
-    font-size: 20px;
-  }
+  .doc-title { font-size: 18px; }
+  .title-input { font-size: 18px; }
   
   .export-section {
     width: 100%;

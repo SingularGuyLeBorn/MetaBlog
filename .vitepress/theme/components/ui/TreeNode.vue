@@ -724,43 +724,43 @@ const doDelete = async () => {
 .node-row {
   display: flex;
   align-items: center;
-  padding: 5px 8px;
-  margin: 1px 0;
-  border-radius: 6px;
+  padding: 6px 10px;
+  margin: 2px 0;
+  border-radius: var(--sr-radius-sm);
   cursor: pointer;
-  transition: background-color 200ms ease, color 200ms ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
   user-select: none;
   position: relative;
 }
 
 .node-row:focus {
-  outline: 2px solid var(--vp-c-brand, #1677ff);
-  outline-offset: -2px;
-  background: var(--vp-c-bg-soft, #f5f5f5);
+  outline: none;
+  background: var(--sr-glass-bg);
 }
 
 .node-row::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: transparent;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 0;
+  background: var(--sr-morandi-purple);
   border-radius: 0 2px 2px 0;
-  transition: background 0.2s;
+  transition: height 0.2s var(--sr-spring-bounce);
 }
 
 .node-row:hover {
-  background: var(--vp-c-bg-soft, #f0f0f0);
+  background: var(--sr-glass-bg);
 }
 
 .node-row.is-active {
-  background: var(--vp-c-brand-soft, rgba(22, 119, 255, 0.1));
+  background: var(--sr-glass-bg-hover);
 }
 
 .node-row.is-active::before {
-  background: var(--vp-c-brand, #1677ff);
+  height: 60%;
 }
 
 /* Show actions on hover */
@@ -772,18 +772,19 @@ const doDelete = async () => {
 .toggle-btn {
   width: 16px;
   height: 16px;
-  margin-right: 2px;
+  margin-right: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--vp-c-text-3, #8c8c8c);
-  transition: transform 200ms ease;
+  color: var(--sr-text-muted);
+  transition: transform 0.2s var(--sr-spring-bounce);
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .toggle-btn:hover {
-  background: var(--vp-c-divider, #e8e8e8);
+  background: var(--sr-glass-bg-hover);
+  color: var(--sr-text-secondary);
 }
 
 .toggle-btn svg {
@@ -803,12 +804,12 @@ const doDelete = async () => {
 .node-icon {
   width: 16px;
   height: 16px;
-  margin-right: 6px;
+  margin-right: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: var(--vp-c-text-3, #bfbfbf);
+  color: var(--sr-text-muted);
 }
 
 .node-icon svg {
@@ -817,11 +818,11 @@ const doDelete = async () => {
 }
 
 .node-icon.is-folder {
-  color: var(--vp-c-warning, #faad14);
+  color: var(--sr-morandi-beige);
 }
 
 .node-row.is-active .node-icon.is-leaf {
-  color: var(--vp-c-brand, #1677ff);
+  color: var(--sr-morandi-purple);
 }
 
 .node-title {
@@ -829,7 +830,7 @@ const doDelete = async () => {
   min-width: 0;
   font-size: 13px;
   line-height: 20px;
-  color: var(--vp-c-text-2, #595959);
+  color: var(--sr-text-muted);
   text-decoration: none;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -841,11 +842,11 @@ const doDelete = async () => {
 }
 
 .node-title:hover {
-  color: var(--vp-c-text-1, #262626);
+  color: var(--sr-text-secondary);
 }
 
 .node-row.is-active .node-title {
-  color: var(--vp-c-brand, #1677ff);
+  color: var(--sr-text-primary);
   font-weight: 500;
 }
 
@@ -898,12 +899,12 @@ const doDelete = async () => {
   right: 0;
   margin-top: 4px;
   min-width: 160px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e7e5e4;
+  background: var(--sr-bg-tertiary);
+  border-radius: var(--sr-radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--sr-glass-border);
   z-index: 1000;
-  padding: 4px;
+  padding: 6px;
 }
 
 .menu-item {
@@ -911,23 +912,23 @@ const doDelete = async () => {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: var(--sr-radius-sm);
   cursor: pointer;
   font-size: 13px;
-  color: #292524;
-  transition: background 0.15s;
+  color: var(--sr-text-secondary);
+  transition: background 0.15s ease;
 }
 
 .menu-item:hover {
-  background: #f5f5f4;
+  background: var(--sr-glass-bg);
 }
 
 .menu-item.danger {
-  color: #dc2626;
+  color: #c97b7b;
 }
 
 .menu-item.danger:hover {
-  background: #fee2e2;
+  background: rgba(201, 123, 123, 0.1);
 }
 
 .menu-icon {
@@ -986,7 +987,8 @@ const doDelete = async () => {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -994,12 +996,13 @@ const doDelete = async () => {
 }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
+  background: var(--sr-bg-tertiary);
+  border: 1px solid var(--sr-glass-border);
+  border-radius: var(--sr-radius-lg);
   width: 90%;
   max-width: 400px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
 .modal-small {

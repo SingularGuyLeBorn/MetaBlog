@@ -1322,7 +1322,7 @@ function formatTime(date: Date): string {
 
 .btn-remove:hover {
   opacity: 1;
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(212, 184, 184, 0.1);
 }
 
 .trigger-config {
@@ -1599,7 +1599,7 @@ input:checked + .toggle-slider:before {
 
 .preview-status.running { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
 .preview-status.paused { background: #f59e0b; }
-.preview-status.error { background: #ef4444; }
+.preview-status.error { background: var(--sr-morandi-pink, #d4b8b8); }
 .preview-status.idle { background: #6b7280; }
 
 .preview-name {
@@ -1640,7 +1640,7 @@ input:checked + .toggle-slider:before {
 
 .preview-stat .stat-value.running { color: #22c55e; }
 .preview-stat .stat-value.paused { color: #f59e0b; }
-.preview-stat .stat-value.error { color: #ef4444; }
+.preview-stat .stat-value.error { color: var(--sr-morandi-pink, #d4b8b8); }
 
 .test-card h4,
 .logs-card h4 {
@@ -1707,7 +1707,7 @@ input:checked + .toggle-slider:before {
   color: var(--vp-c-text-1);
 }
 
-.log-item.error .log-message { color: #ef4444; }
+.log-item.error .log-message { color: var(--sr-morandi-pink, #d4b8b8); }
 .log-item.warn .log-message { color: #f59e0b; }
 
 /* 深色模式 */

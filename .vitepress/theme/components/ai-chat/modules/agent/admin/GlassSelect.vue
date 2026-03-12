@@ -215,9 +215,9 @@ watch(() => props.options, (newOptions) => {
 }
 
 .glass-select-trigger.is-open {
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: rgba(184, 160, 144, 0.3);
   box-shadow: 
-    0 4px 16px rgba(99, 102, 241, 0.15),
+    0 4px 16px rgba(184, 160, 144, 0.15),
     inset 0 1px 1px rgba(255, 255, 255, 0.9);
 }
 
@@ -232,7 +232,7 @@ watch(() => props.options, (newOptions) => {
 .selected-label {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -240,7 +240,7 @@ watch(() => props.options, (newOptions) => {
 
 .selected-sub {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -257,7 +257,7 @@ watch(() => props.options, (newOptions) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
 }
@@ -269,7 +269,7 @@ watch(() => props.options, (newOptions) => {
 
 .glass-select-trigger.is-open .trigger-arrow {
   transform: rotate(180deg);
-  color: #6366f1;
+  color: var(--sr-morandi-purple, #b3a8b8);
 }
 
 /* ===== 下拉菜单 - 3D 玻璃 ===== */
@@ -305,7 +305,7 @@ watch(() => props.options, (newOptions) => {
   height: 200%;
   background: radial-gradient(
     circle at 30% 30%,
-    rgba(99, 102, 241, 0.08) 0%,
+    rgba(184, 160, 144, 0.08) 0%,
     transparent 50%
   );
   pointer-events: none;
@@ -392,7 +392,7 @@ watch(() => props.options, (newOptions) => {
 }
 
 .glass-option:hover {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(184, 160, 144, 0.08);
   transform: translateX(4px);
 }
 
@@ -403,17 +403,17 @@ watch(() => props.options, (newOptions) => {
 .glass-option.is-selected {
   background: linear-gradient(
     135deg,
-    rgba(99, 102, 241, 0.12) 0%,
-    rgba(139, 92, 246, 0.08) 100%
+    rgba(184, 160, 144, 0.12) 0%,
+    rgba(184, 160, 144, 0.08) 100%
   );
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(184, 160, 144, 0.2);
 }
 
 .glass-option.is-selected:hover {
   background: linear-gradient(
     135deg,
-    rgba(99, 102, 241, 0.18) 0%,
-    rgba(139, 92, 246, 0.12) 100%
+    rgba(184, 160, 144, 0.18) 0%,
+    rgba(184, 160, 144, 0.12) 100%
   );
 }
 
@@ -428,7 +428,7 @@ watch(() => props.options, (newOptions) => {
 .option-label {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -436,14 +436,14 @@ watch(() => props.options, (newOptions) => {
 
 .option-sub {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .glass-option.is-selected .option-label {
-  color: #6366f1;
+  color: var(--sr-morandi-purple, #b3a8b8);
 }
 
 .option-check {
@@ -452,7 +452,7 @@ watch(() => props.options, (newOptions) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-purple, #b3a8b8), var(--sr-accent-star, #b8a090));
   border-radius: 50%;
   color: white;
   flex-shrink: 0;

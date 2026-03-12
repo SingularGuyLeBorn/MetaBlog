@@ -492,7 +492,7 @@ onMounted(async () => {
 
 .selector-trigger:hover {
   background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 4px 12px rgba(179, 168, 184, 0.1);
 }
 
 .selected-agent {
@@ -507,10 +507,10 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border-radius: 12px;
   font-size: 20px;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(179, 168, 184, 0.3);
 }
 
 .agent-info {
@@ -522,7 +522,7 @@ onMounted(async () => {
 .agent-name {
   font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .agent-status {
@@ -535,12 +535,12 @@ onMounted(async () => {
 
 .agent-status.online {
   background: #d1fae5;
-  color: #059669;
+  color: var(--sr-morandi-green, #a8b3a8);
 }
 
 .agent-status.offline {
   background: #f1f5f9;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .agent-status.busy {
@@ -578,7 +578,7 @@ onMounted(async () => {
 .dropdown-glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.1), transparent 60%);
+  background: radial-gradient(circle at 50% 0%, rgba(179, 168, 184, 0.1), transparent 60%);
   pointer-events: none;
 }
 
@@ -599,11 +599,11 @@ onMounted(async () => {
 }
 
 .agent-option:hover {
-  background: rgba(59, 130, 246, 0.08);
+  background: rgba(179, 168, 184, 0.08);
 }
 
 .agent-option.active {
-  background: linear-gradient(145deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.08));
+  background: linear-gradient(145deg, rgba(179, 168, 184, 0.12), rgba(184, 160, 144, 0.08));
 }
 
 .option-avatar {
@@ -627,7 +627,7 @@ onMounted(async () => {
 .option-name {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .option-desc {
@@ -641,7 +641,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border-radius: 50%;
   font-size: 12px;
   color: white;
@@ -710,7 +710,7 @@ onMounted(async () => {
 .welcome-glow {
   position: absolute;
   inset: 20%;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.1), transparent 60%);
+  background: radial-gradient(circle, rgba(179, 168, 184, 0.1), transparent 60%);
   filter: blur(40px);
   animation: glow-pulse 4s ease-in-out infinite;
 }
@@ -732,11 +732,11 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border-radius: 24px;
   font-size: 40px;
   margin: 0 auto 20px;
-  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 12px 32px rgba(179, 168, 184, 0.3);
   animation: avatar-float 3s ease-in-out infinite;
 }
 
@@ -749,13 +749,13 @@ onMounted(async () => {
   margin: 0 0 8px 0;
   font-size: 22px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .welcome-content p {
   margin: 0 0 20px 0;
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   max-width: 400px;
 }
 
@@ -795,11 +795,11 @@ onMounted(async () => {
 }
 
 .quick-start-btn:hover {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
   border-color: transparent;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 8px 20px rgba(179, 168, 184, 0.25);
 }
 
 /* 消息气泡 */
@@ -825,7 +825,7 @@ onMounted(async () => {
 }
 
 .message-glow.user {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.2));
+  background: linear-gradient(135deg, rgba(179, 168, 184, 0.3), rgba(184, 160, 144, 0.2));
 }
 
 .message-glow.assistant {
@@ -850,7 +850,7 @@ onMounted(async () => {
 }
 
 .message-liquid.assistant .message-avatar {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
 }
 
 .message-content {
@@ -866,12 +866,12 @@ onMounted(async () => {
   border-radius: 18px;
   font-size: 14px;
   line-height: 1.6;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .message-liquid.user .message-text {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
   border-bottom-right-radius: 6px;
 }
@@ -899,14 +899,14 @@ onMounted(async () => {
   border: none;
   border-radius: 6px;
   font-size: 11px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .regenerate-btn:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(179, 168, 184, 0.1);
+  color: var(--sr-morandi-blue, #9daab8);
 }
 
 /* 思考中 */
@@ -919,7 +919,7 @@ onMounted(async () => {
 .thinking-bubble {
   width: 10px;
   height: 10px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border-radius: 50%;
   animation: thinking-bounce 1.4s ease-in-out infinite both;
 }
@@ -960,7 +960,7 @@ onMounted(async () => {
   border: none;
   font-size: 14px;
   line-height: 1.5;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   resize: none;
   outline: none;
   max-height: 120px;
@@ -981,7 +981,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border: none;
   border-radius: 50%;
   color: white;
@@ -992,7 +992,7 @@ onMounted(async () => {
 
 .send-btn:hover:not(:disabled) {
   transform: scale(1.05);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 20px rgba(179, 168, 184, 0.3);
 }
 
 .send-btn:disabled {
@@ -1039,7 +1039,7 @@ onMounted(async () => {
 .modal-glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.1), transparent 50%);
+  background: radial-gradient(circle at 50% 0%, rgba(179, 168, 184, 0.1), transparent 50%);
   pointer-events: none;
 }
 
@@ -1055,7 +1055,7 @@ onMounted(async () => {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .close-btn {
@@ -1094,7 +1094,7 @@ onMounted(async () => {
 
 .setting-item label {
   font-size: 14px;
-  color: #374151;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 /* 液态开关 */
@@ -1138,7 +1138,7 @@ onMounted(async () => {
 }
 
 .liquid-toggle input:checked + .toggle-slider {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
 }
 
 .liquid-toggle input:checked + .toggle-slider:before {

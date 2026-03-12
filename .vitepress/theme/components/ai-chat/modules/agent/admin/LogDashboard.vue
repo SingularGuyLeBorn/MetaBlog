@@ -471,26 +471,26 @@ watch(filteredLogs, () => {
   justify-content: center;
   background: linear-gradient(145deg, #e0e7ff, #c7d2fe);
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 2px 4px rgba(184, 160, 144, 0.1);
 }
 
 .header-title h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   letter-spacing: -0.5px;
 }
 
 .recording-badge {
   font-size: 12px;
-  color: #10b981;
+  color: var(--sr-morandi-green, #a8b3a8);
   background: linear-gradient(145deg, #d1fae5, #a7f3d0);
   padding: 4px 10px;
   border-radius: 20px;
   font-weight: 500;
   animation: pulse 2s infinite;
-  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 1px 2px rgba(168, 179, 168, 0.1);
 }
 
 @keyframes pulse {
@@ -562,14 +562,14 @@ watch(filteredLogs, () => {
 .stat-value {
   font-size: 26px;
   font-weight: 700;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .stat-card:nth-child(3) .stat-value {
-  background: linear-gradient(135deg, #ef4444, #f97316);
+  background: linear-gradient(135deg, var(--sr-morandi-pink, #d4b8b8), #f97316);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -577,7 +577,7 @@ watch(filteredLogs, () => {
 
 .stat-label {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   margin-top: 6px;
   font-weight: 500;
 }
@@ -655,7 +655,7 @@ watch(filteredLogs, () => {
 }
 
 .filter-checkbox:hover {
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(184, 160, 144, 0.05);
   color: #4f46e5;
 }
 
@@ -665,7 +665,7 @@ watch(filteredLogs, () => {
   border-radius: 4px;
   border: 2px solid #cbd5e1;
   cursor: pointer;
-  accent-color: #6366f1;
+  accent-color: var(--sr-morandi-purple, #b3a8b8);
 }
 
 .filter-select {
@@ -743,7 +743,7 @@ watch(filteredLogs, () => {
   background: linear-gradient(145deg, #ffffff, #f8fafc);
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -794,9 +794,9 @@ watch(filteredLogs, () => {
 }
 
 .log-item.debug { border-left-color: #94a3b8; }
-.log-item.info { border-left-color: #3b82f6; }
+.log-item.info { border-left-color: var(--sr-morandi-blue, #9daab8); }
 .log-item.warn { border-left-color: #f59e0b; }
-.log-item.error { border-left-color: #ef4444; }
+.log-item.error { border-left-color: var(--sr-morandi-pink, #d4b8b8); }
 
 .log-header {
   display: flex;
@@ -826,7 +826,7 @@ watch(filteredLogs, () => {
 
 .log-level.debug { 
   background: linear-gradient(145deg, #f1f5f9, #e2e8f0); 
-  color: #64748b; 
+  color: var(--sr-text-muted, #94a3b8); 
 }
 .log-level.info { 
   background: linear-gradient(145deg, #dbeafe, #bfdbfe); 
@@ -847,7 +847,7 @@ watch(filteredLogs, () => {
   font-size: 10px;
   font-weight: 600;
   background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .log-component {
@@ -867,7 +867,7 @@ watch(filteredLogs, () => {
 
 .log-detail {
   margin-top: 12px;
-  background: linear-gradient(145deg, #1e293b, #0f172a);
+  background: linear-gradient(145deg, var(--sr-text-primary, #1a1a2e), #0f172a);
   border-radius: 10px;
   overflow-x: auto;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -1007,7 +1007,7 @@ watch(filteredLogs, () => {
 .components-section h5 {
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 0 0 12px;
@@ -1039,7 +1039,7 @@ watch(filteredLogs, () => {
 
 .summary-card .summary-label {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-weight: 500;
 }
 
@@ -1073,7 +1073,7 @@ watch(filteredLogs, () => {
 .component-tag:hover {
   background: linear-gradient(145deg, #c7d2fe, #a5b4fc);
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 4px 6px rgba(184, 160, 144, 0.15);
 }
 
 /* 动画 */

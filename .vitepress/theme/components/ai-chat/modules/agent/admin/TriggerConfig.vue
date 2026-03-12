@@ -520,7 +520,7 @@ validateCron()
   margin: 0 0 8px 0;
   font-size: 20px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .title-glow {
@@ -529,16 +529,16 @@ validateCron()
   height: 36px;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border-radius: 10px;
   font-size: 18px;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 15px rgba(179, 168, 184, 0.4);
 }
 
 .section-desc {
   margin: 0 0 20px 0;
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 /* ===== 触发类型选择 - 液态卡片 ===== */
@@ -563,18 +563,18 @@ validateCron()
 .trigger-type-card:hover {
   transform: translateY(-4px) scale(1.02);
   box-shadow: 
-    0 20px 40px rgba(59, 130, 246, 0.15),
+    0 20px 40px rgba(179, 168, 184, 0.15),
     inset 0 1px 1px rgba(255, 255, 255, 0.9);
 }
 
 .trigger-type-card.active {
   background: linear-gradient(145deg, 
-    rgba(59, 130, 246, 0.1) 0%, 
-    rgba(139, 92, 246, 0.05) 100%
+    rgba(179, 168, 184, 0.1) 0%, 
+    rgba(184, 160, 144, 0.05) 100%
   );
-  border-color: rgba(59, 130, 246, 0.4);
+  border-color: rgba(179, 168, 184, 0.4);
   box-shadow: 
-    0 0 30px rgba(59, 130, 246, 0.2),
+    0 0 30px rgba(179, 168, 184, 0.2),
     inset 0 1px 1px rgba(255, 255, 255, 0.9);
 }
 
@@ -583,7 +583,7 @@ validateCron()
   inset: 0;
   background: radial-gradient(
     circle at 50% 100%,
-    rgba(59, 130, 246, 0.1) 0%,
+    rgba(179, 168, 184, 0.1) 0%,
     transparent 70%
   );
   opacity: 0;
@@ -620,8 +620,8 @@ validateCron()
 }
 
 .trigger-type-card.active .type-icon {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
+  box-shadow: 0 8px 20px rgba(179, 168, 184, 0.3);
 }
 
 .type-info {
@@ -634,17 +634,17 @@ validateCron()
 .type-name {
   font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   transition: color 0.3s ease;
 }
 
 .trigger-type-card.active .type-name {
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
 }
 
 .type-desc {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .type-indicator {
@@ -664,15 +664,15 @@ validateCron()
 }
 
 .trigger-type-card.active .indicator-dot {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
+  box-shadow: 0 0 12px rgba(179, 168, 184, 0.5);
 }
 
 .type-ripple {
   position: absolute;
   inset: 0;
   background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
-    rgba(59, 130, 246, 0.2) 0%, 
+    rgba(179, 168, 184, 0.2) 0%, 
     transparent 50%
   );
   opacity: 0;
@@ -724,7 +724,7 @@ validateCron()
 }
 
 .scheduled-glow {
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.2), transparent 60%);
+  background: radial-gradient(circle, rgba(179, 168, 184, 0.2), transparent 60%);
 }
 
 .event-glow {
@@ -732,7 +732,7 @@ validateCron()
 }
 
 .webhook-glow {
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.2), transparent 60%);
+  background: radial-gradient(circle, rgba(184, 160, 144, 0.2), transparent 60%);
 }
 
 .panel-content {
@@ -762,13 +762,13 @@ validateCron()
   margin: 0;
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .config-desc {
   margin: 0 0 20px 0;
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   line-height: 1.6;
 }
 
@@ -788,7 +788,7 @@ validateCron()
 
 .preset-label {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-weight: 500;
 }
 
@@ -799,21 +799,21 @@ validateCron()
   border-radius: 100px;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .preset-btn-liquid:hover {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
   border-color: transparent;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 4px 12px rgba(179, 168, 184, 0.25);
 }
 
 .preset-btn-liquid.active {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
 }
 
@@ -827,7 +827,7 @@ validateCron()
   margin-bottom: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .cron-input-group {
@@ -842,14 +842,14 @@ validateCron()
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 12px;
   font-size: 14px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   outline: none;
   transition: all 0.3s ease;
 }
 
 .liquid-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  border-color: var(--sr-morandi-blue, #9daab8);
+  box-shadow: 0 0 0 4px rgba(179, 168, 184, 0.1);
 }
 
 .validate-btn {
@@ -859,13 +859,13 @@ validateCron()
   border-radius: 12px;
   font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .validate-btn:hover {
-  background: #3b82f6;
+  background: var(--sr-morandi-blue, #9daab8);
   color: white;
 }
 
@@ -880,7 +880,7 @@ validateCron()
 }
 
 .cron-desc {
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
   font-weight: 500;
 }
 
@@ -892,10 +892,10 @@ validateCron()
 .schedule-preview {
   padding: 16px;
   background: linear-gradient(145deg, 
-    rgba(59, 130, 246, 0.05) 0%, 
-    rgba(139, 92, 246, 0.03) 100%
+    rgba(179, 168, 184, 0.05) 0%, 
+    rgba(184, 160, 144, 0.03) 100%
   );
-  border: 1px solid rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(179, 168, 184, 0.15);
   border-radius: 16px;
 }
 
@@ -906,7 +906,7 @@ validateCron()
   margin-bottom: 12px;
   font-size: 13px;
   font-weight: 600;
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
 }
 
 .preview-times {
@@ -941,7 +941,7 @@ validateCron()
 .time-dot {
   width: 6px;
   height: 6px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border-radius: 50%;
 }
 
@@ -1057,7 +1057,7 @@ validateCron()
 
 .toggle-btn:hover,
 .generate-btn:hover {
-  background: #3b82f6;
+  background: var(--sr-morandi-blue, #9daab8);
   color: white;
 }
 
@@ -1119,7 +1119,7 @@ validateCron()
 }
 
 .liquid-checkbox input:checked + .check-indicator {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border-color: transparent;
 }
 
@@ -1170,7 +1170,7 @@ validateCron()
 }
 
 .btn-liquid.secondary {
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   background: rgba(241, 245, 249, 0.8);
 }
 
@@ -1180,13 +1180,13 @@ validateCron()
 
 .btn-liquid.primary {
   color: white;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
+  box-shadow: 0 4px 16px rgba(179, 168, 184, 0.35);
 }
 
 .btn-liquid.primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.45);
+  box-shadow: 0 8px 24px rgba(179, 168, 184, 0.45);
 }
 
 .btn-liquid:disabled {

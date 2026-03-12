@@ -390,12 +390,12 @@ function formatNumber(num: number): string {
   height: 200%;
   background: radial-gradient(
     ellipse at 30% 20%,
-    rgba(59, 130, 246, 0.08) 0%,
+    rgba(179, 168, 184, 0.08) 0%,
     transparent 50%
   ),
   radial-gradient(
     ellipse at 70% 80%,
-    rgba(139, 92, 246, 0.06) 0%,
+    rgba(184, 160, 144, 0.06) 0%,
     transparent 50%
   );
   pointer-events: none;
@@ -429,25 +429,25 @@ function formatNumber(num: number): string {
   margin: 0 0 8px 0;
   font-size: 32px;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   letter-spacing: -0.5px;
 }
 
 .title-glow {
   font-size: 36px;
-  filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
+  filter: drop-shadow(0 0 20px rgba(179, 168, 184, 0.5));
   animation: title-pulse 3s ease-in-out infinite;
 }
 
 @keyframes title-pulse {
-  0%, 100% { filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3)); }
-  50% { filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.6)); }
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(179, 168, 184, 0.3)); }
+  50% { filter: drop-shadow(0 0 30px rgba(179, 168, 184, 0.6)); }
 }
 
 .page-subtitle {
   margin: 0;
   font-size: 15px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .header-actions {
@@ -468,15 +468,15 @@ function formatNumber(num: number): string {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   font-size: 14px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   outline: none;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .search-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 12px rgba(59, 130, 246, 0.1);
+  border-color: var(--sr-morandi-blue, #9daab8);
+  box-shadow: 0 0 0 3px rgba(179, 168, 184, 0.15), 0 4px 12px rgba(179, 168, 184, 0.1);
 }
 
 .search-icon {
@@ -494,7 +494,7 @@ function formatNumber(num: number): string {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   font-size: 14px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   outline: none;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -506,7 +506,7 @@ function formatNumber(num: number): string {
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
   border: none;
   border-radius: 12px;
@@ -515,16 +515,16 @@ function formatNumber(num: number): string {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.4),
-    0 8px 24px rgba(59, 130, 246, 0.2);
+    0 4px 12px rgba(179, 168, 184, 0.4),
+    0 8px 24px rgba(179, 168, 184, 0.2);
   transform-style: preserve-3d;
 }
 
 .btn-create-3d:hover {
   transform: translateY(-2px) rotateX(5deg);
   box-shadow: 
-    0 8px 20px rgba(59, 130, 246, 0.5),
-    0 16px 40px rgba(59, 130, 246, 0.3);
+    0 8px 20px rgba(179, 168, 184, 0.5),
+    0 16px 40px rgba(179, 168, 184, 0.3);
 }
 
 .btn-create-3d:active {
@@ -562,7 +562,7 @@ function formatNumber(num: number): string {
   transform: translateY(-8px) rotateX(5deg);
   box-shadow: 
     0 20px 40px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(59, 130, 246, 0.1);
+    0 0 0 1px rgba(179, 168, 184, 0.1);
 }
 
 @keyframes stat-float {
@@ -580,10 +580,10 @@ function formatNumber(num: number): string {
   filter: blur(40px);
 }
 
-.stat-glow.total { background: radial-gradient(circle, #3b82f6, transparent 70%); }
+.stat-glow.total { background: radial-gradient(circle, var(--sr-morandi-blue, #9daab8), transparent 70%); }
 .stat-glow.online { background: radial-gradient(circle, #22c55e, transparent 70%); }
 .stat-glow.skills { background: radial-gradient(circle, #f59e0b, transparent 70%); }
-.stat-glow.calls { background: radial-gradient(circle, #8b5cf6, transparent 70%); }
+.stat-glow.calls { background: radial-gradient(circle, var(--sr-accent-star, #b8a090), transparent 70%); }
 
 .stat-content {
   position: relative;
@@ -605,7 +605,7 @@ function formatNumber(num: number): string {
 .stat-value {
   font-size: 28px;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   line-height: 1;
 }
 
@@ -653,14 +653,14 @@ function formatNumber(num: number): string {
   font-size: 80px;
   margin-bottom: 24px;
   opacity: 0.5;
-  filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.3));
+  filter: drop-shadow(0 0 20px rgba(179, 168, 184, 0.3));
 }
 
 .empty-3d h3 {
   margin: 0 0 8px 0;
   font-size: 20px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .empty-3d p {
@@ -671,7 +671,7 @@ function formatNumber(num: number): string {
 
 .btn-create-empty {
   padding: 14px 28px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
   border: none;
   border-radius: 12px;
@@ -679,12 +679,12 @@ function formatNumber(num: number): string {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(179, 168, 184, 0.4);
 }
 
 .btn-create-empty:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 8px 20px rgba(179, 168, 184, 0.5);
 }
 
 /* 3D 对话框 */
@@ -718,7 +718,7 @@ function formatNumber(num: number): string {
 .dialog-glow {
   position: absolute;
   inset: -2px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090), #ec4899);
   border-radius: 26px;
   opacity: 0.3;
   filter: blur(20px);
@@ -737,7 +737,7 @@ function formatNumber(num: number): string {
   margin: 0;
   font-size: 20px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .btn-close {
@@ -750,14 +750,14 @@ function formatNumber(num: number): string {
   border: none;
   border-radius: 10px;
   font-size: 18px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .btn-close:hover {
   background: linear-gradient(145deg, #fee2e2, #fecaca);
-  color: #ef4444;
+  color: var(--sr-morandi-pink, #d4b8b8);
 }
 
 .dialog-body {
@@ -775,7 +775,7 @@ function formatNumber(num: number): string {
   margin-bottom: 10px;
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .form-input-3d,
@@ -787,7 +787,7 @@ function formatNumber(num: number): string {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   font-size: 14px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   outline: none;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
@@ -796,8 +796,8 @@ function formatNumber(num: number): string {
 .form-input-3d:focus,
 .form-textarea-3d:focus,
 .form-select-3d:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: var(--sr-morandi-blue, #9daab8);
+  box-shadow: 0 0 0 3px rgba(179, 168, 184, 0.15);
 }
 
 .form-textarea-3d {
@@ -836,9 +836,9 @@ function formatNumber(num: number): string {
 }
 
 .avatar-btn.active {
-  border-color: #3b82f6;
+  border-color: var(--sr-morandi-blue, #9daab8);
   background: linear-gradient(145deg, #dbeafe, #bfdbfe);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 3px rgba(179, 168, 184, 0.2);
 }
 
 .dialog-footer {
@@ -864,7 +864,7 @@ function formatNumber(num: number): string {
 .btn-secondary-3d {
   background: linear-gradient(145deg, #ffffff, #f1f5f9);
   border: 1px solid #e2e8f0;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .btn-secondary-3d:hover {
@@ -872,15 +872,15 @@ function formatNumber(num: number): string {
 }
 
 .btn-primary-3d {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border: none;
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(179, 168, 184, 0.4);
 }
 
 .btn-primary-3d:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 6px 16px rgba(179, 168, 184, 0.5);
 }
 
 .btn-primary-3d:disabled {
@@ -890,14 +890,14 @@ function formatNumber(num: number): string {
 }
 
 .btn-danger-3d {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: linear-gradient(135deg, var(--sr-morandi-pink, #d4b8b8), #dc2626);
   border: none;
   color: white;
 }
 
 .btn-danger-3d:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 4px 12px rgba(212, 184, 184, 0.4);
 }
 
 /* 确认对话框 */
@@ -916,13 +916,13 @@ function formatNumber(num: number): string {
   margin: 0 0 8px 0;
   font-size: 20px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .dialog-content-3d.confirm p {
   margin: 0 0 24px 0;
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   line-height: 1.5;
 }
 
@@ -959,7 +959,7 @@ function formatNumber(num: number): string {
   width: 60px;
   height: 60px;
   border: 4px solid #e2e8f0;
-  border-top-color: #3b82f6;
+  border-top-color: var(--sr-morandi-blue, #9daab8);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 20px;
@@ -976,7 +976,7 @@ function formatNumber(num: number): string {
 
 .btn-retry {
   padding: 12px 24px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
   border: none;
   border-radius: 10px;

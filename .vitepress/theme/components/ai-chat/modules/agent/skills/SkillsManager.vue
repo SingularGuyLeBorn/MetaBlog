@@ -9,7 +9,7 @@
           <p class="title-desc">管理 Agent 可用的 Skills 库</p>
         </div>
       </div>
-      <LiquidGlass glow-color="#8b5cf6" :intensity="0.6">
+      <LiquidGlass glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.6">
         <button class="create-btn" @click="showCreate = true">
           <Icon name="plus" />
           新建 Skill
@@ -18,7 +18,7 @@
     </div>
 
     <!-- 搜索栏 -->
-    <LiquidGlass class="search-glass" glow-color="#64748b" :intensity="0.2">
+    <LiquidGlass class="search-glass" glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.2">
       <div class="search-bar">
         <Icon name="search" class="search-icon" />
         <input
@@ -33,7 +33,7 @@
           v-for="cat in categories"
           :key="cat.id"
           class="filter-chip-glass"
-          :glow-color="selectedCategory === cat.id ? '#8b5cf6' : '#e2e8f0'"
+          :glow-color="selectedCategory === cat.id ? 'var(--sr-accent-star, #b8a090)' : '#e2e8f0'"
           :intensity="selectedCategory === cat.id ? 0.4 : 0.1"
         >
           <button
@@ -104,7 +104,7 @@
     <Teleport to="body">
       <Transition name="modal">
         <div v-if="showCreate || editingSkill" class="modal-overlay" @click.self="closeModal">
-          <LiquidGlass class="modal-glass" glow-color="#8b5cf6" :intensity="0.4">
+          <LiquidGlass class="modal-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.4">
             <div class="skill-modal">
               <div class="modal-header">
                 <h3>{{ editingSkill ? '编辑 Skill' : '新建 Skill' }}</h3>
@@ -156,10 +156,10 @@
               </div>
 
               <div class="modal-footer">
-                <LiquidGlass glow-color="#64748b" :intensity="0.2">
+                <LiquidGlass glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.2">
                   <button class="lg-btn" @click="closeModal">取消</button>
                 </LiquidGlass>
-                <LiquidGlass glow-color="#8b5cf6" :intensity="0.5">
+                <LiquidGlass glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.5">
                   <button class="lg-btn lg-btn-primary" @click="saveSkill">
                     {{ editingSkill ? '保存' : '创建' }}
                   </button>
@@ -246,7 +246,7 @@ const gradients = [
   'linear-gradient(135deg, #e0e7ff, #c7d2fe)'
 ]
 
-const glowColors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4']
+const glowColors = ['var(--sr-accent-star, #b8a090)', 'var(--sr-morandi-blue, #9daab8)', 'var(--sr-morandi-green, #a8b3a8)', '#f59e0b', '#ec4899', '#06b6d4']
 
 function getIconGradient(idx: number) {
   return gradients[idx % gradients.length]
@@ -339,20 +339,20 @@ async function deleteSkill(skill: Skill) {
 .title-icon {
   width: 48px;
   height: 48px;
-  color: #8b5cf6;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .title-text {
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .title-desc {
   margin: 4px 0 0;
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .create-btn {
@@ -360,7 +360,7 @@ async function deleteSkill(skill: Skill) {
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
   color: white;
   border: none;
   border-radius: 12px;
@@ -372,7 +372,7 @@ async function deleteSkill(skill: Skill) {
 
 .create-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 8px 20px rgba(184, 160, 144, 0.3);
 }
 
 .create-btn svg {
@@ -409,7 +409,7 @@ async function deleteSkill(skill: Skill) {
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 14px;
   font-size: 15px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   transition: all 0.2s ease;
 }
 
@@ -420,8 +420,8 @@ async function deleteSkill(skill: Skill) {
 
 .search-input:focus {
   outline: none;
-  border-color: rgba(139, 92, 246, 0.3);
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+  border-color: rgba(184, 160, 144, 0.3);
+  box-shadow: 0 0 0 4px rgba(184, 160, 144, 0.1);
 }
 
 .filter-chips {
@@ -440,7 +440,7 @@ async function deleteSkill(skill: Skill) {
   padding: 8px 16px;
   background: transparent;
   border: none;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -448,7 +448,7 @@ async function deleteSkill(skill: Skill) {
 }
 
 .filter-chip:hover {
-  color: #8b5cf6;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .filter-chip.active {
@@ -519,22 +519,22 @@ async function deleteSkill(skill: Skill) {
   background: rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 10px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .action-btn:hover {
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(139, 92, 246, 0.2);
-  color: #8b5cf6;
+  background: rgba(184, 160, 144, 0.1);
+  border-color: rgba(184, 160, 144, 0.2);
+  color: var(--sr-accent-star, #b8a090);
   transform: translateY(-2px);
 }
 
 .action-btn.danger:hover {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
+  background: rgba(212, 184, 184, 0.1);
+  border-color: rgba(212, 184, 184, 0.2);
+  color: var(--sr-morandi-pink, #d4b8b8);
 }
 
 .action-btn svg {
@@ -550,13 +550,13 @@ async function deleteSkill(skill: Skill) {
   margin: 0 0 8px;
   font-size: 17px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .skill-desc {
   margin: 0 0 12px;
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -577,7 +577,7 @@ async function deleteSkill(skill: Skill) {
   background: rgba(0, 0, 0, 0.05);
   border-radius: 8px;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .meta-badge svg {
@@ -586,8 +586,8 @@ async function deleteSkill(skill: Skill) {
 }
 
 .meta-badge.category {
-  background: rgba(139, 92, 246, 0.1);
-  color: #7c3aed;
+  background: rgba(184, 160, 144, 0.1);
+  color: var(--sr-morandi-purple, #b3a8b8);
 }
 
 .card-footer {
@@ -605,7 +605,7 @@ async function deleteSkill(skill: Skill) {
   background: rgba(0, 0, 0, 0.03);
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 10px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -613,9 +613,9 @@ async function deleteSkill(skill: Skill) {
 }
 
 .view-btn:hover {
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(139, 92, 246, 0.2);
-  color: #8b5cf6;
+  background: rgba(184, 160, 144, 0.1);
+  border-color: rgba(184, 160, 144, 0.2);
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .view-btn svg {
@@ -680,7 +680,7 @@ async function deleteSkill(skill: Skill) {
   margin: 0;
   font-size: 20px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .close-btn {
@@ -692,14 +692,14 @@ async function deleteSkill(skill: Skill) {
   background: rgba(0, 0, 0, 0.05);
   border: none;
   border-radius: 10px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: rgba(212, 184, 184, 0.1);
+  color: var(--sr-morandi-pink, #d4b8b8);
   transform: rotate(90deg);
 }
 
@@ -717,7 +717,7 @@ async function deleteSkill(skill: Skill) {
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .form-row {

@@ -66,17 +66,23 @@ const breadcrumbs = computed(() => {
 </script>
 
 <style scoped>
+/* ═══════════════════════════════════════════════════════════════
+   Breadcrumb — Star River Style
+   ═══════════════════════════════════════════════════════════════ */
+
 .breadcrumb {
-  padding: 16px 32px;
-  background: #fff;
-  border-bottom: 1px solid #e8e8e8;
+  padding: 12px 32px;
+  background: var(--sr-glass-bg, rgba(255, 255, 255, 0.6));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
 }
 
 .breadcrumb-inner {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 2px;
 }
 
 .crumb-item {
@@ -87,52 +93,55 @@ const breadcrumbs = computed(() => {
 .crumb-link {
   display: flex;
   align-items: center;
-  color: #595959;
+  color: var(--sr-text-muted, #94a3b8);
   text-decoration: none;
-  font-size: 14px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s;
+  font-size: 13px;
+  font-weight: 400;
+  padding: 4px 10px;
+  border-radius: var(--sr-radius-sm, 6px);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  letter-spacing: 0.01em;
 }
 
 .crumb-link:hover {
-  color: #1677ff;
-  background: #f0f0f0;
+  color: var(--sr-accent-star, #b8a090);
+  background: var(--sr-glass-bg, rgba(255, 255, 255, 0.5));
 }
 
 .crumb-text {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 22px;
+  font-family: var(--sr-font-primary, 'Inter', sans-serif);
 }
 
 .crumb-text.current {
-  color: #262626;
+  color: var(--sr-text-primary, #1a1a2e);
   font-weight: 500;
-  padding: 4px 8px;
+  padding: 4px 10px;
 }
 
 .separator {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #bfbfbf;
-  padding: 0 4px;
+  color: var(--sr-text-tertiary, rgba(0, 0, 0, 0.15));
+  padding: 0 2px;
 }
 
 .separator svg {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .breadcrumb {
-    padding: 12px 16px;
+    padding: 10px 16px;
   }
   
   .crumb-text,
   .crumb-link {
-    font-size: 13px;
+    font-size: 12px;
   }
 }
 </style>

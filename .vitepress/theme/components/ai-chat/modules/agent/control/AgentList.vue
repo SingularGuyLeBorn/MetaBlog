@@ -269,7 +269,7 @@ const emptyDesc = computed(() => {
   align-items: center;
   gap: 8px;
   padding: 10px 18px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
   border: none;
   border-radius: 10px;
@@ -277,12 +277,12 @@ const emptyDesc = computed(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(179, 168, 184, 0.3);
 }
 
 .btn-create:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 6px 16px rgba(179, 168, 184, 0.4);
 }
 
 /* 状态筛选栏 */
@@ -338,7 +338,7 @@ const emptyDesc = computed(() => {
 .filter-count.running { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
 .filter-count.idle { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
 .filter-count.paused { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
-.filter-count.error { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.filter-count.error { background: rgba(212, 184, 184, 0.15); color: var(--sr-morandi-pink, #d4b8b8); }
 
 /* 统计行 */
 .stats-row {
@@ -373,7 +373,7 @@ const emptyDesc = computed(() => {
 .stat-value.running { color: #22c55e; }
 .stat-value.idle { color: #6b7280; }
 .stat-value.paused { color: #f59e0b; }
-.stat-value.error { color: #ef4444; }
+.stat-value.error { color: var(--sr-morandi-pink, #d4b8b8); }
 
 .stat-label {
   font-size: 12px;
@@ -442,7 +442,7 @@ const emptyDesc = computed(() => {
 }
 
 .btn-create-empty {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border: none;
   color: white;
   font-weight: 500;
@@ -450,7 +450,7 @@ const emptyDesc = computed(() => {
 
 .btn-create-empty:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(179, 168, 184, 0.3);
 }
 
 /* 深色模式 */

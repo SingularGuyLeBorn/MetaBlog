@@ -1,6 +1,6 @@
 [
   {
-    "id": "agent-1771864714589-mpgyp1p",
+    "id": "agent-1773231241953-6otnclg",
     "name": "Meta 助手",
     "avatar": "🤖",
     "description": "基于 DeepSeek 大模型的通用 AI 助手，为您提供专业智能对话体验",
@@ -8,21 +8,9 @@
     "status": "online",
     "seat": 1,
     "capabilities": {
-      "baseRole": "你是数据分析师，逻辑清晰。",
-      "roleSupplement": "",
-      "availableSkills": [
-        "code-craft",
-        "fullstack-developer",
-        "weather-assistant",
-        "project-manager",
-        "creative-designer",
-        "file-manager",
-        "research-assistant",
-        "translate-expert",
-        "data-analyst",
-        "writing-master",
-        "content-analyst"
-      ]
+      "mode": "raw",
+      "skillIds": [],
+      "customSystemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。"
     },
     "memory": {
       "enabled": true,
@@ -33,93 +21,8 @@
     "permissions": [],
     "callCount": 0,
     "isDefault": true,
-    "createdAt": 1771864714589,
-    "updatedAt": 1772852150082,
-    "lastActiveAt": 1772852150082,
-    "runtime": {
-      "model": "claude-3-5-sonnet",
-      "temperature": 0.7,
-      "maxTokens": 2048,
-      "topP": 0.95,
-      "frequencyPenalty": 0,
-      "timeout": 60,
-      "retryCount": 3,
-      "retryDelay": 1
-    }
-  },
-  {
-    "id": "agent-1772117562518-c2smku9",
-    "name": "测试",
-    "avatar": "🧠",
-    "description": "很有意思",
-    "level": "custom",
-    "status": "online",
-    "seat": 1,
-    "capabilities": {
-      "baseRole": "你是专业的写作专家，对语言敏感。",
-      "roleSupplement": "",
-      "availableSkills": [
-        "creative-designer",
-        "code-craft",
-        "translate-expert",
-        "content-analyst",
-        "fullstack-developer",
-        "data-analyst",
-        "weather-assistant",
-        "file-manager",
-        "writing-master",
-        "project-manager",
-        "research-assistant"
-      ]
-    },
-    "memory": {
-      "enabled": true,
-      "content": "测试记忆",
-      "autoExtract": true,
-      "maxTokens": 2000
-    },
-    "permissions": [],
-    "callCount": 0,
-    "isDefault": false,
-    "createdAt": 1772117562518,
-    "updatedAt": 1772852147775,
-    "lastActiveAt": 1772852147774,
-    "runtime": {
-      "model": "kimi-k1.5-pro",
-      "temperature": 0.7,
-      "maxTokens": 2048,
-      "topP": 0.95,
-      "frequencyPenalty": 0,
-      "enableReasoning": false,
-      "timeout": 60,
-      "retryCount": 3,
-      "retryDelay": 1
-    }
-  },
-  {
-    "id": "agent-1772816557101-xxsvzuf",
-    "name": "测试agent",
-    "avatar": "🔮",
-    "description": "废物一个啥也不会",
-    "level": "custom",
-    "status": "online",
-    "seat": 1,
-    "capabilities": {
-      "mode": "raw",
-      "skillIds": [],
-      "customSystemPrompt": "你是 测试agent"
-    },
-    "memory": {
-      "enabled": true,
-      "content": "",
-      "autoExtract": true,
-      "maxTokens": 2000
-    },
-    "permissions": [],
-    "callCount": 0,
-    "isDefault": false,
-    "createdAt": 1772816557101,
-    "updatedAt": 1772820901012,
-    "lastActiveAt": 1772820901011
+    "createdAt": 1773231241953,
+    "updatedAt": 1773239434001,
+    "lastActiveAt": 1773231241953
   }
 ]

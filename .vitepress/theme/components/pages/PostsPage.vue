@@ -1,69 +1,56 @@
 <template>
-  <div class="posts-container-3d">
-    <!-- 背景光效 -->
-    <div class="ambient-light">
-      <div class="light-orb orb-1"></div>
-      <div class="light-orb orb-2"></div>
-      <div class="light-orb orb-3"></div>
-    </div>
-
-    <!-- Hero Section -->
-    <section class="hero-3d">
+  <div class="posts-page">
+    <!-- Hero Section — 极简 -->
+    <section class="hero-section fade-up">
       <div class="hero-content">
-        <div class="hero-badge-3d">
-          <span class="badge-icon">✍️</span>
+        <div class="hero-badge">
+          <span class="badge-star">✦</span>
           <span class="badge-text">博客文章</span>
         </div>
-        <h1 class="hero-title">文章列表</h1>
-        <p class="hero-desc">深入的技术文章与学习思考，探索编程与人工智能的无限可能</p>
-        
-        <!-- Stats -->
-        <div class="hero-stats-3d">
-          <div class="stat-card-3d">
-            <div class="stat-icon-wrapper">
-              <span class="stat-icon">📚</span>
-            </div>
-            <div class="stat-info">
-              <span class="stat-value">{{ posts.length }}</span>
-              <span class="stat-label">篇文章</span>
-            </div>
+        <h1 class="sr-title">
+          <span class="title-main">文章</span>
+          <span class="title-accent">列表</span>
+        </h1>
+        <p class="sr-subtitle hero-desc">
+          深入的技术文章与学习思考，探索编程与人工智能的无限可能
+        </p>
+
+        <!-- Stats — Glass Cards -->
+        <div class="hero-stats">
+          <div class="stat-card glass-card scale-in" style="transition-delay: 0.1s">
+            <span class="stat-num">{{ posts.length }}</span>
+            <span class="stat-label">篇文章</span>
           </div>
-          <div class="stat-card-3d">
-            <div class="stat-icon-wrapper">
-              <span class="stat-icon">🏷️</span>
-            </div>
-            <div class="stat-info">
-              <span class="stat-value">{{ uniqueTags }}</span>
-              <span class="stat-label">个分类</span>
-            </div>
+          <div class="stat-card glass-card scale-in" style="transition-delay: 0.2s">
+            <span class="stat-num">{{ uniqueTags }}</span>
+            <span class="stat-label">个分类</span>
           </div>
-          <div class="stat-card-3d">
-            <div class="stat-icon-wrapper">
-              <span class="stat-icon">📅</span>
-            </div>
-            <div class="stat-info">
-              <span class="stat-value">2024</span>
-              <span class="stat-label">持续更新</span>
-            </div>
+          <div class="stat-card glass-card scale-in" style="transition-delay: 0.3s">
+            <span class="stat-num">2024</span>
+            <span class="stat-label">持续更新</span>
           </div>
         </div>
-      </div>
-      
-      <!-- Decorative Elements -->
-      <div class="hero-decoration-3d">
-        <div class="deco-circle deco-1"></div>
-        <div class="deco-circle deco-2"></div>
-        <div class="deco-circle deco-3"></div>
       </div>
     </section>
 
-    <!-- Filter Bar -->
-    <div class="filter-bar-3d">
-      <div class="filter-tabs-3d">
+    <!-- Trending Marquee Ticker -->
+    <div class="marquee-section fade-up" style="transition-delay: 0.4s">
+      <div class="marquee-track">
+        <div class="marquee-content">
+          <span v-for="(tag, i) in [...trendingTags, ...trendingTags, ...trendingTags]" :key="i" class="trending-badge glass-card">
+            🔥 {{ tag }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Bar — 新拟物 -->
+    <div class="filter-bar">
+      <div class="filter-tabs">
         <button 
           v-for="(tab, index) in filterTabs" 
           :key="tab.value"
-          class="filter-tab-3d"
+          class="filter-tab neu-btn magnetic-btn"
           :class="{ active: currentFilter === tab.value }"
           :style="{ animationDelay: `${index * 0.05}s` }"
           @click="currentFilter = tab.value"
@@ -75,51 +62,46 @@
     </div>
 
     <!-- Posts Grid -->
-    <main class="posts-main-3d">
-      <TransitionGroup name="post-list-3d" tag="div" class="posts-grid-3d">
+    <main class="posts-main">
+      <TransitionGroup name="post-list" tag="div" class="posts-grid sr-grid">
         <article 
           v-for="(post, index) in filteredPosts" 
           :key="post.title" 
-          class="post-card-3d"
-          :style="{ '--delay': `${index * 0.08}s` }"
+          class="post-card glass-card glass-card-hover fade-up"
+          :style="{ transitionDelay: `${index * 0.08}s` }"
         >
-          <a :href="post.link" class="post-link-3d">
-            <!-- Card Header with Tag -->
-            <div class="card-header-3d">
-              <span class="post-tag-3d" :class="post.badgeClass">
-                <span class="tag-dot"></span>
+          <a :href="post.link" class="post-link">
+            <!-- Card Header -->
+            <div class="card-header">
+              <span class="sr-tag" :class="'sr-tag-morandi-' + post.tagColor">
                 {{ post.tag }}
               </span>
-              <time class="post-date-3d" :datetime="post.date">
-                <span class="date-icon">📅</span>
+              <time class="post-date" :datetime="post.date">
                 {{ formatDate(post.date) }}
               </time>
             </div>
             
             <!-- Card Content -->
-            <div class="card-content-3d">
+            <div class="card-content">
               <h2 class="post-title">{{ post.title }}</h2>
               <p class="post-excerpt">{{ post.excerpt }}</p>
             </div>
             
             <!-- Card Footer -->
-            <div class="card-footer-3d">
-              <span class="read-more-3d">
+            <div class="card-footer">
+              <span class="read-more">
                 阅读全文
                 <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </span>
             </div>
-            
-            <!-- Hover Effect Overlay -->
-            <div class="card-glow-3d"></div>
           </a>
         </article>
       </TransitionGroup>
       
       <!-- Empty State -->
-      <div v-if="filteredPosts.length === 0" class="empty-state-3d">
+      <div v-if="filteredPosts.length === 0" class="empty-state glass-card">
         <div class="empty-icon">🔍</div>
         <p>暂无相关文章</p>
       </div>
@@ -133,7 +115,7 @@ import { ref, computed } from 'vue'
 interface Post {
   title: string
   tag: string
-  badgeClass: string
+  tagColor: string
   date: string
   excerpt: string
   link: string
@@ -143,50 +125,54 @@ const posts: Post[] = [
   {
     title: 'AI 论文阅读 2024',
     tag: 'AI',
-    badgeClass: 'ai',
+    tagColor: 'purple',
     date: '2024-12-01',
     excerpt: '精选2024年人工智能领域的重要论文，深入解读核心思想与创新点，涵盖大语言模型、多模态学习等前沿方向...',
-    link: './ai-paper-reading-2024.html'
+    link: '/sections/posts/ai-paper-reading-2024/'
   },
   {
     title: '强化学习：从游戏到现实',
     tag: '强化学习',
-    badgeClass: 'rl',
+    tagColor: 'blue',
     date: '2024-11-15',
     excerpt: '探讨强化学习技术在游戏、机器人、推荐系统等领域的应用，以及从虚拟环境到真实世界的迁移挑战...',
-    link: './rl-from-game-to-reality.html'
+    link: '/sections/posts/rl-from-game-to-reality/'
   },
   {
     title: 'Node L1 系列文章',
     tag: '系列',
-    badgeClass: 'series',
+    tagColor: 'green',
     date: '2024-10-01',
     excerpt: 'Node L1 系列文章，包含多级目录结构下的内容组织示例，展示如何构建层次化的知识体系...',
-    link: './node-L1/node-L1.html'
+    link: '/sections/posts/node-L1/'
   },
   {
     title: 'Leaf 1-1 测试文章',
     tag: '测试',
-    badgeClass: 'test',
+    tagColor: 'pink',
     date: '2024-09-15',
     excerpt: '这是一篇测试文章，用于展示文章列表的样式和布局效果，包含基本的文本排版和样式设置...',
-    link: './leaf-1-1/leaf-1-1.html'
+    link: '/sections/posts/leaf-1-1/'
   },
   {
     title: 'Leaf 1-2 测试文章',
     tag: '测试',
-    badgeClass: 'test',
+    tagColor: 'pink',
     date: '2024-09-01',
     excerpt: '另一篇测试文章，展示多级目录结构下的文章展示效果，探索内容组织的最佳实践...',
-    link: './leaf-1-2/leaf-1-2.html'
+    link: '/sections/posts/leaf-1-2/'
   }
 ]
 
 const filterTabs = [
-  { label: '全部', value: 'all', icon: '📋' },
-  { label: 'AI', value: 'AI', icon: '🤖' },
-  { label: '强化学习', value: '强化学习', icon: '🎯' },
-  { label: '系列', value: '系列', icon: '📚' }
+  { label: '全部', value: 'all', icon: '✦' },
+  { label: 'AI', value: 'AI', icon: '◈' },
+  { label: '强化学习', value: '强化学习', icon: '◇' },
+  { label: '系列', value: '系列', icon: '◆' }
+]
+
+const trendingTags = [
+  'DeepSeek-R1', 'RLHF', 'Diffusion Models', 'Transformer', 'Agentic Workflow', 'Vector DB', 'Prompt Engineering', 'LangChain', 'Ollama'
 ]
 
 const currentFilter = ref('all')
@@ -207,455 +193,258 @@ function formatDate(dateStr: string): string {
 </script>
 
 <style scoped>
-.posts-container-3d {
+/* ═══════════════════════════════════════════════════════════════════════════
+   Posts Page — Star River Style
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.posts-page {
   position: relative;
-  max-width: 1200px;
+  width: 90%;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 100px 24px 80px;
+  padding: 80px 0;
   min-height: 100vh;
-  overflow: hidden;
 }
 
-/* 环境光效 */
-.ambient-light {
-  position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  pointer-events: none;
-  z-index: -1;
-}
-
-.light-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.5;
-  animation: float-orb 20s ease-in-out infinite;
-}
-
-.orb-1 {
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(102, 126, 234, 0.15), transparent 70%);
-  top: 10%;
-  right: 20%;
-  animation-delay: 0s;
-}
-
-.orb-2 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(118, 75, 162, 0.12), transparent 70%);
-  top: 40%;
-  left: 10%;
-  animation-delay: -7s;
-}
-
-.orb-3 {
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.1), transparent 70%);
-  bottom: 20%;
-  right: 30%;
-  animation-delay: -14s;
-}
-
-@keyframes float-orb {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -30px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-}
-
-/* 3D Hero Section */
-.hero-3d {
-  position: relative;
-  padding: 64px 48px;
-  margin-bottom: 48px;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
-  border-radius: 32px;
-  overflow: hidden;
+/* Hero */
+.hero-section {
   text-align: center;
-  box-shadow: 
-    0 25px 50px -12px rgba(124, 58, 237, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  padding: 40px 0 64px;
 }
 
 .hero-content {
   position: relative;
-  z-index: 2;
 }
 
-.hero-badge-3d {
+.hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 24px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(20px);
-  border-radius: 50px;
+  padding: 8px 20px;
+  background: var(--sr-glass-bg);
+  backdrop-filter: var(--sr-glass-blur);
+  border: 1px solid var(--sr-glass-border);
+  border-radius: var(--sr-radius-full);
   margin-bottom: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.badge-icon {
-  font-size: 16px;
+.badge-star {
+  font-size: 12px;
+  color: var(--sr-accent-star);
 }
 
 .badge-text {
-  font-size: 14px;
-  font-weight: 700;
-  color: white;
-  letter-spacing: 0.5px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--sr-text-secondary);
 }
 
-.hero-title {
-  font-size: 52px;
-  font-weight: 800;
-  color: white;
-  margin: 0 0 16px 0;
-  letter-spacing: -2px;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+.title-main {
+  color: var(--sr-text-primary);
+  font-weight: 200;
+}
+
+.title-accent {
+  color: var(--sr-morandi-purple);
+  font-weight: 400;
 }
 
 .hero-desc {
-  font-size: 18px;
-  color: rgba(255, 255, 255, 0.95);
-  max-width: 600px;
-  margin: 0 auto 40px;
-  line-height: 1.7;
+  max-width: 500px;
+  margin: 0 auto 48px;
 }
 
-/* 3D Stats */
-.hero-stats-3d {
+/* Stats */
+.hero-stats {
   display: flex;
   justify-content: center;
-  gap: 24px;
+  gap: 20px;
   flex-wrap: wrap;
 }
 
-.stat-card-3d {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px 28px;
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.stat-card-3d:hover {
-  transform: translateY(-6px) rotateX(5deg);
-  background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-}
-
-.stat-icon-wrapper {
-  width: 52px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  font-size: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.stat-icon {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-.stat-info {
+.stat-card {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  gap: 4px;
+  padding: 20px 32px !important;
 }
 
-.stat-value {
+.stat-num {
   font-size: 28px;
-  font-weight: 800;
-  color: white;
-  line-height: 1;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--sr-text-primary);
 }
 
 .stat-label {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
-  margin-top: 4px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--sr-text-muted);
 }
 
-/* Decorative Elements */
-.hero-decoration-3d {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.deco-circle {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  animation: float-deco 8s ease-in-out infinite;
-}
-
-.deco-1 {
-  width: 350px;
-  height: 350px;
-  top: -120px;
-  right: -60px;
-  animation-delay: 0s;
-}
-
-.deco-2 {
-  width: 250px;
-  height: 250px;
-  bottom: -80px;
-  left: -60px;
-  animation-delay: -3s;
-}
-
-.deco-3 {
-  width: 180px;
-  height: 180px;
-  top: 50%;
+/* Trending Marquee */
+.marquee-section {
+  width: 100vw;
+  position: relative;
   left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.05);
-  animation-delay: -6s;
+  transform: translateX(-50%);
+  overflow: hidden;
+  padding: 10px 0;
+  margin-bottom: 48px;
+  background: linear-gradient(90deg, transparent, rgba(184, 160, 144, 0.05) 20%, rgba(184, 160, 144, 0.05) 80%, transparent);
 }
 
-@keyframes float-deco {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-20px) scale(1.05); }
+.marquee-track {
+  display: flex;
+  width: max-content;
 }
 
-/* 3D Filter Bar */
-.filter-bar-3d {
-  margin-bottom: 40px;
+.marquee-content {
+  display: flex;
+  gap: 20px;
+  padding: 0 10px;
+  animation: scroll-x 30s linear infinite;
+}
+
+.marquee-content:hover {
+  animation-play-state: paused;
+}
+
+.trending-badge {
+  white-space: nowrap;
+  padding: 12px 24px !important;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sr-text-secondary);
+  border-radius: var(--sr-radius-full) !important;
+  cursor: pointer;
+  transition: all 0.3s var(--sr-spring-bounce);
+}
+
+.trending-badge:hover {
+  color: var(--sr-text-primary);
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(184, 160, 144, 0.15);
+  border-color: var(--sr-morandi-purple);
+}
+
+@keyframes scroll-x {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-33.33% - 6.66px)); /* Exact offset for 1/3 of the 3x duplicated array */ }
+}
+
+/* Filter Bar — Neumorphic */
+.filter-bar {
+  margin-bottom: 48px;
   display: flex;
   justify-content: center;
 }
 
-.filter-tabs-3d {
+.filter-tabs {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   padding: 8px;
-  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
-  border-radius: 16px;
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.04),
-    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  background: var(--sr-bg-secondary);
+  border-radius: var(--sr-radius-lg);
 }
 
-.filter-tab-3d {
+.filter-tab {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border: none;
-  background: transparent;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #64748b;
+  gap: 6px;
+  padding: 10px 20px !important;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sr-text-muted);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: tab-fade-in 0.4s ease backwards;
+  border-radius: var(--sr-radius-md) !important;
+  transition: all 0.3s var(--sr-spring-bounce);
 }
 
-@keyframes tab-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.filter-tab:hover {
+  color: var(--sr-text-secondary);
 }
 
-.filter-tab-3d:hover {
-  color: #7c3aed;
-  background: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
-}
-
-.filter-tab-3d.active {
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-  color: white;
-  box-shadow: 
-    0 4px 16px rgba(124, 58, 237, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+.filter-tab.active {
+  color: var(--sr-text-primary);
+  background: var(--sr-bg-elevated) !important;
+  box-shadow:
+    4px 4px 8px var(--sr-neu-shadow-dark),
+    -4px -4px 8px var(--sr-neu-shadow-light) !important;
 }
 
 .tab-icon {
-  font-size: 16px;
+  font-size: 12px;
+  opacity: 0.6;
 }
 
-/* 3D Posts Grid */
-.posts-main-3d {
+/* Posts Grid */
+.posts-main {
   position: relative;
 }
 
-.posts-grid-3d {
+.posts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 28px;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--sr-space-md);
 }
 
-.post-card-3d {
-  position: relative;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
-  border-radius: 24px;
+.post-card {
   overflow: hidden;
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.04),
-    0 0 0 1px rgba(226, 232, 240, 0.8) inset;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  animation: card-fade-in 0.6s ease backwards;
-  animation-delay: var(--delay);
-  transform-style: preserve-3d;
+  padding: 0 !important;
 }
 
-@keyframes card-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.post-card-3d:hover {
-  transform: translateY(-8px) rotateX(3deg);
-  box-shadow: 
-    0 30px 60px -12px rgba(124, 58, 237, 0.2),
-    0 0 0 1px rgba(139, 92, 246, 0.2) inset;
-  border-color: rgba(139, 92, 246, 0.3);
-}
-
-.post-link-3d {
+.post-link {
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 28px;
   text-decoration: none;
   color: inherit;
-  position: relative;
-  z-index: 1;
 }
 
 /* Card Header */
-.card-header-3d {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
 
-.post-tag-3d {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 24px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.tag-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.post-tag-3d.ai {
-  background: linear-gradient(145deg, #ede9fe, #ddd6fe);
-  color: #6d28d9;
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.15);
-}
-.post-tag-3d.ai .tag-dot { 
-  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
-  box-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
-}
-
-.post-tag-3d.rl {
-  background: linear-gradient(145deg, #fef3c7, #fde68a);
-  color: #b45309;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
-}
-.post-tag-3d.rl .tag-dot { 
-  background: linear-gradient(135deg, #f59e0b, #fbbf24);
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
-}
-
-.post-tag-3d.series {
-  background: linear-gradient(145deg, #dbeafe, #bfdbfe);
-  color: #1d4ed8;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
-}
-.post-tag-3d.series .tag-dot { 
-  background: linear-gradient(135deg, #3b82f6, #60a5fa);
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
-}
-
-.post-tag-3d.test {
-  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
-  color: #475569;
-}
-.post-tag-3d.test .tag-dot { 
-  background: #94a3b8;
-}
-
-.post-date-3d {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.post-date {
   font-size: 13px;
-  color: #94a3b8;
-  font-weight: 600;
-}
-
-.date-icon {
-  font-size: 13px;
+  color: var(--sr-text-muted);
+  font-weight: 400;
 }
 
 /* Card Content */
-.card-content-3d {
+.card-content {
   flex: 1;
   margin-bottom: 24px;
 }
 
 .post-title {
-  font-size: 22px;
-  font-weight: 800;
-  color: #1e293b;
-  margin: 0 0 14px 0;
+  font-family: var(--sr-font-primary);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  margin: 0 0 12px 0;
   line-height: 1.4;
-  transition: color 0.3s ease;
+  letter-spacing: -0.01em;
+  transition: color 0.3s var(--sr-spring-gentle);
 }
 
-.post-card-3d:hover .post-title {
-  color: #7c3aed;
+.post-card:hover .post-title {
+  color: var(--sr-accent-star);
 }
 
 .post-excerpt {
-  font-size: 15px;
-  color: #64748b;
+  font-size: 14px;
+  color: var(--sr-text-secondary);
   line-height: 1.8;
   margin: 0;
   display: -webkit-box;
@@ -665,127 +454,97 @@ function formatDate(dateStr: string): string {
 }
 
 /* Card Footer */
-.card-footer-3d {
+.card-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding-top: 20px;
-  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  border-top: 1px solid var(--sr-glass-border);
 }
 
-.read-more-3d {
+.read-more {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #7c3aed;
-  transition: all 0.3s ease;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sr-accent-star);
+  letter-spacing: 0.02em;
+  transition: gap 0.3s var(--sr-spring-bounce);
 }
 
-.post-card-3d:hover .read-more-3d {
+.post-card:hover .read-more {
   gap: 14px;
-  color: #6d28d9;
 }
 
 .arrow-icon {
-  width: 18px;
-  height: 18px;
-  transition: transform 0.3s ease;
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s var(--sr-spring-bounce);
 }
 
-.post-card-3d:hover .arrow-icon {
-  transform: translateX(6px);
+.post-card:hover .arrow-icon {
+  transform: translateX(4px);
 }
 
-/* Card Glow Effect */
-.card-glow-3d {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.03) 0%, rgba(139, 92, 246, 0.05) 100%);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  pointer-events: none;
+/* List Transition */
+.post-list-enter-active,
+.post-list-leave-active {
+  transition: all 0.4s var(--sr-spring-gentle);
 }
 
-.post-card-3d:hover .card-glow-3d {
-  opacity: 1;
-}
-
-/* Transition Animations */
-.post-list-3d-enter-active,
-.post-list-3d-leave-active {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.post-list-3d-enter-from,
-.post-list-3d-leave-to {
+.post-list-enter-from,
+.post-list-leave-to {
   opacity: 0;
   transform: translateY(20px);
 }
 
 /* Empty State */
-.empty-state-3d {
+.empty-state {
   text-align: center;
-  padding: 100px 20px;
-  color: #94a3b8;
-  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
-  border-radius: 24px;
-  border: 2px dashed rgba(226, 232, 240, 0.8);
+  padding: 80px 20px !important;
+  color: var(--sr-text-muted);
 }
 
 .empty-icon {
-  font-size: 56px;
-  margin-bottom: 20px;
-  opacity: 0.6;
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
 }
 
-.empty-state-3d p {
-  font-size: 16px;
-  font-weight: 600;
+.empty-state p {
+  font-size: 15px;
+  font-weight: 500;
   margin: 0;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .posts-container-3d {
-    padding: 80px 16px 60px;
+  .posts-page {
+    padding: 60px 16px 60px;
   }
-  
-  .hero-3d {
-    padding: 40px 24px;
-    border-radius: 24px;
-  }
-  
-  .hero-title {
-    font-size: 36px;
-  }
-  
-  .hero-desc {
-    font-size: 16px;
-  }
-  
-  .hero-stats-3d {
+
+  .hero-stats {
     flex-direction: column;
-    gap: 16px;
+    align-items: center;
+    gap: 12px;
   }
   
-  .stat-card-3d {
+  .stat-card {
     width: 100%;
-    justify-content: center;
+    max-width: 200px;
   }
-  
-  .filter-tabs-3d {
+
+  .filter-tabs {
     flex-wrap: wrap;
     justify-content: center;
   }
-  
-  .posts-grid-3d {
+
+  .posts-grid {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
-  .post-link-3d {
+
+  .post-link {
     padding: 24px;
   }
 }

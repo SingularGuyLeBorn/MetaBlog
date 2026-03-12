@@ -510,7 +510,7 @@ watch(() => props.initialParams, (newParams) => {
   gap: 10px;
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   margin: 0;
 }
 
@@ -540,18 +540,18 @@ watch(() => props.initialParams, (newParams) => {
 .model-card:hover {
   transform: translateY(-3px) scale(1.01);
   box-shadow: 
-    0 16px 32px rgba(59, 130, 246, 0.12),
+    0 16px 32px rgba(179, 168, 184, 0.12),
     inset 0 1px 1px rgba(255, 255, 255, 0.9);
 }
 
 .model-card.active {
   background: linear-gradient(145deg, 
-    rgba(59, 130, 246, 0.08) 0%, 
-    rgba(139, 92, 246, 0.04) 100%
+    rgba(179, 168, 184, 0.08) 0%, 
+    rgba(184, 160, 144, 0.04) 100%
   );
-  border-color: rgba(59, 130, 246, 0.5);
+  border-color: rgba(179, 168, 184, 0.5);
   box-shadow: 
-    0 0 30px rgba(59, 130, 246, 0.15),
+    0 0 30px rgba(179, 168, 184, 0.15),
     inset 0 1px 1px rgba(255, 255, 255, 0.9);
 }
 
@@ -560,7 +560,7 @@ watch(() => props.initialParams, (newParams) => {
   inset: 0;
   background: radial-gradient(
     circle at 50% 120%,
-    rgba(59, 130, 246, 0.08) 0%,
+    rgba(179, 168, 184, 0.08) 0%,
     transparent 60%
   );
   opacity: 0;
@@ -589,11 +589,11 @@ watch(() => props.initialParams, (newParams) => {
 }
 
 .model-glow.standard {
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.25), transparent 60%);
+  background: radial-gradient(circle, rgba(179, 168, 184, 0.25), transparent 60%);
 }
 
 .model-glow.premium {
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.25), transparent 60%);
+  background: radial-gradient(circle, rgba(184, 160, 144, 0.25), transparent 60%);
 }
 
 .model-card.active .model-glow {
@@ -629,8 +629,8 @@ watch(() => props.initialParams, (newParams) => {
 }
 
 .model-card.active .model-icon {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
+  box-shadow: 0 8px 20px rgba(179, 168, 184, 0.3);
 }
 
 .model-badges {
@@ -659,13 +659,13 @@ watch(() => props.initialParams, (newParams) => {
   margin: 0 0 4px 0;
   font-size: 14px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .model-desc {
   margin: 0 0 12px 0;
   font-size: 11px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -720,7 +720,7 @@ watch(() => props.initialParams, (newParams) => {
   inset: 0;
   background: radial-gradient(
     circle at var(--x, 50%) var(--y, 50%),
-    rgba(59, 130, 246, 0.15) 0%,
+    rgba(179, 168, 184, 0.15) 0%,
     transparent 50%
   );
   opacity: 0;
@@ -766,7 +766,7 @@ watch(() => props.initialParams, (newParams) => {
   flex: 1;
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .header-arrow {
@@ -816,15 +816,15 @@ watch(() => props.initialParams, (newParams) => {
   justify-content: space-between;
   font-size: 12px;
   font-weight: 600;
-  color: #374151;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .param-value-display {
   padding: 2px 8px;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(179, 168, 184, 0.1);
   border-radius: 6px;
   font-size: 11px;
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
 }
 
 /* ===== 液态滑块 ===== */
@@ -845,11 +845,11 @@ watch(() => props.initialParams, (newParams) => {
   -webkit-appearance: none;
   width: 18px;
   height: 18px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border-radius: 50%;
   cursor: pointer;
   box-shadow: 
-    0 2px 8px rgba(59, 130, 246, 0.4),
+    0 2px 8px rgba(179, 168, 184, 0.4),
     inset 0 2px 4px rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
 }
@@ -857,18 +857,18 @@ watch(() => props.initialParams, (newParams) => {
 .liquid-slider::-webkit-slider-thumb:hover {
   transform: scale(1.2);
   box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.5),
+    0 4px 12px rgba(179, 168, 184, 0.5),
     inset 0 2px 4px rgba(255, 255, 255, 0.3);
 }
 
 .liquid-slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 2px 8px rgba(179, 168, 184, 0.4);
 }
 
 .param-hints {
@@ -890,7 +890,7 @@ watch(() => props.initialParams, (newParams) => {
 
 .preset-label {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-weight: 500;
 }
 
@@ -901,13 +901,13 @@ watch(() => props.initialParams, (newParams) => {
   border-radius: 100px;
   font-size: 11px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .preset-chip:hover {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
   border-color: transparent;
   transform: translateY(-1px);
@@ -917,10 +917,10 @@ watch(() => props.initialParams, (newParams) => {
 .model-footer {
   padding: 12px 16px;
   background: linear-gradient(145deg, 
-    rgba(59, 130, 246, 0.05) 0%, 
-    rgba(139, 92, 246, 0.03) 100%
+    rgba(179, 168, 184, 0.05) 0%, 
+    rgba(184, 160, 144, 0.03) 100%
   );
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(179, 168, 184, 0.1);
   border-radius: 12px;
 }
 
@@ -929,7 +929,7 @@ watch(() => props.initialParams, (newParams) => {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
 }
 
 .info-icon {
@@ -989,7 +989,7 @@ watch(() => props.initialParams, (newParams) => {
   height: 300px;
   background: radial-gradient(
     circle,
-    rgba(99, 102, 241, 0.08) 0%,
+    rgba(184, 160, 144, 0.08) 0%,
     transparent 70%
   );
   pointer-events: none;
@@ -1059,11 +1059,11 @@ watch(() => props.initialParams, (newParams) => {
 }
 
 .icon-glow.standard {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
 }
 
 .icon-glow.premium {
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  background: linear-gradient(135deg, #f59e0b, var(--sr-morandi-pink, #d4b8b8));
 }
 
 .detail-title-group {
@@ -1077,9 +1077,9 @@ watch(() => props.initialParams, (newParams) => {
 .detail-name {
   font-size: 20px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   margin: 0;
-  background: linear-gradient(135deg, #1e293b, #475569);
+  background: linear-gradient(135deg, var(--sr-text-primary, #1a1a2e), #475569);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1101,9 +1101,9 @@ watch(() => props.initialParams, (newParams) => {
 }
 
 .detail-badge.tier {
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: rgba(184, 160, 144, 0.1);
+  color: var(--sr-morandi-purple, #b3a8b8);
+  border: 1px solid rgba(184, 160, 144, 0.2);
 }
 
 .detail-badge.tier.free {
@@ -1119,12 +1119,12 @@ watch(() => props.initialParams, (newParams) => {
 }
 
 .detail-badge.recommended {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
 }
 
 .detail-badge.new {
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  background: linear-gradient(135deg, #f59e0b, var(--sr-morandi-pink, #d4b8b8));
   color: white;
 }
 
@@ -1184,13 +1184,13 @@ watch(() => props.initialParams, (newParams) => {
 
 .spec-label {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .spec-value {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 /* 特性列表 */
@@ -1202,7 +1202,7 @@ watch(() => props.initialParams, (newParams) => {
 .features-title {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   margin: 0 0 12px;
 }
 
@@ -1227,11 +1227,11 @@ watch(() => props.initialParams, (newParams) => {
 .feature-dot {
   width: 6px;
   height: 6px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-purple, #b3a8b8), var(--sr-accent-star, #b8a090));
   border-radius: 50%;
   margin-top: 6px;
   flex-shrink: 0;
-  box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 0 8px rgba(184, 160, 144, 0.4);
 }
 
 /* 操作按钮 */
@@ -1253,17 +1253,17 @@ watch(() => props.initialParams, (newParams) => {
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-purple, #b3a8b8), var(--sr-accent-star, #b8a090));
   color: white;
   box-shadow: 
-    0 4px 14px rgba(99, 102, 241, 0.4),
+    0 4px 14px rgba(184, 160, 144, 0.4),
     inset 0 1px 1px rgba(255, 255, 255, 0.2);
 }
 
 .action-btn.primary:hover {
   transform: translateY(-2px);
   box-shadow: 
-    0 8px 24px rgba(99, 102, 241, 0.5),
+    0 8px 24px rgba(184, 160, 144, 0.5),
     inset 0 1px 1px rgba(255, 255, 255, 0.3);
 }
 

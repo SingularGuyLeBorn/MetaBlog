@@ -1,0 +1,85 @@
+{
+  "version": "2.0.0",
+  "app": {
+    "name": "MetaBlog",
+    "description": "AI驱动的智能博客系统",
+    "debug": false
+  },
+  "features": {
+    "agentOrchestrator": {
+      "enabled": true,
+      "autoStart": true,
+      "managerDecisionInterval": 60000,
+      "maxWorkers": 10,
+      "enableSelfEvolution": true
+    },
+    "websocket": {
+      "enabled": true,
+      "port": 5173,
+      "heartbeatInterval": 30000
+    },
+    "mcp": {
+      "enabled": true,
+      "autoReconnect": true,
+      "maxRetries": 3
+    },
+    "memory": {
+      "enabled": true,
+      "maxMemories": 1000,
+      "autoCleanup": true
+    },
+    "skills": {
+      "autoLoad": true,
+      "hotReload": true,
+      "allowCustomSkills": true
+    }
+  },
+  "storage": {
+    "format": "json",
+    "prettyPrint": true,
+    "autoBackup": true,
+    "backupInterval": 86400000,
+    "maxBackups": 7
+  },
+  "ui": {
+    "theme": "light",
+    "compact": true,
+    "animations": "minimal",
+    "sidebar": {
+      "collapsed": false,
+      "width": 280
+    },
+    "chat": {
+      "streaming": true,
+      "showTimestamps": true,
+      "maxMessageHeight": 400
+    }
+  },
+  "llm": {
+    "defaultProvider": "deepseek",
+    "maxConcurrentRequests": 3,
+    "requestTimeout": 60000,
+    "retryAttempts": 2,
+    "providers": {
+      "deepseek": {
+        "enabled": true,
+        "model": "deepseek-chat",
+        "temperature": 0.7,
+        "maxTokens": 8192
+      },
+      "kimi": {
+        "enabled": true,
+        "model": "kimi-k2.5",
+        "temperature": 0.7,
+        "maxTokens": 8192
+      }
+    }
+  },
+  "limits": {
+    "maxAgents": 20,
+    "maxSessions": 100,
+    "maxMessagesPerSession": 500,
+    "maxFileSize": 10485760,
+    "maxLogEntries": 10000
+  }
+}

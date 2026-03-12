@@ -244,11 +244,11 @@ function formatNumber(num: number): string {
   border-radius: 21px;
   background: linear-gradient(
     135deg,
-    rgba(59, 130, 246, 0.4) 0%,
-    rgba(139, 92, 246, 0.3) 25%,
+    rgba(179, 168, 184, 0.4) 0%,
+    rgba(184, 160, 144, 0.3) 25%,
     rgba(236, 72, 153, 0.2) 50%,
-    rgba(139, 92, 246, 0.3) 75%,
-    rgba(59, 130, 246, 0.4) 100%
+    rgba(184, 160, 144, 0.3) 75%,
+    rgba(179, 168, 184, 0.4) 100%
   );
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -283,7 +283,7 @@ function formatNumber(num: number): string {
 .shadow-layer {
   position: absolute;
   inset: 10px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border-radius: 20px;
   filter: blur(30px);
   opacity: 0.3;
@@ -306,7 +306,7 @@ function formatNumber(num: number): string {
 .status-bar.online { background: linear-gradient(90deg, #22c55e, #4ade80); box-shadow: 0 0 10px #22c55e60; }
 .status-bar.offline { background: linear-gradient(90deg, #9ca3af, #d1d5db); }
 .status-bar.busy { background: linear-gradient(90deg, #f59e0b, #fbbf24); box-shadow: 0 0 10px #f59e0b60; }
-.status-bar.idle { background: linear-gradient(90deg, #3b82f6, #60a5fa); box-shadow: 0 0 10px #3b82f660; }
+.status-bar.idle { background: linear-gradient(90deg, var(--sr-morandi-blue, #9daab8), #60a5fa); box-shadow: 0 0 10px var(--sr-morandi-blue, #9daab8)60; }
 
 /* 头部 */
 .card-header {
@@ -362,7 +362,7 @@ function formatNumber(num: number): string {
 .status-dot.online { background: #22c55e; }
 .status-dot.offline { background: #9ca3af; }
 .status-dot.busy { background: #f59e0b; }
-.status-dot.idle { background: #3b82f6; }
+.status-dot.idle { background: var(--sr-morandi-blue, #9daab8); }
 
 /* 标题信息 */
 .header-info {
@@ -374,7 +374,7 @@ function formatNumber(num: number): string {
   margin: 0 0 4px 0;
   font-size: 17px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -396,19 +396,19 @@ function formatNumber(num: number): string {
   padding: 5px 12px;
   font-size: 11px;
   font-weight: 700;
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
   background: linear-gradient(135deg, #dbeafe, #bfdbfe);
   border-radius: 20px;
   border: 1px solid #93c5fd;
   transform: translateZ(15px);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 2px 8px rgba(179, 168, 184, 0.2);
 }
 
 /* 描述 */
 .agent-desc {
   margin: 0 0 16px 0;
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -446,7 +446,7 @@ function formatNumber(num: number): string {
   padding: 5px 12px;
   font-size: 12px;
   font-weight: 600;
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
   background: linear-gradient(145deg, #dbeafe, #bfdbfe);
   border-radius: 20px;
   border: 1px solid #93c5fd;
@@ -477,7 +477,7 @@ function formatNumber(num: number): string {
 .stat-val {
   font-size: 18px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .stat-lbl {
@@ -548,7 +548,7 @@ function formatNumber(num: number): string {
   background: linear-gradient(145deg, #ffffff, #f1f5f9);
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.2s ease;
   transform: translateZ(5px);
@@ -556,15 +556,15 @@ function formatNumber(num: number): string {
 
 .btn-icon:hover {
   transform: translateZ(10px) scale(1.1);
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
   border-color: #93c5fd;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 12px rgba(179, 168, 184, 0.2);
 }
 
 .btn-icon.delete:hover {
-  color: #ef4444;
+  color: var(--sr-morandi-pink, #d4b8b8);
   border-color: #fca5a5;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 4px 12px rgba(212, 184, 184, 0.2);
 }
 
 .btn-icon svg {
@@ -574,10 +574,10 @@ function formatNumber(num: number): string {
 
 /* 激活状态 */
 .agent-card-3d.is-active .card-inner {
-  border-color: #3b82f6;
+  border-color: var(--sr-morandi-blue, #9daab8);
   box-shadow: 
-    0 0 0 2px rgba(59, 130, 246, 0.2),
-    0 8px 32px rgba(59, 130, 246, 0.2);
+    0 0 0 2px rgba(179, 168, 184, 0.2),
+    0 8px 32px rgba(179, 168, 184, 0.2);
 }
 
 .agent-card-3d.is-offline {

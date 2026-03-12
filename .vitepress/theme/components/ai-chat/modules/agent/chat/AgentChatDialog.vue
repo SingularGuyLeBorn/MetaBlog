@@ -328,7 +328,7 @@ function handleOverlayClick() {
   right: -2px;
   width: 14px;
   height: 14px;
-  background: #10b981;
+  background: var(--sr-morandi-green, #a8b3a8);
   border: 2px solid white;
   border-radius: 50%;
 }
@@ -342,12 +342,12 @@ function handleOverlayClick() {
 .agent-name {
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .agent-status {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .header-actions {
@@ -364,20 +364,20 @@ function handleOverlayClick() {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 150ms ease-out;
 }
 
 .action-btn:hover {
   background: #ede9fe;
-  border-color: #8b5cf6;
-  color: #7c3aed;
+  border-color: var(--sr-accent-star, #b8a090);
+  color: var(--sr-morandi-purple, #b3a8b8);
 }
 
 .action-btn.close:hover {
   background: #fee2e2;
-  border-color: #ef4444;
+  border-color: var(--sr-morandi-pink, #d4b8b8);
   color: #dc2626;
 }
 
@@ -443,12 +443,12 @@ function handleOverlayClick() {
 
 .message.assistant .message-bubble {
   background: #ffffff;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   border-bottom-left-radius: 6px;
 }
 
 .message.user .message-bubble {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
   color: white;
   border-bottom-right-radius: 6px;
 }
@@ -510,7 +510,7 @@ function handleOverlayClick() {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   font-size: 15px;
   line-height: 1.5;
   resize: none;
@@ -527,7 +527,7 @@ function handleOverlayClick() {
 }
 
 .message-input:focus {
-  border-color: #8b5cf6;
+  border-color: var(--sr-accent-star, #b8a090);
   box-shadow: 0 0 0 3px #ede9fe;
 }
 
@@ -542,7 +542,7 @@ function handleOverlayClick() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
   border: none;
   border-radius: 16px;
   color: white;

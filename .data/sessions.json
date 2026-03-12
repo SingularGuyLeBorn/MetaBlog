@@ -1,27 +1,24 @@
 [
   {
-    "id": "session-1772820893959-eypvtad",
+    "id": "session-1773231249872-p9zeqiy",
     "title": "新对话",
     "config": {
       "model": "deepseek-chat",
       "temperature": 0.7,
       "maxTokens": 8192,
-      "systemPrompt": "你是 Meta 助手，基于 DeepSeek 大模型的通用 AI 助手，为您提供专业智能对话体验",
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。",
       "enableReasoning": false,
-      "streaming": true,
-      "agentId": "agent-1771864714589-mpgyp1p",
-      "agentName": "Meta 助手",
-      "_customSystemPrompt": false
+      "streaming": true
     },
     "stats": {
       "messageCount": 0,
       "totalTokens": 0
     },
-    "createdAt": 1772820893959,
-    "updatedAt": 1772852150078
+    "createdAt": 1773231250044,
+    "updatedAt": 1773231250044
   },
   {
-    "id": "session-1772820893959-eypvtad",
+    "id": "session-1773231249872-p9zeqiy",
     "title": "新对话",
     "config": {
       "model": "deepseek-chat",
@@ -35,7 +32,7 @@
       "messageCount": 0,
       "totalTokens": 0
     },
-    "createdAt": 1772820894123,
-    "updatedAt": 1772820894123
+    "createdAt": 1773231250041,
+    "updatedAt": 1773231250041
   }
 ]

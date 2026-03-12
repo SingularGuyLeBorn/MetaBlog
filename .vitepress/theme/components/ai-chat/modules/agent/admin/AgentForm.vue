@@ -419,7 +419,7 @@ function save() {
 }
 
 .required {
-  color: #ef4444;
+  color: var(--sr-morandi-pink, #d4b8b8);
 }
 
 .form-input,
@@ -435,8 +435,8 @@ function save() {
 .form-input:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--sr-morandi-blue, #9daab8);
+  box-shadow: 0 0 0 3px rgba(179, 168, 184, 0.1);
 }
 
 .form-textarea {
@@ -475,13 +475,13 @@ function save() {
 
 .avatar-option:hover {
   background: white;
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(179, 168, 184, 0.3);
   transform: scale(1.1);
 }
 
 .avatar-option.active {
-  background: #3b82f6;
-  border-color: #3b82f6;
+  background: var(--sr-morandi-blue, #9daab8);
+  border-color: var(--sr-morandi-blue, #9daab8);
 }
 
 /* 等级选项 */
@@ -506,7 +506,7 @@ function save() {
 
 .level-option:hover:not(.disabled) {
   background: white;
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(179, 168, 184, 0.3);
 }
 
 .level-option.active {
@@ -560,8 +560,8 @@ function save() {
 }
 
 .skill-checkbox.checked {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(179, 168, 184, 0.08);
+  border-color: rgba(179, 168, 184, 0.3);
 }
 
 .skill-checkbox input {
@@ -615,9 +615,9 @@ function save() {
 }
 
 .template-btn:hover {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: rgba(59, 130, 246, 0.3);
-  color: #3b82f6;
+  background: rgba(179, 168, 184, 0.1);
+  border-color: rgba(179, 168, 184, 0.3);
+  color: var(--sr-morandi-blue, #9daab8);
 }
 
 /* 权限列表 */
@@ -650,8 +650,8 @@ function save() {
 }
 
 .permission-checkbox input:checked + .perm-check {
-  background: #3b82f6;
-  border-color: #3b82f6;
+  background: var(--sr-morandi-blue, #9daab8);
+  border-color: var(--sr-morandi-blue, #9daab8);
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
   background-size: 14px;
   background-position: center;
@@ -698,7 +698,7 @@ function save() {
 
 .btn-primary {
   padding: 10px 24px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
   border: none;
   border-radius: 10px;

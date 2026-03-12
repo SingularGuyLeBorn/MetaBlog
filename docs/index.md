@@ -1,6 +1,6 @@
 ---
 layout: page
-title: MetaUniverse Blog
+title: 首页
 ---
 
 <HomePage />

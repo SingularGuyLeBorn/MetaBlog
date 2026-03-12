@@ -1,6 +1,6 @@
 <template>
   <div class="control-center">
-    <!-- Control Center Button -->
+    <!-- Control Center Button — Star River neumorphic -->
     <button 
       class="control-btn"
       :class="{ 'is-open': isOpen }"
@@ -19,8 +19,6 @@
       <svg class="control-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="6 9 12 15 18 9"/>
       </svg>
-      <!-- 呼吸光晕效果 -->
-      <span class="btn-glow"></span>
     </button>
 
     <!-- 右侧滑出面板 -->
@@ -82,7 +80,7 @@
                 </span>
                 <div class="item-info">
                   <span class="item-title">文章管理</span>
-                  <span class="item-desc">管理、创建和编辑文章</span>
+                  <span class="item-title">管理、创建和编辑文章</span>
                 </div>
                 <span class="item-arrow">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -159,53 +157,56 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ═══════════════════════════════════════════════════════════════
+   Control Center — Star River Style
+   ═══════════════════════════════════════════════════════════════ */
+
 .control-center {
   position: relative;
 }
 
-/* ===== 按钮样式 - 无边框科幻风 ===== */
+/* Button — Neumorphic Morandi */
 .control-btn {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
   border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
-  color: var(--vp-c-text-1, #262626);
-  font-size: 14px;
+  border-radius: var(--sr-radius-md, 10px);
+  background: var(--sr-bg-elevated, #f5f0eb);
+  color: var(--sr-text-secondary, var(--sr-text-muted, #94a3b8));
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
   overflow: hidden;
-}
-
-.control-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  font-family: var(--sr-font-primary, 'Inter', sans-serif);
+  box-shadow:
+    3px 3px 6px var(--sr-neu-shadow-dark, rgba(0, 0, 0, 0.06)),
+    -3px -3px 6px var(--sr-neu-shadow-light, rgba(255, 255, 255, 0.8));
 }
 
 .control-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.25);
+  color: var(--sr-accent-star, #b8a090);
+  box-shadow:
+    4px 4px 10px var(--sr-neu-shadow-dark, rgba(0, 0, 0, 0.08)),
+    -4px -4px 10px var(--sr-neu-shadow-light, rgba(255, 255, 255, 0.9));
 }
 
-.control-btn:hover::before {
-  opacity: 1;
+.control-btn:active {
+  transform: translateY(0);
+  box-shadow:
+    inset 2px 2px 4px var(--sr-neu-shadow-dark, rgba(0, 0, 0, 0.08)),
+    inset -2px -2px 4px var(--sr-neu-shadow-light, rgba(255, 255, 255, 0.6));
 }
 
 .control-btn.is-open {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%);
-  color: #3b82f6;
-}
-
-.control-btn.is-open .btn-glow {
-  opacity: 1;
+  color: var(--sr-accent-star, #b8a090);
+  box-shadow:
+    inset 2px 2px 4px var(--sr-neu-shadow-dark, rgba(0, 0, 0, 0.06)),
+    inset -2px -2px 4px var(--sr-neu-shadow-light, rgba(255, 255, 255, 0.6));
 }
 
 .control-icon {
@@ -214,8 +215,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  z-index: 1;
 }
 
 .control-icon svg {
@@ -225,9 +224,7 @@ onUnmounted(() => {
 
 .control-label {
   display: none;
-  position: relative;
-  z-index: 1;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 @media (min-width: 768px) {
@@ -239,38 +236,19 @@ onUnmounted(() => {
 .control-arrow {
   width: 14px;
   height: 14px;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  z-index: 1;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .control-btn.is-open .control-arrow {
   transform: rotate(180deg);
 }
 
-/* 呼吸光晕效果 */
-.btn-glow {
-  position: absolute;
-  inset: -2px;
-  background: linear-gradient(135deg, #3b82f6 0%, #9333ea 100%);
-  border-radius: 12px;
-  opacity: 0;
-  z-index: -1;
-  filter: blur(8px);
-  transition: opacity 0.3s ease;
-  animation: breathe 2s ease-in-out infinite;
-}
-
-@keyframes breathe {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
-}
-
-/* ===== 右侧滑出面板 ===== */
+/* Slide-out Panel — Glass */
 .control-panel-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(4px);
   z-index: 9998;
 }
 
@@ -280,23 +258,24 @@ onUnmounted(() => {
   right: 0;
   width: 320px;
   height: 100vh;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border-left: 1px solid rgba(59, 130, 246, 0.15);
-  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.1);
+  background: var(--sr-glass-bg, rgba(255, 255, 255, 0.85));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-left: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.08);
   z-index: 9999;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* 面板头部 */
+/* Panel Header */
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.03) 0%, rgba(147, 51, 234, 0.03) 100%);
+  border-bottom: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
 }
 
 .panel-title {
@@ -311,7 +290,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3b82f6;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .title-icon svg {
@@ -320,9 +299,11 @@ onUnmounted(() => {
 }
 
 .title-text {
-  font-size: 18px;
+  font-family: var(--sr-font-primary, 'Inter', sans-serif);
+  font-size: 16px;
   font-weight: 600;
-  color: var(--vp-c-text-1, #262626);
+  color: var(--sr-text-primary, #1a1a2e);
+  letter-spacing: -0.02em;
 }
 
 .btn-close {
@@ -331,25 +312,35 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
+  background: var(--sr-bg-elevated, #f5f0eb);
   border: none;
-  border-radius: 10px;
-  color: #6b7280;
+  border-radius: var(--sr-radius-sm, 8px);
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow:
+    2px 2px 4px var(--sr-neu-shadow-dark, rgba(0, 0, 0, 0.06)),
+    -2px -2px 4px var(--sr-neu-shadow-light, rgba(255, 255, 255, 0.8));
 }
 
 .btn-close:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  color: var(--sr-accent-star, #b8a090);
+  transform: scale(1.06);
+}
+
+.btn-close:active {
+  box-shadow:
+    inset 2px 2px 4px var(--sr-neu-shadow-dark, rgba(0, 0, 0, 0.08)),
+    inset -2px -2px 4px var(--sr-neu-shadow-light, rgba(255, 255, 255, 0.6));
+  transform: scale(0.96);
 }
 
 .btn-close svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
-/* 面板内容 */
+/* Panel Content */
 .panel-content {
   flex: 1;
   padding: 16px;
@@ -362,39 +353,26 @@ onUnmounted(() => {
 .panel-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
   padding: 14px 16px;
-  border: none;
-  border-radius: 12px;
+  border: 1px solid transparent;
+  border-radius: var(--sr-radius-md, 12px);
   background: transparent;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   text-align: left;
-  position: relative;
-  overflow: hidden;
-}
-
-.panel-item::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
 }
 
 .panel-item:hover {
+  background: var(--sr-glass-bg, rgba(255, 255, 255, 0.5));
+  border-color: var(--sr-glass-border, rgba(0, 0, 0, 0.06));
   transform: translateX(4px);
 }
 
-.panel-item:hover::before {
-  opacity: 1;
-}
-
 .panel-item:hover .item-icon {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%);
-  transform: scale(1.05);
+  transform: scale(1.08);
+  background: var(--sr-glass-bg-hover, rgba(255, 255, 255, 0.7));
 }
 
 .panel-item:hover .item-arrow {
@@ -403,17 +381,16 @@ onUnmounted(() => {
 }
 
 .item-icon {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
-  border-radius: 10px;
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 1;
-  color: #3b82f6;
+  background: var(--sr-bg-secondary, rgba(0, 0, 0, 0.02));
+  border-radius: var(--sr-radius-sm, 10px);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: var(--sr-accent-star, #b8a090);
+  flex-shrink: 0;
 }
 
 .item-icon svg {
@@ -426,19 +403,18 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 2px;
   flex: 1;
-  position: relative;
-  z-index: 1;
 }
 
 .item-title {
+  font-family: var(--sr-font-primary, 'Inter', sans-serif);
   font-size: 14px;
   font-weight: 600;
-  color: var(--vp-c-text-1, #262626);
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .item-desc {
   font-size: 12px;
-  color: var(--vp-c-text-3, #8c8c8c);
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .item-arrow {
@@ -446,10 +422,8 @@ onUnmounted(() => {
   height: 16px;
   opacity: 0;
   transform: translateX(-8px);
-  transition: all 0.3s ease;
-  color: #3b82f6;
-  position: relative;
-  z-index: 1;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .item-arrow svg {
@@ -457,10 +431,10 @@ onUnmounted(() => {
   height: 100%;
 }
 
-/* ===== 滑出动画 ===== */
+/* Slide Animation */
 .slide-enter-active,
 .slide-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .slide-enter-from,
@@ -474,21 +448,17 @@ onUnmounted(() => {
 }
 
 .slide-enter-active .control-panel {
-  animation: slideInPanel 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideInPanel 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes slideInPanel {
-  0% {
-    transform: translateX(100%);
-  }
-  100% {
-    transform: translateX(0);
-  }
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(0); }
 }
 
-/* 面板项依次进入动画 */
+/* Panel items stagger */
 .slide-enter-active .panel-item {
-  animation: slideInItem 0.3s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+  animation: slideInItem 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
 
 .slide-enter-active .panel-item:nth-child(1) { animation-delay: 0.08s; }
@@ -496,13 +466,7 @@ onUnmounted(() => {
 .slide-enter-active .panel-item:nth-child(3) { animation-delay: 0.24s; }
 
 @keyframes slideInItem {
-  0% {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  0% { opacity: 0; transform: translateX(20px); }
+  100% { opacity: 1; transform: translateX(0); }
 }
 </style>

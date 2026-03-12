@@ -26,12 +26,12 @@
     </div>
 
     <!-- 参数滑块 -->
-    <LiquidGlass class="params-glass" glow-color="#8b5cf6" :intensity="0.3">
+    <LiquidGlass class="params-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.3">
       <div class="params-card">
         <div class="param">
           <label class="param-label">
             <span>Temperature</span>
-            <LiquidGlass class="value-glass" glow-color="#8b5cf6" :intensity="0.2">
+            <LiquidGlass class="value-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.2">
               <span class="param-value">{{ params.temperature }}</span>
             </LiquidGlass>
           </label>
@@ -50,7 +50,7 @@
         <div class="param">
           <label class="param-label">
             <span>Max Tokens</span>
-            <LiquidGlass class="value-glass" glow-color="#3b82f6" :intensity="0.2">
+            <LiquidGlass class="value-glass" glow-color="var(--sr-morandi-blue, #9daab8)" :intensity="0.2">
               <span class="param-value">{{ params.maxTokens }}</span>
             </LiquidGlass>
           </label>
@@ -69,7 +69,7 @@
         <div class="param">
           <label class="param-label">
             <span>Top P</span>
-            <LiquidGlass class="value-glass" glow-color="#10b981" :intensity="0.2">
+            <LiquidGlass class="value-glass" glow-color="var(--sr-morandi-green, #a8b3a8)" :intensity="0.2">
               <span class="param-value">{{ params.topP }}</span>
             </LiquidGlass>
           </label>
@@ -142,11 +142,11 @@ const emit = defineEmits<{
 }>()
 
 const models = [
-  { id: 'kimi-k1.5', name: 'Kimi k1.5', description: '基础模型', icon: 'zap', gradient: 'linear-gradient(135deg, #10b981, #059669)', glowColor: '#10b981' },
-  { id: 'kimi-k1.5-pro', name: 'Kimi k1.5 Pro', description: '高级推理', icon: 'rocket', gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', glowColor: '#8b5cf6' },
+  { id: 'kimi-k1.5', name: 'Kimi k1.5', description: '基础模型', icon: 'zap', gradient: 'linear-gradient(135deg, var(--sr-morandi-green, #a8b3a8), var(--sr-morandi-green, #a8b3a8))', glowColor: 'var(--sr-morandi-green, #a8b3a8)' },
+  { id: 'kimi-k1.5-pro', name: 'Kimi k1.5 Pro', description: '高级推理', icon: 'rocket', gradient: 'linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8))', glowColor: 'var(--sr-accent-star, #b8a090)' },
   { id: 'gpt-4o', name: 'GPT-4o', description: '多模态', icon: 'sparkles', gradient: 'linear-gradient(135deg, #06b6d4, #0891b2)', glowColor: '#06b6d4' },
   { id: 'claude-3.5', name: 'Claude 3.5', description: '代码能力', icon: 'code', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', glowColor: '#f59e0b' },
-  { id: 'qwen-max', name: '通义千问 Max', description: '中文优化', icon: 'flame', gradient: 'linear-gradient(135deg, #ef4444, #dc2626)', glowColor: '#ef4444' }
+  { id: 'qwen-max', name: '通义千问 Max', description: '中文优化', icon: 'flame', gradient: 'linear-gradient(135deg, var(--sr-morandi-pink, #d4b8b8), #dc2626)', glowColor: 'var(--sr-morandi-pink, #d4b8b8)' }
 ]
 
 const selectedModel = ref(props.agent.runtime?.model || 'kimi-k1.5')
@@ -232,13 +232,13 @@ watch(() => props.agent, (a) => {
 .model-name {
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   margin-bottom: 4px;
 }
 
 .model-desc {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .model-indicator {
@@ -247,7 +247,7 @@ watch(() => props.agent, (a) => {
   right: 12px;
   width: 24px;
   height: 24px;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
   color: white;
   border-radius: 50%;
   display: flex;
@@ -285,7 +285,7 @@ watch(() => props.agent, (a) => {
   margin-bottom: 12px;
   font-size: 15px;
   font-weight: 600;
-  color: #374151;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .value-glass {
@@ -298,12 +298,12 @@ watch(() => props.agent, (a) => {
   padding: 6px 14px;
   font-size: 14px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .param-desc {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   margin-top: 6px;
 }
 
@@ -318,13 +318,13 @@ watch(() => props.agent, (a) => {
   gap: 10px;
   font-weight: 600;
   font-size: 15px;
-  color: #374151;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .toggle-label svg {
   width: 20px;
   height: 20px;
-  color: #8b5cf6;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 /* 信息卡片 */
@@ -353,7 +353,7 @@ watch(() => props.agent, (a) => {
 }
 
 .info-text strong {
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 @media (max-width: 640px) {

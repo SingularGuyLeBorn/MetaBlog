@@ -27,7 +27,7 @@
                 </div>
               </div>
               <div class="overview-card online">
-                <div class="card-icon" style="background: linear-gradient(135deg, #22c55e, #10b981)">🟢</div>
+                <div class="card-icon" style="background: linear-gradient(135deg, #22c55e, var(--sr-morandi-green, #a8b3a8))">🟢</div>
                 <div class="card-data">
                   <span class="card-value">{{ stats.online }}</span>
                   <span class="card-label">在线数量</span>
@@ -228,7 +228,7 @@ const topAgents = computed(() => [
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border-radius: 12px;
 }
 
@@ -391,7 +391,7 @@ const topAgents = computed(() => [
 .calls-value {
   font-size: 15px;
   font-weight: 700;
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
 }
 
 .calls-label {

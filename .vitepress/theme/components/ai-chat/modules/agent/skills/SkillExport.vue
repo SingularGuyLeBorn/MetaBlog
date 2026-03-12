@@ -302,7 +302,7 @@ function downloadExport() {
   margin: 0 0 8px 0;
   font-size: 22px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .title-icon {
@@ -311,16 +311,16 @@ function downloadExport() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border-radius: 12px;
   font-size: 20px;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 15px rgba(179, 168, 184, 0.3);
 }
 
 .header-desc {
   margin: 0;
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 /* ===== 技能选择 ===== */
@@ -331,15 +331,15 @@ function downloadExport() {
   margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 700;
-  color: #374151;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .preview-badge {
   padding: 2px 8px;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(179, 168, 184, 0.1);
   border-radius: 100px;
   font-size: 11px;
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
 }
 
 .skill-list-liquid {
@@ -371,8 +371,8 @@ function downloadExport() {
 }
 
 .skill-select-item.selected {
-  background: linear-gradient(145deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.04));
-  border-color: rgba(59, 130, 246, 0.4);
+  background: linear-gradient(145deg, rgba(179, 168, 184, 0.08), rgba(184, 160, 144, 0.04));
+  border-color: rgba(179, 168, 184, 0.4);
 }
 
 .skill-select-item input {
@@ -383,7 +383,7 @@ function downloadExport() {
 .select-glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 0% 50%, rgba(59, 130, 246, 0.1), transparent 50%);
+  background: radial-gradient(circle at 0% 50%, rgba(179, 168, 184, 0.1), transparent 50%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -415,7 +415,7 @@ function downloadExport() {
 .skill-name {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .skill-meta {
@@ -441,8 +441,8 @@ function downloadExport() {
 }
 
 .skill-select-item.selected .indicator-dot {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
+  box-shadow: 0 0 12px rgba(179, 168, 184, 0.5);
 }
 
 .selection-actions {
@@ -460,13 +460,13 @@ function downloadExport() {
   background: transparent;
   border: none;
   font-size: 12px;
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .action-link:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(179, 168, 184, 0.1);
   border-radius: 6px;
 }
 
@@ -477,7 +477,7 @@ function downloadExport() {
 .selection-count {
   margin-left: auto;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 /* ===== 导出格式 ===== */
@@ -514,8 +514,8 @@ function downloadExport() {
 }
 
 .format-card.active {
-  background: linear-gradient(145deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.04));
-  border-color: rgba(59, 130, 246, 0.4);
+  background: linear-gradient(145deg, rgba(179, 168, 184, 0.08), rgba(184, 160, 144, 0.04));
+  border-color: rgba(179, 168, 184, 0.4);
 }
 
 .format-card input {
@@ -526,7 +526,7 @@ function downloadExport() {
 .format-glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 100%, rgba(59, 130, 246, 0.1), transparent 60%);
+  background: radial-gradient(circle at 50% 100%, rgba(179, 168, 184, 0.1), transparent 60%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -545,12 +545,12 @@ function downloadExport() {
   border-radius: 10px;
   font-size: 16px;
   font-weight: 700;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   z-index: 1;
 }
 
 .format-card.active .format-icon {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
 }
 
@@ -564,7 +564,7 @@ function downloadExport() {
 .format-name {
   font-size: 13px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .format-desc {
@@ -651,7 +651,7 @@ function downloadExport() {
 }
 
 .btn-liquid.secondary {
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   background: rgba(241, 245, 249, 0.8);
 }
 
@@ -661,13 +661,13 @@ function downloadExport() {
 
 .btn-liquid.primary {
   color: white;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
+  box-shadow: 0 4px 16px rgba(179, 168, 184, 0.35);
 }
 
 .btn-liquid.primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.45);
+  box-shadow: 0 8px 24px rgba(179, 168, 184, 0.45);
 }
 
 .btn-liquid:disabled {

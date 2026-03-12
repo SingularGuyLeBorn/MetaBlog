@@ -1,35 +1,53 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch, provide, nextTick, defineAsyncComponent, onUnmounted } from 'vue'
 import DefaultTheme from 'vitepress/theme'
-import { useData, useRoute } from 'vitepress'
+import { useData, useRoute, useRouter } from 'vitepress'
 import GlobalSidebar from './components/layout/GlobalSidebar.vue'
 import TocSidebar from './components/layout/TocSidebar.vue'
 import TocFab from './components/layout/TocFab.vue'
 import EditFab from './components/editor/EditFab.vue'
 import Breadcrumb from './components/layout/Breadcrumb.vue'
 import DocTitleBar from './components/ui/DocTitleBar.vue'
+import StarRiverLayout from './components/StarRiverLayout.vue'
 
-// 异步加载 ChatPage，避免 SSR 问题
-const ChatPage = defineAsyncComponent(() => import('./components/pages/ChatPage.vue'))
+// 页面组件导入
+import HomePage from './components/pages/HomePage.vue'
+import AboutPage from './components/pages/AboutPage.vue'
+import KnowledgePage from './components/pages/KnowledgePage.vue'
+import PostsPage from './components/pages/PostsPage.vue'
+import ResourcesPage from './components/pages/ResourcesPage.vue'
+import ChatPage from './components/pages/ChatPage.vue'
 
 import ControlCenter from './components/legacy/ControlCenter.vue'
-import FullScreenPanel from './components/legacy/FullScreenPanel.vue'
 import { AgentAdmin } from './components/ai-chat/modules/agent'
+import LogDashboard from './components/ai-chat/modules/agent/admin/LogDashboard.vue'
 import { useAppStore } from './stores/app'
 
 const { Layout } = DefaultTheme
 const { frontmatter, page } = useData()
 const store = useAppStore()
 const route = useRoute()
+const router = useRouter()
 
-// 检查是否为 Chat 页面
-const isChatPage = computed(() => {
-  return route.path === '/chat' || route.path.startsWith('/chat/')
+// 路由拦截器：判断当前页面是否为需要纯 Vue 接管的全屏页面（仅列表页，不包括文章详情页）
+const isPureVuePage = computed(() => {
+  const p = route.path.replace(/\/index\.html$/, '/').replace(/\/$/, '') || '/'
+  
+  // 只匹配确切的列表页面，不匹配子页面（文章详情）
+  if (p === '/' || p === '/index') return 'home'
+  if (p === '/chat' || p.startsWith('/chat/')) return 'chat'
+  if (p === '/sections/about' || p === '/sections/about/index') return 'about'
+  if (p === '/sections/knowledge' || p === '/sections/knowledge/index') return 'knowledge'
+  if (p === '/sections/posts' || p === '/sections/posts/index') return 'posts'
+  if (p === '/sections/resources' || p === '/sections/resources/index') return 'resources'
+  
+  return false
 })
 
 // Control center panel state
 const activePanel = ref<'dashboard' | 'articles' | 'logs' | null>(null)
 const showAgentAdmin = ref(false)
+const showLogDashboard = ref(false)
 
 const handleControlOpen = (panel: 'dashboard' | 'articles' | 'logs') => {
   activePanel.value = panel
@@ -37,6 +55,10 @@ const handleControlOpen = (panel: 'dashboard' | 'articles' | 'logs') => {
   // 打开 Agent 管理面板
   if (panel === 'dashboard') {
     showAgentAdmin.value = true
+  } else if (panel === 'articles') {
+    router.go('/sections/posts/')
+  } else if (panel === 'logs') {
+    showLogDashboard.value = true
   }
 }
 
@@ -44,26 +66,18 @@ const handleAgentChange = (agent: any) => {
   console.log('Agent changed:', agent.name)
 }
 
-const createNewArticle = () => {
-  // Trigger article creation in ArticleManager
-  // This will be handled by the ArticleManager component internally
-  window.dispatchEvent(new CustomEvent('article-manager:create'))
-}
-
-
-
 // Panel widths configuration
 const LEFT_CONFIG = {
-  minWidth: 240,
-  maxWidth: 400,
-  defaultWidth: 280,
+  minWidth: 260,
+  maxWidth: 380,
+  defaultWidth: 300,
   storageKey: 'metablog-sidebar-width'
 }
 
 const RIGHT_CONFIG = {
-  minWidth: 200,
+  minWidth: 220,
   maxWidth: 320,
-  defaultWidth: 260,
+  defaultWidth: 280,
   storageKey: 'metablog-toc-width'
 }
 
@@ -79,18 +93,14 @@ const startRightWidth = ref(0)
 
 // Check if current page should show sidebars
 const showLeftSidebar = computed(() => {
-  // Show on all pages except home
   return route.path !== '/' && !route.path.match(/^\/?$/)
 })
 
 // FIX: Properly check for headers to show TOC
-// Use both server-provided headers and client-side detection
 const clientHeaders = ref<any[]>([])
 
 const showRightSidebar = computed(() => {
-  // Check server-provided headers first
   const serverHeaders = page.value.headers || []
-  // Also check client-detected headers
   const hasClientHeaders = clientHeaders.value.length > 0
   return serverHeaders.length > 0 || hasClientHeaders
 })
@@ -98,7 +108,6 @@ const showRightSidebar = computed(() => {
 // Provide merged headers to TocSidebar
 const mergedHeaders = computed(() => {
   const serverHeaders = page.value.headers || []
-  // Prefer server headers, fallback to client headers
   return serverHeaders.length > 0 ? serverHeaders : clientHeaders.value
 })
 provide('pageHeaders', mergedHeaders)
@@ -111,7 +120,7 @@ const detectHeadersFromDOM = () => {
   const headerElements = document.querySelectorAll('.vp-doc h2, .vp-doc h3, .vp-doc h4')
   
   headerElements.forEach((el, index) => {
-    const level = parseInt(el.tagName[1]) // h2 -> 2, h3 -> 3, etc.
+    const level = parseInt(el.tagName[1])
     const title = el.textContent?.replace(/#$/, '').trim() || ''
     const slug = el.id || `heading-${index}`
     
@@ -130,7 +139,7 @@ const startResizeLeft = (e: MouseEvent) => {
   startLeftWidth.value = leftWidth.value
   document.body.style.cursor = 'col-resize'
   document.body.style.userSelect = 'none'
-  document.body.classList.add('is-dragging')
+  document.body.classList.add('is-resizing')
 }
 
 const startResizeRight = (e: MouseEvent) => {
@@ -139,7 +148,7 @@ const startResizeRight = (e: MouseEvent) => {
   startRightWidth.value = rightWidth.value
   document.body.style.cursor = 'col-resize'
   document.body.style.userSelect = 'none'
-  document.body.classList.add('is-dragging')
+  document.body.classList.add('is-resizing')
 }
 
 // Mouse move handler
@@ -166,9 +175,8 @@ const stopResize = () => {
     isResizingRight.value = false
     document.body.style.cursor = ''
     document.body.style.userSelect = ''
-    document.body.classList.remove('is-dragging')
+    document.body.classList.remove('is-resizing')
     
-    // Save to localStorage
     localStorage.setItem(LEFT_CONFIG.storageKey, leftWidth.value.toString())
     localStorage.setItem(RIGHT_CONFIG.storageKey, rightWidth.value.toString())
   }
@@ -193,210 +201,200 @@ onMounted(() => {
     }
   }
   
-  // Add global event listeners
   document.addEventListener('mousemove', handleMouseMove)
   document.addEventListener('mouseup', stopResize)
   
-  // Detect headers from DOM after initial render
   nextTick(() => {
     detectHeadersFromDOM()
   })
 })
 
-// Watch for route changes to update sidebar visibility and re-detect headers
+// Watch for route changes
 watch(() => route.path, () => {
-  // Reset client headers on route change
   clientHeaders.value = []
-  // Re-detect after DOM updates
   nextTick(() => {
     detectHeadersFromDOM()
   })
 })
+
+// Computed properties for v-bind in CSS
+const leftMargin = computed(() => showLeftSidebar.value ? leftWidth.value + 'px' : '0')
+const rightMargin = computed(() => showRightSidebar.value ? rightWidth.value + 'px' : '0')
+const leftResizerPosition = computed(() => leftWidth.value + 'px')
+const rightResizerPosition = computed(() => rightWidth.value + 'px')
 </script>
 
 <template>
-  <!-- Chat 页面：使用相同的布局框架 -->
-  <template v-if="isChatPage">
-    <div class="metablog-layout chat-layout-integrated">
+  <StarRiverLayout>
+    <div 
+      class="metablog-layout" 
+      :class="{ 
+        'is-editing': store.isEditorOpen,
+        'has-left-sidebar': showLeftSidebar && !isPureVuePage,
+        'has-right-sidebar': showRightSidebar && !isPureVuePage,
+        'is-resizing-left': isResizingLeft,
+        'is-resizing-right': isResizingRight,
+        'is-pure-vue-page': !!isPureVuePage
+      }"
+    >
+      <!-- Three-Column Layout -->
       <div class="layout-container">
-        <main class="main-content chat-main-content">
-          <ChatPage />
+        <!-- Left Sidebar -->
+        <aside 
+          v-if="showLeftSidebar && !isPureVuePage"
+          class="sidebar-left glass-panel"
+          :style="{ width: leftWidth + 'px', minWidth: leftWidth + 'px' }"
+        >
+          <GlobalSidebar />
+        </aside>
+
+        <!-- Left Resizer -->
+        <div 
+          v-if="showLeftSidebar && !isPureVuePage"
+          class="resizer left-resizer"
+          @mousedown.prevent="startResizeLeft"
+        >
+          <div class="resizer-handle" />
+        </div>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+          <Layout :key="route.path">
+            <!-- 导航栏增强 -->
+            <template #nav-bar-content-after>
+              <ControlCenter @open="handleControlOpen" />
+            </template>
+            
+            <!-- 页面布局插槽 (layout: page) -->
+            <template #page-top v-if="isPureVuePage">
+              <!-- 纯 Vue 页面不需要额外装饰 -->
+            </template>
+            
+            <!-- 文档布局插槽 (默认 layout: doc) -->
+            <template #doc-before v-if="!isPureVuePage">
+              <Breadcrumb />
+              <DocTitleBar />
+            </template>
+            
+            <template #doc-after>
+              <!-- Empty slot to override default -->
+            </template>
+            
+            <template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
+              <slot :name="name" v-bind="slotData || {}" />
+            </template>
+          </Layout>
         </main>
+
+        <!-- Right Resizer -->
+        <div 
+          v-if="showRightSidebar && !isPureVuePage"
+          class="resizer right-resizer"
+          @mousedown.prevent="startResizeRight"
+        >
+          <div class="resizer-handle" />
+        </div>
+
+        <!-- Right Sidebar (TOC) -->
+        <aside 
+          v-if="showRightSidebar && !isPureVuePage"
+          class="sidebar-right glass-panel"
+          :style="{ width: rightWidth + 'px', minWidth: rightWidth + 'px' }"
+        >
+          <TocSidebar :headers="mergedHeaders" />
+        </aside>
       </div>
+
+      <!-- FABs -->
+      <TocFab v-if="showRightSidebar && !isPureVuePage" :headers="mergedHeaders" />
+      <EditFab />
+      
+      <!-- Panels -->
+      <AgentAdmin 
+        v-model:visible="showAgentAdmin"
+        @agent-change="handleAgentChange"
+      />
+      <LogDashboard
+        v-model:visible="showLogDashboard"
+        @close="showLogDashboard = false"
+      />
     </div>
-  </template>
-  
-  <!-- 其他页面：默认三栏布局 -->
-  <div v-else class="metablog-layout" :class="{ 
-    'is-editing': store.isEditorOpen,
-    'has-left-sidebar': showLeftSidebar,
-    'has-right-sidebar': showRightSidebar,
-    'is-resizing-left': isResizingLeft,
-    'is-resizing-right': isResizingRight
-  }">
-    <!-- Custom Three-Column Layout -->
-    <div class="layout-container">
-      <!-- Left Sidebar -->
-      <aside 
-        v-if="showLeftSidebar"
-        class="sidebar-left"
-        :style="{ width: leftWidth + 'px', minWidth: leftWidth + 'px' }"
-      >
-        <GlobalSidebar />
-      </aside>
-
-      <!-- Left Resizer -->
-      <div 
-        v-if="showLeftSidebar"
-        class="resizer left-resizer"
-        @mousedown.prevent="startResizeLeft"
-      >
-        <div class="resizer-handle" />
-      </div>
-
-      <!-- Main Content Area -->
-      <main class="main-content">
-        <Layout>
-          <template #nav-bar-content-after>
-            <ControlCenter @open="handleControlOpen" />
-          </template>
-          
-          <template #doc-before>
-            <Breadcrumb />
-            <DocTitleBar />
-          </template>
-          
-          <template #doc-after>
-            <!-- Empty slot to override default -->
-          </template>
-          
-          <!-- Pass through other slots -->
-          <template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
-            <slot :name="name" v-bind="slotData || {}" />
-          </template>
-        </Layout>
-      </main>
-
-      <!-- Right Resizer -->
-      <div 
-        v-if="showRightSidebar"
-        class="resizer right-resizer"
-        @mousedown.prevent="startResizeRight"
-      >
-        <div class="resizer-handle" />
-      </div>
-
-      <!-- Right Sidebar (TOC) - Desktop only -->
-      <aside 
-        v-if="showRightSidebar"
-        class="sidebar-right"
-        :style="{ width: rightWidth + 'px', minWidth: rightWidth + 'px' }"
-      >
-        <TocSidebar :headers="mergedHeaders" />
-      </aside>
-    </div>
-
-    <!-- FAB for Tablet/Mobile TOC -->
-    <TocFab 
-      v-if="showRightSidebar" 
-      :headers="mergedHeaders" 
-    />
-    
-    <!-- Edit FAB -->
-    <EditFab />
-    
-
-    
-    <!-- Full Screen Panels -->
-    <!-- Agent Dashboard Panel -->
-    <AgentAdmin 
-      v-model:visible="showAgentAdmin"
-      @agent-change="handleAgentChange"
-    />
-    <!-- Article Manager Panel - 已移除 -->
-    <!-- Log Viewer Panel - 已移除 -->
-  </div>
+  </StarRiverLayout>
 </template>
 
 <style>
-/* ═══════════════════════════════════════════════════════════════
-   Layout Liquid Glass V3 Styles
-   ═══════════════════════════════════════════════════════════════ */
+/* 即使在纯 Vue 页面也要展示导航栏 */
+.is-pure-vue-page .VPNav {
+  display: block !important;
+  z-index: 1000;
+}
 
-/* Reset VitePress default layout constraints */
+/* 确保主内容区域在纯 Vue 页面时不被侧边栏挤压 */
+.is-pure-vue-page .main-content {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding: 0 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Star River Layout Styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .metablog-layout {
   --vp-layout-max-width: 100%;
   --vp-sidebar-width: 0;
   --vp-aside-width: 0;
+  --vp-nav-height: 64px;
 }
 
-/* Main layout container - FULL WIDTH */
 .layout-container {
   display: flex;
   width: 100%;
-  min-height: calc(100vh - var(--vp-nav-height, 64px));
-  padding-top: var(--vp-nav-height, 64px);
+  min-height: calc(100vh - var(--vp-nav-height));
+  padding-top: var(--vp-nav-height);
 }
 
-/* Left Sidebar - 液态玻璃效果 */
+/* Left Sidebar - Glass Panel */
 .sidebar-left {
   position: fixed;
   left: 0;
-  top: var(--vp-nav-height, 64px);
-  height: calc(100vh - var(--vp-nav-height, 64px));
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.65) !important;
-  backdrop-filter: blur(24px) saturate(1.5) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.5) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  top: var(--vp-nav-height);
+  height: calc(100vh - var(--vp-nav-height));
+  overflow-y: auto;
+  overflow-x: hidden;
   z-index: 100;
-  transition: 
-    background 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  border-right: 1px solid var(--sr-glass-border);
+  border-radius: 0 !important;
 }
 
-.dark .sidebar-left {
-  background: rgba(30, 30, 35, 0.70) !important;
-  border-right-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-/* Right Sidebar - 液态玻璃效果 */
+/* Right Sidebar - Glass Panel */
 .sidebar-right {
   position: fixed;
   right: 0;
-  top: var(--vp-nav-height, 64px);
-  height: calc(100vh - var(--vp-nav-height, 64px));
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.60) !important;
-  backdrop-filter: blur(24px) saturate(1.5) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.5) !important;
-  border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
+  top: var(--vp-nav-height);
+  height: calc(100vh - var(--vp-nav-height));
+  overflow-y: auto;
+  overflow-x: hidden;
   z-index: 100;
-  transition: 
-    background 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  border-left: 1px solid var(--sr-glass-border);
+  border-radius: 0 !important;
 }
 
-.dark .sidebar-right {
-  background: rgba(30, 30, 35, 0.65) !important;
-  border-left-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-/* Main Content - takes remaining space with proper margins */
+/* Main Content */
 .main-content {
   flex: 1;
-  margin-left: v-bind('showLeftSidebar ? leftWidth + "px" : "0"');
-  margin-right: v-bind('showRightSidebar ? rightWidth + "px" : "0"');
+  margin-left: v-bind(leftMargin);
+  margin-right: v-bind(rightMargin);
   min-width: 0;
-  background: var(--vp-c-bg, #ffffff);
-  transition: margin-left 200ms ease, margin-right 200ms ease;
+  transition: margin-left 0.3s var(--sr-spring-gentle), 
+              margin-right 0.3s var(--sr-spring-gentle);
 }
 
-/* Resizers - 液态玻璃风格 */
+/* Resizers */
 .resizer {
   position: fixed;
-  top: var(--vp-nav-height, 64px);
-  height: calc(100vh - var(--vp-nav-height, 64px));
+  top: var(--vp-nav-height);
+  height: calc(100vh - var(--vp-nav-height));
   width: 6px;
   cursor: col-resize;
   display: flex;
@@ -404,44 +402,40 @@ watch(() => route.path, () => {
   justify-content: center;
   background: transparent;
   z-index: 101;
-  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background 0.3s ease;
 }
 
 .left-resizer {
-  left: v-bind('leftWidth + "px"');
+  left: v-bind(leftResizerPosition);
 }
 
 .right-resizer {
-  right: v-bind('rightWidth + "px"');
+  right: v-bind(rightResizerPosition);
 }
 
 .resizer:hover,
 .metablog-layout.is-resizing-left .left-resizer,
 .metablog-layout.is-resizing-right .right-resizer {
-  background: rgba(168, 85, 247, 0.08);
+  background: rgba(196, 184, 212, 0.1);
 }
 
 .resizer-handle {
-  width: 3px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 2px;
-  transition: 
-    background-color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    height 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  width: 2px;
+  height: 48px;
+  background: var(--sr-glass-border);
+  border-radius: 1px;
+  transition: all 0.3s var(--sr-spring-bounce);
 }
 
 .resizer:hover .resizer-handle,
 .metablog-layout.is-resizing-left .left-resizer .resizer-handle,
 .metablog-layout.is-resizing-right .right-resizer .resizer-handle {
-  background: linear-gradient(180deg, rgba(168, 85, 247, 0.6), rgba(96, 165, 250, 0.6));
-  height: 60px;
-  width: 4px;
-  box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+  background: var(--sr-morandi-purple);
+  height: 72px;
+  box-shadow: 0 0 12px rgba(196, 184, 212, 0.4);
 }
 
-/* Override VitePress default layout styles - REDUCE PADDING */
+/* Override VitePress default layout */
 .metablog-layout .VPContent {
   padding: 0 !important;
 }
@@ -460,81 +454,68 @@ watch(() => route.path, () => {
   display: block !important;
 }
 
-/* MAIN CONTENT PADDING - DYNAMIC WIDTH BASED ON VIEWPORT */
-.metablog-layout .VPDoc .content-container {
-  max-width: none !important;
-  width: 100% !important;
-}
-
 .metablog-layout .VPDoc .main {
-  /* Dynamic width: use almost full available space */
   width: 100% !important;
   max-width: none !important;
-  padding: 16px 24px !important;
+  padding: 24px 32px !important;
   margin: 0 !important;
   float: none !important;
   box-sizing: border-box !important;
 }
 
-/* Hide VitePress default aside - we use our own */
 .metablog-layout .VPDoc .aside {
   display: none !important;
 }
 
-/* Hide VitePress default sidebar */
 .metablog-layout .VPSidebar {
   display: none !important;
 }
 
-/* Ensure navbar stays on top */
 .metablog-layout .VPNav {
   z-index: 200;
-}
-
-/* Inline Editing Mode */
-body.inline-editing {
-  /* Layout adjustments for inline editor */
-}
-
-body.inline-editing .VPNav {
-  z-index: 1000;
+  background: rgba(12, 12, 20, 0.8) !important;
+  backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid var(--sr-glass-border) !important;
 }
 
 /* Panel Action Buttons */
 .panel-action-btn {
-  padding: 8px 16px;
-  border: 1px solid var(--vp-c-divider, #e8e8e8);
-  border-radius: 8px;
-  background: var(--vp-c-bg, #ffffff);
-  color: var(--vp-c-text-1, #262626);
+  padding: 10px 20px;
+  border: 1px solid var(--sr-glass-border);
+  border-radius: var(--sr-radius-md);
+  background: var(--sr-glass-bg);
+  color: var(--sr-text-secondary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s var(--sr-spring-bounce);
 }
 
 .panel-action-btn:hover {
-  background: var(--vp-c-brand-soft, rgba(22, 119, 255, 0.1));
-  border-color: var(--vp-c-brand, #1677ff);
+  background: var(--sr-glass-bg-hover);
+  border-color: var(--sr-glass-border-strong);
+  transform: translateY(-2px);
+}
+
+.panel-action-btn:active {
+  transform: scale(0.98);
 }
 
 .panel-action-btn.primary {
-  background: var(--vp-c-brand, #1677ff);
-  color: white;
-  border-color: var(--vp-c-brand, #1677ff);
+  background: linear-gradient(135deg, 
+    rgba(196, 184, 212, 0.3) 0%,
+    rgba(184, 200, 212, 0.2) 100%
+  );
+  border-color: rgba(196, 184, 212, 0.4);
+  color: var(--sr-text-primary);
 }
 
-.panel-action-btn.primary:hover {
-  background: var(--vp-c-brand-dark, #125ec8);
-  border-color: var(--vp-c-brand-dark, #125ec8);
-}
-
-/* Responsive Design */
+/* Responsive */
 @media (max-width: 1280px) {
   .sidebar-left {
     transform: translateX(-100%);
-    transition: transform 200ms ease;
-    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s var(--sr-spring-gentle);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
   }
   
   .metablog-layout.has-left-sidebar .sidebar-left {
@@ -552,14 +533,25 @@ body.inline-editing .VPNav {
   }
 }
 
-/* Chat Layout Integrated Styles */
+@media (max-width: 768px) {
+  .metablog-layout .VPDoc .main {
+    padding: 16px 20px !important;
+  }
+  
+  .main-content {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+}
+
+/* Chat Layout */
 .chat-layout-integrated {
   --vp-layout-max-width: 100%;
 }
 
 .chat-layout-integrated .layout-container {
   padding-top: 0;
-  min-height: calc(100vh - var(--vp-nav-height, 64px));
+  min-height: calc(100vh - var(--vp-nav-height));
 }
 
 .chat-layout-integrated .main-content {
@@ -568,37 +560,10 @@ body.inline-editing .VPNav {
   padding: 0 !important;
 }
 
-.chat-layout-integrated .VPNav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 200;
-}
-
 .chat-main-content {
   width: 100% !important;
   max-width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
-}
-
-/* Desktop optimization */
-@media (min-width: 1280px) {
-  .toc-fab-container {
-    display: none !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .metablog-layout .VPDoc .main {
-    padding: 12px 16px !important;
-  }
-  
-  /* Ensure content doesn't overflow on mobile */
-  .main-content {
-    min-width: 0;
-    overflow-x: hidden;
-  }
 }
 </style>

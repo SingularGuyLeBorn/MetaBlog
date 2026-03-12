@@ -1,7 +1,7 @@
 <template>
   <div class="agent-config">
     <!-- 标签栏 - 液态玻璃 -->
-    <LiquidGlass class="tabs-glass" glow-color="#8b5cf6" :intensity="0.4">
+    <LiquidGlass class="tabs-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.4">
       <div class="tabs">
         <button
           v-for="tab in tabs"
@@ -24,7 +24,7 @@
           <!-- 左侧 -->
           <div class="main-col">
             <!-- 基础角色 -->
-            <LiquidGlass class="card-glass" glow-color="#8b5cf6" :intensity="0.3">
+            <LiquidGlass class="card-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.3">
               <div class="card-inner">
                 <label class="field-label">
                   <Icon name="user" class="label-icon" />
@@ -36,7 +36,7 @@
                     v-for="tpl in baseRoleTemplates"
                     :key="tpl.id"
                     class="chip-glass"
-                    glow-color="#10b981"
+                    glow-color="var(--sr-morandi-green, #a8b3a8)"
                     :intensity="0.2"
                   >
                     <button class="chip" @click="applyBaseRoleTemplate(tpl)">
@@ -55,7 +55,7 @@
             </LiquidGlass>
 
             <!-- 角色补充 -->
-            <LiquidGlass class="card-glass" glow-color="#64748b" :intensity="0.2">
+            <LiquidGlass class="card-glass" glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.2">
               <div class="card-inner">
                 <label class="field-label">
                   <Icon name="file-text" class="label-icon" />
@@ -84,7 +84,7 @@
                     v-for="skill in skills"
                     :key="skill.id"
                     class="skill-item-glass"
-                    :glow-color="isSkillEnabled(skill.id) ? '#8b5cf6' : '#e2e8f0'"
+                    :glow-color="isSkillEnabled(skill.id) ? 'var(--sr-accent-star, #b8a090)' : '#e2e8f0'"
                     :intensity="isSkillEnabled(skill.id) ? 0.4 : 0.15"
                   >
                     <div class="skill-item" @click="toggleSkill(skill.id)">
@@ -120,7 +120,7 @@
               <pre class="preview-content">{{ previewSystemPrompt }}</pre>
             </LiquidGlass>
 
-            <LiquidGlass class="stats-glass" glow-color="#10b981" :intensity="0.2">
+            <LiquidGlass class="stats-glass" glow-color="var(--sr-morandi-green, #a8b3a8)" :intensity="0.2">
               <div class="stats-inner">
                 <div class="stat-item">
                   <Icon name="zap" class="stat-icon" />
@@ -155,7 +155,7 @@
 
       <!-- 记忆 -->
       <div v-show="currentTab === 'memory'" class="panel">
-        <LiquidGlass class="memory-glass" glow-color="#8b5cf6" :intensity="0.3">
+        <LiquidGlass class="memory-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.3">
           <div class="memory-inner">
             <label class="lg-toggle">
               <input v-model="memoryConfig.enabled" type="checkbox" @change="saveMemory" />
@@ -184,15 +184,15 @@
     </div>
 
     <!-- 底部按钮 -->
-    <LiquidGlass class="footer-glass" glow-color="#8b5cf6" :intensity="0.3">
+    <LiquidGlass class="footer-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.3">
       <div class="footer">
-        <LiquidGlass glow-color="#64748b" :intensity="0.2">
+        <LiquidGlass glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.2">
           <button class="lg-btn" @click="emit('cancel')">
             <Icon name="x" />
             取消
           </button>
         </LiquidGlass>
-        <LiquidGlass glow-color="#8b5cf6" :intensity="0.5">
+        <LiquidGlass glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.5">
           <button class="lg-btn lg-btn-primary" @click="save">
             <Icon name="save" />
             保存配置
@@ -375,7 +375,7 @@ onMounted(initConfig)
   background: transparent;
   border: none;
   border-radius: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -383,14 +383,14 @@ onMounted(initConfig)
 }
 
 .tab:hover {
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   background: rgba(255, 255, 255, 0.4);
 }
 
 .tab.active {
   color: white;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
+  box-shadow: 0 4px 12px rgba(184, 160, 144, 0.25);
 }
 
 .tab-icon {
@@ -444,21 +444,21 @@ onMounted(initConfig)
   margin-bottom: 16px;
   font-size: 16px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .label-icon {
   width: 20px;
   height: 20px;
-  color: #8b5cf6;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .badge {
   padding: 4px 10px;
-  background: rgba(139, 92, 246, 0.15);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(184, 160, 144, 0.15);
+  border: 1px solid rgba(184, 160, 144, 0.2);
   border-radius: 20px;
-  color: #7c3aed;
+  color: var(--sr-morandi-purple, #b3a8b8);
   font-size: 11px;
   font-weight: 700;
   margin-left: auto;
@@ -467,7 +467,7 @@ onMounted(initConfig)
 .badge.optional {
   background: rgba(100, 116, 139, 0.15);
   border-color: rgba(100, 116, 139, 0.2);
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 /* 模板芯片 */
@@ -487,7 +487,7 @@ onMounted(initConfig)
   padding: 8px 16px;
   background: transparent;
   border: none;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -495,7 +495,7 @@ onMounted(initConfig)
 }
 
 .chip:hover {
-  color: #059669;
+  color: var(--sr-morandi-green, #a8b3a8);
 }
 
 /* Skills 列表 */
@@ -530,14 +530,14 @@ onMounted(initConfig)
 }
 
 .skill-check.checked {
-  background: rgba(139, 92, 246, 0.2);
-  border-color: #8b5cf6;
+  background: rgba(184, 160, 144, 0.2);
+  border-color: var(--sr-accent-star, #b8a090);
 }
 
 .check-icon {
   width: 14px;
   height: 14px;
-  color: #8b5cf6;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .skill-icon {
@@ -551,13 +551,13 @@ onMounted(initConfig)
 .skill-name {
   font-weight: 600;
   font-size: 15px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   margin-bottom: 2px;
 }
 
 .skill-desc {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .skill-detail-btn {
@@ -569,7 +569,7 @@ onMounted(initConfig)
   background: rgba(0, 0, 0, 0.05);
   border: none;
   border-radius: 8px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   opacity: 0;
   transition: all 0.2s ease;
@@ -580,8 +580,8 @@ onMounted(initConfig)
 }
 
 .skill-detail-btn:hover {
-  background: rgba(139, 92, 246, 0.1);
-  color: #8b5cf6;
+  background: rgba(184, 160, 144, 0.1);
+  color: var(--sr-accent-star, #b8a090);
 }
 
 /* 预览卡片 */
@@ -607,7 +607,7 @@ onMounted(initConfig)
   flex: 1;
   font-size: 14px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .preview-btn {
@@ -670,19 +670,19 @@ onMounted(initConfig)
 .stat-icon {
   width: 20px;
   height: 20px;
-  color: #10b981;
+  color: var(--sr-morandi-green, #a8b3a8);
 }
 
 .stat-label {
   flex: 1;
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .stat-value {
   font-size: 20px;
   font-weight: 700;
-  color: #10b981;
+  color: var(--sr-morandi-green, #a8b3a8);
 }
 
 /* 记忆 */
@@ -702,13 +702,13 @@ onMounted(initConfig)
   gap: 10px;
   font-weight: 600;
   font-size: 15px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .toggle-label svg {
   width: 18px;
   height: 18px;
-  color: #8b5cf6;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .memory-textarea {
@@ -734,7 +734,7 @@ onMounted(initConfig)
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .empty-desc {

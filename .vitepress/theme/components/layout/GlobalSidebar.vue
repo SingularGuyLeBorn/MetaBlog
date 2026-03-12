@@ -1,28 +1,30 @@
 <template>
   <aside class="global-sidebar">
-    <!-- Toolbar -->
-    <div class="sidebar-toolbar">
-      <div class="toolbar-title">{{ sectionTitle }}</div>
-      <div class="toolbar-actions">
+    <!-- Header -->
+    <div class="sidebar-header">
+      <div class="header-title">
+        <span class="title-icon">✦</span>
+        <span class="title-text">{{ sectionTitle }}</span>
+      </div>
+      <div class="header-actions">
         <button 
-          class="toolbar-btn" 
-          :title="isAllExpanded ? '全部折叠 (Ctrl+Shift+E)' : '全部展开 (Ctrl+Shift+E)'"
+          class="action-btn magnetic-btn" 
+          :title="isAllExpanded ? '全部折叠' : '全部展开'"
           @click="toggleAll"
         >
-          <!-- 展开状态显示 ChevronDown ⏷ 提示可折叠，折叠状态显示 ChevronRight ⏵ 提示可展开 -->
-          <svg v-if="isAllExpanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg v-if="isAllExpanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="m6 9 6 6 6-6"/>
           </svg>
-          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="m9 18 6-6-6-6"/>
           </svg>
         </button>
         <button 
-          class="toolbar-btn" 
-          title="定位当前文档 (Alt+L)"
+          class="action-btn magnetic-btn" 
+          title="定位当前"
           @click="locateCurrent"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="12" cy="12" r="10"/>
             <circle cx="12" cy="12" r="3" fill="currentColor"/>
           </svg>
@@ -33,17 +35,21 @@
     <!-- Search -->
     <div class="sidebar-search">
       <div class="search-box">
-        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="11" cy="11" r="8"/>
           <path d="m21 21-4.3-4.3"/>
         </svg>
         <input 
           v-model="searchKey" 
           placeholder="搜索文档..." 
-          class="search-input"
+          class="search-input sr-input"
           type="text"
         />
-        <button v-if="searchKey" class="search-clear" @click="searchKey = ''">×</button>
+        <button v-if="searchKey" class="search-clear" @click="searchKey = ''">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -55,7 +61,8 @@
       @keydown="handleTreeKeydown"
     >
       <div v-if="filteredSidebar.length === 0" class="no-results">
-        未找到匹配的文档
+        <span class="no-results-icon">✧</span>
+        <span>未找到匹配的文档</span>
       </div>
       
       <template v-for="(item, index) in filteredSidebar" :key="item.id || item.link || index">
@@ -74,15 +81,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick, provide, readonly } from 'vue'
-import { useRoute, useRouter, useData } from 'vitepress'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick, provide } from 'vue'
+import { useRoute, useRouter } from 'vitepress'
 import { useSidebar } from 'vitepress/theme'
 import TreeNode from '../ui/TreeNode.vue'
-// EventBus 已移除 - 使用简单的 mitt 替代或直接移除
-const eventBus = {
-  on: () => () => {}, // 返回空函数作为 unsubscribe
-  emit: () => {}
-}
 
 const route = useRoute()
 const router = useRouter()
@@ -93,28 +95,20 @@ const ALL_COLLAPSED_KEY = 'sidebar-all-collapsed'
 const expandedIds = ref<Set<string>>(new Set())
 const searchKey = ref('')
 const treeRef = ref<HTMLElement | null>(null)
-
-// 动态侧边栏数据 - 支持从 API 刷新
 const dynamicSidebarData = ref<any[]>([])
-const isLoading = ref(false)
 const currentSection = ref('posts')
 
-// 从路由路径提取当前 section
 const extractSectionFromRoute = (path: string): string => {
-  // 路径格式: /sections/xxx/... 或 /xxx/...
   const match = path.match(/\/sections\/([^\/]+)/)
   if (match) return match[1]
-  // 尝试从路径开头提取
   const parts = path.split('/').filter(Boolean)
   if (parts.length > 0 && ['posts', 'knowledge-base', 'resources'].includes(parts[0])) {
     return parts[0]
   }
-  return 'posts' // 默认
+  return 'posts'
 }
 
-// 从 API 获取最新侧边栏数据
 const refreshSidebarData = async () => {
-  isLoading.value = true
   try {
     const section = extractSectionFromRoute(route.path)
     currentSection.value = section
@@ -122,21 +116,15 @@ const refreshSidebarData = async () => {
     const result = await res.json()
     if (result.success && result.data) {
       dynamicSidebarData.value = result.data
-      console.log('[Sidebar] Data refreshed from API, section:', section)
     }
   } catch (e) {
     console.error('[Sidebar] Failed to refresh:', e)
-  } finally {
-    isLoading.value = false
   }
 }
 
-// 提供刷新函数给子组件
 provide('refreshSidebar', refreshSidebarData)
 
-// 合并静态和动态数据 - 优先使用动态数据
 const sidebarData = computed(() => {
-  // 如果动态数据已加载，使用动态数据；否则使用静态数据
   return dynamicSidebarData.value.length > 0 ? dynamicSidebarData.value : (sidebar.value || [])
 })
 
@@ -186,20 +174,16 @@ const expandAll = () => {
 }
 
 const collapseAll = () => {
-  // 彻底折叠所有节点（包括当前选中的）
   expandedIds.value.clear()
   saveState()
 }
 
 const locateCurrent = () => {
-  // 先展开当前路径以找到 active 元素
   autoExpandCurrentPath()
-  
   nextTick(() => {
     const activeEl = treeRef.value?.querySelector('.is-active')
     if (activeEl) {
       activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      // 600ms flash animation
       activeEl.classList.add('flash-highlight')
       setTimeout(() => {
         activeEl.classList.remove('flash-highlight')
@@ -229,42 +213,12 @@ const navigate = (link?: string) => {
   if (link) router.go(link)
 }
 
-// 刷新侧边栏 - 从 API 重新获取数据，无需整页刷新
 const handleRefresh = async () => {
-  // 显示刷新提示
-  const toast = document.createElement('div')
-  toast.className = 'refresh-toast'
-  toast.textContent = '更新目录...'
-  toast.style.cssText = `
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 8px 16px;
-    background: var(--vp-c-brand, #1677ff);
-    color: white;
-    border-radius: 6px;
-    font-size: 13px;
-    z-index: 10000;
-    animation: fadeIn 0.2s ease;
-  `
-  document.body.appendChild(toast)
-  
-  // 清空动态数据强制重新加载
   dynamicSidebarData.value = []
-  
-  // 从 API 刷新数据
   await refreshSidebarData()
-  
-  // 刷新后自动展开当前路径（处理叶子文档变文件夹的情况）
   nextTick(() => {
     autoExpandCurrentPath()
   })
-  
-  // 移除提示
-  setTimeout(() => {
-    toast.remove()
-  }, 800)
 }
 
 const autoExpandCurrentPath = () => {
@@ -293,10 +247,8 @@ const autoExpandCurrentPath = () => {
 }
 
 onMounted(() => {
-  // 初始加载动态侧边栏数据
   refreshSidebarData()
   
-  // Load all-collapsed state first
   const allCollapsed = localStorage.getItem(ALL_COLLAPSED_KEY)
   let isAllCollapsed = false
   
@@ -309,10 +261,8 @@ onMounted(() => {
   }
   
   if (isAllCollapsed) {
-    // 用户之前选择了全部折叠，保持折叠状态（彻底折叠，包括当前选中项）
     expandedIds.value.clear()
   } else {
-    // 加载展开的节点状态
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
       try {
@@ -321,32 +271,25 @@ onMounted(() => {
         expandedIds.value = new Set()
       }
     }
-    // 展开当前路径（为了 UX，让用户知道当前位置）
-    // 使用 nextTick 确保动态数据已加载
     nextTick(() => {
       autoExpandCurrentPath()
     })
   }
   
-  // Auto locate current on mount（延迟执行，确保 DOM 更新）
   nextTick(() => {
     locateCurrent()
   })
 })
 
 watch(() => route.path, (newPath, oldPath) => {
-  // 检查 section 是否变化
   const newSection = extractSectionFromRoute(newPath)
   const oldSection = oldPath ? extractSectionFromRoute(oldPath) : ''
   
-  // 如果 section 变化了，清空动态数据并重新加载
   if (newSection !== oldSection && newSection !== currentSection.value) {
-    console.log('[Sidebar] Section changed from', oldSection, 'to', newSection)
-    dynamicSidebarData.value = [] // 清空旧数据避免闪烁
+    dynamicSidebarData.value = []
     refreshSidebarData()
   }
   
-  // 路由切换时，如果不是全部折叠状态，则自动展开当前路径
   const allCollapsed = localStorage.getItem(ALL_COLLAPSED_KEY)
   let isAllCollapsed = false
   if (allCollapsed) {
@@ -401,73 +344,6 @@ onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
 })
 
-// Agent 系统事件监听 - 展开指定路径并刷新侧边栏
-let unsubscribeExpand: (() => void) | null = null
-let unsubscribeRefresh: (() => void) | null = null
-
-onMounted(() => {
-  // 监听侧边栏展开事件（Agent 创建文章后自动展开目录）
-  // @ts-ignore - eventBus stub for deprecated agent module
-  unsubscribeExpand = eventBus.on('sidebar:expand', (data: any) => {
-    const filePath = data.path
-    
-    // 找到包含该文件的所有父目录并展开
-    const findAndExpandPath = (items: any[], parentIds: string[] = []): boolean => {
-      for (const item of items) {
-        const itemId = item.id || item.link
-        const currentPath = [...parentIds, itemId].filter(Boolean)
-        
-        // 检查是否是目标文件或其父目录
-        const isTargetFile = item.link && filePath.includes(item.link.replace(/\.html$/, '.md'))
-        const isParentOfTarget = item.items?.some((child: any) => {
-          const childPath = child.link || child.id
-          return childPath && filePath.includes(childPath.replace(/\.html$/, '.md'))
-        })
-        
-        if (isTargetFile || isParentOfTarget) {
-          // 展开所有父目录
-          currentPath.forEach(id => expandedIds.value.add(id))
-          saveState()
-          
-          // 如果找到目标文件，滚动到视图
-          if (isTargetFile) {
-            nextTick(() => {
-              locateCurrent()
-            })
-          }
-          return true
-        }
-        
-        if (item.items?.length) {
-          const found = findAndExpandPath(item.items, currentPath)
-          if (found) return true
-        }
-      }
-      return false
-    }
-    
-    findAndExpandPath(sidebarData.value)
-  })
-  
-  // 监听侧边栏刷新事件（Agent 创建文章后刷新目录）
-  // @ts-ignore - eventBus stub for deprecated agent module
-  unsubscribeRefresh = eventBus.on('sidebar:refresh', (data: any) => {
-    const section = data.section
-    const currentSectionName = extractSectionFromRoute(route.path)
-    
-    // 只有当当前显示的栏目与 Agent 创建的文章栏目一致时才刷新
-    if (section === currentSectionName || section === 'unknown') {
-      console.log('[Sidebar] Refreshing due to agent task completion, section:', section)
-      refreshSidebarData()
-    }
-  })
-})
-
-onUnmounted(() => {
-  unsubscribeExpand?.()
-  unsubscribeRefresh?.()
-})
-
 // Tree keyboard navigation
 const focusedIndex = ref(-1)
 
@@ -498,13 +374,6 @@ const handleTreeKeydown = (e: KeyboardEvent) => {
         el?.click()
       }
       break
-    case 'Escape':
-      // Close mobile drawer if open
-      const overlay = document.querySelector('.sidebar-overlay.is-open')
-      if (overlay) {
-        overlay.classList.remove('is-open')
-      }
-      break
   }
 }
 </script>
@@ -514,66 +383,78 @@ const handleTreeKeydown = (e: KeyboardEvent) => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--vp-c-bg-alt, #fafafa);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: transparent;
+  font-family: var(--sr-font-primary);
 }
 
-/* Toolbar */
-.sidebar-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+/* Header - Minimalist */
+.sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 48px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--vp-c-divider, #e8e8e8);
-  background: var(--vp-c-bg-soft, #f5f5f5);
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--sr-glass-border);
   flex-shrink: 0;
 }
 
-.toolbar-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--vp-c-text-1, #262626);
-}
-
-.toolbar-actions {
+.header-title {
   display: flex;
-  justify-content: flex-end;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
 }
 
-.toolbar-btn {
+.title-icon {
+  font-size: 14px;
+  color: var(--sr-accent-star);
+  opacity: 0.8;
+}
+
+.title-text {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--sr-text-secondary);
+  text-transform: uppercase;
+}
+
+.header-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.action-btn {
   width: 28px;
   height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  border-radius: 6px;
+  border: 1px solid var(--sr-glass-border);
+  border-radius: var(--sr-radius-sm);
   background: transparent;
-  color: var(--vp-c-text-2, #595959);
+  color: var(--sr-text-muted);
   cursor: pointer;
-  transition: background-color 200ms ease, color 200ms ease;
+  transition: all 0.2s var(--sr-spring-bounce);
 }
 
-.toolbar-btn:hover {
-  background: var(--vp-c-brand-soft, rgba(22, 119, 255, 0.1));
-  color: var(--vp-c-brand, #1677ff);
+.action-btn:hover {
+  border-color: var(--sr-glass-border-strong);
+  color: var(--sr-text-secondary);
+  background: var(--sr-glass-bg);
 }
 
-.toolbar-btn svg {
-  width: 16px;
-  height: 16px;
+.action-btn:active {
+  transform: scale(0.95);
+}
+
+.action-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* Search */
 .sidebar-search {
   padding: 12px 16px;
-  border-bottom: 1px solid var(--vp-c-divider, #e8e8e8);
-  background: var(--vp-c-bg, #ffffff);
+  border-bottom: 1px solid var(--sr-glass-border);
   flex-shrink: 0;
 }
 
@@ -585,59 +466,46 @@ const handleTreeKeydown = (e: KeyboardEvent) => {
 
 .search-icon {
   position: absolute;
-  left: 10px;
+  left: 12px;
   width: 14px;
   height: 14px;
-  color: var(--vp-c-text-3, #8c8c8c);
+  color: var(--sr-text-muted);
   pointer-events: none;
 }
 
 .search-input {
   width: 100%;
-  padding: 7px 28px 7px 32px;
-  font-size: 13px;
-  line-height: 20px;
-  color: var(--vp-c-text-1, #262626);
-  background: var(--vp-c-bg-soft, #f5f5f5);
-  border: 1px solid transparent;
-  border-radius: 6px;
-  outline: none;
-  transition: background-color 200ms ease, border-color 200ms ease;
-}
-
-.search-input::placeholder {
-  color: var(--vp-c-text-3, #8c8c8c);
-}
-
-.search-input:hover {
-  background: var(--vp-c-divider, #e8e8e8);
-}
-
-.search-input:focus {
-  background: var(--vp-c-bg, #ffffff);
-  border-color: var(--vp-c-brand, #1677ff);
+  padding: 8px 32px 8px 34px !important;
+  font-size: 13px !important;
+  background: var(--sr-glass-bg) !important;
+  border: 1px solid var(--sr-glass-border) !important;
+  border-radius: var(--sr-radius-md) !important;
 }
 
 .search-clear {
   position: absolute;
   right: 8px;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  color: var(--vp-c-text-3, #8c8c8c);
-  background: var(--vp-c-divider, #d9d9d9);
+  color: var(--sr-text-muted);
+  background: transparent;
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  transition: background-color 200ms ease, color 200ms ease;
+  transition: all 0.2s ease;
 }
 
 .search-clear:hover {
-  background: var(--vp-c-text-3, #bfbfbf);
-  color: var(--vp-c-bg, #ffffff);
+  color: var(--sr-text-secondary);
+  background: var(--sr-glass-bg-hover);
+}
+
+.search-clear svg {
+  width: 12px;
+  height: 12px;
 }
 
 /* Navigation Tree */
@@ -645,29 +513,36 @@ const handleTreeKeydown = (e: KeyboardEvent) => {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px 12px;
+  padding: 12px 8px;
   outline: none;
 }
 
 .nav-tree:focus {
-  outline: 2px solid var(--vp-c-brand-soft, rgba(22, 119, 255, 0.2));
-  outline-offset: -2px;
+  outline: none;
 }
 
 .no-results {
-  padding: 40px 20px;
-  text-align: center;
-  color: var(--vp-c-text-3, #8c8c8c);
-  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  gap: 12px;
+  color: var(--sr-text-muted);
 }
 
-/* Flash highlight animation - 600ms */
+.no-results-icon {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+/* Flash highlight animation */
 :global(.flash-highlight) {
   animation: flash 600ms ease;
 }
 
 @keyframes flash {
-  0% { background-color: var(--vp-c-brand-soft, rgba(22, 119, 255, 0.15)); }
+  0% { background-color: rgba(196, 184, 212, 0.15); }
   100% { background-color: transparent; }
 }
 
@@ -681,11 +556,11 @@ const handleTreeKeydown = (e: KeyboardEvent) => {
 }
 
 .nav-tree::-webkit-scrollbar-thumb {
-  background: var(--vp-c-divider, #d9d9d9);
+  background: var(--sr-glass-border);
   border-radius: 2px;
 }
 
 .nav-tree::-webkit-scrollbar-thumb:hover {
-  background: var(--vp-c-text-3, #bfbfbf);
+  background: var(--sr-glass-border-strong);
 }
 </style>

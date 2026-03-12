@@ -242,7 +242,7 @@ function getToolStyle(idx: number) {
   margin: 0;
   font-size: 20px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   transform: translateZ(10px);
 }
 
@@ -250,7 +250,7 @@ function getToolStyle(idx: number) {
   display: inline-block;
   padding: 4px 12px;
   background: #ede9fe;
-  color: #7c3aed;
+  color: var(--sr-morandi-purple, #b3a8b8);
   font-size: 12px;
   font-weight: 600;
   border-radius: 20px;
@@ -266,7 +266,7 @@ function getToolStyle(idx: number) {
   background: #f1f5f9;
   border: none;
   border-radius: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transform: translateZ(20px);
   transition: all 0.2s ease;
@@ -274,7 +274,7 @@ function getToolStyle(idx: number) {
 
 .close-btn-3d:hover {
   background: #e2e8f0;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   transform: translateZ(30px) rotate(90deg);
 }
 
@@ -300,7 +300,7 @@ function getToolStyle(idx: number) {
   background: transparent;
   border: none;
   border-radius: 10px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -310,12 +310,12 @@ function getToolStyle(idx: number) {
 
 .modal-tab-3d:hover {
   background: rgba(139,92,246,0.1);
-  color: #7c3aed;
+  color: var(--sr-morandi-purple, #b3a8b8);
   transform: translateZ(10px);
 }
 
 .modal-tab-3d.active {
-  background: #8b5cf6;
+  background: var(--sr-accent-star, #b8a090);
   color: white;
   transform: translateZ(15px);
   box-shadow: 0 8px 20px rgba(139,92,246,0.3);
@@ -349,7 +349,7 @@ function getToolStyle(idx: number) {
   padding: 20px;
   background: #f8fafc;
   border-radius: 12px;
-  border-left: 4px solid #8b5cf6;
+  border-left: 4px solid var(--sr-accent-star, #b8a090);
 }
 
 /* Meta Grid */
@@ -377,7 +377,7 @@ function getToolStyle(idx: number) {
 .meta-label {
   display: block;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 6px;
@@ -386,7 +386,7 @@ function getToolStyle(idx: number) {
 .meta-value {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   font-family: 'JetBrains Mono', monospace;
 }
 
@@ -398,7 +398,7 @@ function getToolStyle(idx: number) {
   margin: 0 0 16px;
   font-size: 15px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .scenario-list-3d {
@@ -428,7 +428,7 @@ function getToolStyle(idx: number) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #8b5cf6;
+  background: var(--sr-accent-star, #b8a090);
   color: white;
   font-size: 13px;
   font-weight: 700;
@@ -443,7 +443,7 @@ function getToolStyle(idx: number) {
 
 /* Code Block */
 .code-block-3d {
-  background: #1e293b;
+  background: var(--sr-text-primary, #1a1a2e);
   border-radius: 16px;
   overflow: hidden;
   transform: translateZ(10px);
@@ -490,7 +490,7 @@ function getToolStyle(idx: number) {
 }
 
 .tool-card-3d:hover {
-  border-color: #8b5cf6;
+  border-color: var(--sr-accent-star, #b8a090);
   background: #ffffff;
   box-shadow: 0 10px 25px rgba(139,92,246,0.1);
 }
@@ -505,7 +505,7 @@ function getToolStyle(idx: number) {
 .tool-name-3d {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   background: #ede9fe;
   padding: 4px 10px;
   border-radius: 6px;
@@ -513,7 +513,7 @@ function getToolStyle(idx: number) {
 
 .tool-type-3d {
   font-size: 11px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   padding: 2px 8px;
   background: #e2e8f0;
   border-radius: 4px;
@@ -521,7 +521,7 @@ function getToolStyle(idx: number) {
 
 .tool-desc-3d {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   margin: 0;
 }
 

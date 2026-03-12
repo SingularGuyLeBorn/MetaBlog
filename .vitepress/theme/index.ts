@@ -3,9 +3,6 @@ import DefaultTheme from "vitepress/theme";
 import Layout from "./Layout.vue";
 import "./style.css";
 import "./styles/animations.css";
-import "./styles/liquid-glass.css";
-import "./styles/liquid-glass-v2.css";
-import "./styles/liquid-glass-v3.css";
 import "./components/ai-chat/styles/index.css";
 import type { Theme } from "vitepress";
 import { useData, useRoute } from "vitepress";
@@ -18,7 +15,7 @@ import KnowledgePage from "./components/pages/KnowledgePage.vue";
 import ResourcesPage from "./components/pages/ResourcesPage.vue";
 import AboutPage from "./components/pages/AboutPage.vue";
 import ChatPage from "./components/pages/ChatPage.vue";
-import OrchestratorPage from "./components/pages/OrchestratorPage.vue";
+
 
 // ========== AI Chat Module ==========
 import { ChatLayout } from "./components/ai-chat";
@@ -69,7 +66,7 @@ export default {
     app.component("ResourcesPage", ResourcesPage);
     app.component("AboutPage", AboutPage);
     app.component("ChatPage", ChatPage);
-    app.component("OrchestratorPage", OrchestratorPage);
+
 
     // ========== Register AI Chat ==========
     app.component("ChatLayout", ChatLayout);

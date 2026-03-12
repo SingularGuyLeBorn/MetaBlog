@@ -215,7 +215,7 @@ function handleAvatarError() {
 
 .agent-status-card.active {
   border-color: var(--vp-c-brand);
-  background: linear-gradient(135deg, var(--vp-c-bg-soft), rgba(59, 130, 246, 0.05));
+  background: linear-gradient(135deg, var(--vp-c-bg-soft), rgba(179, 168, 184, 0.05));
 }
 
 /* 状态指示条 */
@@ -229,9 +229,9 @@ function handleAvatarError() {
 
 .status-bar.running { background: linear-gradient(180deg, #22c55e, #16a34a); }
 .status-bar.paused { background: linear-gradient(180deg, #f59e0b, #d97706); }
-.status-bar.error { background: linear-gradient(180deg, #ef4444, #dc2626); }
+.status-bar.error { background: linear-gradient(180deg, var(--sr-morandi-pink, #d4b8b8), #dc2626); }
 .status-bar.idle { background: linear-gradient(180deg, #6b7280, #4b5563); }
-.status-bar.busy { background: linear-gradient(180deg, #3b82f6, #2563eb); }
+.status-bar.busy { background: linear-gradient(180deg, var(--sr-morandi-blue, #9daab8), #2563eb); }
 .status-bar.online { background: linear-gradient(180deg, #22c55e, #16a34a); }
 .status-bar.offline { background: linear-gradient(180deg, #9ca3af, #6b7280); }
 
@@ -269,9 +269,9 @@ function handleAvatarError() {
 
 .status-dot.running { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
 .status-dot.paused { background: #f59e0b; }
-.status-dot.error { background: #ef4444; }
+.status-dot.error { background: var(--sr-morandi-pink, #d4b8b8); }
 .status-dot.idle { background: #6b7280; }
-.status-dot.busy { background: #3b82f6; animation: pulse 1.5s infinite; }
+.status-dot.busy { background: var(--sr-morandi-blue, #9daab8); animation: pulse 1.5s infinite; }
 .status-dot.online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
 .status-dot.offline { background: #9ca3af; }
 
@@ -332,8 +332,8 @@ function handleAvatarError() {
   color: var(--vp-c-text-2);
 }
 
-.trigger-tag.manual { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-.trigger-tag.scheduled { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+.trigger-tag.manual { background: rgba(179, 168, 184, 0.1); color: var(--sr-morandi-blue, #9daab8); }
+.trigger-tag.scheduled { background: rgba(184, 160, 144, 0.1); color: var(--sr-accent-star, #b8a090); }
 .trigger-tag.event { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
 .trigger-tag.webhook { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
 .trigger-tag.mention { background: rgba(236, 72, 153, 0.1); color: #ec4899; }
@@ -365,7 +365,7 @@ function handleAvatarError() {
 }
 
 .stat-value.error {
-  color: #ef4444;
+  color: var(--sr-morandi-pink, #d4b8b8);
 }
 
 /* 操作区 */
@@ -414,11 +414,11 @@ function handleAvatarError() {
 }
 
 .action-btn.retry {
-  color: #ef4444;
+  color: var(--sr-morandi-pink, #d4b8b8);
   animation: shake 0.5s ease-in-out;
 }
 .action-btn.retry:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(212, 184, 184, 0.1);
 }
 
 .action-btn.edit {
@@ -433,8 +433,8 @@ function handleAvatarError() {
   color: var(--vp-c-text-2);
 }
 .action-btn.delete:hover {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
+  color: var(--sr-morandi-pink, #d4b8b8);
+  background: rgba(212, 184, 184, 0.1);
 }
 
 .action-btn:disabled {
@@ -484,7 +484,7 @@ function handleAvatarError() {
 }
 
 .dark .agent-status-card.active {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(59, 130, 246, 0.1));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(179, 168, 184, 0.1));
 }
 
 /* 响应式 */

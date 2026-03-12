@@ -32,7 +32,7 @@
                 <LiquidGlass
                   v-if="activeAgent"
                   class="active-pill-glass"
-                  glow-color="#10b981"
+                  glow-color="var(--sr-morandi-green, #a8b3a8)"
                   :intensity="0.4"
                   @click="currentView = 'agents'; selectedAgent = activeAgent"
                 >
@@ -57,7 +57,7 @@
                     <Icon name="users" class="title-icon" />
                     我的 Agents
                   </h2>
-                  <LiquidGlass glow-color="#8b5cf6" :intensity="0.6">
+                  <LiquidGlass glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.6">
                     <button class="create-btn" @click="showCreateForm = true">
                       <Icon name="plus" />
                       新建 Agent
@@ -70,7 +70,7 @@
                     v-for="agent in sortedAgents"
                     :key="agent.id"
                     class="agent-card-glass"
-                    :glow-color="agent.id === activeAgentId ? '#10b981' : '#8b5cf6'"
+                    :glow-color="agent.id === activeAgentId ? 'var(--sr-morandi-green, #a8b3a8)' : 'var(--sr-accent-star, #b8a090)'"
                     :intensity="agent.id === activeAgentId ? 0.5 : 0.3"
                     @click="selectAgent(agent)"
                   >
@@ -129,7 +129,7 @@
               <!-- Agent 配置视图 -->
               <div v-else-if="currentView === 'agents' && selectedAgent" class="view-config">
                 <div class="config-header">
-                  <LiquidGlass class="back-btn-glass" glow-color="#64748b" :intensity="0.3">
+                  <LiquidGlass class="back-btn-glass" glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.3">
                     <button class="back-btn" @click="selectedAgent = null">
                       <Icon name="arrow-left" />
                       <span>返回档案馆</span>
@@ -170,7 +170,7 @@
     <Teleport to="body">
       <Transition name="modal">
         <div v-if="showCreateForm" class="modal-overlay" @click.self="showCreateForm = false">
-          <LiquidGlass class="create-modal-glass" glow-color="#8b5cf6" :intensity="0.5">
+          <LiquidGlass class="create-modal-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.5">
             <div class="create-modal">
               <h3 class="modal-title">
                 <Icon name="plus-circle" />
@@ -203,10 +203,10 @@
               </div>
               
               <div class="modal-footer">
-                <LiquidGlass glow-color="#64748b" :intensity="0.3">
+                <LiquidGlass glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.3">
                   <button class="lg-btn" @click="showCreateForm = false">取消</button>
                 </LiquidGlass>
-                <LiquidGlass glow-color="#8b5cf6" :intensity="0.6">
+                <LiquidGlass glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.6">
                   <button class="lg-btn lg-btn-primary" :disabled="!isFormValid" @click="createNewAgent">
                     <Icon name="check" />
                     创建 Agent
@@ -223,7 +223,7 @@
     <Teleport to="body">
       <Transition name="modal">
         <div v-if="showDeleteConfirm" class="modal-overlay" @click.self="showDeleteConfirm = false">
-          <LiquidGlass class="delete-modal-glass" glow-color="#ef4444" :intensity="0.4">
+          <LiquidGlass class="delete-modal-glass" glow-color="var(--sr-morandi-pink, #d4b8b8)" :intensity="0.4">
             <div class="delete-modal">
               <div class="warning-icon">
                 <Icon name="alert-triangle" />
@@ -231,11 +231,11 @@
               <h4>确认删除</h4>
               <p>Agent "{{ agentToDelete?.name }}" 将被永久移除</p>
               <div class="modal-footer">
-                <LiquidGlass glow-color="#64748b" :intensity="0.3">
+                <LiquidGlass glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.3">
                   <button class="lg-btn" @click="showDeleteConfirm = false">保留</button>
                 </LiquidGlass>
-                <LiquidGlass glow-color="#ef4444" :intensity="0.5">
-                  <button class="lg-btn" style="background: rgba(239, 68, 68, 0.9); color: white;" @click="executeDelete">
+                <LiquidGlass glow-color="var(--sr-morandi-pink, #d4b8b8)" :intensity="0.5">
+                  <button class="lg-btn" style="background: rgba(212, 184, 184, 0.9); color: white;" @click="executeDelete">
                     <Icon name="trash-2" />
                     确认删除
                   </button>
@@ -440,21 +440,21 @@ async function executeDelete() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+  background: linear-gradient(135deg, rgba(184, 160, 144, 0.2), rgba(179, 168, 184, 0.2));
   border-radius: 14px;
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(184, 160, 144, 0.2);
 }
 
 .brand-icon {
   width: 24px;
   height: 24px;
-  color: #8b5cf6;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .brand-text {
   font-size: 20px;
   font-weight: 700;
-  background: linear-gradient(135deg, #1e293b, #475569);
+  background: linear-gradient(135deg, var(--sr-text-primary, #1a1a2e), #475569);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -480,7 +480,7 @@ async function executeDelete() {
   background: transparent;
   border: none;
   border-radius: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -488,14 +488,14 @@ async function executeDelete() {
 }
 
 .nav-tab:hover {
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   background: rgba(255, 255, 255, 0.5);
 }
 
 .nav-tab.active {
   color: white;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
+  box-shadow: 0 4px 12px rgba(184, 160, 144, 0.25);
 }
 
 .tab-icon {
@@ -537,15 +537,15 @@ async function executeDelete() {
 .pill-name {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .pill-status {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
+  background: var(--sr-morandi-green, #a8b3a8);
+  box-shadow: 0 0 8px var(--sr-morandi-green, #a8b3a8);
 }
 
 .pill-status.offline {
@@ -562,15 +562,15 @@ async function executeDelete() {
   background: rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: #ef4444;
+  background: rgba(212, 184, 184, 0.1);
+  border-color: rgba(212, 184, 184, 0.3);
+  color: var(--sr-morandi-pink, #d4b8b8);
 }
 
 .close-btn svg {
@@ -584,8 +584,8 @@ async function executeDelete() {
   overflow: auto;
   padding: 24px;
   background: 
-    radial-gradient(ellipse at 20% 30%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 70%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+    radial-gradient(ellipse at 20% 30%, rgba(184, 160, 144, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(168, 179, 168, 0.03) 0%, transparent 50%);
 }
 
 /* ===== Agent 列表视图 ===== */
@@ -607,14 +607,14 @@ async function executeDelete() {
   gap: 12px;
   font-size: 24px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   margin: 0;
 }
 
 .title-icon {
   width: 28px;
   height: 28px;
-  color: #8b5cf6;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .create-btn {
@@ -622,19 +622,19 @@ async function executeDelete() {
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(124, 58, 237, 0.9));
+  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
   border: none;
   border-radius: 12px;
   color: white;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .create-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 8px 24px rgba(184, 160, 144, 0.35);
 }
 
 .create-btn svg {
@@ -672,17 +672,17 @@ async function executeDelete() {
   align-items: center;
   justify-content: center;
   font-size: 28px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.1));
+  background: linear-gradient(135deg, rgba(184, 160, 144, 0.15), rgba(179, 168, 184, 0.1));
   border-radius: 18px;
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(184, 160, 144, 0.1);
 }
 
 .default-badge {
   padding: 4px 10px;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: rgba(168, 179, 168, 0.15);
+  border: 1px solid rgba(168, 179, 168, 0.2);
   border-radius: 20px;
-  color: #059669;
+  color: var(--sr-morandi-green, #a8b3a8);
   font-size: 11px;
   font-weight: 700;
 }
@@ -695,13 +695,13 @@ async function executeDelete() {
   margin: 0 0 8px;
   font-size: 18px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .card-desc {
   margin: 0 0 12px;
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -722,7 +722,7 @@ async function executeDelete() {
   background: rgba(0, 0, 0, 0.04);
   border-radius: 8px;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .stat-badge svg {
@@ -746,28 +746,28 @@ async function executeDelete() {
   background: rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 10px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .action-btn:hover {
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(139, 92, 246, 0.3);
-  color: #8b5cf6;
+  background: rgba(184, 160, 144, 0.1);
+  border-color: rgba(184, 160, 144, 0.3);
+  color: var(--sr-accent-star, #b8a090);
   transform: translateY(-2px);
 }
 
 .action-btn.active {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.3);
-  color: #10b981;
+  background: rgba(168, 179, 168, 0.15);
+  border-color: rgba(168, 179, 168, 0.3);
+  color: var(--sr-morandi-green, #a8b3a8);
 }
 
 .action-btn.danger:hover {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: #ef4444;
+  background: rgba(212, 184, 184, 0.1);
+  border-color: rgba(212, 184, 184, 0.3);
+  color: var(--sr-morandi-pink, #d4b8b8);
 }
 
 .action-btn svg {
@@ -799,7 +799,7 @@ async function executeDelete() {
   padding: 10px 18px;
   background: transparent;
   border: none;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -813,7 +813,7 @@ async function executeDelete() {
 .config-title {
   font-size: 22px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   margin: 0;
 }
 
@@ -849,13 +849,13 @@ async function executeDelete() {
   margin: 0 0 24px;
   font-size: 22px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .modal-title svg {
   width: 26px;
   height: 26px;
-  color: #8b5cf6;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .form-group {
@@ -867,7 +867,7 @@ async function executeDelete() {
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .emoji-grid {
@@ -887,15 +887,15 @@ async function executeDelete() {
 }
 
 .emoji-btn:hover {
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(139, 92, 246, 0.3);
+  background: rgba(184, 160, 144, 0.1);
+  border-color: rgba(184, 160, 144, 0.3);
   transform: scale(1.1);
 }
 
 .emoji-btn.selected {
-  background: rgba(139, 92, 246, 0.2);
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+  background: rgba(184, 160, 144, 0.2);
+  border-color: var(--sr-accent-star, #b8a090);
+  box-shadow: 0 0 0 2px rgba(184, 160, 144, 0.2);
 }
 
 .modal-footer {
@@ -915,9 +915,9 @@ async function executeDelete() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(212, 184, 184, 0.1);
   border-radius: 50%;
-  color: #ef4444;
+  color: var(--sr-morandi-pink, #d4b8b8);
 }
 
 .warning-icon svg {
@@ -929,12 +929,12 @@ async function executeDelete() {
   text-align: center;
   margin: 0 0 12px;
   font-size: 20px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .delete-modal p {
   text-align: center;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   margin: 0 0 24px;
 }
 

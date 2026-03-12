@@ -654,12 +654,7 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   height: calc(100vh - var(--vp-nav-height, 64px));
   background: var(--ai-bg-body);
   overflow: hidden;
-  font-family: 'Urbanist', sans-serif;
-  
-  /* 添加微弱的光晕背景 */
-  background-image: 
-    radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.03) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 40%);
+  font-family: var(--sr-font-primary, 'Inter', sans-serif);
 }
 
 /* 主聊天区 */
@@ -758,8 +753,8 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 .agent-select-trigger:hover,
 .agent-select-trigger.open {
   background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(59, 130, 246, 0.4);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  border-color: rgba(184, 160, 144, 0.4);
+  box-shadow: 0 4px 12px rgba(184, 160, 144, 0.1);
 }
 
 .selected-avatar {
@@ -791,11 +786,12 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   top: calc(100% + 12px);
   left: 0;
   min-width: 280px;
-  background: rgba(0, 11, 26, 0.85);
+  background: var(--sr-glass-bg, rgba(255, 255, 255, 0.88));
   backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
   border-radius: 16px;
-  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
   z-index: 100;
   overflow: hidden;
 }
@@ -857,11 +853,11 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 }
 
 .agent-option:hover {
-  background: rgba(107, 231, 142, 0.05);
+  background: rgba(184, 160, 144, 0.08);
 }
 
 .agent-option.active {
-  background: rgba(107, 231, 142, 0.1);
+  background: rgba(184, 160, 144, 0.12);
 }
 
 .option-avatar {
@@ -871,9 +867,9 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--sr-bg-secondary, rgba(0, 0, 0, 0.02));
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
 }
 
 .option-info {
@@ -887,12 +883,12 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 .option-name {
   font-size: 14px;
   font-weight: 600;
-  color: #FFFFFF;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .option-desc {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--sr-text-muted, #94a3b8);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -904,8 +900,8 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #6BE78E;
-  color: #000B1A;
+  background: var(--sr-accent-star, #b8a090);
+  color: #fff;
   border-radius: 50%;
   font-size: 11px;
 }
@@ -965,13 +961,13 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 }
 
 .log-dashboard-btn:hover {
-  color: #059669;
-  background: #d1fae5;
+  color: var(--sr-morandi-green, #a8b3a8);
+  background: rgba(168, 179, 168, 0.1);
 }
 
 .log-dashboard-btn.active {
-  color: #059669;
-  background: #a7f3d0;
+  color: var(--sr-morandi-green, #a8b3a8);
+  background: rgba(168, 179, 168, 0.15);
 }
 
 /* ========== 液态玻璃 3D 弹窗 ========== */
@@ -999,7 +995,7 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   border: 1px solid rgba(226, 232, 240, 0.8);
   box-shadow: 
     0 25px 50px -12px rgba(31, 38, 135, 0.1),
-    0 0 60px rgba(59, 130, 246, 0.1);
+    0 0 60px rgba(179, 168, 184, 0.1);
   transform-style: preserve-3d;
   animation: modal-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 
@@ -1046,7 +1042,7 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   height: 200px;
   background: radial-gradient(
     circle,
-    rgba(99, 102, 241, 0.15) 0%,
+    rgba(184, 160, 144, 0.15) 0%,
     transparent 70%
   );
   pointer-events: none;
@@ -1082,7 +1078,7 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   transform: translate(-50%, -50%);
   width: 80px;
   height: 80px;
-  border: 2px solid rgba(239, 68, 68, 0.2);
+  border: 2px solid rgba(212, 184, 184, 0.2);
   border-radius: 50%;
   animation: ring-expand 2s ease-out infinite;
 }
@@ -1102,8 +1098,8 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   font-size: 20px;
   font-weight: 700;
   margin: 0 0 12px;
-  color: #1e293b;
-  background: linear-gradient(135deg, #1e293b, #475569);
+  color: var(--sr-text-primary, #1a1a2e);
+  background: linear-gradient(135deg, var(--sr-text-primary, #1a1a2e), #475569);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1111,7 +1107,7 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 
 .glass-hint {
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   margin: 0 0 28px;
   line-height: 1.6;
 }
@@ -1166,15 +1162,15 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 }
 
 .glass-btn.danger {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: linear-gradient(135deg, var(--sr-morandi-pink, #d4b8b8), #dc2626);
   color: white;
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 14px rgba(212, 184, 184, 0.3);
 }
 
 .glass-btn.danger:hover {
   background: linear-gradient(135deg, #dc2626, #b91c1c);
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 8px 20px rgba(212, 184, 184, 0.4);
 }
 
 .danger-pulse {
@@ -1185,7 +1181,7 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   width: 100%;
   height: 100%;
   border-radius: 12px;
-  border: 2px solid rgba(239, 68, 68, 0.5);
+  border: 2px solid rgba(212, 184, 184, 0.5);
   animation: danger-pulse 2s ease-out infinite;
 }
 
@@ -1237,7 +1233,7 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   transform: translateX(-50%);
   padding: 10px 24px;
   background: rgba(255, 255, 255, 0.88);
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   border-radius: 100px;
   font-size: 13px;
   font-weight: 500;

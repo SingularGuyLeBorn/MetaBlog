@@ -480,14 +480,14 @@ function handleTest(message: string) {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border: none;
   color: white;
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(179, 168, 184, 0.3);
 }
 
 .btn-primary:disabled {
@@ -497,7 +497,7 @@ function handleTest(message: string) {
 }
 
 .btn-danger {
-  background: #ef4444;
+  background: var(--sr-morandi-pink, #d4b8b8);
   border: none;
   color: white;
 }

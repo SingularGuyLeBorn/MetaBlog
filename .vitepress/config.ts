@@ -298,11 +298,6 @@ export default defineConfig({
         activeMatch: "/chat",
       },
       {
-        text: "Agent中心",
-        link: "/orchestrator",
-        activeMatch: "/orchestrator",
-      },
-      {
         text: "文章列表",
         link: "/sections/posts/",
         activeMatch: "/sections/posts/",

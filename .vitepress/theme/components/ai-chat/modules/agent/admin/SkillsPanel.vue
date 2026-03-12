@@ -395,13 +395,13 @@ async function deleteSkill(skill: Skill) {
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .title-desc-3d {
   margin: 4px 0 0;
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .create-btn-3d {
@@ -409,7 +409,7 @@ async function deleteSkill(skill: Skill) {
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
   color: white;
   border: none;
   border-radius: 12px;
@@ -458,7 +458,7 @@ async function deleteSkill(skill: Skill) {
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   font-size: 15px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   transition: all 0.2s ease;
 }
 
@@ -468,7 +468,7 @@ async function deleteSkill(skill: Skill) {
 
 .search-input-3d:focus {
   outline: none;
-  border-color: #8b5cf6;
+  border-color: var(--sr-accent-star, #b8a090);
   box-shadow: 0 0 0 4px #ede9fe;
 }
 
@@ -484,21 +484,21 @@ async function deleteSkill(skill: Skill) {
   border: 1px solid #e2e8f0;
   border-radius: 20px;
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transform-style: preserve-3d;
   transition: all 0.2s ease;
 }
 
 .filter-chip-3d:hover {
-  border-color: #8b5cf6;
-  color: #7c3aed;
+  border-color: var(--sr-accent-star, #b8a090);
+  color: var(--sr-morandi-purple, #b3a8b8);
   transform: translateZ(10px);
 }
 
 .filter-chip-3d.active {
-  background: #8b5cf6;
-  border-color: #8b5cf6;
+  background: var(--sr-accent-star, #b8a090);
+  border-color: var(--sr-accent-star, #b8a090);
   color: white;
   transform: translateZ(15px);
   box-shadow: 0 8px 20px rgba(139,92,246,0.3);
@@ -534,7 +534,7 @@ async function deleteSkill(skill: Skill) {
 }
 
 .skill-card-3d:hover {
-  border-color: #8b5cf6;
+  border-color: var(--sr-accent-star, #b8a090);
   box-shadow: 0 20px 40px rgba(139,92,246,0.15);
 }
 
@@ -575,7 +575,7 @@ async function deleteSkill(skill: Skill) {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transform-style: preserve-3d;
   transition: all 0.2s ease;
@@ -583,14 +583,14 @@ async function deleteSkill(skill: Skill) {
 
 .action-btn-3d:hover {
   background: #ede9fe;
-  border-color: #8b5cf6;
-  color: #7c3aed;
+  border-color: var(--sr-accent-star, #b8a090);
+  color: var(--sr-morandi-purple, #b3a8b8);
   transform: translateZ(15px);
 }
 
 .action-btn-3d.danger:hover {
   background: #fee2e2;
-  border-color: #ef4444;
+  border-color: var(--sr-morandi-pink, #d4b8b8);
   color: #dc2626;
 }
 
@@ -607,13 +607,13 @@ async function deleteSkill(skill: Skill) {
   margin: 0 0 8px;
   font-size: 17px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .skill-desc-3d {
   margin: 0 0 16px;
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -634,12 +634,12 @@ async function deleteSkill(skill: Skill) {
   background: #f1f5f9;
   border-radius: 8px;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .meta-badge-3d.category {
   background: #ede9fe;
-  color: #7c3aed;
+  color: var(--sr-morandi-purple, #b3a8b8);
 }
 
 .meta-icon {
@@ -660,7 +660,7 @@ async function deleteSkill(skill: Skill) {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -670,8 +670,8 @@ async function deleteSkill(skill: Skill) {
 
 .view-btn-3d:hover {
   background: #ede9fe;
-  border-color: #8b5cf6;
-  color: #7c3aed;
+  border-color: var(--sr-accent-star, #b8a090);
+  color: var(--sr-morandi-purple, #b3a8b8);
   transform: translateZ(15px);
 }
 
@@ -744,7 +744,7 @@ async function deleteSkill(skill: Skill) {
   background: #f1f5f9;
   border: none;
   border-radius: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transform: translateZ(20px);
   transition: all 0.2s ease;
@@ -752,7 +752,7 @@ async function deleteSkill(skill: Skill) {
 
 .close-btn-3d:hover {
   background: #e2e8f0;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   transform: translateZ(30px) rotate(90deg);
 }
 
@@ -776,7 +776,7 @@ async function deleteSkill(skill: Skill) {
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .form-row-3d {
@@ -794,7 +794,7 @@ async function deleteSkill(skill: Skill) {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   font-size: 14px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   transition: all 0.2s ease;
 }
 
@@ -808,7 +808,7 @@ async function deleteSkill(skill: Skill) {
 .form-select-3d:focus,
 .form-textarea-3d:focus {
   outline: none;
-  border-color: #8b5cf6;
+  border-color: var(--sr-accent-star, #b8a090);
   box-shadow: 0 0 0 4px #ede9fe;
   transform: translateZ(10px);
 }
@@ -852,7 +852,7 @@ async function deleteSkill(skill: Skill) {
 
 .btn-cancel {
   background: #f1f5f9;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .btn-cancel:hover {
@@ -860,7 +860,7 @@ async function deleteSkill(skill: Skill) {
 }
 
 .btn-save {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
   color: white;
   box-shadow: 0 4px 15px rgba(139,92,246,0.3);
 }

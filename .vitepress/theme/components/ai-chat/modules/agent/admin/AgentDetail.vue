@@ -498,10 +498,10 @@ function sendTest() {
 
 .btn-back-3d:hover {
   background: linear-gradient(145deg, #eff6ff, #dbeafe);
-  border-color: rgba(59, 130, 246, 0.3);
-  color: #3b82f6;
+  border-color: rgba(179, 168, 184, 0.3);
+  color: var(--sr-morandi-blue, #9daab8);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 4px 12px rgba(179, 168, 184, 0.15);
 }
 
 .btn-back-3d svg {
@@ -522,9 +522,9 @@ function sendTest() {
   align-items: center;
   justify-content: center;
   font-size: 26px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8) 0%, var(--sr-accent-star, #b8a090) 100%);
   border-radius: 14px;
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 20px rgba(179, 168, 184, 0.3);
   animation: avatar-float 3s ease-in-out infinite;
 }
 
@@ -537,14 +537,14 @@ function sendTest() {
   margin: 0;
   font-size: 20px;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .title-level-3d {
   font-size: 12px;
   font-weight: 700;
   padding: 4px 10px;
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(184, 160, 144, 0.1);
   border-radius: 20px;
 }
 
@@ -567,13 +567,13 @@ function sendTest() {
 }
 
 .btn-status-3d.online {
-  color: #059669;
+  color: var(--sr-morandi-green, #a8b3a8);
   background: linear-gradient(145deg, #d1fae5, #a7f3d0);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 12px rgba(168, 179, 168, 0.2);
 }
 
 .btn-status-3d.offline {
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
 }
 
@@ -590,7 +590,7 @@ function sendTest() {
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8) 0%, var(--sr-accent-star, #b8a090) 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -598,12 +598,12 @@ function sendTest() {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 4px 16px rgba(179, 168, 184, 0.35);
 }
 
 .btn-save-3d:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.45);
+  box-shadow: 0 8px 24px rgba(179, 168, 184, 0.45);
 }
 
 .btn-save-3d:disabled {
@@ -655,7 +655,7 @@ function sendTest() {
   border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: left;
@@ -675,14 +675,14 @@ function sendTest() {
 
 .nav-item-3d:hover {
   background: linear-gradient(145deg, #ffffff, #f8fafc);
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 .nav-item-3d.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8) 0%, var(--sr-accent-star, #b8a090) 100%);
   color: white;
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 20px rgba(179, 168, 184, 0.3);
 }
 
 .nav-icon-3d {
@@ -716,13 +716,13 @@ function sendTest() {
   margin: 0 0 10px 0;
   font-size: 20px;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .section-desc-3d {
   margin: 0 0 24px 0;
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 /* 3D 表单样式 */
@@ -745,7 +745,7 @@ function sendTest() {
   margin-bottom: 10px;
   font-size: 14px;
   font-weight: 700;
-  color: #374151;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .form-input-3d,
@@ -757,7 +757,7 @@ function sendTest() {
   border-radius: 12px;
   font-size: 14px;
   background: linear-gradient(145deg, #ffffff, #f8fafc);
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   outline: none;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
@@ -766,8 +766,8 @@ function sendTest() {
 .form-input-3d:focus,
 .form-textarea-3d:focus,
 .form-select-3d:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(59, 130, 246, 0.1);
+  border-color: var(--sr-morandi-blue, #9daab8);
+  box-shadow: 0 0 0 4px rgba(179, 168, 184, 0.1), 0 4px 12px rgba(179, 168, 184, 0.1);
 }
 
 .form-textarea-3d {
@@ -811,16 +811,16 @@ function sendTest() {
 }
 
 .avatar-btn-3d:hover {
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(179, 168, 184, 0.3);
   transform: translateY(-2px) scale(1.1);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 8px 20px rgba(179, 168, 184, 0.15);
 }
 
 .avatar-btn-3d.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8) 0%, var(--sr-accent-star, #b8a090) 100%);
   border-color: transparent;
   transform: scale(1.1);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 20px rgba(179, 168, 184, 0.3);
 }
 
 /* 3D 提示词模板 */
@@ -837,7 +837,7 @@ function sendTest() {
 
 .template-label-3d {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-weight: 600;
 }
 
@@ -845,20 +845,20 @@ function sendTest() {
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
   background: linear-gradient(145deg, #ffffff, #f8fafc);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(179, 168, 184, 0.2);
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .template-btn-3d:hover {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8) 0%, var(--sr-accent-star, #b8a090) 100%);
   color: white;
   border-color: transparent;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 4px 12px rgba(179, 168, 184, 0.25);
 }
 
 /* 3D 技能列表 */
@@ -882,15 +882,15 @@ function sendTest() {
 }
 
 .skill-checkbox-3d:hover {
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(179, 168, 184, 0.3);
   transform: translateX(4px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 8px 20px rgba(179, 168, 184, 0.1);
 }
 
 .skill-checkbox-3d.checked {
-  border-color: rgba(59, 130, 246, 0.5);
+  border-color: rgba(179, 168, 184, 0.5);
   background: linear-gradient(145deg, #eff6ff, #dbeafe);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 4px 16px rgba(179, 168, 184, 0.15);
 }
 
 .skill-checkbox-3d input {
@@ -910,12 +910,12 @@ function sendTest() {
 .skill-name {
   font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .skill-desc {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 /* 3D Toggle Switch */
@@ -959,7 +959,7 @@ function sendTest() {
 }
 
 input:checked + .toggle-slider-3d {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8) 0%, var(--sr-accent-star, #b8a090) 100%);
 }
 
 input:checked + .toggle-slider-3d:before {
@@ -987,16 +987,16 @@ input:checked + .toggle-slider-3d:before {
 }
 
 .permission-item-3d:hover {
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(179, 168, 184, 0.3);
   transform: translateX(4px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 8px 20px rgba(179, 168, 184, 0.1);
 }
 
 .permission-item-3d input {
   margin-top: 4px;
   width: 18px;
   height: 18px;
-  accent-color: #3b82f6;
+  accent-color: var(--sr-morandi-blue, #9daab8);
 }
 
 .permission-info-3d {
@@ -1008,12 +1008,12 @@ input:checked + .toggle-slider-3d:before {
 .permission-name {
   font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .permission-desc {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 /* 3D 危险区域 */
@@ -1035,7 +1035,7 @@ input:checked + .toggle-slider-3d:before {
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, var(--sr-morandi-pink, #d4b8b8) 0%, #dc2626 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -1043,12 +1043,12 @@ input:checked + .toggle-slider-3d:before {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 16px rgba(212, 184, 184, 0.3);
 }
 
 .btn-danger-3d:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 8px 24px rgba(212, 184, 184, 0.4);
 }
 
 /* 3D 右侧预览区 */
@@ -1076,7 +1076,7 @@ input:checked + .toggle-slider-3d:before {
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   font-size: 14px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   background: linear-gradient(145deg, #f8fafc, #f1f5f9);
 }
 
@@ -1094,9 +1094,9 @@ input:checked + .toggle-slider-3d:before {
   align-items: center;
   justify-content: center;
   font-size: 28px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8) 0%, var(--sr-accent-star, #b8a090) 100%);
   border-radius: 16px;
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 20px rgba(179, 168, 184, 0.3);
   animation: avatar-float 3s ease-in-out infinite;
 }
 
@@ -1109,7 +1109,7 @@ input:checked + .toggle-slider-3d:before {
 .preview-name {
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .preview-status-3d {
@@ -1121,12 +1121,12 @@ input:checked + .toggle-slider-3d:before {
 }
 
 .preview-status-3d.online {
-  color: #059669;
+  color: var(--sr-morandi-green, #a8b3a8);
   background: linear-gradient(145deg, #d1fae5, #a7f3d0);
 }
 
 .preview-status-3d.offline {
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
 }
 
@@ -1164,7 +1164,7 @@ input:checked + .toggle-slider-3d:before {
 .preview-stat-3d .stat-value {
   font-size: 20px;
   font-weight: 800;
-  color: #3b82f6;
+  color: var(--sr-morandi-blue, #9daab8);
 }
 
 /* 3D 测试卡片 */
@@ -1173,7 +1173,7 @@ input:checked + .toggle-slider-3d:before {
 }
 
 .test-header-3d {
-  color: #8b5cf6;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .test-input-3d {
@@ -1182,7 +1182,7 @@ input:checked + .toggle-slider-3d:before {
   border: none;
   font-size: 14px;
   background: transparent;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   outline: none;
   resize: vertical;
   min-height: 100px;
@@ -1196,7 +1196,7 @@ input:checked + .toggle-slider-3d:before {
   width: calc(100% - 40px);
   margin: 0 20px 20px;
   padding: 14px;
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090) 0%, var(--sr-morandi-purple, #b3a8b8) 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -1204,12 +1204,12 @@ input:checked + .toggle-slider-3d:before {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 16px rgba(184, 160, 144, 0.3);
 }
 
 .btn-test-3d:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 8px 24px rgba(184, 160, 144, 0.4);
 }
 
 .btn-test-3d:disabled {

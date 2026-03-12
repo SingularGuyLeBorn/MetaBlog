@@ -188,7 +188,7 @@ function truncateName(name: string, maxLen: number): string {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.3), transparent 70%);
+  background: radial-gradient(circle, rgba(179, 168, 184, 0.3), transparent 70%);
   animation: pulse-glow 3s ease-in-out infinite;
 }
 
@@ -203,11 +203,11 @@ function truncateName(name: string, maxLen: number): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(145deg, var(--sr-morandi-blue, #9daab8), #1d4ed8);
   border-radius: 50%;
   font-size: 28px;
   box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.4),
+    0 4px 12px rgba(179, 168, 184, 0.4),
     inset 0 2px 4px rgba(255, 255, 255, 0.3);
   position: relative;
   z-index: 2;
@@ -216,8 +216,8 @@ function truncateName(name: string, maxLen: number): string {
 .center-label {
   font-size: 12px;
   font-weight: 600;
-  color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
+  color: var(--sr-morandi-blue, #9daab8);
+  background: rgba(179, 168, 184, 0.1);
   padding: 4px 12px;
   border-radius: 20px;
 }
@@ -242,7 +242,7 @@ function truncateName(name: string, maxLen: number): string {
   top: -20px;
   width: 2px;
   height: 20px;
-  background: linear-gradient(180deg, #3b82f6, transparent);
+  background: linear-gradient(180deg, var(--sr-morandi-blue, #9daab8), transparent);
   opacity: 0.3;
 }
 
@@ -282,7 +282,7 @@ function truncateName(name: string, maxLen: number): string {
 .node-name {
   font-size: 12px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   white-space: nowrap;
 }
 
@@ -317,7 +317,7 @@ function truncateName(name: string, maxLen: number): string {
   background: #f1f5f9;
   border-radius: 10px;
   font-size: 10px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-weight: 600;
 }
 
@@ -375,7 +375,7 @@ function truncateName(name: string, maxLen: number): string {
   background: #f1f5f9;
   border-radius: 20px;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-weight: 600;
 }
 
@@ -398,7 +398,7 @@ function truncateName(name: string, maxLen: number): string {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .legend-dot {
@@ -408,8 +408,8 @@ function truncateName(name: string, maxLen: number): string {
 }
 
 .legend-dot.skill {
-  background: #3b82f6;
-  box-shadow: 0 0 6px #3b82f6;
+  background: var(--sr-morandi-blue, #9daab8);
+  box-shadow: 0 0 6px var(--sr-morandi-blue, #9daab8);
 }
 
 .legend-dot.tool {

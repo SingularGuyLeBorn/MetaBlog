@@ -27,7 +27,7 @@
     </div>
 
     <!-- 配置区 -->
-    <LiquidGlass class="config-glass" glow-color="#8b5cf6" :intensity="0.3">
+    <LiquidGlass class="config-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.3">
       <div class="config-card">
         <h4 class="config-title">{{ currentType?.name }} 配置</h4>
         
@@ -53,7 +53,7 @@
                 placeholder="0 9 * * *"
                 class="lg-input"
               />
-              <LiquidGlass glow-color="#3b82f6" :intensity="0.3">
+              <LiquidGlass glow-color="var(--sr-morandi-blue, #9daab8)" :intensity="0.3">
                 <button class="lg-btn" @click="testCron">测试</button>
               </LiquidGlass>
             </div>
@@ -66,7 +66,7 @@
                 v-for="preset in cronPresets"
                 :key="preset.value"
                 class="preset-glass"
-                :glow-color="triggerConfig.cron === preset.value ? '#8b5cf6' : '#e2e8f0'"
+                :glow-color="triggerConfig.cron === preset.value ? 'var(--sr-accent-star, #b8a090)' : '#e2e8f0'"
                 :intensity="triggerConfig.cron === preset.value ? 0.4 : 0.1"
               >
                 <button
@@ -115,7 +115,7 @@
         <div v-else-if="selectedType === 'webhook'" class="webhook-config">
           <div class="form-group">
             <label>Webhook URL</label>
-            <LiquidGlass class="url-glass" glow-color="#3b82f6" :intensity="0.2">
+            <LiquidGlass class="url-glass" glow-color="var(--sr-morandi-blue, #9daab8)" :intensity="0.2">
               <div class="url-box">
                 <code class="url">{{ webhookUrl }}</code>
                 <button class="copy-btn" @click="copyWebhook">
@@ -133,10 +133,10 @@
 
         <!-- 操作按钮 -->
         <div class="config-actions">
-          <LiquidGlass glow-color="#64748b" :intensity="0.2">
+          <LiquidGlass glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.2">
             <button class="lg-btn" @click="$emit('cancel')">取消</button>
           </LiquidGlass>
-          <LiquidGlass glow-color="#8b5cf6" :intensity="0.5">
+          <LiquidGlass glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.5">
             <button class="lg-btn lg-btn-primary" @click="save">
               <Icon name="save" />
               保存配置
@@ -161,10 +161,10 @@ const emit = defineEmits<{
 }>()
 
 const triggerTypes = [
-  { id: 'manual', name: '手动触发', description: '用户点击开始', icon: 'hand', gradient: 'linear-gradient(135deg, #10b981, #059669)', glowColor: '#10b981' },
+  { id: 'manual', name: '手动触发', description: '用户点击开始', icon: 'hand', gradient: 'linear-gradient(135deg, var(--sr-morandi-green, #a8b3a8), var(--sr-morandi-green, #a8b3a8))', glowColor: 'var(--sr-morandi-green, #a8b3a8)' },
   { id: 'scheduled', name: '定时触发', description: '按 Cron 计划执行', icon: 'clock', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', glowColor: '#f59e0b' },
-  { id: 'event', name: '事件触发', description: '监听系统事件', icon: 'zap', gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', glowColor: '#8b5cf6' },
-  { id: 'webhook', name: 'Webhook', description: '外部 HTTP 调用', icon: 'globe', gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)', glowColor: '#3b82f6' }
+  { id: 'event', name: '事件触发', description: '监听系统事件', icon: 'zap', gradient: 'linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8))', glowColor: 'var(--sr-accent-star, #b8a090)' },
+  { id: 'webhook', name: 'Webhook', description: '外部 HTTP 调用', icon: 'globe', gradient: 'linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), #2563eb)', glowColor: 'var(--sr-morandi-blue, #9daab8)' }
 ]
 
 const selectedType = ref('manual')
@@ -286,19 +286,19 @@ watch(() => props.agent, (a) => {
 .trigger-name {
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   margin-bottom: 4px;
 }
 
 .trigger-desc {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .trigger-check {
   width: 28px;
   height: 28px;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
   color: white;
   border-radius: 50%;
   display: flex;
@@ -324,7 +324,7 @@ watch(() => props.agent, (a) => {
   margin: 0 0 24px;
   font-size: 20px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 /* 手动配置 */
@@ -332,8 +332,8 @@ watch(() => props.agent, (a) => {
   display: flex;
   gap: 16px;
   padding: 24px;
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.15);
+  background: rgba(168, 179, 168, 0.08);
+  border: 1px solid rgba(168, 179, 168, 0.15);
   border-radius: 16px;
 }
 
@@ -345,7 +345,7 @@ watch(() => props.agent, (a) => {
 .info-icon {
   width: 24px;
   height: 24px;
-  color: #10b981;
+  color: var(--sr-morandi-green, #a8b3a8);
   flex-shrink: 0;
 }
 
@@ -354,7 +354,7 @@ watch(() => props.agent, (a) => {
 }
 
 .info-desc {
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   margin-top: 6px;
   font-size: 14px;
 }
@@ -382,7 +382,7 @@ watch(() => props.agent, (a) => {
   margin-bottom: 12px;
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .preset-grid {
@@ -410,12 +410,12 @@ watch(() => props.agent, (a) => {
 .preset-time {
   font-size: 20px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .preset-name {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .preset-btn.active .preset-time {
@@ -431,9 +431,9 @@ watch(() => props.agent, (a) => {
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(184, 160, 144, 0.1);
   border-radius: 12px;
-  color: #7c3aed;
+  color: var(--sr-morandi-purple, #b3a8b8);
 }
 
 .preview-box svg {
@@ -472,10 +472,10 @@ watch(() => props.agent, (a) => {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(184, 160, 144, 0.1);
   border: none;
   border-radius: 10px;
-  color: #7c3aed;
+  color: var(--sr-morandi-purple, #b3a8b8);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -483,7 +483,7 @@ watch(() => props.agent, (a) => {
 }
 
 .copy-btn:hover {
-  background: rgba(139, 92, 246, 0.2);
+  background: rgba(184, 160, 144, 0.2);
 }
 
 .copy-btn svg {

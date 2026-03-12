@@ -1,0 +1,20 @@
+[
+  {
+    "id": "session-1772820893959-eypvtad",
+    "title": "新对话",
+    "agentId": "agent-1771864714589-mpgyp1p",
+    "agentName": "Meta 助手",
+    "createdAt": 1772820893959,
+    "updatedAt": 1773227312685,
+    "messageCount": 0
+  },
+  {
+    "id": "session-1772820893959-eypvtad",
+    "title": "新对话",
+    "agentId": "",
+    "agentName": "",
+    "createdAt": 1772820894123,
+    "updatedAt": 1772820894123,
+    "messageCount": 0
+  }
+]

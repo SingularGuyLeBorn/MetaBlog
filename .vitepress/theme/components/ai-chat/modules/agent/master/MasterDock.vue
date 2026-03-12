@@ -396,12 +396,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #a855f7 100%);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8) 0%, var(--sr-accent-star, #b8a090) 50%, #a855f7 100%);
   border: none;
   border-radius: 50%;
   cursor: pointer;
   box-shadow: 
-    0 8px 32px rgba(59, 130, 246, 0.4),
+    0 8px 32px rgba(179, 168, 184, 0.4),
     0 0 0 4px rgba(255, 255, 255, 0.1),
     inset 0 2px 4px rgba(255, 255, 255, 0.3);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -410,7 +410,7 @@ onMounted(() => {
 .master-dock-trigger:hover {
   transform: scale(1.1) rotate(5deg);
   box-shadow: 
-    0 12px 40px rgba(59, 130, 246, 0.5),
+    0 12px 40px rgba(179, 168, 184, 0.5),
     0 0 0 6px rgba(255, 255, 255, 0.15),
     inset 0 2px 4px rgba(255, 255, 255, 0.4);
 }
@@ -418,7 +418,7 @@ onMounted(() => {
 .master-dock-trigger.active {
   transform: scale(0.9);
   box-shadow: 
-    0 4px 16px rgba(59, 130, 246, 0.3),
+    0 4px 16px rgba(179, 168, 184, 0.3),
     inset 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
@@ -429,13 +429,13 @@ onMounted(() => {
 @keyframes pulse-ring {
   0%, 100% {
     box-shadow: 
-      0 8px 32px rgba(59, 130, 246, 0.4),
+      0 8px 32px rgba(179, 168, 184, 0.4),
       0 0 0 4px rgba(255, 255, 255, 0.1);
   }
   50% {
     box-shadow: 
-      0 8px 32px rgba(59, 130, 246, 0.5),
-      0 0 0 8px rgba(59, 130, 246, 0.2);
+      0 8px 32px rgba(179, 168, 184, 0.5),
+      0 0 0 8px rgba(179, 168, 184, 0.2);
   }
 }
 
@@ -457,7 +457,7 @@ onMounted(() => {
 .trigger-aura {
   position: absolute;
   inset: -20px;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(179, 168, 184, 0.2);
   border-radius: 50%;
   animation: aura-expand 3s ease-out infinite;
 }
@@ -514,7 +514,7 @@ onMounted(() => {
   box-shadow: 
     0 32px 64px -16px rgba(0, 0, 0, 0.2),
     0 0 0 1px rgba(255, 255, 255, 0.5) inset,
-    0 0 100px rgba(59, 130, 246, 0.15);
+    0 0 100px rgba(179, 168, 184, 0.15);
   backdrop-filter: blur(20px);
   overflow: hidden;
   transform-origin: bottom right;
@@ -535,8 +535,8 @@ onMounted(() => {
   position: absolute;
   inset: 0;
   background: 
-    radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+    radial-gradient(circle at 0% 0%, rgba(179, 168, 184, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(184, 160, 144, 0.1) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -567,10 +567,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border-radius: 14px;
   font-size: 22px;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(179, 168, 184, 0.3);
 }
 
 .avatar-ring {
@@ -596,8 +596,8 @@ onMounted(() => {
   margin: 0;
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
-  background: linear-gradient(135deg, #1e293b, #3b82f6);
+  color: var(--sr-text-primary, #1a1a2e);
+  background: linear-gradient(135deg, var(--sr-text-primary, #1a1a2e), var(--sr-morandi-blue, #9daab8));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -639,13 +639,13 @@ onMounted(() => {
 }
 
 .action-btn.active {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
 }
 
 .action-btn.close:hover {
   background: #fee2e2;
-  color: #ef4444;
+  color: var(--sr-morandi-pink, #d4b8b8);
 }
 
 /* ===== 工具面板 ===== */
@@ -692,7 +692,7 @@ onMounted(() => {
 .tool-item:hover {
   background: white;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 8px 20px rgba(179, 168, 184, 0.15);
 }
 
 .tool-icon {
@@ -702,7 +702,7 @@ onMounted(() => {
 .tool-name {
   font-size: 10px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 /* ===== 消息区域 ===== */
@@ -731,7 +731,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+  background: linear-gradient(135deg, rgba(179, 168, 184, 0.1), rgba(184, 160, 144, 0.1));
   border-radius: 24px;
   font-size: 40px;
   margin-bottom: 16px;
@@ -741,13 +741,13 @@ onMounted(() => {
   margin: 0 0 8px 0;
   font-size: 18px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .empty-desc {
   margin: 0 0 20px 0;
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   line-height: 1.5;
 }
 
@@ -770,7 +770,7 @@ onMounted(() => {
 }
 
 .quick-action-btn:hover {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
   border-color: transparent;
   transform: translateY(-1px);
@@ -805,7 +805,7 @@ onMounted(() => {
 }
 
 .message-bubble.assistant .message-avatar {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
 }
 
 .message-content {
@@ -820,12 +820,12 @@ onMounted(() => {
   border-radius: 16px;
   font-size: 13px;
   line-height: 1.5;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .message-bubble.user .message-text {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   color: white;
   border-bottom-right-radius: 4px;
 }
@@ -855,7 +855,7 @@ onMounted(() => {
 .thinking-dots span {
   width: 8px;
   height: 8px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border-radius: 50%;
   animation: thinking-bounce 1.4s ease-in-out infinite both;
 }
@@ -896,7 +896,7 @@ onMounted(() => {
   border: none;
   font-size: 13px;
   line-height: 1.5;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   resize: none;
   outline: none;
   max-height: 120px;
@@ -912,7 +912,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-accent-star, #b8a090));
   border: none;
   border-radius: 50%;
   color: white;
@@ -923,7 +923,7 @@ onMounted(() => {
 
 .send-btn:hover:not(:disabled) {
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(179, 168, 184, 0.3);
 }
 
 .send-btn:disabled {

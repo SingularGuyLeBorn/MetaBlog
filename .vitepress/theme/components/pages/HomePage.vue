@@ -1,124 +1,257 @@
 <template>
-  <div class="home-page-liquid-v3">
-    <!-- 环境光球 - 深海氛围 -->
-    <div class="ambient-orbs">
-      <div class="ambient-orb"></div>
-      <div class="ambient-orb"></div>
-      <div class="ambient-orb"></div>
-    </div>
-
+  <div class="home-page-star-river">
     <!-- Hero Section -->
     <section class="hero-section">
       <div class="hero-content">
-        <!-- 徽章 -->
-        <div class="hero-badge lg-v3-enter" :class="{ 'awaken': isLoaded }">
-          <span class="badge-icon">🚀</span>
-          <span class="badge-text">数字孪生级知识管理系统</span>
+        <!-- Badge -->
+        <div class="hero-badge fade-up" :class="{ 'visible': isLoaded }">
+          <span class="badge-star">✦</span>
+          <span class="badge-text">AI 驱动的知识管理系统</span>
         </div>
         
-        <!-- 标题 -->
-        <h1 class="hero-title lg-v3-enter" :class="{ 'awaken': isLoaded }" style="animation-delay: 0.08s">
-          <span class="gradient-text">MetaUniverse</span>
-          <span class="title-secondary">Blog</span>
+        <!-- Title - Large Typography -->
+        <h1 class="hero-title sr-title-large fade-up stagger-1" :class="{ 'visible': isLoaded }">
+          <span class="title-main">Meta</span>
+          <span class="title-accent">Universe</span>
         </h1>
         
-        <!-- 描述 -->
-        <p class="hero-desc lg-v3-enter" :class="{ 'awaken': isLoaded }" style="animation-delay: 0.16s">
-          构建你的第二大脑，让知识流动起来
+        <p class="hero-desc sr-subtitle fade-up stagger-2" :class="{ 'visible': isLoaded }">
+          构建你的第二大脑，探索全息知识网络 <br/>
+          大语言模型 · 星河平台 · 端侧部署
         </p>
         
-        <!-- 按钮组 -->
-        <div class="hero-actions lg-v3-enter" :class="{ 'awaken': isLoaded }" style="animation-delay: 0.24s">
-          <a href="/sections/knowledge/rl-math-principle/" class="btn-primary">
+        <!-- Actions -->
+        <div class="hero-actions fade-up stagger-3" :class="{ 'visible': isLoaded }">
+          <a href="/sections/knowledge/rl-math-principle/" class="star-btn star-btn-primary magnetic-btn">
             <span>开始探索</span>
-            <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </a>
-          <a href="/sections/about/" class="btn-secondary">
+          <a href="/sections/about/" class="star-btn magnetic-btn">
             <span>关于作者</span>
           </a>
         </div>
+      </div>
+      
+      <!-- Floating Orbs — ambient decoration -->
+      <div class="hero-orbs" :class="{ 'visible': isLoaded }">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+      </div>
+      
+      <!-- Stats - Glass Cards -->
+      <div class="hero-stats" :class="{ 'visible': isLoaded }">
+        <div 
+          v-for="(stat, i) in stats" 
+          :key="stat.label" 
+          class="stat-card glass-card glass-card-hover scale-in"
+          :style="{ transitionDelay: `${0.4 + i * 0.1}s` }"
+        >
+          <span class="stat-icon">{{ stat.icon }}</span>
+          <span class="stat-num">{{ stat.num }}</span>
+          <span class="stat-label">{{ stat.label }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tech Stack Marquee - Enhanced Scroll -->
+    <section class="marquee-section fade-up" :class="{ 'visible': isLoaded }">
+      <div class="marquee-track">
+        <div class="marquee-content">
+          <span v-for="(tech, i) in [...techStack, ...techStack, ...techStack, ...techStack]" :key="i" class="tech-badge badge-outline">
+            {{ tech }}
+          </span>
+        </div>
+      </div>
+      <div class="marquee-track" style="margin-top: 16px;">
+        <div class="marquee-content reverse">
+          <span v-for="(tech, i) in [...techStack2, ...techStack2, ...techStack2, ...techStack2]" :key="i" class="tech-badge badge-filled">
+            {{ tech }}
+          </span>
+        </div>
+      </div>
+      <div class="marquee-track" style="margin-top: 16px;">
+        <div class="marquee-content">
+          <span v-for="(tech, i) in [...techStack3, ...techStack3, ...techStack3, ...techStack3]" :key="i" class="tech-badge badge-outline" style="opacity: 0.8">
+            {{ tech }}
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section - Grid Layout -->
+    <section class="features-section sr-section">
+      <div class="sr-container">
+        <div class="section-header fade-up" :class="{ 'visible': featuresVisible }">
+          <span class="section-badge">✦ 核心模块</span>
+          <h2 class="section-title-lg">探索知识宇宙</h2>
+          <p class="section-desc sr-body">四大核心模块，覆盖从学习到创作的完整工作流</p>
+        </div>
         
-        <!-- 统计数据 -->
-        <div class="hero-stats" :class="{ 'stagger-in': isLoaded }">
-          <div class="stat-card" v-for="(stat, i) in stats" :key="stat.label" :style="{ animationDelay: `${0.32 + i * 0.08}s` }">
-            <div class="stat-bubbles">
-              <div class="bubble"></div>
-              <div class="bubble"></div>
-              <div class="bubble"></div>
+        <div class="features-grid sr-grid sr-grid-2">
+          <a 
+            v-for="(feature, index) in features" 
+            :key="feature.title"
+            :href="feature.link"
+            class="feature-card glass-card glass-card-hover fade-up"
+            :class="{ 'visible': featuresVisible }"
+            :style="{ transitionDelay: `${index * 80}ms` }"
+          >
+            <div class="feature-header">
+              <div class="feature-icon-wrapper">
+                <span class="feature-icon">{{ feature.icon }}</span>
+              </div>
+              <span class="sr-tag" :class="'sr-tag-morandi-' + feature.tagColor">{{ feature.tag }}</span>
             </div>
-            <span class="stat-num">{{ stat.num }}</span>
-            <span class="stat-label">{{ stat.label }}</span>
+            
+            <h3 class="feature-title">{{ feature.title }}</h3>
+            <p class="feature-desc sr-body">{{ feature.desc }}</p>
+            
+            <div class="feature-link">
+              <span>{{ feature.linkText }}</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Community Voices - Dual Vertical Scroll -->
+    <section class="community-section sr-section">
+      <div class="sr-container community-container">
+        <div class="community-header fade-up" :class="{ 'visible': communityVisible }">
+          <span class="section-badge">◎ 社区探索</span>
+          <h2 class="section-title-lg">倾听全球社区声音</h2>
+          <p class="section-desc sr-body">与全球数万名开发者共同探索人工智能与前沿技术知识。从强化学习的数学原理，到工程化的落地实践。</p>
+          <a href="/sections/about/" class="star-btn magnetic-btn" style="margin-top: 24px; display: inline-flex;">
+            加入我们
+          </a>
+        </div>
+        
+        <div class="community-scroll-wrapper fade-up stagger-1" :class="{ 'visible': communityVisible }">
+          <!-- Left Column (Scrolling UP) -->
+          <div class="scroll-column column-up">
+            <div class="scroll-content-up">
+              <div v-for="(voice, i) in [...voicesLeft, ...voicesLeft]" :key="'l'+i" class="voice-card glass-card">
+                <p class="voice-text">"{{ voice.text }}"</p>
+                <div class="voice-author">
+                  <div class="avatar">{{ voice.avatar }}</div>
+                  <div>
+                    <div class="name">{{ voice.name }}</div>
+                    <div class="role">{{ voice.role }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Right Column (Scrolling DOWN) -->
+          <div class="scroll-column column-down">
+            <div class="scroll-content-down">
+              <div v-for="(voice, i) in [...voicesRight, ...voicesRight]" :key="'r'+i" class="voice-card glass-card">
+                <p class="voice-text">"{{ voice.text }}"</p>
+                <div class="voice-author">
+                  <div class="avatar">{{ voice.avatar }}</div>
+                  <div>
+                    <div class="name">{{ voice.name }}</div>
+                    <div class="role">{{ voice.role }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Features Grid -->
-    <section class="features-section">
-      <h2 class="section-title" :class="{ 'fade-in': featuresVisible }">核心模块</h2>
-      <div class="features-grid" :class="{ 'stagger-in': featuresVisible }">
-        <a 
-          v-for="(feature, index) in features" 
-          :key="feature.title"
-          :href="feature.link"
-          class="feature-card"
-          :class="{ 'enter': featuresVisible }"
-          :style="{ animationDelay: `${index * 0.1}s` }"
-          @mouseenter="handleCardHover"
-          @mouseleave="handleCardLeave"
-        >
-          <!-- 气泡 -->
-          <div class="card-bubbles">
-            <div class="bubble"></div>
-            <div class="bubble"></div>
-            <div class="bubble"></div>
+    <!-- Highlights Section — visual richness -->
+    <section class="highlights-section sr-section">
+      <div class="sr-container">
+        <div class="section-header fade-up" :class="{ 'visible': highlightsVisible }">
+          <span class="section-badge">◈ 技术亮点</span>
+          <h2 class="section-title-lg">为什么选择 MetaUniverse</h2>
+        </div>
+
+        <div class="highlights-grid">
+          <div 
+            v-for="(hl, i) in highlights" 
+            :key="hl.title"
+            class="highlight-item fade-up"
+            :class="{ 'visible': highlightsVisible }"
+            :style="{ transitionDelay: `${i * 60}ms` }"
+          >
+            <div class="highlight-num">{{ String(i + 1).padStart(2, '0') }}</div>
+            <div class="highlight-content">
+              <h4>{{ hl.title }}</h4>
+              <p>{{ hl.desc }}</p>
+            </div>
           </div>
-          
-          <!-- 图标 -->
-          <div class="feature-icon-wrap" :class="feature.colorClass">
-            <span class="feature-icon-emoji">{{ feature.icon }}</span>
-          </div>
-          
-          <!-- 内容 -->
-          <h3>{{ feature.title }}</h3>
-          <p>{{ feature.desc }}</p>
-          
-          <!-- 链接 -->
-          <span class="feature-link" :class="feature.colorClass">
-            {{ feature.linkText }}
-            <svg class="link-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </span>
-        </a>
+        </div>
       </div>
     </section>
 
-    <!-- Recent Updates -->
-    <section class="recent-section">
-      <h2 class="section-title" :class="{ 'fade-in': recentVisible }">最近更新</h2>
-      <div class="recent-list" :class="{ 'stagger-in': recentVisible }">
-        <a 
-          v-for="(item, index) in recentItems" 
-          :key="item.title" 
-          :href="item.link" 
-          class="recent-card"
-          :class="{ 'enter': recentVisible }"
-          :style="{ animationDelay: `${index * 0.1}s` }"
-        >
-          <div class="recent-tag" :class="item.tagClass">{{ item.tag }}</div>
-          <div class="recent-content">
-            <h4>{{ item.title }}</h4>
-            <p>{{ item.desc }}</p>
+    <!-- Recent Updates Section -->
+    <section class="recent-section sr-section">
+      <div class="sr-container">
+        <div class="section-header-row">
+          <div>
+            <span class="section-badge">◎ 最近更新</span>
+            <h2 class="section-title-lg" style="margin-top: 8px;">最新动态</h2>
           </div>
-          <span class="recent-date">{{ item.date }}</span>
-          <div class="recent-arrow">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+          <a href="/sections/posts/" class="star-btn magnetic-btn">
+            查看全部
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+              <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-          </div>
+          </a>
+        </div>
+        
+        <div class="recent-list">
+          <a 
+            v-for="(item, index) in recentItems" 
+            :key="item.title" 
+            :href="item.link" 
+            class="recent-item glass-card glass-card-hover micro-interaction fade-up"
+            :class="{ 'visible': recentVisible }"
+            :style="{ transitionDelay: `${index * 80}ms` }"
+          >
+            <div class="recent-meta">
+              <span class="sr-tag" :class="'sr-tag-morandi-' + item.tagColor">{{ item.tag }}</span>
+              <span class="recent-date">{{ item.date }}</span>
+            </div>
+            
+            <div class="recent-content">
+              <h4>{{ item.title }}</h4>
+              <p>{{ item.desc }}</p>
+            </div>
+            
+            <svg class="recent-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA — immersive -->
+    <section class="cta-section sr-section fade-up" :class="{ 'visible': recentVisible }">
+      <div class="cta-card glass-card">
+        <div class="cta-visual">
+          <div class="cta-glow"></div>
+          <span class="cta-icon">✦</span>
+        </div>
+        <div class="cta-content">
+          <h3>准备好探索了吗？</h3>
+          <p class="sr-body">从强化学习数学原理开始，踏上系统化学习的旅程</p>
+        </div>
+        <a href="/sections/knowledge/rl-math-principle/" class="star-btn star-btn-primary magnetic-btn">
+          启程
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+            <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </a>
       </div>
     </section>
@@ -128,131 +261,154 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 
-// 加载状态
+// Loading state
 const isLoaded = ref(false)
 const featuresVisible = ref(false)
+const communityVisible = ref(false)
+const highlightsVisible = ref(false)
 const recentVisible = ref(false)
 
-// 统计数据
-const stats = [
-  { num: '200+', label: '知识节点' },
-  { num: '20+', label: '技术文章' },
-  { num: '10K+', label: '总阅读' }
+// Voices Data for Dual Scroll
+const voicesLeft = [
+  { name: 'Alex Chen', role: 'AI Researcher', avatar: '👨‍🔬', text: '这个平台彻底改变了我阅读论文的方式，排版对数学公式的支持非常棒。' },
+  { name: 'Sarah J.', role: 'Frontend Lead', avatar: '👩‍💻', text: '极简的莫兰迪风格和玻璃拟态 UI 让人在阅读长篇技术文章时感到极度舒适。' },
+  { name: 'David W.', role: 'Data Scientist', avatar: '🧑‍💻', text: '终于找到了一个能把强化学习讲得既严谨又易懂的知识库。' },
+  { name: 'Dr. Emily', role: 'Professor', avatar: '👩‍🏫', text: '我建议我的学生在这里学习大模型的底层架构，系统的脉络非常清晰。' }
+]
+const voicesRight = [
+  { name: 'Kevin H.', role: 'Backend Engineer', avatar: '👨‍💻', text: '技术深度令人惊叹，这里的 Agentic Workflow 解析让我受益匪浅。' },
+  { name: 'Linda Y.', role: 'Product Manager', avatar: '👩‍💼', text: '把复杂的前沿 AI 概念讲得如此优雅，真的是不可多得的资源。' },
+  { name: 'Tom R.', role: 'Student', avatar: '🎓', text: '扩散模型和 PyTorch 的系列文章简直是我的毕业设计救星。' },
+  { name: 'Sophia L.', role: 'UI/UX Designer', avatar: '🎨', text: '从字体排版到弹性动画，每一处细节的处理都充满了高级质感。' }
 ]
 
-// 功能模块
+// Tech stack for marquee
+const techStack = [
+  'PyTorch', 'Transformers', 'LLM', 'RLHF', 'Vue 3', 'React', 
+  'TypeScript', 'Tailwind', 'Python', 'Node.js', 'PostgreSQL', 
+  'Redis', 'Docker', 'VitePress', 'DeepSeek'
+]
+const techStack2 = [
+  'Node.js', 'Docker', 'Vite', 'ONNX', 'TensorRT', 'LangChain',
+  'CUDA 12', 'Framer Motion', 'WebGL', 'WebGPU', 'Ollama', 
+  'vLLM', 'TensorFlow', 'JAX', 'Pydantic'
+]
+const techStack3 = [
+  'Agentic Workflow', 'Retrieval Augmented Generation', 'Vector Database', 
+  'Milvus', 'Qdrant', 'Kubernetes', 'FastAPI', 'gRPC', 'WebSockets',
+  'Rust', 'Go', 'WebAssembly', 'OpenAI', 'Anthropic', 'Gemini'
+]
+
+// Stats data
+const stats = [
+  { num: '200+', label: '知识节点', icon: '◈' },
+  { num: '20+', label: '技术文章', icon: '◎' },
+  { num: '10K+', label: '总阅读', icon: '✦' }
+]
+
+// Features data
 const features = [
   {
-    icon: '🧠',
+    icon: '◈',
     title: '知识库',
-    desc: '强化学习数学原理、系统化知识体系，深度剖析技术原理',
+    desc: '强化学习数学原理、系统化知识体系，从测度论到策略梯度，深度剖析技术原理',
     link: '/sections/knowledge/rl-math-principle/',
     linkText: '探索知识',
-    colorClass: 'purple'
+    tag: '核心',
+    tagColor: 'purple'
   },
   {
-    icon: '📝',
+    icon: '◎',
     title: '文章列表',
-    desc: 'AI 论文阅读、技术博客、学习笔记，记录成长的每一步',
+    desc: 'AI 论文阅读、技术博客、学习笔记，记录从理论到工程的每一步思考',
     link: '/sections/posts/ai-paper-reading-2024.html',
     linkText: '阅读文章',
-    colorClass: 'blue'
+    tag: '博客',
+    tagColor: 'blue'
   },
   {
-    icon: '🎨',
+    icon: '◉',
     title: '公开资源',
-    desc: '精选开源项目与工具，提升开发效率',
+    desc: '精选开源项目与工具，提升开发效率，从框架到部署一应俱全',
     link: '/sections/resources/',
     linkText: '查看资源',
-    colorClass: 'mint'
+    tag: '资源',
+    tagColor: 'green'
   },
   {
-    icon: '👋',
+    icon: '✦',
     title: '关于我',
-    desc: '全栈开发者，技术爱好者，期待与你交流',
+    desc: '全栈开发者 × AI 研究员，在电路与系统的边界探索大模型的星辰大海',
     link: '/sections/about/',
     linkText: '了解更多',
-    colorClass: 'gold'
+    tag: '关于',
+    tagColor: 'beige'
   }
 ]
 
-// 最近更新
+// Highlights data
+const highlights = [
+  { title: 'AI 驱动', desc: '内置 AI 助手，智能检索、自动化任务编排' },
+  { title: '数学严谨', desc: '从测度论出发，建立强化学习的严格数学框架' },
+  { title: '全栈覆盖', desc: 'PyTorch × Vue 3 × Docker，从训练到部署' },
+  { title: '知识图谱', desc: '关联式知识管理，构建可视化学习路径' },
+  { title: '持续迭代', desc: '每周更新内容，追踪前沿 AI 研究成果' },
+  { title: '开源精神', desc: '所有内容开放共享，共建技术社区' }
+]
+
+// Recent items data
 const recentItems = [
   {
     title: 'AI 论文阅读 2024',
-    desc: '精选2024年人工智能领域的重要论文，深入解读核心思想与创新点...',
-    link: '/sections/posts/ai-paper-reading-2024.html',
+    desc: '精选2024年人工智能领域的重要论文，深入解读核心思想与创新点',
+    link: '/sections/posts/ai-paper-reading-2024/ai-paper-reading-2024.html',
     tag: 'AI',
-    tagClass: 'ai',
+    tagColor: 'purple',
     date: '2024-12-01'
   },
   {
     title: '强化学习：从游戏到现实',
-    desc: '探讨强化学习技术在游戏、机器人、推荐系统等领域的应用...',
-    link: '/sections/posts/rl-from-game-to-reality.html',
-    tag: '强化学习',
-    tagClass: 'ai',
+    desc: '探讨强化学习技术在游戏、机器人、推荐系统等领域的应用',
+    link: '/sections/posts/rl-from-game-to-reality/rl-from-game-to-reality.html',
+    tag: 'RL',
+    tagColor: 'blue',
     date: '2024-11-15'
   },
   {
-    title: '强化学习数学原理 - 测度论基础',
-    desc: '从测度论的角度理解强化学习，建立严格的数学框架...',
+    title: '测度论基础',
+    desc: '从测度论的角度理解强化学习，建立严格的数学框架',
     link: '/sections/knowledge/rl-math-principle/00_Foundations/01_Theory_Derivation.html',
     tag: '数学',
-    tagClass: 'math',
+    tagColor: 'green',
     date: '2024-10-20'
   }
 ]
 
-// 卡片悬停处理 - 添加有机形变
-const handleCardHover = (e: MouseEvent) => {
-  const card = e.currentTarget as HTMLElement
-  card.classList.add('is-hovered')
-}
-
-const handleCardLeave = (e: MouseEvent) => {
-  const card = e.currentTarget as HTMLElement
-  card.classList.remove('is-hovered')
-}
-
-// 可见性观察器
+// Intersection observers
 let observers: IntersectionObserver[] = []
 
+const observeSection = (selector: string, ref: { value: boolean }) => {
+  const el = document.querySelector(selector)
+  if (el) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          ref.value = true
+          observer.unobserve(entry.target)
+        }
+      })
+    }, { threshold: 0.15 })
+    observer.observe(el)
+    observers.push(observer)
+  }
+}
+
 onMounted(() => {
-  // 触发入场动画
-  requestAnimationFrame(() => {
-    isLoaded.value = true
-  })
-  
-  // 观察功能区域
-  const featuresSection = document.querySelector('.features-section')
-  if (featuresSection) {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          featuresVisible.value = true
-          observer.unobserve(entry.target)
-        }
-      })
-    }, { threshold: 0.2 })
-    observer.observe(featuresSection)
-    observers.push(observer)
-  }
-  
-  // 观察最近更新区域
-  const recentSection = document.querySelector('.recent-section')
-  if (recentSection) {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          recentVisible.value = true
-          observer.unobserve(entry.target)
-        }
-      })
-    }, { threshold: 0.2 })
-    observer.observe(recentSection)
-    observers.push(observer)
-  }
+  requestAnimationFrame(() => { isLoaded.value = true })
+  observeSection('.features-section', featuresVisible)
+  observeSection('.community-section', communityVisible)
+  observeSection('.highlights-section', highlightsVisible)
+  observeSection('.recent-section', recentVisible)
 })
 
 onUnmounted(() => {
@@ -261,592 +417,547 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* ═══════════════════════════════════════════════════════════════
-   HomePage Liquid Glass V3 样式
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   HomePage - Star River Design System — Enriched
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-.home-page-liquid-v3 {
+.home-page-star-river {
   position: relative;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 24px 80px;
-  overflow: hidden;
-}
-
-/* ── 环境光球 ── */
-.ambient-orbs {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  overflow: hidden;
-}
-
-.ambient-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-  opacity: 0.20;
-  animation: orb-float 25s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
-}
-
-.ambient-orb:nth-child(1) {
-  width: 500px;
-  height: 500px;
-  top: -10%;
-  right: -5%;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.6), transparent 70%);
-}
-
-.ambient-orb:nth-child(2) {
-  width: 400px;
-  height: 400px;
-  bottom: -8%;
-  left: -3%;
-  background: radial-gradient(circle, rgba(52, 211, 153, 0.5), transparent 70%);
-  animation-delay: -8s;
-  animation-duration: 20s;
-}
-
-.ambient-orb:nth-child(3) {
-  width: 350px;
-  height: 350px;
-  top: 45%;
-  left: 35%;
-  background: radial-gradient(circle, rgba(96, 165, 250, 0.5), transparent 70%);
-  animation-delay: -16s;
-  animation-duration: 22s;
-}
-
-@keyframes orb-float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  20% { transform: translateY(-20px) rotate(2deg); }
-  40% { transform: translateY(-10px) rotate(-1deg); }
-  60% { transform: translateY(-30px) rotate(1deg); }
-  80% { transform: translateY(-15px) rotate(-0.5deg); }
+  padding: 0 24px 80px;
 }
 
 /* ── Hero Section ── */
 .hero-section {
-  position: relative;
-  padding: 100px 0 70px;
-  text-align: center;
-  min-height: 75vh;
+  min-height: 90vh;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
+  align-items: center;
+  padding: 120px 0 60px;
+  text-align: center;
+  position: relative;
 }
 
 .hero-content {
+  max-width: 800px;
+  margin-bottom: 60px;
   position: relative;
   z-index: 1;
 }
 
-/* 入场动画 */
-.lg-v3-enter {
-  opacity: 0;
-  transform: translateY(24px) scale(0.96);
-  filter: blur(8px);
-  transition: 
-    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-    filter 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.lg-v3-enter.awaken {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  filter: blur(0);
-}
-
-/* 徽章 */
+/* Badge */
 .hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 24px;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(1.5);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 50px;
+  gap: 8px;
+  padding: 8px 16px;
   margin-bottom: 32px;
-  cursor: default;
-  transition: 
-    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  animation: breathe-gentle 5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  border: 1px solid var(--sr-glass-border);
+  border-radius: var(--sr-radius-full);
+  background: var(--sr-glass-bg);
+  backdrop-filter: blur(8px);
 }
 
-.hero-badge:hover {
-  transform: scale(0.985);
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.06);
-}
+.badge-star { font-size: 12px; color: var(--sr-accent-star); }
+.badge-text { font-size: 12px; font-weight: 500; letter-spacing: 0.05em; color: var(--sr-text-secondary); }
 
-.badge-icon {
-  font-size: 18px;
-}
+/* Title */
+.hero-title { margin-bottom: 24px; line-height: 1.1; }
+.title-main { color: var(--sr-text-primary); font-weight: 200; font-size: 64px; display: block; }
+.title-accent { color: var(--sr-morandi-purple); font-weight: 400; font-size: 64px; display: block; }
 
-.badge-text {
-  font-size: 14px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #8b5cf6, #60a5fa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: 0.5px;
-}
+/* Description */
+.hero-desc { max-width: 580px; margin: 0 auto 48px; font-size: 20px; line-height: 1.6; }
 
-/* 标题 */
-.hero-title {
-  font-size: 68px;
-  font-weight: 800;
-  line-height: 1.1;
-  margin: 0 0 24px 0;
-}
-
-.gradient-text {
-  background: linear-gradient(135deg, #8b5cf6 0%, #60a5fa 50%, #34d399 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 4px 16px rgba(139, 92, 246, 0.25));
-}
-
-.title-secondary {
-  color: var(--vp-c-text-1);
-  margin-left: 16px;
-}
-
-/* 描述 */
-.hero-desc {
-  font-size: 20px;
-  color: var(--vp-c-text-2);
-  margin-bottom: 48px;
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-  font-weight: 500;
-  line-height: 1.6;
-}
-
-/* ── 按钮组 - 液态按钮 ── */
+/* Actions */
 .hero-actions {
   display: flex;
-  gap: 20px;
+  gap: 16px;
   justify-content: center;
-  margin-bottom: 56px;
-}
-
-.btn-primary {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 32px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.75) 0%, rgba(96, 165, 250, 0.65) 100%);
-  border: 1px solid rgba(139, 92, 246, 0.40);
-  border-radius: 18px;
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
-  text-decoration: none;
-  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.30);
-  overflow: hidden;
-  transition: 
-    transform 0.3s cubic-bezier(0.68, -0.15, 0.265, 1.15),
-    box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.btn-primary::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
-  transform: translateX(-100%);
-  transition: transform 0.6s;
-}
-
-.btn-primary:hover {
-  transform: scale(0.985) translateY(1px);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.85) 0%, rgba(96, 165, 250, 0.75) 100%);
-  box-shadow: 
-    0 12px 40px rgba(139, 92, 246, 0.40),
-    0 0 60px rgba(139, 92, 246, 0.15);
-}
-
-.btn-primary:hover::before {
-  transform: translateX(100%);
-}
-
-.btn-primary:active {
-  transform: scale(0.978) translateY(2px);
-  transition-duration: 0.1s;
-}
-
-.arrow-icon {
-  width: 18px;
-  height: 18px;
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.btn-primary:hover .arrow-icon {
-  transform: translateX(4px);
-}
-
-.btn-secondary {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  padding: 16px 32px;
-  background: rgba(255, 255, 255, 0.10);
-  backdrop-filter: blur(12px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 18px;
-  color: var(--vp-c-text-1);
-  font-size: 16px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: 
-    transform 0.3s cubic-bezier(0.68, -0.15, 0.265, 1.15),
-    background 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.btn-secondary:hover {
-  transform: scale(0.985) translateY(1px);
-  background: rgba(255, 255, 255, 0.20);
-  border-color: rgba(168, 85, 247, 0.30);
-  box-shadow: 
-    0 0 30px rgba(168, 85, 247, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10);
-}
-
-.btn-secondary:active {
-  transform: scale(0.978) translateY(2px);
-  transition-duration: 0.1s;
-}
-
-/* ── 统计数据卡片 ── */
-.hero-stats {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
   flex-wrap: wrap;
 }
 
-.stat-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 28px 36px;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(1.5);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 24px;
-  min-width: 130px;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(20px) scale(0.95);
-  animation: breathe-gentle 5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-  transition: 
-    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.stagger-in .stat-card {
-  animation: 
-    bounce-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
-    breathe-gentle 5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-}
-
-.stat-card:hover {
-  transform: scale(0.985) translateY(1px);
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(168, 85, 247, 0.22);
-  box-shadow: 
-    inset 0 2px 10px rgba(0, 0, 0, 0.06),
-    0 0 30px rgba(168, 85, 247, 0.08);
-}
-
-.stat-bubbles {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  border-radius: inherit;
-}
-
-.bubble {
-  position: absolute;
-  width: 5px;
-  height: 5px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.4), transparent 70%);
-  border-radius: 50%;
-  animation: bubble-rise 12s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
-}
-
-.stat-card .bubble:nth-child(1) { left: 15%; animation-delay: 0s; animation-duration: 10s; }
-.stat-card .bubble:nth-child(2) { left: 50%; animation-delay: 3s; animation-duration: 13s; width: 4px; height: 4px; }
-.stat-card .bubble:nth-child(3) { left: 75%; animation-delay: 6s; animation-duration: 11s; width: 6px; height: 6px; }
-
-@keyframes bubble-rise {
-  0% { transform: translateY(100%) scale(0); opacity: 0; }
-  5% { opacity: 0.5; }
-  85% { opacity: 0.2; }
-  100% { transform: translateY(-10%) scale(1.1); opacity: 0; }
-}
-
-.stat-num {
-  font-size: 38px;
-  font-weight: 800;
-  line-height: 1;
-  background: linear-gradient(135deg, #8b5cf6 0%, #60a5fa 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: var(--vp-c-text-3);
-  font-weight: 600;
-}
-
-/* ── Section Titles ── */
-.section-title {
-  font-size: 34px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 48px;
-  color: var(--vp-c-text-1);
-  opacity: 0;
-  transform: translateY(16px);
-  transition: 
-    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.section-title.fade-in {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* ── Features Grid ── */
-.features-section {
-  padding: 60px 0;
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-}
-
-.feature-card {
-  position: relative;
-  padding: 32px;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(1.5);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 24px;
-  text-decoration: none;
-  color: inherit;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(24px) scale(0.96);
-  filter: blur(4px);
-  transition: 
-    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  animation: breathe-gentle 5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-}
-
-.feature-card.enter {
-  animation: 
-    materialize 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    breathe-gentle 5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-}
-
-.feature-card:hover {
-  transform: scale(0.985) translateY(2px);
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(168, 85, 247, 0.25);
-  box-shadow: 
-    inset 0 3px 12px rgba(0, 0, 0, 0.06),
-    0 0 35px rgba(168, 85, 247, 0.10);
-}
-
-.card-bubbles {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  border-radius: inherit;
-}
-
-.card-bubbles .bubble:nth-child(1) { left: 12%; animation-delay: 0s; }
-.card-bubbles .bubble:nth-child(2) { left: 45%; animation-delay: 4s; width: 4px; height: 4px; }
-.card-bubbles .bubble:nth-child(3) { left: 78%; animation-delay: 8s; width: 6px; height: 6px; }
-
-.feature-icon-wrap {
-  width: 68px;
-  height: 68px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 18px;
-  margin-bottom: 22px;
-  transition: 
-    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.feature-card:hover .feature-icon-wrap {
-  transform: scale(1.05) rotate(-2deg);
-}
-
-.feature-icon-wrap.purple {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(139, 92, 246, 0.06));
-  box-shadow: 0 0 25px rgba(139, 92, 246, 0.12);
-}
-
-.feature-icon-wrap.blue {
-  background: linear-gradient(135deg, rgba(96, 165, 250, 0.18), rgba(96, 165, 250, 0.06));
-  box-shadow: 0 0 25px rgba(96, 165, 250, 0.12);
-}
-
-.feature-icon-wrap.mint {
-  background: linear-gradient(135deg, rgba(52, 211, 153, 0.18), rgba(52, 211, 153, 0.06));
-  box-shadow: 0 0 25px rgba(52, 211, 153, 0.12);
-}
-
-.feature-icon-wrap.gold {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(251, 191, 36, 0.06));
-  box-shadow: 0 0 25px rgba(251, 191, 36, 0.12);
-}
-
-.feature-icon-emoji {
-  font-size: 34px;
-}
-
-.feature-card h3 {
-  font-size: 21px;
-  font-weight: 800;
-  margin: 0 0 12px 0;
-  color: var(--vp-c-text-1);
-}
-
-.feature-card p {
-  font-size: 15px;
-  color: var(--vp-c-text-2);
-  margin: 0 0 20px 0;
-  line-height: 1.7;
-}
-
-.feature-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  transition: gap 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.feature-link.purple { color: #a78bfa; }
-.feature-link.blue   { color: #60a5fa; }
-.feature-link.mint   { color: #34d399; }
-.feature-link.gold   { color: #fbbf24; }
-
-.feature-card:hover .feature-link {
-  gap: 12px;
-}
-
-.link-arrow {
+.btn-arrow {
   width: 16px;
   height: 16px;
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  margin-left: 4px;
+  transition: transform 0.3s var(--sr-spring-bounce);
 }
 
-.feature-card:hover .link-arrow {
+.star-btn:hover .btn-arrow {
   transform: translateX(4px);
 }
 
-/* ── Recent Updates ── */
-.recent-section {
-  padding: 40px 0;
+/* Floating Orbs — ambient background effect */
+.hero-orbs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 1.5s ease;
 }
+
+.hero-orbs.visible { opacity: 1; }
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  animation: float 8s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(184, 160, 144, 0.12) 0%, transparent 70%);
+  top: 10%;
+  right: -5%;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(179, 168, 184, 0.1) 0%, transparent 70%);
+  bottom: 20%;
+  left: -5%;
+  animation-delay: -3s;
+}
+
+.orb-3 {
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(154, 168, 179, 0.1) 0%, transparent 70%);
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+  animation-delay: -5s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  25% { transform: translateY(-20px) translateX(10px); }
+  50% { transform: translateY(-10px) translateX(-10px); }
+  75% { transform: translateY(-25px) translateX(5px); }
+}
+
+/* Stats */
+.hero-stats {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-stats.visible { opacity: 1; }
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px 44px;
+  min-width: 140px;
+}
+
+.stat-icon {
+  font-size: 16px;
+  color: var(--sr-accent-star);
+  margin-bottom: 4px;
+  opacity: 0.6;
+}
+
+.stat-num {
+  font-size: 32px;
+  font-weight: 200;
+  color: var(--sr-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sr-text-muted);
+}
+
+/* ── Tech Stack Marquee ── */
+.marquee-section {
+  padding: 60px 0;
+  margin-bottom: 80px;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent 0%, black 15%, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 15%, black 85%, transparent 100%);
+}
+
+.marquee-track {
+  width: 100%;
+  overflow: hidden;
+}
+
+.tech-badge {
+  font-family: var(--sr-font-primary);
+  font-size: 56px;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.badge-outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(184, 160, 144, 0.4); /* Morandi light border */
+}
+
+.badge-filled {
+  color: rgba(184, 160, 144, 0.15); /* Solid ghost fill */
+}
+
+.marquee-content {
+  display: flex;
+  gap: 40px;
+  width: max-content;
+  animation: marquee 50s linear infinite;
+  padding-left: 20px;
+}
+
+.marquee-content.reverse {
+  animation: marquee-reverse 45s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-25% - 10px)); } /* Since we use 4 copies, move 1 copy over (25%) */
+}
+
+@keyframes marquee-reverse {
+  0% { transform: translateX(calc(-25% - 10px)); }
+  100% { transform: translateX(0); }
+}
+
+/* ── Section Headers ── */
+.section-header {
+  text-align: left;
+  margin-bottom: 56px;
+}
+
+.section-badge {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sr-accent-star);
+  margin-bottom: 16px;
+}
+
+.section-title-lg {
+  font-family: var(--sr-font-primary);
+  font-size: 40px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  letter-spacing: -0.03em;
+  margin: 0 0 16px;
+}
+
+.section-desc {
+  max-width: 600px;
+  font-size: 16px;
+  color: var(--sr-text-secondary);
+  line-height: 1.6;
+}
+
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 36px;
+}
+
+/* ── Features ── */
+.features-section { padding-top: 80px; }
+
+.features-grid { gap: 24px; }
+
+.feature-card {
+  display: flex;
+  flex-direction: column;
+  padding: 32px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.feature-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.feature-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sr-glass-bg);
+  border: 1px solid var(--sr-glass-border);
+  border-radius: var(--sr-radius-md);
+  transition: transform 0.3s var(--sr-spring-bounce);
+}
+
+.feature-card:hover .feature-icon-wrapper {
+  transform: scale(1.1);
+}
+
+.feature-icon {
+  font-size: 20px;
+  color: var(--sr-accent-star);
+}
+
+.feature-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--sr-text-primary);
+  margin-bottom: 12px;
+}
+
+.feature-desc {
+  margin-bottom: 24px;
+  flex: 1;
+}
+
+.feature-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sr-text-secondary);
+  transition: color 0.2s ease;
+}
+
+.feature-link svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.3s var(--sr-spring-bounce);
+}
+
+.feature-card:hover .feature-link {
+  color: var(--sr-accent-star);
+}
+
+.feature-card:hover .feature-link svg {
+  transform: translateX(4px);
+}
+
+/* ── Community Voices (Dual Scroll) ── */
+.community-section {
+  padding-top: 80px;
+  padding-bottom: 80px;
+}
+
+.community-container {
+  display: flex;
+  align-items: center;
+  gap: 60px;
+}
+
+.community-header {
+  flex: 1;
+  max-width: 400px;
+}
+
+.community-scroll-wrapper {
+  flex: 1.5;
+  display: flex;
+  gap: 20px;
+  height: 500px;
+  overflow: hidden;
+  position: relative;
+  /* Soft fade at top and bottom of the vertical scroll columns */
+  mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+}
+
+.scroll-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll-content-up {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: scroll-y-up 40s linear infinite;
+}
+
+.scroll-content-down {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  /* Start positioned halfway up to allow downwards movement continuously */
+  animation: scroll-y-down 40s linear infinite;
+}
+
+/* Pause animation on hover */
+.scroll-column:hover .scroll-content-up,
+.scroll-column:hover .scroll-content-down {
+  animation-play-state: paused;
+}
+
+@keyframes scroll-y-up {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(calc(-50% - 10px)); } /* 10px is half gap */
+}
+
+@keyframes scroll-y-down {
+  0% { transform: translateY(calc(-50% - 10px)); }
+  100% { transform: translateY(0); }
+}
+
+.voice-card {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.45);
+  transition: transform 0.3s var(--sr-spring-bounce), box-shadow 0.3s ease;
+}
+
+.voice-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 24px rgba(184, 160, 144, 0.1);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.voice-text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--sr-text-primary);
+  font-style: italic;
+  margin: 0;
+}
+
+.voice-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.voice-author .avatar {
+  font-size: 28px;
+  background: var(--sr-bg-secondary);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sr-border-light);
+}
+
+.voice-author .name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--sr-text-primary);
+  margin-bottom: 2px;
+}
+
+.voice-author .role {
+  font-size: 12px;
+  color: var(--sr-text-muted);
+}
+
+/* ── Highlights Grid ── */
+.highlights-section { padding-top: 80px; }
+
+.highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.highlight-item {
+  display: flex;
+  gap: 16px;
+  padding: 28px;
+  background: var(--sr-glass-bg);
+  border: 1px solid var(--sr-glass-border);
+  border-radius: var(--sr-radius-md);
+  backdrop-filter: blur(8px);
+  transition: all 0.35s var(--sr-spring-bounce);
+}
+
+.highlight-item:hover {
+  transform: translateY(-3px);
+  border-color: rgba(184, 160, 144, 0.2);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+}
+
+.highlight-num {
+  font-size: 32px;
+  font-weight: 200;
+  color: var(--sr-text-tertiary);
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.4;
+}
+
+.highlight-content h4 {
+  font-family: var(--sr-font-primary);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  margin: 0 0 6px;
+}
+
+.highlight-content p {
+  font-size: 13px;
+  color: var(--sr-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Recent Section ── */
+.recent-section { padding-top: 80px; }
 
 .recent-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
-.recent-card {
+.recent-item {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 24px 28px;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(1.5);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 20px;
+  gap: 24px;
+  padding: 20px 28px;
   text-decoration: none;
   color: inherit;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: 
-    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.recent-card.enter {
-  animation: materialize 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+.recent-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 100px;
 }
 
-.recent-card:hover {
-  transform: scale(0.992) translateY(1px);
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(96, 165, 250, 0.22);
-  box-shadow: 
-    inset 0 2px 8px rgba(0, 0, 0, 0.05),
-    0 0 25px rgba(96, 165, 250, 0.08);
-}
-
-.recent-card:hover .recent-arrow {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.60), rgba(96, 165, 250, 0.50));
-  color: white;
-  transform: translateX(4px);
-}
-
-.recent-tag {
-  padding: 8px 16px;
-  border-radius: 20px;
+.recent-date {
   font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  flex-shrink: 0;
-}
-
-.recent-tag.ai {
-  background: linear-gradient(145deg, rgba(139, 92, 246, 0.18), rgba(139, 92, 246, 0.06));
-  color: #a78bfa;
-}
-
-.recent-tag.math {
-  background: linear-gradient(145deg, rgba(96, 165, 250, 0.18), rgba(96, 165, 250, 0.06));
-  color: #60a5fa;
+  color: var(--sr-text-muted);
 }
 
 .recent-content {
@@ -855,153 +966,154 @@ onUnmounted(() => {
 }
 
 .recent-content h4 {
-  font-size: 17px;
-  font-weight: 700;
-  margin: 0 0 6px 0;
-  color: var(--vp-c-text-1);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--sr-text-primary);
+  margin-bottom: 6px;
+  transition: color 0.2s ease;
+}
+
+.recent-item:hover .recent-content h4 {
+  color: var(--sr-accent-star);
 }
 
 .recent-content p {
   font-size: 14px;
-  color: var(--vp-c-text-3);
-  margin: 0;
+  color: var(--sr-text-muted);
+  line-height: 1.6;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.recent-date {
-  font-size: 13px;
-  color: var(--vp-c-text-3);
-  font-weight: 600;
+.recent-arrow {
+  width: 20px;
+  height: 20px;
+  color: var(--sr-text-muted);
   flex-shrink: 0;
+  transition: all 0.3s var(--sr-spring-bounce);
 }
 
-.recent-arrow {
-  width: 42px;
-  height: 42px;
+.recent-item:hover .recent-arrow {
+  color: var(--sr-accent-star);
+  transform: translateX(4px);
+}
+
+/* ── Bottom CTA ── */
+.cta-section {
+  padding-top: 60px;
+}
+
+.cta-card {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 40px !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-visual {
+  position: relative;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.10);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  color: var(--vp-c-text-3);
-  transition: 
-    all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   flex-shrink: 0;
 }
 
-.recent-arrow svg {
-  width: 18px;
-  height: 18px;
+.cta-glow {
+  position: absolute;
+  inset: -10px;
+  background: radial-gradient(circle, rgba(184, 160, 144, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: cta-breathe 4s ease-in-out infinite;
 }
 
-/* ── Keyframes ── */
-@keyframes materialize {
-  0% {
-    opacity: 0;
-    transform: translateY(24px) scale(0.96);
-    filter: blur(8px);
-  }
-  60% {
-    opacity: 1;
-    transform: translateY(-2px) scale(1.005);
-    filter: blur(0);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
+@keyframes cta-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 0.8; }
 }
 
-@keyframes bounce-in {
-  0% {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  50% {
-    transform: translateY(-4px) scale(1.01);
-  }
-  75% {
-    transform: translateY(2px) scale(0.998);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.cta-icon {
+  font-size: 28px;
+  color: var(--sr-accent-star);
+  position: relative;
+  z-index: 1;
 }
 
-@keyframes breathe-gentle {
-  0%, 100% { transform: scale(1) translateY(0); }
-  25% { transform: scale(1.002) translateY(-1px); }
-  50% { transform: scale(1.004) translateY(-2px); }
-  75% { transform: scale(1.002) translateY(-1px); }
+.cta-content {
+  flex: 1;
+}
+
+.cta-content h3 {
+  font-family: var(--sr-font-primary);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--sr-text-primary);
+  margin: 0 0 12px;
 }
 
 /* ── Responsive ── */
-@media (max-width: 768px) {
-  .hero-title {
-    font-size: 44px;
-  }
-  
-  .hero-actions {
+@media (max-width: 960px) {
+  .community-container {
     flex-direction: column;
-    align-items: center;
   }
   
-  .btn-primary,
-  .btn-secondary {
+  .community-header {
+    max-width: 100%;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  
+  .community-scroll-wrapper {
     width: 100%;
-    max-width: 280px;
-    justify-content: center;
+    height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 80px 0 60px;
+    min-height: auto;
   }
   
-  .hero-stats {
+  .hero-content { margin-bottom: 48px; }
+  .hero-actions { flex-direction: column; align-items: center; }
+  .star-btn { width: 100%; max-width: 280px; justify-content: center; }
+  .features-grid { grid-template-columns: 1fr; }
+  .highlights-grid { grid-template-columns: 1fr; }
+  
+  .recent-item {
     flex-direction: column;
+    align-items: flex-start;
     gap: 16px;
   }
   
-  .stat-card {
-    width: 100%;
+  .recent-meta {
+    flex-direction: row;
+    align-items: center;
+    min-width: auto;
   }
   
-  .features-grid {
-    grid-template-columns: 1fr;
-  }
+  .recent-arrow { align-self: flex-end; }
   
-  .recent-card {
-    flex-wrap: wrap;
+  .cta-card {
+    flex-direction: column;
+    text-align: center;
   }
-  
-  .recent-content {
-    width: 100%;
-    order: 3;
-  }
-  
-  .recent-date {
-    order: 2;
-  }
-  
-  .recent-arrow {
-    order: 4;
+
+  .section-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
   }
 }
 
 @media (max-width: 480px) {
-  .hero-title {
-    font-size: 36px;
-  }
-  
-  .title-secondary {
-    display: block;
-    margin-left: 0;
-    margin-top: 8px;
-  }
-  
-  .hero-desc {
-    font-size: 18px;
-  }
+  .home-page-star-river { padding: 0 16px 60px; }
+  .stat-card { padding: 24px 32px; min-width: 120px; }
+  .stat-num { font-size: 28px; }
 }
 </style>

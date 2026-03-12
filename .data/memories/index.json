@@ -3,50 +3,45 @@
     "id": "mem-1772200000000-abc123",
     "content": "用户喜欢使用 Vue 3 和 TypeScript 进行开发",
     "category": "preferences",
+    "importance": 4,
     "createdAt": 1772200000000,
     "updatedAt": 1772200000000,
-    "enabled": true,
-    "importance": 4,
-    "source": "user"
+    "enabled": true
   },
   {
     "id": "mem-1772200000001-def456",
     "content": "项目名称是 MetaBlog，使用 VitePress 构建",
     "category": "facts",
+    "importance": 5,
     "createdAt": 1772200000001,
     "updatedAt": 1772200000001,
-    "enabled": true,
-    "importance": 5,
-    "source": "inferred"
+    "enabled": true
   },
   {
     "id": "mem-1772263928000-xyz789",
     "content": "用户偏好深色模式界面",
     "category": "preferences",
+    "importance": 3,
     "createdAt": 1772263928000,
     "updatedAt": 1772263928000,
-    "enabled": true,
-    "importance": 3,
-    "source": "observed"
+    "enabled": true
   },
   {
     "id": "mem-1772263930000-hij012",
     "content": "用户经常使用 MCP 工具进行文件操作",
     "category": "habits",
+    "importance": 4,
     "createdAt": 1772263930000,
     "updatedAt": 1772263930000,
-    "enabled": true,
-    "importance": 4,
-    "source": "inferred"
+    "enabled": true
   },
   {
     "id": "mem-1772263940000-klm345",
     "content": "用户不喜欢重复性的解释，偏好直接进入主题",
     "category": "preferences",
+    "importance": 2,
     "createdAt": 1772263940000,
     "updatedAt": 1772263940000,
-    "enabled": false,
-    "importance": 2,
-    "source": "user"
+    "enabled": false
   }
 ]

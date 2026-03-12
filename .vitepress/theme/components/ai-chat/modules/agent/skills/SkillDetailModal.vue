@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <div class="modal-overlay" @click.self="emit('close')">
-      <LiquidGlass class="modal-glass" glow-color="#8b5cf6" :intensity="0.4">
+      <LiquidGlass class="modal-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.4">
         <div class="skill-modal">
           <!-- 头部 -->
           <div class="modal-header">
@@ -42,7 +42,7 @@
                   v-for="meta in metaItems"
                   :key="meta.label"
                   class="meta-glass"
-                  glow-color="#64748b"
+                  glow-color="var(--sr-text-muted, #94a3b8)"
                   :intensity="0.2"
                 >
                   <div class="meta-item">
@@ -137,7 +137,7 @@ const metaItems = computed(() => [
   { label: '工具数', value: props.skill.tools?.length || 0 }
 ])
 
-const toolColors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899']
+const toolColors = ['var(--sr-accent-star, #b8a090)', 'var(--sr-morandi-blue, #9daab8)', 'var(--sr-morandi-green, #a8b3a8)', '#f59e0b', '#ec4899']
 
 function getToolColor(idx: number) {
   return toolColors[idx % toolColors.length]
@@ -198,21 +198,21 @@ function getToolColor(idx: number) {
   font-size: 28px;
   background: linear-gradient(135deg, #ede9fe, #ddd6fe);
   border-radius: 18px;
-  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.15);
+  box-shadow: 0 8px 20px rgba(184, 160, 144, 0.15);
 }
 
 .skill-title-info h3 {
   margin: 0 0 4px;
   font-size: 20px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .skill-category {
   display: inline-block;
   padding: 4px 12px;
-  background: rgba(139, 92, 246, 0.1);
-  color: #7c3aed;
+  background: rgba(184, 160, 144, 0.1);
+  color: var(--sr-morandi-purple, #b3a8b8);
   font-size: 12px;
   font-weight: 600;
   border-radius: 20px;
@@ -227,14 +227,14 @@ function getToolColor(idx: number) {
   background: rgba(0, 0, 0, 0.05);
   border: none;
   border-radius: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .close-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: rgba(212, 184, 184, 0.1);
+  color: var(--sr-morandi-pink, #d4b8b8);
   transform: rotate(90deg);
 }
 
@@ -260,7 +260,7 @@ function getToolColor(idx: number) {
   background: transparent;
   border: none;
   border-radius: 10px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -268,14 +268,14 @@ function getToolColor(idx: number) {
 }
 
 .modal-tab:hover {
-  background: rgba(139, 92, 246, 0.1);
-  color: #7c3aed;
+  background: rgba(184, 160, 144, 0.1);
+  color: var(--sr-morandi-purple, #b3a8b8);
 }
 
 .modal-tab.active {
-  background: #8b5cf6;
+  background: var(--sr-accent-star, #b8a090);
   color: white;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+  box-shadow: 0 4px 12px rgba(184, 160, 144, 0.25);
 }
 
 .modal-tab svg {
@@ -307,7 +307,7 @@ function getToolColor(idx: number) {
   padding: 20px;
   background: rgba(0, 0, 0, 0.03);
   border-radius: 16px;
-  border-left: 4px solid #8b5cf6;
+  border-left: 4px solid var(--sr-accent-star, #b8a090);
 }
 
 /* 元数据网格 */
@@ -338,12 +338,12 @@ function getToolColor(idx: number) {
 .meta-value {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .meta-value.code {
   font-family: 'JetBrains Mono', monospace;
-  color: #7c3aed;
+  color: var(--sr-morandi-purple, #b3a8b8);
 }
 
 /* 使用场景 */
@@ -354,7 +354,7 @@ function getToolColor(idx: number) {
   margin: 0 0 16px;
   font-size: 15px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .section-title svg {
@@ -410,7 +410,7 @@ function getToolColor(idx: number) {
   font-size: 13px;
   line-height: 1.7;
   color: #e2e8f0;
-  background: #1e293b;
+  background: var(--sr-text-primary, #1a1a2e);
   border-radius: 16px;
   overflow: auto;
   max-height: 400px;
@@ -441,8 +441,8 @@ function getToolColor(idx: number) {
 .tool-name {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
-  background: rgba(139, 92, 246, 0.1);
+  color: var(--sr-text-primary, #1a1a2e);
+  background: rgba(184, 160, 144, 0.1);
   padding: 4px 10px;
   border-radius: 6px;
 }
@@ -457,7 +457,7 @@ function getToolColor(idx: number) {
 
 .tool-desc {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   margin: 0;
 }
 

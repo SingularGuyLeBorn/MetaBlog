@@ -3,26 +3,21 @@
     <div class="toc-wrapper">
       <!-- Header -->
       <div class="toc-header">
-        <svg class="toc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="21" y1="10" x2="7" y2="10"/>
-          <line x1="21" y1="6" x2="3" y2="6"/>
-          <line x1="21" y1="14" x2="3" y2="14"/>
-          <line x1="21" y1="18" x2="7" y2="18"/>
-        </svg>
-        <span class="toc-title">页面导航</span>
+        <span class="header-icon">◈</span>
+        <span class="header-title">目录</span>
       </div>
 
       <!-- Navigation -->
       <nav v-if="localHeaders.length > 0" class="toc-nav" ref="navRef">
         <div 
-          v-for="header in localHeaders" 
+          v-for="(header, index) in localHeaders" 
           :key="header.slug"
-          class="toc-item"
+          class="toc-item fade-up"
           :class="{ 
             'is-active': activeHash === '#' + header.slug,
             [`is-level-${header.level}`]: true
           }"
-          :style="getItemStyle(header)"
+          :style="{ ...getItemStyle(header), transitionDelay: `${index * 30}ms` }"
         >
           <a 
             :href="'#' + header.slug" 
@@ -36,10 +31,8 @@
 
       <!-- Empty State -->
       <div v-else class="toc-empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M9 12h.01M15 12h.01M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z"/>
-        </svg>
-        <span>当前页面无目录</span>
+        <span class="empty-icon">◉</span>
+        <span>暂无目录</span>
       </div>
     </div>
   </aside>
@@ -60,17 +53,12 @@ const props = defineProps<{
 
 const emit = defineEmits(['item-click'])
 
-// Use local copy of headers to ensure reactivity
 const localHeaders = computed(() => props.headers || [])
-
 const activeHash = ref('')
 const navRef = ref<HTMLElement | null>(null)
-
-// Flag to temporarily disable scrollspy during programmatic scroll
 const isScrollingTo = ref(false)
 let scrollTimeout: ReturnType<typeof setTimeout> | null = null
 
-// Watch for header changes
 watch(() => props.headers, (newHeaders) => {
   nextTick(() => {
     if (!isScrollingTo.value) {
@@ -79,14 +67,11 @@ watch(() => props.headers, (newHeaders) => {
   })
 }, { immediate: true, deep: true })
 
-// Smooth scroll with offset for fixed header
 const scrollTo = (hash: string) => {
   const target = document.querySelector(decodeURIComponent(hash))
   if (target) {
-    // Disable scrollspy during programmatic scroll
     isScrollingTo.value = true
     
-    // Clear any existing timeout
     if (scrollTimeout) {
       clearTimeout(scrollTimeout)
     }
@@ -100,23 +85,18 @@ const scrollTo = (hash: string) => {
       behavior: 'smooth'
     })
     
-    // Immediately set active hash
     activeHash.value = hash
     history.pushState(null, '', hash)
     
-    // Re-enable scrollspy after scroll animation completes (smooth scroll ~300-500ms)
     scrollTimeout = setTimeout(() => {
       isScrollingTo.value = false
     }, 600)
     
-    // Emit event for drawer close
     emit('item-click')
   }
 }
 
-// Scrollspy
 const onScroll = () => {
-  // Skip if we're in the middle of a programmatic scroll
   if (isScrollingTo.value) return
   if (localHeaders.value.length === 0) return
   
@@ -140,10 +120,9 @@ const onScroll = () => {
   }
 }
 
-// Calculate indentation based on header level
 const getItemStyle = (header: Header) => {
   const basePadding = 12
-  const levelIndent = (header.level - 2) * 12
+  const levelIndent = (header.level - 2) * 10
   return {
     paddingLeft: (basePadding + levelIndent) + 'px'
   }
@@ -173,7 +152,7 @@ onUnmounted(() => {
 <style scoped>
 .toc-sidebar {
   height: 100%;
-  background: var(--vp-c-bg-alt, #fafafa);
+  background: transparent;
 }
 
 .toc-wrapper {
@@ -183,26 +162,28 @@ onUnmounted(() => {
   padding: 16px 0;
 }
 
-/* Header */
+/* Header - Minimalist */
 .toc-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 16px 12px;
+  padding: 0 20px 12px;
   margin-bottom: 8px;
-  border-bottom: 1px solid var(--vp-c-divider, #e8e8e8);
+  border-bottom: 1px solid var(--sr-glass-border);
 }
 
-.toc-icon {
-  width: 16px;
-  height: 16px;
-  color: var(--vp-c-text-3, #8c8c8c);
+.header-icon {
+  font-size: 12px;
+  color: var(--sr-morandi-purple);
+  opacity: 0.8;
 }
 
-.toc-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--vp-c-text-1, #262626);
+.header-title {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--sr-text-muted);
+  text-transform: uppercase;
 }
 
 /* Navigation */
@@ -210,75 +191,73 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 8px;
+  padding: 0 12px;
 }
 
 .toc-item {
   position: relative;
-  margin: 1px 0;
+  margin: 2px 0;
+  border-radius: var(--sr-radius-sm);
+  transition: background 0.2s ease;
 }
 
 .toc-item::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 0;
-  bottom: 0;
+  top: 50%;
+  transform: translateY(-50%);
   width: 2px;
-  background: transparent;
+  height: 0;
+  background: var(--sr-morandi-purple);
   border-radius: 0 2px 2px 0;
-  transition: background-color 200ms ease, border-color 200ms ease;
+  transition: height 0.2s var(--sr-spring-bounce);
 }
 
 .toc-item.is-active::before {
-  background: var(--vp-c-brand-1, #1677ff);
+  height: 60%;
 }
 
 .toc-item a {
   display: block;
-  padding: 5px 12px;
-  font-size: 13px;
+  padding: 6px 12px;
+  font-size: 12px;
   line-height: 1.5;
-  color: var(--vp-c-text-2, #595959);
+  color: var(--sr-text-muted);
   text-decoration: none;
-  border-radius: 4px;
-  transition: color 200ms ease, background-color 200ms ease;
-  
-  /* 语雀风格：单行省略，hover显示完整标题 */
+  border-radius: var(--sr-radius-sm);
+  transition: all 0.2s ease;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .toc-item a:hover {
-  color: var(--vp-c-text-1, #262626);
-  background: var(--vp-c-bg-soft, #f0f0f0);
-  /* hover时如果有足够空间可以展开，否则保持省略 */
-  white-space: nowrap;
+  color: var(--sr-text-secondary);
+  background: var(--sr-glass-bg);
 }
 
 .toc-item.is-active a {
-  color: var(--vp-c-brand-1, #1677ff);
-  background: var(--vp-c-brand-soft, rgba(22, 119, 255, 0.1));
+  color: var(--sr-text-primary);
+  background: var(--sr-glass-bg-hover);
   font-weight: 500;
-  white-space: nowrap;
 }
 
 /* Level styling */
 .toc-item.is-level-2 > a {
   font-weight: 500;
-  color: var(--vp-c-text-1, #262626);
+  color: var(--sr-text-secondary);
 }
 
 .toc-item.is-level-3 > a {
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .toc-item.is-level-4 > a,
 .toc-item.is-level-5 > a,
 .toc-item.is-level-6 > a {
-  font-size: 12px;
-  color: var(--vp-c-text-3, #8c8c8c);
+  font-size: 11px;
+  color: var(--sr-text-tertiary);
 }
 
 /* Empty State */
@@ -287,19 +266,14 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
-  color: var(--vp-c-text-3, #8c8c8c);
-  gap: 8px;
+  padding: 48px 20px;
+  color: var(--sr-text-muted);
+  gap: 12px;
 }
 
-.toc-empty svg {
-  width: 48px;
-  height: 48px;
-  opacity: 0.5;
-}
-
-.toc-empty span {
-  font-size: 13px;
+.empty-icon {
+  font-size: 28px;
+  opacity: 0.4;
 }
 
 /* Custom Scrollbar */
@@ -312,11 +286,11 @@ onUnmounted(() => {
 }
 
 .toc-nav::-webkit-scrollbar-thumb {
-  background: var(--vp-c-divider, #d9d9d9);
+  background: var(--sr-glass-border);
   border-radius: 2px;
 }
 
 .toc-nav::-webkit-scrollbar-thumb:hover {
-  background: var(--vp-c-text-3, #bfbfbf);
+  background: var(--sr-glass-border-strong);
 }
 </style>

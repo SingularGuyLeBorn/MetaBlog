@@ -33,7 +33,7 @@
     </div>
 
     <!-- 记忆列表 -->
-    <LiquidGlass class="list-glass" glow-color="#8b5cf6" :intensity="0.2">
+    <LiquidGlass class="list-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.2">
       <div class="memory-list-header">
         <h3>记忆条目</h3>
         <div class="list-actions">
@@ -46,7 +46,7 @@
               class="search-input"
             />
           </div>
-          <LiquidGlass glow-color="#ef4444" :intensity="0.3">
+          <LiquidGlass glow-color="var(--sr-morandi-pink, #d4b8b8)" :intensity="0.3">
             <button class="clear-btn" @click="clearAll">
               <Icon name="trash-2" />
               清空全部
@@ -89,7 +89,7 @@
 
     <!-- 导出按钮 -->
     <div class="export-section">
-      <LiquidGlass glow-color="#10b981" :intensity="0.3">
+      <LiquidGlass glow-color="var(--sr-morandi-green, #a8b3a8)" :intensity="0.3">
         <button class="export-btn" @click="exportMemories">
           <Icon name="download" />
           导出记忆数据
@@ -107,17 +107,17 @@ import LiquidGlass from '../../../shared/LiquidGlass.vue'
 const searchQuery = ref('')
 
 const stats = [
-  { id: 'total', label: '总记忆数', value: '128', icon: 'layers', gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', glowColor: '#8b5cf6' },
-  { id: 'agents', label: '涉及 Agents', value: '6', icon: 'users', gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)', glowColor: '#3b82f6' },
-  { id: 'size', label: '存储大小', value: '2.4MB', icon: 'hard-drive', gradient: 'linear-gradient(135deg, #10b981, #059669)', glowColor: '#10b981' },
+  { id: 'total', label: '总记忆数', value: '128', icon: 'layers', gradient: 'linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8))', glowColor: 'var(--sr-accent-star, #b8a090)' },
+  { id: 'agents', label: '涉及 Agents', value: '6', icon: 'users', gradient: 'linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), #2563eb)', glowColor: 'var(--sr-morandi-blue, #9daab8)' },
+  { id: 'size', label: '存储大小', value: '2.4MB', icon: 'hard-drive', gradient: 'linear-gradient(135deg, var(--sr-morandi-green, #a8b3a8), var(--sr-morandi-green, #a8b3a8))', glowColor: 'var(--sr-morandi-green, #a8b3a8)' },
   { id: 'today', label: '今日新增', value: '12', icon: 'trending-up', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', glowColor: '#f59e0b' }
 ]
 
 const memories = ref([
-  { id: '1', agentName: '代码助手', agentAvatar: '👨‍💻', agentColor: '#3b82f6', content: '用户偏好使用 TypeScript 和 Vue 3 组合式 API', time: '2小时前' },
+  { id: '1', agentName: '代码助手', agentAvatar: '👨‍💻', agentColor: 'var(--sr-morandi-blue, #9daab8)', content: '用户偏好使用 TypeScript 和 Vue 3 组合式 API', time: '2小时前' },
   { id: '2', agentName: '写作专家', agentAvatar: '✍️', agentColor: '#ec4899', content: '用户喜欢简洁明了的文风，避免冗长描述', time: '5小时前' },
-  { id: '3', agentName: '数据分析师', agentAvatar: '📊', agentColor: '#10b981', content: '用户经常请求 CSV 格式的数据导出', time: '昨天' },
-  { id: '4', agentName: '通用助手', agentAvatar: '🤖', agentColor: '#8b5cf6', content: '用户对 AI 伦理话题感兴趣，经常询问相关问题', time: '2天前' },
+  { id: '3', agentName: '数据分析师', agentAvatar: '📊', agentColor: 'var(--sr-morandi-green, #a8b3a8)', content: '用户经常请求 CSV 格式的数据导出', time: '昨天' },
+  { id: '4', agentName: '通用助手', agentAvatar: '🤖', agentColor: 'var(--sr-accent-star, #b8a090)', content: '用户对 AI 伦理话题感兴趣，经常询问相关问题', time: '2天前' },
 ])
 
 const filteredMemories = computed(() => {
@@ -179,20 +179,20 @@ function exportMemories() {
 .title-icon {
   width: 48px;
   height: 48px;
-  color: #8b5cf6;
+  color: var(--sr-accent-star, #b8a090);
 }
 
 .title-text {
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .title-desc {
   margin: 4px 0 0;
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 /* 统计网格 */
@@ -236,13 +236,13 @@ function exportMemories() {
 .stat-value {
   font-size: 24px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   margin-bottom: 2px;
 }
 
 .stat-label {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 /* 列表 */
@@ -263,7 +263,7 @@ function exportMemories() {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .list-actions {
@@ -293,14 +293,14 @@ function exportMemories() {
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 12px;
   font-size: 14px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
   transition: all 0.2s;
 }
 
 .search-input:hover,
 .search-input:focus {
   background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(139, 92, 246, 0.3);
+  border-color: rgba(184, 160, 144, 0.3);
   outline: none;
 }
 
@@ -309,10 +309,10 @@ function exportMemories() {
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(212, 184, 184, 0.1);
   border: none;
   border-radius: 10px;
-  color: #ef4444;
+  color: var(--sr-morandi-pink, #d4b8b8);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -320,7 +320,7 @@ function exportMemories() {
 }
 
 .clear-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(212, 184, 184, 0.2);
 }
 
 .clear-btn svg {
@@ -370,7 +370,7 @@ function exportMemories() {
 .memory-agent {
   font-weight: 600;
   font-size: 14px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #1a1a2e);
 }
 
 .memory-time {
@@ -381,7 +381,7 @@ function exportMemories() {
 .memory-text {
   margin: 0;
   font-size: 14px;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
   line-height: 1.5;
 }
 
@@ -405,8 +405,8 @@ function exportMemories() {
 }
 
 .delete-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: rgba(212, 184, 184, 0.1);
+  color: var(--sr-morandi-pink, #d4b8b8);
 }
 
 .delete-btn svg {
@@ -435,7 +435,7 @@ function exportMemories() {
   margin: 0 0 8px;
   font-size: 16px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .empty-state span {
@@ -453,7 +453,7 @@ function exportMemories() {
   align-items: center;
   gap: 8px;
   padding: 14px 28px;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, var(--sr-morandi-green, #a8b3a8), var(--sr-morandi-green, #a8b3a8));
   color: white;
   border: none;
   border-radius: 12px;
@@ -465,7 +465,7 @@ function exportMemories() {
 
 .export-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 20px rgba(168, 179, 168, 0.3);
 }
 
 .export-btn svg {

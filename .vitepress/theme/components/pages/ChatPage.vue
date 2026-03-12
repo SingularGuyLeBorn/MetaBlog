@@ -6,8 +6,8 @@
     <ClientOnly>
       <ChatLayout />
       <template #fallback>
-        <div class="loading-screen-3d">
-          <div class="spinner-3d"></div>
+        <div class="loading-screen">
+          <div class="spinner"></div>
           <p>加载中...</p>
         </div>
       </template>
@@ -25,25 +25,24 @@ import { ChatLayout } from '../ai-chat'
   overflow: hidden;
 }
 
-.loading-screen-3d {
+.loading-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
   gap: 20px;
-  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
-  color: #64748b;
+  background: var(--vp-c-bg, #f8f6f3);
+  color: var(--sr-text-muted, #94a3b8);
 }
 
-.spinner-3d {
-  width: 48px;
-  height: 48px;
-  border: 4px solid #e2e8f0;
-  border-top-color: #3b82f6;
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
+  border-top-color: var(--sr-accent-star, #b8a090);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
