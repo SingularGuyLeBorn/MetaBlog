@@ -606,7 +606,8 @@ onUnmounted(() => {
 
 .home-page-star-river {
   position: relative;
-  max-width: 1200px;
+  width: 95%;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 0 24px 80px;
 }

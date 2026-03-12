@@ -314,10 +314,10 @@ onMounted(() => {
 
 .resources-page {
   position: relative;
-  width: 90%;
-  max-width: 1600px;
+  width: 95%;
+  max-width: 1800px;
   margin: 0 auto;
-  padding: 80px 0;
+  padding: 80px 24px;
   min-height: 100vh;
 }
 

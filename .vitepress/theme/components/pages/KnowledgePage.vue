@@ -1,5 +1,17 @@
 <template>
   <div class="knowledge-page">
+    <!-- Floating Decorations -->
+    <div class="floating-shapes">
+      <div class="shape shape-1">◆</div>
+      <div class="shape shape-2">◇</div>
+      <div class="shape shape-3">◈</div>
+      <div class="shape shape-4">◎</div>
+      <div class="shape shape-5">✦</div>
+    </div>
+    
+    <!-- Background Grid -->
+    <div class="bg-grid"></div>
+    
     <!-- Hero Section — 极简 -->
     <section class="hero-section fade-up">
       <div class="hero-content">
@@ -369,17 +381,80 @@ onMounted(() => {
 
 .knowledge-page {
   position: relative;
-  width: 90%;
-  max-width: 1600px;
+  width: 95%;
+  max-width: 1800px;
   margin: 0 auto;
-  padding: 80px 0;
+  padding: 80px 24px;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Floating Shapes - Creative Decoration */
+.floating-shapes {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.shape {
+  position: absolute;
+  font-size: 24px;
+  color: var(--sr-accent-star);
+  opacity: 0.08;
+  animation: float-shape 20s ease-in-out infinite;
+}
+
+.shape-1 { top: 10%; left: 5%; animation-delay: 0s; }
+.shape-2 { top: 30%; right: 8%; animation-delay: -4s; font-size: 32px; }
+.shape-3 { top: 60%; left: 3%; animation-delay: -8s; font-size: 20px; }
+.shape-4 { top: 80%; right: 5%; animation-delay: -12s; font-size: 28px; }
+.shape-5 { top: 45%; left: 8%; animation-delay: -16s; font-size: 36px; }
+
+@keyframes float-shape {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.08;
+  }
+  25% {
+    transform: translateY(-30px) rotate(90deg);
+    opacity: 0.12;
+  }
+  50% {
+    transform: translateY(-15px) rotate(180deg);
+    opacity: 0.06;
+  }
+  75% {
+    transform: translateY(-40px) rotate(270deg);
+    opacity: 0.1;
+  }
+}
+
+/* Background Grid */
+.bg-grid {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(rgba(184, 160, 144, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(184, 160, 144, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Hero */
 .hero-section {
   text-align: center;
   padding: 40px 0 64px;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-badge {
@@ -423,6 +498,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 80px;
+  position: relative;
+  z-index: 1;
 }
 
 /* Section Headers */
@@ -554,12 +631,18 @@ onMounted(() => {
 }
 
 .topic-number {
-  font-size: 40px;
+  font-size: 48px;
   font-weight: 200;
-  color: var(--sr-text-tertiary);
+  color: var(--sr-accent-star);
   line-height: 1;
   flex-shrink: 0;
-  opacity: 0.5;
+  opacity: 0.3;
+  transition: all 0.4s var(--sr-spring-bounce);
+}
+
+.topic-card:hover .topic-number {
+  opacity: 0.6;
+  transform: scale(1.1);
 }
 
 .topic-content { flex: 1; display: flex; flex-direction: column; }
@@ -614,11 +697,11 @@ onMounted(() => {
   transform: translateX(4px);
 }
 
-/* Articles List */
+/* Articles List - Grid Layout */
 .articles-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px;
 }
 
 .article-card {

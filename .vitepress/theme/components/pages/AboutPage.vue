@@ -242,10 +242,10 @@ onMounted(() => {
 
 .about-page {
   position: relative;
-  width: 90%;
-  max-width: 1200px;
+  width: 95%;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 80px 0 60px;
+  padding: 80px 24px 60px;
 }
 
 /* Profile Hero */
