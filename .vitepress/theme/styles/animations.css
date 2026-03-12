@@ -1,6 +1,296 @@
-/**
- * 动画样式 - 已禁用所有动画
- * 保持简洁，无动效
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   Enhanced Interactive Animations
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-/* 所有动画已删除 */
+/* ===== 涟漪动画 ===== */
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ===== 扫描线动画 ===== */
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(1000%);
+    opacity: 0;
+  }
+}
+
+/* ===== 呼吸动画 ===== */
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+.breathe-animation {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+/* ===== 悬浮动画 ===== */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.float-animation {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ===== 闪烁光标 ===== */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.cursor-blink::after {
+  content: '|';
+  animation: blink 1s step-end infinite;
+  color: var(--sr-accent-star);
+}
+
+/* ===== 脉冲光环 ===== */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.pulse-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 2px solid var(--sr-accent-star);
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+/* ===== 抖动效果 ===== */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+.shake-animation {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* ===== 翻转效果 ===== */
+@keyframes flip {
+  0% {
+    transform: perspective(400px) rotateY(0);
+  }
+  100% {
+    transform: perspective(400px) rotateY(360deg);
+  }
+}
+
+.flip-animation {
+  animation: flip 0.6s ease-in-out;
+}
+
+/* ===== 弹性缩放 ===== */
+@keyframes elastic-scale {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.elastic-in {
+  animation: elastic-scale 0.6s var(--sr-spring-bounce);
+}
+
+/* ===== 渐变光晕扫过 ===== */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-effect {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* ===== 3D 翻转卡片 ===== */
+.flip-card {
+  perspective: 1000px;
+}
+
+.flip-card-inner {
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.flip-card:hover .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  backface-visibility: hidden;
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+
+/* ===== 磁性按钮增强 ===== */
+.magnetic-btn-enhanced {
+  transition: transform 0.3s var(--sr-spring-gentle);
+}
+
+.magnetic-btn-enhanced:hover {
+  transform: scale(1.05);
+}
+
+.magnetic-btn-enhanced:active {
+  transform: scale(0.98);
+}
+
+/* ===== 霓虹发光 ===== */
+@keyframes neon-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--sr-accent-star),
+                0 0 10px var(--sr-accent-star),
+                0 0 20px var(--sr-accent-star);
+  }
+  50% {
+    box-shadow: 0 0 10px var(--sr-accent-star),
+                0 0 20px var(--sr-accent-star),
+                0 0 40px var(--sr-accent-star);
+  }
+}
+
+.neon-glow {
+  animation: neon-glow 2s ease-in-out infinite;
+}
+
+/* ===== 鼠标轨迹粒子 ===== */
+.trail-particle {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--sr-accent-star) 0%, transparent 70%);
+  transition: opacity 0.3s ease;
+  z-index: 9998;
+}
+
+/* ===== 渐变边框动画 ===== */
+@keyframes gradient-border {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-border {
+  position: relative;
+  background: linear-gradient(var(--sr-bg-primary), var(--sr-bg-primary)) padding-box,
+              linear-gradient(45deg, var(--sr-morandi-purple), var(--sr-morandi-blue), var(--sr-morandi-green), var(--sr-morandi-orange)) border-box;
+  border: 2px solid transparent;
+  background-size: 200% 200%;
+  animation: gradient-border 4s ease infinite;
+}
+
+/* ===== 打字机光标 ===== */
+.typewriter-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--sr-accent-star);
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+  vertical-align: middle;
+}
+
+/* ===== 数字滚动 ===== */
+.count-up-number {
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s ease;
+}
+
+/* ===== 悬停上浮 ===== */
+.hover-lift {
+  transition: transform 0.3s var(--sr-spring-gentle), box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== 波纹背景 ===== */
+@keyframes wave {
+  0% {
+    transform: translateX(0) translateZ(0) scaleY(1);
+  }
+  50% {
+    transform: translateX(-25%) translateZ(0) scaleY(0.55);
+  }
+  100% {
+    transform: translateX(-50%) translateZ(0) scaleY(1);
+  }
+}
+
+.wave-bg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 100px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23b8a090' fill-opacity='0.1' d='M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+  animation: wave 10s linear infinite;
+  pointer-events: none;
+}

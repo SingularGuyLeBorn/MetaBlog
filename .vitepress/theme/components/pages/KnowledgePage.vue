@@ -15,17 +15,17 @@
           系统化的知识整理，从理论到实践，构建完整的学习路径
         </p>
 
-        <!-- Stats -->
+        <!-- Stats with Animation -->
         <div class="hero-stats">
-          <div class="stat-card glass-card scale-in" style="transition-delay: 0.1s">
-            <span class="stat-num">{{ topics.length + 1 }}</span>
+          <div class="stat-card glass-card tilt-card scale-in" style="transition-delay: 0.1s">
+            <span class="stat-num count-up-number">{{ topicCountAnim.current.value }}</span>
             <span class="stat-label">核心专题</span>
           </div>
-          <div class="stat-card glass-card scale-in" style="transition-delay: 0.2s">
-            <span class="stat-num">{{ articles.length }}</span>
+          <div class="stat-card glass-card tilt-card scale-in" style="transition-delay: 0.2s">
+            <span class="stat-num count-up-number">{{ articleCountAnim.current.value }}</span>
             <span class="stat-label">知识节点</span>
           </div>
-          <div class="stat-card glass-card scale-in" style="transition-delay: 0.3s">
+          <div class="stat-card glass-card tilt-card scale-in breathe-animation" style="transition-delay: 0.3s">
             <span class="stat-num">∞</span>
             <span class="stat-label">探索深度</span>
           </div>
@@ -43,7 +43,7 @@
           <p class="section-desc sr-body">从测度论、概率论的角度深入理解强化学习，建立严格的数学框架</p>
         </div>
         
-        <a href="./rl-math-principle/" class="featured-card glass-card glass-card-hover magnetic-btn">
+        <a href="./rl-math-principle/" class="featured-card glass-card glass-card-hover tilt-card magnetic-btn">
           <div class="featured-visual">
             <div class="visual-icon">📐</div>
           </div>
@@ -85,7 +85,7 @@
             v-for="(topic, index) in topics" 
             :key="topic.title" 
             :href="topic.link"
-            class="topic-card glass-card glass-card-hover fade-up"
+            class="topic-card glass-card glass-card-hover tilt-card fade-up"
             :style="{ transitionDelay: `${index * 0.1}s` }"
           >
             <div class="topic-number">0{{ index + 1 }}</div>
@@ -126,7 +126,7 @@
             v-for="(article, index) in articles" 
             :key="article.title" 
             :href="article.link"
-            class="article-card glass-card micro-interaction fade-up"
+            class="article-card glass-card tilt-card micro-interaction fade-up"
             :style="{ transitionDelay: `${index * 60}ms` }"
           >
             <div class="article-marker" :class="article.badgeClass"></div>
@@ -152,6 +152,9 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, nextTick, ref, computed } from 'vue'
+import { useInteractiveEffects, useCountUp } from '../../composables/useInteractiveEffects'
+
 interface Topic {
   icon: string
   title: string
@@ -233,6 +236,22 @@ const articles: Article[] = [
     path: '01_Bellman_Equation / 01_Theory_Derivation'
   }
 ]
+
+// Count up animations
+const topicsCount = computed(() => topics.length + 1)
+const articlesCount = computed(() => articles.length)
+const topicCountAnim = useCountUp(topicsCount.value, 1500)
+const articleCountAnim = useCountUp(articlesCount.value, 1500)
+
+onMounted(() => {
+  nextTick(() => {
+    useInteractiveEffects()
+    setTimeout(() => {
+      topicCountAnim.start()
+      articleCountAnim.start()
+    }, 300)
+  })
+})
 </script>
 
 <style scoped>

@@ -15,17 +15,17 @@
           深入的技术文章与学习思考，探索编程与人工智能的无限可能
         </p>
 
-        <!-- Stats — Glass Cards -->
+        <!-- Stats — Glass Cards with Animation -->
         <div class="hero-stats">
-          <div class="stat-card glass-card scale-in" style="transition-delay: 0.1s">
-            <span class="stat-num">{{ posts.length }}</span>
+          <div class="stat-card glass-card tilt-card scale-in" style="transition-delay: 0.1s">
+            <span class="stat-num count-up-number">{{ postCountAnim.current.value }}</span>
             <span class="stat-label">篇文章</span>
           </div>
-          <div class="stat-card glass-card scale-in" style="transition-delay: 0.2s">
-            <span class="stat-num">{{ uniqueTags }}</span>
+          <div class="stat-card glass-card tilt-card scale-in" style="transition-delay: 0.2s">
+            <span class="stat-num count-up-number">{{ tagCountAnim.current.value }}</span>
             <span class="stat-label">个分类</span>
           </div>
-          <div class="stat-card glass-card scale-in" style="transition-delay: 0.3s">
+          <div class="stat-card glass-card tilt-card scale-in breathe-animation" style="transition-delay: 0.3s">
             <span class="stat-num">2024</span>
             <span class="stat-label">持续更新</span>
           </div>
@@ -50,10 +50,10 @@
         <button 
           v-for="(tab, index) in filterTabs" 
           :key="tab.value"
-          class="filter-tab neu-btn magnetic-btn"
+          class="filter-tab neu-btn magnetic-btn ripple-btn"
           :class="{ active: currentFilter === tab.value }"
           :style="{ animationDelay: `${index * 0.05}s` }"
-          @click="currentFilter = tab.value"
+          @click="switchFilter(tab.value)"
         >
           <span class="tab-icon">{{ tab.icon }}</span>
           <span class="tab-text">{{ tab.label }}</span>
@@ -67,7 +67,8 @@
         <article 
           v-for="(post, index) in filteredPosts" 
           :key="post.title" 
-          class="post-card glass-card glass-card-hover fade-up"
+          class="post-card glass-card glass-card-hover tilt-card fade-up"
+          :class="{ 'post-exit': isSwitching }"
           :style="{ transitionDelay: `${index * 0.08}s` }"
         >
           <a :href="post.link" class="post-link">
@@ -110,7 +111,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { useInteractiveEffects, useCountUp } from '../../composables/useInteractiveEffects'
 
 interface Post {
   title: string
@@ -186,10 +188,35 @@ const uniqueTags = computed(() => {
   return new Set(posts.map(p => p.tag)).size
 })
 
+// 数字滚动
+const postCountAnim = useCountUp(posts.length, 1500)
+const tagCountAnim = useCountUp(uniqueTags.value, 1500)
+
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr)
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
 }
+
+// 切换过滤器动画
+const isSwitching = ref(false)
+const switchFilter = (value: string) => {
+  if (currentFilter.value === value) return
+  isSwitching.value = true
+  setTimeout(() => {
+    currentFilter.value = value
+    isSwitching.value = false
+  }, 200)
+}
+
+onMounted(() => {
+  nextTick(() => {
+    useInteractiveEffects()
+    setTimeout(() => {
+      postCountAnim.start()
+      tagCountAnim.start()
+    }, 300)
+  })
+})
 </script>
 
 <style scoped>
@@ -391,6 +418,17 @@ function formatDate(dateStr: string): string {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
   gap: var(--sr-space-md);
+}
+
+.post-exit {
+  animation: postExit 0.2s ease forwards;
+}
+
+@keyframes postExit {
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
 }
 
 .post-card {

@@ -39,7 +39,7 @@
         这个博客是我构建的<strong>数字孪生级知识管理系统</strong>，用来记录学习、整理思考、分享见解。
       </p>
       
-      <div class="quote-box glass-card">
+      <div class="quote-box glass-card tilt-card scanline-effect">
         <span class="quote-mark">"</span>
         <blockquote>构建第二大脑，让知识流动起来。</blockquote>
         <span class="quote-mark">"</span>
@@ -90,7 +90,7 @@
           v-for="(contact, index) in contacts" 
           :key="contact.title" 
           :href="contact.link" 
-          class="contact-card glass-card glass-card-hover magnetic-btn"
+          class="contact-card glass-card glass-card-hover tilt-card magnetic-btn"
           :style="{ transitionDelay: `${index * 80}ms` }"
         >
           <div class="contact-icon">{{ contact.icon }}</div>
@@ -110,6 +110,9 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, nextTick } from 'vue'
+import { useInteractiveEffects, useCountUp } from '../../composables/useInteractiveEffects'
+
 const skills = ['PyTorch', 'Transformers', 'LLM', 'RLHF', 'Vue 3', 'React', 'TypeScript', 'Tailwind', 'Python', 'Node.js', 'PostgreSQL', 'Redis', 'Docker']
 
 const tagColors = ['sr-tag-morandi-purple', 'sr-tag-morandi-blue', 'sr-tag-morandi-green', 'sr-tag-morandi-pink']
@@ -126,6 +129,12 @@ const contacts = [
   { icon: '🐙', title: 'GitHub', value: '@metauniverse', link: 'https://github.com' },
   { icon: '💬', title: '微信', value: 'metauniverse', link: '#' }
 ]
+
+onMounted(() => {
+  nextTick(() => {
+    useInteractiveEffects()
+  })
+})
 </script>
 
 <style scoped>

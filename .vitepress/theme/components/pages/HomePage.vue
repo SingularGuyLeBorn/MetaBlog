@@ -41,16 +41,17 @@
         <div class="orb orb-3"></div>
       </div>
       
-      <!-- Stats - Glass Cards -->
+      <!-- Stats - Glass Cards with Count Up -->
       <div class="hero-stats" :class="{ 'visible': isLoaded }">
         <div 
           v-for="(stat, i) in stats" 
           :key="stat.label" 
-          class="stat-card glass-card glass-card-hover scale-in"
+          class="stat-card glass-card glass-card-hover tilt-card scale-in"
           :style="{ transitionDelay: `${0.4 + i * 0.1}s` }"
         >
           <span class="stat-icon">{{ stat.icon }}</span>
-          <span class="stat-num">{{ stat.num }}</span>
+          <span class="stat-num count-up-number">{{ statValues[i]?.current.value || stat.num }}</span>
+          <span class="stat-suffix">{{ stat.suffix }}</span>
           <span class="stat-label">{{ stat.label }}</span>
         </div>
       </div>
@@ -95,7 +96,7 @@
             v-for="(feature, index) in features" 
             :key="feature.title"
             :href="feature.link"
-            class="feature-card glass-card glass-card-hover fade-up"
+            class="feature-card glass-card glass-card-hover tilt-card fade-up"
             :class="{ 'visible': featuresVisible }"
             :style="{ transitionDelay: `${index * 80}ms` }"
           >
@@ -259,7 +260,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { useInteractiveEffects, useCountUp } from '../../composables/useInteractiveEffects'
 
 // Loading state
 const isLoaded = ref(false)
@@ -299,11 +301,11 @@ const techStack3 = [
   'Rust', 'Go', 'WebAssembly', 'OpenAI', 'Anthropic', 'Gemini'
 ]
 
-// Stats data
+// Stats data (for count up animation)
 const stats = [
-  { num: '200+', label: '知识节点', icon: '◈' },
-  { num: '20+', label: '技术文章', icon: '◎' },
-  { num: '10K+', label: '总阅读', icon: '✦' }
+  { num: 200, suffix: '+', label: '知识节点', icon: '◈' },
+  { num: 20, suffix: '+', label: '技术文章', icon: '◎' },
+  { num: 10000, suffix: '+', label: '总阅读', icon: '✦' }
 ]
 
 // Features data
@@ -403,12 +405,29 @@ const observeSection = (selector: string, ref: { value: boolean }) => {
   }
 }
 
+// 数字滚动动画
+const statValues = [
+  useCountUp(200, 2000),
+  useCountUp(20, 2000),
+  useCountUp(10000, 2500)
+]
+
 onMounted(() => {
   requestAnimationFrame(() => { isLoaded.value = true })
   observeSection('.features-section', featuresVisible)
   observeSection('.community-section', communityVisible)
   observeSection('.highlights-section', highlightsVisible)
   observeSection('.recent-section', recentVisible)
+  
+  // 初始化数字滚动
+  nextTick(() => {
+    setTimeout(() => {
+      statValues.forEach(s => s.start())
+    }, 500)
+  })
+  
+  // 初始化交互效果
+  useInteractiveEffects()
 })
 
 onUnmounted(() => {
@@ -578,6 +597,14 @@ onUnmounted(() => {
   font-size: 32px;
   font-weight: 200;
   color: var(--sr-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-suffix {
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--sr-accent-star);
+  margin-left: 2px;
   letter-spacing: -0.02em;
 }
 

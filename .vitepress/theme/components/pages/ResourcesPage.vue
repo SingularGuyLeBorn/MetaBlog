@@ -16,11 +16,12 @@
         </p>
 
         <div class="hero-stats">
-          <div class="stat-pill glass-card scale-in" style="transition-delay: 0.1s">
+          <div class="stat-pill glass-card tilt-card scale-in" style="transition-delay: 0.1s">
             <span>📁</span>
-            <span>{{ resources.length }} 个资源</span>
+            <span class="count-up-number">{{ resourceCountAnim.current.value }}</span>
+            <span>个资源</span>
           </div>
-          <div class="stat-pill glass-card scale-in" style="transition-delay: 0.2s">
+          <div class="stat-pill glass-card tilt-card scale-in breathe-animation" style="transition-delay: 0.2s">
             <span>🌟</span>
             <span>持续更新</span>
           </div>
@@ -34,9 +35,9 @@
         <button 
           v-for="(filter, index) in filters" 
           :key="filter.value"
-          class="filter-tag neu-btn magnetic-btn"
+          class="filter-tag neu-btn magnetic-btn ripple-btn"
           :class="{ active: currentFilter === filter.value }"
-          @click="currentFilter = filter.value"
+          @click="switchFilter(filter.value)"
         >
           <span class="filter-icon">{{ filter.icon }}</span>
           {{ filter.label }}
@@ -51,7 +52,8 @@
           v-for="(resource, index) in filteredResources" 
           :key="resource.title"
           :href="resource.link"
-          class="resource-card glass-card glass-card-hover fade-up"
+          class="resource-card glass-card glass-card-hover tilt-card fade-up"
+          :class="{ 'resource-exit': isSwitching }"
           :style="{ transitionDelay: `${index * 0.08}s` }"
         >
           <!-- Card Header -->
@@ -110,7 +112,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { useInteractiveEffects, useCountUp } from '../../composables/useInteractiveEffects'
 
 interface Resource {
   title: string
@@ -181,6 +184,29 @@ const currentFilter = ref('all')
 const filteredResources = computed(() => {
   if (currentFilter.value === 'all') return resources
   return resources.filter(r => r.typeClass === currentFilter.value)
+})
+
+// Count up animation
+const resourceCountAnim = useCountUp(resources.length, 1500)
+
+// Switch filter with animation
+const isSwitching = ref(false)
+const switchFilter = (value: string) => {
+  if (currentFilter.value === value) return
+  isSwitching.value = true
+  setTimeout(() => {
+    currentFilter.value = value
+    isSwitching.value = false
+  }, 200)
+}
+
+onMounted(() => {
+  nextTick(() => {
+    useInteractiveEffects()
+    setTimeout(() => {
+      resourceCountAnim.start()
+    }, 300)
+  })
 })
 </script>
 
@@ -392,6 +418,18 @@ const filteredResources = computed(() => {
 .resource-list-leave-to {
   opacity: 0;
   transform: translateY(20px);
+}
+
+/* Filter Switch Animation */
+.resource-exit {
+  animation: resourceExit 0.2s ease forwards;
+}
+
+@keyframes resourceExit {
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
 }
 
 /* Empty State */
