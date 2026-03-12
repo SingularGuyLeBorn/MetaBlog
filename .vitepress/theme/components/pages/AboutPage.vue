@@ -168,7 +168,7 @@
 
 <script setup lang="ts">
 import { onMounted, nextTick } from 'vue'
-import { useInteractiveEffects, useCountUp } from '../../composables/useInteractiveEffects'
+import { initInteractiveEffects, useCountUp } from '../../composables/useInteractiveEffects'
 
 const skills = ['PyTorch', 'Transformers', 'LLM', 'RLHF', 'Vue 3', 'React', 'TypeScript', 'Tailwind', 'Python', 'Node.js', 'PostgreSQL', 'Redis', 'Docker']
 
@@ -230,7 +230,7 @@ const interests = [
 
 onMounted(() => {
   nextTick(() => {
-    useInteractiveEffects()
+    initInteractiveEffects()
   })
 })
 </script>

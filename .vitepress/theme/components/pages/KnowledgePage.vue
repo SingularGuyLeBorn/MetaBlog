@@ -233,7 +233,7 @@
 
 <script setup lang="ts">
 import { onMounted, nextTick, ref, computed } from 'vue'
-import { useInteractiveEffects } from '../../composables/useInteractiveEffects'
+import { initInteractiveEffects } from '../../composables/useInteractiveEffects'
 import ArmorTransform from '../effects/ArmorTransform.vue'
 import DragonPhoenix from '../effects/DragonPhoenix.vue'
 
@@ -384,7 +384,7 @@ const onTransformComplete = () => {
 
 onMounted(() => {
   nextTick(() => {
-    useInteractiveEffects()
+    initInteractiveEffects()
     // 5秒后自动隐藏合体动画
     setTimeout(() => {
       showTransform.value = false

@@ -346,7 +346,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import { useInteractiveEffects } from '../../composables/useInteractiveEffects'
+import { initInteractiveEffects } from '../../composables/useInteractiveEffects'
 
 // Loading state
 const isLoaded = ref(false)

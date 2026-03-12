@@ -175,7 +175,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { useInteractiveEffects } from '../../composables/useInteractiveEffects'
+import { initInteractiveEffects } from '../../composables/useInteractiveEffects'
 
 interface Resource {
   title: string
@@ -302,7 +302,7 @@ const switchFilter = (value: string) => {
 
 onMounted(() => {
   nextTick(() => {
-    useInteractiveEffects()
+    initInteractiveEffects()
   })
 })
 </script>
