@@ -18,7 +18,7 @@
         <!-- Stats -->
         <div class="hero-stats">
           <div class="stat-card glass-card tilt-card scale-in" style="transition-delay: 0.1s">
-            <span class="stat-num">{{ topics.length + 1 }}</span>
+            <span class="stat-num">{{ dynamicTopics.length + 1 }}</span>
             <span class="stat-label">核心专题</span>
           </div>
           <div class="stat-card glass-card tilt-card scale-in" style="transition-delay: 0.2s">
@@ -70,37 +70,37 @@
         </a>
       </section>
 
-      <!-- Sub Topics Grid -->
+      <!-- Sub Topics List -->
       <section class="topics-section fade-up">
         <div class="section-header-row">
           <h2 class="section-title-sm">
             <span class="title-icon">🎯</span>
             子专题
           </h2>
-          <span class="sr-tag">{{ topics.length }} 个专题</span>
+          <span class="sr-tag">{{ dynamicTopics.length }} 个专题</span>
         </div>
         
-        <div class="topics-grid sr-grid sr-grid-3">
+        <div class="topics-list">
           <a 
-            v-for="(topic, index) in topics" 
+            v-for="(topic, index) in dynamicTopics" 
             :key="topic.title" 
             :href="topic.link"
-            class="topic-card glass-card glass-card-hover tilt-card fade-up"
-            :style="{ transitionDelay: `${index * 0.1}s` }"
+            class="topic-card-wide glass-card glass-card-hover fade-up"
+            :style="{ transitionDelay: `${index * 0.05}s` }"
           >
-            <div class="topic-number">0{{ index + 1 }}</div>
-            <div class="topic-content">
-              <div class="topic-icon-wrapper">
-                <span class="topic-icon">{{ topic.icon }}</span>
-              </div>
-              <h4 class="topic-title">{{ topic.title }}</h4>
-              <p class="topic-desc">{{ topic.desc }}</p>
-              <div class="topic-footer">
-                <span class="sr-tag sr-tag-morandi-purple">{{ topic.count }} 篇文章</span>
-                <svg class="topic-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
+            <div class="topic-card-index">{{ String(index + 1).padStart(2, '0') }}</div>
+            <div class="topic-card-icon">{{ topic.icon }}</div>
+            <div class="topic-card-content">
+              <h4 class="topic-card-title">{{ topic.title }}</h4>
+              <p class="topic-card-desc">{{ topic.desc }}</p>
+            </div>
+            <div class="topic-card-meta">
+              <span class="topic-count">{{ topic.count }} 篇文章</span>
+            </div>
+            <div class="topic-card-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
           </a>
         </div>
@@ -214,7 +214,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, nextTick, ref, computed } from 'vue'
+import { onMounted, nextTick, computed } from 'vue'
+import { useData } from 'vitepress'
 
 interface Topic {
   icon: string
@@ -239,29 +240,31 @@ const tagColorMap: Record<string, string> = {
   practice: 'green'
 }
 
-const topics: Topic[] = [
-  {
-    icon: '📊',
-    title: 'Foundations',
-    desc: '测度论基础、理论推导、Python实现',
-    count: 4,
-    link: './rl-math-principle/00_Foundations/01_Theory_Derivation'
-  },
-  {
-    icon: '🎯',
-    title: 'Bellman Equation',
-    desc: '贝尔曼最优性原理与动态规划',
-    count: 4,
-    link: './rl-math-principle/01_Bellman_Equation/01_Theory_Derivation'
-  },
-  {
-    icon: '🚀',
-    title: 'Policy Gradient',
-    desc: '策略梯度方法与优化算法',
-    count: 4,
-    link: './rl-math-principle/02_Policy_Gradient/01_Theory_Derivation'
-  }
-]
+const { theme } = useData()
+
+const defaultIconsList = ['📊', '🎯', '🚀', '💡', '🔬', '🎨', '⚙️', '💻', '🔍', '📖']
+
+const dynamicTopics = computed<Topic[]>(() => {
+  const sidebarNodes = theme.value.sidebar['/sections/knowledge/'] || []
+  
+  return sidebarNodes.map((node: any, index: number) => {
+    // node 是 toSidebarFormat 返回的对象
+    const itemsCount = node.items ? node.items.length : 0
+    let link = node.link || '#'
+    // 如果顶级节点没有 link 但有子节点，取第一个子节点的 link
+    if ((!link || link === '#') && node.items && node.items.length > 0) {
+      link = node.items[0].link
+    }
+    
+    return {
+      icon: defaultIconsList[index % defaultIconsList.length],
+      title: node.text,
+      desc: node.description || '暂无简介',
+      count: itemsCount,
+      link: link
+    }
+  })
+})
 
 const articles: Article[] = [
   {
@@ -624,79 +627,102 @@ onMounted(() => {
 
 .meta-arrow svg { width: 16px; height: 16px; }
 
-/* Topics Grid */
-.topic-card {
+/* Topics List - 纵向宽卡片 */
+.topics-list {
   display: flex;
-  gap: 20px;
-  padding: 28px !important;
-  text-decoration: none;
-  color: inherit;
-  overflow: hidden;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.topic-number {
-  font-size: 48px;
+.topic-card-wide {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 28px !important;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+}
+
+.topic-card-wide:hover {
+  transform: translateX(4px);
+}
+
+.topic-card-index {
+  font-size: 36px;
   font-weight: 200;
   color: var(--sr-accent-star);
   line-height: 1;
-  flex-shrink: 0;
+  font-family: 'SF Mono', monospace;
+  min-width: 60px;
   opacity: 0.3;
-  transition: all 0.4s var(--sr-spring-bounce);
+  transition: all 0.3s ease;
 }
 
-.topic-card:hover .topic-number {
+.topic-card-wide:hover .topic-card-index {
   opacity: 0.6;
-  transform: scale(1.1);
 }
 
-.topic-content { flex: 1; display: flex; flex-direction: column; }
-
-.topic-icon-wrapper {
-  width: 44px;
-  height: 44px;
-  background: var(--sr-glass-bg);
-  border-radius: var(--sr-radius-md);
-  border: 1px solid var(--sr-glass-border);
+.topic-card-icon {
+  font-size: 40px;
+  min-width: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 14px;
-  transition: transform 0.3s var(--sr-spring-bounce);
 }
 
-.topic-card:hover .topic-icon-wrapper { transform: scale(1.08); }
-.topic-icon { font-size: 22px; }
+.topic-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
 
-.topic-title {
+.topic-card-title {
   font-family: var(--sr-font-primary);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--sr-text-primary);
-  margin: 0 0 6px;
+  margin: 0;
+  line-height: 1.4;
 }
 
-.topic-desc {
+.topic-card-desc {
+  font-size: 14px;
+  color: var(--sr-text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.topic-card-meta {
+  display: flex;
+  align-items: center;
+  padding-left: 20px;
+  border-left: 1px solid var(--sr-glass-border);
+  min-width: 100px;
+}
+
+.topic-count {
+  padding: 8px 16px;
+  background: var(--sr-glass-bg);
+  border: 1px solid var(--sr-glass-border);
+  border-radius: 20px;
   font-size: 13px;
   color: var(--sr-text-secondary);
-  margin: 0 0 16px;
-  line-height: 1.6;
-  flex: 1;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.topic-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.topic-arrow {
-  width: 18px;
-  height: 18px;
+.topic-card-arrow {
+  width: 24px;
+  height: 24px;
   color: var(--sr-text-tertiary);
-  transition: all 0.3s var(--sr-spring-bounce);
+  margin-left: 16px;
+  transition: all 0.3s ease;
 }
 
-.topic-card:hover .topic-arrow {
+.topic-card-wide:hover .topic-card-arrow {
   color: var(--sr-accent-star);
   transform: translateX(4px);
 }
