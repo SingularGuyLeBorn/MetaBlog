@@ -1,87 +1,49 @@
 /**
  * AI Chat - 智能对话系统
  * 
- * 目录结构：
- * - core/       核心逻辑（composables, services, types）
- * - modules/    功能模块（agent, chat）
- * - ui/         通用 UI 组件
- * - styles/     样式文件
- * - layouts/    布局组件
+ * 新目录结构：
+ * - api/        API 和服务
+ * - components/ UI 组件
+ * - stores/     状态管理
+ * - tools/      工具系统
+ * - types/      类型定义
+ * - utils/      工具函数
  */
 
-// ===== Core =====
-export * from './core/composables'
-export * from './core/services'
+// ===== API =====
+export * from './api/services'
+export * from './api/providers/types'
+export { DeepSeekProvider } from './api/providers/DeepSeekProvider'
+export { BaseProvider } from './api/providers/BaseProvider'
+export * from './api/providers/models'
 
-// ===== Core Types =====
-export type {
-  MessageRole,
-  MessageStatus,
-  ModelType,
-  ReasoningContent,
-  MessageAttachment,
-  TokenUsage,
-  MessageMetadata,
-  MessageVersion,
-  ChatMessage,
-  MessageGroup,
-  SessionConfig,
-  SessionStats,
-  ChatSession,
-  GroupedSessions,
-  DeepSeekRequest,
-  DeepSeekStreamChunk,
-  StreamCallbacks,
-  ChatState,
-  PersistedData,
-  PersistedDataV2,
-  StreamState,
-  LogLevel,
-  LogEntry
-} from './core/types'
+// ===== Stores =====
+export * from './stores'
 
-// ===== Core Types（新统一 Agent 类型） =====
-export type {
-  Agent,
-  AgentLevel,
-  AgentStatus,
-  AgentCapabilities,
-  AgentConfigMode,
-  AgentCreateParams,
-  AgentUpdateParams,
-  Skill,
-  SkillCategory,
-  SkillCreateParams,
-  Tool,
-  CapabilityGraph,
-  CapabilityNode
-} from './core/types/agent'
+// ===== Tools =====
+export * from './tools'
 
-// ===== Modules - Agent =====
-// 注意：CapabilityGraph 已经包含在下面的导出中
-export { 
-  AgentConfig,
-  AgentAdmin, 
+// ===== Types =====
+export * from './types'
+
+// ===== Utils =====
+export * from './utils'
+
+// ===== Components =====
+// Chat 组件
+export { default as ChatLayout } from './components/chat/ChatLayout.vue'
+export { default as ChatInput } from './components/chat/ChatInput.vue'
+export { default as MessageList } from './components/chat/MessageList.vue'
+export { default as MessageBubble } from './components/chat/MessageBubble.vue'
+export { default as SessionPanel } from './components/chat/SessionPanel.vue'
+export { default as SessionManager } from './components/chat/SessionManager.vue'
+export { default as SettingsPanel } from './components/chat/SettingsPanel.vue'
+
+// Agent 组件
+export {
+  AgentAdmin,
+  AgentCard,
   AgentConfigPanel,
-  AgentHome,
-  AgentCard, 
   AgentDetail,
-  SkillManager, 
-  SkillEditor, 
-  SkillPreview, 
-  SkillImport,
-  MemoryManager,
-  ToolsManager
-} from './modules/agent'
-
-// ===== Modules - Chat =====
-export { SessionPanel } from './modules/chat/session'
-export { MessageList, MessageBubble, MessageVersions } from './modules/chat/messages'
-export { ChatInput } from './modules/chat/input'
-export { SettingsPanel } from './modules/chat/settings'
-
-// ===== Layouts =====
-export { default as ChatLayout } from './layouts/ChatLayout.vue'
-
-// ===== UI =====
-export * from './ui'
+  SkillsPanel
+} from './components/agent'
