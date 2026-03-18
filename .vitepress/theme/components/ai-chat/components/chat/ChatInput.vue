@@ -214,8 +214,8 @@
 import { ref, computed, watch } from 'vue'
 import { Icon } from '../../../ui'
 import MentionInput, { type Mention } from '../../../ui/MentionInput.vue'
-import type { Skill } from '../../../core/types/agent'
-import type { MessageAttachment } from '../../../core/types'
+import type { Skill } from '../../types/agent'
+import type { MessageAttachment } from '../../types/chat'
 import { 
   detectMediaType, 
   isSupportedFile, 
@@ -223,7 +223,7 @@ import {
   getVideoInfo,
   formatFileSize,
   formatDuration 
-} from '../../../core/services/multimediaService'
+} from '../../api/services/multimediaService'
 
 const props = defineProps<{
   modelValue: string
@@ -465,7 +465,8 @@ async function handleSend() {
     
     for (const mention of currentMentions.value) {
       try {
-        const response = await fetch(`/api/files/read?path=${encodeURI('sections/' + mention.path)}`)
+        // 从 docs 目录读取文章
+        const response = await fetch(`/api/files/read?path=${encodeURI('docs/' + mention.path)}`)
         if (response.ok) {
           const content = await response.text()
           references.push(`<reference title="${mention.title}" path="${mention.path}">\n${content}\n</reference>`)
