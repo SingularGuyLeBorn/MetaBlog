@@ -991,3 +991,31 @@ export function useSkills() {
     matchSkills
   }
 }
+
+// ==================== Progressive Disclosure Export ====================
+// 导出渐进式披露相关函数（从 skillLoader.ts 导入）
+export {
+  useSkillLoader,
+  parseSkillLoadRequests,
+  removeSkillLoadMarkers,
+  buildProgressiveSystemPrompt,
+  loadSkillContent,
+  getGlobalActiveSkills,
+  setGlobalActiveSkills,
+  addGlobalActiveSkill,
+  type SkillMetadata,
+  type ActiveSkill
+} from './skillLoader'
+
+/**
+ * 构建渐进式披露的系统提示词
+ * 
+ * 使用方式：
+ * ```ts
+ * const { buildSystemPrompt, processSkillLoadRequests } = useSkillLoader(skills.value)
+ * const systemPrompt = buildSystemPrompt('你是一个AI助手')
+ * 
+ * // AI 回复后处理
+ * const { processedResponse, loadedSkills } = await processSkillLoadRequests(aiResponse)
+ * ```
+ */
