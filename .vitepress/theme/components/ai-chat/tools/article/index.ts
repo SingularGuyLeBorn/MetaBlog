@@ -6,7 +6,7 @@
 // 导出执行器
 export {
   createArticle,
-  getArticleContent,
+  getArticle,
   updateArticle,
   deleteArticle,
   listArticles,
@@ -16,13 +16,11 @@ export {
 // 导出定义
 export {
   createArticleDef,
-  getArticleContentDef,
+  getArticleDef,
   updateArticleDef,
   deleteArticleDef,
   listArticlesDef,
-  searchArticlesDef,
-  articleToolDefinitions,
-  articleToolNames
+  searchArticlesDef
 } from './definitions'
 
 // 导出类型

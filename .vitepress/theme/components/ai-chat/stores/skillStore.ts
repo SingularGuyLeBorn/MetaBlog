@@ -378,6 +378,58 @@ const BUILTIN_SKILLS: Skill[] = [
     enabled: true,
     createdAt: Date.now(),
     updatedAt: Date.now()
+  },
+  {
+    id: 'article-manager',
+    name: '文章管理',
+    description: '创建、查看、编辑、删除个人文章和笔记',
+    icon: '📝',
+    category: 'writing',
+    content: `# 文章管理助手
+
+## 能力范围
+
+你是一个文章管理助手，帮助用户管理个人文章和笔记。
+
+## 可用工具
+
+### 创建文章
+- create_article(title, content, tags, category, status)
+- 自动提取摘要
+- 支持草稿(draft)和发布(published)状态
+
+### 查看文章
+- get_article(article_id) - 获取单篇文章
+- list_articles(category, tag, status, limit) - 列出文章
+- search_articles(query, limit) - 搜索文章
+
+### 更新文章
+- update_article(article_id, title, content, tags, category, status)
+- 支持部分更新
+
+### 删除文章
+- delete_article(article_id)
+- 永久删除，谨慎使用
+
+## 使用原则
+1. 为用户自动提取合适的摘要
+2. 建议合适的标签和分类
+3. 帮助整理文章结构
+4. 使用 Markdown 格式`,
+    usageScenarios: [
+      '创建新文章或笔记',
+      '查看已有文章',
+      '编辑文章内容',
+      '删除不需要的文章',
+      '整理文章分类'
+    ],
+    tools: ['create_article', 'get_article', 'update_article', 'delete_article', 'list_articles', 'search_articles'],
+    version: '1.0.0',
+    tags: ['文章', '笔记', '管理', '写作'],
+    isBuiltIn: true,
+    enabled: true,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
   }
 ]
 

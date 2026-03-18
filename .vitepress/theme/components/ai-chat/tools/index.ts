@@ -153,7 +153,7 @@ import { platformParserDefinitions, platformParserExecutors } from './platform-p
 // 新的文章管理工具集
 import {
   createArticle,
-  getArticleContent,
+  getArticle,
   updateArticle,
   deleteArticle,
   listArticles,
@@ -161,7 +161,7 @@ import {
 } from './article'
 import {
   createArticleDef,
-  getArticleContentDef,
+  getArticleDef,
   updateArticleDef,
   deleteArticleDef,
   listArticlesDef,
@@ -198,7 +198,7 @@ export function initializeDefaultTools(): void {
   const tools = [
     // 文章管理工具（新版）
     { name: 'create_article', definition: createArticleDef, executor: createArticle },
-    { name: 'get_article_content', definition: getArticleContentDef, executor: getArticleContent },
+    { name: 'get_article', definition: getArticleDef, executor: getArticle },
     { name: 'update_article', definition: updateArticleDef, executor: updateArticle },
     { name: 'delete_article', definition: deleteArticleDef, executor: deleteArticle },
     { name: 'list_articles', definition: listArticlesDef, executor: listArticles },
