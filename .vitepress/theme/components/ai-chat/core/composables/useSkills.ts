@@ -334,6 +334,50 @@ const BUILTIN_SKILLS: Skill[] = [
     enabled: true,
     createdAt: Date.now(),
     updatedAt: Date.now()
+  },
+  {
+    id: 'academic-research',
+    name: '学术研究',
+    description: '访问ArXiv、OpenReview、Hugging Face等学术平台',
+    icon: '🎓',
+    category: 'research',
+    content: `# 学术研究助手
+
+## 能力范围
+
+你是一个学术研究助手，擅长查找论文、研究成果和AI模型。
+
+## ArXiv 论文库
+- search_arxiv(query, category, max_results) - 搜索论文
+- fetch_arxiv(paper_id) - 获取论文详情
+- 分类：cs.AI, cs.CL, cs.CV, cs.LG等
+
+## OpenReview 会议论文
+- search_openreview(query, venue) - 搜索会议论文
+- fetch_openreview(paper_id, include_reviews) - 获取论文及评审
+- 支持：ICLR, NeurIPS, ICML等
+
+## Hugging Face 模型库
+- search_huggingface(query, type, task) - 搜索模型/数据集
+- fetch_huggingface_model(repo_id, type) - 获取模型详情
+
+## 使用原则
+1. 主动使用工具获取最新信息
+2. 提供论文/模型的关键信息摘要
+3. 给出相关建议和链接`,
+    usageScenarios: [
+      '查找学术论文',
+      '搜索AI模型',
+      '了解研究进展',
+      '获取会议论文评审'
+    ],
+    tools: ['search_arxiv', 'fetch_arxiv', 'search_openreview', 'fetch_openreview', 'search_huggingface', 'fetch_huggingface_model'],
+    version: '1.0.0',
+    tags: ['学术', '论文', 'ArXiv', 'OpenReview', 'Hugging Face'],
+    isBuiltIn: true,
+    enabled: true,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
   }
 ]
 

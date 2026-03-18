@@ -139,18 +139,37 @@ body {
   width: 100% !important;
 }
 
+:root {
+  --vp-layout-max-width: 100%;
+}
+
 .VPDoc .container {
-  max-width: 1024px !important;
+  max-width: 100% !important;
 }
 
 .VPDoc .content {
-  max-width: 1024px !important;
+  max-width: 85% !important;
+  width: 85%;
+  margin: 0 auto !important;
+}
+
+/* Key fix: VitePress uses .content-container to limit width */
+.VPDoc.has-aside .content-container,
+.VPDoc .content-container {
+  max-width: 100% !important;
 }
 
 .vp-doc {
   font-size: 16px;
   line-height: 1.8;
   color: var(--vp-c-text-1);
+}
+
+/* Override all text element width constraints */
+.vp-doc h1, .vp-doc h2, .vp-doc h3, .vp-doc h4, .vp-doc h5, .vp-doc h6,
+.vp-doc p, .vp-doc li, .vp-doc blockquote, .vp-doc .custom-block,
+.vp-doc ul, .vp-doc ol, .vp-doc pre, .vp-doc table {
+  max-width: 100% !important;
 }
 
 .vp-doc h1 {
@@ -194,6 +213,7 @@ body {
   word-wrap: break-word;
   word-break: normal;
   hyphens: auto;
+  max-width: none !important;
 }
 
 .vp-doc a {
@@ -312,6 +332,8 @@ body {
 }
 
 /* 表格 */
+/* 表格容器：支持横向滚动 */
+.vp-doc .table-container,
 .vp-doc table {
   display: block;
   width: 100%;
@@ -321,8 +343,13 @@ body {
   border-collapse: separate;
   border-spacing: 0;
   font-size: 15px;
-  white-space: nowrap;
   border-radius: var(--sr-radius-lg);
+}
+
+.vp-doc table {
+  display: table;
+  table-layout: auto;
+  min-width: 100%;
   background: rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(200, 195, 188, 0.25);
@@ -593,23 +620,33 @@ body.is-dragging::after {
     width: 100% !important;
   }
   .VPDoc .container {
-    max-width: 1200px !important;
+    max-width: 100% !important;
   }
   .VPDoc .content {
-    max-width: 1000px !important;
+    max-width: 85% !important;
+    width: 85%;
     margin: 0 auto !important;
+  }
+  .VPDoc.has-aside .content-container,
+  .VPDoc .content-container {
+    max-width: 100% !important;
   }
 }
 
 @media (min-width: 1600px) {
   .VPDoc .container {
-    max-width: 1400px !important;
+    max-width: 100% !important;
   }
   .VPDoc .content {
-    max-width: 1100px !important;
+    max-width: 85% !important;
+    width: 85%;
+  }
+  .VPDoc.has-aside .content-container,
+  .VPDoc .content-container {
+    max-width: 100% !important;
   }
   .metablog-layout .VPDoc .main {
-    max-width: 1400px !important;
+    max-width: 100% !important;
     margin: 0 auto !important;
   }
 }

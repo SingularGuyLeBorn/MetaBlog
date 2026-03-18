@@ -32,6 +32,7 @@ export type SkillCategory =
   | 'coding'       // 编程
   | 'analysis'     // 分析
   | 'creative'     // 创意
+  | 'research'     // 研究
   | 'custom'       // 自定义
 
 // ==================== Skill 定义 ====================

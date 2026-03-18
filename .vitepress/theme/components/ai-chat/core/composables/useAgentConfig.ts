@@ -95,7 +95,14 @@ export function useAgentConfig() {
       query_knowledge: '🧠',
       get_weather: '🌤️',
       create_note: '📓',
-      list_notes: '📔'
+      list_notes: '📔',
+      // 学术平台工具
+      search_arxiv: '📚',
+      fetch_arxiv: '📄',
+      search_openreview: '🎓',
+      fetch_openreview: '📋',
+      search_huggingface: '🤗',
+      fetch_huggingface_model: '🔧'
     }
     return defs.map(d => ({
       name: d.function.name,
@@ -115,6 +122,9 @@ export function useAgentConfig() {
     if (name.includes('note')) return '笔记工具'
     if (name.includes('knowledge')) return '知识库'
     if (name.includes('time') || name.includes('weather') || name.includes('calculate')) return '系统工具'
+    if (name.includes('arxiv') || name.includes('openreview')) return '学术平台'
+    if (name.includes('huggingface')) return 'AI模型平台'
+    if (name.includes('github')) return '代码平台'
     return '其他'
   }
 
@@ -212,6 +222,45 @@ export function useAgentConfig() {
   // ==================== 系统提示词构建 ====================
 
   /**
+   * 获取技能的详细内容（用于动态加载）
+   */
+  function getSkillContent(skillId: string): string | null {
+    const skill = skills.value.find(s => s.id === skillId)
+    return skill?.content || null
+  }
+
+  /**
+   * 构建工具简要描述（用于系统提示词）
+   */
+  function buildToolsDescription(tools: Tool[]): string {
+    if (tools.length === 0) return ''
+    
+    const lines: string[] = []
+    lines.push('\n## 可用工具')
+    lines.push(`你有以下 ${tools.length} 个工具可供调用：\n`)
+    
+    // 按类别分组
+    const toolsByCategory = new Map<string, Tool[]>()
+    tools.forEach(tool => {
+      const category = tool.category || '其他'
+      if (!toolsByCategory.has(category)) {
+        toolsByCategory.set(category, [])
+      }
+      toolsByCategory.get(category)!.push(tool)
+    })
+    
+    toolsByCategory.forEach((categoryTools, category) => {
+      lines.push(`\n### ${category}`)
+      categoryTools.forEach(tool => {
+        lines.push(`- **${tool.name}**: ${tool.description}`)
+      })
+    })
+    
+    lines.push('\n当需要调用工具时，系统会自动提供完整的参数定义。')
+    return lines.join('\n')
+  }
+
+  /**
    * 构建系统提示词
    * 使用后端定义的数据结构：capabilities.customSystemPrompt 和 skillIds
    */
@@ -229,26 +278,24 @@ export function useAgentConfig() {
     // 1. 基础角色 - 使用后端的 customSystemPrompt
     sections.push(customSystemPrompt || `你是 ${agent.name}，${agent.description}`)
     
-    // 2. 可用 Skills 列表
+    // 2. 可用 Skills 和工具
     if (skillIds.length > 0) {
       const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
       if (agentSkills.length > 0) {
-        sections.push('\n\n## 可用 Skills')
-        sections.push('你可以根据对话需要，自主决定调用以下 Skills：\n')
+        // Skills 列表（简要）
+        sections.push('\n\n## 你的能力')
+        sections.push('你拥有以下 Skills，可以调用其中的工具：\n')
         
         agentSkills.forEach(skill => {
-          sections.push(`- ${skill.icon} **${skill.name}** (ID: \`${skill.id}\`): ${skill.description}`)
+          sections.push(`- ${skill.icon} **${skill.name}**: ${skill.description}`)
+          if (skill.tools?.length) {
+            sections.push(`  - 工具: ${skill.tools.join(', ')}`)
+          }
         })
         
-        sections.push('\n## 如何加载 Skills')
-        sections.push('当你需要使用某个 Skill 时，请在你的回复中明确说明：')
-        sections.push('```')
-        sections.push('[使用 Skill: <skill-id>]')
-        sections.push('```')
-        sections.push('例如：`[使用 Skill: write]` 或 `[使用 Skill: code-review]`')
-        sections.push('系统会自动为你加载该 Skill 的详细内容和可用工具。')
-        sections.push('\n你也可以一次加载多个 Skills：')
-        sections.push('`[使用 Skill: write,code-review]`')
+        // 添加所有可用工具的简要描述
+        const effectiveTools = getEffectiveTools(agent)
+        sections.push(buildToolsDescription(effectiveTools))
       }
     }
     

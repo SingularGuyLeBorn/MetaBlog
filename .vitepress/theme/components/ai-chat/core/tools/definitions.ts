@@ -952,6 +952,215 @@ export const fetchArxivDef: ToolDefinition = {
   }
 }
 
+export const searchArxivDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'search_arxiv',
+    description: `搜索 ArXiv 论文库。支持关键词、作者、分类搜索。
+
+使用场景：
+1. 查找特定研究领域的论文
+2. 追踪最新研究进展
+3. 发现相关工作和引用
+4. 按分类浏览论文
+
+ArXiv 主要分类：
+- cs.AI: 人工智能
+- cs.CL: 计算语言学/NLP
+- cs.CV: 计算机视觉
+- cs.LG: 机器学习
+- cs.RO: 机器人
+- physics: 物理学
+- math: 数学
+- q-bio: 定量生物学`,
+    parameters: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: '搜索关键词，例如 "transformer", "GPT", "diffusion model"'
+        },
+        category: {
+          type: 'string',
+          description: 'ArXiv 分类代码，例如 "cs.AI", "cs.CL", "cs.CV"',
+          default: 'cs.AI'
+        },
+        max_results: {
+          type: 'number',
+          description: '返回结果数量，默认 10，最大 50',
+          default: 10
+        },
+        sort_by: {
+          type: 'string',
+          enum: ['relevance', 'lastUpdatedDate', 'submittedDate'],
+          description: '排序方式：relevance（相关度）、lastUpdatedDate（最近更新）、submittedDate（提交日期）',
+          default: 'relevance'
+        }
+      },
+      required: ['query']
+    }
+  }
+}
+
+// ============ OpenReview 工具定义 ============
+
+export const fetchOpenReviewDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'fetch_openreview',
+    description: `获取 OpenReview 论文/评审的详细信息。OpenReview 是顶级 AI 会议（NeurIPS、ICML、ICLR）的论文和评审平台。
+
+使用场景：
+1. 获取会议论文的完整信息
+2. 查看论文的评审意见和元评审
+3. 查看作者回复和讨论
+4. 追踪论文审稿进度
+
+支持的会议：ICLR、NeurIPS、ICML、AAAI、CVPR、ICCV、ECCV 等`,
+    parameters: {
+      type: 'object',
+      properties: {
+        paper_id: {
+          type: 'string',
+          description: 'OpenReview 论文 ID，例如 "Syx4wnE9P7"'
+        },
+        venue: {
+          type: 'string',
+          description: '会议/期刊名称，例如 "ICLR2024", "NeurIPS2023"',
+          default: ''
+        },
+        include_reviews: {
+          type: 'boolean',
+          description: '是否包含评审意见，默认 false',
+          default: false
+        }
+      },
+      required: ['paper_id']
+    }
+  }
+}
+
+export const searchOpenReviewDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'search_openreview',
+    description: `搜索 OpenReview 论文。可以搜索特定会议的论文。
+
+使用场景：
+1. 搜索特定会议（如 ICLR、NeurIPS）的论文
+2. 查找特定主题的最新会议论文
+3. 按作者搜索论文
+4. 查看特定会议的接收论文列表`,
+    parameters: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: '搜索关键词，例如 "attention mechanism", "large language model"'
+        },
+        venue: {
+          type: 'string',
+          description: '会议名称，例如 "ICLR2024", "NeurIPS2023", "ICML2024"'
+        },
+        max_results: {
+          type: 'number',
+          description: '返回结果数量，默认 10，最大 50',
+          default: 10
+        }
+      },
+      required: ['query']
+    }
+  }
+}
+
+// ============ Hugging Face 工具定义 ============
+
+export const fetchHuggingFaceModelDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'fetch_huggingface_model',
+    description: `获取 Hugging Face 模型或数据集的详细信息。Hugging Face 是最大的开源 AI 模型和数据集平台。
+
+使用场景：
+1. 查找预训练模型的信息
+2. 查看模型性能指标和基准测试
+3. 了解模型架构和使用方法
+4. 发现数据集和 Spaces 应用
+
+支持类型：
+- model: 预训练模型（BERT、GPT、LLaMA 等）
+- dataset: 数据集
+- space: 交互式应用演示`,
+    parameters: {
+      type: 'object',
+      properties: {
+        repo_id: {
+          type: 'string',
+          description: 'Hugging Face 仓库 ID，例如 "bert-base-uncased", "microsoft/DialoGPT-medium", "facebook/bart-large-cnn"'
+        },
+        type: {
+          type: 'string',
+          enum: ['model', 'dataset', 'space'],
+          description: '资源类型：model（模型）、dataset（数据集）、space（应用）',
+          default: 'model'
+        },
+        include_readme: {
+          type: 'boolean',
+          description: '是否包含 README 内容，默认 true',
+          default: true
+        }
+      },
+      required: ['repo_id']
+    }
+  }
+}
+
+export const searchHuggingFaceDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'search_huggingface',
+    description: `搜索 Hugging Face Hub 上的模型、数据集和 Spaces。
+
+使用场景：
+1. 查找特定任务的预训练模型
+2. 发现适合的数据集
+3. 浏览交互式 AI 应用
+4. 按标签和任务筛选
+
+支持类型：
+- model: 预训练模型
+- dataset: 数据集  
+- space: 交互式应用
+
+常用任务标签：text-classification, text-generation, image-classification, automatic-speech-recognition 等`,
+    parameters: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: '搜索关键词，例如 "sentiment analysis", "summarization", "stable diffusion"'
+        },
+        type: {
+          type: 'string',
+          enum: ['model', 'dataset', 'space'],
+          description: '搜索类型：model（模型）、dataset（数据集）、space（应用）',
+          default: 'model'
+        },
+        task: {
+          type: 'string',
+          description: '任务类型，例如 "text-classification", "text-generation", "image-classification"'
+        },
+        max_results: {
+          type: 'number',
+          description: '返回结果数量，默认 10，最大 50',
+          default: 10
+        }
+      },
+      required: ['query']
+    }
+  }
+}
+
 // ============ Knowledge Base 工具定义 ============
 
 export const kbListDef: ToolDefinition = {
@@ -1237,6 +1446,13 @@ export const allToolDefinitions = [
   fetchUrlDef,
   // ArXiv 工具
   fetchArxivDef,
+  searchArxivDef,
+  // OpenReview 工具
+  fetchOpenReviewDef,
+  searchOpenReviewDef,
+  // Hugging Face 工具
+  fetchHuggingFaceModelDef,
+  searchHuggingFaceDef,
   // GitHub 工具
   githubGetRepoDef,
   githubListRepoContentsDef,

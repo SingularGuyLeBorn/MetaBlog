@@ -31,7 +31,11 @@ const router = useRouter()
 
 // 路由拦截器：判断当前页面是否为需要纯 Vue 接管的全屏页面（仅列表页，不包括文章详情页）
 const isPureVuePage = computed(() => {
-  const p = route.path.replace(/\/index\.html$/, '/').replace(/\/$/, '') || '/'
+  // 处理路径：移除 index.html 和 .html 后缀，然后标准化
+  const p = route.path
+    .replace(/\/index\.html$/, '/')
+    .replace(/\.html$/, '')
+    .replace(/\/$/, '') || '/'
   
   // 只匹配确切的列表页面，不匹配子页面（文章详情）
   if (p === '/' || p === '/index') return 'home'
@@ -91,8 +95,10 @@ const startX = ref(0)
 const startLeftWidth = ref(0)
 const startRightWidth = ref(0)
 
-// Check if current page should show sidebars
+// Check if current page should show sidebars (排除纯 Vue 页面)
 const showLeftSidebar = computed(() => {
+  // 纯 Vue 页面不显示侧边栏
+  if (isPureVuePage.value) return false
   return route.path !== '/' && !route.path.match(/^\/?$/)
 })
 
@@ -100,6 +106,8 @@ const showLeftSidebar = computed(() => {
 const clientHeaders = ref<any[]>([])
 
 const showRightSidebar = computed(() => {
+  // 编辑模式下不显示右侧大纲（编辑器有自己的内容结构）
+  if (store.isEditing) return false
   const serverHeaders = page.value.headers || []
   const hasClientHeaders = clientHeaders.value.length > 0
   return serverHeaders.length > 0 || hasClientHeaders

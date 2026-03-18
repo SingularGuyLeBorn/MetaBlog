@@ -7,7 +7,7 @@
  * 3. 支持版本切换、删除
  */
 import { ref, computed } from 'vue'
-import type { ChatSession, ChatMessage, SessionConfig, MessageGroup, ToolCallRecord, ThinkingStep } from '../types'
+import type { ChatSession, ChatMessage, SessionConfig, MessageGroup, ToolCallRecord, ThinkingStep, MessageAttachment } from '../types'
 import { storage, convertGroupsToMessages } from '../services/storage'
 import { aiService } from '../services/aiService'
 import { logger, addLog } from '../services/logger'
@@ -149,8 +149,8 @@ export function useAIChat() {
   }
 
   // ==================== 消息发送 ====================
-  async function sendMessage(content: string, skillInfo?: { id: string; name: string; icon: string; content: string }): Promise<boolean> {
-    if (!currentSession.value || !content.trim()) return false
+  async function sendMessage(content: string, attachments?: MessageAttachment[], skillInfo?: { id: string; name: string; icon: string; content: string }): Promise<boolean> {
+    if (!currentSession.value || (!content.trim() && (!attachments || attachments.length === 0))) return false
     
     const sessionId = currentSessionId.value!
     const config = currentSession.value.config
@@ -170,6 +170,7 @@ export function useAIChat() {
       status: 'completed',
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      attachments: attachments && attachments.length > 0 ? attachments : undefined,
       metadata: skillInfo ? { skill: skillInfo } : undefined
     }
     

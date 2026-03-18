@@ -283,10 +283,11 @@ export default defineConfig({
   title: "MetaUniverse Blog",
   description: "数字孪生级知识管理系统",
   base: "/",
-  cleanUrls: true,
+  cleanUrls: false,
   ignoreDeadLinks: true,
 
   // Generate rewrites dynamically
+  // 支持中文文件名：确保中文路径正确处理
   rewrites: generateRewrites(),
 
   themeConfig: {
@@ -391,7 +392,11 @@ export default defineConfig({
     },
   },
   vite: {
+    base: "/",
     envPrefix: ["VITE_", "LLM_"],
+    optimizeDeps: {
+      force: true,
+    },
     resolve: {
       alias: [
         {
@@ -413,6 +418,10 @@ export default defineConfig({
           "**/logs/**",
           "**/.trash/**",
         ],
+      },
+      // 修复 MIME 类型错误
+      fs: {
+        strict: false,
       },
     },
     plugins: [
@@ -502,8 +511,10 @@ export default defineConfig({
               console.log("[Routing] Processing:", url);
 
               // Redirect paths without trailing slash to have trailing slash
-              // FIX: Encode the URL to handle Chinese characters
-              if (!url.endsWith("/") && !url.endsWith(".md")) {
+              // FIX: 只处理 folder-note 模式的目录路径，不处理 .html 文件
+              // cleanUrls: false 时，叶子节点 URL 是 /path/file.html
+              const isFile = url.match(/\.(html|md)$/);
+              if (!url.endsWith("/") && !isFile) {
                 res.statusCode = 301;
                 // Re-encode the URL and preserve query string
                 const queryString = rawUrl.includes("?")
@@ -514,8 +525,8 @@ export default defineConfig({
                 return;
               }
 
-              // Skip .md files with query params (Vite internal requests)
-              if (url.endsWith(".md")) {
+              // Skip .md and .html files (Vite internal requests)
+              if (isFile) {
                 next();
                 return;
               }

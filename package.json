@@ -10,7 +10,10 @@
     "docs:preview": "vitepress preview",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "check:structure": "node scripts/structure-checker.js",
+    "check:structure:dry": "node scripts/structure-checker.js --dry-run",
+    "check:structure:verbose": "node scripts/structure-checker.js --verbose"
   },
   "keywords": [],
   "author": "Gemini",

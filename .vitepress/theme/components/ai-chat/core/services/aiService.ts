@@ -248,7 +248,7 @@ function logApiError(endpoint: string, error: any, duration?: number, requestDat
 
 // ==================== 多模型配置 ====================
 
-export type ModelProvider = 'deepseek' | 'kimi' | 'openai' | 'anthropic' | 'custom'
+export type ModelProvider = 'deepseek' | 'kimi'
 
 export interface ModelConfig {
   provider: ModelProvider
@@ -261,9 +261,11 @@ export interface ModelConfig {
   maxTokens: number
 }
 
-// 支持的模型配置
+// 支持的模型配置 - 仅 DeepSeek 和 Kimi
 const MODEL_CONFIGS: Record<string, ModelConfig> = {
-  // DeepSeek 模型 - 纯文本
+  // ═══════════════════════════════════════════════════════════════
+  // DeepSeek 模型
+  // ═══════════════════════════════════════════════════════════════
   'deepseek-chat': {
     provider: 'deepseek',
     model: 'deepseek-chat',
@@ -282,38 +284,86 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsVision: false,
     supportsVideo: false,
     supportsFunctionCalling: true,
-    maxTokens: 8192
+    maxTokens: 64000 // reasoner 支持更大的输出
   },
+  
+  // ═══════════════════════════════════════════════════════════════
   // Kimi (Moonshot) 模型 - 支持多模态
+  // ═══════════════════════════════════════════════════════════════
+  // K2.5 系列 - 最新多模态模型
   'kimi-k2.5': {
     provider: 'kimi',
     model: 'kimi-k2.5',
     baseURL: 'https://api.moonshot.cn/v1',
     apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
-    supportsVideo: true,
+    supportsVideo: false, // 文档未明确说明视频支持，先设为 false
     supportsFunctionCalling: true,
     maxTokens: 8192
   },
-  'kimi-k2': {
+  // K2 Turbo 预览版
+  'kimi-k2-turbo-preview': {
     provider: 'kimi',
-    model: 'kimi-k2',
+    model: 'kimi-k2-turbo-preview',
     baseURL: 'https://api.moonshot.cn/v1',
     apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
-    supportsVideo: true,
+    supportsVideo: false,
     supportsFunctionCalling: true,
     maxTokens: 8192
   },
-  'kimi-k1.5': {
+  // K2 思考模式
+  'kimi-k2-thinking': {
     provider: 'kimi',
-    model: 'kimi-k1.5',
+    model: 'kimi-k2-thinking',
     baseURL: 'https://api.moonshot.cn/v1',
     apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
-    supportsVideo: false, // k1.5不支持视频
+    supportsVideo: false,
     supportsFunctionCalling: true,
     maxTokens: 8192
+  },
+  // K2 思考模式 Turbo
+  'kimi-k2-thinking-turbo': {
+    provider: 'kimi',
+    model: 'kimi-k2-thinking-turbo',
+    baseURL: 'https://api.moonshot.cn/v1',
+    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
+    supportsVision: true,
+    supportsVideo: false,
+    supportsFunctionCalling: true,
+    maxTokens: 8192
+  },
+  // Vision 预览版系列
+  'moonshot-v1-8k-vision-preview': {
+    provider: 'kimi',
+    model: 'moonshot-v1-8k-vision-preview',
+    baseURL: 'https://api.moonshot.cn/v1',
+    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
+    supportsVision: true,
+    supportsVideo: false,
+    supportsFunctionCalling: true,
+    maxTokens: 8192
+  },
+  'moonshot-v1-32k-vision-preview': {
+    provider: 'kimi',
+    model: 'moonshot-v1-32k-vision-preview',
+    baseURL: 'https://api.moonshot.cn/v1',
+    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
+    supportsVision: true,
+    supportsVideo: false,
+    supportsFunctionCalling: true,
+    maxTokens: 32000
+  },
+  'moonshot-v1-128k-vision-preview': {
+    provider: 'kimi',
+    model: 'moonshot-v1-128k-vision-preview',
+    baseURL: 'https://api.moonshot.cn/v1',
+    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
+    supportsVision: true,
+    supportsVideo: false,
+    supportsFunctionCalling: true,
+    maxTokens: 128000
   }
 }
 
@@ -324,31 +374,8 @@ function getModelConfig(modelName: string): ModelConfig {
     return config
   }
   
-  // 如果找不到配置，尝试基于模型名称推断
-  if (modelName.startsWith('kimi')) {
-    return {
-      provider: 'kimi',
-      model: modelName,
-      baseURL: 'https://api.moonshot.cn/v1',
-      apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
-      supportsVision: true,
-      supportsVideo: modelName.includes('k2'), // k2系列支持视频
-      supportsFunctionCalling: true,
-      maxTokens: 8192
-    }
-  }
-  
-  // 默认使用 DeepSeek
-  return {
-    provider: 'deepseek',
-    model: modelName,
-    baseURL: 'https://api.deepseek.com/v1',
-    apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || '',
-    supportsVision: false,
-    supportsVideo: false,
-    supportsFunctionCalling: true,
-    maxTokens: 8192
-  }
+  // 如果找不到配置，抛出错误（不再自动推断，确保使用预定义模型）
+  throw new Error(`不支持的模型: ${modelName}。请使用 DeepSeek 或 Kimi 系列模型。`)
 }
 
 // 验证 API Key
@@ -952,10 +979,12 @@ export const aiService = {
           const thinkingStep: ThinkingStep = {
             id: `step_${toolRound}_${Date.now()}_${stepIndex}`,
             type: 'thinking',
-            index: stepIndex++,
+            round: toolRound,  // 标记轮次
+            index: stepIndex,  // 使用当前索引
             content: currentThinking,
             createdAt: Date.now()
           }
+          stepIndex++  // 递增索引
           callbacks.onThinkingStep?.(thinkingStep)
           
           logThinkingStep(toolRound, 'thinking', currentThinking, {
@@ -1001,11 +1030,12 @@ export const aiService = {
           const args = JSON.parse(toolCall.function.arguments || '{}')
           const toolStartTime = Date.now()
           
-          const toolStepId = `tool_${toolRound}_${toolStartTime}_${stepIndex++}`
+          const toolStepId = `tool_${toolRound}_${toolStartTime}_${stepIndex}`
           const toolStep: ThinkingStep = {
             id: toolStepId,
             type: 'tool_call',
-            index: stepIndex,
+            round: toolRound,  // 标记轮次
+            index: stepIndex,  // 使用当前索引
             toolRecord: {
               id: toolCall.id,
               name: toolCall.function.name,
@@ -1016,6 +1046,7 @@ export const aiService = {
             },
             createdAt: toolStartTime
           }
+          stepIndex++  // 递增索引
           callbacks.onThinkingStep?.(toolStep)
           
           const { result, record } = await executeToolWithRecord(

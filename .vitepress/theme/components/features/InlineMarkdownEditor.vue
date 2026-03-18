@@ -12,10 +12,12 @@ const route = useRoute()
 // Check if current file is editable (not homepage components)
 const isEditableFile = computed(() => {
   const currentPath = route.path
-  // 首页组件不可编辑
+  // 首页组件和 AI 助手页面不可编辑
   const nonEditablePaths = [
     '/',
     '/index.html',
+    '/chat',
+    '/chat.html',
     '/sections/posts/',
     '/sections/posts/index.html',
     '/sections/knowledge/',
@@ -147,9 +149,9 @@ async function initEditor() {
         enable: false // Disable cache to prevent stale content
       },
       outline: {
-        enable: true,
+        enable: false,  // 禁用内置大纲，使用页面自带的 TocSidebar
         position: 'right'
-      },
+      } as any,
       preview: {
         delay: 300,
         math: {
@@ -179,9 +181,6 @@ async function initEditor() {
               vditorInstance.value.setValue(content)
             }
           }
-          
-          // Setup outline click handlers for navigation
-          setupOutlineClickHandlers()
           
           isLoading.value = false
         }, 100)
@@ -377,6 +376,9 @@ function handleKeyDown(event: KeyboardEvent) {
 // Handle double click
 function handleDoubleClick(event: MouseEvent) {
   if (isEditing.value) return
+  
+  // 在 AI 助手页面禁用双击编辑
+  if (route.path === '/chat' || route.path.startsWith('/chat/')) return
   
   // Only allow editing for .md files
   if (!isEditableFile.value) return

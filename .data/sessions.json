@@ -1,13 +1,373 @@
 [
   {
-    "id": "session-1773231249872-p9zeqiy",
+    "id": "session-1773762092153-qhrov1b",
+    "title": "与 Meta 助手 的对话",
+    "config": {
+      "model": "kimi-k2.5",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。\n\n\n## 你的能力\n你拥有以下 Skills，可以调用其中的工具：\n\n- 🔧 **学术研究**: 访问学术平台和AI模型库的能力，支持ArXiv、OpenReview、Hugging Face\n  - 工具: search_arxiv, fetch_arxiv, search_openreview, fetch_openreview, search_huggingface, fetch_huggingface_model\n- 🔧 **内容分析师**: 专业的内容分析助手，擅长解析图片、链接和各类媒体内容，提取关键信息并给出深度分析\n- 🔧 **代码工匠**: 专业编程助手，擅长代码审查、重构和最佳实践\n- 🔧 **全栈开发者**: 全栈开发专家，前后端技术全能\n  - 工具: execute_code, analyze_code, read_file, write_file, list_files, web_search, fetch_url\n- 🔧 **天气助手**: 提供天气预报和生活建议\n  - 工具: get_weather, get_current_time, web_search\n- 🔧 **项目经理**: 项目管理专家，帮助规划和跟踪项目进度\n  - 工具: get_current_time, create_note, list_notes, summarize_text, format_text\n- 🔧 **创意设计师**: 创意设计助手，提供设计灵感和创意建议\n  - 工具: get_current_time, summarize_text, format_text, web_search\n- 🔧 **文件管家**: 文件管理专家，帮助整理和管理文件系统\n  - 工具: read_file, write_file, list_files, get_article_content, list_articles\n- 🔧 **研究助手**: 学术研究助手，擅长信息检索和知识整理\n  - 工具: web_search, fetch_url, query_knowledge, create_note, list_notes, summarize_text\n- 🔧 **翻译专家**: 多语言翻译专家，支持多种语言互译\n  - 工具: translate_text, summarize_text, format_text\n- 🔧 **数据分析师**: 数据分析专家，提供统计计算和商业智能洞察\n  - 工具: calculate, summarize_text, format_text, query_knowledge\n- 🔧 **文章大师**: 专业写作助手，擅长各类文本创作和编辑\n  - 工具: summarize_text, format_text, translate_text, create_article, update_article\n\n## 可用工具\n你有以下 26 个工具可供调用：\n\n\n### 文章管理\n- **get_article_content**: 获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n- **list_articles**: 列出文章列表，支持分类筛选和层级浏览。\n- **create_article**: 创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n- **update_article**: 更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n### 文件管理\n- **read_file**: 读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。\n- **write_file**: 写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。\n- **list_files**: 列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。\n\n### 网络工具\n- **web_search**: 执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。\n- **fetch_url**: 获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n- **fetch_arxiv**: 获取 ArXiv 论文的详细信息。包括标题、作者、摘要、PDF链接等。\n- **fetch_openreview**: 获取 OpenReview 论文/评审的详细信息。OpenReview 是顶级 AI 会议（NeurIPS、ICML、ICLR）的论文和评审平台。\n- **fetch_huggingface_model**: 获取 Hugging Face 模型或数据集的详细信息。Hugging Face 是最大的开源 AI 模型和数据集平台。\n\n### 学术平台\n- **search_arxiv**: 搜索 ArXiv 论文库。支持关键词、作者、分类搜索。\n- **search_openreview**: 搜索 OpenReview 论文。可以搜索特定会议的论文。\n\n### AI模型平台\n- **search_huggingface**: 搜索 Hugging Face Hub 上的模型、数据集和 Spaces。\n\n### 系统工具\n- **calculate**: 执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。\n- **get_weather**: 获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。\n- **get_current_time**: 获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。\n\n### 文本处理\n- **translate_text**: 翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。\n- **summarize_text**: 对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。\n- **format_text**: 将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。\n\n### 代码工具\n- **execute_code**: 执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。\n- **analyze_code**: 分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。\n\n### 知识库\n- **query_knowledge**: 查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。\n\n### 笔记工具\n- **create_note**: 创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。\n- **list_notes**: 列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。\n\n当需要调用工具时，系统会自动提供完整的参数定义。",
+      "enableReasoning": true,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg",
+      "agentName": "Meta 助手",
+      "_customSystemPrompt": false
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773762092153,
+    "updatedAt": 1773846780871
+  },
+  {
+    "id": "session-1773762092153-qhrov1b",
     "title": "新对话",
     "config": {
       "model": "deepseek-chat",
       "temperature": 0.7,
       "maxTokens": 8192,
-      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。",
+      "systemPrompt": "",
       "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg"
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773762092155,
+    "updatedAt": 1773762092155
+  },
+  {
+    "id": "session-1773761573418-q74iq9h",
+    "title": "与 Meta 助手 的对话",
+    "config": {
+      "model": "deepseek-reasoner",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。\n\n\n## 你的能力\n你拥有以下 Skills，可以调用其中的工具：\n\n- 🔧 **学术研究**: 访问学术平台和AI模型库的能力，支持ArXiv、OpenReview、Hugging Face\n  - 工具: search_arxiv, fetch_arxiv, search_openreview, fetch_openreview, search_huggingface, fetch_huggingface_model\n- 🔧 **内容分析师**: 专业的内容分析助手，擅长解析图片、链接和各类媒体内容，提取关键信息并给出深度分析\n- 🔧 **代码工匠**: 专业编程助手，擅长代码审查、重构和最佳实践\n- 🔧 **全栈开发者**: 全栈开发专家，前后端技术全能\n  - 工具: execute_code, analyze_code, read_file, write_file, list_files, web_search, fetch_url\n- 🔧 **天气助手**: 提供天气预报和生活建议\n  - 工具: get_weather, get_current_time, web_search\n- 🔧 **项目经理**: 项目管理专家，帮助规划和跟踪项目进度\n  - 工具: get_current_time, create_note, list_notes, summarize_text, format_text\n- 🔧 **创意设计师**: 创意设计助手，提供设计灵感和创意建议\n  - 工具: get_current_time, summarize_text, format_text, web_search\n- 🔧 **文件管家**: 文件管理专家，帮助整理和管理文件系统\n  - 工具: read_file, write_file, list_files, get_article_content, list_articles\n- 🔧 **研究助手**: 学术研究助手，擅长信息检索和知识整理\n  - 工具: web_search, fetch_url, query_knowledge, create_note, list_notes, summarize_text\n- 🔧 **翻译专家**: 多语言翻译专家，支持多种语言互译\n  - 工具: translate_text, summarize_text, format_text\n- 🔧 **数据分析师**: 数据分析专家，提供统计计算和商业智能洞察\n  - 工具: calculate, summarize_text, format_text, query_knowledge\n- 🔧 **文章大师**: 专业写作助手，擅长各类文本创作和编辑\n  - 工具: summarize_text, format_text, translate_text, create_article, update_article\n\n## 可用工具\n你有以下 26 个工具可供调用：\n\n\n### 文章管理\n- **get_article_content**: 获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n- **list_articles**: 列出文章列表，支持分类筛选和层级浏览。\n- **create_article**: 创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n- **update_article**: 更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n### 文件管理\n- **read_file**: 读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。\n- **write_file**: 写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。\n- **list_files**: 列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。\n\n### 网络工具\n- **web_search**: 执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。\n- **fetch_url**: 获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n- **fetch_arxiv**: 获取 ArXiv 论文的详细信息。包括标题、作者、摘要、PDF链接等。\n- **fetch_openreview**: 获取 OpenReview 论文/评审的详细信息。OpenReview 是顶级 AI 会议（NeurIPS、ICML、ICLR）的论文和评审平台。\n- **fetch_huggingface_model**: 获取 Hugging Face 模型或数据集的详细信息。Hugging Face 是最大的开源 AI 模型和数据集平台。\n\n### 学术平台\n- **search_arxiv**: 搜索 ArXiv 论文库。支持关键词、作者、分类搜索。\n- **search_openreview**: 搜索 OpenReview 论文。可以搜索特定会议的论文。\n\n### AI模型平台\n- **search_huggingface**: 搜索 Hugging Face Hub 上的模型、数据集和 Spaces。\n\n### 系统工具\n- **calculate**: 执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。\n- **get_weather**: 获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。\n- **get_current_time**: 获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。\n\n### 文本处理\n- **translate_text**: 翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。\n- **summarize_text**: 对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。\n- **format_text**: 将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。\n\n### 代码工具\n- **execute_code**: 执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。\n- **analyze_code**: 分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。\n\n### 知识库\n- **query_knowledge**: 查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。\n\n### 笔记工具\n- **create_note**: 创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。\n- **list_notes**: 列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。\n\n当需要调用工具时，系统会自动提供完整的参数定义。",
+      "enableReasoning": true,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg",
+      "agentName": "Meta 助手",
+      "_customSystemPrompt": false
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773761573418,
+    "updatedAt": 1773761574102
+  },
+  {
+    "id": "session-1773761573418-q74iq9h",
+    "title": "新对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg"
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773761573419,
+    "updatedAt": 1773761573419
+  },
+  {
+    "id": "session-1773761555830-x3kxarg",
+    "title": "与 Meta 助手 的对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。\n\n\n## 你的能力\n你拥有以下 Skills，可以调用其中的工具：\n\n- 🔧 **学术研究**: 访问学术平台和AI模型库的能力，支持ArXiv、OpenReview、Hugging Face\n  - 工具: search_arxiv, fetch_arxiv, search_openreview, fetch_openreview, search_huggingface, fetch_huggingface_model\n- 🔧 **内容分析师**: 专业的内容分析助手，擅长解析图片、链接和各类媒体内容，提取关键信息并给出深度分析\n- 🔧 **代码工匠**: 专业编程助手，擅长代码审查、重构和最佳实践\n- 🔧 **全栈开发者**: 全栈开发专家，前后端技术全能\n  - 工具: execute_code, analyze_code, read_file, write_file, list_files, web_search, fetch_url\n- 🔧 **天气助手**: 提供天气预报和生活建议\n  - 工具: get_weather, get_current_time, web_search\n- 🔧 **项目经理**: 项目管理专家，帮助规划和跟踪项目进度\n  - 工具: get_current_time, create_note, list_notes, summarize_text, format_text\n- 🔧 **创意设计师**: 创意设计助手，提供设计灵感和创意建议\n  - 工具: get_current_time, summarize_text, format_text, web_search\n- 🔧 **文件管家**: 文件管理专家，帮助整理和管理文件系统\n  - 工具: read_file, write_file, list_files, get_article_content, list_articles\n- 🔧 **研究助手**: 学术研究助手，擅长信息检索和知识整理\n  - 工具: web_search, fetch_url, query_knowledge, create_note, list_notes, summarize_text\n- 🔧 **翻译专家**: 多语言翻译专家，支持多种语言互译\n  - 工具: translate_text, summarize_text, format_text\n- 🔧 **数据分析师**: 数据分析专家，提供统计计算和商业智能洞察\n  - 工具: calculate, summarize_text, format_text, query_knowledge\n- 🔧 **文章大师**: 专业写作助手，擅长各类文本创作和编辑\n  - 工具: summarize_text, format_text, translate_text, create_article, update_article\n\n## 可用工具\n你有以下 26 个工具可供调用：\n\n\n### 文章管理\n- **get_article_content**: 获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n- **list_articles**: 列出文章列表，支持分类筛选和层级浏览。\n- **create_article**: 创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n- **update_article**: 更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n### 文件管理\n- **read_file**: 读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。\n- **write_file**: 写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。\n- **list_files**: 列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。\n\n### 网络工具\n- **web_search**: 执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。\n- **fetch_url**: 获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n- **fetch_arxiv**: 获取 ArXiv 论文的详细信息。包括标题、作者、摘要、PDF链接等。\n- **fetch_openreview**: 获取 OpenReview 论文/评审的详细信息。OpenReview 是顶级 AI 会议（NeurIPS、ICML、ICLR）的论文和评审平台。\n- **fetch_huggingface_model**: 获取 Hugging Face 模型或数据集的详细信息。Hugging Face 是最大的开源 AI 模型和数据集平台。\n\n### 学术平台\n- **search_arxiv**: 搜索 ArXiv 论文库。支持关键词、作者、分类搜索。\n- **search_openreview**: 搜索 OpenReview 论文。可以搜索特定会议的论文。\n\n### AI模型平台\n- **search_huggingface**: 搜索 Hugging Face Hub 上的模型、数据集和 Spaces。\n\n### 系统工具\n- **calculate**: 执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。\n- **get_weather**: 获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。\n- **get_current_time**: 获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。\n\n### 文本处理\n- **translate_text**: 翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。\n- **summarize_text**: 对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。\n- **format_text**: 将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。\n\n### 代码工具\n- **execute_code**: 执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。\n- **analyze_code**: 分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。\n\n### 知识库\n- **query_knowledge**: 查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。\n\n### 笔记工具\n- **create_note**: 创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。\n- **list_notes**: 列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。\n\n当需要调用工具时，系统会自动提供完整的参数定义。",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg",
+      "agentName": "Meta 助手",
+      "_customSystemPrompt": false
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773761555830,
+    "updatedAt": 1773761555934
+  },
+  {
+    "id": "session-1773761555830-x3kxarg",
+    "title": "新对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg"
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773761555911,
+    "updatedAt": 1773761555911
+  },
+  {
+    "id": "session-1773761460772-9p0gepy",
+    "title": "与 Meta 助手 的对话",
+    "config": {
+      "model": "deepseek-reasoner",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。\n\n\n## 你的能力\n你拥有以下 Skills，可以调用其中的工具：\n\n- 🔧 **学术研究**: 访问学术平台和AI模型库的能力，支持ArXiv、OpenReview、Hugging Face\n  - 工具: search_arxiv, fetch_arxiv, search_openreview, fetch_openreview, search_huggingface, fetch_huggingface_model\n- 🔧 **内容分析师**: 专业的内容分析助手，擅长解析图片、链接和各类媒体内容，提取关键信息并给出深度分析\n- 🔧 **代码工匠**: 专业编程助手，擅长代码审查、重构和最佳实践\n- 🔧 **全栈开发者**: 全栈开发专家，前后端技术全能\n  - 工具: execute_code, analyze_code, read_file, write_file, list_files, web_search, fetch_url\n- 🔧 **天气助手**: 提供天气预报和生活建议\n  - 工具: get_weather, get_current_time, web_search\n- 🔧 **项目经理**: 项目管理专家，帮助规划和跟踪项目进度\n  - 工具: get_current_time, create_note, list_notes, summarize_text, format_text\n- 🔧 **创意设计师**: 创意设计助手，提供设计灵感和创意建议\n  - 工具: get_current_time, summarize_text, format_text, web_search\n- 🔧 **文件管家**: 文件管理专家，帮助整理和管理文件系统\n  - 工具: read_file, write_file, list_files, get_article_content, list_articles\n- 🔧 **研究助手**: 学术研究助手，擅长信息检索和知识整理\n  - 工具: web_search, fetch_url, query_knowledge, create_note, list_notes, summarize_text\n- 🔧 **翻译专家**: 多语言翻译专家，支持多种语言互译\n  - 工具: translate_text, summarize_text, format_text\n- 🔧 **数据分析师**: 数据分析专家，提供统计计算和商业智能洞察\n  - 工具: calculate, summarize_text, format_text, query_knowledge\n- 🔧 **文章大师**: 专业写作助手，擅长各类文本创作和编辑\n  - 工具: summarize_text, format_text, translate_text, create_article, update_article\n\n## 可用工具\n你有以下 26 个工具可供调用：\n\n\n### 文章管理\n- **get_article_content**: 获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n- **list_articles**: 列出文章列表，支持分类筛选和层级浏览。\n- **create_article**: 创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n- **update_article**: 更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n### 文件管理\n- **read_file**: 读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。\n- **write_file**: 写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。\n- **list_files**: 列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。\n\n### 网络工具\n- **web_search**: 执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。\n- **fetch_url**: 获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n- **fetch_arxiv**: 获取 ArXiv 论文的详细信息。包括标题、作者、摘要、PDF链接等。\n- **fetch_openreview**: 获取 OpenReview 论文/评审的详细信息。OpenReview 是顶级 AI 会议（NeurIPS、ICML、ICLR）的论文和评审平台。\n- **fetch_huggingface_model**: 获取 Hugging Face 模型或数据集的详细信息。Hugging Face 是最大的开源 AI 模型和数据集平台。\n\n### 学术平台\n- **search_arxiv**: 搜索 ArXiv 论文库。支持关键词、作者、分类搜索。\n- **search_openreview**: 搜索 OpenReview 论文。可以搜索特定会议的论文。\n\n### AI模型平台\n- **search_huggingface**: 搜索 Hugging Face Hub 上的模型、数据集和 Spaces。\n\n### 系统工具\n- **calculate**: 执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。\n- **get_weather**: 获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。\n- **get_current_time**: 获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。\n\n### 文本处理\n- **translate_text**: 翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。\n- **summarize_text**: 对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。\n- **format_text**: 将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。\n\n### 代码工具\n- **execute_code**: 执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。\n- **analyze_code**: 分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。\n\n### 知识库\n- **query_knowledge**: 查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。\n\n### 笔记工具\n- **create_note**: 创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。\n- **list_notes**: 列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。\n\n当需要调用工具时，系统会自动提供完整的参数定义。",
+      "enableReasoning": true,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg",
+      "agentName": "Meta 助手",
+      "_customSystemPrompt": false
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773761460772,
+    "updatedAt": 1773761554594
+  },
+  {
+    "id": "session-1773761460772-9p0gepy",
+    "title": "新对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg"
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773761460922,
+    "updatedAt": 1773761460922
+  },
+  {
+    "id": "session-1773761301731-hy6evka",
+    "title": "与 Meta 助手 的对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。\n\n\n## 你的能力\n你拥有以下 Skills，可以调用其中的工具：\n\n- 🔧 **学术研究**: 访问学术平台和AI模型库的能力，支持ArXiv、OpenReview、Hugging Face\n  - 工具: search_arxiv, fetch_arxiv, search_openreview, fetch_openreview, search_huggingface, fetch_huggingface_model\n- 🔧 **内容分析师**: 专业的内容分析助手，擅长解析图片、链接和各类媒体内容，提取关键信息并给出深度分析\n- 🔧 **代码工匠**: 专业编程助手，擅长代码审查、重构和最佳实践\n- 🔧 **全栈开发者**: 全栈开发专家，前后端技术全能\n  - 工具: execute_code, analyze_code, read_file, write_file, list_files, web_search, fetch_url\n- 🔧 **天气助手**: 提供天气预报和生活建议\n  - 工具: get_weather, get_current_time, web_search\n- 🔧 **项目经理**: 项目管理专家，帮助规划和跟踪项目进度\n  - 工具: get_current_time, create_note, list_notes, summarize_text, format_text\n- 🔧 **创意设计师**: 创意设计助手，提供设计灵感和创意建议\n  - 工具: get_current_time, summarize_text, format_text, web_search\n- 🔧 **文件管家**: 文件管理专家，帮助整理和管理文件系统\n  - 工具: read_file, write_file, list_files, get_article_content, list_articles\n- 🔧 **研究助手**: 学术研究助手，擅长信息检索和知识整理\n  - 工具: web_search, fetch_url, query_knowledge, create_note, list_notes, summarize_text\n- 🔧 **翻译专家**: 多语言翻译专家，支持多种语言互译\n  - 工具: translate_text, summarize_text, format_text\n- 🔧 **数据分析师**: 数据分析专家，提供统计计算和商业智能洞察\n  - 工具: calculate, summarize_text, format_text, query_knowledge\n- 🔧 **文章大师**: 专业写作助手，擅长各类文本创作和编辑\n  - 工具: summarize_text, format_text, translate_text, create_article, update_article\n\n## 可用工具\n你有以下 26 个工具可供调用：\n\n\n### 文章管理\n- **get_article_content**: 获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n- **list_articles**: 列出文章列表，支持分类筛选和层级浏览。\n- **create_article**: 创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n- **update_article**: 更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n### 文件管理\n- **read_file**: 读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。\n- **write_file**: 写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。\n- **list_files**: 列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。\n\n### 网络工具\n- **web_search**: 执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。\n- **fetch_url**: 获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n- **fetch_arxiv**: 获取 ArXiv 论文的详细信息。包括标题、作者、摘要、PDF链接等。\n- **fetch_openreview**: 获取 OpenReview 论文/评审的详细信息。OpenReview 是顶级 AI 会议（NeurIPS、ICML、ICLR）的论文和评审平台。\n- **fetch_huggingface_model**: 获取 Hugging Face 模型或数据集的详细信息。Hugging Face 是最大的开源 AI 模型和数据集平台。\n\n### 学术平台\n- **search_arxiv**: 搜索 ArXiv 论文库。支持关键词、作者、分类搜索。\n- **search_openreview**: 搜索 OpenReview 论文。可以搜索特定会议的论文。\n\n### AI模型平台\n- **search_huggingface**: 搜索 Hugging Face Hub 上的模型、数据集和 Spaces。\n\n### 系统工具\n- **calculate**: 执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。\n- **get_weather**: 获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。\n- **get_current_time**: 获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。\n\n### 文本处理\n- **translate_text**: 翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。\n- **summarize_text**: 对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。\n- **format_text**: 将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。\n\n### 代码工具\n- **execute_code**: 执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。\n- **analyze_code**: 分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。\n\n### 知识库\n- **query_knowledge**: 查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。\n\n### 笔记工具\n- **create_note**: 创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。\n- **list_notes**: 列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。\n\n当需要调用工具时，系统会自动提供完整的参数定义。",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg",
+      "agentName": "Meta 助手",
+      "_customSystemPrompt": false
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773761301731,
+    "updatedAt": 1773761301755
+  },
+  {
+    "id": "session-1773761301731-hy6evka",
+    "title": "新对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg"
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773761301733,
+    "updatedAt": 1773761301733
+  },
+  {
+    "id": "session-1773761154822-lr4ny8u",
+    "title": "与 Meta 助手 的对话",
+    "config": {
+      "model": "deepseek-reasoner",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。\n\n\n## 你的能力\n你拥有以下 Skills，可以调用其中的工具：\n\n- 🔧 **学术研究**: 访问学术平台和AI模型库的能力，支持ArXiv、OpenReview、Hugging Face\n  - 工具: search_arxiv, fetch_arxiv, search_openreview, fetch_openreview, search_huggingface, fetch_huggingface_model\n- 🔧 **内容分析师**: 专业的内容分析助手，擅长解析图片、链接和各类媒体内容，提取关键信息并给出深度分析\n- 🔧 **代码工匠**: 专业编程助手，擅长代码审查、重构和最佳实践\n- 🔧 **全栈开发者**: 全栈开发专家，前后端技术全能\n  - 工具: execute_code, analyze_code, read_file, write_file, list_files, web_search, fetch_url\n- 🔧 **天气助手**: 提供天气预报和生活建议\n  - 工具: get_weather, get_current_time, web_search\n- 🔧 **项目经理**: 项目管理专家，帮助规划和跟踪项目进度\n  - 工具: get_current_time, create_note, list_notes, summarize_text, format_text\n- 🔧 **创意设计师**: 创意设计助手，提供设计灵感和创意建议\n  - 工具: get_current_time, summarize_text, format_text, web_search\n- 🔧 **文件管家**: 文件管理专家，帮助整理和管理文件系统\n  - 工具: read_file, write_file, list_files, get_article_content, list_articles\n- 🔧 **研究助手**: 学术研究助手，擅长信息检索和知识整理\n  - 工具: web_search, fetch_url, query_knowledge, create_note, list_notes, summarize_text\n- 🔧 **翻译专家**: 多语言翻译专家，支持多种语言互译\n  - 工具: translate_text, summarize_text, format_text\n- 🔧 **数据分析师**: 数据分析专家，提供统计计算和商业智能洞察\n  - 工具: calculate, summarize_text, format_text, query_knowledge\n- 🔧 **文章大师**: 专业写作助手，擅长各类文本创作和编辑\n  - 工具: summarize_text, format_text, translate_text, create_article, update_article\n\n## 可用工具\n你有以下 26 个工具可供调用：\n\n\n### 文章管理\n- **get_article_content**: 获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n- **list_articles**: 列出文章列表，支持分类筛选和层级浏览。\n- **create_article**: 创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n- **update_article**: 更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n### 文件管理\n- **read_file**: 读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。\n- **write_file**: 写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。\n- **list_files**: 列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。\n\n### 网络工具\n- **web_search**: 执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。\n- **fetch_url**: 获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n- **fetch_arxiv**: 获取 ArXiv 论文的详细信息。包括标题、作者、摘要、PDF链接等。\n- **fetch_openreview**: 获取 OpenReview 论文/评审的详细信息。OpenReview 是顶级 AI 会议（NeurIPS、ICML、ICLR）的论文和评审平台。\n- **fetch_huggingface_model**: 获取 Hugging Face 模型或数据集的详细信息。Hugging Face 是最大的开源 AI 模型和数据集平台。\n\n### 学术平台\n- **search_arxiv**: 搜索 ArXiv 论文库。支持关键词、作者、分类搜索。\n- **search_openreview**: 搜索 OpenReview 论文。可以搜索特定会议的论文。\n\n### AI模型平台\n- **search_huggingface**: 搜索 Hugging Face Hub 上的模型、数据集和 Spaces。\n\n### 系统工具\n- **calculate**: 执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。\n- **get_weather**: 获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。\n- **get_current_time**: 获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。\n\n### 文本处理\n- **translate_text**: 翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。\n- **summarize_text**: 对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。\n- **format_text**: 将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。\n\n### 代码工具\n- **execute_code**: 执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。\n- **analyze_code**: 分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。\n\n### 知识库\n- **query_knowledge**: 查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。\n\n### 笔记工具\n- **create_note**: 创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。\n- **list_notes**: 列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。\n\n当需要调用工具时，系统会自动提供完整的参数定义。",
+      "enableReasoning": true,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg",
+      "agentName": "Meta 助手",
+      "_customSystemPrompt": false
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773761154822,
+    "updatedAt": 1773761300178
+  },
+  {
+    "id": "session-1773761154822-lr4ny8u",
+    "title": "新对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg"
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773761154824,
+    "updatedAt": 1773761154824
+  },
+  {
+    "id": "session-1773761020157-j8z5fhl",
+    "title": "与 Meta 助手 的对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。\n\n\n## 你的能力\n你拥有以下 Skills，可以调用其中的工具：\n\n- 🔧 **学术研究**: 访问学术平台和AI模型库的能力，支持ArXiv、OpenReview、Hugging Face\n  - 工具: search_arxiv, fetch_arxiv, search_openreview, fetch_openreview, search_huggingface, fetch_huggingface_model\n- 🔧 **内容分析师**: 专业的内容分析助手，擅长解析图片、链接和各类媒体内容，提取关键信息并给出深度分析\n- 🔧 **代码工匠**: 专业编程助手，擅长代码审查、重构和最佳实践\n- 🔧 **全栈开发者**: 全栈开发专家，前后端技术全能\n  - 工具: execute_code, analyze_code, read_file, write_file, list_files, web_search, fetch_url\n- 🔧 **天气助手**: 提供天气预报和生活建议\n  - 工具: get_weather, get_current_time, web_search\n- 🔧 **项目经理**: 项目管理专家，帮助规划和跟踪项目进度\n  - 工具: get_current_time, create_note, list_notes, summarize_text, format_text\n- 🔧 **创意设计师**: 创意设计助手，提供设计灵感和创意建议\n  - 工具: get_current_time, summarize_text, format_text, web_search\n- 🔧 **文件管家**: 文件管理专家，帮助整理和管理文件系统\n  - 工具: read_file, write_file, list_files, get_article_content, list_articles\n- 🔧 **研究助手**: 学术研究助手，擅长信息检索和知识整理\n  - 工具: web_search, fetch_url, query_knowledge, create_note, list_notes, summarize_text\n- 🔧 **翻译专家**: 多语言翻译专家，支持多种语言互译\n  - 工具: translate_text, summarize_text, format_text\n- 🔧 **数据分析师**: 数据分析专家，提供统计计算和商业智能洞察\n  - 工具: calculate, summarize_text, format_text, query_knowledge\n- 🔧 **文章大师**: 专业写作助手，擅长各类文本创作和编辑\n  - 工具: summarize_text, format_text, translate_text, create_article, update_article\n\n## 可用工具\n你有以下 26 个工具可供调用：\n\n\n### 文章管理\n- **get_article_content**: 获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n- **list_articles**: 列出文章列表，支持分类筛选和层级浏览。\n- **create_article**: 创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n- **update_article**: 更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n### 文件管理\n- **read_file**: 读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。\n- **write_file**: 写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。\n- **list_files**: 列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。\n\n### 网络工具\n- **web_search**: 执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。\n- **fetch_url**: 获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n- **fetch_arxiv**: 获取 ArXiv 论文的详细信息。包括标题、作者、摘要、PDF链接等。\n- **fetch_openreview**: 获取 OpenReview 论文/评审的详细信息。OpenReview 是顶级 AI 会议（NeurIPS、ICML、ICLR）的论文和评审平台。\n- **fetch_huggingface_model**: 获取 Hugging Face 模型或数据集的详细信息。Hugging Face 是最大的开源 AI 模型和数据集平台。\n\n### 学术平台\n- **search_arxiv**: 搜索 ArXiv 论文库。支持关键词、作者、分类搜索。\n- **search_openreview**: 搜索 OpenReview 论文。可以搜索特定会议的论文。\n\n### AI模型平台\n- **search_huggingface**: 搜索 Hugging Face Hub 上的模型、数据集和 Spaces。\n\n### 系统工具\n- **calculate**: 执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。\n- **get_weather**: 获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。\n- **get_current_time**: 获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。\n\n### 文本处理\n- **translate_text**: 翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。\n- **summarize_text**: 对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。\n- **format_text**: 将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。\n\n### 代码工具\n- **execute_code**: 执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。\n- **analyze_code**: 分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。\n\n### 知识库\n- **query_knowledge**: 查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。\n\n### 笔记工具\n- **create_note**: 创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。\n- **list_notes**: 列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。\n\n当需要调用工具时，系统会自动提供完整的参数定义。",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg",
+      "agentName": "Meta 助手",
+      "_customSystemPrompt": false
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773761020157,
+    "updatedAt": 1773761020682
+  },
+  {
+    "id": "session-1773761020157-j8z5fhl",
+    "title": "新对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg"
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773761020327,
+    "updatedAt": 1773761020327
+  },
+  {
+    "id": "session-1773760527413-g3se76b",
+    "title": "与 Meta 助手 的对话",
+    "config": {
+      "model": "deepseek-reasoner",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。\n\n\n## 你的能力\n你拥有以下 Skills，可以调用其中的工具：\n\n- 🔧 **学术研究**: 访问学术平台和AI模型库的能力，支持ArXiv、OpenReview、Hugging Face\n  - 工具: search_arxiv, fetch_arxiv, search_openreview, fetch_openreview, search_huggingface, fetch_huggingface_model\n- 🔧 **内容分析师**: 专业的内容分析助手，擅长解析图片、链接和各类媒体内容，提取关键信息并给出深度分析\n- 🔧 **代码工匠**: 专业编程助手，擅长代码审查、重构和最佳实践\n- 🔧 **全栈开发者**: 全栈开发专家，前后端技术全能\n  - 工具: execute_code, analyze_code, read_file, write_file, list_files, web_search, fetch_url\n- 🔧 **天气助手**: 提供天气预报和生活建议\n  - 工具: get_weather, get_current_time, web_search\n- 🔧 **项目经理**: 项目管理专家，帮助规划和跟踪项目进度\n  - 工具: get_current_time, create_note, list_notes, summarize_text, format_text\n- 🔧 **创意设计师**: 创意设计助手，提供设计灵感和创意建议\n  - 工具: get_current_time, summarize_text, format_text, web_search\n- 🔧 **文件管家**: 文件管理专家，帮助整理和管理文件系统\n  - 工具: read_file, write_file, list_files, get_article_content, list_articles\n- 🔧 **研究助手**: 学术研究助手，擅长信息检索和知识整理\n  - 工具: web_search, fetch_url, query_knowledge, create_note, list_notes, summarize_text\n- 🔧 **翻译专家**: 多语言翻译专家，支持多种语言互译\n  - 工具: translate_text, summarize_text, format_text\n- 🔧 **数据分析师**: 数据分析专家，提供统计计算和商业智能洞察\n  - 工具: calculate, summarize_text, format_text, query_knowledge\n- 🔧 **文章大师**: 专业写作助手，擅长各类文本创作和编辑\n  - 工具: summarize_text, format_text, translate_text, create_article, update_article\n\n## 可用工具\n你有以下 26 个工具可供调用：\n\n\n### 文章管理\n- **get_article_content**: 获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n- **list_articles**: 列出文章列表，支持分类筛选和层级浏览。\n- **create_article**: 创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n- **update_article**: 更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n### 文件管理\n- **read_file**: 读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。\n- **write_file**: 写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。\n- **list_files**: 列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。\n\n### 网络工具\n- **web_search**: 执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。\n- **fetch_url**: 获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n- **fetch_arxiv**: 获取 ArXiv 论文的详细信息。包括标题、作者、摘要、PDF链接等。\n- **fetch_openreview**: 获取 OpenReview 论文/评审的详细信息。OpenReview 是顶级 AI 会议（NeurIPS、ICML、ICLR）的论文和评审平台。\n- **fetch_huggingface_model**: 获取 Hugging Face 模型或数据集的详细信息。Hugging Face 是最大的开源 AI 模型和数据集平台。\n\n### 学术平台\n- **search_arxiv**: 搜索 ArXiv 论文库。支持关键词、作者、分类搜索。\n- **search_openreview**: 搜索 OpenReview 论文。可以搜索特定会议的论文。\n\n### AI模型平台\n- **search_huggingface**: 搜索 Hugging Face Hub 上的模型、数据集和 Spaces。\n\n### 系统工具\n- **calculate**: 执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。\n- **get_weather**: 获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。\n- **get_current_time**: 获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。\n\n### 文本处理\n- **translate_text**: 翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。\n- **summarize_text**: 对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。\n- **format_text**: 将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。\n\n### 代码工具\n- **execute_code**: 执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。\n- **analyze_code**: 分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。\n\n### 知识库\n- **query_knowledge**: 查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。\n\n### 笔记工具\n- **create_note**: 创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。\n- **list_notes**: 列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。\n\n当需要调用工具时，系统会自动提供完整的参数定义。",
+      "enableReasoning": true,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg",
+      "agentName": "Meta 助手",
+      "_customSystemPrompt": false
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773760527413,
+    "updatedAt": 1773760734445
+  },
+  {
+    "id": "session-1773760527413-g3se76b",
+    "title": "新对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg"
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773760527415,
+    "updatedAt": 1773760527415
+  },
+  {
+    "id": "session-1773760103263-8r3cp9g",
+    "title": "与 Meta 助手 的对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。\n\n\n## 你的能力\n你拥有以下 Skills，可以调用其中的工具：\n\n- 🔧 **学术研究**: 访问学术平台和AI模型库的能力，支持ArXiv、OpenReview、Hugging Face\n  - 工具: search_arxiv, fetch_arxiv, search_openreview, fetch_openreview, search_huggingface, fetch_huggingface_model\n- 🔧 **内容分析师**: 专业的内容分析助手，擅长解析图片、链接和各类媒体内容，提取关键信息并给出深度分析\n- 🔧 **代码工匠**: 专业编程助手，擅长代码审查、重构和最佳实践\n- 🔧 **全栈开发者**: 全栈开发专家，前后端技术全能\n  - 工具: execute_code, analyze_code, read_file, write_file, list_files, web_search, fetch_url\n- 🔧 **天气助手**: 提供天气预报和生活建议\n  - 工具: get_weather, get_current_time, web_search\n- 🔧 **项目经理**: 项目管理专家，帮助规划和跟踪项目进度\n  - 工具: get_current_time, create_note, list_notes, summarize_text, format_text\n- 🔧 **创意设计师**: 创意设计助手，提供设计灵感和创意建议\n  - 工具: get_current_time, summarize_text, format_text, web_search\n- 🔧 **文件管家**: 文件管理专家，帮助整理和管理文件系统\n  - 工具: read_file, write_file, list_files, get_article_content, list_articles\n- 🔧 **研究助手**: 学术研究助手，擅长信息检索和知识整理\n  - 工具: web_search, fetch_url, query_knowledge, create_note, list_notes, summarize_text\n- 🔧 **翻译专家**: 多语言翻译专家，支持多种语言互译\n  - 工具: translate_text, summarize_text, format_text\n- 🔧 **数据分析师**: 数据分析专家，提供统计计算和商业智能洞察\n  - 工具: calculate, summarize_text, format_text, query_knowledge\n- 🔧 **文章大师**: 专业写作助手，擅长各类文本创作和编辑\n  - 工具: summarize_text, format_text, translate_text, create_article, update_article\n\n## 可用工具\n你有以下 26 个工具可供调用：\n\n\n### 文章管理\n- **get_article_content**: 获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n- **list_articles**: 列出文章列表，支持分类筛选和层级浏览。\n- **create_article**: 创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n- **update_article**: 更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n### 文件管理\n- **read_file**: 读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。\n- **write_file**: 写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。\n- **list_files**: 列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。\n\n### 网络工具\n- **web_search**: 执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。\n- **fetch_url**: 获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n- **fetch_arxiv**: 获取 ArXiv 论文的详细信息。包括标题、作者、摘要、PDF链接等。\n- **fetch_openreview**: 获取 OpenReview 论文/评审的详细信息。OpenReview 是顶级 AI 会议（NeurIPS、ICML、ICLR）的论文和评审平台。\n- **fetch_huggingface_model**: 获取 Hugging Face 模型或数据集的详细信息。Hugging Face 是最大的开源 AI 模型和数据集平台。\n\n### 学术平台\n- **search_arxiv**: 搜索 ArXiv 论文库。支持关键词、作者、分类搜索。\n- **search_openreview**: 搜索 OpenReview 论文。可以搜索特定会议的论文。\n\n### AI模型平台\n- **search_huggingface**: 搜索 Hugging Face Hub 上的模型、数据集和 Spaces。\n\n### 系统工具\n- **calculate**: 执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。\n- **get_weather**: 获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。\n- **get_current_time**: 获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。\n\n### 文本处理\n- **translate_text**: 翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。\n- **summarize_text**: 对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。\n- **format_text**: 将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。\n\n### 代码工具\n- **execute_code**: 执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。\n- **analyze_code**: 分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。\n\n### 知识库\n- **query_knowledge**: 查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。\n\n### 笔记工具\n- **create_note**: 创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。\n- **list_notes**: 列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。\n\n当需要调用工具时，系统会自动提供完整的参数定义。",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg",
+      "agentName": "Meta 助手",
+      "_customSystemPrompt": false
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773760103263,
+    "updatedAt": 1773760103277
+  },
+  {
+    "id": "session-1773760103263-8r3cp9g",
+    "title": "新对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg"
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1773760103264,
+    "updatedAt": 1773760103264
+  },
+  {
+    "id": "session-1773231249872-p9zeqiy",
+    "title": "帮我找一下关于 LLM 的最新研究 去 ...",
+    "config": {
+      "model": "deepseek-reasoner",
+      "temperature": 0.7,
+      "maxTokens": 8192,
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。\n\n\n## 你的能力\n你拥有以下 Skills，可以调用其中的工具：\n\n- 🔧 **学术研究**: 访问学术平台和AI模型库的能力，支持ArXiv、OpenReview、Hugging Face\n  - 工具: search_arxiv, fetch_arxiv, search_openreview, fetch_openreview, search_huggingface, fetch_huggingface_model\n- 🔧 **内容分析师**: 专业的内容分析助手，擅长解析图片、链接和各类媒体内容，提取关键信息并给出深度分析\n- 🔧 **代码工匠**: 专业编程助手，擅长代码审查、重构和最佳实践\n- 🔧 **全栈开发者**: 全栈开发专家，前后端技术全能\n  - 工具: execute_code, analyze_code, read_file, write_file, list_files, web_search, fetch_url\n- 🔧 **天气助手**: 提供天气预报和生活建议\n  - 工具: get_weather, get_current_time, web_search\n- 🔧 **项目经理**: 项目管理专家，帮助规划和跟踪项目进度\n  - 工具: get_current_time, create_note, list_notes, summarize_text, format_text\n- 🔧 **创意设计师**: 创意设计助手，提供设计灵感和创意建议\n  - 工具: get_current_time, summarize_text, format_text, web_search\n- 🔧 **文件管家**: 文件管理专家，帮助整理和管理文件系统\n  - 工具: read_file, write_file, list_files, get_article_content, list_articles\n- 🔧 **研究助手**: 学术研究助手，擅长信息检索和知识整理\n  - 工具: web_search, fetch_url, query_knowledge, create_note, list_notes, summarize_text\n- 🔧 **翻译专家**: 多语言翻译专家，支持多种语言互译\n  - 工具: translate_text, summarize_text, format_text\n- 🔧 **数据分析师**: 数据分析专家，提供统计计算和商业智能洞察\n  - 工具: calculate, summarize_text, format_text, query_knowledge\n- 🔧 **文章大师**: 专业写作助手，擅长各类文本创作和编辑\n  - 工具: summarize_text, format_text, translate_text, create_article, update_article\n\n## 可用工具\n你有以下 26 个工具可供调用：\n\n\n### 文章管理\n- **get_article_content**: 获取指定文章的内容。仅在用户要求\"查看某篇文章\"、\"读取某篇文章\"时使用。\n- **list_articles**: 列出文章列表，支持分类筛选和层级浏览。\n- **create_article**: 创建一篇新文章。当用户明确要求创建文章、写博客、新建文档时使用。\n- **update_article**: 更新/修改已有文章的内容。当用户要求编辑、修改、更新文章时使用。\n\n### 文件管理\n- **read_file**: 读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。\n- **write_file**: 写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。\n- **list_files**: 列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。\n\n### 网络工具\n- **web_search**: 执行网络搜索获取最新信息。当用户询问时事、需要最新数据或查询不在知识库中的信息时使用。\n- **fetch_url**: 获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。\n- **fetch_arxiv**: 获取 ArXiv 论文的详细信息。包括标题、作者、摘要、PDF链接等。\n- **fetch_openreview**: 获取 OpenReview 论文/评审的详细信息。OpenReview 是顶级 AI 会议（NeurIPS、ICML、ICLR）的论文和评审平台。\n- **fetch_huggingface_model**: 获取 Hugging Face 模型或数据集的详细信息。Hugging Face 是最大的开源 AI 模型和数据集平台。\n\n### 学术平台\n- **search_arxiv**: 搜索 ArXiv 论文库。支持关键词、作者、分类搜索。\n- **search_openreview**: 搜索 OpenReview 论文。可以搜索特定会议的论文。\n\n### AI模型平台\n- **search_huggingface**: 搜索 Hugging Face Hub 上的模型、数据集和 Spaces。\n\n### 系统工具\n- **calculate**: 执行数学计算。当用户需要复杂计算、数学公式求解或单位转换时使用。\n- **get_weather**: 获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。\n- **get_current_time**: 获取当前系统时间。当用户询问\"现在几点\"、\"当前时间\"、\"今天日期\"等时间相关问题时，必须调用此工具获取准确时间。\n\n### 文本处理\n- **translate_text**: 翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。\n- **summarize_text**: 对给定文本生成简短摘要。当用户要求\"总结\"、\"摘要\"、\"概括\"或文本过长需要精简时使用。\n- **format_text**: 将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或示例时使用。\n\n### 代码工具\n- **execute_code**: 执行代码片段并返回结果。支持 Python、JavaScript、Shell 等语言。当用户需要运行代码、测试算法或执行脚本时使用。\n- **analyze_code**: 分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。\n\n### 知识库\n- **query_knowledge**: 查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。\n\n### 笔记工具\n- **create_note**: 创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。\n- **list_notes**: 列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。\n\n当需要调用工具时，系统会自动提供完整的参数定义。",
+      "enableReasoning": true,
       "streaming": true
     },
     "stats": {
@@ -15,7 +375,7 @@
       "totalTokens": 0
     },
     "createdAt": 1773231250044,
-    "updatedAt": 1773231250044
+    "updatedAt": 1773756305660
   },
   {
     "id": "session-1773231249872-p9zeqiy",

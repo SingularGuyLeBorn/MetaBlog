@@ -253,6 +253,9 @@ interface ModelConfig {
 }
 
 const modelConfigs: ModelConfig[] = [
+  // ═══════════════════════════════════════════════════════════════
+  // DeepSeek 模型
+  // ═══════════════════════════════════════════════════════════════
   {
     id: 'deepseek-chat',
     name: 'DeepSeek Chat',
@@ -269,15 +272,70 @@ const modelConfigs: ModelConfig[] = [
     supportsReasoning: true,
     reasoningRequired: true,
     defaultTemperature: 0.7,
-    defaultMaxTokens: 4096
+    defaultMaxTokens: 64000
+  },
+  
+  // ═══════════════════════════════════════════════════════════════
+  // Kimi 模型 - 支持多模态（图片输入）
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 'kimi-k2.5',
+    name: 'Kimi K2.5',
+    description: '最新多模态模型，支持图片理解和思考模式',
+    recommended: true,
+    supportsReasoning: true,
+    defaultTemperature: 0.6,
+    defaultMaxTokens: 8192
   },
   {
-    id: 'deepseek-coder',
-    name: 'DeepSeek Coder',
-    description: '代码专用，可开启思考模式',
-    supportsReasoning: true,
-    defaultTemperature: 0.3,
+    id: 'kimi-k2-turbo-preview',
+    name: 'Kimi K2 Turbo',
+    description: 'K2 快速预览版，响应更快',
+    supportsReasoning: false,
+    defaultTemperature: 0.6,
     defaultMaxTokens: 8192
+  },
+  {
+    id: 'kimi-k2-thinking',
+    name: 'Kimi K2 Thinking',
+    description: 'K2 思考模式，适合复杂问题',
+    supportsReasoning: true,
+    reasoningRequired: true,
+    defaultTemperature: 0.6,
+    defaultMaxTokens: 8192
+  },
+  {
+    id: 'kimi-k2-thinking-turbo',
+    name: 'Kimi K2 Thinking Turbo',
+    description: 'K2 思考模式快速版',
+    supportsReasoning: true,
+    reasoningRequired: true,
+    defaultTemperature: 0.6,
+    defaultMaxTokens: 8192
+  },
+  {
+    id: 'moonshot-v1-8k-vision-preview',
+    name: 'Kimi Vision 8K',
+    description: '视觉版 8K 上下文，支持图片输入',
+    supportsReasoning: false,
+    defaultTemperature: 0.6,
+    defaultMaxTokens: 8192
+  },
+  {
+    id: 'moonshot-v1-32k-vision-preview',
+    name: 'Kimi Vision 32K',
+    description: '视觉版 32K 上下文，支持图片输入',
+    supportsReasoning: false,
+    defaultTemperature: 0.6,
+    defaultMaxTokens: 32000
+  },
+  {
+    id: 'moonshot-v1-128k-vision-preview',
+    name: 'Kimi Vision 128K',
+    description: '视觉版 128K 上下文，支持长文档+图片',
+    supportsReasoning: false,
+    defaultTemperature: 0.6,
+    defaultMaxTokens: 128000
   }
 ]
 

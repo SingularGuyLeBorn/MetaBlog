@@ -131,7 +131,9 @@
         v-model="inputText"
         :is-streaming="isStreaming"
         :selected-skill="selectedSkill"
-        :placeholder="inputPlaceholder"
+        :supports-vision="currentModelSupportsVision"
+        :supports-video="currentModelSupportsVideo"
+        :max-attachments="10"
         @send="handleSend"
         @stop="interruptGeneration"
         @select-skill="handleSelectSkill"
@@ -238,7 +240,7 @@ import { LogDashboard } from '../modules/agent/admin'
 import { Icon } from '../ui'
 import { useAIChat, useAgents } from '../core/composables'
 import { useAgentConfig } from '../core/composables/useAgentConfig'
-import type { SessionConfig, ChatSession } from '../core/types'
+import type { SessionConfig, ChatSession, MessageAttachment } from '../core/types'
 import type { Skill } from '../core/types/agent'
 import type { Agent } from '../core/types/agent'
 
@@ -330,6 +332,27 @@ const currentAgentSystemPrompt = computed(() => {
   if (!selectedAgent.value) return ''
   return selectedAgent.value.systemPrompt || buildSystemPrompt(selectedAgent.value)
 })
+
+// 当前模型配置
+const currentModelConfig = computed(() => {
+  const model = currentSession.value?.config?.model || 'deepseek-chat'
+  // 从 aiService 获取模型配置
+  const configs: Record<string, { supportsVision?: boolean; supportsVideo?: boolean }> = {
+    'deepseek-chat': { supportsVision: false, supportsVideo: false },
+    'deepseek-reasoner': { supportsVision: false, supportsVideo: false },
+    'kimi-k2.5': { supportsVision: true, supportsVideo: true },
+    'kimi-k2-turbo-preview': { supportsVision: true, supportsVideo: false },
+    'kimi-k2-thinking': { supportsVision: true, supportsVideo: false },
+    'kimi-k2-thinking-turbo': { supportsVision: true, supportsVideo: false }
+  }
+  return configs[model] || { supportsVision: false, supportsVideo: false }
+})
+
+// 当前模型是否支持视觉
+const currentModelSupportsVision = computed(() => currentModelConfig.value.supportsVision)
+
+// 当前模型是否支持视频
+const currentModelSupportsVideo = computed(() => currentModelConfig.value.supportsVideo)
 
 // System Prompt 是否已自定义（与会话初始值不同）
 const isSystemPromptCustomized = computed((): boolean => {
@@ -508,8 +531,8 @@ async function handleRegenerate() {
   }
 }
 
-async function handleSend(content: string, skillInfo?: Skill) {
-  if (!content.trim() || isStreaming.value) return
+async function handleSend(content: string, attachments: MessageAttachment[] = [], skillInfo?: Skill) {
+  if ((!content.trim() && attachments.length === 0) || isStreaming.value) return
   
   inputText.value = ''
   
@@ -530,7 +553,7 @@ async function handleSend(content: string, skillInfo?: Skill) {
   }
   
   // 发送消息
-  await sendMessage(content, skillInfo)
+  await sendMessage(content, attachments, skillInfo)
 }
 
 function handleQuickPrompt(text: string) {

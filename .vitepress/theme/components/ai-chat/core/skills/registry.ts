@@ -17,49 +17,50 @@ const BUILTIN_SKILLS: Skill[] = [
   {
     id: 'writer',
     name: '文章管理',
-    icon: '📄',
-    description: '知识库文章的管理和写作能力',
-    content: `当你需要处理知识库文章时，请遵循以下指南：
+    icon: '📝',
+    description: '个人文章的管理和写作能力，支持创建、编辑、删除、搜索文章',
+    content: `当你需要管理用户的个人文章时，请遵循以下指南：
 
-## 文章管理流程
+## 文章管理工具
 
-1. **查找已有文章**
-   - 使用 search_articles(query="关键词") 搜索相关文章
-   - 使用 list_articles(section="knowledge") 浏览知识库结构
-   - 使用 get_article_content(path="...") 读取文章内容
+1. **创建文章**
+   - create_article(title="标题", content="内容", tags=["标签"], category="分类")
+   - 自动保存到本地存储
+   - 支持草稿(draft)和已发布(published)状态
 
-2. **创建新文章**
-   - 使用 create_article(title="标题", path="knowledge/folder/article.md", content="内容")
-   - 合理设置 tags 和 category 便于后续检索
-   - 使用 Markdown 格式编写内容
+2. **查看文章**
+   - get_article_content(article_id="xxx") - 获取完整内容
+   - list_articles(category="", tag="", status="", limit=50) - 列出文章列表
+   - search_articles(query="关键词") - 搜索文章
 
 3. **更新文章**
-   - 使用 update_article(path="...", content="新内容", mode="replace|append|prepend")
-   - 修改前先用 get_article_content 确认内容
-   - 支持追加、插入、替换等多种模式
+   - update_article(article_id="xxx", title="新标题", content="新内容")
+   - 可更新：标题、内容、摘要、标签、分类、状态
 
 4. **删除文章**
-   - 使用 delete_article(path="...") 删除不需要的文章
-   - 重要文章建议先备份再删除
+   - delete_article(article_id="xxx") - 永久删除文章
+   - 删除前请确认用户意图
 
-## 注意事项
-- 文章路径格式：knowledge/folder/article.md
-- 标签建议：["标签1", "标签2"]
-- 分类建议：knowledge、tech、life 等`,
+## 最佳实践
+- 为用户自动提取文章摘要
+- 建议合适的标签和分类
+- 帮助用户整理文章结构
+- 支持 Markdown 格式`,
     usageScenarios: [
-      '用户要求创建、编辑、删除知识库文章',
-      '用户要求整理知识库结构',
-      '用户要求搜索或查看已有文章',
-      '用户要求总结或格式化文章内容'
+      '用户要求创建新文章或笔记',
+      '用户要求查看或编辑已有文章',
+      '用户要求搜索特定内容',
+      '用户要求删除不需要的文章',
+      '用户要求整理文章分类'
     ],
     category: 'writing',
     isBuiltIn: true,
     createdAt: Date.now(),
     updatedAt: Date.now(),
     enabled: true,
-    tags: ['文章管理', '知识库', '写作'],
-    tools: ['get_article_content', 'search_articles', 'list_articles', 'create_article', 'update_article', 'delete_article', 'summarize_text', 'format_text'],
-    version: '1.0.0'
+    tags: ['文章管理', '笔记', '写作', 'CRUD'],
+    tools: ['create_article', 'get_article_content', 'update_article', 'delete_article', 'list_articles', 'search_articles'],
+    version: '2.0.0'
   },
   {
     id: 'github',
@@ -275,6 +276,71 @@ const BUILTIN_SKILLS: Skill[] = [
     tags: ['时间', '天气', '实用工具'],
     tools: ['get_current_time', 'get_weather'],
     version: '1.0.0'
+  },
+  {
+    id: 'academic-research',
+    name: '学术研究',
+    icon: '🎓',
+    description: '全面学术搜索能力，支持 ArXiv、OpenReview、HuggingFace、PapersWithCode、Semantic Scholar 等主流学术平台',
+    content: `当用户需要查找学术论文、研究成果或AI模型时，请使用以下工具：
+
+## ArXiv 论文库 (cs/physics/math)
+- search_arxiv(query="transformer attention", category="cs.CL", max_results=10) - 搜索论文
+- fetch_arxiv(paper_id="2401.12345") - 获取论文详情
+- 常用分类：cs.AI (AI), cs.CL (NLP), cs.CV (CV), cs.LG (ML), cs.RO (机器人)
+
+## OpenReview 顶级会议论文
+- search_openreview(query="reinforcement learning", venue="ICLR", limit=10) - 搜索会议论文
+- fetch_openreview(forum_id="xxxxxxxx") - 获取论文详情
+- 支持：ICLR, NeurIPS, ICML, AAAI, CVPR, ICCV, ECCV 等
+
+## HuggingFace 模型库
+- search_huggingface(query="bert", task="text-classification", limit=10) - 搜索模型
+- fetch_huggingface_model(model_id="bert-base-chinese") - 获取模型详情
+- 常用任务：text-classification, token-classification, text-generation, summarization
+
+## Papers With Code (论文+代码)
+- search_paperswithcode(query="image classification", limit=10) - 搜索带代码的论文
+- 特点：每篇论文都关联 GitHub 实现和 Leaderboard
+
+## Semantic Scholar (全面学术搜索)
+- search_semantic_scholar(query="deep learning", limit=10) - 跨领域学术搜索
+- 特点：提供引用数、影响力指标
+
+## 使用策略
+1. 一般学术搜索 → 优先使用 Semantic Scholar (覆盖面广)
+2. AI/CS 论文 → 使用 ArXiv (最新、最全)
+3. 顶级会议论文 → 使用 OpenReview (含评审意见)
+4. 需要代码实现 → 使用 Papers With Code
+5. 寻找预训练模型 → 使用 HuggingFace
+
+## 使用场景
+- 用户询问最新研究进展
+- 用户需要查找特定论文
+- 用户寻找预训练模型
+- 用户需要论文的开源代码
+- 用户想了解会议论文评审意见`,
+    usageScenarios: [
+      '用户询问最新论文或研究',
+      '用户需要查找特定论文',
+      '用户寻找AI模型',
+      '用户需要论文的开源代码',
+      '用户想了解会议论文和评审'
+    ],
+    category: 'research',
+    isBuiltIn: true,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    enabled: true,
+    tags: ['学术', '论文', 'ArXiv', 'OpenReview', 'HuggingFace', 'PapersWithCode', 'SemanticScholar', '研究'],
+    tools: [
+      'search_arxiv', 'fetch_arxiv',
+      'search_openreview', 'fetch_openreview',
+      'search_huggingface', 'fetch_huggingface_model',
+      'search_paperswithcode',
+      'search_semantic_scholar'
+    ],
+    version: '2.0.0'
   }
 ]
 

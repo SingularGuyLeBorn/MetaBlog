@@ -1,0 +1,56 @@
+{
+  "uuid": "d10397f9-c960-4f04-ad13-9252fd57d71a",
+  "sessionId": "session-1773753135187-eauhhdu",
+  "filename": "20260317-211230-session-deepseek-chat-mmumtufs-98bb3w",
+  "startTime": "2026-03-17T13:12:30.808Z",
+  "model": "deepseek-chat",
+  "reasoningEnabled": false,
+  "supportsVision": false,
+  "supportsVideo": false,
+  "entries": [
+    {
+      "timestamp": "2026-03-17T13:12:30.808Z",
+      "type": "system",
+      "title": "🚀 Session 开始",
+      "note": "UUID: d10397f9-c960-4f04-ad13-9252fd57d71a, 文件名: 20260317-211230-session-deepseek-chat-mmumtufs-98bb3w, 模型: deepseek-chat, 思考模式: 关闭",
+      "metadata": {
+        "uuid": "d10397f9-c960-4f04-ad13-9252fd57d71a",
+        "filename": "20260317-211230-session-deepseek-chat-mmumtufs-98bb3w",
+        "model": "deepseek-chat",
+        "reasoningEnabled": false
+      }
+    },
+    {
+      "timestamp": "2026-03-17T13:12:30.808Z",
+      "type": "user_input",
+      "title": "👤 用户输入",
+      "content": "你好啊 帮我搜搜 higgingface2026年3 月17热榜",
+      "uiVisible": true,
+      "uiLocation": "chat_input",
+      "note": "用户在聊天界面输入的消息",
+      "metadata": {
+        "messageId": "msg_1773753150807_odohz941e",
+        "sessionId": "session-1773753135187-eauhhdu"
+      }
+    },
+    {
+      "timestamp": "2026-03-17T13:44:23.197Z",
+      "type": "system",
+      "title": "🏁 Session 结束",
+      "note": "总计 0 轮对话, 0 次工具调用",
+      "metadata": {
+        "stats": {
+          "totalRounds": 0,
+          "toolCallCount": 0,
+          "errorCount": 0
+        }
+      }
+    }
+  ],
+  "stats": {
+    "totalRounds": 0,
+    "toolCallCount": 0,
+    "errorCount": 0
+  },
+  "endTime": "2026-03-17T13:44:23.197Z"
+}

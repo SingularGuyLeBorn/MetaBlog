@@ -56,7 +56,7 @@ const DEFAULT_AGENT: Agent = {
   seat: 1,
   capabilities: {
     mode: 'raw',
-    skillIds: ['readlater', 'knowledge_manage', 'content_extract', 'note_create'],
+    skillIds: ['readlater', 'knowledge_manage', 'content_extract', 'note_create', 'academic-research'],
     toolIds: [],
     customSystemPrompt: `你是 Meta 助手，用户的个人知识管家。你的核心使命是帮用户收集、整理和管理知识。
 

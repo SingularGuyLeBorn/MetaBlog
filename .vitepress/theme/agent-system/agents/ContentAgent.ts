@@ -5,6 +5,7 @@
 
 import { urlFetcher, FetchedContent } from '../mcp-tools/url-fetcher'
 import { socialMediaReader, SocialMediaContent } from '../mcp-tools/social-media-reader'
+import { browserAutomation, BrowserAutomationResult, BrowseOptions } from '../mcp-tools/browser-automation'
 
 export interface ContentTask {
   id: string
@@ -28,6 +29,11 @@ export interface ContentAgentConfig {
   retryAttempts?: number
   retryDelay?: number
   defaultPriority?: 'high' | 'normal' | 'low'
+  // Browser Automation 配置
+  useBrowser?: boolean       // 是否使用浏览器自动化
+  demoMode?: boolean         // 演示模式（返回模拟数据）
+  takeScreenshots?: boolean  // 是否截图
+  scrollCount?: number       // 滚动次数
 }
 
 export class ContentAgent {
@@ -45,6 +51,10 @@ export class ContentAgent {
       retryAttempts: config.retryAttempts || 3,
       retryDelay: config.retryDelay || 5000,
       defaultPriority: config.defaultPriority || 'normal',
+      useBrowser: config.useBrowser || false,
+      demoMode: config.demoMode || true,  // 默认演示模式
+      takeScreenshots: config.takeScreenshots || false,
+      scrollCount: config.scrollCount || 3,
     }
   }
 

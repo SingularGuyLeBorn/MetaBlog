@@ -1,0 +1,56 @@
+{
+  "uuid": "9abdc6f6-7d29-474a-a1a3-b9a45f5720ca",
+  "sessionId": "session-1773760527413-g3se76b",
+  "filename": "20260317-231746-session-deepseek-chat-mmuraxon-blwt64",
+  "startTime": "2026-03-17T15:17:46.631Z",
+  "model": "deepseek-chat",
+  "reasoningEnabled": false,
+  "supportsVision": false,
+  "supportsVideo": false,
+  "entries": [
+    {
+      "timestamp": "2026-03-17T15:17:46.631Z",
+      "type": "system",
+      "title": "🚀 Session 开始",
+      "note": "UUID: 9abdc6f6-7d29-474a-a1a3-b9a45f5720ca, 文件名: 20260317-231746-session-deepseek-chat-mmuraxon-blwt64, 模型: deepseek-chat, 思考模式: 关闭",
+      "metadata": {
+        "uuid": "9abdc6f6-7d29-474a-a1a3-b9a45f5720ca",
+        "filename": "20260317-231746-session-deepseek-chat-mmuraxon-blwt64",
+        "model": "deepseek-chat",
+        "reasoningEnabled": false
+      }
+    },
+    {
+      "timestamp": "2026-03-17T15:17:46.631Z",
+      "type": "user_input",
+      "title": "👤 用户输入",
+      "content": "你好 搜索 huggingface的 2026年3月17日热榜",
+      "uiVisible": true,
+      "uiLocation": "chat_input",
+      "note": "用户在聊天界面输入的消息",
+      "metadata": {
+        "messageId": "msg_1773760666630_vav1l294y",
+        "sessionId": "session-1773760527413-g3se76b"
+      }
+    },
+    {
+      "timestamp": "2026-03-17T15:18:56.744Z",
+      "type": "system",
+      "title": "🏁 Session 结束",
+      "note": "总计 0 轮对话, 0 次工具调用",
+      "metadata": {
+        "stats": {
+          "totalRounds": 0,
+          "toolCallCount": 0,
+          "errorCount": 0
+        }
+      }
+    }
+  ],
+  "stats": {
+    "totalRounds": 0,
+    "toolCallCount": 0,
+    "errorCount": 0
+  },
+  "endTime": "2026-03-17T15:18:56.744Z"
+}

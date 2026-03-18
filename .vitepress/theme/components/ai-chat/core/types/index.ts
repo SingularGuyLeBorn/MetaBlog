@@ -14,14 +14,19 @@ export type MessageRole = 'user' | 'assistant' | 'system' | 'tool'
 /** 消息状态 */
 export type MessageStatus = 'pending' | 'streaming' | 'completed' | 'error' | 'interrupted'
 
-/** 模型类型 */
+/** 模型类型 - 仅支持 DeepSeek 和 Kimi */
 export type ModelType = 
+  // DeepSeek 模型
   | 'deepseek-chat' 
-  | 'deepseek-reasoner' 
-  | 'deepseek-coder'
+  | 'deepseek-reasoner'
+  // Kimi 模型
   | 'kimi-k2.5'
-  | 'kimi-k2'
-  | 'kimi-k1.5'
+  | 'kimi-k2-turbo-preview'
+  | 'kimi-k2-thinking'
+  | 'kimi-k2-thinking-turbo'
+  | 'moonshot-v1-8k-vision-preview'
+  | 'moonshot-v1-32k-vision-preview'
+  | 'moonshot-v1-128k-vision-preview'
 
 /** 深度思考内容 */
 export interface ReasoningContent {

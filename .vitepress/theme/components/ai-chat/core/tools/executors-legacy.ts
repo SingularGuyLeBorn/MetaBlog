@@ -2167,3 +2167,692 @@ export const kbListDocuments: ToolExecutor = async (args) => {
     return `❌ 获取文档列表失败: ${error instanceof Error ? error.message : String(error)}`
   }
 }
+
+
+/**
+ * ============================================
+ * ArXiv 增强工具
+ * ============================================
+ */
+
+/**
+ * 搜索 ArXiv 论文
+ */
+export const searchArxiv: ToolExecutor = async (args) => {
+  const { query, category = 'cs.AI', max_results = 10, sort_by = 'relevance' } = args
+  
+  if (!query) {
+    return `❌ 错误：query 是必填参数
+
+示例：search_arxiv(query="transformer", category="cs.CL", max_results=10)`
+  }
+  
+  // 限制结果数量
+  const limit = Math.min(Math.max(1, max_results), 50)
+  
+  try {
+    // 构建 ArXiv API URL
+    const searchQuery = category ? `cat:${category}+AND+all:${encodeURIComponent(query)}` : `all:${encodeURIComponent(query)}`
+    const arxivUrl = `http://export.arxiv.org/api/query?search_query=${searchQuery}&start=0&max_results=${limit}&sortBy=${sort_by}&sortOrder=descending`
+    
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
+    
+    const response = await fetch(arxivUrl, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/atom+xml'
+      }
+    })
+    
+    clearTimeout(timeoutId)
+    
+    if (!response.ok) {
+      return `❌ ArXiv API 返回错误: ${response.status}
+
+建议：
+1. 检查网络连接
+2. 稍后重试
+3. 尝试简化搜索关键词`
+    }
+    
+    const xmlText = await response.text()
+    
+    // 解析 XML
+    const parser = new DOMParser()
+    const xmlDoc = parser.parseFromString(xmlText, 'text/xml')
+    
+    // 获取所有条目
+    const entries = xmlDoc.querySelectorAll('entry')
+    
+    if (entries.length === 0) {
+      return `🔍 未找到与 "${query}" 相关的论文
+
+建议：
+1. 尝试简化关键词
+2. 检查分类代码是否正确
+3. 尝试不同的搜索词`
+    }
+    
+    let result = `🔍 ArXiv 搜索结果: "${query}"\n`
+    result += `📂 分类: ${category || '全部'}\n`
+    result += `📊 找到 ${entries.length} 篇论文\n\n`
+    
+    entries.forEach((entry, index) => {
+      const title = entry.querySelector('title')?.textContent?.trim() || '未知标题'
+      const summary = entry.querySelector('summary')?.textContent?.trim() || ''
+      const published = entry.querySelector('published')?.textContent || ''
+      
+      // 提取论文 ID
+      const idElement = entry.querySelector('id')
+      const idText = idElement?.textContent || ''
+      const paperIdMatch = idText.match(/(\d+\.\d+)/)
+      const paperId = paperIdMatch ? paperIdMatch[1] : ''
+      
+      // 作者列表
+      const authors: string[] = []
+      entry.querySelectorAll('author name').forEach(author => {
+        const name = author.textContent?.trim()
+        if (name) authors.push(name)
+      })
+      
+      // 分类
+      const categories: string[] = []
+      entry.querySelectorAll('category').forEach(cat => {
+        const term = cat.getAttribute('term')
+        if (term) categories.push(term)
+      })
+      
+      result += `${index + 1}. ${title}\n`
+      if (authors.length > 0) {
+        result += `   👥 ${authors.slice(0, 3).join(', ')}${authors.length > 3 ? ` 等 ${authors.length} 人` : ''}\n`
+      }
+      if (published) {
+        const pubDate = new Date(published).toLocaleDateString('zh-CN')
+        result += `   📅 ${pubDate}\n`
+      }
+      if (categories.length > 0) {
+        result += `   🏷️ ${categories.slice(0, 3).join(', ')}\n`
+      }
+      
+      // 摘要预览
+      const abstractPreview = summary.replace(/\s+/g, ' ').slice(0, 150)
+      result += `   📝 ${abstractPreview}${summary.length > 150 ? '...' : ''}\n`
+      
+      if (paperId) {
+        result += `   🔗 获取详情: fetch_arxiv(paper_id="${paperId}")\n`
+      }
+      
+      result += '\n'
+    })
+    
+    result += `💡 提示:\n`
+    result += `- 使用 fetch_arxiv(paper_id="xxx") 获取论文详细信息\n`
+    result += `- 尝试不同分类: cs.AI (AI), cs.CL (NLP), cs.CV (CV), cs.LG (ML)`
+    
+    return result
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return `❌ 请求超时: 无法连接到 ArXiv API
+
+请检查网络连接，或稍后再试。`
+    }
+    return `❌ 搜索 ArXiv 失败: ${error instanceof Error ? error.message : String(error)}`
+  }
+}
+
+/**
+ * ============================================
+ * OpenReview 工具
+ * ============================================
+ */
+
+const OPENREVIEW_API_BASE = 'https://api.openreview.net'
+
+/**
+ * 获取 OpenReview 论文信息
+ */
+export const fetchOpenReview: ToolExecutor = async (args) => {
+  const { paper_id, venue = '', include_reviews = false } = args
+  
+  if (!paper_id) {
+    return `❌ 错误：paper_id 是必填参数
+
+示例：fetch_openreview(paper_id="Syx4wnE9P7")
+示例：fetch_openreview(paper_id="ICLR.cc/2024/Conference/-/Submission123")`
+  }
+  
+  try {
+    // OpenReview API - 获取笔记/论文详情
+    const noteUrl = `${OPENREVIEW_API_BASE}/notes?id=${encodeURIComponent(paper_id)}`
+    
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
+    
+    const response = await fetch(noteUrl, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    
+    clearTimeout(timeoutId)
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return `❌ 未找到论文: ${paper_id}
+
+可能原因：
+1. 论文 ID 不正确
+2. 论文是私有的（尚未公开）
+3. 论文已被删除`
+      }
+      return `❌ OpenReview API 错误: ${response.status}
+
+建议：稍后重试`
+    }
+    
+    const data = await response.json()
+    const notes = data.notes || []
+    
+    if (notes.length === 0) {
+      return `❌ 未找到论文: ${paper_id}`
+    }
+    
+    const note = notes[0]
+    const content = note.content || {}
+    
+    let result = `📄 OpenReview 论文\n\n`
+    result += `📝 标题: ${content.title?.value || content.title || '未知标题'}\n`
+    
+    // 作者信息
+    const authors = content.authors?.value || content.authors || []
+    if (authors.length > 0) {
+      result += `👥 作者: ${authors.join(', ')}\n`
+    }
+    
+    // 关键词
+    const keywords = content.keywords?.value || content.keywords || []
+    if (keywords.length > 0) {
+      result += `🏷️ 关键词: ${keywords.slice(0, 5).join(', ')}\n`
+    }
+    
+    // 会议/期刊信息
+    if (note.invitation) {
+      const venueMatch = note.invitation.match(/([A-Z]+)\.cc\/(\d+)/)
+      if (venueMatch) {
+        result += `🎪 会议: ${venueMatch[1]} ${venueMatch[2]}\n`
+      }
+    }
+    
+    // 状态
+    if (note.state) {
+      result += `📊 状态: ${note.state}\n`
+    }
+    
+    result += `🆔 ID: ${paper_id}\n`
+    result += `🔗 链接: https://openreview.net/forum?id=${paper_id}\n`
+    
+    // TL;DR
+    const tldr = content.tldr?.value || content.tldr || ''
+    if (tldr) {
+      result += `\n💡 TL;DR:\n${tldr}\n`
+    }
+    
+    // 摘要
+    const abstract = content.abstract?.value || content.abstract || ''
+    if (abstract) {
+      result += `\n📖 摘要:\n${abstract}\n`
+    }
+    
+    // 如果需要评审意见
+    if (include_reviews) {
+      try {
+        const reviewsUrl = `${OPENREVIEW_API_BASE}/notes?forum=${encodeURIComponent(paper_id)}&details=replies`
+        const reviewsResponse = await fetch(reviewsUrl, {
+          headers: { 'Accept': 'application/json' }
+        })
+        
+        if (reviewsResponse.ok) {
+          const reviewsData = await reviewsResponse.json()
+          const replies = reviewsData.notes?.filter((n: any) => 
+            n.invitation?.includes('Official_Review') || 
+            n.invitation?.includes('Meta_Review')
+          ) || []
+          
+          if (replies.length > 0) {
+            result += `\n📝 评审意见 (${replies.length}条):\n\n`
+            
+            replies.forEach((review: any, idx: number) => {
+              const rContent = review.content || {}
+              const rating = rContent.rating?.value || rContent.rating || ''
+              const confidence = rContent.confidence?.value || rContent.confidence || ''
+              
+              if (review.invitation?.includes('Meta_Review')) {
+                result += `[元评审]\n`
+              } else {
+                result += `[评审 ${idx + 1}]`
+                if (rating) result += ` 评分: ${rating}`
+                if (confidence) result += ` 信心: ${confidence}`
+                result += '\n'
+              }
+              
+              const comment = rContent.review?.value || rContent.comment?.value || ''
+              if (comment) {
+                result += `${comment.slice(0, 300)}${comment.length > 300 ? '...' : ''}\n`
+              }
+              result += '\n'
+            })
+          }
+        }
+      } catch (e) {
+        result += `\n⚠️ 无法获取评审意见\n`
+      }
+    } else {
+      result += `\n💡 提示: 设置 include_reviews=true 可查看评审意见\n`
+    }
+    
+    return result
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return `❌ 请求超时: 无法连接到 OpenReview API
+
+请检查网络连接，或稍后再试。`
+    }
+    return `❌ 获取 OpenReview 论文失败: ${error instanceof Error ? error.message : String(error)}`
+  }
+}
+
+/**
+ * 搜索 OpenReview 论文
+ */
+export const searchOpenReview: ToolExecutor = async (args) => {
+  const { query, venue = '', max_results = 10 } = args
+  
+  if (!query) {
+    return `❌ 错误：query 是必填参数
+
+示例：search_openreview(query="attention mechanism", venue="ICLR2024")`
+  }
+  
+  const limit = Math.min(Math.max(1, max_results), 50)
+  
+  try {
+    // 构建搜索 URL
+    // OpenReview 使用 Elasticsearch 风格的查询
+    let searchUrl = `${OPENREVIEW_API_BASE}/notes/search?term=${encodeURIComponent(query)}&type=forum`
+    
+    if (venue) {
+      // 提取会议名称和年份
+      const venueMatch = venue.match(/([A-Z]+)(\d{4})/)
+      if (venueMatch) {
+        const confName = venueMatch[1]
+        const year = venueMatch[2]
+        searchUrl += `&invitation=${confName}.cc/${year}/Conference/-/Blind_Submission`
+      }
+    }
+    
+    searchUrl += `&limit=${limit}`
+    
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
+    
+    const response = await fetch(searchUrl, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    
+    clearTimeout(timeoutId)
+    
+    if (!response.ok) {
+      return `❌ OpenReview API 错误: ${response.status}
+
+建议：稍后重试`
+    }
+    
+    const data = await response.json()
+    const notes = data.notes || []
+    
+    if (notes.length === 0) {
+      return `🔍 未找到与 "${query}" 相关的论文
+
+建议：
+1. 尝试简化关键词
+2. 检查会议名称是否正确（如 ICLR2024、NeurIPS2023）
+3. 尝试不同的搜索词`
+    }
+    
+    let result = `🔍 OpenReview 搜索结果: "${query}"\n`
+    if (venue) {
+      result += `🎪 会议: ${venue}\n`
+    }
+    result += `📊 找到 ${notes.length} 篇论文\n\n`
+    
+    notes.forEach((note: any, index: number) => {
+      const content = note.content || {}
+      const title = content.title?.value || content.title || '未知标题'
+      const authors = content.authors?.value || content.authors || []
+      
+      result += `${index + 1}. ${title}\n`
+      
+      if (authors.length > 0) {
+        result += `   👥 ${authors.slice(0, 3).join(', ')}${authors.length > 3 ? ` 等 ${authors.length} 人` : ''}\n`
+      }
+      
+      // 提取会议信息
+      if (note.invitation) {
+        const venueMatch = note.invitation.match(/([A-Z]+)\.cc\/(\d+)/)
+        if (venueMatch) {
+          result += `   🎪 ${venueMatch[1]} ${venueMatch[2]}\n`
+        }
+      }
+      
+      // TL;DR 预览
+      const tldr = content.tldr?.value || content.tldr || ''
+      if (tldr) {
+        result += `   💡 ${tldr.slice(0, 100)}${tldr.length > 100 ? '...' : ''}\n`
+      }
+      
+      result += `   🔗 fetch_openreview(paper_id="${note.id}")\n\n`
+    })
+    
+    result += `💡 提示:\n`
+    result += `- 使用 fetch_openreview(paper_id="xxx") 获取论文详细信息\n`
+    result += `- 设置 include_reviews=true 查看评审意见`
+    
+    return result
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return `❌ 请求超时: 无法连接到 OpenReview API
+
+请检查网络连接，或稍后再试。`
+    }
+    return `❌ 搜索 OpenReview 失败: ${error instanceof Error ? error.message : String(error)}`
+  }
+}
+
+/**
+ * ============================================
+ * Hugging Face 工具
+ * ============================================
+ */
+
+const HF_API_BASE = 'https://huggingface.co/api'
+
+/**
+ * 获取 Hugging Face 模型/数据集信息
+ */
+export const fetchHuggingFaceModel: ToolExecutor = async (args) => {
+  const { repo_id, type = 'model', include_readme = true } = args
+  
+  if (!repo_id) {
+    return `❌ 错误：repo_id 是必填参数
+
+示例：fetch_huggingface_model(repo_id="bert-base-uncased")
+示例：fetch_huggingface_model(repo_id="microsoft/DialoGPT-medium", type="model")
+示例：fetch_huggingface_model(repo_id="imdb", type="dataset")`
+  }
+  
+  try {
+    // 根据类型选择 API 端点
+    let apiUrl = ''
+    if (type === 'model') {
+      apiUrl = `${HF_API_BASE}/models/${encodeURIComponent(repo_id)}`
+    } else if (type === 'dataset') {
+      apiUrl = `${HF_API_BASE}/datasets/${encodeURIComponent(repo_id)}`
+    } else if (type === 'space') {
+      apiUrl = `${HF_API_BASE}/spaces/${encodeURIComponent(repo_id)}`
+    } else {
+      return `❌ 错误：type 必须是 "model"、"dataset" 或 "space"`
+    }
+    
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
+    
+    const response = await fetch(apiUrl, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    
+    clearTimeout(timeoutId)
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return `❌ 未找到 ${type}: ${repo_id}
+
+可能原因：
+1. 仓库 ID 不正确
+2. 该仓库不存在
+3. 仓库已被删除或私有化`
+      }
+      return `❌ Hugging Face API 错误: ${response.status}
+
+建议：稍后重试`
+    }
+    
+    const data = await response.json()
+    
+    const typeEmoji = type === 'model' ? '🤖' : type === 'dataset' ? '📊' : '🚀'
+    const typeName = type === 'model' ? '模型' : type === 'dataset' ? '数据集' : 'Space'
+    
+    let result = `${typeEmoji} Hugging Face ${typeName}: ${repo_id}\n\n`
+    
+    // 基本信息
+    if (data.id) {
+      result += `🆔 ID: ${data.id}\n`
+    }
+    
+    if (data.author) {
+      result += `👤 作者: ${data.author}\n`
+    }
+    
+    // 描述
+    const description = data.description || data.cardData?.description || ''
+    if (description) {
+      result += `📝 ${description}\n\n`
+    }
+    
+    // 标签
+    const tags = data.tags || []
+    const pipeline_tag = data.pipeline_tag || ''
+    if (pipeline_tag) {
+      result += `🏷️ 任务: ${pipeline_tag}\n`
+    }
+    if (tags.length > 0) {
+      result += `🏷️ 标签: ${tags.slice(0, 8).join(', ')}${tags.length > 8 ? '...' : ''}\n`
+    }
+    
+    // 统计信息
+    if (data.downloads !== undefined) {
+      result += `⬇️ 下载: ${data.downloads.toLocaleString()}\n`
+    }
+    if (data.likes !== undefined) {
+      result += `❤️ 点赞: ${data.likes.toLocaleString()}\n`
+    }
+    
+    // 模型特有信息
+    if (type === 'model') {
+      if (data.config?.model_type) {
+        result += `🏗️ 架构: ${data.config.model_type}\n`
+      }
+      if (data.siblings) {
+        const hasTokenizer = data.siblings.some((f: any) => 
+          f.rfilename?.includes('tokenizer') || f.rfilename?.endsWith('vocab.txt')
+        )
+        if (hasTokenizer) {
+          result += `🔤 包含分词器: 是\n`
+        }
+      }
+    }
+    
+    // 数据集特有信息
+    if (type === 'dataset') {
+      if (data.cardData?.size_categories) {
+        result += `📦 大小: ${data.cardData.size_categories}\n`
+      }
+    }
+    
+    result += `🔗 链接: https://huggingface.co/${repo_id}\n`
+    
+    // 获取 README
+    if (include_readme) {
+      try {
+        const readmeUrl = `https://huggingface.co/${encodeURIComponent(repo_id)}/raw/main/README.md`
+        const readmeResponse = await fetch(readmeUrl, {
+          signal: AbortSignal.timeout(10000)
+        })
+        
+        if (readmeResponse.ok) {
+          const readme = await readmeResponse.text()
+          const readmePreview = readme.slice(0, 500)
+          result += `\n📄 README 预览:\n\`\`\`markdown\n${readmePreview}${readme.length > 500 ? '\n...' : ''}\n\`\`\`\n`
+        }
+      } catch (e) {
+        // README 获取失败不显示错误
+      }
+    }
+    
+    // 使用示例
+    result += `\n💡 使用示例:\n`
+    if (type === 'model') {
+      result += `\`\`\`python
+from transformers import AutoModel, AutoTokenizer
+
+model = AutoModel.from_pretrained("${repo_id}")
+tokenizer = AutoTokenizer.from_pretrained("${repo_id}")
+\`\`\`\n`
+    } else if (type === 'dataset') {
+      result += `\`\`\`python
+from datasets import load_dataset
+
+dataset = load_dataset("${repo_id}")
+\`\`\`\n`
+    }
+    
+    return result
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return `❌ 请求超时: 无法连接到 Hugging Face API
+
+请检查网络连接，或稍后再试。`
+    }
+    return `❌ 获取 Hugging Face ${type} 失败: ${error instanceof Error ? error.message : String(error)}`
+  }
+}
+
+/**
+ * 搜索 Hugging Face Hub
+ */
+export const searchHuggingFace: ToolExecutor = async (args) => {
+  const { query, type = 'model', task = '', max_results = 10 } = args
+  
+  if (!query) {
+    return `❌ 错误：query 是必填参数
+
+示例：search_huggingface(query="sentiment analysis", type="model")
+示例：search_huggingface(query="summarization", type="model", task="text-generation")
+示例：search_huggingface(query="Chinese", type="dataset")`
+  }
+  
+  const limit = Math.min(Math.max(1, max_results), 50)
+  
+  try {
+    // 构建搜索 URL
+    let searchUrl = `${HF_API_BASE}/${type}s?search=${encodeURIComponent(query)}&limit=${limit}`
+    
+    if (task && type === 'model') {
+      searchUrl += `&pipeline_tag=${encodeURIComponent(task)}`
+    }
+    
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
+    
+    const response = await fetch(searchUrl, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    
+    clearTimeout(timeoutId)
+    
+    if (!response.ok) {
+      return `❌ Hugging Face API 错误: ${response.status}
+
+建议：稍后重试`
+    }
+    
+    const items = await response.json()
+    
+    if (!Array.isArray(items) || items.length === 0) {
+      return `🔍 未找到与 "${query}" 相关的${type === 'model' ? '模型' : type === 'dataset' ? '数据集' : 'Space'}
+
+建议：
+1. 尝试简化关键词
+2. 检查类型是否正确（model/dataset/space）
+3. 尝试不同的搜索词`
+    }
+    
+    const typeEmoji = type === 'model' ? '🤖' : type === 'dataset' ? '📊' : '🚀'
+    const typeName = type === 'model' ? '模型' : type === 'dataset' ? '数据集' : 'Space'
+    
+    let result = `🔍 Hugging Face ${typeName}搜索: "${query}"\n`
+    if (task) {
+      result += `🏷️ 任务: ${task}\n`
+    }
+    result += `📊 找到 ${items.length} 个结果\n\n`
+    
+    items.slice(0, limit).forEach((item: any, index: number) => {
+      const name = item.id || item.modelId || '未知'
+      const description = item.description || item.cardData?.description || ''
+      
+      result += `${index + 1}. ${typeEmoji} ${name}\n`
+      
+      // 描述预览
+      if (description) {
+        const descPreview = description.slice(0, 100)
+        result += `   📝 ${descPreview}${description.length > 100 ? '...' : ''}\n`
+      }
+      
+      // 任务类型
+      if (item.pipeline_tag) {
+        result += `   🏷️ ${item.pipeline_tag}\n`
+      }
+      
+      // 标签
+      if (item.tags && item.tags.length > 0) {
+        result += `   🏷️ ${item.tags.slice(0, 5).join(', ')}${item.tags.length > 5 ? '...' : ''}\n`
+      }
+      
+      // 统计
+      if (item.downloads !== undefined) {
+        result += `   ⬇️ ${item.downloads.toLocaleString()} 下载`
+        if (item.likes !== undefined) {
+          result += ` · ❤️ ${item.likes.toLocaleString()}`
+        }
+        result += '\n'
+      }
+      
+      result += `   🔗 fetch_huggingface_model(repo_id="${name}", type="${type}")\n\n`
+    })
+    
+    result += `💡 提示:\n`
+    result += `- 使用 fetch_huggingface_model(repo_id="xxx", type="${type}") 获取详细信息\n`
+    if (type === 'model') {
+      result += `- 常用任务: text-classification, text-generation, image-classification, automatic-speech-recognition\n`
+    }
+    
+    return result
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return `❌ 请求超时: 无法连接到 Hugging Face API
+
+请检查网络连接，或稍后再试。`
+    }
+    return `❌ 搜索 Hugging Face 失败: ${error instanceof Error ? error.message : String(error)}`
+  }
+}

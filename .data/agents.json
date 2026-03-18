@@ -9,7 +9,20 @@
     "seat": 1,
     "capabilities": {
       "mode": "raw",
-      "skillIds": [],
+      "skillIds": [
+        "content-analyst",
+        "code-craft",
+        "creative-designer",
+        "project-manager",
+        "weather-assistant",
+        "file-manager",
+        "research-assistant",
+        "translate-expert",
+        "data-analyst",
+        "writing-master",
+        "fullstack-developer",
+        "academic-research"
+      ],
       "customSystemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。"
     },
     "memory": {
@@ -22,7 +35,7 @@
     "callCount": 0,
     "isDefault": true,
     "createdAt": 1773231241953,
-    "updatedAt": 1773239434001,
+    "updatedAt": 1773756305646,
     "lastActiveAt": 1773231241953
   }
 ]

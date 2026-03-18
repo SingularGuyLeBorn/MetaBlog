@@ -1,0 +1,70 @@
+{
+  "uuid": "94913334-f0ed-41cd-80db-fb8c4d8f4c04",
+  "sessionId": "session-1773231249872-p9zeqiy",
+  "filename": "20260317-210113-session-deepseek-reasoner-mmumfc3g-pl9y5j",
+  "startTime": "2026-03-17T13:01:13.852Z",
+  "model": "deepseek-reasoner",
+  "reasoningEnabled": true,
+  "supportsVision": false,
+  "supportsVideo": false,
+  "entries": [
+    {
+      "timestamp": "2026-03-17T13:01:13.852Z",
+      "type": "system",
+      "title": "🚀 Session 开始",
+      "note": "UUID: 94913334-f0ed-41cd-80db-fb8c4d8f4c04, 文件名: 20260317-210113-session-deepseek-reasoner-mmumfc3g-pl9y5j, 模型: deepseek-reasoner, 思考模式: 开启",
+      "metadata": {
+        "uuid": "94913334-f0ed-41cd-80db-fb8c4d8f4c04",
+        "filename": "20260317-210113-session-deepseek-reasoner-mmumfc3g-pl9y5j",
+        "model": "deepseek-reasoner",
+        "reasoningEnabled": true
+      }
+    },
+    {
+      "timestamp": "2026-03-17T13:01:13.852Z",
+      "type": "user_input",
+      "title": "👤 用户输入",
+      "content": "帮我找一下关于 LLM 的最新研究 去 arxiv上 找点有趣的论文",
+      "uiVisible": true,
+      "uiLocation": "chat_input",
+      "note": "用户在聊天界面输入的消息",
+      "metadata": {
+        "messageId": "msg_1773752473851_w265xa2so",
+        "sessionId": "session-1773231249872-p9zeqiy"
+      }
+    },
+    {
+      "timestamp": "2026-03-17T13:01:44.484Z",
+      "type": "thinking_step",
+      "round": 1,
+      "title": "💭 思考过程",
+      "content": "嗯，用户需要arxiv上关于LLM的最新有趣论文。需要理解“最新”和“有趣”这两个关键点。arxiv每天更新大量论文，最新通常指最近一周内，有趣则可能涵盖技术突破、新颖应用或颠覆性观点。\n\n想到可以按论文类型分类，这样用户能快速找到感兴趣的方向。技术优化类比如推理效率提升，对齐研究涉及安全伦理，应用扩展可能更有创意。额外补充综述和交叉学科研究，帮助用户把握全局。\n\n每篇需要提供清晰标题和一句话亮点，避免冗长。补充分类说明能帮用户理解当前研究热点分布。考虑优先选择知名作者或机构的研究，质量更有保障。",
+      "note": "AI 的思考过程（绿色气泡展示）",
+      "uiVisible": true,
+      "uiLocation": "thinking_bubble",
+      "metadata": {
+        "stepId": "step_1_1773752504484_0",
+        "stepIndex": 0
+      }
+    },
+    {
+      "timestamp": "2026-03-17T13:02:37.156Z",
+      "type": "system",
+      "title": "🏁 Session 结束",
+      "note": "总计 1 轮对话, 0 次工具调用",
+      "metadata": {
+        "stats": {
+          "totalRounds": 1,
+          "toolCallCount": 0,
+          "errorCount": 0
+        }
+      }
+    }
+  ],
+  "stats": {
+    "totalRounds": 1,
+    "toolCallCount": 0,
+    "errorCount": 0
+  },
+  "endTime": "2026-03-17T13:02:37.156Z"
+}

@@ -18,6 +18,7 @@ export interface DocNode {
   title: string          // 显示标题
   path: string           // 相对路径 (sections/posts/xxx)
   link?: string          // URL 链接
+  desc?: string          // 简介描述
   children?: DocNode[]
   isLeaf: boolean
   collapsed?: boolean
@@ -50,7 +51,16 @@ export function scanDocStructure(
     const relativePath = `${secName}/${entry.name}`
     
     if (entry.isDirectory()) {
-      const folderNode = scanFolder(fullPath, entry.name, relativePath, secName)
+      // 尝试读取 manifest.json
+      let manifest: any = {}
+      try {
+        const manifestPath = join(sectionPath, 'manifest.json')
+        if (existsSync(manifestPath)) {
+          manifest = JSON.parse(require('fs').readFileSync(manifestPath, 'utf-8'))
+        }
+      } catch (e) {}
+
+      const folderNode = scanFolder(fullPath, entry.name, relativePath, secName, manifest)
       if (folderNode) nodes.push(folderNode)
     } else if (entry.isFile() && entry.name.endsWith('.md')) {
       // 跳过 section 首页文件 (如 posts.md)
@@ -71,24 +81,28 @@ function scanFolder(
   dirPath: string,
   folderName: string,
   relativePath: string,
-  sectionName: string
+  sectionName: string,
+  manifest: any = {}
 ): DocNode | null {
   const folderNotePath = join(dirPath, `${folderName}.md`)
   const indexPath = join(dirPath, 'index.md')
   
   let title = folderName
+  let desc = manifest[folderName]?.description || ''
   let link: string | undefined
   let folderNotePathUsed: string | undefined
   
   // 优先使用 Folder Note 模式 (folder/folder.md)
   if (existsSync(folderNotePath)) {
-    title = extractTitle(folderNotePath) || formatDisplayName(folderName)
+    title = extractTitle(folderNotePath) || manifest[folderName]?.title || formatDisplayName(folderName)
+    desc = desc || extractDesc(folderNotePath) || ''
     link = `/sections/${relativePath}/`
     folderNotePathUsed = folderNotePath
   }
   // 其次使用 Index 模式 (folder/index.md)
   else if (existsSync(indexPath)) {
-    title = extractTitle(indexPath) || formatDisplayName(folderName)
+    title = extractTitle(indexPath) || manifest[folderName]?.title || formatDisplayName(folderName)
+    desc = desc || extractDesc(indexPath) || ''
     link = `/sections/${relativePath}/`
     folderNotePathUsed = indexPath
   }
@@ -131,6 +145,7 @@ function scanFolder(
     type: 'folder',
     name: folderName,
     title,
+    desc,
     path: relativePath,
     link,
     children: children.length > 0 ? children : undefined,
@@ -150,6 +165,7 @@ function createFileNode(
 ): DocNode | null {
   const baseName = fileName.replace(/\.md$/i, '')
   const title = extractTitle(filePath) || formatDisplayName(baseName)
+  const desc = extractDesc(filePath) || ''
   const link = `/sections/${relativePath.replace(/\.md$/i, '')}`
   
   return {
@@ -157,6 +173,7 @@ function createFileNode(
     type: 'file',
     name: baseName,
     title,
+    desc,
     path: relativePath.replace(/\.md$/i, ''),
     link,
     isLeaf: true
@@ -185,6 +202,20 @@ function extractTitle(filePath: string): string | null {
 }
 
 /**
+ * 从文件提取描述
+ */
+function extractDesc(filePath: string): string | null {
+  try {
+    const content = require('fs').readFileSync(filePath, 'utf-8')
+    const fmMatch = content.match(/^---\n[\s\S]*?\ndescription:\s*(.+?)\n/)
+    if (fmMatch) return fmMatch[1].trim().replace(/^["']|["']$/g, '')
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
  * 格式化显示名称
  */
 function formatDisplayName(name: string): string {
@@ -203,7 +234,8 @@ export function toSidebarFormat(nodes: DocNode[]): any[] {
       text: node.title,
       id: node.id,
       collapsed: node.collapsed ?? false,
-      isLeaf: node.isLeaf
+      isLeaf: node.isLeaf,
+      description: node.desc
     }
     
     // 确保链接格式一致性：文件夹以 / 结尾，文件不以 / 结尾

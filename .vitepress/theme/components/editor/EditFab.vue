@@ -13,10 +13,12 @@ const editorRef = ref<InstanceType<typeof InlineMarkdownEditor> | null>(null)
 // 判断当前页面是否可编辑 - computed property
 const isEditable = computed<boolean>(() => {
   const currentPath = route.path
-  // 首页组件不可编辑
+  // 首页组件和 AI 助手页面不可编辑
   const nonEditablePaths = [
     '/',
     '/index.html',
+    '/chat',
+    '/chat.html',
     '/sections/posts/',
     '/sections/posts/index.html',
     '/sections/knowledge/',

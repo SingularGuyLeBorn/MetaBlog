@@ -84,6 +84,13 @@ export {
   fetchUrl,
   // ArXiv 工具
   fetchArxiv,
+  searchArxiv,
+  // OpenReview 工具
+  fetchOpenReview,
+  searchOpenReview,
+  // Hugging Face 工具
+  fetchHuggingFaceModel,
+  searchHuggingFace,
   // GitHub 工具
   githubGetRepo,
   githubListRepoContents,
@@ -128,6 +135,13 @@ export {
   fetchUrlDef,
   // ArXiv 工具
   fetchArxivDef,
+  searchArxivDef,
+  // OpenReview 工具
+  fetchOpenReviewDef,
+  searchOpenReviewDef,
+  // Hugging Face 工具
+  fetchHuggingFaceModelDef,
+  searchHuggingFaceDef,
   // GitHub 工具
   githubGetRepoDef,
   githubListRepoContentsDef,
@@ -168,19 +182,59 @@ import {
   richArticleExecutors
 } from './rich-article'
 
+// 新的文章管理工具集
+import {
+  createArticle,
+  getArticleContent,
+  updateArticle,
+  deleteArticle,
+  listArticles,
+  searchArticles
+} from './article'
+import {
+  createArticleDef,
+  getArticleContentDef,
+  updateArticleDef,
+  deleteArticleDef,
+  listArticlesDef,
+  searchArticlesDef
+} from './article/definitions'
+
+// 新的学术工具集
+import {
+  searchArxiv,
+  fetchArxiv,
+  searchOpenReview,
+  fetchOpenReview,
+  searchHuggingFace,
+  fetchHuggingFaceModel,
+  searchPapersWithCode,
+  searchSemanticScholar
+} from './academic'
+import {
+  searchArxivDef,
+  fetchArxivDef,
+  searchOpenReviewDef,
+  fetchOpenReviewDef,
+  searchHuggingFaceDef,
+  fetchHuggingFaceModelDef,
+  searchPapersWithCodeDef,
+  searchSemanticScholarDef
+} from './academic/definitions'
+
 /**
  * 初始化所有默认工具（向后兼容）
  * 在应用启动时调用，注册所有内置工具
  */
 export function initializeDefaultTools(): void {
   const tools = [
-    // 文章管理工具
-    { name: 'get_article_content', definition: definitions.getArticleContentDef, executor: executors.getArticleContent },
-    { name: 'search_articles', definition: definitions.searchArticlesDef, executor: executors.searchArticles },
-    { name: 'list_articles', definition: definitions.listArticlesDef, executor: executors.listArticles },
-    { name: 'create_article', definition: definitions.createArticleDef, executor: executors.createArticle },
-    { name: 'update_article', definition: definitions.updateArticleDef, executor: executors.updateArticle },
-    { name: 'delete_article', definition: definitions.deleteArticleDef, executor: executors.deleteArticle },
+    // 文章管理工具（新版）
+    { name: 'create_article', definition: createArticleDef, executor: createArticle },
+    { name: 'get_article_content', definition: getArticleContentDef, executor: getArticleContent },
+    { name: 'update_article', definition: updateArticleDef, executor: updateArticle },
+    { name: 'delete_article', definition: deleteArticleDef, executor: deleteArticle },
+    { name: 'list_articles', definition: listArticlesDef, executor: listArticles },
+    { name: 'search_articles', definition: searchArticlesDef, executor: searchArticles },
     
     // 文件管理工具
     { name: 'read_file', definition: definitions.readFileDef, executor: executors.readFile },
@@ -190,7 +244,16 @@ export function initializeDefaultTools(): void {
     // 网络工具
     { name: 'web_search', definition: definitions.webSearchDef, executor: executors.webSearch },
     { name: 'fetch_url', definition: definitions.fetchUrlDef, executor: executors.fetchUrl },
-    { name: 'fetch_arxiv', definition: definitions.fetchArxivDef, executor: executors.fetchArxiv },
+    
+    // 学术研究工具（新版）
+    { name: 'search_arxiv', definition: searchArxivDef, executor: searchArxiv },
+    { name: 'fetch_arxiv', definition: fetchArxivDef, executor: fetchArxiv },
+    { name: 'search_openreview', definition: searchOpenReviewDef, executor: searchOpenReview },
+    { name: 'fetch_openreview', definition: fetchOpenReviewDef, executor: fetchOpenReview },
+    { name: 'search_huggingface', definition: searchHuggingFaceDef, executor: searchHuggingFace },
+    { name: 'fetch_huggingface_model', definition: fetchHuggingFaceModelDef, executor: fetchHuggingFaceModel },
+    { name: 'search_paperswithcode', definition: searchPapersWithCodeDef, executor: searchPapersWithCode },
+    { name: 'search_semantic_scholar', definition: searchSemanticScholarDef, executor: searchSemanticScholar },
     
     // 计算与转换工具
     { name: 'calculate', definition: definitions.calculateDef, executor: executors.calculate },
