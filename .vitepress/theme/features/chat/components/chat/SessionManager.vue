@@ -223,7 +223,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
 import { Icon } from '../../../../shared/components'
-import GlassSelect from '../../agent/admin/GlassSelect.vue'
+import GlassSelect from '../agent/GlassSelect.vue'
 import type { ChatSession } from '../../../core/types'
 import type { Agent } from '../../../core/types/agent'
 
