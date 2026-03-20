@@ -307,7 +307,7 @@ async function deleteSkill(skill: Skill) {
 </script>
 
 <style scoped>
-@import '../../../styles/liquid-glass-theme.css';
+@import '../../../../shared/styles/liquid-glass-theme.css';
 
 .skills-manager {
   max-width: 1200px;

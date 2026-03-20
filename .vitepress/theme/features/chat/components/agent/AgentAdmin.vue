@@ -385,7 +385,7 @@ async function executeDelete() {
 </script>
 
 <style scoped>
-@import '../../../styles/liquid-glass-theme.css';
+@import '../../../../shared/styles/liquid-glass-theme.css';
 
 /* ===== 档案馆容器 ===== */
 .glass-archive-overlay {

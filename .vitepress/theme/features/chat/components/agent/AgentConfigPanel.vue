@@ -347,7 +347,7 @@ onMounted(initConfig)
 </script>
 
 <style scoped>
-@import '../../../styles/liquid-glass-theme.css';
+@import '../../../../shared/styles/liquid-glass-theme.css';
 
 .agent-config {
   display: flex;

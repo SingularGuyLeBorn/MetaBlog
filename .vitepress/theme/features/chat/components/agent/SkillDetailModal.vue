@@ -145,7 +145,7 @@ function getToolColor(idx: number) {
 </script>
 
 <style scoped>
-@import '../../../styles/liquid-glass-theme.css';
+@import '../../../../shared/styles/liquid-glass-theme.css';
 
 .modal-overlay {
   position: fixed;

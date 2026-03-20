@@ -154,7 +154,7 @@ function exportMemories() {
 </script>
 
 <style scoped>
-@import '../../../styles/liquid-glass-theme.css';
+@import '../../../../shared/styles/liquid-glass-theme.css';
 
 .memory-manager {
   max-width: 1000px;
