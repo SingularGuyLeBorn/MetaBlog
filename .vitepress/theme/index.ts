@@ -1,54 +1,53 @@
-import { h, defineAsyncComponent } from "vue";
+import { h } from "vue";
 import DefaultTheme from "vitepress/theme";
 import Layout from "./Layout.vue";
 import "./style.css";
-import "./styles/animations.css";
-import "./components/ai-chat/styles/index.css";
+import "./shared/styles/animations.css";
 import type { Theme } from "vitepress";
-import { useData, useRoute } from "vitepress";
 import { createPinia } from "pinia";
 
 // ========== Pages ==========
-import HomePage from "./components/pages/HomePage.vue";
-import PostsPage from "./components/pages/PostsPage.vue";
-import KnowledgePage from "./components/pages/KnowledgePage.vue";
-import ResourcesPage from "./components/pages/ResourcesPage.vue";
-import AboutPage from "./components/pages/AboutPage.vue";
-import ChatPage from "./components/pages/ChatPage.vue";
+import HomePage from "./pages/HomePage.vue";
+import PostsPage from "./pages/PostsPage.vue";
+import KnowledgePage from "./pages/KnowledgePage.vue";
+import ResourcesPage from "./pages/ResourcesPage.vue";
+import AboutPage from "./pages/AboutPage.vue";
+import ChatPage from "./pages/ChatPage.vue";
 
+// ========== Features ==========
+// Chat
+import { ChatLayout } from "./features/chat";
 
-// ========== AI Chat Module ==========
-import { ChatLayout } from "./components/ai-chat";
+// Editor
+import EditFab from "./features/editor/EditFab.vue";
 
-// ========== Layout Components ==========
-import Breadcrumb from "./components/layout/Breadcrumb.vue";
-import GlobalSidebar from "./components/layout/GlobalSidebar.vue";
-import TocSidebar from "./components/layout/TocSidebar.vue";
-import TocFab from "./components/layout/TocFab.vue";
+// ========== Shared Components ==========
+// Layout
+import Breadcrumb from "./shared/components/Breadcrumb.vue";
+import GlobalSidebar from "./shared/components/GlobalSidebar.vue";
+import TocSidebar from "./shared/components/TocSidebar.vue";
+import TocFab from "./shared/components/TocFab.vue";
 
-// ========== Home Components ==========
-import HomePortal from "./components/home/HomePortal.vue";
-import SectionHub from "./components/home/SectionHub.vue";
-import SectionHero from "./components/home/SectionHero.vue";
+// UI
+import AnimatedContainer from "./shared/components/AnimatedContainer.vue";
+import AnimatedButton from "./shared/components/AnimatedButton.vue";
 
-// ========== Feature Components ==========
-import InlineMarkdownEditor from "./components/features/InlineMarkdownEditor.vue";
-import KnowledgeGraph from "./components/features/KnowledgeGraph.vue";
-import RAGSearch from "./components/features/RAGSearch.vue";
+// Home
+import HomePortal from "./pages/HomePortal.vue";
+import SectionHub from "./pages/SectionHub.vue";
+import SectionHero from "./pages/SectionHero.vue";
 
-// ========== Dashboard Components ==========
-import AboutProfile from "./components/Dashboards/AboutProfile.vue";
+// KB Features
+import InlineMarkdownEditor from "./features/kb/InlineMarkdownEditor.vue";
+import KnowledgeGraph from "./features/kb/KnowledgeGraph.vue";
+import RAGSearch from "./features/kb/RAGSearch.vue";
 
-// ========== Editor Components ==========
-import EditFab from "./components/editor/EditFab.vue";
+// Dashboards
+import AboutProfile from "./shared/components/AboutProfile.vue";
 
-// ========== UI Components ==========
-import AnimatedContainer from "./components/ui/AnimatedContainer.vue";
-import AnimatedButton from "./components/ui/AnimatedButton.vue";
-
-// ========== Legacy Components ==========
-import ControlCenter from "./components/legacy/ControlCenter.vue";
-import FullScreenPanel from "./components/legacy/FullScreenPanel.vue";
+// Legacy
+import ControlCenter from "./shared/components/ControlCenter.vue";
+import FullScreenPanel from "./shared/components/FullScreenPanel.vue";
 
 export default {
   extends: DefaultTheme,
@@ -67,9 +66,12 @@ export default {
     app.component("AboutPage", AboutPage);
     app.component("ChatPage", ChatPage);
 
-
-    // ========== Register AI Chat ==========
+    // ========== Register Features ==========
     app.component("ChatLayout", ChatLayout);
+    app.component("EditFab", EditFab);
+    app.component("InlineMarkdownEditor", InlineMarkdownEditor);
+    app.component("KnowledgeGraph", KnowledgeGraph);
+    app.component("RAGSearch", RAGSearch);
 
     // ========== Register Layout ==========
     app.component("Breadcrumb", Breadcrumb);
@@ -82,36 +84,15 @@ export default {
     app.component("SectionHub", SectionHub);
     app.component("SectionHero", SectionHero);
 
-    // ========== Register Features ==========
-    app.component("InlineMarkdownEditor", InlineMarkdownEditor);
-    app.component("KnowledgeGraph", KnowledgeGraph);
-    app.component("RAGSearch", RAGSearch);
-
-    // ========== Register Dashboards ==========
-    app.component("AboutProfile", AboutProfile);
-
-    // ========== Register Editor ==========
-    app.component("EditFab", EditFab);
-
     // ========== Register UI ==========
     app.component("AnimatedContainer", AnimatedContainer);
     app.component("AnimatedButton", AnimatedButton);
+
+    // ========== Register Dashboards ==========
+    app.component("AboutProfile", AboutProfile);
 
     // ========== Register Legacy ==========
     app.component("ControlCenter", ControlCenter);
     app.component("FullScreenPanel", FullScreenPanel);
   },
 } satisfies Theme;
-
-// Utility function for sidebar data (can be used in components)
-export function useSidebarData() {
-  const { theme } = useData();
-  const route = useRoute();
-  const sidebar = theme.value.sidebar || {};
-
-  // Find key that matches current path
-  const path = route.path;
-  const matchedKey = Object.keys(sidebar).find((key) => path.startsWith(key));
-
-  return matchedKey ? sidebar[matchedKey] : [];
-}

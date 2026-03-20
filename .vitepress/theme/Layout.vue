@@ -2,26 +2,26 @@
 import { ref, onMounted, computed, watch, provide, nextTick, defineAsyncComponent, onUnmounted } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import { useData, useRoute, useRouter } from 'vitepress'
-import GlobalSidebar from './components/layout/GlobalSidebar.vue'
-import TocSidebar from './components/layout/TocSidebar.vue'
-import TocFab from './components/layout/TocFab.vue'
-import EditFab from './components/editor/EditFab.vue'
-import Breadcrumb from './components/layout/Breadcrumb.vue'
-import DocTitleBar from './components/ui/DocTitleBar.vue'
-import StarRiverLayout from './components/StarRiverLayout.vue'
+import GlobalSidebar from './shared/components/GlobalSidebar.vue'
+import TocSidebar from './shared/components/TocSidebar.vue'
+import TocFab from './shared/components/TocFab.vue'
+import EditFab from './features/editor/EditFab.vue'
+import Breadcrumb from './shared/components/Breadcrumb.vue'
+import DocTitleBar from './shared/components/DocTitleBar.vue'
+import StarRiverLayout from './shared/components/StarRiverLayout.vue'
 
 // 页面组件导入
-import HomePage from './components/pages/HomePage.vue'
-import AboutPage from './components/pages/AboutPage.vue'
-import KnowledgePage from './components/pages/KnowledgePage.vue'
-import PostsPage from './components/pages/PostsPage.vue'
-import ResourcesPage from './components/pages/ResourcesPage.vue'
-import ChatPage from './components/pages/ChatPage.vue'
+import HomePage from './pages/HomePage.vue'
+import AboutPage from './pages/AboutPage.vue'
+import KnowledgePage from './pages/KnowledgePage.vue'
+import PostsPage from './pages/PostsPage.vue'
+import ResourcesPage from './pages/ResourcesPage.vue'
+import ChatPage from './pages/ChatPage.vue'
 
-import ControlCenter from './components/legacy/ControlCenter.vue'
-import { AgentAdmin } from './components/ai-chat/modules/agent'
-import LogDashboard from './components/ai-chat/modules/agent/admin/LogDashboard.vue'
-import { useAppStore } from './stores/app'
+import ControlCenter from './shared/components/ControlCenter.vue'
+import { AgentAdmin } from './features/chat/components/agent'
+
+import { useAppStore } from './shared/stores/app'
 
 const { Layout } = DefaultTheme
 const { frontmatter, page } = useData()
@@ -49,11 +49,10 @@ const isPureVuePage = computed(() => {
 })
 
 // Control center panel state
-const activePanel = ref<'dashboard' | 'articles' | 'logs' | null>(null)
+const activePanel = ref<'dashboard' | 'articles' | null>(null)
 const showAgentAdmin = ref(false)
-const showLogDashboard = ref(false)
 
-const handleControlOpen = (panel: 'dashboard' | 'articles' | 'logs') => {
+const handleControlOpen = (panel: 'dashboard' | 'articles') => {
   activePanel.value = panel
   
   // 打开 Agent 管理面板
@@ -61,9 +60,7 @@ const handleControlOpen = (panel: 'dashboard' | 'articles' | 'logs') => {
     showAgentAdmin.value = true
   } else if (panel === 'articles') {
     router.go('/sections/posts/')
-  } else if (panel === 'logs') {
-    showLogDashboard.value = true
-  }
+
 }
 
 const handleAgentChange = (agent: any) => {
@@ -322,10 +319,7 @@ const rightResizerPosition = computed(() => rightWidth.value + 'px')
         v-model:visible="showAgentAdmin"
         @agent-change="handleAgentChange"
       />
-      <LogDashboard
-        v-model:visible="showLogDashboard"
-        @close="showLogDashboard = false"
-      />
+
     </div>
   </StarRiverLayout>
 </template>
