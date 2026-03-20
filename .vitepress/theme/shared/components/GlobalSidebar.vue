@@ -84,7 +84,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick, provide } from 'vue'
 import { useRoute, useRouter } from 'vitepress'
 import { useSidebar } from 'vitepress/theme'
-import TreeNode from '../ui/TreeNode.vue'
+import TreeNode from './TreeNode.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -1,7 +1,7 @@
 ﻿<script setup lang="ts">
-import { data as posts } from '../../../../docs/data/posts.data'
-import { data as knowledge } from '../../../../docs/data/knowledge.data'
-import { data as resources } from '../../../../docs/data/resources.data'
+import { data as posts } from '../../../docs/data/posts.data'
+import { data as knowledge } from '../../../docs/data/knowledge.data'
+import { data as resources } from '../../../docs/data/resources.data'
 
 
 const sections = [

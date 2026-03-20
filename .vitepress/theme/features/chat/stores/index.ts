@@ -3,5 +3,6 @@
  */
 
 export { useAIChat } from './chatStore'
-export { useAgentConfig } from './agentStore'
-export { useSkills } from './skillStore'
+export { useAgentConfig } from './useAgentConfig'
+export { useAgents } from './useAgents'
+export { useSkills } from './useSkills'
