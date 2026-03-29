@@ -1,8 +1,14 @@
 /**
  * 工具注册表
  * 
- * 管理所有工具的注册、查询和执行
- * 统一处理工具返回格式和错误处理
+ * 管理所有工具的注册、查询和执行。
+ * 这是工具系统的核心模块，负责：
+ * 1. 工具注册和管理
+ * 2. 工具执行调度
+ * 3. 工具调用记录
+ * 4. 错误处理和返回格式统一
+ * 
+ * @module ToolRegistry
  */
 
 import type {
@@ -13,16 +19,33 @@ import type {
   ToolCall,
   ToolCallRecord
 } from './types'
-import { createErrorResult, createSuccessResult } from './types'
+import { createErrorResult } from './types'
 
-// 工具存储
+// ==================== 存储 ====================
+
+/** 工具注册表 - 存储所有已注册的工具 */
 const toolRegistry = new Map<string, ToolRegistration>()
 
-// 工具调用记录（用于UI展示）
+/** 工具调用记录 - 用于 UI 展示和调试 */
 const toolCallRecords = new Map<string, ToolCallRecord>()
+
+// ==================== 工具注册 ====================
 
 /**
  * 注册单个工具
+ * 
+ * @param name - 工具名称（必须唯一）
+ * @param definition - 工具定义（给 AI 看的）
+ * @param executor - 执行器（实际实现）
+ * 
+ * @example
+ * ```typescript
+ * registerTool(
+ *   'get_weather',
+ *   getWeatherDef,
+ *   getWeather
+ * )
+ * ```
  */
 export function registerTool(
   name: string,
@@ -39,6 +62,16 @@ export function registerTool(
 
 /**
  * 批量注册工具
+ * 
+ * @param tools - 工具注册信息数组
+ * 
+ * @example
+ * ```typescript
+ * registerTools([
+ *   { name: 'tool1', definition: def1, executor: exec1 },
+ *   { name: 'tool2', definition: def2, executor: exec2 }
+ * ])
+ * ```
  */
 export function registerTools(tools: ToolRegistration[]): void {
   tools.forEach(tool => {
@@ -46,8 +79,13 @@ export function registerTools(tools: ToolRegistration[]): void {
   })
 }
 
+// ==================== 工具查询 ====================
+
 /**
  * 获取工具
+ * 
+ * @param name - 工具名称
+ * @returns 工具注册信息，如果不存在返回 undefined
  */
 export function getTool(name: string): ToolRegistration | undefined {
   return toolRegistry.get(name)
@@ -55,13 +93,18 @@ export function getTool(name: string): ToolRegistration | undefined {
 
 /**
  * 检查工具是否存在
+ * 
+ * @param name - 工具名称
+ * @returns 是否存在
  */
 export function hasTool(name: string): boolean {
   return toolRegistry.has(name)
 }
 
 /**
- * 获取所有工具定义（用于Function Calling）
+ * 获取所有工具定义（用于 Function Calling）
+ * 
+ * @returns 所有工具的定义数组
  */
 export function getToolDefinitions(): ToolDefinition[] {
   return Array.from(toolRegistry.values()).map(t => t.definition)
@@ -69,6 +112,8 @@ export function getToolDefinitions(): ToolDefinition[] {
 
 /**
  * 获取已注册工具名称列表
+ * 
+ * @returns 工具名称数组
  */
 export function getRegisteredToolNames(): string[] {
   return Array.from(toolRegistry.keys())
@@ -76,13 +121,20 @@ export function getRegisteredToolNames(): string[] {
 
 /**
  * 获取工具数量
+ * 
+ * @returns 已注册工具数量
  */
 export function getToolCount(): number {
   return toolRegistry.size
 }
 
+// ==================== 工具注销 ====================
+
 /**
  * 注销工具
+ * 
+ * @param name - 工具名称
+ * @returns 是否成功注销
  */
 export function unregisterTool(name: string): boolean {
   return toolRegistry.delete(name)
@@ -96,8 +148,10 @@ export function clearTools(): void {
   toolCallRecords.clear()
 }
 
+// ==================== 工具执行 ====================
+
 /**
- * 生成工具调用记录ID
+ * 生成工具调用记录 ID
  */
 function generateRecordId(): string {
   return `tool_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
@@ -106,11 +160,27 @@ function generateRecordId(): string {
 /**
  * 执行工具
  * 
- * 统一处理：
- * 1. 参数解析
- * 2. 执行调用
- * 3. 返回格式统一
- * 4. 错误处理
+ * 这是工具执行的核心函数，负责：
+ * 1. 查找工具
+ * 2. 解析参数
+ * 3. 执行调用
+ * 4. 统一返回格式
+ * 5. 错误处理
+ * 
+ * @param toolCall - AI 返回的工具调用
+ * @returns ToolResult
+ * 
+ * @example
+ * ```typescript
+ * const result = await executeTool({
+ *   id: 'call_123',
+ *   type: 'function',
+ *   function: {
+ *     name: 'get_weather',
+ *     arguments: '{"city": "北京"}'
+ *   }
+ * })
+ * ```
  */
 export async function executeTool(
   toolCall: ToolCall
@@ -118,6 +188,7 @@ export async function executeTool(
   const { name } = toolCall.function
   const tool = getTool(name)
   
+  // 1. 检查工具是否存在
   if (!tool) {
     return createErrorResult(
       `工具 "${name}" 不存在`,
@@ -126,7 +197,7 @@ export async function executeTool(
     )
   }
   
-  // 解析参数
+  // 2. 解析参数
   let args: Record<string, any>
   try {
     args = JSON.parse(toolCall.function.arguments)
@@ -134,25 +205,26 @@ export async function executeTool(
     return createErrorResult(
       `参数解析失败: ${e?.message || String(e)}`,
       '参数格式不正确',
-      '请检查输入参数是否为有效的JSON格式'
+      '请检查输入参数是否为有效的 JSON 格式'
     )
   }
   
+  // 3. 执行工具
   try {
-    // 执行工具
     const result = await tool.executor(args)
     
-    // 统一返回格式
+    // 4. 统一返回格式
     if (typeof result === 'string') {
       // 字符串结果转换为标准格式
-      return createSuccessResult(
-        result,
-        result,
-        name
-      )
+      return {
+        success: true,
+        data: result,
+        message: result,
+        action: name
+      }
     }
     
-    // 已经是ToolResult格式
+    // 已经是 ToolResult 格式
     return result
   } catch (error: any) {
     console.error(`[ToolRegistry] 工具 "${name}" 执行失败:`, error)
@@ -166,6 +238,11 @@ export async function executeTool(
 
 /**
  * 执行工具并记录（带可视化支持）
+ * 
+ * 这个函数在执行工具的同时记录调用过程，用于 UI 展示。
+ * 
+ * @param toolCall - AI 返回的工具调用
+ * @returns 执行结果和调用记录
  */
 export async function executeToolWithRecord(
   toolCall: ToolCall
@@ -215,8 +292,13 @@ export async function executeToolWithRecord(
   }
 }
 
+// ==================== 记录查询 ====================
+
 /**
  * 获取工具调用记录
+ * 
+ * @param id - 记录 ID
+ * @returns 调用记录
  */
 export function getToolCallRecord(id: string): ToolCallRecord | undefined {
   return toolCallRecords.get(id)
@@ -224,6 +306,8 @@ export function getToolCallRecord(id: string): ToolCallRecord | undefined {
 
 /**
  * 获取所有工具调用记录
+ * 
+ * @returns 调用记录数组
  */
 export function getAllToolCallRecords(): ToolCallRecord[] {
   return Array.from(toolCallRecords.values())

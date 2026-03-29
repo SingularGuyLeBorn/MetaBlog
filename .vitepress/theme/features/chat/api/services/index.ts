@@ -49,3 +49,15 @@ export {
 
 // logger
 export * from './logger'
+
+// Skill Integrated Service (Claude Code 风格的 Skills + Tools 整合)
+export { 
+  skillIntegratedService,
+  createSkillMetadata,
+  analyzePrompt
+} from './skillIntegratedService'
+export type { 
+  SkillIntegratedConfig,
+  SkillActivationResult,
+  EnhancedStreamCallbacks
+} from './skillIntegratedService'

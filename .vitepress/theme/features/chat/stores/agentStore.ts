@@ -31,7 +31,7 @@ import {
   updateSkill as updateSkillStorage,
   deleteSkill as deleteSkillStorage
 } from '../api/services/agentStorage'
-import { allToolDefinitions } from '../tools/definitions'
+import { getToolDefinitions } from '../tools'
 
 // ==================== 状态（内存临时存储）====================
 
@@ -71,7 +71,7 @@ export function useAgentConfig() {
 
   // ----- Tools -----
   const allTools = computed((): Tool[] => {
-    const defs = allToolDefinitions
+    const defs = getToolDefinitions()
     const iconMap: Record<string, string> = {
       get_current_time: '⏰',
       get_article_content: '📄',

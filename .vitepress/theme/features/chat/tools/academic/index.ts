@@ -30,5 +30,5 @@ export {
   academicToolNames
 } from './definitions'
 
-// 导出类型（只导出实际存在的）
+// 导出类型
 export type { ArxivPaper } from './executors'

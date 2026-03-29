@@ -50,9 +50,17 @@ export {
   unregisterTool,
   clearTools,
   initializeDefaultTools,
-  platformParserDefinitions,
-  platformParserExecutors,
 } from './tools'
+
+// 平台解析工具（从子模块导出）
+export {
+  parseZhihuDef,
+  parseXiaohongshuDef,
+  parseWechatDef,
+  parsePlatformLinkDef,
+  ocrImageDef,
+  processImageDef,
+} from './tools/platform'
 
 export type {
   ToolDefinition,

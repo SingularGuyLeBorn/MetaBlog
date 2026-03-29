@@ -32,6 +32,11 @@ import {
   type ToolDefinition,
   type ToolCall
 } from '../../tools/index'
+import { 
+  buildFullPrompt,
+  type SkillMetadata,
+  type ActiveSkill
+} from '../../skills/index'
 import { fileToBase64, detectMediaType, buildKimiImageContent, buildKimiVideoContent } from './multimediaService'
 
 // 初始化默认工具
@@ -914,7 +919,7 @@ export const aiService = {
       // 转换消息格式，支持多模态
       const apiMessages: any[] = []
       
-      // 添加系统提示词
+      // 添加系统提示词 (支持 Skills 的渐进式披露)
       if (config.systemPrompt) {
         // 为多模态模型添加提示
         let enhancedPrompt = config.systemPrompt

@@ -3,7 +3,8 @@
  * 所有 API 均为免费公开接口，无需认证
  */
 
-import type { ToolExecutor } from '../types'
+import type { ToolExecutor, ToolResult } from '../types'
+import { createSuccessResult, createErrorResult } from '../types'
 
 // ==================== ArXiv ====================
 
@@ -64,7 +65,7 @@ function parseArxivXml(xml: string): ArxivPaper[] {
       categories.push(catMatch[1])
     }
     
-    const arxivId = idMatch ? idMatch[1].split('/').pop()?.replace('abs/', '').replace('v\d+', '') || '' : ''
+    const arxivId = idMatch ? idMatch[1].split('/').pop()?.replace('abs/', '').replace(/v\d+$/, '') || '' : ''
     
     if (arxivId && titleMatch) {
       papers.push({
@@ -83,10 +84,16 @@ function parseArxivXml(xml: string): ArxivPaper[] {
   return papers
 }
 
-export const searchArxiv: ToolExecutor = async (args) => {
+export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
   const { query, category = '', max_results = 10, sort_by = 'relevance' } = args
   
-  if (!query) return '❌ 错误：query 是必填参数\n\n示例：search_arxiv(query="transformer")'
+  if (!query) {
+    return createErrorResult(
+      'Missing query parameter',
+      '请提供搜索关键词',
+      '示例: search_arxiv(query="transformer")'
+    )
+  }
   
   const limit = Math.min(Math.max(1, max_results), 50)
   
@@ -104,32 +111,68 @@ export const searchArxiv: ToolExecutor = async (args) => {
       headers: { 'Accept': 'application/atom+xml' }
     })
     
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    if (!response.ok) {
+      return createErrorResult(
+        `HTTP ${response.status}`,
+        'ArXiv 搜索失败',
+        '请稍后重试或检查网络连接'
+      )
+    }
     
     const xmlText = await response.text()
     const papers = parseArxivXml(xmlText)
     
-    if (papers.length === 0) return `🔍 未找到与 "${query}" 相关的论文`
+    if (papers.length === 0) {
+      return createSuccessResult(
+        [],
+        `未找到与 "${query}" 相关的论文`,
+        'search_arxiv',
+        '尝试使用不同的关键词或放宽搜索条件'
+      )
+    }
     
-    let result = `📚 ArXiv 搜索结果: "${query}" (${papers.length}篇)\n\n`
+    // 格式化输出
+    let formattedResult = `📚 ArXiv 搜索结果: "${query}" (${papers.length}篇)\n\n`
     papers.forEach((p, i) => {
-      result += `${i + 1}. **${p.title}**\n`
-      result += `   👤 ${p.authors.slice(0, 3).join(', ')}${p.authors.length > 3 ? ' 等' : ''}\n`
-      result += `   📅 ${formatDate(p.published)} · 🏷️ ${p.primaryCategory || 'N/A'}\n`
-      result += `   📝 ${p.summary.slice(0, 150)}...\n`
-      result += `   🔗 fetch_arxiv(paper_id="${p.id}")\n\n`
+      formattedResult += `${i + 1}. **${p.title}**\n`
+      formattedResult += `   👤 ${p.authors.slice(0, 3).join(', ')}${p.authors.length > 3 ? ' 等' : ''}\n`
+      formattedResult += `   📅 ${formatDate(p.published)} · 🏷️ ${p.primaryCategory || 'N/A'}\n`
+      formattedResult += `   📝 ${p.summary.slice(0, 150)}...\n`
+      formattedResult += `   🔗 fetch_arxiv(paper_id="${p.id}")\n\n`
     })
     
-    return result
+    return createSuccessResult(
+      papers,
+      `找到 ${papers.length} 篇相关论文`,
+      'search_arxiv',
+      '使用 fetch_arxiv(paper_id="xxx") 获取论文详情'
+    )
   } catch (error: any) {
-    if (error.name === 'AbortError') return '⏱️ 请求超时'
-    return `❌ 搜索失败: ${error.message}`
+    if (error.name === 'AbortError') {
+      return createErrorResult(
+        'Request timeout',
+        '请求超时',
+        'ArXiv 服务响应较慢，请稍后重试'
+      )
+    }
+    return createErrorResult(
+      error.message,
+      '搜索失败',
+      '请检查网络连接或稍后重试'
+    )
   }
 }
 
-export const fetchArxiv: ToolExecutor = async (args) => {
+export const fetchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
   const { paper_id } = args
-  if (!paper_id) return '❌ 错误：paper_id 是必填参数\n\n示例：fetch_arxiv(paper_id="2401.12345")'
+  
+  if (!paper_id) {
+    return createErrorResult(
+      'Missing paper_id parameter',
+      '请提供论文 ID',
+      '示例: fetch_arxiv(paper_id="2401.12345")'
+    )
+  }
   
   const cleanId = paper_id.toString().trim().toLowerCase().replace(/v\d+$/, '')
   
@@ -144,15 +187,27 @@ export const fetchArxiv: ToolExecutor = async (args) => {
       headers: { 'Accept': 'application/atom+xml' }
     })
     
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    if (!response.ok) {
+      return createErrorResult(
+        `HTTP ${response.status}`,
+        '获取论文详情失败',
+        '请稍后重试'
+      )
+    }
     
     const xmlText = await response.text()
     const papers = parseArxivXml(xmlText)
     
-    if (papers.length === 0) return `❌ 未找到论文: ${paper_id}`
+    if (papers.length === 0) {
+      return createErrorResult(
+        'Paper not found',
+        `未找到论文: ${paper_id}`,
+        '请检查论文 ID 是否正确'
+      )
+    }
     
     const p = papers[0]
-    return `📄 **${p.title}**
+    const formattedResult = `📄 **${p.title}**
 
 👤 **作者**: ${p.authors.join(', ')}
 📅 **发布**: ${formatDate(p.published)}
@@ -162,17 +217,40 @@ export const fetchArxiv: ToolExecutor = async (args) => {
 
 📝 **摘要**:
 ${p.summary}`
+    
+    return createSuccessResult(
+      p,
+      `成功获取论文: ${p.title}`,
+      'fetch_arxiv'
+    )
   } catch (error: any) {
-    if (error.name === 'AbortError') return '⏱️ 请求超时'
-    return `❌ 获取失败: ${error.message}`
+    if (error.name === 'AbortError') {
+      return createErrorResult(
+        'Request timeout',
+        '请求超时',
+        '请稍后重试'
+      )
+    }
+    return createErrorResult(
+      error.message,
+      '获取论文详情失败',
+      '请检查网络连接'
+    )
   }
 }
 
 // ==================== HuggingFace ====================
 
-export const searchHuggingFace: ToolExecutor = async (args) => {
+export const searchHuggingFace: ToolExecutor = async (args): Promise<ToolResult> => {
   const { query, task = '', limit = 10 } = args
-  if (!query) return '❌ 错误：query 是必填参数\n\n示例：search_huggingface(query="bert")'
+  
+  if (!query) {
+    return createErrorResult(
+      'Missing query parameter',
+      '请提供搜索关键词',
+      '示例: search_huggingface(query="bert")'
+    )
+  }
   
   try {
     let url = `https://huggingface.co/api/models?search=${encodeURIComponent(query)}&limit=${Math.min(limit, 50)}`
@@ -182,31 +260,66 @@ export const searchHuggingFace: ToolExecutor = async (args) => {
     setTimeout(() => controller.abort(), 15000)
     
     const response = await fetch(url, { signal: controller.signal })
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    
+    if (!response.ok) {
+      return createErrorResult(
+        `HTTP ${response.status}`,
+        'HuggingFace 搜索失败',
+        '请稍后重试'
+      )
+    }
     
     const models = await response.json()
-    if (!models?.length) return `🔍 未找到与 "${query}" 相关的模型`
     
-    let result = `🤗 HuggingFace 搜索结果: "${query}" (${models.length}个)\n\n`
-    models.slice(0, limit).forEach((m: any, i: number) => {
-      const downloads = m.downloads > 1000000 ? `${(m.downloads/1000000).toFixed(1)}M` : 
-                       m.downloads > 1000 ? `${(m.downloads/1000).toFixed(1)}K` : m.downloads
-      result += `${i + 1}. **${m.id}**\n`
-      result += `   📥 ${downloads} downloads · ❤️ ${m.likes || 0} likes\n`
-      if (m.pipeline_tag) result += `   🏷️ ${m.pipeline_tag}\n`
-      result += `   🔗 https://huggingface.co/${m.id}\n\n`
-    })
+    if (!models?.length) {
+      return createSuccessResult(
+        [],
+        `未找到与 "${query}" 相关的模型`,
+        'search_huggingface',
+        '尝试使用不同的关键词'
+      )
+    }
     
-    return result
+    const formattedModels = models.slice(0, limit).map((m: any) => ({
+      id: m.id,
+      downloads: m.downloads,
+      likes: m.likes || 0,
+      pipeline_tag: m.pipeline_tag,
+      url: `https://huggingface.co/${m.id}`
+    }))
+    
+    return createSuccessResult(
+      formattedModels,
+      `找到 ${models.length} 个相关模型`,
+      'search_huggingface',
+      '使用 fetch_huggingface_model(model_id="xxx") 获取模型详情'
+    )
   } catch (error: any) {
-    if (error.name === 'AbortError') return '⏱️ 请求超时'
-    return `❌ 搜索失败: ${error.message}`
+    if (error.name === 'AbortError') {
+      return createErrorResult(
+        'Request timeout',
+        '请求超时',
+        '请稍后重试'
+      )
+    }
+    return createErrorResult(
+      error.message,
+      '搜索失败',
+      '请检查网络连接'
+    )
   }
 }
 
-export const fetchHuggingFaceModel: ToolExecutor = async (args) => {
+export const fetchHuggingFaceModel: ToolExecutor = async (args): Promise<ToolResult> => {
   const { model_id } = args
-  if (!model_id) return '❌ 错误：model_id 是必填参数\n\n示例：fetch_huggingface_model(model_id="bert-base-chinese")'
+  
+  if (!model_id) {
+    return createErrorResult(
+      'Missing model_id parameter',
+      '请提供模型 ID',
+      '示例: fetch_huggingface_model(model_id="bert-base-chinese")'
+    )
+  }
   
   try {
     const url = `https://huggingface.co/api/models/${model_id}`
@@ -215,35 +328,68 @@ export const fetchHuggingFaceModel: ToolExecutor = async (args) => {
     setTimeout(() => controller.abort(), 15000)
     
     const response = await fetch(url, { signal: controller.signal })
+    
+    if (response.status === 404) {
+      return createErrorResult(
+        'Model not found',
+        `未找到模型: ${model_id}`,
+        '请检查模型 ID 是否正确'
+      )
+    }
+    
     if (!response.ok) {
-      if (response.status === 404) return `❌ 未找到模型: ${model_id}`
-      throw new Error(`HTTP ${response.status}`)
+      return createErrorResult(
+        `HTTP ${response.status}`,
+        '获取模型详情失败',
+        '请稍后重试'
+      )
     }
     
     const m = await response.json()
-    const downloads = m.downloads > 1000000 ? `${(m.downloads/1000000).toFixed(1)}M` : 
-                     m.downloads > 1000 ? `${(m.downloads/1000).toFixed(1)}K` : m.downloads
     
-    return `🤗 **${m.id}**
-
-👤 **作者**: ${m.author || 'Unknown'}
-📥 **Downloads**: ${downloads}
-❤️ **Likes**: ${m.likes || 0}
-🏷️ **Task**: ${m.pipeline_tag || 'N/A'}
-🔗 **链接**: https://huggingface.co/${m.id}
-
-${m.cardData?.description ? `📝 **描述**:\n${m.cardData.description.slice(0, 500)}` : ''}`
+    const modelData = {
+      id: m.id,
+      author: m.author || 'Unknown',
+      downloads: m.downloads,
+      likes: m.likes || 0,
+      pipeline_tag: m.pipeline_tag,
+      url: `https://huggingface.co/${m.id}`,
+      description: m.cardData?.description || ''
+    }
+    
+    return createSuccessResult(
+      modelData,
+      `成功获取模型: ${m.id}`,
+      'fetch_huggingface_model'
+    )
   } catch (error: any) {
-    if (error.name === 'AbortError') return '⏱️ 请求超时'
-    return `❌ 获取失败: ${error.message}`
+    if (error.name === 'AbortError') {
+      return createErrorResult(
+        'Request timeout',
+        '请求超时',
+        '请稍后重试'
+      )
+    }
+    return createErrorResult(
+      error.message,
+      '获取模型详情失败',
+      '请检查网络连接'
+    )
   }
 }
 
 // ==================== Papers With Code ====================
 
-export const searchPapersWithCode: ToolExecutor = async (args) => {
+export const searchPapersWithCode: ToolExecutor = async (args): Promise<ToolResult> => {
   const { query, limit = 10 } = args
-  if (!query) return '❌ 错误：query 是必填参数\n\n示例：search_paperswithcode(query="image classification")'
+  
+  if (!query) {
+    return createErrorResult(
+      'Missing query parameter',
+      '请提供搜索关键词',
+      '示例: search_paperswithcode(query="image classification")'
+    )
+  }
   
   try {
     const url = `https://paperswithcode.com/api/v1/search/?q=${encodeURIComponent(query)}&items_per_page=${Math.min(limit, 50)}`
@@ -252,34 +398,69 @@ export const searchPapersWithCode: ToolExecutor = async (args) => {
     setTimeout(() => controller.abort(), 15000)
     
     const response = await fetch(url, { signal: controller.signal })
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    
+    if (!response.ok) {
+      return createErrorResult(
+        `HTTP ${response.status}`,
+        'Papers With Code 搜索失败',
+        '请稍后重试'
+      )
+    }
     
     const data = await response.json()
     const results = data.results?.filter((r: any) => r.type === 'paper') || []
     
-    if (!results.length) return `🔍 未找到与 "${query}" 相关的论文`
+    if (!results.length) {
+      return createSuccessResult(
+        [],
+        `未找到与 "${query}" 相关的论文`,
+        'search_paperswithcode',
+        '尝试使用不同的关键词'
+      )
+    }
     
-    let output = `📊 Papers With Code: "${query}" (${results.length}篇)\n\n`
-    results.slice(0, limit).forEach((item: any, i: number) => {
+    const papers = results.slice(0, limit).map((item: any) => {
       const p = item._source
-      output += `${i + 1}. **${p.title}**\n`
-      if (p.authors?.length) output += `   👤 ${p.authors.slice(0, 3).join(', ')}\n`
-      if (p.abstract) output += `   📝 ${p.abstract.slice(0, 150)}...\n`
-      output += '\n'
+      return {
+        title: p.title,
+        authors: p.authors || [],
+        abstract: p.abstract || ''
+      }
     })
     
-    return output
+    return createSuccessResult(
+      papers,
+      `找到 ${results.length} 篇带代码实现的论文`,
+      'search_paperswithcode'
+    )
   } catch (error: any) {
-    if (error.name === 'AbortError') return '⏱️ 请求超时'
-    return `❌ 搜索失败: ${error.message}`
+    if (error.name === 'AbortError') {
+      return createErrorResult(
+        'Request timeout',
+        '请求超时',
+        '请稍后重试'
+      )
+    }
+    return createErrorResult(
+      error.message,
+      '搜索失败',
+      '请检查网络连接'
+    )
   }
 }
 
 // ==================== Semantic Scholar ====================
 
-export const searchSemanticScholar: ToolExecutor = async (args) => {
+export const searchSemanticScholar: ToolExecutor = async (args): Promise<ToolResult> => {
   const { query, limit = 10 } = args
-  if (!query) return '❌ 错误：query 是必填参数\n\n示例：search_semantic_scholar(query="deep learning")'
+  
+  if (!query) {
+    return createErrorResult(
+      'Missing query parameter',
+      '请提供搜索关键词',
+      '示例: search_semantic_scholar(query="deep learning")'
+    )
+  }
   
   try {
     const fields = 'title,authors,year,abstract,citationCount'
@@ -289,40 +470,68 @@ export const searchSemanticScholar: ToolExecutor = async (args) => {
     setTimeout(() => controller.abort(), 15000)
     
     const response = await fetch(url, { signal: controller.signal })
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    
+    if (!response.ok) {
+      return createErrorResult(
+        `HTTP ${response.status}`,
+        'Semantic Scholar 搜索失败',
+        '请稍后重试'
+      )
+    }
     
     const data = await response.json()
     const papers = data.data || []
     
-    if (!papers.length) return `🔍 未找到与 "${query}" 相关的论文`
+    if (!papers.length) {
+      return createSuccessResult(
+        [],
+        `未找到与 "${query}" 相关的论文`,
+        'search_semantic_scholar',
+        '尝试使用不同的关键词'
+      )
+    }
     
-    let result = `🎓 Semantic Scholar: "${query}" (${papers.length}篇)\n\n`
-    papers.forEach((p: any, i: number) => {
-      result += `${i + 1}. **${p.title}**\n`
-      if (p.authors?.length) {
-        result += `   👤 ${p.authors.map((a: any) => a.name).slice(0, 3).join(', ')}\n`
-      }
-      if (p.year) {
-        result += `   📅 ${p.year}`
-        if (p.citationCount !== undefined) result += ` · 📚 ${p.citationCount} citations`
-        result += '\n'
-      }
-      if (p.abstract) result += `   📝 ${p.abstract.slice(0, 150)}...\n`
-      result += '\n'
-    })
+    const formattedPapers = papers.map((p: any) => ({
+      title: p.title,
+      authors: p.authors?.map((a: any) => a.name) || [],
+      year: p.year,
+      citationCount: p.citationCount,
+      abstract: p.abstract || ''
+    }))
     
-    return result
+    return createSuccessResult(
+      formattedPapers,
+      `找到 ${papers.length} 篇论文`,
+      'search_semantic_scholar'
+    )
   } catch (error: any) {
-    if (error.name === 'AbortError') return '⏱️ 请求超时'
-    return `❌ 搜索失败: ${error.message}`
+    if (error.name === 'AbortError') {
+      return createErrorResult(
+        'Request timeout',
+        '请求超时',
+        '请稍后重试'
+      )
+    }
+    return createErrorResult(
+      error.message,
+      '搜索失败',
+      '请检查网络连接'
+    )
   }
 }
 
 // ==================== OpenReview ====================
 
-export const searchOpenReview: ToolExecutor = async (args) => {
+export const searchOpenReview: ToolExecutor = async (args): Promise<ToolResult> => {
   const { query, venue = '', limit = 10 } = args
-  if (!query) return '❌ 错误：query 是必填参数\n\n示例：search_openreview(query="reinforcement learning")'
+  
+  if (!query) {
+    return createErrorResult(
+      'Missing query parameter',
+      '请提供搜索关键词',
+      '示例: search_openreview(query="reinforcement learning")'
+    )
+  }
   
   try {
     const url = `https://api.openreview.net/notes/search?term=${encodeURIComponent(query)}&limit=${Math.min(limit, 50)}`
@@ -331,7 +540,14 @@ export const searchOpenReview: ToolExecutor = async (args) => {
     setTimeout(() => controller.abort(), 15000)
     
     const response = await fetch(url, { signal: controller.signal })
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    
+    if (!response.ok) {
+      return createErrorResult(
+        `HTTP ${response.status}`,
+        'OpenReview 搜索失败',
+        '请稍后重试'
+      )
+    }
     
     const data = await response.json()
     let notes = data.notes || []
@@ -342,29 +558,54 @@ export const searchOpenReview: ToolExecutor = async (args) => {
       )
     }
     
-    if (!notes.length) return `🔍 未找到与 "${query}" 相关的 OpenReview 论文`
+    if (!notes.length) {
+      return createSuccessResult(
+        [],
+        `未找到与 "${query}" 相关的 OpenReview 论文`,
+        'search_openreview',
+        '尝试使用不同的关键词或移除会议过滤'
+      )
+    }
     
-    let result = `📚 OpenReview: "${query}" (${notes.length}篇)\n\n`
-    notes.slice(0, limit).forEach((n: any, i: number) => {
-      const title = n.content?.title?.value || n.content?.title || 'Untitled'
-      const authors = n.content?.authors?.value || n.content?.authors || []
-      const venue = n.content?.venue?.value || 'Unknown'
-      
-      result += `${i + 1}. **${title}**\n`
-      if (authors.length) result += `   👤 ${authors.slice(0, 3).join(', ')}\n`
-      result += `   🏛️ ${venue}\n\n`
-    })
+    const papers = notes.slice(0, limit).map((n: any) => ({
+      title: n.content?.title?.value || n.content?.title || 'Untitled',
+      authors: n.content?.authors?.value || n.content?.authors || [],
+      venue: n.content?.venue?.value || 'Unknown',
+      forum: n.forum || n.id
+    }))
     
-    return result
+    return createSuccessResult(
+      papers,
+      `找到 ${notes.length} 篇论文`,
+      'search_openreview',
+      '使用 fetch_openreview(forum_id="xxx") 获取详情'
+    )
   } catch (error: any) {
-    if (error.name === 'AbortError') return '⏱️ 请求超时'
-    return `❌ 搜索失败: ${error.message}`
+    if (error.name === 'AbortError') {
+      return createErrorResult(
+        'Request timeout',
+        '请求超时',
+        '请稍后重试'
+      )
+    }
+    return createErrorResult(
+      error.message,
+      '搜索失败',
+      '请检查网络连接'
+    )
   }
 }
 
-export const fetchOpenReview: ToolExecutor = async (args) => {
+export const fetchOpenReview: ToolExecutor = async (args): Promise<ToolResult> => {
   const { forum_id } = args
-  if (!forum_id) return '❌ 错误：forum_id 是必填参数\n\n示例：fetch_openreview(forum_id="xxxxxxxx")'
+  
+  if (!forum_id) {
+    return createErrorResult(
+      'Missing forum_id parameter',
+      '请提供 Forum ID',
+      '示例: fetch_openreview(forum_id="xxxxxxxx")'
+    )
+  }
   
   try {
     const url = `https://api.openreview.net/notes?id=${forum_id}`
@@ -373,28 +614,52 @@ export const fetchOpenReview: ToolExecutor = async (args) => {
     setTimeout(() => controller.abort(), 15000)
     
     const response = await fetch(url, { signal: controller.signal })
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    
+    if (!response.ok) {
+      return createErrorResult(
+        `HTTP ${response.status}`,
+        '获取论文详情失败',
+        '请稍后重试'
+      )
+    }
     
     const data = await response.json()
     const note = data.notes?.[0]
     
-    if (!note) return `❌ 未找到论文: ${forum_id}`
+    if (!note) {
+      return createErrorResult(
+        'Paper not found',
+        `未找到论文: ${forum_id}`,
+        '请检查 Forum ID 是否正确'
+      )
+    }
     
-    const title = note.content?.title?.value || note.content?.title || 'Untitled'
-    const authors = note.content?.authors?.value || note.content?.authors || []
-    const abstract = note.content?.abstract?.value || note.content?.abstract || ''
-    const venue = note.content?.venue?.value || 'Unknown'
+    const paperData = {
+      title: note.content?.title?.value || note.content?.title || 'Untitled',
+      authors: note.content?.authors?.value || note.content?.authors || [],
+      abstract: note.content?.abstract?.value || note.content?.abstract || '',
+      venue: note.content?.venue?.value || 'Unknown',
+      forum: note.forum || note.id,
+      url: `https://openreview.net/forum?id=${note.forum || note.id}`
+    }
     
-    return `📄 **${title}**
-
-👤 **作者**: ${authors.join(', ')}
-🏛️ **会议**: ${venue}
-🔗 **链接**: https://openreview.net/forum?id=${note.forum || note.id}
-
-📝 **摘要**:
-${abstract || '无摘要'}`
+    return createSuccessResult(
+      paperData,
+      `成功获取论文: ${paperData.title}`,
+      'fetch_openreview'
+    )
   } catch (error: any) {
-    if (error.name === 'AbortError') return '⏱️ 请求超时'
-    return `❌ 获取失败: ${error.message}`
+    if (error.name === 'AbortError') {
+      return createErrorResult(
+        'Request timeout',
+        '请求超时',
+        '请稍后重试'
+      )
+    }
+    return createErrorResult(
+      error.message,
+      '获取论文详情失败',
+      '请检查网络连接'
+    )
   }
 }

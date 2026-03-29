@@ -1,10 +1,21 @@
 /**
- * 工具系统统一入口 - 生产环境
+ * 工具系统统一入口
  * 
- * 提供工具注册、执行、查询等功能的统一导出
+ * 按功能分类的工具集合：
+ * - article: 文章管理
+ * - academic: 学术研究
+ * - file: 文件操作
+ * - platform: 平台解析
+ * - github: GitHub 操作
+ * - kb: 知识库
+ * - note: 笔记
+ * - text: 文本处理
+ * - code: 代码工具
+ * - network: 网络工具
+ * - system: 系统工具
  */
 
-// 类型导出
+// ==================== 类型导出 ====================
 export type {
   ToolDefinition,
   ToolCall,
@@ -15,10 +26,9 @@ export type {
   ToolResult
 } from './types'
 
-// 工具结果帮助函数
 export { createSuccessResult, createErrorResult } from './types'
 
-// 注册表功能导出
+// ==================== 注册表导出 ====================
 export {
   registerTool,
   registerTools,
@@ -36,139 +46,8 @@ export {
   clearToolCallRecords
 } from './registry'
 
-// 平台解析工具
+// ==================== 文章工具 ====================
 export {
-  platformParserDefinitions,
-  platformParserExecutors,
-  parseZhihuExecutor,
-  parseXiaohongshuExecutor,
-  parseWechatExecutor,
-  ocrImageExecutor,
-  parsePlatformLinkExecutor,
-  processImageExecutor
-} from './platform-parsers'
-
-// 文章管理工具（新的统一版本）
-export {
-  createArticle,
-  getArticleContent,
-  updateArticle,
-  deleteArticle,
-  listArticles,
-  searchArticles
-} from './article'
-
-// 文章工具定义
-export {
-  createArticleDef,
-  getArticleContentDef,
-  updateArticleDef,
-  deleteArticleDef,
-  listArticlesDef,
-  searchArticlesDef
-} from './article/definitions'
-
-// 新的学术工具集
-export {
-  searchArxiv,
-  fetchArxiv,
-  searchOpenReview,
-  fetchOpenReview,
-  searchHuggingFace,
-  fetchHuggingFaceModel,
-  searchPapersWithCode,
-  searchSemanticScholar
-} from './academic'
-
-// 学术工具定义
-export {
-  searchArxivDef,
-  fetchArxivDef,
-  searchOpenReviewDef,
-  fetchOpenReviewDef,
-  searchHuggingFaceDef,
-  fetchHuggingFaceModelDef,
-  searchPapersWithCodeDef,
-  searchSemanticScholarDef
-} from './academic/definitions'
-
-// 旧版执行器（保留向后兼容，但标记为弃用）
-export {
-  getCurrentTime,
-  testEcho,
-  summarizeText,
-  formatText,
-  readFile,
-  writeFile,
-  listFiles,
-  webSearch,
-  fetchUrl,
-  calculate,
-  translateText,
-  executeCode,
-  analyzeCode,
-  queryKnowledge,
-  getWeather,
-  createNote,
-  listNotes,
-  // GitHub 工具
-  githubGetRepo,
-  githubListRepoContents,
-  githubGetFileContent,
-  githubSearchCode,
-  githubGetCommitHistory,
-  githubGetIssues,
-  // Knowledge Base 工具
-  kbList,
-  kbCreate,
-  kbDelete,
-  kbQuery,
-  kbListDocuments,
-  kbDocumentAdd,
-  kbDocumentDelete
-} from './executors-legacy'
-
-// 旧版定义（保留向后兼容）
-export {
-  getCurrentTimeDef,
-  testEchoDef,
-  summarizeTextDef,
-  formatTextDef,
-  readFileDef,
-  writeFileDef,
-  listFilesDef,
-  webSearchDef,
-  fetchUrlDef,
-  calculateDef,
-  translateTextDef,
-  executeCodeDef,
-  analyzeCodeDef,
-  queryKnowledgeDef,
-  getWeatherDef,
-  createNoteDef,
-  listNotesDef,
-  githubGetRepoDef,
-  githubListRepoContentsDef,
-  githubGetFileContentDef,
-  githubSearchCodeDef,
-  githubGetCommitHistoryDef,
-  githubGetIssuesDef,
-  kbListDef,
-  kbCreateDef,
-  kbDeleteDef,
-  kbQueryDef,
-  kbListDocumentsDef,
-  kbDocumentAddDef,
-  kbDocumentDeleteDef,
-  allToolDefinitions
-} from './definitions'
-
-// 导入
-import { registerTools, getRegisteredToolNames } from './registry'
-import * as definitions from './definitions'
-import * as executors from './executors-legacy'
-import { platformParserDefinitions, platformParserExecutors } from './platform-parsers'
-import {
   createArticle,
   getArticleContent,
   updateArticle,
@@ -182,7 +61,9 @@ import {
   listArticlesDef,
   searchArticlesDef
 } from './article'
-import {
+
+// ==================== 学术工具 ====================
+export {
   searchArxiv,
   fetchArxiv,
   searchOpenReview,
@@ -201,12 +82,173 @@ import {
   searchSemanticScholarDef
 } from './academic'
 
+// ==================== 文件工具 ====================
+export {
+  readFile,
+  writeFile,
+  listFiles,
+  readFileDef,
+  writeFileDef,
+  listFilesDef
+} from './file'
+
+// ==================== 平台解析工具 ====================
+export {
+  parseZhihu,
+  parseXiaohongshu,
+  parseWechat,
+  parsePlatformLink,
+  ocrImage,
+  processImage,
+  parseZhihuDef,
+  parseXiaohongshuDef,
+  parseWechatDef,
+  parsePlatformLinkDef,
+  ocrImageDef,
+  processImageDef
+} from './platform'
+
+// ==================== GitHub 工具 ====================
+export {
+  githubGetRepo,
+  githubListRepoContents,
+  githubGetFileContent,
+  githubSearchCode,
+  githubGetCommitHistory,
+  githubGetIssues,
+  githubGetRepoDef,
+  githubListRepoContentsDef,
+  githubGetFileContentDef,
+  githubSearchCodeDef,
+  githubGetCommitHistoryDef,
+  githubGetIssuesDef
+} from './github'
+
+// ==================== 知识库工具 ====================
+export {
+  kbList,
+  kbCreate,
+  kbDelete,
+  kbQuery,
+  kbListDocuments,
+  kbDocumentAdd,
+  kbDocumentDelete,
+  kbListDef,
+  kbCreateDef,
+  kbDeleteDef,
+  kbQueryDef,
+  kbListDocumentsDef,
+  kbDocumentAddDef,
+  kbDocumentDeleteDef
+} from './kb'
+
+// ==================== 笔记工具 ====================
+export {
+  createNote,
+  listNotes,
+  queryKnowledge,
+  createNoteDef,
+  listNotesDef,
+  queryKnowledgeDef
+} from './note'
+
+// ==================== 文本工具 ====================
+export {
+  summarizeText,
+  formatText,
+  translateText,
+  summarizeTextDef,
+  formatTextDef,
+  translateTextDef
+} from './text'
+
+// ==================== 代码工具 ====================
+export {
+  executeCode,
+  analyzeCode,
+  executeCodeDef,
+  analyzeCodeDef
+} from './code'
+
+// ==================== 网络工具 ====================
+export {
+  webSearch,
+  fetchUrl,
+  webSearchDef,
+  fetchUrlDef
+} from './network'
+
+// ==================== 系统工具 ====================
+export {
+  getCurrentTime,
+  testEcho,
+  calculate,
+  getWeather,
+  getCurrentTimeDef,
+  testEchoDef,
+  calculateDef,
+  getWeatherDef
+} from './system'
+
+// ==================== 导入用于初始化 ====================
+import { registerTools, getRegisteredToolNames } from './registry'
+
+// 文章工具
+import {
+  createArticle, getArticleContent, updateArticle, deleteArticle, listArticles, searchArticles,
+  createArticleDef, getArticleContentDef, updateArticleDef, deleteArticleDef, listArticlesDef, searchArticlesDef
+} from './article'
+
+// 学术工具
+import {
+  searchArxiv, fetchArxiv, searchOpenReview, fetchOpenReview, searchHuggingFace, fetchHuggingFaceModel, searchPapersWithCode, searchSemanticScholar,
+  searchArxivDef, fetchArxivDef, searchOpenReviewDef, fetchOpenReviewDef, searchHuggingFaceDef, fetchHuggingFaceModelDef, searchPapersWithCodeDef, searchSemanticScholarDef
+} from './academic'
+
+// 文件工具
+import { readFile, writeFile, listFiles, readFileDef, writeFileDef, listFilesDef } from './file'
+
+// 平台解析工具
+import {
+  parseZhihu, parseXiaohongshu, parseWechat, parsePlatformLink, ocrImage, processImage,
+  parseZhihuDef, parseXiaohongshuDef, parseWechatDef, parsePlatformLinkDef, ocrImageDef, processImageDef
+} from './platform'
+
+// GitHub 工具
+import {
+  githubGetRepo, githubListRepoContents, githubGetFileContent, githubSearchCode, githubGetCommitHistory, githubGetIssues,
+  githubGetRepoDef, githubListRepoContentsDef, githubGetFileContentDef, githubSearchCodeDef, githubGetCommitHistoryDef, githubGetIssuesDef
+} from './github'
+
+// 知识库工具
+import {
+  kbList, kbCreate, kbDelete, kbQuery, kbListDocuments, kbDocumentAdd, kbDocumentDelete,
+  kbListDef, kbCreateDef, kbDeleteDef, kbQueryDef, kbListDocumentsDef, kbDocumentAddDef, kbDocumentDeleteDef
+} from './kb'
+
+// 笔记工具
+import { createNote, listNotes, queryKnowledge, createNoteDef, listNotesDef, queryKnowledgeDef } from './note'
+
+// 文本工具
+import { summarizeText, formatText, translateText, summarizeTextDef, formatTextDef, translateTextDef } from './text'
+
+// 代码工具
+import { executeCode, analyzeCode, executeCodeDef, analyzeCodeDef } from './code'
+
+// 网络工具
+import { webSearch, fetchUrl, webSearchDef, fetchUrlDef } from './network'
+
+// 系统工具
+import { getCurrentTime, testEcho, calculate, getWeather, getCurrentTimeDef, testEchoDef, calculateDef, getWeatherDef } from './system'
+
+// ==================== 初始化函数 ====================
+
 /**
  * 初始化所有默认工具
  * 在应用启动时调用，注册所有内置工具
  */
 export function initializeDefaultTools(): void {
-  // 文章管理工具（新版 - 统一格式）
+  // 文章管理工具（6个）
   registerTools([
     { name: 'create_article', definition: createArticleDef, executor: createArticle },
     { name: 'get_article_content', definition: getArticleContentDef, executor: getArticleContent },
@@ -216,86 +258,88 @@ export function initializeDefaultTools(): void {
     { name: 'search_articles', definition: searchArticlesDef, executor: searchArticles }
   ])
   
-  // 学术研究工具（新版）
+  // 学术研究工具（8个）
   registerTools([
     { name: 'search_arxiv', definition: searchArxivDef, executor: searchArxiv },
     { name: 'fetch_arxiv', definition: fetchArxivDef, executor: fetchArxiv },
     { name: 'search_openreview', definition: searchOpenReviewDef, executor: searchOpenReview },
     { name: 'fetch_openreview', definition: fetchOpenReviewDef, executor: fetchOpenReview },
     { name: 'search_huggingface', definition: searchHuggingFaceDef, executor: searchHuggingFace },
-    { name: 'fetch_huggingface_model', definition: fetchHuggingFaceModelDef, executor: fetchHuggingFaceModel }
+    { name: 'fetch_huggingface_model', definition: fetchHuggingFaceModelDef, executor: fetchHuggingFaceModel },
+    { name: 'search_paperswithcode', definition: searchPapersWithCodeDef, executor: searchPapersWithCode },
+    { name: 'search_semantic_scholar', definition: searchSemanticScholarDef, executor: searchSemanticScholar }
   ])
   
-  // 文件管理工具
+  // 文件管理工具（3个）
   registerTools([
-    { name: 'read_file', definition: definitions.readFileDef, executor: executors.readFile },
-    { name: 'write_file', definition: definitions.writeFileDef, executor: executors.writeFile },
-    { name: 'list_files', definition: definitions.listFilesDef, executor: executors.listFiles }
+    { name: 'read_file', definition: readFileDef, executor: readFile },
+    { name: 'write_file', definition: writeFileDef, executor: writeFile },
+    { name: 'list_files', definition: listFilesDef, executor: listFiles }
   ])
   
-  // 网络工具
+  // 平台解析工具（6个）
   registerTools([
-    { name: 'web_search', definition: definitions.webSearchDef, executor: executors.webSearch },
-    { name: 'fetch_url', definition: definitions.fetchUrlDef, executor: executors.fetchUrl }
+    { name: 'parse_zhihu', definition: parseZhihuDef, executor: parseZhihu },
+    { name: 'parse_xiaohongshu', definition: parseXiaohongshuDef, executor: parseXiaohongshu },
+    { name: 'parse_wechat', definition: parseWechatDef, executor: parseWechat },
+    { name: 'parse_platform_link', definition: parsePlatformLinkDef, executor: parsePlatformLink },
+    { name: 'ocr_image', definition: ocrImageDef, executor: ocrImage },
+    { name: 'process_image', definition: processImageDef, executor: processImage }
   ])
   
-  // 计算与转换工具
+  // GitHub 工具（6个）
   registerTools([
-    { name: 'calculate', definition: definitions.calculateDef, executor: executors.calculate },
-    { name: 'translate_text', definition: definitions.translateTextDef, executor: executors.translateText },
-    { name: 'summarize_text', definition: definitions.summarizeTextDef, executor: executors.summarizeText },
-    { name: 'format_text', definition: definitions.formatTextDef, executor: executors.formatText }
+    { name: 'github_get_repo', definition: githubGetRepoDef, executor: githubGetRepo },
+    { name: 'github_list_repo_contents', definition: githubListRepoContentsDef, executor: githubListRepoContents },
+    { name: 'github_get_file_content', definition: githubGetFileContentDef, executor: githubGetFileContent },
+    { name: 'github_search_code', definition: githubSearchCodeDef, executor: githubSearchCode },
+    { name: 'github_get_commit_history', definition: githubGetCommitHistoryDef, executor: githubGetCommitHistory },
+    { name: 'github_get_issues', definition: githubGetIssuesDef, executor: githubGetIssues }
   ])
   
-  // 代码工具
+  // 知识库工具（7个）
   registerTools([
-    { name: 'execute_code', definition: definitions.executeCodeDef, executor: executors.executeCode },
-    { name: 'analyze_code', definition: definitions.analyzeCodeDef, executor: executors.analyzeCode }
+    { name: 'kb_list', definition: kbListDef, executor: kbList },
+    { name: 'kb_create', definition: kbCreateDef, executor: kbCreate },
+    { name: 'kb_delete', definition: kbDeleteDef, executor: kbDelete },
+    { name: 'kb_query', definition: kbQueryDef, executor: kbQuery },
+    { name: 'kb_list_documents', definition: kbListDocumentsDef, executor: kbListDocuments },
+    { name: 'kb_document_add', definition: kbDocumentAddDef, executor: kbDocumentAdd },
+    { name: 'kb_document_delete', definition: kbDocumentDeleteDef, executor: kbDocumentDelete }
   ])
   
-  // 知识与笔记工具
+  // 笔记工具（3个）
   registerTools([
-    { name: 'query_knowledge', definition: definitions.queryKnowledgeDef, executor: executors.queryKnowledge },
-    { name: 'create_note', definition: definitions.createNoteDef, executor: executors.createNote },
-    { name: 'list_notes', definition: definitions.listNotesDef, executor: executors.listNotes }
+    { name: 'create_note', definition: createNoteDef, executor: createNote },
+    { name: 'list_notes', definition: listNotesDef, executor: listNotes },
+    { name: 'query_knowledge', definition: queryKnowledgeDef, executor: queryKnowledge }
   ])
   
-  // GitHub 工具
+  // 文本处理工具（3个）
   registerTools([
-    { name: 'github_get_repo', definition: definitions.githubGetRepoDef, executor: executors.githubGetRepo },
-    { name: 'github_list_repo_contents', definition: definitions.githubListRepoContentsDef, executor: executors.githubListRepoContents },
-    { name: 'github_get_file_content', definition: definitions.githubGetFileContentDef, executor: executors.githubGetFileContent },
-    { name: 'github_search_code', definition: definitions.githubSearchCodeDef, executor: executors.githubSearchCode },
-    { name: 'github_get_commit_history', definition: definitions.githubGetCommitHistoryDef, executor: executors.githubGetCommitHistory },
-    { name: 'github_get_issues', definition: definitions.githubGetIssuesDef, executor: executors.githubGetIssues }
+    { name: 'summarize_text', definition: summarizeTextDef, executor: summarizeText },
+    { name: 'format_text', definition: formatTextDef, executor: formatText },
+    { name: 'translate_text', definition: translateTextDef, executor: translateText }
   ])
   
-  // Knowledge Base 工具
+  // 代码工具（2个）
   registerTools([
-    { name: 'kb_list', definition: definitions.kbListDef, executor: executors.kbList },
-    { name: 'kb_create', definition: definitions.kbCreateDef, executor: executors.kbCreate },
-    { name: 'kb_delete', definition: definitions.kbDeleteDef, executor: executors.kbDelete },
-    { name: 'kb_query', definition: definitions.kbQueryDef, executor: executors.kbQuery },
-    { name: 'kb_list_documents', definition: definitions.kbListDocumentsDef, executor: executors.kbListDocuments },
-    { name: 'kb_document_add', definition: definitions.kbDocumentAddDef, executor: executors.kbDocumentAdd },
-    { name: 'kb_document_delete', definition: definitions.kbDocumentDeleteDef, executor: executors.kbDocumentDelete }
+    { name: 'execute_code', definition: executeCodeDef, executor: executeCode },
+    { name: 'analyze_code', definition: analyzeCodeDef, executor: analyzeCode }
   ])
   
-  // 其他工具
+  // 网络工具（2个）
   registerTools([
-    { name: 'get_current_time', definition: definitions.getCurrentTimeDef, executor: executors.getCurrentTime },
-    { name: 'get_weather', definition: definitions.getWeatherDef, executor: executors.getWeather },
-    { name: 'test_echo', definition: definitions.testEchoDef, executor: executors.testEcho }
+    { name: 'web_search', definition: webSearchDef, executor: webSearch },
+    { name: 'fetch_url', definition: fetchUrlDef, executor: fetchUrl }
   ])
   
-  // 平台解析工具
+  // 系统工具（4个）
   registerTools([
-    { name: 'parse_zhihu', definition: platformParserDefinitions[0], executor: platformParserExecutors.parse_zhihu },
-    { name: 'parse_xiaohongshu', definition: platformParserDefinitions[1], executor: platformParserExecutors.parse_xiaohongshu },
-    { name: 'parse_wechat', definition: platformParserDefinitions[2], executor: platformParserExecutors.parse_wechat },
-    { name: 'ocr_image', definition: platformParserDefinitions[3], executor: platformParserExecutors.ocr_image },
-    { name: 'parse_platform_link', definition: platformParserDefinitions[4], executor: platformParserExecutors.parse_platform_link },
-    { name: 'process_image', definition: platformParserDefinitions[5], executor: platformParserExecutors.process_image }
+    { name: 'get_current_time', definition: getCurrentTimeDef, executor: getCurrentTime },
+    { name: 'get_weather', definition: getWeatherDef, executor: getWeather },
+    { name: 'calculate', definition: calculateDef, executor: calculate },
+    { name: 'test_echo', definition: testEchoDef, executor: testEcho }
   ])
   
   console.log(`[ToolSystem] ${getRegisteredToolNames().length} 个工具已初始化`)
