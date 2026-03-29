@@ -8,7 +8,17 @@
  * 4. 支持结构化数据输出
  */
 
-import type { LogLevel, LogEntry } from '../components/ai-chat/core/types'
+/** 日志级别 */
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+
+/** 日志条目 */
+export interface LogEntry {
+  level: LogLevel
+  module: string
+  message: string
+  data?: any
+  timestamp: number
+}
 
 // 是否是开发模式
 const isDev = typeof process !== 'undefined' 

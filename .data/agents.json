@@ -10,6 +10,7 @@
     "capabilities": {
       "mode": "raw",
       "skillIds": [
+        "article-manager",
         "content-analyst",
         "code-craft",
         "creative-designer",

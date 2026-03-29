@@ -251,14 +251,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useAgentConfig } from '../../../core/composables/useAgentConfig'
-import type { Agent } from '../../../core/types/agent'
+import { useAgentConfig } from '../../stores/useAgentConfig'
+import type { Agent } from '../../types/agent'
 import AgentConfigPanel from './AgentConfigPanel.vue'
-import SkillsManager from '../skills/SkillsManager.vue'
-import MemoryManager from '../memory/MemoryManager.vue'
-import MCPConfigPanel from '../../mcp/MCPConfigPanel.vue'
-import Icon from '../../../shared/Icon.vue'
-import LiquidGlass from '../../../shared/LiquidGlass.vue'
+import SkillsManager from './SkillsManager.vue'
+import MemoryManager from './MemoryManager.vue'
+import MCPConfigPanel from '../mcp/MCPConfigPanel.vue'
+import { Icon } from '../../../../shared/components'
+import { LiquidGlass } from '../../../../shared/components'
 
 const props = defineProps<{
   visible: boolean
@@ -385,7 +385,7 @@ async function executeDelete() {
 </script>
 
 <style scoped>
-@import '../../../../shared/styles/liquid-glass-theme.css';
+/* 使用全局导入的 liquid-glass-theme.css */
 
 /* ===== 档案馆容器 ===== */
 .glass-archive-overlay {

@@ -37,7 +37,7 @@ export class DeepSeekProvider extends BaseProvider {
     }
     
     // 转换消息格式
-    const convertedMessages = await this.convertMessages(messages, model.capabilities.vision)
+    const convertedMessages = await this.convertMessages(messages)
     
     // 构建请求体
     const requestBody: any = {
@@ -138,7 +138,7 @@ export class DeepSeekProvider extends BaseProvider {
     }
     
     // 转换消息格式
-    const convertedMessages = await this.convertMessages(messages, model.capabilities.vision)
+    const convertedMessages = await this.convertMessages(messages)
     
     const requestBody: any = {
       model: config.model,

@@ -3,6 +3,7 @@ import DefaultTheme from "vitepress/theme";
 import Layout from "./Layout.vue";
 import "./style.css";
 import "./shared/styles/animations.css";
+import "./shared/styles/liquid-glass-theme.css";
 import type { Theme } from "vitepress";
 import { createPinia } from "pinia";
 

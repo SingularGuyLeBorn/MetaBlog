@@ -261,8 +261,11 @@ export function useAgentConfig() {
   }
 
   /**
-   * 构建系统提示词
-   * 使用后端定义的数据结构：capabilities.customSystemPrompt 和 skillIds
+   * 构建系统提示词 - Claude Code 风格渐进式披露 (LOD-0)
+   * 
+   * 只包含 Skills 元数据（name + description + 工具名列表）
+   * 工具详细定义通过 Function Calling 传递（不在 System Prompt 中）
+   * Skill 详细内容（工作流）通过 invokeSkill 按需注入
    */
   function buildSystemPrompt(agent: Agent): string {
     const capabilities = agent.capabilities
@@ -270,36 +273,38 @@ export function useAgentConfig() {
       return '你是一个 helpful 的 AI 助手。'
     }
     
-    const customSystemPrompt = capabilities.customSystemPrompt
     const skillIds = capabilities.skillIds || []
+    const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
     
-    const sections: string[] = []
+    // 1. 基础角色
+    const roleSection = capabilities.customSystemPrompt || 
+      `你是 ${agent.name}，${agent.description}`
     
-    // 1. 基础角色 - 使用后端的 customSystemPrompt
-    sections.push(customSystemPrompt || `你是 ${agent.name}，${agent.description}`)
+    // 2. LOD-0: Skills 元数据列表（极简，只包含名称、描述、工具名）
+    const skillsMetadata = agentSkills.map(skill => {
+      const toolNames = (skill.tools || []).join(', ')
+      return `- ${skill.icon} **${skill.name}**: ${skill.description} [工具: ${toolNames || '无'}]`
+    }).join('\n')
     
-    // 2. 可用 Skills 和工具
-    if (skillIds.length > 0) {
-      const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
-      if (agentSkills.length > 0) {
-        // Skills 列表（简要）
-        sections.push('\n\n## 你的能力')
-        sections.push('你拥有以下 Skills，可以调用其中的工具：\n')
-        
-        agentSkills.forEach(skill => {
-          sections.push(`- ${skill.icon} **${skill.name}**: ${skill.description}`)
-          if (skill.tools?.length) {
-            sections.push(`  - 工具: ${skill.tools.join(', ')}`)
-          }
-        })
-        
-        // 添加所有可用工具的简要描述
-        const effectiveTools = getEffectiveTools(agent)
-        sections.push(buildToolsDescription(effectiveTools))
-      }
-    }
+    // 3. 组合完整提示词（LOD-0 层）
+    const fullPrompt = `${roleSection}
+
+## 你的 Skills（能力领域）
+你有 ${agentSkills.length} 个已启用的 Skills：
+${skillsMetadata}
+
+## 使用规则
+1. **自动触发**: 当用户请求匹配 Skill 描述时，自动调用对应工具
+2. **工具调用**: 你有权调用上述 Skills 中的工具来完成任务
+3. **路径格式**: 文章路径使用 "section/filename.md" 格式
+4. **搜索优先**: 不知道具体路径时，先用 search_articles 搜索
+
+## 示例
+- 用户: "找一下 React 的文章" → 调用 search_articles
+- 用户: "创建 Vue 指南" → 调用 create_article
+`
     
-    return sections.join('\n')
+    return fullPrompt
   }
   
 
@@ -397,23 +402,43 @@ export function useAgentConfig() {
     return { nodes, edges }
   }
 
-  // ==================== Skill 调用/注入 ====================
+  // ==================== Skill 调用/注入 (LOD-2 层) ====================
   
   /**
-   * 调用 Skill - 获取要在对话中注入的内容
+   * 调用 Skill - 获取要在对话中注入的内容 (LOD-2 层渐进式披露)
    * 
    * 根据 Claude Code Skills 设计：
-   * - Skill 内容不放入系统提示词
-   * - 在需要时通过 invokeSkill 获取内容
-   * - 将内容作为用户消息注入对话上下文
+   * - LOD-0: Skills 元数据在 System Prompt 中（已包含）
+   * - LOD-1: 工具定义通过 Function Calling 传递（已包含）
+   * - LOD-2: Skill 详细内容（工作流、最佳实践）按需注入
+   * 
+   * 当 Agent 匹配到 Skill 后，通过此方法加载完整 Skill 指导
    */
-  function invokeSkill(skillId: string): { role: 'user' | 'system', content: string } | null {
+  function invokeSkill(skillId: string): { role: 'user', content: string } | null {
     const skill = skills.value.find(s => s.id === skillId)
     if (!skill || !skill.enabled) return null
     
+    // 构建完整的 Skill 指导内容（LOD-2）
+    const toolNames = skill.tools || []
+    const toolList = toolNames.length > 0 
+      ? `\n## 可用工具\n${toolNames.map(t => `- ${t}`).join('\n')}` 
+      : ''
+    
+    const usageScenarios = (skill.usageScenarios || []).length > 0
+      ? `\n## 使用场景\n${skill.usageScenarios?.map(s => `- ${s}`).join('\n')}`
+      : ''
+    
+    const fullContent = `[Skill 激活: ${skill.name}]
+
+${skill.content}${toolList}${usageScenarios}
+
+---
+请根据以上 Skill 指导，使用提供的工具完成用户请求。
+`
+    
     return {
       role: 'user',
-      content: skill.content
+      content: fullContent
     }
   }
   

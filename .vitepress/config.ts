@@ -1474,7 +1474,16 @@ export default defineConfig({
                 const basePath = isConfigPath
                   ? process.cwd()
                   : path.join(process.cwd(), "docs");
-                const fullPath = path.resolve(basePath, dirPath);
+                
+                // 如果 dirPath 已经是 basePath 的子目录，不要重复拼接
+                const resolvedDirPath = path.resolve(dirPath);
+                const resolvedBasePath = path.resolve(basePath);
+                let fullPath: string;
+                if (resolvedDirPath.startsWith(resolvedBasePath)) {
+                  fullPath = resolvedDirPath;
+                } else {
+                  fullPath = path.resolve(basePath, dirPath);
+                }
 
                 // 安全检查
                 if (!fullPath.startsWith(basePath)) {
@@ -3207,11 +3216,9 @@ ${content}`;
           server.middlewares.use("/api/mcp/tools", async (req, res, next) => {
             if (req.method === "GET") {
               try {
-                const { mcpManager } =
-                  await import("./theme/components/ai-chat/core/mcp/index");
-                const tools = mcpManager.getAllTools();
+                // MCP 模块暂未迁移到新路径
                 res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify({ success: true, data: tools }));
+                res.end(JSON.stringify({ success: true, data: [], message: 'MCP module not available' }));
               } catch (e) {
                 res.statusCode = 500;
                 res.end(
@@ -3234,15 +3241,8 @@ ${content}`;
                   const body = JSON.parse(Buffer.concat(chunks).toString());
                   const { serverId, toolName, args = {} } = body;
 
-                  // 获取 MCP Manager（从运行时模块）
-                  const { mcpManager } =
-                    await import("./theme/components/ai-chat/core/mcp/index");
-
-                  const result = await mcpManager.execute(
-                    serverId,
-                    toolName,
-                    args,
-                  );
+                  // MCP 模块暂未迁移到新路径
+                  const result = { error: 'MCP module not available', serverId, toolName, args };
 
                   res.setHeader("Content-Type", "application/json");
                   res.end(JSON.stringify({ success: true, data: result }));
@@ -5351,9 +5351,12 @@ ${skill.content || skill.systemPrompt || ""}
           function readSessionMessages(): Record<string, any[]> {
             try {
               if (fs.existsSync(SESSION_MESSAGES_FILE)) {
-                return JSON.parse(
-                  fs.readFileSync(SESSION_MESSAGES_FILE, "utf-8"),
-                );
+                const content = fs.readFileSync(SESSION_MESSAGES_FILE, "utf-8");
+                // 处理空文件的情况
+                if (!content || content.trim() === "") {
+                  return {};
+                }
+                return JSON.parse(content);
               }
             } catch (e) {
               console.error("[API] Failed to read session messages:", e);

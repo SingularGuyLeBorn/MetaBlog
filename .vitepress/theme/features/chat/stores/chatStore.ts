@@ -11,11 +11,11 @@ import type { ChatSession, ChatMessage, SessionConfig, MessageGroup, ToolCallRec
 import { storage, convertGroupsToMessages } from '../api/services/storage'
 import { aiService } from '../api/services/aiService'
 import { logger, addLog } from '../api/services/logger'
-import { useAgentConfig } from './agentStore'
+import { useAgentConfig } from './useAgentConfig'
 
 const DEFAULT_CONFIG: SessionConfig = {
   model: 'deepseek-chat',
-  temperature: 0.7,
+  temperature: 1.0,
   maxTokens: 8192,
   systemPrompt: '',
   enableReasoning: false,
@@ -34,7 +34,7 @@ const sessionControllers = new Map<string, AbortController>()
 
 export function useAIChat() {
   // 获取 Agent 配置（用于工具权限校验）
-  const { activeAgent, skills, getEffectiveTools } = useAgentConfig()
+  const { activeAgent, skills, getEffectiveTools, matchSkills, invokeSkill } = useAgentConfig()
   
   // ==================== 初始化 ====================
   async function initialize() {
@@ -223,8 +223,30 @@ export function useAIChat() {
     })
     
     try {
-      // 构建历史记录（使用当前激活版本的消息）
-      const history = buildHistoryFromGroups(groups)
+      // ========== LOD-2: Skill 渐进式披露 ==========
+      // 1. 匹配用户输入对应的 Skills
+      const matchedSkillIds = activeAgent.value ? matchSkills(content, activeAgent.value) : []
+      
+      // 2. 注入匹配的 Skill 内容到对话历史
+      let skillInjections: ChatMessage[] = []
+      for (const skillId of matchedSkillIds) {
+        const skillContent = invokeSkill(skillId)
+        if (skillContent) {
+          skillInjections.push({
+            id: `skill_${skillId}_${Date.now()}`,
+            sessionId,
+            role: 'user',
+            content: skillContent.content,
+            status: 'completed',
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          })
+        }
+      }
+      
+      // 3. 构建历史记录（插入 Skill 注入消息）
+      const baseHistory = buildHistoryFromGroups(groups)
+      const history = [...baseHistory, ...skillInjections]
       
       // 用于存储工具调用记录
       let toolRecords: ToolCallRecord[] = []

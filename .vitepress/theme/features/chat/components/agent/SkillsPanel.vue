@@ -195,8 +195,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useAgentConfig } from '../../../core/composables'
-import type { Skill, SkillCategory } from '../../../core/types'
+import { useAgentConfig } from '../../stores/useAgentConfig'
+import type { Skill, SkillCategory } from '../../types'
 import SkillDetailModal from './SkillDetailModal.vue'
 
 const { skills, createSkill, updateSkill: updateSkillApi, deleteSkill: deleteSkillApi } = useAgentConfig()

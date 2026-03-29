@@ -18,7 +18,7 @@ import type { Skill, SkillCategory, SkillInvocation } from '../types/agent'
 const SKILLS_DIR = '/.skills'
 
 // 内置 Skills - 新的格式（content + usageScenarios + tools）
-const BUILTIN_SKILLS: Skill[] = [
+export const BUILTIN_SKILLS: Skill[] = [
   {
     id: 'write',
     name: '写作助手',
@@ -102,71 +102,33 @@ const BUILTIN_SKILLS: Skill[] = [
     updatedAt: Date.now()
   },
   {
-    id: 'translate',
-    name: '中英翻译',
-    description: '准确流畅进行中英互译，保持原文语气和风格',
-    icon: '🌐',
-    category: 'general',
-    content: `# 专业翻译
-
-## 能力范围
-
-你是一个专业翻译，能够准确流畅地进行中英互译。
-
-## 翻译原则
-
-1. 准确传达原文意思
-2. 符合目标语言的习惯表达
-3. 保持原文的语气和风格
-4. 专业术语翻译准确
-
-## 注意事项
-
-- 注意文化差异
-- 保持原文格式
-- 专有名词保持一致`,
-    usageScenarios: [
-      '翻译内容',
-      '中英互译',
-      '英文翻译中文',
-      '中文翻译英文'
-    ],
-    tools: ['translate_text'],
-    version: '1.0.0',
-    tags: ['翻译', '语言'],
-    isBuiltIn: true,
-    enabled: true,
-    createdAt: Date.now(),
-    updatedAt: Date.now()
-  },
-  {
-    id: 'polish',
-    name: '润色优化',
-    description: '优化文章表达，提升可读性和专业性',
+    id: 'refine',
+    name: '润色辅助',
+    description: '优化已有内容的语言细节，提升可读性和专业感',
     icon: '✨',
     category: 'writing',
-    content: `# 文字润色专家
+    content: `# 润色专家
 
 ## 能力范围
 
-你是一个文字润色专家，擅长优化表达、修正语法错误。
-
-## 润色原则
-
-1. 修正语法和拼写错误
-2. 优化句子结构，提升流畅度
-3. 改进用词，增强表达力
-4. 保持原文的核心意思和风格
+你是一个专业的润色专家，擅长优化已有内容的语言细节。
 
 ## 润色维度
 
-- 语法正确性
-- 表达流畅度
-- 用词准确性
-- 专业性和一致性`,
+1. 语法检查和纠正
+2. 用词准确性和丰富度
+3. 句式结构优化
+4. 语气和风格一致性
+5. 逻辑连贯性增强
+
+## 使用技巧
+
+- 提供修改后的版本
+- 说明修改的原因和改进点
+- 保持原意不变`,
     usageScenarios: [
-      '润色文章',
-      '优化表达',
+      '润色已有稿件',
+      '提升文章专业度',
       '提升可读性',
       '修改语法错误'
     ],
@@ -184,7 +146,7 @@ const BUILTIN_SKILLS: Skill[] = [
     description: '生成清晰高效的代码，提供详细解释和使用示例',
     icon: '💻',
     category: 'coding',
-    content: `# 编程专家
+    content: `# 编程专家助手
 
 ## 能力范围
 
@@ -220,19 +182,19 @@ const BUILTIN_SKILLS: Skill[] = [
   {
     id: 'review',
     name: '代码审查',
-    description: '审查代码，发现潜在问题和改进点',
+    description: '审查代码，发现潜在问题 and 改进点',
     icon: '🔍',
     category: 'coding',
     content: `# 代码审查员
 
 ## 能力范围
 
-你是一个经验丰富的代码审查员，擅长发现代码中的问题和改进点。
+你是一个经验丰富的代码审查员，擅长发现代码中的问题 and 改进点。
 
 ## 审查维度
 
 1. 代码风格和规范
-2. 潜在的 bug 和错误
+2. 潜在的 bug and 错误
 3. 性能优化建议
 4. 安全漏洞检查
 5. 可维护性评估
@@ -260,7 +222,7 @@ const BUILTIN_SKILLS: Skill[] = [
   {
     id: 'explain',
     name: '概念解释',
-    description: '将复杂概念解释得通俗易懂，使用类比和例子',
+    description: '将复杂概念解释得通俗易懂，使用类比 and 例子',
     icon: '💡',
     category: 'general',
     content: `# 概念解释专家
@@ -271,10 +233,10 @@ const BUILTIN_SKILLS: Skill[] = [
 
 ## 解释原则
 
-1. 使用类比和例子帮助理解
+1. 使用类比 and 例子帮助理解
 2. 从简单到复杂，循序渐进
 3. 避免过多专业术语，必要时解释
-4. 鼓励提问和互动
+4. 鼓励提问 and 互动
 
 ## 解释技巧
 
@@ -297,16 +259,107 @@ const BUILTIN_SKILLS: Skill[] = [
     updatedAt: Date.now()
   },
   {
+    id: 'academic-research',
+    name: '学术研究',
+    description: '深入搜索 ArXiv 论文库、获取 OpenReview 评审详情、查找 Hugging Face AI 模型',
+    icon: '🎓',
+    category: 'research',
+    content: `# 学术研究专家
+
+## 能力范围
+
+你是一个学术研究辅助专家，擅长使用外部 API 获取最新的科研动态。
+
+## 各平台核心工具
+
+### ArXiv (论文搜索与获取)
+- **search_arxiv(query, category)**: 搜索最新论文。注意 query 支持 boolean 逻辑，category 可选 cs.AI, cs.CL, cs.CV 等。
+- **fetch_arxiv(paper_id)**: 获取单篇论文的摘要、PDF 链接 and 详细元数据。
+
+### OpenReview (顶级会议评审)
+- **search_openreview(query, venue)**: 在 ICLR, NeurIPS, ICML 等会议中搜索论文。
+- **fetch_openreview(forum_id)**: 获取论文及其社区评审、决策细节。
+
+### Hugging Face (模型与数据集)
+- **search_huggingface(query, limit)**: 搜索业界最先进的开源模型 and 数据集。
+- **fetch_huggingface_model(model_id)**: 获取模型详情、下载数 and 作者信息。
+
+## 工作流建议
+1. 优先使用 ArXiv 获取最新的预印本。
+2. 对于具体的工业界动态，查询 Hugging Face。
+3. 如果用户询问某篇顶会论文的评价，查找 OpenReview。`,
+    usageScenarios: [
+      '搜索最新的学术论文',
+      '查找特定领域的 AI 模型',
+      '查看会议论文的匿名评审意见',
+      '获取论文摘要 and PDF 链接'
+    ],
+    tools: ['search_arxiv', 'fetch_arxiv', 'search_openreview', 'fetch_openreview', 'search_huggingface', 'fetch_huggingface_model'],
+    version: '1.2.0',
+    tags: ['学术', '论文', '科研', 'AI模型'],
+    isBuiltIn: true,
+    enabled: true,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  },
+  {
+    id: 'article-manager',
+    name: '文章管理',
+    description: '使用 VitePress 后端接口管理博客文章与知识库笔记',
+    icon: '📝',
+    category: 'writing',
+    content: `# VitePress 文章管理专家
+
+## 能力范围
+
+你是一个专业的 VitePress 内容管理专家，可以通过直接调用后端 API 对 \`/sections/\` 目录下的 Markdown 文稿进行 CRUD 操作。
+
+## 核心 API 与参数指南
+
+**重要概念**：所有操作均通过文章的 \`path\` (相对路径) 进行。
+路径示例：\`posts/my-post.md\`, \`knowledge/ai/transformer.md\`。
+
+### 1. 文章发现
+- **list_articles(section)**: 浏览目录。默认返回 \`posts\`, \`knowledge\`, \`resources\` 下的一级列表。
+- **search_articles(query)**: 全局全文搜索，返回匹配的文章及其 \`path\`。
+
+### 2. 内容读取
+- **get_article_content(path)**: 获取文章的全部内容 and Frontmatter。
+
+### 3. 创建与更新 (写入操作)
+- **create_article(title, path, content)**: 在指定路径创建新文章。系统会自动处理文件夹创建。
+- **update_article(path, content)**: 完整替换/更新文章内容。
+- **delete_article(path)**: 删除单篇文章（不可恢复）。
+
+## 交互原则
+1. **先搜索，再读取**：当用户提到一篇已存在的文章但没有提供路径时，先使用 \`search_articles\` 确认其准确路径。
+2. **规范化输出**：创建或更新文章时，确保 Markdown 结构完整，包含规范的 H1 标题。
+3. **反馈路径**：操作完成后明确告诉用户文章的相对路径（path），方便后续操作。`,
+    usageScenarios: [
+      '创建新的博客文章或随笔',
+      '在知识库中添加或修改学习笔记',
+      '查找历史写的文章内容',
+      '删除已有的 Markdown 文档'
+    ],
+    tools: ['create_article', 'get_article_content', 'update_article', 'delete_article', 'list_articles', 'search_articles'],
+    version: '2.0.0',
+    tags: ['文章', '笔记', 'CMS', 'VitePress'],
+    isBuiltIn: true,
+    enabled: true,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  },
+  {
     id: 'brainstorm',
     name: '头脑风暴',
-    description: '生成创意点子和创新解决方案',
+    description: '生成创意点子 and 创新解决方案',
     icon: '🧠',
     category: 'creative',
     content: `# 创意专家
 
 ## 能力范围
 
-你是一个创意专家，擅长头脑风暴和生成创新点子。
+你是一个创意专家，擅长头脑风暴 and 生成创新点子。
 
 ## 创意原则
 
@@ -330,102 +383,6 @@ const BUILTIN_SKILLS: Skill[] = [
     tools: [],
     version: '1.0.0',
     tags: ['创意', '头脑风暴'],
-    isBuiltIn: true,
-    enabled: true,
-    createdAt: Date.now(),
-    updatedAt: Date.now()
-  },
-  {
-    id: 'academic-research',
-    name: '学术研究',
-    description: '访问ArXiv、OpenReview、Hugging Face等学术平台',
-    icon: '🎓',
-    category: 'research',
-    content: `# 学术研究助手
-
-## 能力范围
-
-你是一个学术研究助手，擅长查找论文、研究成果和AI模型。
-
-## ArXiv 论文库
-- search_arxiv(query, category, max_results) - 搜索论文
-- fetch_arxiv(paper_id) - 获取论文详情
-- 分类：cs.AI, cs.CL, cs.CV, cs.LG等
-
-## OpenReview 会议论文
-- search_openreview(query, venue) - 搜索会议论文
-- fetch_openreview(paper_id, include_reviews) - 获取论文及评审
-- 支持：ICLR, NeurIPS, ICML等
-
-## Hugging Face 模型库
-- search_huggingface(query, type, task) - 搜索模型/数据集
-- fetch_huggingface_model(repo_id, type) - 获取模型详情
-
-## 使用原则
-1. 主动使用工具获取最新信息
-2. 提供论文/模型的关键信息摘要
-3. 给出相关建议和链接`,
-    usageScenarios: [
-      '查找学术论文',
-      '搜索AI模型',
-      '了解研究进展',
-      '获取会议论文评审'
-    ],
-    tools: ['search_arxiv', 'fetch_arxiv', 'search_openreview', 'fetch_openreview', 'search_huggingface', 'fetch_huggingface_model'],
-    version: '1.0.0',
-    tags: ['学术', '论文', 'ArXiv', 'OpenReview', 'Hugging Face'],
-    isBuiltIn: true,
-    enabled: true,
-    createdAt: Date.now(),
-    updatedAt: Date.now()
-  },
-  {
-    id: 'article-manager',
-    name: '文章管理',
-    description: '创建、查看、编辑、删除个人文章和笔记',
-    icon: '📝',
-    category: 'writing',
-    content: `# 文章管理助手
-
-## 能力范围
-
-你是一个文章管理助手，帮助用户管理个人文章和笔记。
-
-## 可用工具
-
-### 创建文章
-- create_article(title, content, tags, category, status)
-- 自动提取摘要
-- 支持草稿(draft)和发布(published)状态
-
-### 查看文章
-- get_article(article_id) - 获取单篇文章
-- list_articles(category, tag, status, limit) - 列出文章
-- search_articles(query, limit) - 搜索文章
-
-### 更新文章
-- update_article(article_id, title, content, tags, category, status)
-- 支持部分更新
-
-### 删除文章
-- delete_article(article_id)
-- 永久删除，谨慎使用
-
-## 使用原则
-1. 为用户自动提取合适的摘要
-2. 建议合适的标签和分类
-3. 帮助整理文章结构
-4. 使用 Markdown 格式`,
-    usageScenarios: [
-      '创建新文章或笔记',
-      '查看已有文章',
-      '编辑文章内容',
-      '删除不需要的文章',
-      '整理文章分类'
-    ],
-    tools: ['create_article', 'get_article', 'update_article', 'delete_article', 'list_articles', 'search_articles'],
-    version: '1.0.0',
-    tags: ['文章', '笔记', '管理', '写作'],
     isBuiltIn: true,
     enabled: true,
     createdAt: Date.now(),
@@ -537,12 +494,12 @@ async function parseSkillFile(filename: string): Promise<Skill | null> {
         return indentMatch[1]
           .trim()
           .split('\n')
-          .map(line => line.replace(/^\s+-\s+/, '').trim().replace(/^["']|["']$/g, ''))
+          .map(line => line.replace(/^\\s+-\\\\s+/, '').trim().replace(/^["']|["']$/g, ''))
           .filter(Boolean)
       }
       
       // 支持内联格式：key: ["item1", "item2"]
-      const inlineMatch = frontmatter.match(new RegExp(`^${name}:\\s*\\[(.+?)\\]`, 'm'))
+      const inlineMatch = frontmatter.match(new RegExp(`^${name}:\\s*\[(.+?)\]`, 'm'))
       if (inlineMatch) {
         return inlineMatch[1].split(',').map(s => s.trim().replace(/^["']|["']$/g, ''))
       }
@@ -598,8 +555,8 @@ async function createSkill(params: {
   try {
     const id = params.name
       .toLowerCase()
-      .replace(/[^\w\s]/g, '')
-      .replace(/\s+/g, '-')
+      .replace(/[^\\w\\s]/g, '')
+      .replace(/\\s+/g, '-')
       .substring(0, 50)
     
     const now = Date.now()
@@ -750,16 +707,16 @@ async function importSkillFile(file: File): Promise<Skill | null> {
     const fileContent = await file.text()
     
     // 验证格式
-    if (!fileContent.match(/^---\n[\s\S]*?\n---/)) {
+    if (!fileContent.match(/^---\\n[\\s\\S]*?\\n---/)) {
       throw new Error('Invalid skill file format: missing frontmatter')
     }
     
     // 解析 frontmatter
-    const frontmatterMatch = fileContent.match(/^---\n([\s\S]*?)\n---/)
+    const frontmatterMatch = fileContent.match(/^---\\n([\\s\\S]*?)\\n---/)
     if (!frontmatterMatch) return null
     
     const frontmatter = frontmatterMatch[1]
-    const content = fileContent.replace(/^---\n[\s\S]*?\n---\n*/, '').trim()
+    const content = fileContent.replace(/^---\\n[\\s\\S]*?\\n---\\n*/, '').trim()
     
     // 解析字段
     const parseField = (name: string, defaultValue: string = ''): string => {
@@ -776,7 +733,7 @@ async function importSkillFile(file: File): Promise<Skill | null> {
           .map(line => line.replace(/^\\s+-\\s+/, '').trim().replace(/^["']|["']$/g, ''))
           .filter(Boolean)
       }
-      const inlineMatch = frontmatter.match(new RegExp(`^${name}:\\s*\\[(.+?)\\]`, 'm'))
+      const inlineMatch = frontmatter.match(new RegExp(`^${name}:\\s*\[(.+?)\]`, 'm'))
       if (inlineMatch) {
         return inlineMatch[1].split(',').map(s => s.trim().replace(/^["']|["']$/g, ''))
       }
@@ -912,7 +869,7 @@ function matchSkills(userInput: string, availableSkillIds: string[]): string[] {
     
     // 检查使用场景是否匹配
     const matches = skill.usageScenarios?.some(scenario => {
-      const keywords = scenario.toLowerCase().split(/\s+/)
+      const keywords = scenario.toLowerCase().split(/\\s+/)
       return keywords.some(keyword => keyword.length > 2 && input.includes(keyword))
     })
     
@@ -1006,16 +963,3 @@ export {
   type SkillMetadata,
   type ActiveSkill
 } from './skillLoader'
-
-/**
- * 构建渐进式披露的系统提示词
- * 
- * 使用方式：
- * ```ts
- * const { buildSystemPrompt, processSkillLoadRequests } = useSkillLoader(skills.value)
- * const systemPrompt = buildSystemPrompt('你是一个AI助手')
- * 
- * // AI 回复后处理
- * const { processedResponse, loadedSkills } = await processSkillLoadRequests(aiResponse)
- * ```
- */

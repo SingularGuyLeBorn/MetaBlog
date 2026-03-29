@@ -1,10 +1,10 @@
 /**
  * 工具系统类型定义
  * 
- * 定义工具相关的所有类型，包括工具定义、工具调用、执行器等
+ * 统一工具返回格式，解决AI难以处理不同格式结果的问题
  */
 
-/** 工具定义（给AI的schema） */
+// 工具定义（Function Calling格式）
 export interface ToolDefinition {
   type: 'function'
   function: {
@@ -18,63 +18,99 @@ export interface ToolDefinition {
   }
 }
 
-/** 工具调用请求（来自AI） */
+// 统一工具返回格式
+export interface ToolResult<T = any> {
+  /** 是否成功 */
+  success: boolean
+  /** 返回数据 */
+  data?: T
+  /** 错误信息（技术细节） */
+  error?: string
+  /** 用户友好的提示消息 */
+  message?: string
+  /** 操作类型描述 */
+  action?: string
+  /** 建议的下一步操作 */
+  suggestion?: string
+}
+
+// 工具执行器类型（支持返回字符串或ToolResult，用于向后兼容）
+export type ToolExecutor = (args: Record<string, any>) => Promise<ToolResult | string> | ToolResult | string
+
+// 工具注册信息
+export interface ToolRegistration {
+  name: string
+  definition: ToolDefinition
+  executor: ToolExecutor
+}
+
+// 工具调用记录（用于展示和日志）
+export interface ToolCallRecord {
+  id: string
+  toolName?: string
+  name?: string
+  args?: Record<string, any>
+  arguments?: any
+  status: 'pending' | 'running' | 'success' | 'error'
+  startTime: number
+  endTime?: number
+  duration?: number
+  result?: ToolResult | string
+  error?: string
+}
+
+// AI返回的工具调用
 export interface ToolCall {
   id: string
   type: 'function'
   function: {
     name: string
-    arguments: string
+    arguments: string  // JSON字符串
   }
 }
 
-/** 工具执行器函数类型 */
-export type ToolExecutor = (args: Record<string, any>) => Promise<string> | string
-
-/** 工具注册项 */
-export interface ToolRegistration {
-  definition: ToolDefinition
-  executor: ToolExecutor
-}
-
-/** 工具调用记录（用于UI展示和日志） */
-export interface ToolCallRecord {
-  id: string
-  name: string
-  description?: string
-  arguments: Record<string, any>
-  result: string
-  status: 'pending' | 'running' | 'success' | 'error'
-  startTime: number
-  endTime?: number
-  duration?: number
-  error?: string
-}
-
-/** 思考步骤（用于分步展示） */
+// 思考步骤（用于展示推理过程）
 export interface ThinkingStep {
   id: string
-  /** 步骤类型
-   * - thinking: AI 思考过程
-   * - tool_call: 工具调用
-   * - tool_result: 工具执行结果
-   * - final_response: 最终回复
-   */
-  type: 'thinking' | 'tool_call' | 'tool_result' | 'final_response'
-  /** 轮次号（用于区分多轮对话） */
-  round: number
-  /** 步骤序号（用于排序） */
   index: number
-  /** 步骤标题（显示在头部） */
+  step?: number
+  round?: number
   title?: string
-  /** 内容（thinking 和 final_response 时使用） */
   content?: string
-  /** 工具调用记录（tool_call/tool_result 时使用） */
+  type: 'thought' | 'plan' | 'action' | 'observation' | 'thinking' | 'text' | 'tool_call'
+  timestamp?: number
+  createdAt?: number
+  duration?: number
+  status?: 'pending' | 'running' | 'success' | 'error' | 'completed'
   toolRecord?: ToolCallRecord
-  /** 步骤状态 */
-  status?: 'running' | 'success' | 'error' | 'completed'
-  /** 创建时间 */
-  createdAt: number
-  /** 更新时间（用于流式更新） */
-  updatedAt?: number
+}
+
+// 创建成功结果的帮助函数
+export function createSuccessResult<T>(
+  data: T,
+  message?: string,
+  action?: string,
+  suggestion?: string
+): ToolResult<T> {
+  return {
+    success: true,
+    data,
+    message,
+    action,
+    suggestion
+  }
+}
+
+// 创建错误结果的帮助函数
+export function createErrorResult(
+  error: string,
+  message?: string,
+  suggestion?: string
+): ToolResult {
+  return {
+    success: false,
+    error,
+    message: message || `操作失败: ${error}`,
+    suggestion: suggestion || '请检查参数后重试，或尝试其他方式'
+  }
 }

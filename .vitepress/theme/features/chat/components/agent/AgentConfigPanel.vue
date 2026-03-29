@@ -214,13 +214,13 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import type { Agent, Skill } from '../../../core/types/agent'
-import { useAgentConfig } from '../../../core/composables/useAgentConfig'
-import SkillDetailModal from '../skills/SkillDetailModal.vue'
+import type { Agent, Skill } from '../../types/agent'
+import { useAgentConfig } from '../../stores/useAgentConfig'
+import SkillDetailModal from './SkillDetailModal.vue'
 import TriggerPanel from './TriggerPanel.vue'
-import ModelPanel from './ModelPanel.vue'
-import Icon from '../../../shared/Icon.vue'
-import LiquidGlass from '../../../shared/LiquidGlass.vue'
+// import ModelPanel from './ModelPanel.vue'
+import { Icon } from '../../../../shared/components'
+import { LiquidGlass } from '../../../../shared/components'
 
 const props = defineProps<{ agent: Agent }>()
 const emit = defineEmits<{
@@ -347,7 +347,7 @@ onMounted(initConfig)
 </script>
 
 <style scoped>
-@import '../../../../shared/styles/liquid-glass-theme.css';
+/* 使用全局导入的 liquid-glass-theme.css */
 
 .agent-config {
   display: flex;

@@ -432,7 +432,7 @@ const createChild = async () => {
     }
   } catch (e) {
     showToast('error', '创建失败: ' + (e as Error).message)
-    logger.error('file.create', `创建文件失败: ${e}`)
+    logger.error(`创建文件失败: ${e}`)
   }
 }
 
@@ -528,7 +528,7 @@ const doRename = async () => {
   } catch (e) {
     console.error('[Rename Error]', e)
     showToast('error', '重命名失败: ' + (e as Error).message)
-    logger.error('file.rename', `重命名失败: ${e}`)
+    logger.error(`重命名失败: ${e}`)
   }
 }
 

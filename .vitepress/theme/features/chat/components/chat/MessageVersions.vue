@@ -1,12 +1,12 @@
-﻿<template>
+<template>
   <div class="message-versions">
-    <!-- 鐗堟湰鍒囨崲鍣紙濮嬬粓鏄剧ず锛屾柟渚跨煡閬撳綋鍓嶆槸绗嚑涓増鏈級 -->
+    <!-- 版本切换器（始终显示，方便知道当前是第几个版本） -->
     <div class="version-switcher">
       <button 
         class="version-btn prev"
         :disabled="currentIndex <= 0"
         @click="switchToVersion(currentIndex - 1)"
-        title="涓婁竴涓増鏈?
+        title="上一个版本"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="15 18 9 12 15 6"/>
@@ -21,7 +21,7 @@
         class="version-btn next"
         :disabled="currentIndex >= versions.length - 1"
         @click="switchToVersion(currentIndex + 1)"
-        title="涓嬩竴涓増鏈?
+        title="下一个版本"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="9 18 15 12 9 6"/>
@@ -29,35 +29,35 @@
       </button>
     </div>
     
-    <!-- 閲嶆柊鐢熸垚鎸夐挳锛堝湪鐗堟湰鍒囨崲鍙充晶锛?-->
+    <!-- 重新生成按钮（在版本切换右侧） -->
     <button 
       v-if="!isStreaming"
       class="regenerate-btn"
       @click="handleRegenerate"
-      title="閲嶆柊鐢熸垚鏂扮増鏈?
+      title="重新生成新版本"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="23 4 23 10 17 10"/>
         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
       </svg>
-      <span>閲嶆柊鐢熸垚</span>
+      <span>重新生成</span>
     </button>
     
-    <!-- 鐢熸垚涓寚绀哄櫒 -->
+    <!-- 生成中指示器 -->
     <div v-else class="generating-indicator">
       <span class="generating-dots">
         <span></span>
         <span></span>
         <span></span>
       </span>
-      <span class="generating-text">鐢熸垚涓?..</span>
+      <span class="generating-text">生成中...</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ChatMessage } from '../../../core/types'
+import type { ChatMessage } from '../../types'
 
 interface Props {
   versions: ChatMessage[]
@@ -94,7 +94,7 @@ function handleRegenerate() {
   color: var(--vp-c-text-2);
 }
 
-/* 鐗堟湰鍒囨崲鍣?*/
+/* 版本切换器 */
 .version-switcher {
   display: flex;
   align-items: center;
@@ -140,7 +140,7 @@ function handleRegenerate() {
   font-size: 13px;
 }
 
-/* 閲嶆柊鐢熸垚鎸夐挳 */
+/* 重新生成按钮 */
 .regenerate-btn {
   display: flex;
   align-items: center;
@@ -166,7 +166,7 @@ function handleRegenerate() {
   height: 14px;
 }
 
-/* 鐢熸垚涓寚绀哄櫒 */
+/* 生成中指示器 */
 .generating-indicator {
   display: flex;
   align-items: center;

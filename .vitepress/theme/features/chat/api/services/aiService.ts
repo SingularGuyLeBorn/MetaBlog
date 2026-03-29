@@ -31,7 +31,7 @@ import {
   initializeDefaultTools,
   type ToolDefinition,
   type ToolCall
-} from '../../tools'
+} from '../../tools/index'
 import { fileToBase64, detectMediaType, buildKimiImageContent, buildKimiVideoContent } from './multimediaService'
 
 // 初始化默认工具
@@ -152,9 +152,13 @@ function logApiRequest(endpoint: string, data: any) {
       // 多模态消息
       msg.content_type = 'multimodal'
       msg.content_parts = m.content.map((c: any) => c.type)
+    } else if (typeof m.content === 'string') {
+      msg.content_length = m.content.length
+      msg.content_preview = m.content.substring(0, 200) + (m.content.length > 200 ? '...' : '')
     } else {
-      msg.content_length = m.content?.length || 0
-      msg.content_preview = m.content?.substring(0, 200) + (m.content?.length > 200 ? '...' : '')
+      // 其他类型（null, undefined, object等）
+      msg.content_type = typeof m.content
+      msg.content_preview = String(m.content || '').substring(0, 200)
     }
     if (m.tool_calls) {
       msg.tool_calls = m.tool_calls.map((tc: any) => ({ id: tc.id, name: tc.function?.name }))
@@ -192,13 +196,16 @@ function logApiResponse(endpoint: string, data: any, duration: number) {
   const message = data.choices?.[0]?.message
   const responseSize = JSON.stringify(data).length
   
+  const contentStr = typeof message.content === 'string' ? message.content : ''
+  const reasoningStr = typeof message.reasoning_content === 'string' ? message.reasoning_content : ''
+  
   const simplifiedMessage = message ? {
     role: message.role,
-    content_length: message.content?.length || 0,
-    content_preview: message.content?.substring(0, 300) + (message.content?.length > 300 ? '...' : ''),
+    content_length: contentStr.length,
+    content_preview: contentStr.substring(0, 300) + (contentStr.length > 300 ? '...' : ''),
     has_reasoning: !!message.reasoning_content,
-    reasoning_length: message.reasoning_content?.length,
-    reasoning_preview: message.reasoning_content?.substring(0, 200) + (message.reasoning_content?.length > 200 ? '...' : ''),
+    reasoning_length: reasoningStr.length,
+    reasoning_preview: reasoningStr.substring(0, 200) + (reasoningStr.length > 200 ? '...' : ''),
     tool_calls: message.tool_calls?.map((tc: any) => ({
       id: tc.id, name: tc.function?.name,
       arguments_preview: tc.function?.arguments?.substring(0, 100) + (tc.function?.arguments?.length > 100 ? '...' : '')
@@ -529,12 +536,13 @@ function cleanAIOutput(content: string): string {
  */
 function truncateMessages(messages: any[], maxContentLength: number = 8000): any[] {
   return messages.map(m => {
-    // 处理多模态消息
-    if (Array.isArray(m.content)) {
+    // 只处理字符串类型的 content
+    if (typeof m.content !== 'string') {
       return m
     }
     
-    if (m.role === 'tool' && m.content && m.content.length > maxContentLength) {
+    // 处理 tool 角色的消息
+    if (m.role === 'tool' && m.content.length > maxContentLength) {
       const truncated = m.content.substring(0, maxContentLength)
       const truncatedLength = m.content.length - maxContentLength
       return {
@@ -542,12 +550,15 @@ function truncateMessages(messages: any[], maxContentLength: number = 8000): any
         content: truncated + `\n\n... [内容已截断，省略 ${truncatedLength} 字符]`
       }
     }
-    if (m.role === 'assistant' && m.content && m.content.length > maxContentLength * 2) {
+    
+    // 处理 assistant 角色的消息
+    if (m.role === 'assistant' && m.content.length > maxContentLength * 2) {
       return {
         ...m,
         content: m.content.substring(0, maxContentLength * 2) + `\n\n... [内容已截断]`
       }
     }
+    
     return m
   })
 }
@@ -997,6 +1008,22 @@ export const aiService = {
         
         const toolCalls = response.toolCalls
         
+        // 处理中间文本（工具调用前 AI 生成的说明文字）
+        if (response.content && toolCalls && toolCalls.length > 0) {
+          const textStep: ThinkingStep = {
+            id: `text_${toolRound}_${Date.now()}_${stepIndex}`,
+            type: 'text',
+            round: toolRound,
+            index: stepIndex,
+            content: cleanAIOutput(response.content),
+            createdAt: Date.now()
+          }
+          stepIndex++
+          callbacks.onThinkingStep?.(textStep)
+          
+          apiDebugLogger.logNote('intermediate_text', '【UI展示】中间文本', { content: response.content }, true)
+        }
+        
         if (!toolCalls || toolCalls.length === 0) {
           // 没有工具调用，直接显示最终回复
           if (response.content) {
@@ -1049,12 +1076,7 @@ export const aiService = {
           stepIndex++  // 递增索引
           callbacks.onThinkingStep?.(toolStep)
           
-          const { result, record } = await executeToolWithRecord(
-            toolCall.function.name, 
-            args,
-            toolContext,
-            callbacks.onToolRecord
-          )
+          const { result, record } = await executeToolWithRecord(toolCall)
           toolRecords.push(record)
           
           toolStep.toolRecord = {
@@ -1075,10 +1097,24 @@ export const aiService = {
             result 
           }, true)
           
+          // 将 ToolResult 转换为字符串
+          let resultContent: string
+          if (typeof result === 'string') {
+            resultContent = result
+          } else if (result && typeof result === 'object') {
+            if (result.success) {
+              resultContent = result.message || JSON.stringify(result.data)
+            } else {
+              resultContent = result.message || result.error || '操作失败'
+            }
+          } else {
+            resultContent = String(result || '')
+          }
+          
           toolResultMessages.push({
             role: 'tool',
             tool_call_id: toolCall.id,
-            content: result
+            content: resultContent
           })
         }
         
@@ -1146,13 +1182,13 @@ export const aiService = {
   
   // 保留registerTool用于动态注册
   registerTool(name: string, definition: ToolDefinition, executor: (args: Record<string, any>) => Promise<string> | string) {
-    import('../tools').then(({ registerTool }) => {
+    import('../../tools/index').then(({ registerTool }) => {
       registerTool(name, definition, executor)
     })
   },
   
   getRegisteredTools(): string[] {
-    const { getRegisteredToolNames } = require('../tools')
+    const { getRegisteredToolNames } = require('../../tools/index')
     return getRegisteredToolNames()
   },
   

@@ -6,7 +6,7 @@
 // 导出执行器
 export {
   createArticle,
-  getArticle,
+  getArticleContent,
   updateArticle,
   deleteArticle,
   listArticles,
@@ -16,7 +16,7 @@ export {
 // 导出定义
 export {
   createArticleDef,
-  getArticleDef,
+  getArticleContentDef,
   updateArticleDef,
   deleteArticleDef,
   listArticlesDef,
@@ -24,4 +24,4 @@ export {
 } from './definitions'
 
 // 导出类型
-export type { Article } from './executors'
+// (已移除暂不需要的 Article 类型)

@@ -287,8 +287,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
-import type { Agent, AgentPermission } from '../../../core/composables/useAgents'
-import { LEVEL_CONFIG, PERMISSION_TEMPLATES } from '../../../core/composables/useAgents'
+import type { Agent, AgentPermission } from '../../stores/useAgents'
+import { LEVEL_CONFIG, PERMISSION_TEMPLATES } from '../../stores/useAgents'
 
 const props = defineProps<{
   agent: Agent
@@ -367,7 +367,7 @@ const availableSkills = [
   { id: 'search', name: '搜索', icon: '🔍', description: '网络搜索和信息检索' },
 ]
 
-const permissionTemplates = PERMISSION_TEMPLATES
+const permissionTemplates = PERMISSION_TEMPLATES.default
 
 const promptTemplates = [
   { name: '通用助手', content: '你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。' },

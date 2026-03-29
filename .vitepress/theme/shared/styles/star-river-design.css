@@ -65,8 +65,8 @@ html {
   --sr-neu-shadow-light: #ffffff;
   --sr-neu-shadow-dark: #d0ccc5;
   
-  /* 字体 */
-  --sr-font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* 字体 - 添加中文字体回退 */
+  --sr-font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
   
   /* 间距 - 极简 generous white space */
   --sr-space-xs: 0.5rem;

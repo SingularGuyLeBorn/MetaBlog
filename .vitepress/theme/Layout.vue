@@ -10,7 +10,7 @@ import Breadcrumb from './shared/components/Breadcrumb.vue'
 import DocTitleBar from './shared/components/DocTitleBar.vue'
 import StarRiverLayout from './shared/components/StarRiverLayout.vue'
 
-// 页面组件导入
+// 椤甸潰缁勪欢瀵煎叆
 import HomePage from './pages/HomePage.vue'
 import AboutPage from './pages/AboutPage.vue'
 import KnowledgePage from './pages/KnowledgePage.vue'
@@ -19,8 +19,8 @@ import ResourcesPage from './pages/ResourcesPage.vue'
 import ChatPage from './pages/ChatPage.vue'
 
 import ControlCenter from './shared/components/ControlCenter.vue'
-import { AgentAdmin } from './features/chat/components/agent'
-
+import AgentAdmin from './features/chat/components/agent/AgentAdmin.vue'
+// import LogDashboard from './features/chat/components/agent/LogDashboard.vue'
 import { useAppStore } from './shared/stores/app'
 
 const { Layout } = DefaultTheme
@@ -29,16 +29,15 @@ const store = useAppStore()
 const route = useRoute()
 const router = useRouter()
 
-// 路由拦截器：判断当前页面是否为需要纯 Vue 接管的全屏页面（仅列表页，不包括文章详情页）
+// 璺敱鎷︽埅鍣細鍒ゆ柇褰撳墠椤甸潰鏄惁涓洪渶瑕佺函 Vue 鎺ョ鐨勫叏灞忛〉闈紙浠呭垪琛ㄩ〉锛屼笉鍖呮嫭鏂囩珷璇︽儏椤碉級
 const isPureVuePage = computed(() => {
-  // 处理路径：移除 index.html 和 .html 后缀，然后标准化
+  // 澶勭悊璺緞锛氱Щ闄?index.html 鍜?.html 鍚庣紑锛岀劧鍚庢爣鍑嗗寲
   const p = route.path
     .replace(/\/index\.html$/, '/')
     .replace(/\.html$/, '')
     .replace(/\/$/, '') || '/'
   
-  // 只匹配确切的列表页面，不匹配子页面（文章详情）
-  if (p === '/' || p === '/index') return 'home'
+  // 鍙尮閰嶇‘鍒囩殑鍒楄〃椤甸潰锛屼笉鍖归厤瀛愰〉闈紙鏂囩珷璇︽儏锛?  if (p === '/' || p === '/index') return 'home'
   if (p === '/chat' || p.startsWith('/chat/')) return 'chat'
   if (p === '/sections/about' || p === '/sections/about/index') return 'about'
   if (p === '/sections/knowledge' || p === '/sections/knowledge/index') return 'knowledge'
@@ -49,18 +48,21 @@ const isPureVuePage = computed(() => {
 })
 
 // Control center panel state
-const activePanel = ref<'dashboard' | 'articles' | null>(null)
+const activePanel = ref<'dashboard' | 'articles' | 'logs' | null>(null)
 const showAgentAdmin = ref(false)
+const showLogDashboard = ref(false)
 
-const handleControlOpen = (panel: 'dashboard' | 'articles') => {
+const handleControlOpen = (panel: 'dashboard' | 'articles' | 'logs') => {
   activePanel.value = panel
   
-  // 打开 Agent 管理面板
+  // 鎵撳紑 Agent 绠＄悊闈㈡澘
   if (panel === 'dashboard') {
     showAgentAdmin.value = true
   } else if (panel === 'articles') {
     router.go('/sections/posts/')
-
+  } else if (panel === 'logs') {
+    showLogDashboard.value = true
+  }
 }
 
 const handleAgentChange = (agent: any) => {
@@ -92,9 +94,9 @@ const startX = ref(0)
 const startLeftWidth = ref(0)
 const startRightWidth = ref(0)
 
-// Check if current page should show sidebars (排除纯 Vue 页面)
+// Check if current page should show sidebars (鎺掗櫎绾?Vue 椤甸潰)
 const showLeftSidebar = computed(() => {
-  // 纯 Vue 页面不显示侧边栏
+  // 绾?Vue 椤甸潰涓嶆樉绀轰晶杈规爮
   if (isPureVuePage.value) return false
   return route.path !== '/' && !route.path.match(/^\/?$/)
 })
@@ -103,8 +105,7 @@ const showLeftSidebar = computed(() => {
 const clientHeaders = ref<any[]>([])
 
 const showRightSidebar = computed(() => {
-  // 编辑模式下不显示右侧大纲（编辑器有自己的内容结构）
-  if (store.isEditing) return false
+  // 缂栬緫妯″紡涓嬩笉鏄剧ず鍙充晶澶х翰锛堢紪杈戝櫒鏈夎嚜宸辩殑鍐呭缁撴瀯锛?  if (store.isEditing) return false
   const serverHeaders = page.value.headers || []
   const hasClientHeaders = clientHeaders.value.length > 0
   return serverHeaders.length > 0 || hasClientHeaders
@@ -265,17 +266,17 @@ const rightResizerPosition = computed(() => rightWidth.value + 'px')
         <!-- Main Content Area -->
         <main class="main-content">
           <Layout :key="route.path">
-            <!-- 导航栏增强 -->
+            <!-- 瀵艰埅鏍忓寮?-->
             <template #nav-bar-content-after>
               <ControlCenter @open="handleControlOpen" />
             </template>
             
-            <!-- 页面布局插槽 (layout: page) -->
+            <!-- 椤甸潰甯冨眬鎻掓Ы (layout: page) -->
             <template #page-top v-if="isPureVuePage">
-              <!-- 纯 Vue 页面不需要额外装饰 -->
+              <!-- 绾?Vue 椤甸潰涓嶉渶瑕侀澶栬楗?-->
             </template>
             
-            <!-- 文档布局插槽 (默认 layout: doc) -->
+            <!-- 鏂囨。甯冨眬鎻掓Ы (榛樿 layout: doc) -->
             <template #doc-before v-if="!isPureVuePage">
               <Breadcrumb />
               <DocTitleBar />
@@ -319,28 +320,30 @@ const rightResizerPosition = computed(() => rightWidth.value + 'px')
         v-model:visible="showAgentAdmin"
         @agent-change="handleAgentChange"
       />
-
+      <LogDashboard
+        v-model:visible="showLogDashboard"
+        @close="showLogDashboard = false"
+      />
     </div>
   </StarRiverLayout>
 </template>
 
 <style>
-/* 即使在纯 Vue 页面也要展示导航栏 */
+/* 鍗充娇鍦ㄧ函 Vue 椤甸潰涔熻灞曠ず瀵艰埅鏍?*/
 .is-pure-vue-page .VPNav {
   display: block !important;
   z-index: 1000;
 }
 
-/* 确保主内容区域在纯 Vue 页面时不被侧边栏挤压 */
+/* 纭繚涓诲唴瀹瑰尯鍩熷湪绾?Vue 椤甸潰鏃朵笉琚晶杈规爮鎸ゅ帇 */
 .is-pure-vue-page .main-content {
   margin-left: 0 !important;
   margin-right: 0 !important;
   padding: 0 !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Star River Layout Styles
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?   Star River Layout Styles
+   鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?*/
 
 .metablog-layout {
   --vp-layout-max-width: 100%;

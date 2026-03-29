@@ -239,7 +239,7 @@
 import { ref, computed, watch } from 'vue'
 import { Teleport } from 'vue'
 import { Icon } from '../../../../shared/components'
-import type { SessionConfig, ModelType } from '../../../core/types'
+import type { SessionConfig, ModelType } from '../../types'
 
 interface ModelConfig {
   id: ModelType

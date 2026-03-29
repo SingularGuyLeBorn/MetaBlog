@@ -255,6 +255,7 @@ const tools = [
 ]
 
 // Switch filter with animation
+const currentFilter = ref('all')
 const isSwitching = ref(false)
 const switchFilter = (value: string) => {
   if (currentFilter.value === value) return

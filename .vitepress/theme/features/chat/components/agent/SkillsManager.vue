@@ -1,30 +1,30 @@
-﻿<template>
+<template>
   <div class="skills-manager">
-    <!-- 澶撮儴 -->
+    <!-- 头部 -->
     <div class="manager-header">
       <div class="header-title">
         <Icon name="zap" class="title-icon" />
         <div>
-          <h2 class="title-text">Skills 绠＄悊</h2>
-          <p class="title-desc">绠＄悊 Agent 鍙敤鐨?Skills 搴?/p>
+          <h2 class="title-text">Skills 管理</h2>
+          <p class="title-desc">管理 Agent 可用的 Skills 库</p>
         </div>
       </div>
       <LiquidGlass glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.6">
         <button class="create-btn" @click="showCreate = true">
           <Icon name="plus" />
-          鏂板缓 Skill
+          新建 Skill
         </button>
       </LiquidGlass>
     </div>
 
-    <!-- 鎼滅储鏍?-->
+    <!-- 搜索栏 -->
     <LiquidGlass class="search-glass" glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.2">
       <div class="search-bar">
         <Icon name="search" class="search-icon" />
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="鎼滅储 Skills..."
+          placeholder="搜索 Skills..."
           class="search-input"
         />
       </div>
@@ -47,7 +47,7 @@
       </div>
     </LiquidGlass>
 
-    <!-- Skills 缃戞牸 -->
+    <!-- Skills 网格 -->
     <div class="skills-grid">
       <LiquidGlass
         v-for="(skill, idx) in filteredSkills"
@@ -63,10 +63,10 @@
               <span class="skill-icon">{{ skill.icon }}</span>
             </div>
             <div class="skill-actions">
-              <button class="action-btn" @click.stop="editSkill(skill)" title="缂栬緫">
+              <button class="action-btn" @click.stop="editSkill(skill)" title="编辑">
                 <Icon name="edit" />
               </button>
-              <button class="action-btn danger" @click.stop="deleteSkill(skill)" title="鍒犻櫎">
+              <button class="action-btn danger" @click.stop="deleteSkill(skill)" title="删除">
                 <Icon name="trash-2" />
               </button>
             </div>
@@ -78,36 +78,36 @@
             <div class="skill-meta">
               <span class="meta-badge">
                 <Icon name="tool" />
-                {{ skill.tools?.length || 0 }} 宸ュ叿
+                {{ skill.tools?.length || 0 }} 工具
               </span>
-              <span class="meta-badge category">{{ skill.category || '閫氱敤' }}</span>
+              <span class="meta-badge category">{{ skill.category || '通用' }}</span>
             </div>
           </div>
 
           <div class="card-footer">
             <button class="view-btn" @click="viewSkill(skill)">
-              鏌ョ湅璇︽儏
+              查看详情
               <Icon name="arrow-right" />
             </button>
           </div>
         </div>
       </LiquidGlass>
 
-      <!-- 绌虹姸鎬?-->
+      <!-- 空状态 -->
       <div v-if="filteredSkills.length === 0" class="empty-state">
         <Icon name="search" class="empty-icon" />
-        <p>娌℃湁鎵惧埌鍖归厤鐨?Skills</p>
+        <p>没有找到匹配的 Skills</p>
       </div>
     </div>
 
-    <!-- 鍒涘缓/缂栬緫寮圭獥 -->
+    <!-- 创建/编辑弹窗 -->
     <Teleport to="body">
       <Transition name="modal">
         <div v-if="showCreate || editingSkill" class="modal-overlay" @click.self="closeModal">
           <LiquidGlass class="modal-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.4">
             <div class="skill-modal">
               <div class="modal-header">
-                <h3>{{ editingSkill ? '缂栬緫 Skill' : '鏂板缓 Skill' }}</h3>
+                <h3>{{ editingSkill ? '编辑 Skill' : '新建 Skill' }}</h3>
                 <button class="close-btn" @click="closeModal">
                   <Icon name="x" />
                 </button>
@@ -115,53 +115,53 @@
 
               <div class="modal-body">
                 <div class="form-group">
-                  <label>鍚嶇О</label>
-                  <input v-model="form.name" type="text" class="lg-input" placeholder="Skill 鍚嶇О" />
+                  <label>名称</label>
+                  <input v-model="form.name" type="text" class="lg-input" placeholder="Skill 名称" />
                 </div>
 
                 <div class="form-row">
                   <div class="form-group">
-                    <label>鍥炬爣</label>
+                    <label>图标</label>
                     <input v-model="form.icon" type="text" class="lg-input" placeholder="馃幆" />
                   </div>
                   <div class="form-group">
-                    <label>鍒嗙被</label>
+                    <label>分类</label>
                     <select v-model="form.category" class="lg-input">
-                      <option value="閫氱敤">閫氱敤</option>
-                      <option value="鍐欎綔">鍐欎綔</option>
-                      <option value="缂栫▼">缂栫▼</option>
-                      <option value="鍒嗘瀽">鍒嗘瀽</option>
-                      <option value="鎼滅储">鎼滅储</option>
+                      <option value="通用">通用</option>
+                      <option value="写作">写作</option>
+                      <option value="编程">编程</option>
+                      <option value="分析">分析</option>
+                      <option value="搜索">搜索</option>
                     </select>
                   </div>
                 </div>
 
                 <div class="form-group">
-                  <label>鎻忚堪</label>
-                  <textarea v-model="form.description" class="lg-input" rows="2" placeholder="绠€鐭弿杩拌繖涓?Skill 鐨勫姛鑳? />
+                  <label>描述</label>
+                  <textarea v-model="form.description" class="lg-input" rows="2" placeholder="简要描述这个 Skill 的功能" />
                 </div>
 
                 <div class="form-group">
-                  <label>鍐呭 (SKILL.md)</label>
-                  <textarea v-model="form.content" class="lg-input code" rows="8" placeholder="# Skill 鍚嶇О
+                  <label>内容 (SKILL.md)</label>
+                  <textarea v-model="form.content" class="lg-input code" rows="8" placeholder="# Skill 名称
 
-## 鎻忚堪
+## 描述
 ..." />
                 </div>
 
                 <div class="form-group">
-                  <label>宸ュ叿 (閫楀彿鍒嗛殧)</label>
+                  <label>工具 (逗号分隔)</label>
                   <input v-model="toolsInput" type="text" class="lg-input" placeholder="tool1, tool2, tool3" />
                 </div>
               </div>
 
               <div class="modal-footer">
                 <LiquidGlass glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.2">
-                  <button class="lg-btn" @click="closeModal">鍙栨秷</button>
+                  <button class="lg-btn" @click="closeModal">取消</button>
                 </LiquidGlass>
                 <LiquidGlass glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.5">
                   <button class="lg-btn lg-btn-primary" @click="saveSkill">
-                    {{ editingSkill ? '淇濆瓨' : '鍒涘缓' }}
+                    {{ editingSkill ? '保存' : '创建' }}
                   </button>
                 </LiquidGlass>
               </div>
@@ -171,18 +171,18 @@
       </Transition>
     </Teleport>
 
-    <!-- 璇︽儏寮圭獥 -->
+    <!-- 详情弹窗 -->
     <SkillDetailModal v-if="viewingSkill" :skill="viewingSkill" @close="viewingSkill = null" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useAgentConfig } from '../../../core/composables/useAgentConfig'
-import type { Skill, SkillCategory } from '../../../core/types/agent'
+import { useAgentConfig } from '../../stores/useAgentConfig'
+import type { Skill, SkillCategory } from '../../types/agent'
 import SkillDetailModal from './SkillDetailModal.vue'
-import Icon from '../../../shared/Icon.vue'
-import LiquidGlass from '../../../shared/LiquidGlass.vue'
+import { Icon } from '../../../../shared/components'
+import { LiquidGlass } from '../../../../shared/components'
 
 const { skills, createSkill, updateSkill: updateSkillApi, deleteSkill: deleteSkillApi } = useAgentConfig()
 
@@ -193,13 +193,13 @@ const editingSkill = ref<Skill | null>(null)
 const viewingSkill = ref<Skill | null>(null)
 
 const categories = [
-  { id: 'all', name: '鍏ㄩ儴' },
-  { id: 'general', name: '閫氱敤' },
-  { id: 'writing', name: '鍐欎綔' },
-  { id: 'coding', name: '缂栫▼' },
-  { id: 'analysis', name: '鍒嗘瀽' },
-  { id: 'creative', name: '鍒涙剰' },
-  { id: 'custom', name: '鑷畾涔? }
+  { id: 'all', name: '全部' },
+  { id: 'general', name: '通用' },
+  { id: 'writing', name: '写作' },
+  { id: 'coding', name: '编程' },
+  { id: 'analysis', name: '分析' },
+  { id: 'creative', name: '创意' },
+  { id: 'custom', name: '自定义' }
 ]
 
 const filteredSkills = computed(() => {
@@ -217,7 +217,7 @@ const filteredSkills = computed(() => {
   return result
 })
 
-// 鏄惧紡澹版槑 form 绫诲瀷锛岄伩鍏嶄娇鐢?as 鏂█
+// 显式声明 form 类型，避免使用 as 断言
 interface SkillForm {
   name: string
   icon: string
@@ -269,7 +269,8 @@ function resetForm() {
 
 function editSkill(skill: Skill) {
   editingSkill.value = skill
-  // 浣跨敤绫诲瀷瀹夊叏鐨勯粯璁ゅ€?  const category: SkillCategory = skill.category ?? 'general'
+  // 使用类型安全的默认值
+  const category: SkillCategory = skill.category ?? 'general'
   form.value = {
     name: skill.name,
     icon: skill.icon,
@@ -300,14 +301,14 @@ async function saveSkill() {
 }
 
 async function deleteSkill(skill: Skill) {
-  if (confirm(`纭畾瑕佸垹闄?"${skill.name}" 鍚楋紵`)) {
+  if (confirm(`确定要删除"${skill.name}" 吗？`)) {
     await deleteSkillApi(skill.id)
   }
 }
 </script>
 
 <style scoped>
-@import '../../../../shared/styles/liquid-glass-theme.css';
+/* 使用全局导入的 liquid-glass-theme.css */
 
 .skills-manager {
   max-width: 1200px;
@@ -315,7 +316,7 @@ async function deleteSkill(skill: Skill) {
   padding: 8px;
 }
 
-/* 澶撮儴 */
+/* 头部 */
 .manager-header {
   display: flex;
   align-items: center;
@@ -379,7 +380,7 @@ async function deleteSkill(skill: Skill) {
   height: 18px;
 }
 
-/* 鎼滅储鏍?*/
+/* 搜索栏 */
 .search-glass {
   margin-bottom: 24px;
   border-radius: 24px;
@@ -454,7 +455,7 @@ async function deleteSkill(skill: Skill) {
   color: white;
 }
 
-/* Skills 缃戞牸 */
+/* Skills 网格 */
 .skills-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -622,7 +623,7 @@ async function deleteSkill(skill: Skill) {
   height: 16px;
 }
 
-/* 绌虹姸鎬?*/
+/* 空状态 */
 .empty-state {
   grid-column: 1 / -1;
   display: flex;
@@ -639,7 +640,7 @@ async function deleteSkill(skill: Skill) {
   color: #cbd5e1;
 }
 
-/* 寮圭獥 */
+/* 弹窗 */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -749,3 +750,4 @@ async function deleteSkill(skill: Skill) {
   opacity: 0;
 }
 </style>
+

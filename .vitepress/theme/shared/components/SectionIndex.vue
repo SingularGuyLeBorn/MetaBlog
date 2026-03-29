@@ -126,8 +126,8 @@
             class="masonry-card"
             :class="{ 'tall': index % 3 === 0 }"
           >
-            <div class="masonry-num">{{ String(folder.index + 1).padStart(2, '0') }}</div>
-            <div class="masonry-icon">{{ folder.icon || defaultIcons[(folder.index) % defaultIcons.length] }}</div>
+            <div class="masonry-num">{{ String((folder.index ?? 0) + 1).padStart(2, '0') }}</div>
+            <div class="masonry-icon">{{ folder.icon || defaultIcons[(folder.index ?? 0) % defaultIcons.length] }}</div>
             <h3>{{ folder.title }}</h3>
             <p>{{ folder.description }}</p>
             <div class="masonry-footer">

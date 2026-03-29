@@ -224,8 +224,8 @@
 import { ref, computed, nextTick } from 'vue'
 import { Icon } from '../../../../shared/components'
 import GlassSelect from '../agent/GlassSelect.vue'
-import type { ChatSession } from '../../../core/types'
-import type { Agent } from '../../../core/types/agent'
+import type { ChatSession } from '../../types'
+import type { Agent } from '../../types/agent'
 
 const props = defineProps<{
   visible: boolean

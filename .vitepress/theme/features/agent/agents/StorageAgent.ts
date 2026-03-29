@@ -173,15 +173,23 @@ export class StorageAgent {
     return `docs/sections/${targetSection}/${year}/${month}/${filename}`
   }
 
+  // 类型守卫
+  private isSocialMediaContent(content: FetchedContent | SocialMediaContent): content is SocialMediaContent {
+    return 'originalUrl' in content
+  }
+
   // 构建文章
   private buildArticle(
     content: FetchedContent | SocialMediaContent,
     localImages: string[]
   ): ArticleContent {
+    // 获取原始URL
+    const sourceUrl = this.isSocialMediaContent(content) ? content.originalUrl : content.url
+    
     // 构建 frontmatter
     const frontmatter: Record<string, any> = {
       description: this.generateDescription(content),
-      source: content.originalUrl || content.url,
+      source: sourceUrl,
       platform: 'platform' in content ? content.platform : 'web',
       author: content.author || 'Unknown',
       crawlDate: new Date().toISOString(),

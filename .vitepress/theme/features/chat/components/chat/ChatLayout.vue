@@ -179,8 +179,8 @@
       @delete="handleBatchDelete"
     />
     
-    <!-- 日志监控面板 -->
-    <LogDashboard v-model:visible="showLogDashboard" />
+    <!-- 日志监控面板 (组件暂缺) -->
+    <!-- <LogDashboard v-model:visible="showLogDashboard" /> -->
     
     <!-- 删除确认弹窗 - 液态玻璃 3D 风格 -->
     <Teleport to="body">
@@ -230,11 +230,13 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { Teleport } from 'vue'
-import { SessionPanel, SessionManager } from './SessionPanel.vue'
-import { MessageList } from './MessageList.vue'
-import { ChatInput } from './ChatInput.vue'
-import { SettingsPanel } from './SettingsPanel.vue'
-import { AgentAdmin, AgentChatDialog, LogDashboard } from '../agent'
+import { Icon } from '../../../../shared/components'
+import SessionPanel from './SessionPanel.vue'
+import SessionManager from './SessionManager.vue'
+import MessageList from './MessageList.vue'
+import ChatInput from './ChatInput.vue'
+import SettingsPanel from './SettingsPanel.vue'
+import { AgentAdmin, AgentChatDialog } from '../agent'
 import type { SessionConfig, ChatSession, MessageAttachment, Skill, Agent } from '../../types'
 import { useAIChat, useAgentConfig } from '../../stores'
 

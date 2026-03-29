@@ -1,24 +1,24 @@
 ﻿<template>
   <div class="mcp-config">
-    <!-- 澶撮儴 -->
+    <!-- 头部 -->
     <div class="config-header">
       <div class="header-title">
         <Icon name="cpu" class="title-icon" />
         <div>
-          <h2 class="title-text">MCP 閰嶇疆</h2>
-          <p class="title-desc">妯″瀷涓婁笅鏂囧崗璁?(Model Context Protocol) 璁剧疆</p>
+          <h2 class="title-text">MCP 配置</h2>
+          <p class="title-desc">模型上下文协议(Model Context Protocol)设置</p>
         </div>
       </div>
     </div>
 
-    <!-- 鏈嶅姟鍣ㄥ垪琛?-->
+    <!-- 服务器列表 -->
     <div class="servers-section">
       <div class="section-header">
-        <h3>MCP 鏈嶅姟鍣?/h3>
+        <h3>MCP 服务器</h3>
         <LiquidGlass glow-color="#8b5cf6" :intensity="0.4">
           <button class="add-btn" @click="showAddServer = true">
             <Icon name="plus" />
-            娣诲姞鏈嶅姟鍣?          </button>
+            添加服务器          </button>
         </LiquidGlass>
       </div>
 
@@ -37,7 +37,7 @@
               </div>
               <div class="server-status" :class="server.status">
                 <span class="status-dot" />
-                {{ server.status === 'connected' ? '宸茶繛鎺? : '鏈繛鎺? }}
+                {{ server.status === 'connected' ? '已连接' : '未连接' }}
               </div>
             </div>
             
@@ -46,7 +46,7 @@
               <p class="server-desc">{{ server.description }}</p>
               <div class="server-tools">
                 <Icon name="tool" />
-                {{ server.tools }} 涓伐鍏?              </div>
+                {{ server.tools }} 个工具              </div>
             </div>
 
             <div class="server-actions">
@@ -62,18 +62,18 @@
       </div>
     </div>
 
-    <!-- 鍏ㄥ眬璁剧疆 -->
+    <!-- 全局设置 -->
     <LiquidGlass class="settings-glass" glow-color="#3b82f6" :intensity="0.2">
       <div class="settings-card">
         <h3 class="settings-title">
           <Icon name="settings" />
-          鍏ㄥ眬璁剧疆
+          全局设置
         </h3>
         
         <div class="setting-item">
           <div class="setting-info">
-            <span class="setting-label">鑷姩閲嶈繛</span>
-            <span class="setting-desc">杩炴帴鏂紑鍚庤嚜鍔ㄥ皾璇曢噸杩?/span>
+            <span class="setting-label">自动重连</span>
+            <span class="setting-desc">连接断开后自动尝试重连</span>
           </div>
           <label class="lg-toggle">
             <input v-model="settings.autoReconnect" type="checkbox" />
@@ -83,8 +83,8 @@
 
         <div class="setting-item">
           <div class="setting-info">
-            <span class="setting-label">璇锋眰瓒呮椂</span>
-            <span class="setting-desc">MCP 璇锋眰鐨勬渶澶х瓑寰呮椂闂?/span>
+            <span class="setting-label">请求超时</span>
+            <span class="setting-desc">MCP 请求的最大等待时间</span>
           </div>
           <input
             v-model.number="settings.timeout"
@@ -97,8 +97,8 @@
 
         <div class="setting-item">
           <div class="setting-info">
-            <span class="setting-label">鏃ュ織绾у埆</span>
-            <span class="setting-desc">MCP 瀹㈡埛绔棩蹇楄缁嗙▼搴?/span>
+            <span class="setting-label">日志级别</span>
+            <span class="setting-desc">MCP 客户端日志详细程度</span>
           </div>
           <select v-model="settings.logLevel" class="lg-input">
             <option value="debug">Debug</option>
@@ -110,14 +110,14 @@
       </div>
     </LiquidGlass>
 
-    <!-- 娣诲姞鏈嶅姟鍣ㄥ脊绐?-->
+    <!-- 添加服务器弹窗 -->
     <Teleport to="body">
       <Transition name="modal">
         <div v-if="showAddServer" class="modal-overlay" @click.self="showAddServer = false">
           <LiquidGlass class="modal-glass" glow-color="#8b5cf6" :intensity="0.4">
             <div class="add-server-modal">
               <div class="modal-header">
-                <h3>娣诲姞 MCP 鏈嶅姟鍣?/h3>
+                <h3>添加 MCP 服务器</h3>
                 <button class="close-btn" @click="showAddServer = false">
                   <Icon name="x" />
                 </button>
@@ -125,34 +125,34 @@
 
               <div class="modal-body">
                 <div class="form-group">
-                  <label>鏈嶅姟鍣ㄥ悕绉?/label>
+                  <label>服务器名称</label>
                   <input v-model="newServer.name" type="text" class="lg-input" placeholder="My MCP Server" />
                 </div>
 
                 <div class="form-group">
-                  <label>杩炴帴鍦板潃</label>
+                  <label>连接地址</label>
                   <input v-model="newServer.url" type="text" class="lg-input" placeholder="ws://localhost:3000" />
                 </div>
 
                 <div class="form-group">
-                  <label>鎻忚堪</label>
-                  <textarea v-model="newServer.description" class="lg-input" rows="2" placeholder="鏈嶅姟鍣ㄥ姛鑳芥弿杩?.." />
+                  <label>描述</label>
+                  <textarea v-model="newServer.description" class="lg-input" rows="2" placeholder="服务器功能描述..." />
                 </div>
 
                 <div class="form-group">
-                  <label>璁よ瘉浠ょ墝 (鍙€?</label>
+                  <label>认证令牌 (可选)</label>
                   <input v-model="newServer.token" type="password" class="lg-input" placeholder="Bearer token..." />
                 </div>
               </div>
 
               <div class="modal-footer">
                 <LiquidGlass glow-color="#64748b" :intensity="0.2">
-                  <button class="lg-btn" @click="showAddServer = false">鍙栨秷</button>
+                  <button class="lg-btn" @click="showAddServer = false">取消</button>
                 </LiquidGlass>
                 <LiquidGlass glow-color="#8b5cf6" :intensity="0.5">
                   <button class="lg-btn lg-btn-primary" @click="addServer">
                     <Icon name="plus" />
-                    娣诲姞
+                    添加
                   </button>
                 </LiquidGlass>
               </div>
@@ -166,16 +166,16 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import Icon from '../../shared/Icon.vue'
-import LiquidGlass from '../../shared/LiquidGlass.vue'
+import { Icon } from '../../../../shared/components'
+import { LiquidGlass } from '../../../../shared/components'
 
 const showAddServer = ref(false)
 
 const servers = ref([
   {
     id: '1',
-    name: '鏂囦欢绯荤粺',
-    description: '璁块棶鏈湴鏂囦欢绯荤粺锛岃鍙栧拰鍐欏叆鏂囦欢',
+    name: '文件系统',
+    description: '访问本地文件系统，读取和写入文件',
     icon: 'folder',
     gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)',
     status: 'connected',
@@ -183,8 +183,8 @@ const servers = ref([
   },
   {
     id: '2',
-    name: '鏁版嵁搴?,
-    description: '杩炴帴 SQLite 鏁版嵁搴撴墽琛屾煡璇?,
+    name: '数据库',
+    description: '连接 SQLite 数据库执行查询',
     icon: 'database',
     gradient: 'linear-gradient(135deg, #10b981, #059669)',
     status: 'disconnected',
@@ -224,14 +224,14 @@ function editServer(server: any) {
 }
 
 function removeServer(id: string) {
-  if (confirm('纭畾瑕佸垹闄よ繖涓湇鍔″櫒鍚楋紵')) {
+  if (confirm('确定要删除这个服务器吗？')) {
     servers.value = servers.value.filter(s => s.id !== id)
   }
 }
 </script>
 
 <style scoped>
-@import '../../../shared/styles/liquid-glass-theme.css';
+/* 使用全局导入的 liquid-glass-theme.css */
 
 .mcp-config {
   max-width: 1000px;
@@ -239,7 +239,7 @@ function removeServer(id: string) {
   padding: 8px;
 }
 
-/* 澶撮儴 */
+/* 头部 */
 .config-header {
   margin-bottom: 24px;
 }
@@ -269,7 +269,7 @@ function removeServer(id: string) {
   color: #64748b;
 }
 
-/* 鏈嶅姟鍣ㄥ尯 */
+/* 服务器区 */
 .servers-section {
   margin-bottom: 24px;
 }
@@ -439,7 +439,7 @@ function removeServer(id: string) {
   height: 16px;
 }
 
-/* 璁剧疆鍗＄墖 */
+/* 设置卡片 */
 .settings-glass {
   border-radius: 24px;
 }
@@ -498,7 +498,7 @@ function removeServer(id: string) {
   text-align: center;
 }
 
-/* 寮圭獥 */
+/* 弹窗 */
 .modal-overlay {
   position: fixed;
   inset: 0;

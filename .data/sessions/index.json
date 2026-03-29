@@ -1,20 +1,80 @@
 [
   {
-    "id": "session-1772820893959-eypvtad",
-    "title": "新对话",
-    "agentId": "agent-1771864714589-mpgyp1p",
-    "agentName": "Meta 助手",
-    "createdAt": 1772820893959,
-    "updatedAt": 1773227312685,
-    "messageCount": 0
+    "id": "session-1774716540065-3e6s6vt",
+    "title": "与 Meta 助手 的对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 1,
+      "maxTokens": 8192,
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。\n\n\n## 你的能力\n你拥有以下 Skills，可以调用其中的工具：\n\n- 🎓 **学术研究**: 访问ArXiv、OpenReview、Hugging Face等学术平台\n  - 工具: search_arxiv, fetch_arxiv, search_openreview, fetch_openreview, search_huggingface, fetch_huggingface_model\n\n## 可用工具\n你有以下 6 个工具可供调用：\n\n\n### 网络工具\n- **fetch_arxiv**: 获取 ArXiv 论文的详细信息。包括标题、作者、摘要、PDF链接等。\n- **fetch_openreview**: 获取 OpenReview 论文/评审的详细信息。OpenReview 是顶级 AI 会议（NeurIPS、ICML、ICLR）的论文和评审平台。\n- **fetch_huggingface_model**: 获取 Hugging Face 模型或数据集的详细信息。Hugging Face 是最大的开源 AI 模型和数据集平台。\n\n### 学术平台\n- **search_arxiv**: 搜索 ArXiv 论文库。支持关键词、作者、分类搜索。\n- **search_openreview**: 搜索 OpenReview 论文。可以搜索特定会议的论文。\n\n### AI模型平台\n- **search_huggingface**: 搜索 Hugging Face Hub 上的模型、数据集和 Spaces。\n\n当需要调用工具时，系统会自动提供完整的参数定义。",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg",
+      "agentName": "Meta 助手",
+      "_customSystemPrompt": false
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1774716540065,
+    "updatedAt": 1774716540076
   },
   {
-    "id": "session-1772820893959-eypvtad",
+    "id": "session-1774716540065-3e6s6vt",
     "title": "新对话",
-    "agentId": "",
-    "agentName": "",
-    "createdAt": 1772820894123,
-    "updatedAt": 1772820894123,
-    "messageCount": 0
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 1,
+      "maxTokens": 8192,
+      "systemPrompt": "",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg"
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1774716540067,
+    "updatedAt": 1774716540067
+  },
+  {
+    "id": "session-1774701517174-ow3db66",
+    "title": "帮我在 posts 下面新建一篇文章，讲...",
+    "config": {
+      "model": "deepseek-reasoner",
+      "temperature": 1,
+      "maxTokens": 8192,
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。\n\n\n## 你的能力\n你拥有以下 Skills，可以调用其中的工具：\n\n- 🎓 **学术研究**: 访问ArXiv、OpenReview、Hugging Face等学术平台\n  - 工具: search_arxiv, fetch_arxiv, search_openreview, fetch_openreview, search_huggingface, fetch_huggingface_model\n\n## 可用工具\n你有以下 6 个工具可供调用：\n\n\n### 网络工具\n- **fetch_arxiv**: 获取 ArXiv 论文的详细信息。包括标题、作者、摘要、PDF链接等。\n- **fetch_openreview**: 获取 OpenReview 论文/评审的详细信息。OpenReview 是顶级 AI 会议（NeurIPS、ICML、ICLR）的论文和评审平台。\n- **fetch_huggingface_model**: 获取 Hugging Face 模型或数据集的详细信息。Hugging Face 是最大的开源 AI 模型和数据集平台。\n\n### 学术平台\n- **search_arxiv**: 搜索 ArXiv 论文库。支持关键词、作者、分类搜索。\n- **search_openreview**: 搜索 OpenReview 论文。可以搜索特定会议的论文。\n\n### AI模型平台\n- **search_huggingface**: 搜索 Hugging Face Hub 上的模型、数据集和 Spaces。\n\n当需要调用工具时，系统会自动提供完整的参数定义。",
+      "enableReasoning": true,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg"
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1774701517174,
+    "updatedAt": 1774715586079
+  },
+  {
+    "id": "session-1774701517174-ow3db66",
+    "title": "新对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 1,
+      "maxTokens": 8192,
+      "systemPrompt": "",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg"
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1774701517174,
+    "updatedAt": 1774701517174
   }
 ]

@@ -143,7 +143,7 @@ export class MetaAgent {
       for (const contentResult of validContents) {
         const storageResult = await this.storageAgent.store({
           content: contentResult.content!,
-          section: workflow.target.section,
+          section: workflow.target.section as any,
           options: {
             downloadImages: true,
             autoCommit: workflow.target.autoPublish,

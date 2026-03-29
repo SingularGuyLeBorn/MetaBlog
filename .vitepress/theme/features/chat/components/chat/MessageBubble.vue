@@ -27,7 +27,7 @@
           思考时间线 - 按官方文档垂直排列
           顺序：思维链1.1 → 工具调用1.1 → 思维链1.2 → 工具调用1.2 → ... → 思维链1.N → 最终回复
         -->
-        <template v-if="hasThinkingSteps">
+        <template v-if="hasTimelineItems">
           <div class="thinking-timeline">
             <div 
               v-for="(item, index) in timelineItems" 
@@ -38,33 +38,45 @@
               <!-- 思维链卡片 -->
               <template v-if="item.type === 'thinking'">
                 <div class="card-header" @click="toggleItem(item.id)">
-                  <span class="card-icon">🧠</span>
-                  <span class="card-title">思考</span>
-                  <span class="card-round">第 {{ item.round }} 轮</span>
+                  <span class="card-icon">💡</span>
+                  <span class="card-title">思考{{ item.type === 'thinking' && (item as any).status === 'completed' ? '已完成' : '中' }}</span>
                   <Icon :name="expandedItems[item.id] ? 'chevron-down' : 'chevron-right'" :size="12" />
                 </div>
                 <div v-show="expandedItems[item.id]" class="card-body">
                   <div class="thinking-content">{{ item.content }}</div>
                 </div>
               </template>
+
+              <!-- 中间文本（模型在工具调用之间生成的说明文字） -->
+              <template v-else-if="item.type === 'text'">
+                <div class="intermediate-text" v-html="renderMarkdown(item.content || '')"></div>
+              </template>
               
               <!-- 工具调用卡片 -->
               <template v-else-if="item.type === 'tool_call' && item.toolRecord">
-                <div class="card-header" @click="toggleItem(item.id)">
-                  <span class="card-icon">🔨</span>
-                  <span class="card-title">{{ item.toolRecord.name }}</span>
-                  <span :class="['card-status', item.toolRecord.status]">
-                    {{ statusText(item.toolRecord.status) }}
-                  </span>
-                  <Icon :name="expandedItems[item.id] ? 'chevron-down' : 'chevron-right'" :size="12" />
+                <div class="card-header tool-call-header" @click="toggleItem(item.id)">
+                  <div class="tool-call-left">
+                    <span class="card-icon">🔧</span>
+                    <span class="tool-call-name">{{ item.toolRecord.name }}</span>
+                    <span v-if="item.toolRecord.arguments" class="tool-call-args">
+                      {{ getToolArgsSummary(item.toolRecord.arguments) }}
+                    </span>
+                  </div>
+                  <div class="tool-call-right">
+                    <span v-if="item.toolRecord.duration" class="tool-call-time">{{ item.toolRecord.duration }}ms</span>
+                    <span :class="['card-status', item.toolRecord.status]">
+                      {{ statusText(item.toolRecord.status) }}
+                    </span>
+                    <Icon :name="expandedItems[item.id] ? 'chevron-down' : 'chevron-right'" :size="12" />
+                  </div>
                 </div>
                 <div v-show="expandedItems[item.id]" class="card-body">
                   <div class="tool-section">
-                    <span class="section-label">参数</span>
+                    <span class="section-label">📥 参数</span>
                     <code class="section-code">{{ JSON.stringify(item.toolRecord.arguments, null, 2) }}</code>
                   </div>
                   <div v-if="item.toolRecord.status !== 'pending' && item.toolRecord.status !== 'running'" class="tool-section">
-                    <span class="section-label">结果</span>
+                    <span class="section-label">📤 结果</span>
                     <pre class="section-pre">{{ item.toolRecord.result }}</pre>
                   </div>
                   <div v-else class="tool-running">
@@ -78,10 +90,10 @@
           </div>
         </template>
         
-        <!-- 传统思考框（兼容旧数据） -->
+        <!-- 传统思考框（兼容旧数据，无 thinkingSteps 时） -->
         <div v-else-if="displayReasoning" class="reasoning-box-3d">
           <div class="reasoning-header" @click="isExpanded = !isExpanded">
-            <span class="reasoning-icon">💭</span>
+            <span class="reasoning-icon">💡</span>
             <span>思考过程</span>
             <Icon :name="isExpanded ? 'chevron-down' : 'chevron-right'" :size="14" />
           </div>
@@ -129,54 +141,7 @@
           <span class="thinking-dot-3d"></span>
         </div>
 
-        <!-- 传统工具面板（兼容旧数据） -->
-        <div v-if="showLegacyToolPanel" class="tool-panel">
-          <div class="tool-panel-header" @click="showToolRecords = !showToolRecords">
-            <div class="tool-panel-title">
-              <span class="tool-icon">🔧</span>
-              <span>工具调用</span>
-              <span class="tool-count">{{ toolRecords.length }}</span>
-            </div>
-            <Icon :name="showToolRecords ? 'chevron-down' : 'chevron-right'" :size="14" />
-          </div>
-          <div v-show="showToolRecords" class="tool-panel-content">
-            <div v-for="(record, index) in toolRecords" :key="record.id" class="tool-item">
-              <div class="tool-item-header" @click="toggleToolDetail(index)">
-                <div class="tool-item-left">
-                  <span class="tool-round-num">#{{ index + 1 }}</span>
-                  <span class="tool-item-name">{{ record.name }}</span>
-                  <span :class="['tool-item-status', record.status]">{{ statusText(record.status) }}</span>
-                </div>
-                <div class="tool-item-right">
-                  <span v-if="record.duration" class="tool-item-time">⏱️ {{ record.duration }}ms</span>
-                  <Icon :name="expandedTools[index] ? 'chevron-down' : 'chevron-right'" :size="12" />
-                </div>
-              </div>
-              
-              <div v-show="expandedTools[index]" class="tool-item-detail">
-                <div class="tool-detail-section">
-                  <div class="tool-detail-header" @click="toggleSection(index, 'args')">
-                    <span>📥 参数</span>
-                    <Icon :name="expandedSections[`${index}-args`] ? 'chevron-down' : 'chevron-right'" :size="10" />
-                  </div>
-                  <div v-show="expandedSections[`${index}-args`]" class="tool-detail-content">
-                    <pre class="tool-code-light">{{ JSON.stringify(record.arguments, null, 2) }}</pre>
-                  </div>
-                </div>
-                
-                <div class="tool-detail-section">
-                  <div class="tool-detail-header" @click="toggleSection(index, 'result')">
-                    <span>📤 结果</span>
-                    <Icon :name="expandedSections[`${index}-result`] ? 'chevron-down' : 'chevron-right'" :size="10" />
-                  </div>
-                  <div v-show="expandedSections[`${index}-result`]" class="tool-detail-content">
-                    <pre class="tool-code-light">{{ record.result }}</pre>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- legacy 工具面板已移除，统一走 timeline 路径 -->
 
         <!-- 版本切换器 -->
         <MessageVersions
@@ -211,7 +176,7 @@ import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { Avatar, AIAvatar, Icon, TypewriterText } from '../../../../shared/components'
 import MessageVersions from './MessageVersions.vue'
-import type { ChatMessage, ChatMessage as ChatMessageType, ThinkingStep } from '../../../core/types'
+import type { ChatMessage, ChatMessage as ChatMessageType, ThinkingStep } from '../../types'
 
 interface VersionInfo {
   versions: ChatMessageType[]
@@ -245,25 +210,36 @@ const typewriterRef = ref<InstanceType<typeof TypewriterText> | null>(null)
 
 // ============ 计算属性 ============
 
-// 所有思考步骤，按索引排序（官方文档顺序）
+// 所有思考步骤，按索引排序
 const allThinkingSteps = computed((): ThinkingStep[] => {
   const steps = props.message.metadata?.thinkingSteps || []
   return [...steps].sort((a, b) => a.index - b.index)
 })
 
-// 是否有思考步骤
-const hasThinkingSteps = computed(() => allThinkingSteps.value.length > 0)
-
-// 时间线项目 - 按官方文档顺序排列
-const timelineItems = computed(() => allThinkingSteps.value)
-
 // 传统工具记录
 const toolRecords = computed(() => props.message.metadata?.toolRecords || [])
 
-// 是否显示传统工具面板
-const showLegacyToolPanel = computed(() => {
-  return toolRecords.value.length > 0 && !hasThinkingSteps.value
+// 统一时间线：thinkingSteps 优先，否则将 toolRecords 转换为 timeline items
+const timelineItems = computed((): ThinkingStep[] => {
+  if (allThinkingSteps.value.length > 0) {
+    return allThinkingSteps.value
+  }
+  // 兼容旧数据：将 toolRecords 转换为 ThinkingStep
+  if (toolRecords.value.length > 0) {
+    return toolRecords.value.map((record, index) => ({
+      id: `legacy_tool_${record.id || index}`,
+      type: 'tool_call' as const,
+      round: 1,
+      index,
+      toolRecord: record,
+      createdAt: record.startTime || Date.now()
+    }))
+  }
+  return []
 })
+
+// 是否有时间线项目（统一判断）
+const hasTimelineItems = computed(() => timelineItems.value.length > 0)
 
 // 传统思考内容
 const displayReasoning = computed(() => props.message.reasoning?.content || '')
@@ -343,6 +319,37 @@ function statusText(status: string): string {
     'error': '失败'
   }
   return map[status] || status
+}
+
+// 将 markdown 渲染为安全 HTML（用于中间文本块）
+function renderMarkdown(content: string): string {
+  if (!content) return ''
+  try {
+    const raw = marked.parse(content, { async: false }) as string
+    return DOMPurify.sanitize(raw)
+  } catch {
+    return content
+  }
+}
+
+// 提取工具参数摘要（显示在卡片标题中）
+function getToolArgsSummary(args: Record<string, any>): string {
+  if (!args || typeof args !== 'object') return ''
+  // 优先显示 query/keyword/url/path 等关键参数
+  const priorityKeys = ['query', 'keyword', 'q', 'url', 'path', 'text', 'content', 'message']
+  for (const key of priorityKeys) {
+    if (args[key] && typeof args[key] === 'string') {
+      const val = args[key] as string
+      return val.length > 60 ? val.slice(0, 60) + '...' : val
+    }
+  }
+  // 回退：显示第一个字符串参数
+  for (const val of Object.values(args)) {
+    if (typeof val === 'string' && val.length > 0) {
+      return val.length > 60 ? val.slice(0, 60) + '...' : val
+    }
+  }
+  return ''
 }
 
 function toggleItem(itemId: string) {
@@ -658,6 +665,84 @@ async function copyContent() {
   40% { transform: scale(1); opacity: 1; }
 }
 
+/* ========== 中间文本 ========== */
+.timeline-card.text {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.intermediate-text {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #1e293b;
+  padding: 4px 0;
+  font-weight: 600;
+}
+
+.intermediate-text :deep(p) {
+  margin: 0 0 8px;
+}
+
+.intermediate-text :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.intermediate-text :deep(strong) {
+  color: #0f172a;
+}
+
+/* ========== 工具调用卡片增强 ========== */
+.tool-call-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tool-call-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tool-call-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.tool-call-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #b45309;
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+
+.tool-call-args {
+  font-size: 12px;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 300px;
+  border-left: 2px solid rgba(148, 163, 184, 0.3);
+  padding-left: 8px;
+}
+
+.tool-call-time {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+}
+
 /* ========== 最终回复 ========== */
 .final-response {
   background: rgba(255, 255, 255, 0.9);
@@ -734,8 +819,10 @@ async function copyContent() {
 .tool-panel {
   margin-top: 16px;
   background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .tool-panel-header {
@@ -745,6 +832,191 @@ async function copyContent() {
   padding: 12px 16px;
   cursor: pointer;
   font-weight: 600;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+  transition: background 0.2s ease;
+}
+
+.tool-panel-header:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.tool-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.tool-icon {
+  font-size: 16px;
+}
+
+.tool-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #b45309;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tool-panel-content {
+  padding: 8px 12px 12px;
+}
+
+.tool-item {
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.5);
+  transition: box-shadow 0.2s ease;
+}
+
+.tool-item:last-child {
+  margin-bottom: 0;
+}
+
+.tool-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.tool-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  user-select: none;
+}
+
+.tool-item-header:hover {
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.tool-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.tool-item-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.tool-round-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.12);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tool-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #b45309;
+  font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-item-status {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.tool-item-status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tool-item-status.running {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.tool-item-status.success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.tool-item-status.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.tool-item-time {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.tool-item-detail {
+  border-top: 1px solid rgba(226, 232, 240, 0.5);
+  padding: 12px 14px;
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.tool-detail-section {
+  margin-bottom: 10px;
+}
+
+.tool-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.tool-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  user-select: none;
+}
+
+.tool-detail-header:hover {
+  color: #475569;
+}
+
+.tool-detail-content {
+  margin-top: 6px;
+}
+
+.tool-code-light {
+  display: block;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+  color: #374151;
 }
 
 .message-actions-3d {

@@ -11,6 +11,7 @@
 
 import type { Agent, Skill, AgentCreateParams, AgentUpdateParams } from '../../types/agent'
 import { API_ENDPOINTS, API_CONFIG } from '../config'
+import { BUILTIN_SKILLS } from '../../stores/skillStore'
 
 // API响应格式
 interface ApiResponse<T> {
@@ -25,6 +26,95 @@ const cache = {
   agents: null as Agent[] | null,
   skills: null as Skill[] | null,
   activeAgentId: null as string | null,
+}
+
+// 默认 Agent 配置
+const DEFAULT_AGENT: Agent = {
+  id: 'default-assistant',
+  name: 'Meta 助手',
+  avatar: '✨',
+  description: '你的全能数字孪生，掌握博客内容创作、学术搜索与系统管理，是 MetaBlog 的灵魂核心。',
+  level: 'core',
+  status: 'online',
+  seat: 1,
+  isDefault: true,
+  capabilities: {
+    mode: 'raw',
+    skillIds: ['write', 'summarize', 'refine', 'code', 'review', 'explain', 'brainstorm', 'academic-research', 'article-manager'],
+    toolIds: [
+      // 文章管理工具
+      'create_article', 'get_article_content', 'update_article', 'delete_article', 'list_articles', 'search_articles',
+      // 学术工具
+      'search_arxiv', 'fetch_arxiv', 'search_openreview', 'fetch_openreview', 'search_huggingface', 'fetch_huggingface_model',
+      // 系统常用工具
+      'summarize_text', 'translate_text', 'format_text', 'execute_code', 'analyze_code'
+    ],
+    customSystemPrompt: `你是一个部署在 MetaBlog (VitePress 驱动的学术博客系统) 中的高级 AI 助手。
+你是邵承源的数字分身，名字叫 Gemini (基于 Antigravity 框架)。
+
+## 核心身份
+- **内容主理人**：你有权通过后端 API 对 \`/sections/\` 目录（包含 posts, knowledge, resources 等）下的文章进行 CRUD 操作。
+- **科研加速者**：你可以直接检索 ArXiv, OpenReview 和 Hugging Face 上的前沿论文与模型。
+
+## 关键任务与交互准则
+
+### 1. 文章管理 (VitePress CMS)
+- **路径敏感**：所有文章操作必须基于路径（path）。路径通常为 \`posts/xxx.md\` 或 \`knowledge/xxx.md\`。
+- **搜索优先**：若用户提到一篇文章，优先用 \`search_articles\` 找路径，再用 \`get_article_content\` 读取。
+- **创作规范**：创建新文章时（\`create_article\`），必须包含规范的 Markdown 语法和 H1 标题、Frontmatter。
+
+### 2. 学术研究 (Academic Research)
+- 遇到技术难点时，主动提出搜索最新论文（search_arxiv）。
+- 对于 AI 模型，查阅 Hugging Face 的最新权重信息。
+
+### 3. 文本文档
+- 使用中文回复。
+- 代码块需标注语言。
+
+愿你的代码如电路般精确，如诗歌般优雅。`
+  },
+  memory: {
+    enabled: true,
+    content: '',
+    autoExtract: true,
+    maxTokens: 2000
+  },
+  triggers: [],
+  runtime: {
+    model: 'kimi-k2.5',
+    temperature: 1.0,
+    maxTokens: 8192,
+    topP: 0.9,
+    enableReasoning: false
+  },
+  permissions: [],
+  callCount: 0,
+  lastActiveAt: Date.now(),
+  createdAt: Date.now(),
+  updatedAt: Date.now()
+}
+
+/**
+ * 强制同步默认 Agent 配置
+ * 用于确保旧版本 Agent (default-assistant) 能获取到最新的工具列表和提示词
+ */
+export function syncDefaultAgent(existingAgent: Agent): Agent {
+  if (existingAgent.id === DEFAULT_AGENT.id || existingAgent.isDefault) {
+    console.log('[AgentStorage] Syncing default agent capabilities...')
+    return {
+      ...existingAgent,
+      description: DEFAULT_AGENT.description,
+      avatar: DEFAULT_AGENT.avatar,
+      capabilities: {
+        ...existingAgent.capabilities,
+        skillIds: [...DEFAULT_AGENT.capabilities.skillIds],
+        toolIds: [...DEFAULT_AGENT.capabilities.toolIds],
+        customSystemPrompt: DEFAULT_AGENT.capabilities.customSystemPrompt
+      },
+      updatedAt: Date.now()
+    }
+  }
+  return existingAgent
 }
 
 // ==================== API请求工具 ====================
@@ -107,11 +197,17 @@ export async function getAgents(): Promise<Agent[]> {
   
   try {
     const agents = await apiRequest<Agent[]>(API_ENDPOINTS.AGENTS)
+    // 如果后端没有数据，使用默认 Agent
+    if (!agents || agents.length === 0) {
+      cache.agents = [DEFAULT_AGENT]
+      return cache.agents
+    }
     cache.agents = agents
     return agents
   } catch (e) {
-    console.error('[AgentStorage] Failed to get agents:', e)
-    return []
+    console.warn('[AgentStorage] API failed, using default agent')
+    cache.agents = [DEFAULT_AGENT]
+    return cache.agents
   }
 }
 
@@ -298,11 +394,15 @@ export async function getSkills(): Promise<Skill[]> {
   
   try {
     const skills = await apiRequest<Skill[]>(API_ENDPOINTS.SKILLS)
-    cache.skills = skills
-    return skills
+    // 合并内置技能和自定义技能
+    const apiSkillIds = new Set(skills.map(s => s.id))
+    const customSkills = skills.filter(s => !apiSkillIds.has(s.id))
+    cache.skills = [...BUILTIN_SKILLS, ...customSkills]
+    return cache.skills
   } catch (e) {
-    console.error('[AgentStorage] Failed to get skills:', e)
-    return []
+    console.warn('[AgentStorage] API failed, using built-in skills')
+    cache.skills = [...BUILTIN_SKILLS]
+    return cache.skills
   }
 }
 

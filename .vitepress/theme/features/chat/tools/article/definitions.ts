@@ -8,33 +8,33 @@ export const createArticleDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'create_article',
-    description: '创建一篇新文章。支持标题、内容、标签、分类和状态。',
+    description: '创建一篇新文章。利用博客专用的后端引擎创建，支持自动生成英文段落 slug 路径和子文档。',
     parameters: {
       type: 'object',
       properties: {
-        title: { type: 'string', description: '文章标题' },
+        title: { type: 'string', description: '文章标题（会自动转换为 URL 友好的英文 slug 作为文件名）' },
         content: { type: 'string', description: '文章内容（支持 Markdown）' },
-        summary: { type: 'string', description: '文章摘要（可选）' },
-        tags: { type: 'array', items: { type: 'string' }, description: '标签', default: [] },
-        category: { type: 'string', description: '分类', default: 'general' },
-        status: { type: 'string', enum: ['draft', 'published'], default: 'draft' }
+        section: { type: 'string', description: '所属板块，例如 "posts", "knowledge", "resources" 等，默认 "posts"' },
+        tags: { type: 'array', items: { type: 'string' }, description: '文章标签' },
+        isChildDoc: { type: 'boolean', description: '是否作为某篇已有文章的子文档（将父文档转为文件夹并放入其中）' },
+        parentPath: { type: 'string', description: '当 isChildDoc 为 true 时，指定父文档的路径（相对于 sections/）' }
       },
-      required: ['title', 'content']
+      required: ['title']
     }
   }
 }
 
-export const getArticleDef: ToolDefinition = {
+export const getArticleContentDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'get_article',
-    description: '获取指定文章的完整内容。',
+    name: 'get_article_content',
+    description: '获取指定文章的内容。路径建议先通过 list_articles 或 search_articles 获得。',
     parameters: {
       type: 'object',
       properties: {
-        article_id: { type: 'string', description: '文章 ID' }
+        path: { type: 'string', description: '文章的相对路径，例如 "posts/my-article.md" 或 "knowledge/folder/index.md"' }
       },
-      required: ['article_id']
+      required: ['path']
     }
   }
 }
@@ -43,19 +43,14 @@ export const updateArticleDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'update_article',
-    description: '更新现有文章。可更新标题、内容、摘要、标签、分类、状态。',
+    description: '更新/覆盖已有文章的完整内容。',
     parameters: {
       type: 'object',
       properties: {
-        article_id: { type: 'string', description: '文章 ID' },
-        title: { type: 'string', description: '新标题（可选）' },
-        content: { type: 'string', description: '新内容（可选）' },
-        summary: { type: 'string', description: '新摘要（可选）' },
-        tags: { type: 'array', items: { type: 'string' }, description: '新标签（可选）' },
-        category: { type: 'string', description: '新分类（可选）' },
-        status: { type: 'string', enum: ['draft', 'published'], description: '新状态（可选）' }
+        path: { type: 'string', description: '文章路径，如 "posts/my-article.md"' },
+        content: { type: 'string', description: '完整的 Markdown 内容（包含 frontmatter）' }
       },
-      required: ['article_id']
+      required: ['path', 'content']
     }
   }
 }
@@ -64,30 +59,13 @@ export const deleteArticleDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'delete_article',
-    description: '删除指定文章。此操作不可恢复！',
+    description: '删除指定文章（操作不可逆，会同时清理缓存）。',
     parameters: {
       type: 'object',
       properties: {
-        article_id: { type: 'string', description: '文章 ID' }
+        path: { type: 'string', description: '文章路径，如 "posts/my-article.md"' }
       },
-      required: ['article_id']
-    }
-  }
-}
-
-export const listArticlesDef: ToolDefinition = {
-  type: 'function',
-  function: {
-    name: 'list_articles',
-    description: '列出所有文章，支持按分类、标签、状态过滤。',
-    parameters: {
-      type: 'object',
-      properties: {
-        category: { type: 'string', description: '按分类过滤', default: '' },
-        tag: { type: 'string', description: '按标签过滤', default: '' },
-        status: { type: 'string', enum: ['draft', 'published'], description: '按状态过滤', default: '' },
-        limit: { type: 'number', description: '数量限制', default: 50 }
-      }
+      required: ['path']
     }
   }
 }
@@ -96,14 +74,25 @@ export const searchArticlesDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'search_articles',
-    description: '搜索文章，在标题、内容、标签中查找。',
+    description: '在博客中全局搜索文章。返回匹配的文章路径。',
     parameters: {
       type: 'object',
       properties: {
-        query: { type: 'string', description: '搜索关键词' },
-        limit: { type: 'number', description: '数量限制', default: 20 }
+        query: { type: 'string', description: '搜索关键词' }
       },
       required: ['query']
+    }
+  }
+}
+
+export const listArticlesDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'list_articles',
+    description: '列出博客中的所有文章及其路径信息。',
+    parameters: {
+      type: 'object',
+      properties: {}
     }
   }
 }

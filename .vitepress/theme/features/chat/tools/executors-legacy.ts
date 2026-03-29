@@ -968,8 +968,13 @@ export const writeFile: ToolExecutor = async (args) => {
 export const listFiles: ToolExecutor = async (args) => {
   const { path: dirPath = '', recursive = false } = args
   
+  // 基础参数验证
+  if (dirPath && (dirPath.includes('**') || dirPath.includes('*'))) {
+    return `❌ 错误：暂不支持 glob 通配符（如 "**"）。请提供具体的文件夹路径（如 "sections/posts/"）。`
+  }
+
   try {
-    // 使用 sidebar API 获取文件列表
+    // 优先尝试使用 sidebar API 获取结构化的文件列表
     const response = await fetch(`${API_BASE}/sidebar`)
     if (!response.ok) {
       return `❌ 无法获取文件列表: HTTP ${response.status}\n\n建议：检查网络连接或稍后重试`

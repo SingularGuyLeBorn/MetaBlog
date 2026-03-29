@@ -11,20 +11,101 @@
  */
 
 // ===== API =====
-export * from './api/services'
-export * from './api/providers/types'
+export { aiService } from './api/services/aiService'
+export { storage } from './api/services/storage'
 export { DeepSeekProvider } from './api/providers/DeepSeekProvider'
 export { BaseProvider } from './api/providers/BaseProvider'
 export * from './api/providers/models'
 
+// Provider types (避免与 tools/types 和 chat/types 重复导出)
+export type {
+  IProvider,
+  ProviderInfo,
+  ModelInfo,
+  ModelCapabilities,
+  ModelPricing,
+  ChatOptions,
+  ToolResult,
+  StandardMessage,
+  ContentPart,
+  StreamCallbacks as ProviderStreamCallbacks,
+  ToolCall as ProviderToolCall,
+  ToolDefinition as ProviderToolDefinition,
+} from './api/providers/types'
+
 // ===== Stores =====
 export * from './stores'
 
-// ===== Tools =====
-export * from './tools'
+// ===== Tools (避免与 provider types 冲突) =====
+export {
+  registerTool,
+  registerTools,
+  getTool,
+  hasTool,
+  executeTool,
+  executeToolWithRecord,
+  getToolDefinitions,
+  getRegisteredToolNames,
+  getToolCount,
+  unregisterTool,
+  clearTools,
+  initializeDefaultTools,
+  platformParserDefinitions,
+  platformParserExecutors,
+} from './tools'
 
-// ===== Types =====
-export * from './types'
+export type {
+  ToolDefinition,
+  ToolExecutor,
+  ToolRegistration,
+  ToolCallRecord,
+  ThinkingStep,
+} from './tools/types'
+
+// ===== Types (避免与其他导出冲突) =====
+export type {
+  MessageRole,
+  MessageStatus,
+  ModelType,
+  ReasoningContent,
+  AttachmentType,
+  MessageAttachment,
+  TokenUsage,
+  MessageMetadata,
+  MessageVersion,
+  ChatMessage,
+  MessageGroup,
+  SessionConfig,
+  SessionStats,
+  ChatSession,
+  GroupedSessions,
+  DeepSeekRequest,
+  DeepSeekStreamChunk,
+  ChatState,
+  PersistedData,
+  PersistedDataV2,
+  StreamState,
+} from './types/chat'
+
+export type {
+  Agent,
+  AgentLevel,
+  AgentStatus,
+  AgentPermission,
+  AgentMemory,
+  AgentCapabilities,
+  AgentConfigMode,
+  AgentCreateParams,
+  AgentUpdateParams,
+  Skill,
+  SkillCategory,
+  SkillCreateParams,
+  Tool,
+  CapabilityNode,
+  CapabilityEdge,
+  CapabilityGraph,
+  SystemPromptContext,
+} from './types/agent'
 
 // ===== Utils =====
 export * from './utils'

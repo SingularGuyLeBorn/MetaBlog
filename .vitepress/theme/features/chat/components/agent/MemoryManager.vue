@@ -1,17 +1,17 @@
 ﻿<template>
   <div class="memory-manager">
-    <!-- 澶撮儴 -->
+    <!-- 头部-->
     <div class="manager-header">
       <div class="header-title">
         <Icon name="database" class="title-icon" />
         <div>
-          <h2 class="title-text">璁板繂绠＄悊</h2>
-          <p class="title-desc">绠＄悊 Agents 鐨勯暱鏈熻蹇嗘暟鎹?/p>
+          <h2 class="title-text">记忆管理</h2>
+          <p class="title-desc">管理 Agents 的长期记忆数据</p>
         </div>
       </div>
     </div>
 
-    <!-- 缁熻鍗＄墖 -->
+    <!-- 统计卡片 -->
     <div class="stats-grid">
       <LiquidGlass
         v-for="(stat, idx) in stats"
@@ -32,24 +32,24 @@
       </LiquidGlass>
     </div>
 
-    <!-- 璁板繂鍒楄〃 -->
+    <!-- 记忆列表 -->
     <LiquidGlass class="list-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.2">
       <div class="memory-list-header">
-        <h3>璁板繂鏉＄洰</h3>
+        <h3>记忆条目</h3>
         <div class="list-actions">
           <div class="search-box">
             <Icon name="search" class="search-icon" />
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="鎼滅储璁板繂..."
+              placeholder="搜索记忆..."
               class="search-input"
             />
           </div>
           <LiquidGlass glow-color="var(--sr-morandi-pink, #d4b8b8)" :intensity="0.3">
             <button class="clear-btn" @click="clearAll">
               <Icon name="trash-2" />
-              娓呯┖鍏ㄩ儴
+              清空全部
             </button>
           </LiquidGlass>
         </div>
@@ -78,21 +78,21 @@
           </div>
         </LiquidGlass>
 
-        <!-- 绌虹姸鎬?-->
+        <!-- 空状态-->
         <div v-if="filteredMemories.length === 0" class="empty-state">
           <Icon name="database" class="empty-icon" />
-          <p>鏆傛棤璁板繂鏁版嵁</p>
-          <span>Agent 浼氬湪瀵硅瘽涓嚜鍔ㄥ涔犲拰瀛樺偍璁板繂</span>
+          <p>暂无记忆数据</p>
+          <span>Agent 会在对话中自动学习和存储记忆</span>
         </div>
       </div>
     </LiquidGlass>
 
-    <!-- 瀵煎嚭鎸夐挳 -->
+    <!-- 导出按钮 -->
     <div class="export-section">
       <LiquidGlass glow-color="var(--sr-morandi-green, #a8b3a8)" :intensity="0.3">
         <button class="export-btn" @click="exportMemories">
           <Icon name="download" />
-          瀵煎嚭璁板繂鏁版嵁
+          导出记忆数据
         </button>
       </LiquidGlass>
     </div>
@@ -101,23 +101,23 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import Icon from '../../../shared/Icon.vue'
-import LiquidGlass from '../../../shared/LiquidGlass.vue'
+import { Icon } from '../../../../shared/components'
+import { LiquidGlass } from '../../../../shared/components'
 
 const searchQuery = ref('')
 
 const stats = [
-  { id: 'total', label: '鎬昏蹇嗘暟', value: '128', icon: 'layers', gradient: 'linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8))', glowColor: 'var(--sr-accent-star, #b8a090)' },
-  { id: 'agents', label: '娑夊強 Agents', value: '6', icon: 'users', gradient: 'linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), #2563eb)', glowColor: 'var(--sr-morandi-blue, #9daab8)' },
-  { id: 'size', label: '瀛樺偍澶у皬', value: '2.4MB', icon: 'hard-drive', gradient: 'linear-gradient(135deg, var(--sr-morandi-green, #a8b3a8), var(--sr-morandi-green, #a8b3a8))', glowColor: 'var(--sr-morandi-green, #a8b3a8)' },
-  { id: 'today', label: '浠婃棩鏂板', value: '12', icon: 'trending-up', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', glowColor: '#f59e0b' }
+  { id: 'total', label: '总记忆数', value: '128', icon: 'layers', gradient: 'linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8))', glowColor: 'var(--sr-accent-star, #b8a090)' },
+  { id: 'agents', label: '涉及 Agents', value: '6', icon: 'users', gradient: 'linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), #2563eb)', glowColor: 'var(--sr-morandi-blue, #9daab8)' },
+  { id: 'size', label: '存储大小', value: '2.4MB', icon: 'hard-drive', gradient: 'linear-gradient(135deg, var(--sr-morandi-green, #a8b3a8), var(--sr-morandi-green, #a8b3a8))', glowColor: 'var(--sr-morandi-green, #a8b3a8)' },
+  { id: 'today', label: '今日新增', value: '12', icon: 'trending-up', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', glowColor: '#f59e0b' }
 ]
 
 const memories = ref([
-  { id: '1', agentName: '浠ｇ爜鍔╂墜', agentAvatar: '馃懆鈥嶐煉?, agentColor: 'var(--sr-morandi-blue, #9daab8)', content: '鐢ㄦ埛鍋忓ソ浣跨敤 TypeScript 鍜?Vue 3 缁勫悎寮?API', time: '2灏忔椂鍓? },
-  { id: '2', agentName: '鍐欎綔涓撳', agentAvatar: '鉁嶏笍', agentColor: '#ec4899', content: '鐢ㄦ埛鍠滄绠€娲佹槑浜嗙殑鏂囬锛岄伩鍏嶅啑闀挎弿杩?, time: '5灏忔椂鍓? },
-  { id: '3', agentName: '鏁版嵁鍒嗘瀽甯?, agentAvatar: '馃搳', agentColor: 'var(--sr-morandi-green, #a8b3a8)', content: '鐢ㄦ埛缁忓父璇锋眰 CSV 鏍煎紡鐨勬暟鎹鍑?, time: '鏄ㄥぉ' },
-  { id: '4', agentName: '閫氱敤鍔╂墜', agentAvatar: '馃', agentColor: 'var(--sr-accent-star, #b8a090)', content: '鐢ㄦ埛瀵?AI 浼︾悊璇濋鎰熷叴瓒ｏ紝缁忓父璇㈤棶鐩稿叧闂', time: '2澶╁墠' },
+  { id: '1', agentName: '代码助手', agentAvatar: '👨‍💻', agentColor: 'var(--sr-morandi-blue, #9daab8)', content: '用户偏好使用 TypeScript 和 Vue 3 组合式 API', time: '2小时前' },
+  { id: '2', agentName: '写作专家', agentAvatar: '✍️', agentColor: '#ec4899', content: '用户喜欢简洁明了的文风，避免冗长描述', time: '5小时前' },
+  { id: '3', agentName: '数据分析师', agentAvatar: '📊', agentColor: 'var(--sr-morandi-green, #a8b3a8)', content: '用户经常请求 CSV 格式的数据导出', time: '昨天' },
+  { id: '4', agentName: '通用助手', agentAvatar: '🤖', agentColor: 'var(--sr-accent-star, #b8a090)', content: '用户对 AI 伦理话题感兴趣，经常询问相关问题', time: '2天前' },
 ])
 
 const filteredMemories = computed(() => {
@@ -130,13 +130,13 @@ const filteredMemories = computed(() => {
 })
 
 function deleteMemory(id: string) {
-  if (confirm('纭畾瑕佸垹闄よ繖鏉¤蹇嗗悧锛?)) {
+  if (confirm('确定要删除这条记忆吗？')) {
     memories.value = memories.value.filter(m => m.id !== id)
   }
 }
 
 function clearAll() {
-  if (confirm('纭畾瑕佹竻绌烘墍鏈夎蹇嗗悧锛熸鎿嶄綔涓嶅彲鎭㈠銆?)) {
+  if (confirm('确定要清空所有记忆吗？此操作不可恢复。')) {
     memories.value = []
   }
 }
@@ -154,7 +154,7 @@ function exportMemories() {
 </script>
 
 <style scoped>
-@import '../../../../shared/styles/liquid-glass-theme.css';
+/* 使用全局导入的liquid-glass-theme.css */
 
 .memory-manager {
   max-width: 1000px;
@@ -162,7 +162,7 @@ function exportMemories() {
   padding: 8px;
 }
 
-/* 澶撮儴 */
+/* 头部*/
 .manager-header {
   display: flex;
   align-items: center;
@@ -195,7 +195,7 @@ function exportMemories() {
   color: var(--sr-text-muted, #94a3b8);
 }
 
-/* 缁熻缃戞牸 */
+/* 统计网格 */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -245,7 +245,7 @@ function exportMemories() {
   color: var(--sr-text-muted, #94a3b8);
 }
 
-/* 鍒楄〃 */
+/* 列表 */
 .list-glass {
   border-radius: 28px;
   margin-bottom: 24px;
@@ -328,7 +328,7 @@ function exportMemories() {
   height: 16px;
 }
 
-/* 璁板繂鍒楄〃 */
+/* 记忆列表 */
 .memory-list {
   padding: 20px;
 }
@@ -414,7 +414,7 @@ function exportMemories() {
   height: 16px;
 }
 
-/* 绌虹姸鎬?*/
+/* 空状态*/
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -442,7 +442,7 @@ function exportMemories() {
   font-size: 14px;
 }
 
-/* 瀵煎嚭鍖?*/
+/* 导出区 */
 .export-section {
   display: flex;
   justify-content: center;
@@ -489,3 +489,4 @@ function exportMemories() {
   }
 }
 </style>
+

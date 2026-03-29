@@ -186,8 +186,8 @@ export abstract class BaseProvider implements IProvider {
   protected async buildMultimodalContent(
     textContent: string,
     attachments: MessageAttachment[]
-  ): Promise<Array<{ type: string; [key: string]: any }>> {
-    const parts: Array<{ type: string; [key: string]: any }> = []
+  ): Promise<any[]> {
+    const parts: any[] = []
     
     // 添加文本
     if (textContent) {
