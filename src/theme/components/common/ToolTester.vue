@@ -295,7 +295,7 @@
 
 <script setup>
 import { ref, computed, reactive, watch, onMounted } from 'vue'
-import { executeTool as executeRealTool, hasTool, initializeDefaultTools } from './ai-chat/core/tools'
+import { executeTool as executeRealTool, hasTool, initializeDefaultTools } from '@/theme/tools'
 
 // ============ 工具定义 ============
 
