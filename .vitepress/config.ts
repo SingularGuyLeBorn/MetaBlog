@@ -401,7 +401,11 @@ export default defineConfig({
       alias: [
         {
           find: "@",
-          replacement: fileURLToPath(new URL("./theme", import.meta.url)),
+          replacement: fileURLToPath(new URL("../src", import.meta.url)),
+        },
+        {
+          find: "@docs",
+          replacement: fileURLToPath(new URL("../docs", import.meta.url)),
         },
       ],
     },
@@ -413,9 +417,10 @@ export default defineConfig({
     server: {
       watch: {
         ignored: [
-          "**/.vitepress/agent/memory/data/**",
-          "**/.vitepress/agent/logs/**",
-          "**/logs/**",
+          "**/data/memory/**",
+          "**/data/logs/**",
+          "**/data/sessions/**",
+          "**/data/history/**",
           "**/.trash/**",
         ],
       },
