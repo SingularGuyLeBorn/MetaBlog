@@ -7,7 +7,7 @@
  * 3. 第三层（按需）：加载 resources/ 下的资源
  */
 
-import type { Skill } from '../types/agent'
+import type { Skill } from '@/theme/types/agent'
 
 // Skill 元数据（轻量级，始终保留在上下文中）
 export interface SkillMetadata {

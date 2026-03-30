@@ -3,8 +3,8 @@
  * 所有 API 均为免费公开接口，无需认证
  */
 
-import type { ToolExecutor, ToolResult } from '../types'
-import { createSuccessResult, createErrorResult } from '../types'
+import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
+import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 
 // ==================== ArXiv ====================
 

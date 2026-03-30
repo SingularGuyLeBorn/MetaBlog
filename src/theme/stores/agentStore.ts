@@ -18,7 +18,7 @@ import type {
   CapabilityNode,
   CapabilityEdge,
   CapabilityGraph
-} from '../types/agent'
+} from '@/theme/types/agent'
 import { 
   getAgents, 
   createAgent as createAgentStorage,
@@ -30,8 +30,8 @@ import {
   createSkill as createSkillStorage,
   updateSkill as updateSkillStorage,
   deleteSkill as deleteSkillStorage
-} from '../api/services/agentStorage'
-import { getToolDefinitions } from '../tools'
+} from '@/theme/api/services/agentStorage'
+import { getToolDefinitions } from '@/theme/tools'
 
 // ==================== 状态（内存临时存储）====================
 

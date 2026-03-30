@@ -95,8 +95,8 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import { Icon } from '../../common'
-import type { ChatSession } from '../../types'
+import { Icon } from '@/theme/components/common'
+import type { ChatSession } from '@/theme/types'
 
 interface Props {
   sessions: ChatSession[]

@@ -212,10 +212,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Icon } from '../../common'
-import MentionInput, { type Mention } from '../../common/MentionInput.vue'
-import type { Skill } from '../../types/agent'
-import type { MessageAttachment } from '../../types/chat'
+import { Icon } from '@/theme/components/common'
+import MentionInput, { type Mention } from '@/theme/components/common/MentionInput.vue'
+import type { Skill } from '@/theme/types/agent'
+import type { MessageAttachment } from '@/theme/types/chat'
 import { 
   detectMediaType, 
   isSupportedFile, 
@@ -223,7 +223,7 @@ import {
   getVideoInfo,
   formatFileSize,
   formatDuration 
-} from '../../api/services/multimediaService'
+} from '@/theme/api/services/multimediaService'
 
 const props = defineProps<{
   modelValue: string

@@ -12,7 +12,7 @@
  * - 系统提示词只包含 Skills 列表（name + description）
  */
 
-import type { ToolDefinition } from '../tools/types'
+import type { ToolDefinition } from '@/theme/tools/types'
 
 // ==================== 基础类型 ====================
 

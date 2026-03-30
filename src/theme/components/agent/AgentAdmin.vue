@@ -251,14 +251,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useAgentConfig } from '../../stores/useAgentConfig'
-import type { Agent } from '../../types/agent'
+import { useAgentConfig } from '@/theme/stores/useAgentConfig'
+import type { Agent } from '@/theme/types/agent'
 import AgentConfigPanel from './AgentConfigPanel.vue'
 import SkillsManager from './SkillsManager.vue'
 import MemoryManager from './MemoryManager.vue'
 import MCPConfigPanel from './MCPConfigPanel.vue'
-import { Icon } from '../../common'
-import { LiquidGlass } from '../../common'
+import { Icon } from '@/theme/components/common'
+import { LiquidGlass } from '@/theme/components/common'
 
 const props = defineProps<{
   visible: boolean

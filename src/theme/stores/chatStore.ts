@@ -7,11 +7,11 @@
  * 3. 支持版本切换、删除
  */
 import { ref, computed } from 'vue'
-import type { ChatSession, ChatMessage, SessionConfig, MessageGroup, ToolCallRecord, ThinkingStep, MessageAttachment } from '../types'
-import { storage, convertGroupsToMessages } from '../api/services/storage'
-import { aiService } from '../api/services/aiService'
-import { logger, addLog } from '../api/services/logger'
-import { useAgentConfig } from './useAgentConfig'
+import type { ChatSession, ChatMessage, SessionConfig, MessageGroup, ToolCallRecord, ThinkingStep, MessageAttachment } from '@/theme/types'
+import { storage, convertGroupsToMessages } from '@/theme/api/services/storage'
+import { aiService } from '@/theme/api/services/aiService'
+import { logger, addLog } from '@/theme/api/services/logger'
+import { useAgentConfig } from '@/theme/stores/useAgentConfig'
 
 const DEFAULT_CONFIG: SessionConfig = {
   model: 'deepseek-chat',

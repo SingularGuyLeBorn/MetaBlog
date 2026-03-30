@@ -166,7 +166,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { createAgentSystem, AgentSystem } from '../index'
+import { createAgentSystem, AgentSystem } from '@/theme/components/agent/index'
 
 // 状态
 const agentSystem = ref<AgentSystem | null>(null)

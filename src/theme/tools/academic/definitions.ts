@@ -2,7 +2,7 @@
  * 学术研究工具定义
  */
 
-import type { ToolDefinition } from '../types'
+import type { ToolDefinition } from '@/theme/tools/types'
 
 export const searchArxivDef: ToolDefinition = {
   type: 'function',

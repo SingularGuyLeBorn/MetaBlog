@@ -178,11 +178,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useAgentConfig } from '../../stores/useAgentConfig'
-import type { Skill, SkillCategory } from '../../types/agent'
+import { useAgentConfig } from '@/theme/stores/useAgentConfig'
+import type { Skill, SkillCategory } from '@/theme/types/agent'
 import SkillDetailModal from './SkillDetailModal.vue'
-import { Icon } from '../../common'
-import { LiquidGlass } from '../../common'
+import { Icon } from '@/theme/components/common'
+import { LiquidGlass } from '@/theme/components/common'
 
 const { skills, createSkill, updateSkill: updateSkillApi, deleteSkill: deleteSkillApi } = useAgentConfig()
 

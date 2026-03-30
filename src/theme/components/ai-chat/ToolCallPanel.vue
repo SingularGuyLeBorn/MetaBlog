@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { ToolCallRecord, ToolResult } from '../tools/types'
+import type { ToolCallRecord, ToolResult } from '@/theme/tools/types'
 
 interface Props {
   records: ToolCallRecord[]

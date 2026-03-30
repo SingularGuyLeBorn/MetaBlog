@@ -3,8 +3,8 @@
  * 支持知乎、小红书、微信公众号等平台的内容提取
  */
 
-import type { ToolExecutor, ToolResult } from '../types'
-import { createSuccessResult, createErrorResult } from '../types'
+import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
+import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 
 const API_BASE = '/api'
 

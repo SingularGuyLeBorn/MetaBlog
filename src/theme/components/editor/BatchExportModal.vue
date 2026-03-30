@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import TreeNodeSelect from '../common/TreeNodeSelect.vue'
+import TreeNodeSelect from '@/theme/components/common/TreeNodeSelect.vue'
 
 const props = defineProps<{
   visible: boolean

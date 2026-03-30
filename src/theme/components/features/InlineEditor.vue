@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { useData } from 'vitepress'
-import VditorEditor from '../editor/VditorEditor.vue'
+import VditorEditor from '@/theme/components/editor/VditorEditor.vue'
 
 const { page } = useData()
 

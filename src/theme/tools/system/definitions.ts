@@ -2,7 +2,7 @@
  * 系统工具定义
  */
 
-import type { ToolDefinition } from '../types'
+import type { ToolDefinition } from '@/theme/tools/types'
 
 export const getCurrentTimeDef: ToolDefinition = {
   type: 'function',

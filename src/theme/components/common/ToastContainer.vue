@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-// import { eventBus } from '../../agent/core/EventBus'  // Agent module deprecated - using local implementation
+// import { eventBus } from '@/theme/components/agent/core/EventBus'  // Agent module deprecated - using local implementation
 interface EventBus {
   on: (event: string, handler: (...args: any[]) => void) => (() => void)
   emit: (event: string, ...args: any[]) => void

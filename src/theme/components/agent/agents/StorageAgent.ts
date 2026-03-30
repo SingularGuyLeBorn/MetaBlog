@@ -3,9 +3,9 @@
  * 负责内容存储和文件管理
  */
 
-import { FileOperatorTool, ArticleContent } from '../mcp-tools/file-operator'
-import { SocialMediaContent } from '../mcp-tools/social-media-reader'
-import { FetchedContent } from '../mcp-tools/url-fetcher'
+import { FileOperatorTool, ArticleContent } from '@/theme/components/agent/mcp-tools/file-operator'
+import { SocialMediaContent } from '@/theme/components/agent/mcp-tools/social-media-reader'
+import { FetchedContent } from '@/theme/components/agent/mcp-tools/url-fetcher'
 
 export interface StorageTask {
   id: string

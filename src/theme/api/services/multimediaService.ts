@@ -3,7 +3,7 @@
  * 处理图片、视频等媒体文件的转换和验证
  */
 
-import type { MessageAttachment } from '../../types/chat'
+import type { MessageAttachment } from '@/theme/types/chat'
 
 /** 支持的媒体类型 */
 export type MediaType = 'image' | 'video' | 'audio' | 'file'

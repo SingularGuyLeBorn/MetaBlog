@@ -2,7 +2,7 @@
  * 文本处理工具定义
  */
 
-import type { ToolDefinition } from '../types'
+import type { ToolDefinition } from '@/theme/tools/types'
 
 export const summarizeTextDef: ToolDefinition = {
   type: 'function',

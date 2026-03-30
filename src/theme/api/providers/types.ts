@@ -3,7 +3,7 @@
  * 统一的模型厂商接口规范
  */
 
-import type { ChatMessage, SessionConfig } from '../../types'
+import type { ChatMessage, SessionConfig } from '@/theme/types'
 
 /** 模型能力标识 */
 export interface ModelCapabilities {

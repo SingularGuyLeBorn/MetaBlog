@@ -2,7 +2,7 @@
  * 网络工具定义
  */
 
-import type { ToolDefinition } from '../types'
+import type { ToolDefinition } from '@/theme/tools/types'
 
 export const webSearchDef: ToolDefinition = {
   type: 'function',

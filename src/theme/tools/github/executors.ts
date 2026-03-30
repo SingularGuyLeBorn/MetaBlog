@@ -3,8 +3,8 @@
  * 包含：仓库查询、代码搜索、提交历史等功能
  */
 
-import type { ToolExecutor, ToolResult } from '../types'
-import { createSuccessResult, createErrorResult } from '../types'
+import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
+import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 
 const GITHUB_API_BASE = 'https://api.github.com'
 

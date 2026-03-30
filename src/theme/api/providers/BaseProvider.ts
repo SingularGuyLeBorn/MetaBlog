@@ -13,7 +13,7 @@ import type {
   ToolDefinition,
   ToolCall
 } from './types'
-import type { ChatMessage, MessageAttachment } from '../../types'
+import type { ChatMessage, MessageAttachment } from '@/theme/types'
 import { getModelById, getProviderById } from './models'
 
 /** API 配置 */

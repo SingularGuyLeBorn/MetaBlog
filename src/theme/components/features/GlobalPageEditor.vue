@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useData } from 'vitepress'
-import { useAppStore } from '../../stores/app'
-import VditorEditor from '../editor/VditorEditor.vue'
+import { useAppStore } from '@/theme/stores/app'
+import VditorEditor from '@/theme/components/editor/VditorEditor.vue'
 
 const store = useAppStore()
 const { page } = useData()

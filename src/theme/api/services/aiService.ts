@@ -9,7 +9,7 @@
  * 
  * 更新：增加Kimi多模态支持（图片/视频理解）
  */
-import type { ChatMessage, SessionConfig, MessageRole, ToolCallRecord, ThinkingStep } from '../../types'
+import type { ChatMessage, SessionConfig, MessageRole, ToolCallRecord, ThinkingStep } from '@/theme/types'
 import { addLog } from './logger'
 import {
   startSessionLog,
@@ -31,12 +31,12 @@ import {
   initializeDefaultTools,
   type ToolDefinition,
   type ToolCall
-} from '../../tools/index'
+} from '@/theme/tools/index'
 import { 
   buildFullPrompt,
   type SkillMetadata,
   type ActiveSkill
-} from '../../skills/index'
+} from '@/theme/skills/index'
 import { fileToBase64, detectMediaType, buildKimiImageContent, buildKimiVideoContent } from './multimediaService'
 
 // 初始化默认工具

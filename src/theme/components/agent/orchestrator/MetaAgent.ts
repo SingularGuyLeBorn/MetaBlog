@@ -3,9 +3,9 @@
  * 高级编排和调度 Agent
  */
 
-import { ContentAgent, ContentTask, ContentResult } from '../agents/ContentAgent'
-import { StorageAgent, StorageTask, StorageResult } from '../agents/StorageAgent'
-import { scheduler, CronPresets } from '../mcp-tools/scheduler'
+import { ContentAgent, ContentTask, ContentResult } from '@/theme/components/agent/agents/ContentAgent'
+import { StorageAgent, StorageTask, StorageResult } from '@/theme/components/agent/agents/StorageAgent'
+import { scheduler, CronPresets } from '@/theme/components/agent/mcp-tools/scheduler'
 
 export interface MetaAgentConfig {
   contentAgent: ContentAgent

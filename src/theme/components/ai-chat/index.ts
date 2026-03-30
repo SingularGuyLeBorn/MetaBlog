@@ -11,11 +11,11 @@
  */
 
 // ===== API =====
-export { aiService } from '../../api/services/aiService'
-export { storage } from '../../api/services/storage'
-export { DeepSeekProvider } from '../../api/providers/DeepSeekProvider'
-export { BaseProvider } from '../../api/providers/BaseProvider'
-export * from '../../api/providers/models'
+export { aiService } from '@/theme/api/services/aiService'
+export { storage } from '@/theme/api/services/storage'
+export { DeepSeekProvider } from '@/theme/api/providers/DeepSeekProvider'
+export { BaseProvider } from '@/theme/api/providers/BaseProvider'
+export * from '@/theme/api/providers/models'
 
 // Provider types (避免与 tools/types 和 chat/types 重复导出)
 export type {
@@ -31,10 +31,10 @@ export type {
   StreamCallbacks as ProviderStreamCallbacks,
   ToolCall as ProviderToolCall,
   ToolDefinition as ProviderToolDefinition,
-} from '../../api/providers/types'
+} from '@/theme/api/providers/types'
 
 // ===== Stores =====
-export * from '../../stores'
+export * from '@/theme/stores'
 
 // ===== Tools (避免与 provider types 冲突) =====
 export {
@@ -50,7 +50,7 @@ export {
   unregisterTool,
   clearTools,
   initializeDefaultTools,
-} from '../../tools'
+} from '@/theme/tools'
 
 // 平台解析工具（从子模块导出）
 export {
@@ -60,7 +60,7 @@ export {
   parsePlatformLinkDef,
   ocrImageDef,
   processImageDef,
-} from '../../tools/platform'
+} from '@/theme/tools/platform'
 
 export type {
   ToolDefinition,
@@ -68,7 +68,7 @@ export type {
   ToolRegistration,
   ToolCallRecord,
   ThinkingStep,
-} from '../../tools/types'
+} from '@/theme/tools/types'
 
 // ===== Types (避免与其他导出冲突) =====
 export type {
@@ -93,7 +93,7 @@ export type {
   PersistedData,
   PersistedDataV2,
   StreamState,
-} from '../../types/chat'
+} from '@/theme/types/chat'
 
 export type {
   Agent,
@@ -113,10 +113,10 @@ export type {
   CapabilityEdge,
   CapabilityGraph,
   SystemPromptContext,
-} from '../../types/agent'
+} from '@/theme/types/agent'
 
 // ===== Utils =====
-export * from '../../utils'
+export * from '@/theme/utils'
 
 // ===== Components =====
 // Chat 组件
@@ -135,4 +135,4 @@ export {
   AgentConfigPanel,
   AgentDetail,
   SkillsPanel
-} from '../agent'
+} from '@/theme/components/agent'

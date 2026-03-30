@@ -214,13 +214,13 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import type { Agent, Skill } from '../../types/agent'
-import { useAgentConfig } from '../../stores/useAgentConfig'
+import type { Agent, Skill } from '@/theme/types/agent'
+import { useAgentConfig } from '@/theme/stores/useAgentConfig'
 import SkillDetailModal from './SkillDetailModal.vue'
 import TriggerPanel from './TriggerPanel.vue'
 // import ModelPanel from './ModelPanel.vue'
-import { Icon } from '../../common'
-import { LiquidGlass } from '../../common'
+import { Icon } from '@/theme/components/common'
+import { LiquidGlass } from '@/theme/components/common'
 
 const props = defineProps<{ agent: Agent }>()
 const emit = defineEmits<{

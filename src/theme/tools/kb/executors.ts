@@ -6,8 +6,8 @@
  * 建议：接入后端数据库实现持久化
  */
 
-import type { ToolExecutor, ToolResult } from '../types'
-import { createSuccessResult, createErrorResult } from '../types'
+import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
+import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 
 // 简单的内存知识库（注意：重启后数据丢失）
 const knowledgeBases = new Map<string, { documents: Map<string, string> }>()

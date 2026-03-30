@@ -238,8 +238,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { Teleport } from 'vue'
-import { Icon } from '../../common'
-import type { SessionConfig, ModelType } from '../../types'
+import { Icon } from '@/theme/components/common'
+import type { SessionConfig, ModelType } from '@/theme/types'
 
 interface ModelConfig {
   id: ModelType

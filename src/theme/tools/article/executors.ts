@@ -4,8 +4,8 @@
  * 统一返回格式，提供用户友好的错误信息
  */
 
-import type { ToolExecutor, ToolResult } from '../types'
-import { createSuccessResult, createErrorResult } from '../types'
+import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
+import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 
 const API_BASE = '/api'
 

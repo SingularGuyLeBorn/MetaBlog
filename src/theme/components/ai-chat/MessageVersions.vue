@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ChatMessage } from '../../types'
+import type { ChatMessage } from '@/theme/types'
 
 interface Props {
   versions: ChatMessage[]

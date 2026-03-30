@@ -5,7 +5,7 @@
  * 数据源：后端API（唯一数据源）
  */
 
-import type { ChatSession, ChatMessage, MessageGroup } from '../../types'
+import type { ChatSession, ChatMessage, MessageGroup } from '@/theme/types'
 import * as chatStorage from './chatStorage'
 
 // 重新导出 API 函数

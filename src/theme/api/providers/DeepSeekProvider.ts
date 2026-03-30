@@ -4,7 +4,7 @@
 
 import { BaseProvider, type ProviderOptions } from './BaseProvider'
 import type { ProviderInfo, ChatOptions, StreamCallbacks, ToolCall } from './types'
-import type { ChatMessage } from '../../types'
+import type { ChatMessage } from '@/theme/types'
 
 export class DeepSeekProvider extends BaseProvider {
   readonly info: ProviderInfo = {

@@ -174,9 +174,9 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import { Avatar, AIAvatar, Icon, TypewriterText } from '../../common'
+import { Avatar, AIAvatar, Icon, TypewriterText } from '@/theme/components/common'
 import MessageVersions from './MessageVersions.vue'
-import type { ChatMessage, ChatMessage as ChatMessageType, ThinkingStep } from '../../types'
+import type { ChatMessage, ChatMessage as ChatMessageType, ThinkingStep } from '@/theme/types'
 
 interface VersionInfo {
   versions: ChatMessageType[]

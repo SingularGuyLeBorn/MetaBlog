@@ -2,7 +2,7 @@
  * 知识库工具定义
  */
 
-import type { ToolDefinition } from '../types'
+import type { ToolDefinition } from '@/theme/tools/types'
 
 export const kbListDef: ToolDefinition = {
   type: 'function',

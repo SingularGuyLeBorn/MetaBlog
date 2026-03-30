@@ -230,15 +230,15 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { Teleport } from 'vue'
-import { Icon } from '../../common'
+import { Icon } from '@/theme/components/common'
 import SessionPanel from './SessionPanel.vue'
 import SessionManager from './SessionManager.vue'
 import MessageList from './MessageList.vue'
 import ChatInput from './ChatInput.vue'
 import SettingsPanel from './SettingsPanel.vue'
-import { AgentAdmin, AgentChatDialog } from '../agent'
-import type { SessionConfig, ChatSession, MessageAttachment, Skill, Agent } from '../../types'
-import { useAIChat, useAgentConfig } from '../../stores'
+import { AgentAdmin, AgentChatDialog } from '@/theme/components/agent'
+import type { SessionConfig, ChatSession, MessageAttachment, Skill, Agent } from '@/theme/types'
+import { useAIChat, useAgentConfig } from '@/theme/stores'
 
 const {
   sessions,

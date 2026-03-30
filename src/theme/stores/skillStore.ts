@@ -12,7 +12,7 @@
  * 3. 运行时动态调用 skill（inject 到对话上下文）
  */
 import { ref, computed } from 'vue'
-import type { Skill, SkillCategory, SkillInvocation } from '../types/agent'
+import type { Skill, SkillCategory, SkillInvocation } from '@/theme/types/agent'
 
 // Skill 存储目录
 const SKILLS_DIR = '/.skills'

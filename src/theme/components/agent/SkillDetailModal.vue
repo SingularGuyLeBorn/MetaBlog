@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Skill } from '../../types/agent'
+import type { Skill } from '@/theme/types/agent'
 
 const props = defineProps<{
   skill: Skill

@@ -103,7 +103,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import type { Skill } from '../../types/agent'
+import type { Skill } from '@/theme/types/agent'
 
 export interface Mention {
   title: string

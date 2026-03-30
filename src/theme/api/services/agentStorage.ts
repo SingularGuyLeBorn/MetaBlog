@@ -9,9 +9,9 @@
  * - 空状态由UI处理
  */
 
-import type { Agent, Skill, AgentCreateParams, AgentUpdateParams } from '../../types/agent'
-import { API_ENDPOINTS, API_CONFIG } from '../config'
-import { BUILTIN_SKILLS } from '../../stores/skillStore'
+import type { Agent, Skill, AgentCreateParams, AgentUpdateParams } from '@/theme/types/agent'
+import { API_ENDPOINTS, API_CONFIG } from '@/theme/api/config'
+import { BUILTIN_SKILLS } from '@/theme/stores/skillStore'
 
 // API响应格式
 interface ApiResponse<T> {

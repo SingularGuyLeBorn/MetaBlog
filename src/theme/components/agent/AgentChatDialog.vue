@@ -96,7 +96,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
-import type { Agent } from '../../types'
+import type { Agent } from '@/theme/types'
 
 interface Message {
   role: 'user' | 'assistant'

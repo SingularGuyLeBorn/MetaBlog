@@ -403,6 +403,10 @@ export default defineConfig({
           find: "@",
           replacement: fileURLToPath(new URL("../src", import.meta.url)),
         },
+        {
+          find: "@docs",
+          replacement: fileURLToPath(new URL("../docs", import.meta.url)),
+        },
       ],
     },
     // Exclude visual scene modules from SSR - they use browser-only APIs

@@ -296,7 +296,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { logger, logFileOperation } from '../../composables/useLogger'
+import { logger, logFileOperation } from '@/theme/composables/useLogger'
 
 const props = defineProps<{
   item: any

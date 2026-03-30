@@ -109,9 +109,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { Agent } from '../../stores/useAgents'
-import { LEVEL_CONFIG } from '../../stores/useAgents'
-import { useSkills } from '../../stores/useSkills'
+import type { Agent } from '@/theme/stores/useAgents'
+import { LEVEL_CONFIG } from '@/theme/stores/useAgents'
+import { useSkills } from '@/theme/stores/useSkills'
 
 const props = defineProps<{
   agent: Agent

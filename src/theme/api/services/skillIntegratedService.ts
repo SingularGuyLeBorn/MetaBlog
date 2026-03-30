@@ -17,16 +17,16 @@
  * - Skill 匹配可视化
  */
 
-import type { ChatMessage, SessionConfig, ToolCallRecord, ThinkingStep, Skill } from '../../types'
-import type { SkillMetadata, ActiveSkill, SkillMatchResult } from '../../skills/types'
+import type { ChatMessage, SessionConfig, ToolCallRecord, ThinkingStep, Skill } from '@/theme/types'
+import type { SkillMetadata, ActiveSkill, SkillMatchResult } from '@/theme/skills/types'
 import { aiService } from './aiService'
 import { 
   matchSkills, 
   matchSkillsWithContext,
   buildFullPrompt,
   autoActivateSkills
-} from '../../skills'
-import { getToolDefinitions, type ToolDefinition } from '../../tools/index'
+} from '@/theme/skills'
+import { getToolDefinitions, type ToolDefinition } from '@/theme/tools/index'
 
 // ═══════════════════════════════════════════════════════════════
 // 类型定义

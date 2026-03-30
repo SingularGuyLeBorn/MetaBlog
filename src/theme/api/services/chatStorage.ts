@@ -8,8 +8,8 @@
  * - 空状态由UI处理
  */
 
-import type { ChatSession, ChatMessage, MessageGroup, SessionConfig } from '../../types'
-import { API_ENDPOINTS, API_CONFIG } from '../config'
+import type { ChatSession, ChatMessage, MessageGroup, SessionConfig } from '@/theme/types'
+import { API_ENDPOINTS, API_CONFIG } from '@/theme/api/config'
 
 // API响应格式
 interface ApiResponse<T> {

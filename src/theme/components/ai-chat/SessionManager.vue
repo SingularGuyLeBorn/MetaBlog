@@ -222,10 +222,10 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import { Icon } from '../../common'
-import GlassSelect from '../agent/GlassSelect.vue'
-import type { ChatSession } from '../../types'
-import type { Agent } from '../../types/agent'
+import { Icon } from '@/theme/components/common'
+import GlassSelect from '@/theme/components/agent/GlassSelect.vue'
+import type { ChatSession } from '@/theme/types'
+import type { Agent } from '@/theme/types/agent'
 
 const props = defineProps<{
   visible: boolean

@@ -287,8 +287,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
-import type { Agent, AgentPermission } from '../../stores/useAgents'
-import { LEVEL_CONFIG, PERMISSION_TEMPLATES } from '../../stores/useAgents'
+import type { Agent, AgentPermission } from '@/theme/stores/useAgents'
+import { LEVEL_CONFIG, PERMISSION_TEMPLATES } from '@/theme/stores/useAgents'
 
 const props = defineProps<{
   agent: Agent

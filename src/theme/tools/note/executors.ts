@@ -3,8 +3,8 @@
  * 包含：创建笔记、列出笔记等功能
  */
 
-import type { ToolExecutor, ToolResult } from '../types'
-import { createSuccessResult, createErrorResult } from '../types'
+import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
+import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 
 const API_BASE = '/api'
 

@@ -3,9 +3,9 @@
  * 负责从各种来源提取内容
  */
 
-import { urlFetcher, FetchedContent } from '../mcp-tools/url-fetcher'
-import { socialMediaReader, SocialMediaContent } from '../mcp-tools/social-media-reader'
-import { browserAutomation, BrowserAutomationResult, BrowseOptions } from '../mcp-tools/browser-automation'
+import { urlFetcher, FetchedContent } from '@/theme/components/agent/mcp-tools/url-fetcher'
+import { socialMediaReader, SocialMediaContent } from '@/theme/components/agent/mcp-tools/social-media-reader'
+import { browserAutomation, BrowserAutomationResult, BrowseOptions } from '@/theme/components/agent/mcp-tools/browser-automation'
 
 export interface ContentTask {
   id: string

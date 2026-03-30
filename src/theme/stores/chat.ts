@@ -78,7 +78,7 @@ export interface TokenUsage {
   total: number
 }
 
-import type { ToolCall, ToolCallRecord, ThinkingStep } from '../tools'
+import type { ToolCall, ToolCallRecord, ThinkingStep } from '@/theme/tools'
 
 /** 重新导出工具类型 */
 export type { ToolCall, ToolCallRecord, ThinkingStep }

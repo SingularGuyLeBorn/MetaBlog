@@ -2,7 +2,7 @@
  * 文章管理工具定义
  */
 
-import type { ToolDefinition } from '../types'
+import type { ToolDefinition } from '@/theme/tools/types'
 
 export const createArticleDef: ToolDefinition = {
   type: 'function',
