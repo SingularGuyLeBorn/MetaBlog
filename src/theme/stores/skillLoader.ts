@@ -114,7 +114,7 @@ ${s.content}`).join('\n\n')}`)
 export async function loadSkillContent(skillId: string): Promise<string | null> {
   try {
     // 从文件系统加载 Skill 内容
-    const response = await fetch(`/api/files/read?path=.vitepress/theme/components/ai-chat/prompts/skills/${skillId}.md`)
+    const response = await fetch(`/api/files/read?path=src/theme/components/ai-chat/prompts/skills/${skillId}.md`)
     if (response.ok) {
       return await response.text()
     }
