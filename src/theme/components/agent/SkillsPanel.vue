@@ -195,7 +195,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useAgentConfig } from '@/theme/stores/useAgentConfig'
+import { useAgentConfig } from '@/theme/stores/agentStore'
 import type { Skill, SkillCategory } from '@/theme/types'
 import SkillDetailModal from './SkillDetailModal.vue'
 

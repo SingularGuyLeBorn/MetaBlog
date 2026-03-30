@@ -251,7 +251,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useAgentConfig } from '@/theme/stores/useAgentConfig'
+import { useAgentConfig } from '@/theme/stores/agentStore'
 import type { Agent } from '@/theme/types/agent'
 import AgentConfigPanel from './AgentConfigPanel.vue'
 import SkillsManager from './SkillsManager.vue'

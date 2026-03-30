@@ -11,7 +11,7 @@ import type { ChatSession, ChatMessage, SessionConfig, MessageGroup, ToolCallRec
 import { storage, convertGroupsToMessages } from '@/theme/api/services/storage'
 import { aiService } from '@/theme/api/services/aiService'
 import { logger, addLog } from '@/theme/api/services/logger'
-import { useAgentConfig } from '@/theme/stores/useAgentConfig'
+import { useAgentConfig } from '@/theme/stores/agentStore'
 
 const DEFAULT_CONFIG: SessionConfig = {
   model: 'deepseek-chat',

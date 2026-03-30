@@ -215,7 +215,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import type { Agent, Skill } from '@/theme/types/agent'
-import { useAgentConfig } from '@/theme/stores/useAgentConfig'
+import { useAgentConfig } from '@/theme/stores/agentStore'
 import SkillDetailModal from './SkillDetailModal.vue'
 import TriggerPanel from './TriggerPanel.vue'
 // import ModelPanel from './ModelPanel.vue'

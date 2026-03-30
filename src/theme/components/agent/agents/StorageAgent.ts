@@ -1,11 +1,12 @@
 /**
  * StorageAgent
- * 负责内容存储和文件管理
+ * 负责内容存储和文件管理 (Browser-compatible version)
+ * 
+ * Note: File operations are performed via API calls to server-side MCP tools
  */
 
-import { FileOperatorTool, ArticleContent } from '@/theme/components/agent/mcp-tools/file-operator'
-import { SocialMediaContent } from '@/theme/components/agent/mcp-tools/social-media-reader'
-import { FetchedContent } from '@/theme/components/agent/mcp-tools/url-fetcher'
+import type { ArticleContent } from '@/theme/types/agent'
+import type { SocialMediaContent, FetchedContent } from '@/theme/types/agent'
 
 export interface StorageTask {
   id: string
@@ -34,11 +35,23 @@ export interface StorageAgentConfig {
   imageDir?: string
 }
 
+// API call helper
+async function callStorageAPI(action: string, data: any): Promise<any> {
+  const response = await fetch('/api/agent/storage', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, data })
+  })
+  if (!response.ok) {
+    throw new Error(`Storage API error: ${response.statusText}`)
+  }
+  return response.json()
+}
+
 export class StorageAgent {
   name = 'StorageAgent'
   description = '存储管理 Agent'
   
-  private fileOperator: FileOperatorTool
   private config: Required<StorageAgentConfig>
 
   constructor(config: StorageAgentConfig) {
@@ -48,8 +61,6 @@ export class StorageAgent {
       imageDir: 'images',
       ...config,
     }
-    
-    this.fileOperator = new FileOperatorTool(config.basePath)
   }
 
   // 存储内容
@@ -73,72 +84,15 @@ export class StorageAgent {
     return Promise.all(tasks.map(task => this.store(task)))
   }
 
-  // 执行存储
+  // 执行存储 - 通过 API 调用服务器端
   private async executeStore(task: StorageTask): Promise<StorageResult> {
-    const { content, targetPath, section, options = {} } = task
+    const article = this.buildArticle(task.content, [])
     
-    // 1. 确定目标路径
-    const finalPath = targetPath || this.generatePath(content, section)
-    
-    // 2. 下载图片
-    let localImages: string[] = []
-    if (options.downloadImages && content.images.length > 0) {
-      localImages = await this.downloadImages(content.images, finalPath)
-    }
-    
-    // 3. 构建文章内容
-    const article = this.buildArticle(content, localImages)
-    
-    // 4. 保存文件
-    const saveResult = await this.fileOperator.saveArticle(finalPath, article)
-    
-    if (!saveResult.success) {
-      return {
-        success: false,
-        taskId: task.id,
-        message: saveResult.message,
-      }
-    }
-    
-    // 5. Git 提交（如果启用）
-    let gitCommit: string | undefined
-    if (options.autoCommit || this.config.autoCommit) {
-      gitCommit = await this.commitChanges(finalPath, options.commitMessage)
-    }
-    
-    return {
-      success: true,
-      taskId: task.id,
-      filePath: finalPath,
-      message: `Content stored to ${finalPath}`,
-      gitCommit,
-    }
-  }
-
-  // 下载图片
-  private async downloadImages(imageUrls: string[], articlePath: string): Promise<string[]> {
-    const imageDir = path.join(
-      path.dirname(articlePath),
-      this.config.imageDir
-    )
-    
-    const downloaded: string[] = []
-    
-    for (let i = 0; i < imageUrls.length; i++) {
-      try {
-        const filename = `image_${String(i + 1).padStart(2, '0')}.jpg`
-        const localPath = await this.fileOperator.downloadImage(
-          imageUrls[i],
-          imageDir,
-          filename
-        )
-        downloaded.push(localPath)
-      } catch (error) {
-        console.error(`[StorageAgent] Failed to download image: ${imageUrls[i]}`, error)
-      }
-    }
-    
-    return downloaded
+    return callStorageAPI('saveArticle', {
+      path: task.targetPath || this.generatePath(task.content, task.section),
+      article,
+      options: task.options
+    })
   }
 
   // 生成存储路径
@@ -150,7 +104,6 @@ export class StorageAgent {
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
     
-    // 确定 section
     let targetSection = section || this.config.defaultSection
     
     // 根据平台自动判断 section
@@ -167,8 +120,12 @@ export class StorageAgent {
       targetSection = platformMap[content.platform] || this.config.defaultSection
     }
     
-    // 生成文件名
-    const filename = this.fileOperator.generateFilename(content.title)
+    // 生成文件名 (简单版本)
+    const filename = content.title
+      .toLowerCase()
+      .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '-')
+      .replace(/-+/g, '-')
+      .slice(0, 50) + '.md'
     
     return `docs/sections/${targetSection}/${year}/${month}/${filename}`
   }
@@ -183,11 +140,10 @@ export class StorageAgent {
     content: FetchedContent | SocialMediaContent,
     localImages: string[]
   ): ArticleContent {
-    // 获取原始URL
     const sourceUrl = this.isSocialMediaContent(content) ? content.originalUrl : content.url
     
-    // 构建 frontmatter
     const frontmatter: Record<string, any> = {
+      title: content.title,
       description: this.generateDescription(content),
       source: sourceUrl,
       platform: 'platform' in content ? content.platform : 'web',
@@ -209,23 +165,9 @@ export class StorageAgent {
       }
     }
     
-    // 处理内容中的图片引用
-    let processedContent = content.content
-    if (localImages.length > 0) {
-      // 将远程图片链接替换为本地路径
-      localImages.forEach((localPath, index) => {
-        if (content.images[index]) {
-          processedContent = processedContent.replace(
-            content.images[index],
-            `./${this.config.imageDir}/${path.basename(localPath)}`
-          )
-        }
-      })
-    }
-    
     return {
       title: content.title,
-      content: processedContent,
+      content: content.content,
       frontmatter,
       images: localImages.map((path, index) => ({
         url: content.images[index] || '',
@@ -241,33 +183,16 @@ export class StorageAgent {
     return cleanText + (text.length > 150 ? '...' : '')
   }
 
-  // Git 提交
-  private async commitChanges(filePath: string, message?: string): Promise<string> {
-    const commitMsg = message || `feat: add content from agent - ${path.basename(filePath)}`
-    
-    try {
-      await this.fileOperator.gitAdd([filePath])
-      await this.fileOperator.gitCommit([filePath], commitMsg)
-      await this.fileOperator.gitPush()
-      
-      return commitMsg
-    } catch (error) {
-      console.error('[StorageAgent] Git commit failed:', error)
-      return ''
-    }
-  }
-
   // 检查文件是否存在
   async fileExists(path: string): Promise<boolean> {
-    return this.fileOperator.fileExists(path)
+    const result = await callStorageAPI('fileExists', { path })
+    return result.exists
   }
 
   // 列出目录
   async listDirectory(path: string): Promise<string[]> {
-    return this.fileOperator.listDirectory(path)
+    return callStorageAPI('listDirectory', { path })
   }
 }
-
-import path from 'path'
 
 export const createStorageAgent = (config: StorageAgentConfig) => new StorageAgent(config)

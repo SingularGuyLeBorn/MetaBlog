@@ -3,18 +3,18 @@
  */
 
 // Agent stores
-export * from './agent'
+export * from '@/theme/types/agent'
 export * from './agentStore'
 export * from './useAgents'
-export * from './useAgentConfig'
+// useAgentConfig is exported from agentStore
 
 // Chat stores  
-export * from './chat'
+export * from '@/theme/types/chat'
 export { useAIChat } from './chatStore'
 
 // Skill stores
 export * from './skillStore'
-export * from './useSkills'
+// useSkills is exported from skillStore
 export * from './skillLoader'
 
 // App stores

@@ -59,10 +59,8 @@ export { ContentAgent, createContentAgent } from './agents/ContentAgent'
 export { StorageAgent, createStorageAgent } from './agents/StorageAgent'
 export { MetaAgent, createMetaAgent } from './orchestrator/MetaAgent'
 
-export { urlFetcher, URLFetcherTool } from './mcp-tools/url-fetcher'
-export { socialMediaReader, SocialMediaReaderTool } from './mcp-tools/social-media-reader'
-export { FileOperatorTool, createFileOperator } from './mcp-tools/file-operator'
-export { scheduler, CronPresets, SchedulerTool } from './mcp-tools/scheduler'
+// Note: MCP tools (url-fetcher, social-media-reader, file-operator, scheduler) 
+// have been moved to server/mcp-tools/ as they use Node.js-only APIs (fs, etc.)
 
 import { MetaAgent, MetaAgentConfig } from './orchestrator/MetaAgent'
 import { ContentAgent, ContentAgentConfig } from './agents/ContentAgent'

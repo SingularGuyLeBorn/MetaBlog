@@ -111,7 +111,7 @@
 import { ref, computed } from 'vue'
 import type { Agent } from '@/theme/stores/useAgents'
 import { LEVEL_CONFIG } from '@/theme/stores/useAgents'
-import { useSkills } from '@/theme/stores/useSkills'
+import { useSkills } from '@/theme/stores/skillStore'
 
 const props = defineProps<{
   agent: Agent
