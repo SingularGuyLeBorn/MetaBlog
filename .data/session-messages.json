@@ -575,5 +575,113 @@
       ],
       "currentVersionIndex": 0
     }
+  ],
+  "session-1774888960746-epp8ohc": [
+    {
+      "userMessage": {
+        "id": "msg_1774888974969_oefotln7z",
+        "sessionId": "session-1774888960746-epp8ohc",
+        "role": "user",
+        "content": "你好 你谁啊?口气这么大",
+        "status": "completed",
+        "createdAt": 1774888974969,
+        "updatedAt": 1774888974969
+      },
+      "aiVersions": [
+        {
+          "id": "msg_1774888974970_41yay6wem",
+          "sessionId": "session-1774888960746-epp8ohc",
+          "role": "assistant",
+          "content": "我是你的专属技术文档助手，专门帮你创建、搜索和管理技术文章。口气大是因为我有能力直接操作文档系统，但态度是友好的！有什么技术文档相关的需求，尽管吩咐~ 😄",
+          "status": "completed",
+          "createdAt": 1774888974969,
+          "updatedAt": 1774888978677,
+          "parentMessageId": "msg_1774888974969_oefotln7z",
+          "isActiveVersion": false,
+          "metadata": {
+            "model": "deepseek-chat",
+            "toolRecords": []
+          }
+        },
+        {
+          "id": "msg_1774888981378_rjhy7date",
+          "sessionId": "session-1774888960746-epp8ohc",
+          "role": "assistant",
+          "content": "我是你的专属技术文档助手，专门帮你管理和搜索技术文章。口气大？那可能是因为我确实很擅长这个——毕竟我能瞬间搜索、创建、更新任何技术文档，还能保持路径整洁有序。\n\n有什么技术文档需要我帮你处理吗？",
+          "status": "completed",
+          "createdAt": 1774888981378,
+          "updatedAt": 1774888984147,
+          "parentMessageId": "msg_1774888974969_oefotln7z",
+          "isActiveVersion": false,
+          "metadata": {
+            "model": "deepseek-chat",
+            "toolRecords": []
+          }
+        },
+        {
+          "id": "msg_1774888987796_wntw19dz5",
+          "sessionId": "session-1774888960746-epp8ohc",
+          "role": "assistant",
+          "content": "哈哈，我是DeepSeek，一个由深度求索公司创造的AI助手！😊 \n\n我的“口气大”可能是因为我确实有很多能力可以帮到你：\n- 知识问答和对话交流\n- 文件处理（支持图像、PDF、Word、Excel等多种格式）\n- 128K上下文长度，能记住很长的对话\n- 完全免费使用\n- 支持联网搜索（需要手动开启）\n\n不过我本质上还是很谦逊的AI，只是希望能更好地为你提供帮助！有什么想了解或需要我协助的吗？我会用最热情和专业的态度来服务你！✨",
+          "status": "completed",
+          "createdAt": 1774888987796,
+          "updatedAt": 1774888996230,
+          "parentMessageId": "msg_1774888974969_oefotln7z",
+          "isActiveVersion": true,
+          "reasoning": {
+            "content": "嗯，用户这个问题带着调侃的语气，问我是谁还说我口气大。需要既保持友好又简单说明自己的身份和功能。\n\n可以用轻松的语气回应调侃，然后清晰介绍我是DeepSeek AI助手，突出核心功能和可用服务，比如知识库、文件处理、免费这些点。最后用开放性问题引导对话继续。\n\n注意避免技术性描述，用日常语言让用户快速理解我能做什么，结尾保持开放邀请用户提出具体需求。",
+            "isVisible": true
+          },
+          "metadata": {
+            "model": "deepseek-reasoner",
+            "toolRecords": []
+          }
+        }
+      ],
+      "currentVersionIndex": 2
+    },
+    {
+      "userMessage": {
+        "id": "msg_1774889081000_mn2jkt4fg",
+        "sessionId": "session-1774888960746-epp8ohc",
+        "role": "user",
+        "content": "你是?",
+        "status": "completed",
+        "createdAt": 1774889081000,
+        "updatedAt": 1774889081000
+      },
+      "aiVersions": [
+        {
+          "id": "msg_1774889081001_wukiauopp",
+          "sessionId": "session-1774888960746-epp8ohc",
+          "role": "assistant",
+          "content": "我是DeepSeek，一个由深度求索公司创造的AI助手！😊\n\n简单来说：\n- 🤖 我是AI聊天助手\n- 🆓 完全免费使用\n- 📁 支持上传各种文件（图片、PDF、Word、Excel等）\n- 💬 拥有128K超长上下文记忆\n- 🌐 支持联网搜索（需手动开启）\n\n你可以把我当作：\n- 学习伙伴：解答问题、辅导功课\n- 工作助手：写作、编程、分析文档\n- 生活顾问：出主意、聊天解闷\n- 创意伙伴：头脑风暴、策划方案\n\n有什么我可以帮你的吗？无论是学习、工作还是日常问题，我都很乐意协助！✨",
+          "status": "completed",
+          "createdAt": 1774889081000,
+          "updatedAt": 1774889094789,
+          "parentMessageId": "msg_1774889081000_mn2jkt4fg",
+          "isActiveVersion": true,
+          "reasoning": {
+            "content": "好的，用户又问了一次“你是？”，看来刚才的自我介绍可能被忽略了，或者用户想确认更简洁的版本。  \n\n嗯，用户之前已经问过类似的问题，我也详细介绍了身份和能力，但可能回复太长了，用户没耐心看完。这次需要更直接，用最核心的信息抓住注意力。  \n\n用户连续问身份，可能有几种情况：可能是刚接触AI助手不太熟悉，想确认基础功能；或者测试我是否记得之前的对话；又或者单纯想找个话题开始聊天。  \n\n从语气看，用户似乎带着点调侃（上次提到“口气大”），所以回复可以保持轻松活泼，但重点突出关键点：我是谁、能做什么、怎么用。  \n\n上次提到了免费、文件处理、长上下文这些优势，这次可以更结构化，用表情符号和简短条目让信息更易读，避免大段文字。最后加个开放性问题，引导用户提出具体需求。  \n\n对了，用户没提具体问题，所以主动提供几个常见使用场景的例子（写代码、学习、日常问题），帮助用户快速理解我的用途。这样应该能覆盖用户可能的潜在需求，促进进一步互动。",
+            "isVisible": true
+          },
+          "metadata": {
+            "thinkingSteps": [
+              {
+                "id": "step_1_1774889094789_0",
+                "type": "thinking",
+                "round": 1,
+                "index": 0,
+                "content": "好的，用户又问了一次“你是？”，看来刚才的自我介绍可能被忽略了，或者用户想确认更简洁的版本。  \n\n嗯，用户之前已经问过类似的问题，我也详细介绍了身份和能力，但可能回复太长了，用户没耐心看完。这次需要更直接，用最核心的信息抓住注意力。  \n\n用户连续问身份，可能有几种情况：可能是刚接触AI助手不太熟悉，想确认基础功能；或者测试我是否记得之前的对话；又或者单纯想找个话题开始聊天。  \n\n从语气看，用户似乎带着点调侃（上次提到“口气大”），所以回复可以保持轻松活泼，但重点突出关键点：我是谁、能做什么、怎么用。  \n\n上次提到了免费、文件处理、长上下文这些优势，这次可以更结构化，用表情符号和简短条目让信息更易读，避免大段文字。最后加个开放性问题，引导用户提出具体需求。  \n\n对了，用户没提具体问题，所以主动提供几个常见使用场景的例子（写代码、学习、日常问题），帮助用户快速理解我的用途。这样应该能覆盖用户可能的潜在需求，促进进一步互动。",
+                "createdAt": 1774889094789
+              }
+            ],
+            "model": "deepseek-reasoner",
+            "toolRecords": []
+          }
+        }
+      ],
+      "currentVersionIndex": 0
+    }
   ]
 }

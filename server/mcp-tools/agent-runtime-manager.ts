@@ -121,6 +121,7 @@ class AgentRuntimeManager {
       agentId: params.agentId,
       status: 'created',
       config: {
+        agentId: params.agentId,
         mode: params.mode || 'manual',
         recovery: {
           enabled: true,

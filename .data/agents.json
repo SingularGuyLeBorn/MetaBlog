@@ -38,5 +38,31 @@
     "createdAt": 1773231241953,
     "updatedAt": 1773756305646,
     "lastActiveAt": 1773231241953
+  },
+  {
+    "id": "agent-1774888948819-pb1bvjs",
+    "name": "测试",
+    "avatar": "🎯",
+    "description": "测试",
+    "level": "custom",
+    "status": "online",
+    "seat": 1,
+    "capabilities": {
+      "mode": "raw",
+      "skillIds": [],
+      "customSystemPrompt": "你是 测试"
+    },
+    "memory": {
+      "enabled": true,
+      "content": "",
+      "autoExtract": true,
+      "maxTokens": 2000
+    },
+    "permissions": [],
+    "callCount": 0,
+    "isDefault": false,
+    "createdAt": 1774888948819,
+    "updatedAt": 1774888960757,
+    "lastActiveAt": 1774888960756
   }
 ]

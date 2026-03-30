@@ -1,0 +1,43 @@
+{
+  "sessionId": "session-1774888981378",
+  "startTime": "2026-03-30T16:43:01.378Z",
+  "endTime": "2026-03-30T16:43:07.796Z",
+  "totalRounds": 1,
+  "entryCount": 2,
+  "entries": [
+    {
+      "timestamp": "2026-03-30T16:43:01.379Z",
+      "type": "request",
+      "endpoint": "/chat/completions (stream)",
+      "round": 1,
+      "data": {
+        "model": "deepseek-chat",
+        "messages": [
+          {
+            "role": "system",
+            "content": "你是 测试\n\n## 你的 Skills（能力领域）\n你有 0 个已启用的 Skills：\n\n\n## 使用规则\n1. **自动触发**: 当用户请求匹配 Skill 描述时，自动调用对应工具\n2. **工具调用**: 你有权调用上述 Skills 中的工具来完成任务\n3. **路径格式**: 文章路径使用 \"section/filename.md\" 格式\n4. **搜索优先**: 不知道具体路径时，先用 search_articles 搜索\n\n## 示例\n- 用户: \"找一下 React 的文章\" → 调用 search_articles\n- 用户: \"创建 Vue 指南\" → 调用 create_article\n"
+          },
+          {
+            "role": "user",
+            "content": "你好 你谁啊?口气这么大"
+          }
+        ],
+        "max_tokens": 8192,
+        "stream": true,
+        "temperature": 1
+      },
+      "humanNote": "【API请求】发送到AI服务"
+    },
+    {
+      "timestamp": "2026-03-30T16:43:04.147Z",
+      "type": "note",
+      "endpoint": "final_response",
+      "round": 1,
+      "data": {
+        "content": "我是你的专属技术文档助手，专门帮你管理和搜索技术文章。口气大？那可能是因为我确实很擅长这个——毕竟我能瞬间搜索、创建、更新任何技术文档，还能保持路径整洁有序。\n\n有什么技术文档需要我帮你处理吗？"
+      },
+      "humanNote": "【UI展示】最终回复（流式输出完毕）",
+      "uiVisible": true
+    }
+  ]
+}

@@ -219,7 +219,7 @@ class ReportAgentManager {
           agentId: runtime.agentId,
           name: `Agent ${runtime.agentId.slice(-8)}`,
           status: runtime.status,
-          health: worker?.health || 'unknown',
+          health: (worker?.health as 'healthy' | 'degraded' | 'unhealthy') || 'healthy',
           lastHeartbeat: runtime.stats.lastHeartbeatAt || 0,
           stats: {
             tasksCompleted: runtime.completedTasks.length,
@@ -243,7 +243,7 @@ class ReportAgentManager {
       },
       performance: {
         cpuUsage: workers.reduce((sum, w) => sum + w.load.cpuUsage, 0) / (workers.length || 1),
-        memoryUsage: workers.reduce((sum, w) => sum + w.resources.memoryMB, 0),
+        memoryUsage: workers.reduce((sum, w) => sum + w.load.memoryUsage, 0),
         diskUsage: 0,  // TODO: implement
         networkIO: { in: 0, out: 0 }  // TODO: implement
       },
@@ -436,7 +436,12 @@ ${JSON.stringify(content, null, 2)}
       details,
       delivery: {
         channels,
-        status: Object.fromEntries(channels.map(c => [c, 'pending' as const]))
+        status: channels.reduce((acc, c) => {
+          acc[c] = 'pending'
+          return acc
+        }, {} as Record<DeliveryChannel, 'pending' | 'sent' | 'failed'>),
+        sentAt: {} as Record<DeliveryChannel, number>,
+        errors: {} as Record<DeliveryChannel, string>
       },
       read: false
     }
@@ -448,12 +453,10 @@ ${JSON.stringify(content, null, 2)}
       try {
         await this.deliverToChannel(channel, notification)
         notification.delivery.status[channel] = 'sent'
-        notification.delivery.sentAt = notification.delivery.sentAt || {}
-        notification.delivery.sentAt[channel] = Date.now()
+        notification.delivery.sentAt![channel] = Date.now()
       } catch (error: any) {
         notification.delivery.status[channel] = 'failed'
-        notification.delivery.errors = notification.delivery.errors || {}
-        notification.delivery.errors[channel] = error.message
+        notification.delivery.errors![channel] = error.message
       }
     }
 
