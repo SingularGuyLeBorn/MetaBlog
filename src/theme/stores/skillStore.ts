@@ -60,6 +60,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     tags: ['写作', '内容创作'],
     isBuiltIn: true,
     enabled: true,
+    author: 'system',
     createdAt: Date.now(),
     updatedAt: Date.now()
   },
@@ -98,6 +99,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     tags: ['总结', '分析'],
     isBuiltIn: true,
     enabled: true,
+    author: 'system',
     createdAt: Date.now(),
     updatedAt: Date.now()
   },
@@ -137,6 +139,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     tags: ['润色', '编辑'],
     isBuiltIn: true,
     enabled: true,
+    author: 'system',
     createdAt: Date.now(),
     updatedAt: Date.now()
   },
@@ -176,6 +179,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     tags: ['编程', '代码'],
     isBuiltIn: true,
     enabled: true,
+    author: 'system',
     createdAt: Date.now(),
     updatedAt: Date.now()
   },
@@ -216,6 +220,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     tags: ['代码审查', '质量'],
     isBuiltIn: true,
     enabled: true,
+    author: 'system',
     createdAt: Date.now(),
     updatedAt: Date.now()
   },
@@ -255,6 +260,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     tags: ['教育', '解释'],
     isBuiltIn: true,
     enabled: true,
+    author: 'system',
     createdAt: Date.now(),
     updatedAt: Date.now()
   },
@@ -299,6 +305,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     tags: ['学术', '论文', '科研', 'AI模型'],
     isBuiltIn: true,
     enabled: true,
+    author: 'system',
     createdAt: Date.now(),
     updatedAt: Date.now()
   },
@@ -346,6 +353,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     tags: ['文章', '笔记', 'CMS', 'VitePress'],
     isBuiltIn: true,
     enabled: true,
+    author: 'system',
     createdAt: Date.now(),
     updatedAt: Date.now()
   },
@@ -385,6 +393,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     tags: ['创意', '头脑风暴'],
     isBuiltIn: true,
     enabled: true,
+    author: 'system',
     createdAt: Date.now(),
     updatedAt: Date.now()
   }
@@ -953,13 +962,10 @@ export function useSkills() {
 // 导出渐进式披露相关函数（从 skillLoader.ts 导入）
 export {
   useSkillLoader,
-  parseSkillLoadRequests,
-  removeSkillLoadMarkers,
-  buildProgressiveSystemPrompt,
-  loadSkillContent,
   getGlobalActiveSkills,
   setGlobalActiveSkills,
-  addGlobalActiveSkill,
-  type SkillMetadata,
-  type ActiveSkill
-} from './skillLoader'
+  addGlobalActiveSkill
+} from '@/theme/skills/skillLoader'
+
+// 从 types 重新导出类型
+export type { SkillMetadata, ActiveSkill } from '@/theme/skills/types'

@@ -68,6 +68,12 @@ const closeExportMenu = () => {
 }
 
 // Click outside directive
+declare global {
+  interface HTMLElement {
+    _clickOutside?: (event: Event) => void
+  }
+}
+
 const vClickOutside = {
   mounted(el: HTMLElement, binding: any) {
     el._clickOutside = (event: Event) => {

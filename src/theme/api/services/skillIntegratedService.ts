@@ -126,9 +126,11 @@ class SkillsContextManager {
         // 从可用 Skills 中查找完整定义
         const fullSkill = this.availableSkills.find(s => s.id === match.skill.id)
         if (fullSkill) {
+          // SkillMetadata 没有 content，使用空字符串作为默认值
+          // 实际内容应该从完整的 Skill 对象或缓存中获取
           const activeSkill: ActiveSkill = {
             ...fullSkill,
-            content: fullSkill.content || '', // 使用已加载的内容
+            content: '', // 需要从完整 Skill 对象获取内容
             createdAt: Date.now(),
             updatedAt: Date.now(),
             activatedAt: Date.now(),
@@ -165,7 +167,7 @@ class SkillsContextManager {
     
     const activeSkill: ActiveSkill = {
       ...skill,
-      prompt: '',
+      content: '', // 需要从完整 Skill 对象获取内容
       createdAt: Date.now(),
       updatedAt: Date.now(),
       activatedAt: Date.now(),
@@ -343,8 +345,10 @@ export const skillIntegratedService = {
     // Step 4: 调用底层 aiService
     // ═══════════════════════════════════════════════════════════════
     
+    // 排除 SkillIntegratedConfig 特有的属性，只保留 SessionConfig 的属性
+    const { availableSkills, activeSkills, skillMatchThreshold, maxActiveSkills, enableSkills, ...sessionConfig } = config
     const enhancedConfig: SessionConfig = {
-      ...config,
+      ...sessionConfig,
       systemPrompt: enhancedSystemPrompt,
       // 传递工具上下文
       availableTools

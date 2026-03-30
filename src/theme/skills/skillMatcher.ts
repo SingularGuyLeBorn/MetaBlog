@@ -82,7 +82,7 @@ const MATCH_RULES: MatchRule[] = [
       let score = 0
       const keywords: string[] = []
       
-      for (const scenario of skill.scenarios) {
+      for (const scenario of skill.usageScenarios) {
         const scenarioTokens = new Set(tokenize(scenario))
         const similarity = jaccardSimilarity(tokens, scenarioTokens)
         if (similarity > 0.1) {
@@ -355,7 +355,7 @@ export function quickMatchSkills(
     }
     
     if (score === 0) {
-      for (const scenario of skill.scenarios) {
+      for (const scenario of skill.usageScenarios) {
         const scenarioTokens = tokenize(scenario)
         for (const token of scenarioTokens) {
           if (inputLower.includes(token)) {

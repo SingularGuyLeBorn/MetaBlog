@@ -13,7 +13,7 @@
  * - LOD-2: 激活 Skill 的完整内容 (动态注入)
  */
 
-import { ref, computed, type Ref } from 'vue'
+import { ref, computed, type Ref, type ComputedRef } from 'vue'
 import type { 
   Skill, 
   SkillMetadata, 
@@ -98,8 +98,8 @@ export interface SkillLoaderAPI {
   error: Ref<string | null>
   
   // 计算属性
-  activeSkillIds: ReturnType<typeof computed<Set<string>>>
-  activeTools: ReturnType<typeof computed<string[]>>
+  activeSkillIds: ComputedRef<Set<string>>
+  activeTools: ComputedRef<string[]>
   
   // 方法
   loadSkills: () => Promise<void>

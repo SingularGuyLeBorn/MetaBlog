@@ -272,3 +272,38 @@ export interface SystemPromptContext {
   activeSkills?: Skill[]  // 已调用的 Skills（完整内容）
   availableTools: Tool[]
 }
+
+// ═══════════════════════════════════════════════════════════════
+// 内容获取相关类型
+// ═══════════════════════════════════════════════════════════════
+
+/** 获取的内容基础接口 */
+export interface FetchedContent {
+  title: string
+  content: string
+  url: string
+  author?: string
+  publishDate?: string
+  tags: string[]
+  images: string[]
+}
+
+/** 社交媒体内容 */
+export interface SocialMediaContent extends FetchedContent {
+  platform: string
+  originalUrl: string
+  likes?: number
+  comments?: number
+  shares?: number
+}
+
+/** 文章内容 */
+export interface ArticleContent {
+  title: string
+  content: string
+  frontmatter: Record<string, any>
+  images: Array<{
+    url: string
+    filename: string
+  }>
+}

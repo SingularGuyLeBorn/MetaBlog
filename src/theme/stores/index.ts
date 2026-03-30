@@ -2,20 +2,15 @@
  * Stores - 状态管理入口
  */
 
-// Agent stores
-export * from '@/theme/types/agent'
-export * from './agentStore'
+// Agent stores - 避免重复导出类型，只导出 store 相关
+export { useAgentConfig } from './agentStore'
 export * from './useAgents'
-// useAgentConfig is exported from agentStore
 
 // Chat stores  
-export * from '@/theme/types/chat'
 export { useAIChat } from './chatStore'
 
-// Skill stores
-export * from './skillStore'
-// useSkills is exported from skillStore
-// skillLoader is now in @/theme/skills/skillLoader
+// Skill stores - 避免重复导出类型，只导出 store 相关
+export { useSkills } from './skillStore'
 
 // App stores
 export * from './app'

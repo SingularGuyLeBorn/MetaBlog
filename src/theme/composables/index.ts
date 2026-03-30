@@ -8,4 +8,4 @@ export {
   generateReadableFilename,
   generateSessionId,
   isValidSessionId
-} from './uuid'
+} from '@/theme/utils/uuid'

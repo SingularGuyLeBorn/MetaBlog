@@ -98,8 +98,8 @@ export interface Skill extends SkillMetadata {
    * 用于定位 Skill 关联的脚本、模板等资源
    */
   basePath?: string
-  /** 作者 */
-  author?: string
+  /** 作者（继承自 SkillMetadata，但可选） */
+  author: string
 }
 
 /** 激活的 Skill (已加载到上下文中) */
