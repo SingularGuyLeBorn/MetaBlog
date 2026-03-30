@@ -183,10 +183,10 @@ export function useSkillLoader(): SkillLoaderAPI {
         version: s.version,
         tags: s.tags,
         author: s.author,
-        builtin: s.builtin,
+        isBuiltIn: s.isBuiltIn,
         enabled: s.enabled,
         tools: s.tools,
-        scenarios: s.scenarios
+        usageScenarios: s.usageScenarios
       }))
     } catch (err) {
       error.value = err instanceof Error ? err.message : String(err)

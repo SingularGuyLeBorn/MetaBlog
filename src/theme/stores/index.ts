@@ -15,7 +15,7 @@ export { useAIChat } from './chatStore'
 // Skill stores
 export * from './skillStore'
 // useSkills is exported from skillStore
-export * from './skillLoader'
+// skillLoader is now in @/theme/skills/skillLoader
 
 // App stores
 export * from './app'

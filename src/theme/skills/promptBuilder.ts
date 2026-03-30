@@ -169,7 +169,7 @@ function buildLOD2ActiveSkills(activeSkills: ActiveSkill[]): string {
     
     lines.push(`### ${skill.icon} ${skill.name} ${activationInfo}`)
     lines.push('')
-    lines.push(skill.prompt)
+    lines.push(skill.content)
     lines.push('')
     lines.push('─'.repeat(40))
     lines.push('')

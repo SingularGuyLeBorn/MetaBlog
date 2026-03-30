@@ -128,10 +128,10 @@ export function parseSkillFile(content: string, filePath?: string): ParsedSkillF
     version: yaml.version || '1.0.0',
     tags: parseList(yaml.tags),
     author: yaml.author || 'system',
-    builtin: yaml.builtin === 'true' || yaml.builtin === true,
+    isBuiltIn: yaml.builtin === 'true' || yaml.builtin === true,
     enabled: yaml.enabled !== 'false' && yaml.enabled !== false,
     tools: parseList(yaml.tools),
-    scenarios: parseList(yaml.scenarios)
+    usageScenarios: parseList(yaml.scenarios)
   }
   
   // 验证必要字段
@@ -180,7 +180,7 @@ export function buildSkillFromContent(content: string, filePath?: string): Skill
   
   return {
     ...parsed.metadata,
-    prompt: parsed.prompt,
+    content: parsed.prompt,
     createdAt: now,
     updatedAt: now
   }

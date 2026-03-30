@@ -32,7 +32,7 @@ import { getToolDefinitions, type ToolDefinition } from '@/theme/tools/index'
 // 类型定义
 // ═══════════════════════════════════════════════════════════════
 
-export interface SkillIntegratedConfig extends SessionConfig {
+export interface SkillIntegratedConfig extends Omit<SessionConfig, 'availableSkills'> {
   /** 可用 Skills (元数据) */
   availableSkills?: SkillMetadata[]
   /** 当前激活的 Skills */
@@ -128,7 +128,7 @@ class SkillsContextManager {
         if (fullSkill) {
           const activeSkill: ActiveSkill = {
             ...fullSkill,
-            prompt: '', // 需要时异步加载
+            content: fullSkill.content || '', // 使用已加载的内容
             createdAt: Date.now(),
             updatedAt: Date.now(),
             activatedAt: Date.now(),
@@ -409,10 +409,10 @@ export function createSkillMetadata(skill: Skill): SkillMetadata {
     version: skill.version,
     tags: skill.tags,
     author: skill.author,
-    builtin: skill.builtin,
+    isBuiltIn: skill.isBuiltIn,
     enabled: skill.enabled,
     tools: skill.tools,
-    scenarios: skill.scenarios
+    usageScenarios: skill.usageScenarios
   }
 }
 
@@ -433,6 +433,6 @@ export function analyzePrompt(
     activeCount: activeSkills.length,
     toolCount: activeSkills.reduce((sum, s) => sum + s.tools.length, 0),
     estimatedTokens: Math.ceil(userInput.length / 4) + 
-      activeSkills.reduce((sum, s) => sum + (s.prompt?.length || 0) / 4, 0)
+      activeSkills.reduce((sum, s) => sum + (s.content?.length || 0) / 4, 0)
   }
 }

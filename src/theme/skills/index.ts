@@ -53,11 +53,10 @@ export type {
   ParsedSkillFile,
   SkillLoaderConfig,
   SkillRuntimeState,
-  SkillMatchRecord,
-  
-  // Loader API
-  SkillLoaderAPI
+  SkillMatchRecord
 } from './types'
+
+export type { SkillLoaderAPI } from './skillLoader'
 
 // ═══════════════════════════════════════════════════════════════
 // 核心功能导出

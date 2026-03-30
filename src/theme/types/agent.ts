@@ -14,7 +14,22 @@
 
 import type { ToolDefinition } from '@/theme/tools/types'
 
-// ==================== 基础类型 ====================
+// ═══════════════════════════════════════════════════════════════
+// 从 Skills 系统重新导出类型
+// ═══════════════════════════════════════════════════════════════
+
+export type {
+  Skill,
+  SkillMetadata,
+  SkillCategory,
+  ActiveSkill,
+  SkillMatchResult,
+  SkillMatchOptions,
+} from '@/theme/skills/types'
+
+// ═══════════════════════════════════════════════════════════════
+// 基础类型
+// ═══════════════════════════════════════════════════════════════
 
 /** 能力类型 */
 export type CapabilityType = 'skill' | 'tool'
@@ -25,107 +40,24 @@ export type CapabilityType = 'skill' | 'tool'
  */
 export type AgentConfigMode = 'claude-code'
 
-/** 技能分类 */
-export type SkillCategory = 
-  | 'general'      // 通用
-  | 'writing'      // 写作
-  | 'coding'       // 编程
-  | 'analysis'     // 分析
-  | 'creative'     // 创意
-  | 'research'     // 研究
-  | 'custom'       // 自定义
+// ═══════════════════════════════════════════════════════════════
+// Skill 创建参数（扩展 skills 系统的 Skill）
+// ═══════════════════════════════════════════════════════════════
 
-// ==================== Skill 定义 ====================
-
-/**
- * Skill 定义 - 能力扩展模块
- * 
- * 参考 Claude Code Skills 设计：
- * - description: 简短描述，用于列表展示和意图匹配
- * - content: SKILL.md 完整内容，调用时注入对话
- * - tools: 该 Skill 需要的工具
- */
-export interface Skill {
-  id: string
-  name: string
-  icon: string
-  /** 
-   * 简短描述 - 用于：
-   * 1. UI 列表展示
-   * 2. Agent 判断是否需要调用该 Skill
-   * 3. 系统提示词中的 Skills 列表
-   */
-  description: string
-  /** 
-   * SKILL.md 完整内容 - 包含：
-   * - 详细使用说明
-   * - 场景示例
-   * - 工具调用指南
-   * - 脚本引用等
-   * 
-   * 调用时动态注入到对话上下文
-   */
-  content: string
-  category: SkillCategory
-  version: string
-  isBuiltIn: boolean
-  enabled: boolean
-  createdAt: number
-  updatedAt: number
-  tags: string[]
-  /** 
-   * 该 Skill 需要的工具（工具名列表）
-   * Agent 调用 Skill 时，这些工具必须可用
-   */
-  tools: string[]
-  /**
-   * 工具的详细定义（从 SKILL.md 解析）
-   * { toolName: { description, params: [{ name, type, description }] } }
-   */
-  toolDefinitions?: Record<string, {
-    name: string
-    description: string
-    params: { name: string; type: string; description: string }[]
-  }>
-  /** 
-   * 使用场景列表
-   * 用于匹配用户意图，决定何时调用该 Skill
-   */
-  usageScenarios: string[]
-  /** 
-   * 资源基路径
-   * 用于定位 Skill 关联的脚本、模板等资源
-   */
-  basePath?: string
-  /** 作者 */
-  author?: string
-}
-
-/** 
- * Skill 创建参数
- */
 export interface SkillCreateParams {
   name: string
   icon?: string
   description: string
   content: string
-  category?: SkillCategory
+  category?: import('@/theme/skills/types').SkillCategory
   tags?: string[]
   tools?: string[]
   basePath?: string
 }
 
-/** 
- * Skill 元数据（用于系统提示词）
- * 只包含基本信息，不包含详细内容
- */
-export interface SkillMetadata {
-  id: string
-  name: string
-  description: string
-}
-
-// ==================== Tool 定义 ====================
+// ═══════════════════════════════════════════════════════════════
+// Tool 定义
+// ═══════════════════════════════════════════════════════════════
 
 /** 工具定义 - 来自 definitions.ts */
 export interface Tool {
@@ -136,7 +68,9 @@ export interface Tool {
   category?: string
 }
 
-// ==================== Agent 定义 ====================
+// ═══════════════════════════════════════════════════════════════
+// Agent 定义
+// ═══════════════════════════════════════════════════════════════
 
 /** Agent 等级 */
 export type AgentLevel = 'meta' | 'core' | 'fixed' | 'custom' | 'temp'
@@ -278,7 +212,9 @@ export interface AgentUpdateParams {
   isDefault?: boolean
 }
 
-// ==================== 能力图谱 ====================
+// ═══════════════════════════════════════════════════════════════
+// 能力图谱
+// ═══════════════════════════════════════════════════════════════
 
 /** 能力节点 */
 export interface CapabilityNode {
@@ -307,11 +243,11 @@ export interface CapabilityGraph {
   edges: CapabilityEdge[]
 }
 
-// ==================== 配置模式 ====================
+// ═══════════════════════════════════════════════════════════════
+// Skill 调用相关
+// ═══════════════════════════════════════════════════════════════
 
-
-
-// ==================== Skill 调用相关 ====================
+import type { Skill } from '@/theme/skills/types'
 
 /** 
  * Skill 调用上下文
@@ -332,7 +268,7 @@ export interface SkillInvocation {
  */
 export interface SystemPromptContext {
   agent: Agent
-  availableSkills: SkillMetadata[]
+  availableSkills: import('@/theme/skills/types').SkillMetadata[]
   activeSkills?: Skill[]  // 已调用的 Skills（完整内容）
   availableTools: Tool[]
 }

@@ -28,13 +28,13 @@ export interface SkillMetadata {
   /** 作者 */
   author: string
   /** 是否内置 */
-  builtin: boolean
+  isBuiltIn: boolean
   /** 是否启用 */
   enabled: boolean
   /** 该 Skill 声明的工具列表 */
   tools: string[]
   /** 使用场景（用于匹配） */
-  scenarios: string[]
+  usageScenarios: string[]
 }
 
 /** Skill 分类 */
@@ -42,9 +42,14 @@ export type SkillCategory =
   | 'content'      // 内容管理
   | 'research'     // 学术研究
   | 'code'         // 代码开发
+  | 'coding'       // 编程开发（兼容旧代码）
   | 'file'         // 文件管理
   | 'system'       // 系统工具
   | 'multimedia'   // 多媒体处理
+  | 'general'      // 通用
+  | 'writing'      // 写作
+  | 'analysis'     // 分析
+  | 'creative'     // 创意
   | 'custom'       // 自定义
 
 // ═══════════════════════════════════════════════════════════════
@@ -72,13 +77,29 @@ export interface ToolDefinition {
 /** 完整 Skill 定义 */
 export interface Skill extends SkillMetadata {
   /** 完整 Prompt 内容 (LOD-2) */
-  prompt: string
+  content: string
   /** 附加资源文件路径 */
   resources?: string[]
   /** 创建时间 */
   createdAt: number
   /** 更新时间 */
   updatedAt: number
+  /**
+   * 工具的详细定义（从 SKILL.md 解析）
+   * { toolName: { description, params: [{ name, type, description }] } }
+   */
+  toolDefinitions?: Record<string, {
+    name: string
+    description: string
+    params: { name: string; type: string; description: string }[]
+  }>
+  /** 
+   * 资源基路径
+   * 用于定位 Skill 关联的脚本、模板等资源
+   */
+  basePath?: string
+  /** 作者 */
+  author?: string
 }
 
 /** 激活的 Skill (已加载到上下文中) */

@@ -13,10 +13,13 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@/*": [".vitepress/*"]
+      "@/*": ["src/*"],
+      "@docs/*": ["docs/*"]
     }
   },
   "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
     ".vitepress/**/*.ts",
     ".vitepress/**/*.vue",
     "server/**/*.ts"
