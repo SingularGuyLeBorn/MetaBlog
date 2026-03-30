@@ -166,8 +166,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Icon } from '../../../../shared/components'
-import { LiquidGlass } from '../../../../shared/components'
+import { Icon } from '../../common'
+import { LiquidGlass } from '../../common'
 
 const showAddServer = ref(false)
 

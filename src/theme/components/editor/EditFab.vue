@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useData, useRoute } from 'vitepress'
-import InlineMarkdownEditor from '../kb/InlineMarkdownEditor.vue'
-import { useAppStore } from '../../shared/stores/app'
+import InlineMarkdownEditor from '../features/InlineMarkdownEditor.vue'
+import { useAppStore } from '../../stores/app'
 
 const { page } = useData()
 const route = useRoute()

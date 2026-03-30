@@ -181,8 +181,8 @@ import { ref, computed } from 'vue'
 import { useAgentConfig } from '../../stores/useAgentConfig'
 import type { Skill, SkillCategory } from '../../types/agent'
 import SkillDetailModal from './SkillDetailModal.vue'
-import { Icon } from '../../../../shared/components'
-import { LiquidGlass } from '../../../../shared/components'
+import { Icon } from '../../common'
+import { LiquidGlass } from '../../common'
 
 const { skills, createSkill, updateSkill: updateSkillApi, deleteSkill: deleteSkillApi } = useAgentConfig()
 

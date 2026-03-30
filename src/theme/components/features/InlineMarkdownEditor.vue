@@ -3,7 +3,7 @@ import { ref, onMounted, onBeforeUnmount, nextTick, watch, computed } from 'vue'
 import { useData, useRoute } from 'vitepress'
 import Vditor from 'vditor'
 import 'vditor/dist/index.css'
-import { useAppStore } from '../../shared/stores/app'
+import { useAppStore } from '../../stores/app'
 
 const store = useAppStore()
 const { page } = useData()

@@ -256,9 +256,9 @@ import type { Agent } from '../../types/agent'
 import AgentConfigPanel from './AgentConfigPanel.vue'
 import SkillsManager from './SkillsManager.vue'
 import MemoryManager from './MemoryManager.vue'
-import MCPConfigPanel from '../mcp/MCPConfigPanel.vue'
-import { Icon } from '../../../../shared/components'
-import { LiquidGlass } from '../../../../shared/components'
+import MCPConfigPanel from './MCPConfigPanel.vue'
+import { Icon } from '../../common'
+import { LiquidGlass } from '../../common'
 
 const props = defineProps<{
   visible: boolean

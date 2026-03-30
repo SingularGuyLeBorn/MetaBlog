@@ -212,8 +212,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Icon } from '../../../../shared/components'
-import MentionInput, { type Mention } from '../../../../shared/components/MentionInput.vue'
+import { Icon } from '../../common'
+import MentionInput, { type Mention } from '../../common/MentionInput.vue'
 import type { Skill } from '../../types/agent'
 import type { MessageAttachment } from '../../types/chat'
 import { 

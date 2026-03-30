@@ -67,7 +67,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
 import MessageBubble from './MessageBubble.vue'
-import { Icon } from '../../../../shared/components'
+import { Icon } from '../../common'
 import type { ChatMessage, MessageGroup } from '../../types'
 
 interface Props {

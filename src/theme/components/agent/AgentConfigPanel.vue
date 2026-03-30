@@ -219,8 +219,8 @@ import { useAgentConfig } from '../../stores/useAgentConfig'
 import SkillDetailModal from './SkillDetailModal.vue'
 import TriggerPanel from './TriggerPanel.vue'
 // import ModelPanel from './ModelPanel.vue'
-import { Icon } from '../../../../shared/components'
-import { LiquidGlass } from '../../../../shared/components'
+import { Icon } from '../../common'
+import { LiquidGlass } from '../../common'
 
 const props = defineProps<{ agent: Agent }>()
 const emit = defineEmits<{

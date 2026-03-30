@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { ChatLayout } from '../features/chat'
+import { ChatLayout } from '../ai-chat'
 </script>
 
 <style scoped>

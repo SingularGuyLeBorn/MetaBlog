@@ -230,7 +230,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { Teleport } from 'vue'
-import { Icon } from '../../../../shared/components'
+import { Icon } from '../../common'
 import SessionPanel from './SessionPanel.vue'
 import SessionManager from './SessionManager.vue'
 import MessageList from './MessageList.vue'

@@ -174,7 +174,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import { Avatar, AIAvatar, Icon, TypewriterText } from '../../../../shared/components'
+import { Avatar, AIAvatar, Icon, TypewriterText } from '../../common'
 import MessageVersions from './MessageVersions.vue'
 import type { ChatMessage, ChatMessage as ChatMessageType, ThinkingStep } from '../../types'
 

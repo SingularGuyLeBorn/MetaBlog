@@ -101,8 +101,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Icon } from '../../../../shared/components'
-import { LiquidGlass } from '../../../../shared/components'
+import { Icon } from '../../common'
+import { LiquidGlass } from '../../common'
 
 const searchQuery = ref('')
 
