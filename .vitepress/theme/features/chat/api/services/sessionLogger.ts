@@ -1,0 +1,133 @@
+/**
+ * Session Logger - 会话运行日志
+ * 
+ * 记录完整的对话过程，包括用户输入、AI思考、工具调用等
+ */
+
+export interface LogEntry {
+  timestamp: number
+  type: 'user' | 'ai' | 'tool' | 'error' | 'system'
+  content: string
+  metadata?: Record<string, any>
+}
+
+export interface SessionLog {
+  sessionId: string
+  startTime: number
+  config?: Record<string, any>
+  entries: LogEntry[]
+}
+
+const sessionLogs = new Map<string, SessionLog>()
+let currentSessionId: string | null = null
+
+export function startSessionLog(sessionId: string, config?: Record<string, any>): SessionLog {
+  const log: SessionLog = {
+    sessionId,
+    startTime: Date.now(),
+    config,
+    entries: []
+  }
+  sessionLogs.set(sessionId, log)
+  currentSessionId = sessionId
+  return log
+}
+
+export function addLogEntry(sessionId: string, entry: Omit<LogEntry, 'timestamp'>) {
+  const log = sessionLogs.get(sessionId)
+  if (log) {
+    log.entries.push({
+      ...entry,
+      timestamp: Date.now()
+    })
+  }
+}
+
+export function logUserInput(content: string, metadata?: Record<string, any>) {
+  if (!currentSessionId) return
+  addLogEntry(currentSessionId, { type: 'user', content, metadata })
+}
+
+export function logAIRequest(endpoint: string, request: any) {
+  if (!currentSessionId) return
+  addLogEntry(currentSessionId, {
+    type: 'system',
+    content: `AI Request: ${endpoint}`,
+    metadata: { request }
+  })
+}
+
+export function logAIContent(content: string, metadata?: any) {
+  if (!currentSessionId) return
+  addLogEntry(currentSessionId, {
+    type: 'ai',
+    content,
+    metadata
+  })
+}
+
+export function logThinkingStep(round: number, type: string, content: string, metadata?: any) {
+  if (!currentSessionId) return
+  addLogEntry(currentSessionId, {
+    type: 'system',
+    content: `Thinking Step [Round ${round}] (${type})`,
+    metadata: { round, stepType: type, content, ...metadata }
+  })
+}
+
+export function logToolResult(toolName: string, result: any) {
+  if (!currentSessionId) return
+  addLogEntry(currentSessionId, {
+    type: 'tool',
+    content: `Tool Result: ${toolName}`,
+    metadata: { result }
+  })
+}
+
+export function logHumanNote(note: string) {
+  if (!currentSessionId) return
+  addLogEntry(currentSessionId, {
+    type: 'system',
+    content: `Note: ${note}`
+  })
+}
+
+export function logAIResponse(content: string) {
+  if (!currentSessionId) return
+  addLogEntry(currentSessionId, { type: 'ai', content })
+}
+
+export function logToolCall(toolName: string, params: any) {
+  if (!currentSessionId) return
+  addLogEntry(currentSessionId, {
+    type: 'tool',
+    content: `Tool: ${toolName}`,
+    metadata: { params }
+  })
+}
+
+export function logError(error: Error | string, note?: string) {
+  if (!currentSessionId) return
+  const message = error instanceof Error ? error.message : error
+  const stack = error instanceof Error ? error.stack : undefined
+  addLogEntry(currentSessionId, {
+    type: 'error',
+    content: note ? `${note}: ${message}` : message,
+    metadata: { stack }
+  })
+}
+
+export function getSessionLog(sessionId: string): SessionLog | undefined {
+  return sessionLogs.get(sessionId)
+}
+
+export function endSessionLog(sessionId?: string) {
+  const id = sessionId || currentSessionId
+  if (!id) return undefined
+  const log = sessionLogs.get(id)
+  sessionLogs.delete(id)
+  if (id === currentSessionId) {
+    currentSessionId = null
+  }
+  return log
+}
