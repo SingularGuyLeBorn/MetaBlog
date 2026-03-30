@@ -10,7 +10,7 @@ export * from './useAgentConfig'
 
 // Chat stores  
 export * from './chat'
-export * from './chatStore'
+export { useAIChat } from './chatStore'
 
 // Skill stores
 export * from './skillStore'
