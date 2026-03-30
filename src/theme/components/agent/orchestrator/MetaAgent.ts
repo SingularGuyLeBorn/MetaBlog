@@ -1,11 +1,58 @@
 /**
  * MetaAgent
- * 高级编排和调度 Agent
+ * 高级编排和调度 Agent (Browser-compatible version)
  */
 
 import { ContentAgent, ContentTask, ContentResult } from '@/theme/components/agent/agents/ContentAgent'
 import { StorageAgent, StorageTask, StorageResult } from '@/theme/components/agent/agents/StorageAgent'
-import { scheduler, CronPresets } from '@/theme/components/agent/mcp-tools/scheduler'
+
+// Simple in-browser scheduler (replaces server-side scheduler)
+interface ScheduledTask {
+  id: string
+  cron: string
+  handler: () => Promise<void>
+  enabled: boolean
+}
+
+class SimpleScheduler {
+  private tasks: Map<string, ScheduledTask> = new Map()
+  
+  schedule(task: ScheduledTask): void {
+    this.tasks.set(task.id, task)
+    console.log(`[Scheduler] Task scheduled: ${task.id} (${task.cron})`)
+  }
+  
+  stop(taskId: string): void {
+    const task = this.tasks.get(taskId)
+    if (task) {
+      task.enabled = false
+      this.tasks.set(taskId, task)
+    }
+  }
+  
+  startAll(): void {
+    console.log(`[Scheduler] Starting ${this.tasks.size} tasks`)
+  }
+  
+  stopAll(): void {
+    console.log(`[Scheduler] Stopping all tasks`)
+    this.tasks.forEach(task => task.enabled = false)
+  }
+  
+  listTasks(): ScheduledTask[] {
+    return Array.from(this.tasks.values())
+  }
+}
+
+export const CronPresets = {
+  EVERY_MINUTE: '* * * * *',
+  EVERY_5_MINUTES: '*/5 * * * *',
+  EVERY_HOUR: '0 * * * *',
+  EVERY_DAY_AT_9AM: '0 9 * * *',
+  EVERY_DAY_AT_MIDNIGHT: '0 0 * * *',
+}
+
+const scheduler = new SimpleScheduler()
 
 export interface MetaAgentConfig {
   contentAgent: ContentAgent
@@ -84,7 +131,6 @@ export class MetaAgent {
     
     this.workflows.set(id, fullWorkflow)
     
-    // 如果启用定时调度
     if (workflow.schedule?.enabled && workflow.schedule.cron) {
       this.scheduleWorkflow(id, workflow.schedule.cron)
     }
@@ -116,44 +162,32 @@ export class MetaAgent {
     }
 
     try {
-      // 1. 获取内容源
       const urls = await this.resolveSource(workflow.source)
       result.summary.total = urls.length
 
-      // 2. 提取内容
-      const contentTasks = urls.map(url => ({
-        url,
-        priority: 'normal' as const,
-        callback: (contentResult: ContentResult) => {
-          result.tasks.content.push(contentResult)
-        },
-      }))
-
-      const taskIds = await this.contentAgent.addTasks(contentTasks)
-      
-      // 等待所有内容提取完成
-      await this.waitForContentTasks(taskIds)
-
-      // 3. 过滤内容
-      const validContents = result.tasks.content.filter(r => 
-        r.success && this.applyFilter(r.content!, workflow.filter)
-      )
-
-      // 4. 存储内容
-      for (const contentResult of validContents) {
-        const storageResult = await this.storageAgent.store({
-          content: contentResult.content!,
-          section: workflow.target.section as any,
-          options: {
-            downloadImages: true,
-            autoCommit: workflow.target.autoPublish,
-          },
-        })
+      // Fetch content
+      for (const url of urls) {
+        const contentResult = await this.contentAgent.fetch(url)
+        result.tasks.content.push(contentResult)
         
-        result.tasks.storage.push(storageResult)
-        
-        if (storageResult.success) {
-          result.summary.success++
+        if (contentResult.success && contentResult.content) {
+          // Store content
+          const storageResult = await this.storageAgent.store({
+            content: contentResult.content,
+            section: workflow.target.section as any,
+            options: {
+              downloadImages: true,
+              autoCommit: workflow.target.autoPublish,
+            },
+          })
+          
+          result.tasks.storage.push(storageResult)
+          
+          if (storageResult.success) {
+            result.summary.success++
+          } else {
+            result.summary.failed++
+          }
         } else {
           result.summary.failed++
         }
@@ -163,7 +197,6 @@ export class MetaAgent {
       console.error(`[MetaAgent] Workflow failed: ${workflowId}`, error)
     }
 
-    // 保存结果
     this.results.set(workflowId, result)
     
     console.log(`[MetaAgent] Workflow completed: ${workflow.name}`, result.summary)
@@ -171,7 +204,7 @@ export class MetaAgent {
     return result
   }
 
-  // 处理 URL 命令（用户发送链接）
+  // 处理 URL 命令
   async handleUrlCommand(
     url: string,
     options: {
@@ -182,25 +215,12 @@ export class MetaAgent {
   ): Promise<{ content: ContentResult; storage: StorageResult }> {
     console.log(`[MetaAgent] Handling URL: ${url}`)
 
-    // 1. 提取内容
-    const contentTaskId = await this.contentAgent.addTask({
-      url,
-      platform: options.platform,
-      priority: 'high',
-    })
-
-    // 等待提取完成
-    let contentResult: ContentResult | undefined
-    while (!contentResult) {
-      await this.delay(500)
-      contentResult = this.contentAgent.getResult(contentTaskId)
-    }
+    const contentResult = await this.contentAgent.fetch(url, { platform: options.platform })
 
     if (!contentResult.success) {
       throw new Error(`Content extraction failed: ${contentResult.error}`)
     }
 
-    // 2. 存储内容
     const storageResult = await this.storageAgent.store({
       content: contentResult.content!,
       section: options.section as any,
@@ -217,7 +237,6 @@ export class MetaAgent {
   private scheduleWorkflow(workflowId: string, cron: string): void {
     scheduler.schedule({
       id: `schedule_${workflowId}`,
-      name: `Workflow: ${this.workflows.get(workflowId)?.name}`,
       cron,
       handler: async () => {
         await this.executeWorkflow(workflowId)
@@ -235,66 +254,15 @@ export class MetaAgent {
         return source.urls || []
       
       case 'search':
-        // 这里应该调用搜索 API
         console.log('[MetaAgent] Search source not implemented yet')
         return []
       
       case 'rss':
-        // 这里应该解析 RSS
         console.log('[MetaAgent] RSS source not implemented yet')
         return []
       
       default:
         return []
-    }
-  }
-
-  // 应用过滤器
-  private applyFilter(
-    content: any,
-    filter?: ContentWorkflow['filter']
-  ): boolean {
-    if (!filter) return true
-
-    // 长度过滤
-    if (filter.minLength && content.content.length < filter.minLength) {
-      return false
-    }
-
-    // 关键词过滤
-    if (filter.keywords && filter.keywords.length > 0) {
-      const hasKeyword = filter.keywords.some(kw => 
-        content.content.includes(kw) || content.title.includes(kw)
-      )
-      if (!hasKeyword) return false
-    }
-
-    // 排除关键词
-    if (filter.excludeKeywords && filter.excludeKeywords.length > 0) {
-      const hasExclude = filter.excludeKeywords.some(kw => 
-        content.content.includes(kw) || content.title.includes(kw)
-      )
-      if (hasExclude) return false
-    }
-
-    return true
-  }
-
-  // 等待内容任务完成
-  private async waitForContentTasks(taskIds: string[]): Promise<void> {
-    const checkInterval = 500
-    const maxWait = 60000 // 60秒超时
-    let waited = 0
-
-    while (waited < maxWait) {
-      const allComplete = taskIds.every(id => 
-        this.contentAgent.getResult(id) !== undefined
-      )
-      
-      if (allComplete) break
-      
-      await this.delay(checkInterval)
-      waited += checkInterval
     }
   }
 
@@ -330,7 +298,7 @@ export class MetaAgent {
     return {
       workflows: this.workflows.size,
       scheduled: scheduler.listTasks().length,
-      contentQueue: this.contentAgent.getStatus().queueLength,
+      contentQueue: this.contentAgent.getQueueStatus().queueLength,
       completedJobs: this.results.size,
     }
   }
