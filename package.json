@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A digital twin grade knowledge management system.",
   "main": "index.js",
+  "bin": {
+    "meta-agent": "./bin/meta-agent-cli.ts"
+  },
   "type": "module",
   "scripts": {
     "docs:dev": "vitepress dev",
@@ -13,7 +16,9 @@
     "test:coverage": "vitest run --coverage",
     "check:structure": "node scripts/structure-checker.js",
     "check:structure:dry": "node scripts/structure-checker.js --dry-run",
-    "check:structure:verbose": "node scripts/structure-checker.js --verbose"
+    "check:structure:verbose": "node scripts/structure-checker.js --verbose",
+    "meta-agent": "tsx bin/meta-agent-cli.ts",
+    "meta-agent:dev": "tsx watch bin/meta-agent-cli.ts"
   },
   "keywords": [],
   "author": "Gemini",

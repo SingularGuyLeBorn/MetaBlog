@@ -28,6 +28,9 @@ import {
   DocNode,
 } from "./utils/doc-structure";
 import { getTaskManager } from "../server/mcp-tools/task-manager";
+import { getAgentRuntimeManager } from "../server/mcp-tools/agent-runtime-manager";
+import { getMetaAgentManager } from "../server/mcp-tools/meta-agent-manager";
+import { getReportAgentManager } from "../server/mcp-tools/report-agent-manager";
 // 简化的日志系统
 const system = {
   info: (event: string, message: string, data?: any) =>
@@ -3804,6 +3807,361 @@ ${content}`;
               } else next();
             },
           );
+
+          // ============================================
+          // Agent Runtime API - Agent 运行时管理
+          // ============================================
+          const runtimeManager = getAgentRuntimeManager();
+
+          // 获取所有运行时状态
+          server.middlewares.use("/api/agent-runtime", (req, res, next) => {
+            if (req.method === "GET") {
+              const url = new URL(req.url || "", `http://${req.headers.host}`);
+              const status = url.searchParams.get("status")?.split(",") as any;
+              
+              const { runtimes, total } = runtimeManager.queryRuntimes({
+                status: status,
+                limit: parseInt(url.searchParams.get("limit") || "50"),
+                offset: parseInt(url.searchParams.get("offset") || "0"),
+              });
+              
+              const stats = runtimeManager.getStats();
+
+              res.setHeader("Content-Type", "application/json");
+              res.end(
+                JSON.stringify({
+                  success: true,
+                  data: runtimes,
+                  total,
+                  stats,
+                }),
+              );
+            } else if (req.method === "POST") {
+              // 创建运行时
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const runtime = runtimeManager.createRuntime({
+                    agentId: body.agentId,
+                    mode: body.mode,
+                    config: body.config,
+                  });
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(
+                    JSON.stringify({
+                      success: true,
+                      message: "Runtime created",
+                      data: runtime,
+                    }),
+                  );
+                } catch (error: any) {
+                  res.statusCode = 400;
+                  res.end(
+                    JSON.stringify({
+                      success: false,
+                      message: error.message,
+                    }),
+                  );
+                }
+              });
+            } else next();
+          });
+
+          // 单个运行时操作
+          server.middlewares.use(
+            "/api/agent-runtime/:id/start",
+            (req, res, next) => {
+              if (req.method === "POST") {
+                const url = new URL(req.url || "", `http://${req.headers.host}`);
+                const id = url.pathname.split("/").pop()?.replace("/start", "");
+                if (!id) return next();
+
+                runtimeManager.startRuntime(id).then((runtime) => {
+                  if (!runtime) {
+                    res.statusCode = 404;
+                    res.end(JSON.stringify({ success: false, message: "Runtime not found" }));
+                    return;
+                  }
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: runtime }));
+                }).catch((error: any) => {
+                  res.statusCode = 400;
+                  res.end(JSON.stringify({ success: false, message: error.message }));
+                });
+              } else next();
+            },
+          );
+
+          server.middlewares.use(
+            "/api/agent-runtime/:id/pause",
+            (req, res, next) => {
+              if (req.method === "POST") {
+                const url = new URL(req.url || "", `http://${req.headers.host}`);
+                const id = url.pathname.split("/").pop()?.replace("/pause", "");
+                if (!id) return next();
+
+                const runtime = runtimeManager.pauseRuntime(id);
+                if (!runtime) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ success: false, message: "Runtime not found" }));
+                  return;
+                }
+
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: runtime }));
+              } else next();
+            },
+          );
+
+          server.middlewares.use(
+            "/api/agent-runtime/:id/resume",
+            (req, res, next) => {
+              if (req.method === "POST") {
+                const url = new URL(req.url || "", `http://${req.headers.host}`);
+                const id = url.pathname.split("/").pop()?.replace("/resume", "");
+                if (!id) return next();
+
+                const runtime = runtimeManager.resumeRuntime(id);
+                if (!runtime) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ success: false, message: "Runtime not found" }));
+                  return;
+                }
+
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: runtime }));
+              } else next();
+            },
+          );
+
+          server.middlewares.use(
+            "/api/agent-runtime/:id/stop",
+            (req, res, next) => {
+              if (req.method === "POST") {
+                const url = new URL(req.url || "", `http://${req.headers.host}`);
+                const id = url.pathname.split("/").pop()?.replace("/stop", "");
+                if (!id) return next();
+
+                const urlObj = new URL(req.url || "", `http://${req.headers.host}`);
+                const force = urlObj.searchParams.get("force") === "true";
+
+                const runtime = runtimeManager.stopRuntime(id, force);
+                if (!runtime) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ success: false, message: "Runtime not found" }));
+                  return;
+                }
+
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: runtime }));
+              } else next();
+            },
+          );
+
+          // 发送消息到 Agent
+          server.middlewares.use(
+            "/api/agent-runtime/:id/message",
+            (req, res, next) => {
+              if (req.method === "POST") {
+                const url = new URL(req.url || "", `http://${req.headers.host}`);
+                const id = url.pathname.split("/").pop()?.replace("/message", "");
+                if (!id) return next();
+
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const message = runtimeManager.sendMessage(id, {
+                      type: body.type || "command",
+                      from: body.from || "user",
+                      to: body.to || id,
+                      content: body.content,
+                      payload: body.payload,
+                      priority: body.priority || "normal",
+                      read: false,
+                    });
+
+                    if (!message) {
+                      res.statusCode = 404;
+                      res.end(JSON.stringify({ success: false, message: "Runtime not found" }));
+                      return;
+                    }
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(JSON.stringify({ success: true, data: message }));
+                  } catch (error: any) {
+                    res.statusCode = 400;
+                    res.end(JSON.stringify({ success: false, message: error.message }));
+                  }
+                });
+              } else next();
+            },
+          );
+
+          // ============================================
+          // Meta-Agent API - Meta-Agent 管理
+          // ============================================
+          const metaManager = getMetaAgentManager();
+
+          // 启动 Meta-Agent
+          server.middlewares.use("/api/meta/start", (req, res, next) => {
+            if (req.method === "POST") {
+              try {
+                metaManager.start();
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, message: "Meta-Agent started" }));
+              } catch (error: any) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, message: error.message }));
+              }
+            } else next();
+          });
+
+          // 停止 Meta-Agent
+          server.middlewares.use("/api/meta/stop", (req, res, next) => {
+            if (req.method === "POST") {
+              metaManager.stop();
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ success: true, message: "Meta-Agent stopped" }));
+            } else next();
+          });
+
+          // 获取 Meta-Agent 状态
+          server.middlewares.use("/api/meta/status", (req, res, next) => {
+            if (req.method === "GET") {
+              const status = metaManager.getStatus();
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ success: true, data: status }));
+            } else next();
+          });
+
+          // Worker 管理
+          server.middlewares.use("/api/meta/workers", (req, res, next) => {
+            if (req.method === "GET") {
+              const workers = metaManager.getAllWorkers();
+              const statuses = metaManager.getAllWorkerStatuses();
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ 
+                success: true, 
+                data: { workers, statuses } 
+              }));
+            } else if (req.method === "POST") {
+              // 注册 Worker
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const worker = metaManager.registerWorker(body);
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: worker }));
+                } catch (error: any) {
+                  res.statusCode = 400;
+                  res.end(JSON.stringify({ success: false, message: error.message }));
+                }
+              });
+            } else next();
+          });
+
+          // 分配任务
+          server.middlewares.use("/api/meta/assign", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  
+                  if (body.tasks) {
+                    // 批量分配
+                    const result = metaManager.assignBatchTasks({
+                      tasks: body.tasks,
+                      strategy: body.strategy,
+                      options: body.options,
+                    });
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(JSON.stringify({ success: true, data: result }));
+                  } else {
+                    // 单个分配
+                    const assignment = metaManager.assignTask(body);
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(JSON.stringify({ success: true, data: assignment }));
+                  }
+                } catch (error: any) {
+                  res.statusCode = 400;
+                  res.end(JSON.stringify({ success: false, message: error.message }));
+                }
+              });
+            } else next();
+          });
+
+          // ============================================
+          // Report Agent API - 报告系统
+          // ============================================
+          const reportManager = getReportAgentManager();
+
+          // 生成报告
+          server.middlewares.use("/api/report/generate", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", async () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const report = await reportManager.generateReport(body);
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: report }));
+                } catch (error: any) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, message: error.message }));
+                }
+              });
+            } else next();
+          });
+
+          // 获取系统概览
+          server.middlewares.use("/api/report/overview", async (req, res, next) => {
+            if (req.method === "GET") {
+              try {
+                const report = await reportManager.generateSystemStatusReport();
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ success: true, data: report }));
+              } catch (error: any) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, message: error.message }));
+              }
+            } else next();
+          });
+
+          // 发送通知
+          server.middlewares.use("/api/report/notify", (req, res, next) => {
+            if (req.method === "POST") {
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", async () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const notification = await reportManager.sendNotification(
+                    body.type,
+                    body.title,
+                    body.message,
+                    body.channels,
+                    body.details,
+                  );
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ success: true, data: notification }));
+                } catch (error: any) {
+                  res.statusCode = 500;
+                  res.end(JSON.stringify({ success: false, message: error.message }));
+                }
+              });
+            } else next();
+          });
 
           // ============================================
           // Chat API - 流式消息发送
