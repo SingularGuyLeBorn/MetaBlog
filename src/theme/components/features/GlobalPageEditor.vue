@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useData } from 'vitepress'
-import { useAppStore } from '../../shared/stores/app'
+import { useAppStore } from '../../stores/app'
 import VditorEditor from '../editor/VditorEditor.vue'
 
 const store = useAppStore()

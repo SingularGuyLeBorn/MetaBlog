@@ -14,8 +14,8 @@
  * ```
  */
 import { computed, watch, nextTick, ref } from 'vue'
-import { useAIChat } from '../../features/chat/stores/chatStore'
-import type { ChatSession, ChatMessage, MessageGroup } from '../../features/chat/types'
+import { useAIChat } from '../stores/chatStore'
+import type { ChatSession, ChatMessage, MessageGroup } from '../types'
 
 export interface UseChatOptions {
   /** 自动滚动到底部 */

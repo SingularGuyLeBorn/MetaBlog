@@ -168,7 +168,7 @@
 
 <script setup lang="ts">
 import { onMounted, nextTick } from 'vue'
-import { useCountUp } from '../shared/composables/useInteractiveEffects'
+import { useCountUp } from '../../composables/useInteractiveEffects'
 
 const skills = ['PyTorch', 'Transformers', 'LLM', 'RLHF', 'Vue 3', 'React', 'TypeScript', 'Tailwind', 'Python', 'Node.js', 'PostgreSQL', 'Redis', 'Docker']
 
