@@ -27,6 +27,7 @@ import {
   toDirectoryTree,
   DocNode,
 } from "./utils/doc-structure";
+import { getTaskManager } from "../server/mcp-tools/task-manager";
 // 简化的日志系统
 const system = {
   info: (event: string, message: string, data?: any) =>
@@ -3065,6 +3066,61 @@ ${content}`;
             },
           );
 
+          // GET /api/logs/export - 导出日志
+          server.middlewares.use("/api/logs/export", async (req, res, next) => {
+            if (req.method === "GET") {
+              try {
+                const url = new URL(req.url || "", `http://${req.headers.host}`);
+                const startDate = url.searchParams.get("startDate");
+                const endDate = url.searchParams.get("endDate");
+
+                const LOGS_DIR = path.join(process.cwd(), ".logs");
+                let allLogs: any[] = [];
+
+                // 读取所有日志文件
+                if (fs.existsSync(LOGS_DIR)) {
+                  const files = fs.readdirSync(LOGS_DIR).filter((f) => f.endsWith(".jsonl"));
+
+                  for (const file of files) {
+                    // 检查文件名是否符合日期范围
+                    if (startDate && !file.includes(startDate)) continue;
+                    if (endDate && !file.includes(endDate)) continue;
+
+                    const filePath = path.join(LOGS_DIR, file);
+                    const content = fs.readFileSync(filePath, "utf-8");
+                    const lines = content.split("\n").filter(Boolean);
+
+                    for (const line of lines) {
+                      try {
+                        const log = JSON.parse(line);
+                        allLogs.push(log);
+                      } catch (e) {
+                        // 跳过无效行
+                      }
+                    }
+                  }
+                }
+
+                // 按时间排序
+                allLogs.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+                // 设置下载响应头
+                res.setHeader("Content-Type", "application/json");
+                res.setHeader("Content-Disposition", `attachment; filename="logs-export-${Date.now()}.json"`);
+                res.end(JSON.stringify({
+                  success: true,
+                  exportedAt: Date.now(),
+                  count: allLogs.length,
+                  logs: allLogs
+                }, null, 2));
+              } catch (e) {
+                console.error("[Logs Export] Error:", e);
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: String(e) }));
+              }
+            } else next();
+          });
+
           // ============================================
           // Proxy API - 网络抓取代理
           // ============================================
@@ -3475,84 +3531,21 @@ ${content}`;
           );
 
           // ============================================
-          // Background Tasks API - 简化版（模拟数据）
+          // Task Manager API - 任务调度系统
           // ============================================
-          // 注意: BackgroundTaskManager 模块未实现，以下 API 返回模拟数据
-
-          // 模拟任务模板
-          const MOCK_TASK_TEMPLATES = [
-            {
-              id: "sync-knowledge",
-              name: "同步知识库",
-              description: "从外部源同步知识库内容",
-              icon: "🔄",
-              category: "system",
-              params: [
-                {
-                  name: "source",
-                  type: "string",
-                  required: true,
-                  description: "数据源 URL",
-                },
-                {
-                  name: "force",
-                  type: "boolean",
-                  required: false,
-                  description: "强制同步",
-                },
-              ],
-            },
-            {
-              id: "generate-index",
-              name: "生成索引",
-              description: "为知识库生成搜索索引",
-              icon: "📇",
-              category: "system",
-              params: [
-                {
-                  name: "sections",
-                  type: "array",
-                  required: false,
-                  description: "指定章节",
-                },
-              ],
-            },
-            {
-              id: "backup-data",
-              name: "备份数据",
-              description: "备份所有数据到指定位置",
-              icon: "💾",
-              category: "maintenance",
-              params: [
-                {
-                  name: "destination",
-                  type: "string",
-                  required: true,
-                  description: "备份目标路径",
-                },
-              ],
-            },
-            {
-              id: "clean-cache",
-              name: "清理缓存",
-              description: "清理过期缓存文件",
-              icon: "🧹",
-              category: "maintenance",
-              params: [],
-            },
-          ];
+          const taskManager = getTaskManager();
 
           // 获取任务模板列表
           server.middlewares.use(
             "/api/agent/tasks/templates",
             (req, res, next) => {
               if (req.method === "GET") {
+                const templates = taskManager.getTemplates();
                 res.setHeader("Content-Type", "application/json");
                 res.end(
                   JSON.stringify({
                     success: true,
-                    data: MOCK_TASK_TEMPLATES,
-                    message: "Task system not available - returning mock data",
+                    data: templates,
                   }),
                 );
               } else next();
@@ -3562,22 +3555,49 @@ ${content}`;
           // 触发任务
           server.middlewares.use(
             "/api/agent/tasks/trigger",
-            (req, res, next) => {
+            async (req, res, next) => {
               if (req.method === "POST") {
-                res.setHeader("Content-Type", "application/json");
-                res.end(
-                  JSON.stringify({
-                    success: true,
-                    message: "Task system not available",
-                    data: {
-                      id: `mock-task-${Date.now()}`,
-                      type: "mock",
-                      name: "Mock Task",
-                      status: "not_available",
-                      createdAt: new Date().toISOString(),
-                    },
-                  }),
-                );
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", async () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const task = taskManager.createTask({
+                      name: body.name || `${body.type} Task`,
+                      description: body.description,
+                      type: body.type || 'custom',
+                      priority: body.priority,
+                      params: body.params,
+                      config: body.config,
+                      metadata: {
+                        createdBy: body.createdBy || 'user',
+                        agentId: body.agentId,
+                        sessionId: body.sessionId,
+                        tags: body.tags || []
+                      }
+                    });
+
+                    // 异步执行任务
+                    taskManager.executeTask(task.id).catch(console.error);
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({
+                        success: true,
+                        message: "Task created and started",
+                        data: task,
+                      }),
+                    );
+                  } catch (error: any) {
+                    res.statusCode = 400;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        message: error.message,
+                      }),
+                    );
+                  }
+                });
               } else next();
             },
           );
@@ -3587,14 +3607,36 @@ ${content}`;
             "/api/agent/tasks/trigger-batch",
             (req, res, next) => {
               if (req.method === "POST") {
-                res.setHeader("Content-Type", "application/json");
-                res.end(
-                  JSON.stringify({
-                    success: true,
-                    message: "Task system not available",
-                    data: [],
-                  }),
-                );
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const tasks = taskManager.createBatchTasks(body.tasks || []);
+                    
+                    // 异步执行所有任务
+                    tasks.forEach(task => {
+                      taskManager.executeTask(task.id).catch(console.error);
+                    });
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({
+                        success: true,
+                        message: `Created ${tasks.length} tasks`,
+                        data: tasks,
+                      }),
+                    );
+                  } catch (error: any) {
+                    res.statusCode = 400;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        message: error.message,
+                      }),
+                    );
+                  }
+                });
               } else next();
             },
           );
@@ -3602,20 +3644,24 @@ ${content}`;
           // 获取任务列表
           server.middlewares.use("/api/agent/tasks", (req, res, next) => {
             if (req.method === "GET") {
+              const url = new URL(req.url || "", `http://${req.headers.host}`);
+              const status = url.searchParams.get("status")?.split(",") as any;
+              
+              const { tasks, total } = taskManager.queryTasks({
+                status: status,
+                limit: parseInt(url.searchParams.get("limit") || "50"),
+                offset: parseInt(url.searchParams.get("offset") || "0"),
+              });
+              
+              const stats = taskManager.getStats();
+
               res.setHeader("Content-Type", "application/json");
               res.end(
                 JSON.stringify({
                   success: true,
-                  message: "Task system not available - returning mock data",
-                  data: [],
-                  stats: {
-                    total: 0,
-                    pending: 0,
-                    running: 0,
-                    completed: 0,
-                    failed: 0,
-                    cancelled: 0,
-                  },
+                  data: tasks,
+                  total,
+                  stats,
                 }),
               );
             } else next();
@@ -3626,12 +3672,27 @@ ${content}`;
             "/api/agent/tasks/detail",
             (req, res, next) => {
               if (req.method === "GET") {
+                const url = new URL(req.url || "", `http://${req.headers.host}`);
+                const id = url.searchParams.get("id");
+                
+                if (!id) {
+                  res.statusCode = 400;
+                  res.end(JSON.stringify({ success: false, message: "Task ID required" }));
+                  return;
+                }
+
+                const task = taskManager.getTask(id);
+                if (!task) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ success: false, message: "Task not found" }));
+                  return;
+                }
+
                 res.setHeader("Content-Type", "application/json");
                 res.end(
                   JSON.stringify({
                     success: true,
-                    message: "Task system not available",
-                    data: null,
+                    data: task,
                   }),
                 );
               } else next();
@@ -3643,13 +3704,30 @@ ${content}`;
             "/api/agent/tasks/cancel",
             (req, res, next) => {
               if (req.method === "POST") {
-                res.setHeader("Content-Type", "application/json");
-                res.end(
-                  JSON.stringify({
-                    success: true,
-                    message: "Task system not available - no task to cancel",
-                  }),
-                );
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const success = taskManager.cancelTask(body.taskId);
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({
+                        success,
+                        message: success ? "Task cancelled" : "Task not found or cannot be cancelled",
+                      }),
+                    );
+                  } catch (error: any) {
+                    res.statusCode = 400;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        message: error.message,
+                      }),
+                    );
+                  }
+                });
               } else next();
             },
           );
@@ -3657,14 +3735,40 @@ ${content}`;
           // 重试任务
           server.middlewares.use("/api/agent/tasks/retry", (req, res, next) => {
             if (req.method === "POST") {
-              res.setHeader("Content-Type", "application/json");
-              res.end(
-                JSON.stringify({
-                  success: true,
-                  message: "Task system not available",
-                  data: null,
-                }),
-              );
+              const chunks: Buffer[] = [];
+              req.on("data", (chunk) => chunks.push(chunk));
+              req.on("end", () => {
+                try {
+                  const body = JSON.parse(Buffer.concat(chunks).toString());
+                  const task = taskManager.retryTask(body.taskId);
+
+                  if (!task) {
+                    res.statusCode = 404;
+                    res.end(JSON.stringify({ success: false, message: "Task not found" }));
+                    return;
+                  }
+
+                  // 异步执行重试
+                  taskManager.executeTask(task.id).catch(console.error);
+
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(
+                    JSON.stringify({
+                      success: true,
+                      message: "Task retried",
+                      data: task,
+                    }),
+                  );
+                } catch (error: any) {
+                  res.statusCode = 400;
+                  res.end(
+                    JSON.stringify({
+                      success: false,
+                      message: error.message,
+                    }),
+                  );
+                }
+              });
             } else next();
           });
 
@@ -3673,13 +3777,30 @@ ${content}`;
             "/api/agent/tasks/delete",
             (req, res, next) => {
               if (req.method === "POST") {
-                res.setHeader("Content-Type", "application/json");
-                res.end(
-                  JSON.stringify({
-                    success: true,
-                    message: "Task system not available - no task to delete",
-                  }),
-                );
+                const chunks: Buffer[] = [];
+                req.on("data", (chunk) => chunks.push(chunk));
+                req.on("end", () => {
+                  try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString());
+                    const success = taskManager.deleteTask(body.taskId);
+
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(
+                      JSON.stringify({
+                        success,
+                        message: success ? "Task deleted" : "Task not found",
+                      }),
+                    );
+                  } catch (error: any) {
+                    res.statusCode = 400;
+                    res.end(
+                      JSON.stringify({
+                        success: false,
+                        message: error.message,
+                      }),
+                    );
+                  }
+                });
               } else next();
             },
           );
