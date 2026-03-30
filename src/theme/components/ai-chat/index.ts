@@ -11,11 +11,11 @@
  */
 
 // ===== API =====
-export { aiService } from './api/services/aiService'
-export { storage } from './api/services/storage'
-export { DeepSeekProvider } from './api/providers/DeepSeekProvider'
-export { BaseProvider } from './api/providers/BaseProvider'
-export * from './api/providers/models'
+export { aiService } from '../../api/services/aiService'
+export { storage } from '../../api/services/storage'
+export { DeepSeekProvider } from '../../api/providers/DeepSeekProvider'
+export { BaseProvider } from '../../api/providers/BaseProvider'
+export * from '../../api/providers/models'
 
 // Provider types (避免与 tools/types 和 chat/types 重复导出)
 export type {
@@ -31,10 +31,10 @@ export type {
   StreamCallbacks as ProviderStreamCallbacks,
   ToolCall as ProviderToolCall,
   ToolDefinition as ProviderToolDefinition,
-} from './api/providers/types'
+} from '../../api/providers/types'
 
 // ===== Stores =====
-export * from './stores'
+export * from '../../stores'
 
 // ===== Tools (避免与 provider types 冲突) =====
 export {
@@ -50,7 +50,7 @@ export {
   unregisterTool,
   clearTools,
   initializeDefaultTools,
-} from './tools'
+} from '../../tools'
 
 // 平台解析工具（从子模块导出）
 export {
@@ -60,7 +60,7 @@ export {
   parsePlatformLinkDef,
   ocrImageDef,
   processImageDef,
-} from './tools/platform'
+} from '../../tools/platform'
 
 export type {
   ToolDefinition,
@@ -68,7 +68,7 @@ export type {
   ToolRegistration,
   ToolCallRecord,
   ThinkingStep,
-} from './tools/types'
+} from '../../tools/types'
 
 // ===== Types (避免与其他导出冲突) =====
 export type {
@@ -93,7 +93,7 @@ export type {
   PersistedData,
   PersistedDataV2,
   StreamState,
-} from './types/chat'
+} from '../../types/chat'
 
 export type {
   Agent,
@@ -113,20 +113,20 @@ export type {
   CapabilityEdge,
   CapabilityGraph,
   SystemPromptContext,
-} from './types/agent'
+} from '../../types/agent'
 
 // ===== Utils =====
-export * from './utils'
+export * from '../../utils'
 
 // ===== Components =====
 // Chat 组件
-export { default as ChatLayout } from './components/chat/ChatLayout.vue'
-export { default as ChatInput } from './components/chat/ChatInput.vue'
-export { default as MessageList } from './components/chat/MessageList.vue'
-export { default as MessageBubble } from './components/chat/MessageBubble.vue'
-export { default as SessionPanel } from './components/chat/SessionPanel.vue'
-export { default as SessionManager } from './components/chat/SessionManager.vue'
-export { default as SettingsPanel } from './components/chat/SettingsPanel.vue'
+export { default as ChatLayout } from './ChatLayout.vue'
+export { default as ChatInput } from './ChatInput.vue'
+export { default as MessageList } from './MessageList.vue'
+export { default as MessageBubble } from './MessageBubble.vue'
+export { default as SessionPanel } from './SessionPanel.vue'
+export { default as SessionManager } from './SessionManager.vue'
+export { default as SettingsPanel } from './SettingsPanel.vue'
 
 // Agent 组件
 export {
@@ -135,4 +135,4 @@ export {
   AgentConfigPanel,
   AgentDetail,
   SkillsPanel
-} from './components/agent'
+} from '../agent'
