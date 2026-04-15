@@ -539,7 +539,7 @@ function cleanAIOutput(content: string): string {
 /**
  * 截断过长的消息内容，防止请求体过大
  */
-function truncateMessages(messages: any[], maxContentLength: number = 8000): any[] {
+function truncateMessages(messages: any[], maxContentLength: number = 128000): any[] {
   return messages.map(m => {
     // 只处理字符串类型的 content
     if (typeof m.content !== 'string') {
