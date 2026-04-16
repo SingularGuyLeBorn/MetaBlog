@@ -339,19 +339,8 @@ export const metaBlogBffPlugin = (): Plugin => ({
   name: "meta-blog-bff",
   configureServer(server: ViteDevServer) {
     const triggerReload = () => {
-      console.log("[HMR] Trigger reload called, server.ws exists:", !!server.ws);
-      setTimeout(() => {
-        if (server.ws) {
-          try {
-            server.ws.send({ type: "full-reload" });
-            console.log("[HMR] Triggered full reload successfully");
-          } catch (e) {
-            console.error("[HMR] Failed to send reload:", e);
-          }
-        } else {
-          console.log("[HMR] server.ws not available, reload skipped");
-        }
-      }, 100);
+      // 已禁用 full-reload，避免聊天页面状态丢失
+      console.log("[HMR] Trigger reload ignored to preserve SPA state");
     };
 
     const ctx = { system, structuredLog, gitCommit, triggerReload };

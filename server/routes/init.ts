@@ -265,8 +265,8 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ success: true, message: "Saved" }));
 
-          // 触发热更新
-          triggerReload();
+          // 触发热更新 (已禁用，避免聊天页面被刷新)
+          // triggerReload();
         } catch (error) {
           console.error("[API] Save file error:", error);
           res.statusCode = 500;
@@ -385,8 +385,8 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
             }),
           );
 
-          // 触发热更新
-          triggerReload();
+          // 触发热更新 (已禁用，避免聊天页面被刷新)
+          // triggerReload();
         } catch (e) {
           res.statusCode = 500;
           res.end(JSON.stringify({ success: false, error: String(e) }));
@@ -430,8 +430,8 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ success: true, data: { toPath } }));
 
-          // 触发热更新
-          triggerReload();
+          // 触发热更新 (已禁用，避免聊天页面被刷新)
+          // triggerReload();
         } catch (e) {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: String(e) }));
@@ -524,8 +524,8 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ success: true }));
 
-          // 触发热更新
-          triggerReload();
+          // 触发热更新 (已禁用，避免聊天页面被刷新)
+          // triggerReload();
         } catch (e) {
           console.error("[API] Delete error:", e);
           res.statusCode = 500;
@@ -660,8 +660,8 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
             }),
           );
 
-          // 触发热更新
-          triggerReload();
+          // 触发热更新 (已禁用，避免聊天页面被刷新)
+          // triggerReload();
         } catch (e) {
           console.error("[API] Restore error:", e);
           res.statusCode = 500;
