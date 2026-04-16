@@ -4,7 +4,7 @@ import fs from "fs";
 
 import { clearSidebarCache } from "../../.vitepress/utils/global-sidebar";
 import { scanDocStructure, toSidebarFormat, toDirectoryTree, type DocNode } from "../../.vitepress/utils/doc-structure";
-import { createArticleInHarness } from "../utils/article-harness";
+import { createArticleInHarness } from "../utils/article-creator";
 export interface RouteContext {
   system: any;
   structuredLog: any;
