@@ -6,15 +6,76 @@
 import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
 import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 
+// ==================== 速率限制与缓存 ====================
+// ArXiv 官方 ToU: 每 3 秒最多 1 个请求，且单连接
+// https://info.arxiv.org/help/api/tou.html
+const lastFetchTime: Record<string, number> = {}
+const MIN_INTERVAL_MS = 3000
+
+async function rateLimitDelay(url: string) {
+  try {
+    const host = new URL(url).hostname
+    const now = Date.now()
+    const last = lastFetchTime[host] || 0
+    const wait = Math.max(0, MIN_INTERVAL_MS - (now - last))
+    if (wait > 0) {
+      await new Promise(r => setTimeout(r, wait))
+    }
+    lastFetchTime[host] = Date.now()
+  } catch {
+    // ignore invalid url
+  }
+}
+
+interface CacheEntry {
+  text: string
+  ts: number
+}
+const responseCache = new Map<string, CacheEntry>()
+const CACHE_TTL_MS = 5 * 60 * 1000 // 5 分钟缓存
+
+function getCacheKey(url: string, headers?: Record<string, string>) {
+  return `${url}::${JSON.stringify(headers || {})}`
+}
+
+function getCachedResponse(url: string, headers?: Record<string, string>): Response | null {
+  const key = getCacheKey(url, headers)
+  const entry = responseCache.get(key)
+  if (entry && Date.now() - entry.ts < CACHE_TTL_MS) {
+    return {
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-type': 'text/xml; charset=utf-8' }),
+      text: async () => entry.text,
+      json: async () => JSON.parse(entry.text),
+    } as Response
+  }
+  responseCache.delete(key)
+  return null
+}
+
+function setCachedResponse(url: string, text: string, headers?: Record<string, string>) {
+  const key = getCacheKey(url, headers)
+  responseCache.set(key, { text, ts: Date.now() })
+}
+
 // 通过后端代理转发请求，避免浏览器 CORS 限制
 async function proxyFetch(url: string, headers?: Record<string, string>, timeout = 15000): Promise<Response> {
+  // ArXiv 域名优先走缓存
+  const isArxiv = url.includes('export.arxiv.org') || url.includes('arxiv.org')
+  if (isArxiv) {
+    const cached = getCachedResponse(url, headers)
+    if (cached) return cached
+  }
+
+  await rateLimitDelay(url)
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeout)
   try {
     const res = await fetch('/api/proxy/fetch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, timeout, headers }),
+      body: JSON.stringify({ url, timeout, headers, retries: 2 }),
       signal: controller.signal
     })
     if (!res.ok) {
@@ -24,6 +85,9 @@ async function proxyFetch(url: string, headers?: Record<string, string>, timeout
     // 构造一个 Response-like 对象，兼容原有代码
     const contentType = res.headers.get('content-type') || ''
     const text = await res.text()
+    if (isArxiv) {
+      setCachedResponse(url, text, headers)
+    }
     return {
       ok: true,
       status: 200,
@@ -115,7 +179,7 @@ function parseArxivXml(xml: string): ArxivPaper[] {
 }
 
 export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
-  const { query, category = '', max_results = 10, sort_by = 'relevance' } = args
+  const { query, category = '', max_results = 5, sort_by = 'relevance' } = args
   
   if (!query) {
     return createErrorResult(
@@ -155,7 +219,7 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
       )
     }
     
-    // 格式化输出
+    // 格式化输出（给人类/AI 看）
     let formattedResult = `📚 ArXiv 搜索结果: "${query}" (${papers.length}篇)\n\n`
     papers.forEach((p, i) => {
       formattedResult += `${i + 1}. **${p.title}**\n`
@@ -165,9 +229,21 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
       formattedResult += `   🔗 fetch_arxiv(paper_id="${p.id}")\n\n`
     })
     
+    // 精简 data，去掉长摘要，避免 JSON.stringify 后体积过大导致 UI 卡顿
+    const slimPapers = papers.map(p => ({
+      id: p.id,
+      title: p.title,
+      authors: p.authors.slice(0, 5),
+      published: p.published,
+      primaryCategory: p.primaryCategory,
+      pdfUrl: p.pdfUrl,
+      absUrl: p.absUrl,
+      summaryPreview: p.summary.slice(0, 120) + (p.summary.length > 120 ? '...' : '')
+    }))
+    
     return createSuccessResult(
-      papers,
-      `找到 ${papers.length} 篇相关论文`,
+      slimPapers,
+      formattedResult,
       'search_arxiv',
       '使用 fetch_arxiv(paper_id="xxx") 获取论文详情'
     )
@@ -188,23 +264,32 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
 }
 
 export const fetchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
-  const { paper_id } = args
-  
-  if (!paper_id) {
+  const rawIds: string[] = []
+  if (args.paper_ids && Array.isArray(args.paper_ids) && args.paper_ids.length > 0) {
+    rawIds.push(...args.paper_ids)
+  } else if (args.paper_id) {
+    rawIds.push(args.paper_id)
+  }
+
+  if (rawIds.length === 0) {
     return createErrorResult(
-      'Missing paper_id parameter',
+      'Missing paper_id or paper_ids parameter',
       '请提供论文 ID',
-      '示例: fetch_arxiv(paper_id="2401.12345")'
+      '示例: fetch_arxiv(paper_id="2401.12345") 或 fetch_arxiv(paper_ids=["2401.12345","2402.67890"])'
     )
   }
-  
-  const cleanId = paper_id.toString().trim().toLowerCase().replace(/v\d+$/, '')
-  
+
+  const cleanIds = rawIds
+    .map(id => id.toString().trim().toLowerCase().replace(/v\d+$/, ''))
+    .filter(Boolean)
+
   try {
-    const url = `https://export.arxiv.org/api/query?search_query=id:${cleanId}&start=0&max_results=1`
-    
+    // 使用 id_list 批量查询，一次请求获取多篇论文
+    const idList = cleanIds.join(',')
+    const url = `https://export.arxiv.org/api/query?id_list=${idList}&start=0&max_results=${cleanIds.length}`
+
     const response = await proxyFetch(url, { 'Accept': 'application/atom+xml' })
-    
+
     if (!response.ok) {
       return createErrorResult(
         `HTTP ${response.status}`,
@@ -212,20 +297,23 @@ export const fetchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
         '请稍后重试'
       )
     }
-    
+
     const xmlText = await response.text()
     const papers = parseArxivXml(xmlText)
-    
+
     if (papers.length === 0) {
       return createErrorResult(
         'Paper not found',
-        `未找到论文: ${paper_id}`,
+        `未找到论文: ${cleanIds.join(', ')}`,
         '请检查论文 ID 是否正确'
       )
     }
-    
-    const p = papers[0]
-    const formattedResult = `📄 **${p.title}**
+
+    // 格式化多篇论文
+    let formattedResult = ''
+    if (papers.length === 1) {
+      const p = papers[0]
+      formattedResult = `📄 **${p.title}**
 
 👤 **作者**: ${p.authors.join(', ')}
 📅 **发布**: ${formatDate(p.published)}
@@ -235,10 +323,23 @@ export const fetchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
 
 📝 **摘要**:
 ${p.summary}`
-    
+    } else {
+      formattedResult = `📚 共获取 ${papers.length} 篇论文\n\n`
+      papers.forEach((p, i) => {
+        formattedResult += `--- 论文 ${i + 1} ---\n`
+        formattedResult += `📄 **${p.title}**\n`
+        formattedResult += `👤 **作者**: ${p.authors.join(', ')}\n`
+        formattedResult += `📅 **发布**: ${formatDate(p.published)}\n`
+        formattedResult += `🏷️ **分类**: ${p.primaryCategory || 'N/A'}\n`
+        formattedResult += `🔗 **链接**: ${p.absUrl}\n`
+        formattedResult += `📥 **PDF**: ${p.pdfUrl}\n`
+        formattedResult += `📝 **摘要**:\n${p.summary}\n\n`
+      })
+    }
+
     return createSuccessResult(
-      p,
-      `成功获取论文: ${p.title}`,
+      papers.length === 1 ? papers[0] : papers,
+      formattedResult,
       'fetch_arxiv'
     )
   } catch (error: any) {

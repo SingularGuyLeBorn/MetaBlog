@@ -40,13 +40,15 @@ export interface ToolDefinition {
      * 描述越清晰，AI 调用越准确
      */
     description: string
-    /** 参数定义 */
+    /** 参数定义（支持 anyOf、oneOf 等 JSON Schema 扩展） */
     parameters: {
       type: 'object'
       /** 每个参数的定义 */
       properties: Record<string, any>
       /** 必填参数列表 */
       required?: string[]
+      /** 允许 JSON Schema 扩展字段 */
+      [key: string]: any
     }
   }
 }

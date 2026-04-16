@@ -18,11 +18,18 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
   server.middlewares.use("/api/proxy/fetch", async (req, res, next) => {
     if (req.method === "POST") {
       const chunks: Buffer[] = [];
+      let reqError: Error | null = null;
       req.on("data", (chunk) => chunks.push(chunk));
+      req.on("error", (err) => { reqError = err; });
       req.on("end", async () => {
+        if (reqError) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ success: false, error: reqError.message }));
+          return;
+        }
         try {
           const body = JSON.parse(Buffer.concat(chunks).toString());
-          const { url, timeout = 10000, headers: customHeaders = {} } = body;
+          const { url, timeout = 15000, headers: customHeaders = {}, retries = 2 } = body;
 
           if (!url) {
             res.statusCode = 400;
@@ -62,95 +69,122 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
           structuredLog.info("proxy.fetch.started", `Fetching ${url}`, {
             url,
             timeout,
+            retries,
           });
 
-          // 使用 Node.js fetch (兼容 Node 16+)
-          structuredLog.info("proxy.fetch.request", `Fetching ${url}`, {
-            hostname: targetUrl.hostname,
-          });
+          // 重试辅助
+          const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+          const jitter = () => Math.floor(Math.random() * 300);
 
-          // 创建 AbortController 实现超时（兼容 Node 16）
-          const controller = new AbortController();
-          const timeoutId = setTimeout(
-            () => controller.abort(),
-            timeout,
-          );
+          let lastError: any = null;
+          let attempt = 0;
+          while (attempt <= retries) {
+            attempt++;
+            if (attempt > 1) {
+              const delay = 500 * (attempt - 1) + jitter();
+              structuredLog.info("proxy.fetch.retry", `Retry ${attempt}/${retries + 1} for ${url} after ${delay}ms`);
+              await sleep(delay);
+            }
 
-          try {
-            const fetchResponse = await fetch(url, {
-              method: "GET",
-              headers: {
-                "User-Agent":
-                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                Accept:
-                  "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-                ...customHeaders,
-              },
-              signal: controller.signal,
-            });
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-            clearTimeout(timeoutId);
+            try {
+              const fetchResponse = await fetch(url, {
+                method: "GET",
+                headers: {
+                  "User-Agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                  Accept:
+                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                  "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                  ...customHeaders,
+                },
+                signal: controller.signal,
+                // @ts-ignore - undici/node fetch option
+                keepalive: false,
+              });
 
-            if (!fetchResponse.ok) {
-              structuredLog.warn(
-                "proxy.fetch.failed",
-                `Failed to fetch ${url}`,
-                { status: fetchResponse.status },
+              clearTimeout(timeoutId);
+
+              if (!fetchResponse.ok) {
+                // 对可重试状态码进行重试
+                const retryable = [429, 502, 503, 504].includes(fetchResponse.status);
+                if (retryable && attempt <= retries) {
+                  lastError = { status: fetchResponse.status, statusText: fetchResponse.statusText };
+                  continue;
+                }
+                structuredLog.warn(
+                  "proxy.fetch.failed",
+                  `Failed to fetch ${url}`,
+                  { status: fetchResponse.status },
+                );
+                res.statusCode = fetchResponse.status;
+                res.end(
+                  JSON.stringify({
+                    success: false,
+                    error: `HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`,
+                  }),
+                );
+                return;
+              }
+
+              const data = await fetchResponse.text();
+              structuredLog.success(
+                "proxy.fetch.completed",
+                `Fetched ${url}`,
+                { size: data.length, attempts: attempt },
               );
-              res.statusCode = fetchResponse.status;
+
+              res.setHeader(
+                "Content-Type",
+                fetchResponse.headers.get("content-type") ||
+                  "text/plain; charset=utf-8",
+              );
+              res.end(data);
+              return;
+            } catch (fetchError: any) {
+              clearTimeout(timeoutId);
+              const isTimeout =
+                fetchError.name === "AbortError" ||
+                fetchError.message?.includes("timeout");
+              const isRetryable = !isTimeout || attempt <= retries;
+              lastError = fetchError;
+
+              if (isRetryable && attempt <= retries) {
+                structuredLog.warn("proxy.fetch.retryable", `Attempt ${attempt} failed for ${url}: ${fetchError.message}`);
+                continue;
+              }
+
+              const errorMsg = isTimeout
+                ? `请求超时 (${timeout}ms)`
+                : `请求失败: ${fetchError.message}`;
+
+              structuredLog.error(
+                "proxy.fetch.error",
+                `Error fetching ${url}`,
+                {
+                  error: fetchError.message,
+                  isTimeout,
+                  attempts: attempt,
+                },
+              );
+
+              res.statusCode = isTimeout ? 504 : 502;
               res.end(
                 JSON.stringify({
                   success: false,
-                  error: `HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`,
+                  error: errorMsg,
+                  details: {
+                    url,
+                    hostname: targetUrl.hostname,
+                    isTimeout,
+                    rawError: fetchError.message,
+                  },
                 }),
               );
               return;
             }
-
-            const data = await fetchResponse.text();
-            structuredLog.success(
-              "proxy.fetch.completed",
-              `Fetched ${url}`,
-              { size: data.length },
-            );
-
-            res.setHeader(
-              "Content-Type",
-              fetchResponse.headers.get("content-type") ||
-                "text/plain; charset=utf-8",
-            );
-            res.end(data);
-          } catch (fetchError: any) {
-            clearTimeout(timeoutId);
-            const isTimeout =
-              fetchError.name === "AbortError" ||
-              fetchError.message?.includes("timeout");
-            const errorMsg = isTimeout
-              ? `请求超时 (${timeout}ms)`
-              : `请求失败: ${fetchError.message}`;
-
-            structuredLog.error(
-              "proxy.fetch.error",
-              `Error fetching ${url}`,
-              {
-                error: fetchError.message,
-                isTimeout,
-              },
-            );
-
-            res.statusCode = isTimeout ? 504 : 502;
-            res.end(
-              JSON.stringify({
-                success: false,
-                error: errorMsg,
-                details: {
-                  url,
-                  hostname: targetUrl.hostname,
-                  isTimeout,
-                },
-              }),
-            );
           }
         } catch (e) {
           res.statusCode = 500;

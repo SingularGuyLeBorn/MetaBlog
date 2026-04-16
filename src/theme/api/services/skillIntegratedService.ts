@@ -359,7 +359,7 @@ export const skillIntegratedService = {
       enhancedConfig,
       callbacks,
       signal,
-      10, // maxToolRounds
+      100, // maxToolRounds
       sessionId,
       {
         availableTools,

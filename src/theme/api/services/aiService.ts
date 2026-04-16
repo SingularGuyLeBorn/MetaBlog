@@ -763,6 +763,41 @@ async function chatStreamInternal(
   let chunkCount = 0
   let toolCalls: any[] = []
 
+  // 流式回调 throttle，避免前端每 1~2 个 token 就重渲染一次
+  const CONTENT_THROTTLE_MS = 80
+  let lastContentFlush = 0
+  let pendingContent = ''
+  function flushContent(force = false) {
+    if (!pendingContent && !force) return
+    const now = Date.now()
+    if (!force && now - lastContentFlush < CONTENT_THROTTLE_MS) return
+    lastContentFlush = now
+    callbacks.onContent(cleanAIOutput(pendingContent))
+  }
+
+  // 内部超时控制
+  const internalController = new AbortController()
+  const onExternalAbort = () => internalController.abort(signal?.reason)
+  signal?.addEventListener('abort', onExternalAbort)
+
+  let idleTimer: ReturnType<typeof setTimeout> | null = null
+  function resetIdleTimer() {
+    if (idleTimer) clearTimeout(idleTimer)
+    idleTimer = setTimeout(() => {
+      internalController.abort(new Error('Stream idle timeout: no data received for 60s'))
+    }, 60000)
+  }
+  function clearIdleTimer() {
+    if (idleTimer) {
+      clearTimeout(idleTimer)
+      idleTimer = null
+    }
+  }
+
+  const connectionTimer = setTimeout(() => {
+    internalController.abort(new Error('Connection timeout: failed to establish stream within 30s'))
+  }, 30000)
+
   try {
     const response = await fetch(`${modelConfig.baseURL}/chat/completions`, {
       method: 'POST',
@@ -771,8 +806,11 @@ async function chatStreamInternal(
         'Authorization': `Bearer ${modelConfig.apiKey}`
       },
       body: JSON.stringify(requestBody),
-      signal
+      signal: internalController.signal
     })
+
+    clearTimeout(connectionTimer)
+    resetIdleTimer()
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -788,6 +826,7 @@ async function chatStreamInternal(
       const { done, value } = await reader.read()
       if (done) break
 
+      resetIdleTimer()
       chunkCount++
       buffer += decoder.decode(value, { stream: true })
       const lines = buffer.split('\n')
@@ -798,6 +837,7 @@ async function chatStreamInternal(
         
         const data = line.slice(6).trim()
         if (data === '[DONE]') {
+          flushContent(true)
           return {
             content: fullContent,
             reasoningContent: fullReasoning,
@@ -829,10 +869,11 @@ async function chatStreamInternal(
             fullReasoning += delta.reasoning_content
             callbacks.onReasoning(fullReasoning)
           }
-          
+
           if (delta?.content) {
             fullContent += delta.content
-            callbacks.onContent(cleanAIOutput(fullContent))
+            pendingContent = fullContent
+            flushContent()
           }
         } catch {
           // 忽略解析错误
@@ -841,6 +882,7 @@ async function chatStreamInternal(
     }
     
     // 返回最终在流结束时积累的数据（防由于网络结束但未发送[DONE]）
+    flushContent(true)
     return {
       content: fullContent,
       reasoningContent: fullReasoning,
@@ -850,6 +892,9 @@ async function chatStreamInternal(
     const errorObj = error instanceof Error ? error : new Error(String(error))
     logApiError('/chat/completions (stream)', errorObj, Date.now() - startTime, requestBody)
     return { error: errorObj.message }
+  } finally {
+    clearIdleTimer()
+    signal?.removeEventListener('abort', onExternalAbort)
   }
 }
 
@@ -861,7 +906,7 @@ export const aiService = {
     config: SessionConfig,
     callbacks: StreamCallbacks,
     signal?: AbortSignal,
-    maxToolRounds: number = 10,
+    maxToolRounds: number = 100,
     sessionId?: string,
     toolContext?: {
       agentId?: string
@@ -962,6 +1007,7 @@ export const aiService = {
       let hasMoreToolCalls = true
       let fullThinking = ''
       let stepIndex = 0
+      let lastResponseContent = ''
       
       while (hasMoreToolCalls && toolRound < maxToolRounds) {
         toolRound++
@@ -1026,6 +1072,9 @@ export const aiService = {
           stepIndex++
           callbacks.onThinkingStep?.(textStep)
           
+          // 清空 content 区域，避免中间文本残留为最终回复
+          callbacks.onContent('')
+          
           apiDebugLogger.logNote('intermediate_text', '【UI展示】中间文本', { content: response.content }, true)
         }
         
@@ -1048,6 +1097,11 @@ export const aiService = {
           
           await apiDebugLogger.flush()
           return { toolRecords }
+        }
+        
+        // 达到最大轮次前，记录最后一轮的内容，用于轮次耗尽时给出总结
+        if (response.content) {
+          lastResponseContent = response.content
         }
         
         // 执行工具调用
@@ -1148,6 +1202,34 @@ export const aiService = {
           data: { round: toolRound, toolCount: toolCalls.length, toolNames: toolCalls.map(tc => tc.function.name) }
         })
       }
+      
+      // 如果是因为达到 maxToolRounds 而退出循环，尝试再发一次不带 tools 的请求获取最终总结
+      if (toolRound >= maxToolRounds && lastResponseContent) {
+        addLog({
+          level: 'warn', category: 'chat', component: 'aiService',
+          event: 'max_rounds_reached', message: `已达到最大工具轮次 (${maxToolRounds})，尝试获取最终回复`,
+          data: { maxToolRounds }
+        })
+        filteredMessages.push({
+          role: 'assistant',
+          content: lastResponseContent
+        })
+        filteredMessages.push({
+          role: 'user',
+          content: '请基于以上搜索结果，直接给出最终回答，不要再调用任何工具。'
+        })
+        const finalResponse = await chatStreamInternal(filteredMessages, config, callbacks, signal, true, false, toolContext)
+        if (!finalResponse.error) {
+          if (finalResponse.content) {
+            callbacks.onContent(cleanAIOutput(finalResponse.content))
+          }
+          if (isReasoningMode && finalResponse.reasoningContent) {
+            callbacks.onReasoning(fullThinking + '\n\n---\n' + finalResponse.reasoningContent)
+          }
+        }
+      }
+      
+      callbacks.onComplete()
       
       const duration = Date.now() - startTime
       addLog({

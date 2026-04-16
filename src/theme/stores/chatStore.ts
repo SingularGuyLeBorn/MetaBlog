@@ -572,7 +572,7 @@ export function useAIChat() {
           }
         },
         undefined,  // signal
-        10,         // maxToolRounds
+        100,        // maxToolRounds
         undefined,  // sessionId
         toolContext
       )

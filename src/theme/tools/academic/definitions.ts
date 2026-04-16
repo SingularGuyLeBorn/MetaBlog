@@ -8,13 +8,13 @@ export const searchArxivDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'search_arxiv',
-    description: '搜索 ArXiv 学术论文。支持关键词、分类过滤。常用分类：cs.AI(AI), cs.CL(NLP), cs.CV(计算机视觉), cs.LG(机器学习)',
+    description: '搜索 ArXiv 学术论文。支持关键词、分类过滤。常用分类：cs.AI(AI), cs.CL(NLP), cs.CV(计算机视觉), cs.LG(机器学习)。注意：ArXiv 免费 API 有速率限制（约每 3 秒 1 次），请尽量把相关主题用 OR 合并到一次查询中，避免连续发起多次搜索。',
     parameters: {
       type: 'object',
       properties: {
-        query: { type: 'string', description: '搜索关键词' },
+        query: { type: 'string', description: '搜索关键词，可用 OR 合并多个主题，如 "transformer OR attention"' },
         category: { type: 'string', description: '分类过滤，如 cs.AI', default: '' },
-        max_results: { type: 'number', description: '返回数量(1-50)', default: 10 },
+        max_results: { type: 'number', description: '返回数量(1-50)', default: 5 },
         sort_by: { type: 'string', enum: ['relevance', 'lastUpdatedDate', 'submittedDate'], default: 'relevance' }
       },
       required: ['query']
@@ -26,13 +26,17 @@ export const fetchArxivDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'fetch_arxiv',
-    description: '获取 ArXiv 论文详情，包括完整摘要、作者、PDF链接',
+    description: '获取 ArXiv 论文详情，包括完整摘要、作者、PDF链接。支持一次获取多篇论文以减少 API 调用次数。',
     parameters: {
       type: 'object',
       properties: {
-        paper_id: { type: 'string', description: 'ArXiv 论文 ID，如 2401.12345' }
+        paper_id: { type: 'string', description: 'ArXiv 论文 ID，如 2401.12345。与 paper_ids 二选一或同时使用。' },
+        paper_ids: { type: 'array', items: { type: 'string' }, description: '多个 ArXiv 论文 ID 数组，如 ["2401.12345","2402.67890"]' }
       },
-      required: ['paper_id']
+      anyOf: [
+        { required: ['paper_id'] },
+        { required: ['paper_ids'] }
+      ]
     }
   }
 }
