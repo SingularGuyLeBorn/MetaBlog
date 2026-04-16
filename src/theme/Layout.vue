@@ -320,10 +320,10 @@ const rightResizerPosition = computed(() => rightWidth.value + 'px')
         v-model:visible="showAgentAdmin"
         @agent-change="handleAgentChange"
       />
-      <LogDashboard
+      <!-- <LogDashboard
         v-model:visible="showLogDashboard"
         @close="showLogDashboard = false"
-      />
+      /> -->
     </div>
   </StarRiverLayout>
 </template>

@@ -667,10 +667,11 @@ async function copyContent() {
 
 /* ========== 中间文本 ========== */
 .timeline-card.text {
-  background: transparent;
-  border: none;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-left: 4px solid #94a3b8;
   box-shadow: none;
-  padding: 0;
+  padding: 10px 14px;
 }
 
 .intermediate-text {

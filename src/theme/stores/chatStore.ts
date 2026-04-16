@@ -355,6 +355,7 @@ export function useAIChat() {
             
             targetMsg.updatedAt = Date.now()
             targetMsg.metadata = { 
+              ...targetMsg.metadata,
               model: config.model,
               toolRecords,
               error: errorMessage

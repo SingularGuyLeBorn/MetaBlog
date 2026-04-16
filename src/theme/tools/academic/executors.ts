@@ -6,6 +6,36 @@
 import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
 import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 
+// 通过后端代理转发请求，避免浏览器 CORS 限制
+async function proxyFetch(url: string, headers?: Record<string, string>, timeout = 15000): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeout)
+  try {
+    const res = await fetch('/api/proxy/fetch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, timeout, headers }),
+      signal: controller.signal
+    })
+    if (!res.ok) {
+      const text = await res.text().catch(() => 'Proxy error')
+      throw new Error(`Proxy HTTP ${res.status}: ${text}`)
+    }
+    // 构造一个 Response-like 对象，兼容原有代码
+    const contentType = res.headers.get('content-type') || ''
+    const text = await res.text()
+    return {
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-type': contentType }),
+      text: async () => text,
+      json: async () => JSON.parse(text),
+    } as Response
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 // ==================== ArXiv ====================
 
 export interface ArxivPaper {
@@ -103,13 +133,7 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
     
     const url = `https://export.arxiv.org/api/query?search_query=${searchQuery}&start=0&max_results=${limit}&sortBy=${sort_by}&sortOrder=descending`
     
-    const controller = new AbortController()
-    setTimeout(() => controller.abort(), 15000)
-    
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: { 'Accept': 'application/atom+xml' }
-    })
+    const response = await proxyFetch(url, { 'Accept': 'application/atom+xml' })
     
     if (!response.ok) {
       return createErrorResult(
@@ -179,13 +203,7 @@ export const fetchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
   try {
     const url = `https://export.arxiv.org/api/query?search_query=id:${cleanId}&start=0&max_results=1`
     
-    const controller = new AbortController()
-    setTimeout(() => controller.abort(), 15000)
-    
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: { 'Accept': 'application/atom+xml' }
-    })
+    const response = await proxyFetch(url, { 'Accept': 'application/atom+xml' })
     
     if (!response.ok) {
       return createErrorResult(
@@ -256,10 +274,7 @@ export const searchHuggingFace: ToolExecutor = async (args): Promise<ToolResult>
     let url = `https://huggingface.co/api/models?search=${encodeURIComponent(query)}&limit=${Math.min(limit, 50)}`
     if (task) url += `&filter=${task}`
     
-    const controller = new AbortController()
-    setTimeout(() => controller.abort(), 15000)
-    
-    const response = await fetch(url, { signal: controller.signal })
+    const response = await proxyFetch(url)
     
     if (!response.ok) {
       return createErrorResult(
@@ -324,10 +339,7 @@ export const fetchHuggingFaceModel: ToolExecutor = async (args): Promise<ToolRes
   try {
     const url = `https://huggingface.co/api/models/${model_id}`
     
-    const controller = new AbortController()
-    setTimeout(() => controller.abort(), 15000)
-    
-    const response = await fetch(url, { signal: controller.signal })
+    const response = await proxyFetch(url)
     
     if (response.status === 404) {
       return createErrorResult(
@@ -394,10 +406,7 @@ export const searchPapersWithCode: ToolExecutor = async (args): Promise<ToolResu
   try {
     const url = `https://paperswithcode.com/api/v1/search/?q=${encodeURIComponent(query)}&items_per_page=${Math.min(limit, 50)}`
     
-    const controller = new AbortController()
-    setTimeout(() => controller.abort(), 15000)
-    
-    const response = await fetch(url, { signal: controller.signal })
+    const response = await proxyFetch(url)
     
     if (!response.ok) {
       return createErrorResult(
@@ -466,10 +475,7 @@ export const searchSemanticScholar: ToolExecutor = async (args): Promise<ToolRes
     const fields = 'title,authors,year,abstract,citationCount'
     const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(query)}&fields=${fields}&limit=${Math.min(limit, 100)}`
     
-    const controller = new AbortController()
-    setTimeout(() => controller.abort(), 15000)
-    
-    const response = await fetch(url, { signal: controller.signal })
+    const response = await proxyFetch(url)
     
     if (!response.ok) {
       return createErrorResult(
@@ -536,10 +542,7 @@ export const searchOpenReview: ToolExecutor = async (args): Promise<ToolResult> 
   try {
     const url = `https://api.openreview.net/notes/search?term=${encodeURIComponent(query)}&limit=${Math.min(limit, 50)}`
     
-    const controller = new AbortController()
-    setTimeout(() => controller.abort(), 15000)
-    
-    const response = await fetch(url, { signal: controller.signal })
+    const response = await proxyFetch(url)
     
     if (!response.ok) {
       return createErrorResult(
@@ -610,10 +613,7 @@ export const fetchOpenReview: ToolExecutor = async (args): Promise<ToolResult> =
   try {
     const url = `https://api.openreview.net/notes?id=${forum_id}`
     
-    const controller = new AbortController()
-    setTimeout(() => controller.abort(), 15000)
-    
-    const response = await fetch(url, { signal: controller.signal })
+    const response = await proxyFetch(url)
     
     if (!response.ok) {
       return createErrorResult(

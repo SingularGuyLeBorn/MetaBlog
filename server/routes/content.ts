@@ -595,7 +595,7 @@ ${content}`;
             );
 
             // 触发热更新
-            triggerReload();
+            // triggerReload();
           } catch (e) {
             console.error("[API] Create article error:", e);
             res.statusCode = 500;
@@ -636,7 +636,7 @@ ${content}`;
             );
 
             // 触发热更新
-            triggerReload();
+            // triggerReload();
           } catch (e) {
             res.statusCode = 500;
             res.end(
@@ -686,7 +686,7 @@ ${content}`;
             );
 
             // 触发热更新
-            triggerReload();
+            // triggerReload();
           } catch (e) {
             res.statusCode = 500;
             res.end(
@@ -731,7 +731,7 @@ ${content}`;
             );
 
             // 触发热更新
-            triggerReload();
+            // triggerReload();
           } catch (e) {
             res.statusCode = 500;
             res.end(
@@ -781,7 +781,7 @@ ${content}`;
             );
 
             // 触发热更新
-            triggerReload();
+            // triggerReload();
           } catch (e) {
             res.statusCode = 500;
             res.end(

@@ -221,7 +221,8 @@ async function loadArticles() {
     // 扫描 docs 目录下的所有 markdown 文件
     const response = await fetch('/api/files/list?path=docs&recursive=true')
     if (response.ok) {
-      const files = await response.json()
+      const result = await response.json()
+      const files = result.data || []
       const mdFiles = files.filter((f: any) => f.path.endsWith('.md'))
       
       articles.value = mdFiles.map((f: any) => {

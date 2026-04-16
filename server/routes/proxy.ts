@@ -22,7 +22,7 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
       req.on("end", async () => {
         try {
           const body = JSON.parse(Buffer.concat(chunks).toString());
-          const { url, timeout = 10000 } = body;
+          const { url, timeout = 10000, headers: customHeaders = {} } = body;
 
           if (!url) {
             res.statusCode = 400;
@@ -85,6 +85,7 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
                 Accept:
                   "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
                 "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                ...customHeaders,
               },
               signal: controller.signal,
             });
