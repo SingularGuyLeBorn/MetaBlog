@@ -694,7 +694,7 @@ async function chatStreamInternal(
     declaredTools?: string[]
     availableTools?: string[]
   }
-): Promise<{ content?: string; toolCalls?: ToolCall[]; reasoningContent?: string; error?: string }> {
+): Promise<{ content?: string; toolCalls?: ToolCall[]; reasoningContent?: string; error?: string; aborted?: boolean }> {
   const modelConfig = getModelConfig(config.model)
   validateApiKey(modelConfig)
   
@@ -890,6 +890,15 @@ async function chatStreamInternal(
     }
   } catch (error) {
     const errorObj = error instanceof Error ? error : new Error(String(error))
+    const isAbort = errorObj.name === 'AbortError' || errorObj.message?.toLowerCase().includes('aborted')
+    if (isAbort) {
+      return {
+        content: fullContent,
+        reasoningContent: fullReasoning,
+        toolCalls: toolCalls.length > 0 ? toolCalls.filter(Boolean) : undefined,
+        aborted: true
+      }
+    }
     logApiError('/chat/completions (stream)', errorObj, Date.now() - startTime, requestBody)
     return { error: errorObj.message }
   } finally {
@@ -1020,7 +1029,12 @@ export const aiService = {
         
         const hasAnyTools = !!(toolContext?.availableTools?.length)
         const response = await chatStreamInternal(filteredMessages, config, callbacks, signal, toolRound > 1, hasAnyTools, toolContext)
-        
+
+        if (response.aborted) {
+          callbacks.onComplete()
+          return { toolRecords }
+        }
+
         if (response.error) {
           callbacks.onError(new Error(response.error))
           return { toolRecords }
