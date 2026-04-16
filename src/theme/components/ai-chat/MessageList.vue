@@ -162,21 +162,26 @@ watch(
 )
 
 let contentUpdateTimeout: ReturnType<typeof setTimeout> | null = null
+let scrollRafId: number | null = null
 watch(
   () => props.messages[props.messages.length - 1]?.content || '',
   () => {
     if (!props.isStreaming || userScrolledUp.value) return
-    
+
     if (contentUpdateTimeout) return
-    
+
     contentUpdateTimeout = setTimeout(() => {
       contentUpdateTimeout = null
-      
+
       if (!userScrolledUp.value && isNearBottom()) {
-        const container = containerRef.value
-        if (container) {
-          container.scrollTop = container.scrollHeight
-        }
+        if (scrollRafId) cancelAnimationFrame(scrollRafId)
+        scrollRafId = requestAnimationFrame(() => {
+          scrollRafId = null
+          const container = containerRef.value
+          if (container) {
+            container.scrollTop = container.scrollHeight
+          }
+        })
       }
     }, 50)
   }
@@ -244,7 +249,7 @@ defineExpose({ scrollToBottom })
 .orb-1 {
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, rgba(107, 231, 142, 0.2), transparent 70%);
+  background: radial-gradient(circle, rgba(179, 168, 184, 0.18), transparent 70%);
   top: 20%;
   left: 20%;
 }
@@ -252,7 +257,7 @@ defineExpose({ scrollToBottom })
 .orb-2 {
   width: 250px;
   height: 250px;
-  background: radial-gradient(circle, rgba(255, 31, 34, 0.15), transparent 70%);
+  background: radial-gradient(circle, rgba(154, 168, 179, 0.14), transparent 70%);
   bottom: 30%;
   right: 20%;
   animation-delay: -3s;
@@ -261,7 +266,7 @@ defineExpose({ scrollToBottom })
 .orb-3 {
   width: 200px;
   height: 200px;
-  background: radial-gradient(circle, rgba(107, 231, 142, 0.15), transparent 70%);
+  background: radial-gradient(circle, rgba(212, 196, 176, 0.12), transparent 70%);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -287,7 +292,7 @@ defineExpose({ scrollToBottom })
 .logo-glow {
   position: absolute;
   inset: -20px;
-  background: radial-gradient(circle, rgba(107, 231, 142, 0.2) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(179, 168, 184, 0.2) 0%, transparent 70%);
   border-radius: 50%;
   animation: pulse-glow 3s ease-in-out infinite;
 }
@@ -305,13 +310,13 @@ defineExpose({ scrollToBottom })
 
 .ring-1 {
   inset: -10px;
-  border-color: rgba(107, 231, 142, 0.3);
+  border-color: rgba(179, 168, 184, 0.35);
   animation: spin 15s linear infinite;
 }
 
 .ring-2 {
   inset: -20px;
-  border-color: rgba(255, 31, 34, 0.2);
+  border-color: rgba(154, 168, 179, 0.25);
   animation: spin-reverse 20s linear infinite;
 }
 
@@ -321,7 +326,7 @@ defineExpose({ scrollToBottom })
 .logo-icon {
   position: relative;
   font-size: 64px;
-  filter: drop-shadow(0 4px 20px rgba(107, 231, 142, 0.4));
+  filter: drop-shadow(0 4px 20px rgba(184, 160, 144, 0.25));
   animation: icon-float 3s ease-in-out infinite;
   z-index: 1;
 }
@@ -333,29 +338,30 @@ defineExpose({ scrollToBottom })
 
 .welcome-title-3d {
   font-size: 42px;
-  font-weight: 800;
+  font-weight: 300;
   margin-bottom: 16px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #2d2a26);
   position: relative;
   z-index: 1;
+  letter-spacing: -0.02em;
 }
 
 .gradient-text-3d {
-  background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, var(--sr-morandi-purple, #b3a8b8) 0%, var(--sr-morandi-warm, #d4c4b0) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.1));
+  filter: drop-shadow(0 4px 12px rgba(179, 168, 184, 0.15));
 }
 
 .welcome-desc-3d {
   font-size: 16px;
-  color: #64748b;
+  color: var(--sr-text-secondary, #6a6560);
   margin-bottom: 40px;
   max-width: 400px;
   position: relative;
   z-index: 1;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 /* 3D 快捷操作按钮 */
@@ -395,9 +401,9 @@ defineExpose({ scrollToBottom })
 }
 
 .quick-action-btn-3d:hover {
-  border-color: rgba(59, 130, 246, 0.4);
+  border-color: rgba(184, 160, 144, 0.4);
   background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.1), inset 0 0 16px rgba(59, 130, 246, 0.05);
+  box-shadow: 0 12px 30px rgba(184, 160, 144, 0.1), inset 0 0 16px rgba(184, 160, 144, 0.05);
   transform: translateY(-4px) rotateX(5deg);
 }
 
@@ -412,8 +418,8 @@ defineExpose({ scrollToBottom })
 
 .action-text {
   font-size: 15px;
-  font-weight: 600;
-  color: #1e293b;
+  font-weight: 500;
+  color: var(--sr-text-primary, #2d2a26);
 }
 
 /* 3D 滚动到底部按钮 */
@@ -438,11 +444,11 @@ defineExpose({ scrollToBottom })
 }
 
 .scroll-to-bottom-3d:hover {
-  background: rgba(241, 245, 249, 0.95);
-  border-color: rgba(59, 130, 246, 0.4);
-  color: #3b82f6;
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(184, 160, 144, 0.4);
+  color: var(--sr-text-secondary, #6a6560);
   transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.15), inset 0 0 12px rgba(59, 130, 246, 0.05);
+  box-shadow: 0 12px 30px rgba(184, 160, 144, 0.12), inset 0 0 12px rgba(184, 160, 144, 0.05);
 }
 
 .new-messages-dot-3d {
@@ -451,11 +457,11 @@ defineExpose({ scrollToBottom })
   right: -2px;
   width: 12px;
   height: 12px;
-  background: #6BE78E;
+  background: var(--sr-morandi-warm, #d4c4b0);
   border-radius: 50%;
-  border: 2px solid #000B1A;
+  border: 2px solid var(--sr-bg-primary, #f8f6f3);
   animation: pulse-dot 1.5s ease-in-out infinite;
-  box-shadow: 0 0 12px rgba(107, 231, 142, 0.5);
+  box-shadow: 0 0 12px rgba(184, 160, 144, 0.45);
 }
 
 @keyframes pulse-dot {

@@ -774,10 +774,10 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 }
 
 .input-container-3d.focused {
-  border-color: rgba(59, 130, 246, 0.5);
-  box-shadow: 
-    0 0 0 4px rgba(59, 130, 246, 0.1),
-    0 12px 32px rgba(59, 130, 246, 0.15),
+  border-color: rgba(184, 160, 144, 0.5);
+  box-shadow:
+    0 0 0 4px rgba(184, 160, 144, 0.1),
+    0 12px 32px rgba(184, 160, 144, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   transform: translateY(-2px);
 }
@@ -803,9 +803,9 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 }
 
 .attach-btn-3d:hover:not(:disabled) {
-  background: linear-gradient(145deg, #eff6ff, #dbeafe);
-  color: #3b82f6;
-  border-color: rgba(59, 130, 246, 0.3);
+  background: linear-gradient(145deg, rgba(248, 246, 243, 0.9), rgba(240, 237, 232, 0.9));
+  color: var(--sr-text-secondary, #6a6560);
+  border-color: rgba(184, 160, 144, 0.35);
   transform: scale(1.05);
 }
 
@@ -882,23 +882,23 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+  background: linear-gradient(135deg, rgba(179, 168, 184, 0.9) 0%, rgba(168, 179, 168, 0.85) 50%, rgba(184, 160, 144, 0.9) 100%);
   border: none;
   border-radius: 12px;
   color: white;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
-  box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.4),
-    0 8px 24px rgba(59, 130, 246, 0.2);
+  box-shadow:
+    0 4px 12px rgba(179, 168, 184, 0.35),
+    0 8px 24px rgba(179, 168, 184, 0.18);
 }
 
 .send-btn-3d:hover:not(:disabled) {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 
-    0 8px 20px rgba(59, 130, 246, 0.5),
-    0 16px 40px rgba(59, 130, 246, 0.3);
+  box-shadow:
+    0 8px 20px rgba(179, 168, 184, 0.45),
+    0 16px 40px rgba(179, 168, 184, 0.25);
 }
 
 .send-btn-3d:disabled {
@@ -909,10 +909,10 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 }
 
 .send-btn-3d.stop {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  box-shadow: 
-    0 4px 12px rgba(239, 68, 68, 0.4),
-    0 8px 24px rgba(239, 68, 68, 0.2);
+  background: linear-gradient(135deg, rgba(201, 184, 179, 0.9) 0%, rgba(179, 168, 168, 0.9) 100%);
+  box-shadow:
+    0 4px 12px rgba(201, 184, 179, 0.35),
+    0 8px 24px rgba(201, 184, 179, 0.18);
   animation: pulse-stop 1.5s ease-in-out infinite;
 }
 
