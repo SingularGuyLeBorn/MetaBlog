@@ -171,7 +171,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { Avatar, AIAvatar, Icon, TypewriterText } from '@/theme/components/common'
@@ -240,6 +240,26 @@ const timelineItems = computed((): ThinkingStep[] => {
 
 // 是否有时间线项目（统一判断）
 const hasTimelineItems = computed(() => timelineItems.value.length > 0)
+
+// 初始化折叠状态：卡片过多时默认只展开最近的 5 个，防止浏览器卡死
+watch(timelineItems, (items) => {
+  if (!items.length) return
+  const keepOpen = 5
+  const threshold = 8
+  const shouldCollapse = items.length > threshold
+  const startOpenIndex = shouldCollapse ? Math.max(0, items.length - keepOpen) : 0
+
+  const next: Record<string, boolean> = {}
+  items.forEach((item, idx) => {
+    // 保留用户已手动切换过的状态；新出现的项按策略设置
+    if (expandedItems.value[item.id] !== undefined) {
+      next[item.id] = expandedItems.value[item.id]
+    } else {
+      next[item.id] = idx >= startOpenIndex
+    }
+  })
+  expandedItems.value = next
+}, { immediate: true })
 
 // 传统思考内容
 const displayReasoning = computed(() => props.message.reasoning?.content || '')
@@ -497,8 +517,8 @@ async function copyContent() {
 .thinking-timeline {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .timeline-card {
@@ -598,6 +618,8 @@ async function copyContent() {
 .card-body {
   padding: 0 16px 16px;
   border-top: 1px solid rgba(226, 232, 240, 0.5);
+  max-height: 360px;
+  overflow-y: auto;
 }
 
 .thinking-content {
@@ -607,6 +629,8 @@ async function copyContent() {
   font-style: italic;
   white-space: pre-wrap;
   padding-top: 12px;
+  max-height: 280px;
+  overflow-y: auto;
 }
 
 .tool-section {
