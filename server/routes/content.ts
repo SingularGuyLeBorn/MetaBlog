@@ -4,6 +4,7 @@ import fs from "fs";
 
 import { clearSidebarCache } from "../../.vitepress/utils/global-sidebar";
 import { scanDocStructure, toSidebarFormat, toDirectoryTree, type DocNode } from "../../.vitepress/utils/doc-structure";
+import { createArticleInHarness } from "../utils/article-harness";
 export interface RouteContext {
   system: any;
   structuredLog: any;
@@ -447,15 +448,8 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
               content = "",
               section = "posts",
               tags = [],
-              parentPath,
-              isChildDoc,
+              path: articlePath,
             } = body;
-            console.log("[API] Creating article:", {
-              title,
-              section,
-              isChildDoc,
-              parentPath,
-            });
 
             if (!title) {
               res.statusCode = 400;
@@ -468,113 +462,24 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
               return;
             }
 
-            // 生成 slug
-            const slug = generateSlug(title);
+            const result = await createArticleInHarness({
+              title,
+              content,
+              section,
+              tags,
+              path: articlePath,
+            });
 
-            const date = new Date().toISOString().split("T")[0];
-            const filename = `${slug}.md`;
-
-            let targetDir: string;
-            let filePath: string;
-
-            // 处理子文档创建
-            if (isChildDoc && parentPath) {
-              // 解析父文档路径
-              // 处理可能的 .html 或 .md 后缀，以及开头的 / 和末尾的 /
-              let cleanParentPath = parentPath
-                .replace(/\.(html|md)$/i, "")
-                .replace(/^\//, "")
-                .replace(/\/$/, "");
-              // 如果路径以 sections/ 开头，去掉它（因为 SECTIONS_PATH 已经包含）
-              if (cleanParentPath.startsWith("sections/")) {
-                cleanParentPath = cleanParentPath.substring(
-                  "sections/".length,
-                );
-              }
-              // 确保路径不包含 .md 后缀（前面已处理，这里再次确认）
-              cleanParentPath = cleanParentPath.replace(/\.md$/i, "");
-
-              // 提取父文档名称（路径的最后一部分）
-              const parentName = path.basename(cleanParentPath);
-              // 父文档的完整文件路径
-              const parentFullPath =
-                path.join(SECTIONS_PATH, cleanParentPath) + ".md";
-              // 父文档所在目录
-              const parentDir = path.dirname(parentFullPath);
-              // 父文档对应的文件夹路径（用于存放子文档）
-              const parentFolderPath = path.join(parentDir, parentName);
-
-              console.log("[API] Parent info:", {
-                parentFullPath,
-                parentDir,
-                parentName,
-                parentFolderPath,
-              });
-
-              // 检查父文档是否为叶子文档（即是否存在同名文件夹）
-              const isLeafDoc = !fs.existsSync(parentFolderPath);
-
-              if (isLeafDoc) {
-                // 叶子文档：需要创建同名文件夹并移动原文档
-                console.log(
-                  "[API] Parent is leaf document, creating folder and moving...",
-                );
-
-                // 1. 创建同名文件夹
-                await fs.promises.mkdir(parentFolderPath, {
-                  recursive: true,
-                });
-
-                // 2. 将原文档移动到文件夹内（使用 index.md，VitePress 原生支持 /folder/ → folder/index.md）
-                const targetParentPath = path.join(
-                  parentFolderPath,
-                  "index.md",
-                );
-                if (fs.existsSync(parentFullPath)) {
-                  await fs.promises.rename(
-                    parentFullPath,
-                    targetParentPath,
-                  );
-                  console.log(
-                    "[API] Moved parent doc to:",
-                    targetParentPath,
-                  );
-                }
-
-                // 3. 在文件夹内创建子文档
-                targetDir = parentFolderPath;
-              } else {
-                // 非叶子文档：直接在已有文件夹内创建
-                console.log(
-                  "[API] Parent already has folder, creating inside...",
-                );
-                targetDir = parentFolderPath;
-              }
-
-              filePath = path.join(targetDir, filename);
-            } else {
-              // 普通文档创建
-              targetDir = path.join(SECTIONS_PATH, section);
-              filePath = path.join(targetDir, filename);
+            if (!result.success) {
+              res.statusCode = 500;
+              res.end(
+                JSON.stringify({
+                  success: false,
+                  error: result.error || "Failed to create article",
+                }),
+              );
+              return;
             }
-
-            console.log("[API] Target path:", { targetDir, filePath });
-
-            // 确保目录存在
-            await fs.promises.mkdir(targetDir, { recursive: true });
-
-            // 创建文章
-            const frontmatter = `---
-title: ${title}
-date: ${date}
-tags:
-${tags.map((t: string) => `  - ${t}`).join("\n")}
----
-
-${content}`;
-
-            await fs.promises.writeFile(filePath, frontmatter, "utf-8");
-            console.log("[API] File written successfully:", filePath);
 
             // 清除 sidebar 缓存
             clearSidebarCache(section);
@@ -584,18 +489,13 @@ ${content}`;
               JSON.stringify({
                 success: true,
                 data: {
-                  path: path
-                    .relative(SECTIONS_PATH, filePath)
-                    .replace(/\\/g, "/"),
+                  path: result.path,
                   title,
-                  date,
-                  fullPath: filePath,
+                  fullPath: result.fullPath,
+                  promotedNodes: result.promotedNodes,
                 },
               }),
             );
-
-            // 触发热更新
-            // triggerReload();
           } catch (e) {
             console.error("[API] Create article error:", e);
             res.statusCode = 500;

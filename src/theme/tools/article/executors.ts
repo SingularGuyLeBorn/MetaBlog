@@ -237,11 +237,11 @@ export const listArticles: ToolExecutor = async (args) => {
 }
 
 /**
- * 创建文章
+ * 创建文章 - 通过后端 Harness，自动处理叶子节点提升
  */
 export const createArticle: ToolExecutor = async (args) => {
-  let { title, path: articlePath, content = '', tags = [], category } = args
-  
+  const { title, path: articlePath, content = '', tags = [], section = 'posts' } = args
+
   if (!title) {
     return createErrorResult(
       'Missing title',
@@ -249,79 +249,35 @@ export const createArticle: ToolExecutor = async (args) => {
       '例如: "Vue 3 入门指南"'
     )
   }
-  
-  // 自动处理路径
-  if (!articlePath) {
-    // 根据标题自动生成路径
-    const slug = title
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .substring(0, 50)
-    articlePath = `knowledge/${slug}.md`
-  }
-  
-  // 规范化路径
-  let normalizedPath = articlePath
-  
-  // 确保有 .md 后缀
-  if (!normalizedPath.endsWith('.md')) {
-    normalizedPath += '.md'
-  }
-  
-  // 如果路径以 / 开头，移除它
-  if (normalizedPath.startsWith('/')) {
-    normalizedPath = normalizedPath.substring(1)
-  }
-  
-  // 如果没有 sections/ 前缀，添加它
-  if (!normalizedPath.startsWith('sections/')) {
-    normalizedPath = `sections/${normalizedPath}`
-  }
-  
-  // 生成默认内容
-  const defaultContent = `# ${title}
 
-${content}
-
----
-创建于: ${new Date().toLocaleString()}
-`
-  
-  // 构建frontmatter
-  const frontmatter = [
-    '---',
-    `title: "${title}"`,
-    `date: ${new Date().toISOString()}`,
-    tags.length > 0 ? `tags:\n${tags.map((t: string) => `  - ${t}`).join('\n')}` : '',
-    category ? `category: ${category}` : '',
-    '---',
-    ''
-  ].filter(Boolean).join('\n')
-  
-  const fullContent = frontmatter + defaultContent
-  
   try {
-    const response = await fetch(`${API_BASE}/files/save`, {
+    const response = await fetch(`${API_BASE}/articles/create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        path: normalizedPath,
-        content: fullContent
+        title,
+        content,
+        section,
+        tags,
+        path: articlePath
       })
     })
-    
+
     const result = await handleApiResponse(response, '创建文章')
-    
+
     if (result.success) {
+      const data = result.data || {}
+      const promoted = data.promotedNodes && data.promotedNodes.length > 0
+        ? `\n（自动提升叶子节点: ${data.promotedNodes.join(', ')}）`
+        : ''
       return createSuccessResult(
-        { path: normalizedPath, title },
-        `文章 "${title}" 创建成功！\n路径: ${normalizedPath}`,
+        data,
+        `文章 "${title}" 创建成功！\n路径: ${data.path || articlePath}${promoted}`,
         'create_article',
         '可以使用 get_article_content 读取或 update_article 修改'
       )
     }
-    
+
     return result
   } catch (error) {
     return createErrorResult(

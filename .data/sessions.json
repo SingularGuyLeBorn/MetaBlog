@@ -1,5 +1,45 @@
 [
   {
+    "id": "session-1776344936890-7i1d1f4",
+    "title": "与 Meta 助手 的对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 1,
+      "maxTokens": 8192,
+      "systemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。\n\n## 你的 Skills（能力领域）\n你有 2 个已启用的 Skills：\n- 🎓 **学术研究**: 深入搜索 ArXiv 论文库、获取 OpenReview 评审详情、查找 Hugging Face AI 模型 [工具: search_arxiv, fetch_arxiv, search_openreview, fetch_openreview, search_huggingface, fetch_huggingface_model]\n- 📝 **文章管理**: 使用 VitePress 后端接口管理博客文章与知识库笔记 [工具: create_article, get_article_content, update_article, delete_article, list_articles, search_articles]\n\n## 使用规则\n1. **自动触发**: 当用户请求匹配 Skill 描述时，自动调用对应工具\n2. **工具调用**: 你有权调用上述 Skills 中的工具来完成任务\n3. **路径格式**: 文章路径使用 \"section/filename.md\" 格式\n4. **搜索优先**: 不知道具体路径时，先用 search_articles 搜索\n\n## 示例\n- 用户: \"找一下 React 的文章\" → 调用 search_articles\n- 用户: \"创建 Vue 指南\" → 调用 create_article\n",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg",
+      "agentName": "Meta 助手",
+      "_customSystemPrompt": false
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1776344936890,
+    "updatedAt": 1776344936911
+  },
+  {
+    "id": "session-1776344936890-7i1d1f4",
+    "title": "新对话",
+    "config": {
+      "model": "deepseek-chat",
+      "temperature": 1,
+      "maxTokens": 8192,
+      "systemPrompt": "",
+      "enableReasoning": false,
+      "streaming": true,
+      "agentId": "agent-1773231241953-6otnclg"
+    },
+    "stats": {
+      "messageCount": 0,
+      "totalTokens": 0
+    },
+    "createdAt": 1776344936893,
+    "updatedAt": 1776344936893
+  },
+  {
     "id": "session-1776342318141-yaw9w6w",
     "title": "与 Meta 助手 的对话",
     "config": {

@@ -8,7 +8,7 @@ export const createArticleDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'create_article',
-    description: '创建一篇新文章。利用博客专用的后端引擎创建，支持自动生成英文段落 slug 路径和子文档。',
+    description: '创建一篇新文章。Harness 会自动检测路径上的叶子节点冲突，并在需要时将叶子文档提升为 folder-note 结构。支持传入嵌套路径（如 "posts/attention/flash-attention.md"），无需手动指定 isChildDoc。',
     parameters: {
       type: 'object',
       properties: {
@@ -16,8 +16,7 @@ export const createArticleDef: ToolDefinition = {
         content: { type: 'string', description: '文章内容（支持 Markdown）' },
         section: { type: 'string', description: '所属板块，例如 "posts", "knowledge", "resources" 等，默认 "posts"' },
         tags: { type: 'array', items: { type: 'string' }, description: '文章标签' },
-        isChildDoc: { type: 'boolean', description: '是否作为某篇已有文章的子文档（将父文档转为文件夹并放入其中）' },
-        parentPath: { type: 'string', description: '当 isChildDoc 为 true 时，指定父文档的路径（相对于 sections/）' }
+        path: { type: 'string', description: '可选的自定义路径（相对于 sections/），例如 "posts/attention/flash-attention.md"。如果不传，则根据标题自动生成路径。' }
       },
       required: ['title']
     }

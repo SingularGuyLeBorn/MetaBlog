@@ -357,4 +357,11 @@ export const metaBlogBffPlugin = (): Plugin => ({
     registerMcpRoutes(server, ctx);
     registerSessionsRoutes(server, ctx);
   },
+  handleHotUpdate({ file, server }) {
+    // 拦截 docs 目录下 markdown 文件的 HMR，防止 VitePress 自动 full-reload 导致聊天状态丢失
+    if (file.endsWith(".md") && file.includes(path.sep + "docs" + path.sep)) {
+      console.log("[HMR] Suppress markdown full-reload for:", file);
+      return [];
+    }
+  },
 });
