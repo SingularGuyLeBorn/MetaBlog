@@ -11,6 +11,53 @@ export interface RouteContext {
 
 export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
+
+  // ========== AI 文章操作安全边界 ==========
+  const ALLOWED_SECTIONS = ["posts", "knowledge", "resources"];
+  const BLOCKED_SECTIONS = ["about", "ai-research"];
+
+  function validateSection(section: string): { valid: boolean; error?: string } {
+    if (ALLOWED_SECTIONS.includes(section)) return { valid: true };
+    if (BLOCKED_SECTIONS.includes(section)) {
+      return {
+        valid: false,
+        error: `板块 "${section}" 不允许AI操作。可用板块：${ALLOWED_SECTIONS.join("。")}`,
+      };
+    }
+    return {
+      valid: false,
+      error: `板块 "${section}" 不存在。可用板块：${ALLOWED_SECTIONS.join("。")}`,
+    };
+  }
+
+  function extractSection(filePath: string): string | null {
+    const normalized = filePath.replace(/^\//, "").replace(/^sections\//, "");
+    const firstSlash = normalized.indexOf("/");
+    return firstSlash > 0 ? normalized.substring(0, firstSlash) : normalized;
+  }
+
+  function isPathSafe(filePath: string): { safe: boolean; error?: string } {
+    if (filePath.includes("..")) {
+      return { safe: false, error: '路径中不允许使用 ".."' };
+    }
+    return { safe: true };
+  }
+
+  function checkSectionsBoundary(
+    filePath: string
+  ): { allowed: boolean; error?: string } {
+    const normalized = filePath.replace(/^\//, "");
+    if (normalized.startsWith("sections/")) {
+      const section = extractSection(filePath);
+      if (section) {
+        const check = validateSection(section);
+        if (!check.valid) return { allowed: false, error: check.error };
+      }
+    }
+    return { allowed: true };
+  }
+  // ========================================
+
   // BFF API Server 初始化
   system.info("server.init", "BFF API Server 初始化完成");
 
@@ -179,6 +226,14 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
           // Decode URI components to handle Chinese characters
           filePath = decodeURIComponent(filePath);
 
+          // 安全校验：禁止目录遍历
+          const safety = isPathSafe(filePath);
+          if (!safety.safe) {
+            res.statusCode = 403;
+            res.end(safety.error);
+            return;
+          }
+
           // P0-CK: 支持 .vitepress/agent/ 路径（checkpoint 存储）
           const isAgentPath =
             filePath.startsWith(".vitepress/") ||
@@ -190,6 +245,14 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
             basePath,
             filePath.replace(/^\//, ""),
           );
+
+          // 边界校验：确保解析后的路径仍在 basePath 内
+          if (!fullPath.startsWith(basePath)) {
+            res.statusCode = 403;
+            res.end("Access denied: path out of bounds");
+            return;
+          }
+
           if (fs.existsSync(fullPath)) {
             res.setHeader("Content-Type", "text/plain");
             res.end(fs.readFileSync(fullPath, "utf-8"));
@@ -226,6 +289,22 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
             return;
           }
 
+          // 安全校验：禁止目录遍历
+          const safety = isPathSafe(filePath);
+          if (!safety.safe) {
+            res.statusCode = 403;
+            res.end(JSON.stringify({ success: false, error: safety.error }));
+            return;
+          }
+
+          // 板块边界校验：sections/ 下的路径必须在白名单内
+          const boundary = checkSectionsBoundary(filePath);
+          if (!boundary.allowed) {
+            res.statusCode = 403;
+            res.end(JSON.stringify({ success: false, error: boundary.error }));
+            return;
+          }
+
           // P0-CK: 支持 .vitepress/agent/ 路径（checkpoint 存储）
           const isAgentPath =
             filePath.startsWith(".vitepress/") ||
@@ -237,6 +316,13 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
             basePath,
             filePath.replace(/^\//, ""),
           );
+
+          // 边界校验：确保解析后的路径仍在 basePath 内
+          if (!fullPath.startsWith(basePath)) {
+            res.statusCode = 403;
+            res.end(JSON.stringify({ success: false, error: "Access denied: path out of bounds" }));
+            return;
+          }
 
           // 确保目录存在
           const dir = path.dirname(fullPath);
@@ -456,11 +542,34 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
             decodedPath = decodeURIComponent(filePath);
           } catch (e) {}
 
+          // 安全校验：禁止目录遍历
+          const safety = isPathSafe(decodedPath);
+          if (!safety.safe) {
+            res.statusCode = 403;
+            res.end(JSON.stringify({ success: false, error: safety.error }));
+            return;
+          }
+
+          // 板块边界校验：sections/ 下的路径必须在白名单内
+          const boundary = checkSectionsBoundary(decodedPath);
+          if (!boundary.allowed) {
+            res.statusCode = 403;
+            res.end(JSON.stringify({ success: false, error: boundary.error }));
+            return;
+          }
+
+          const basePath = path.join(process.cwd(), "docs");
           const fullPath = path.resolve(
-            process.cwd(),
-            "docs",
+            basePath,
             decodedPath.replace(/^\//, ""),
           );
+
+          // 边界校验：确保解析后的路径仍在 basePath 内
+          if (!fullPath.startsWith(basePath)) {
+            res.statusCode = 403;
+            res.end(JSON.stringify({ success: false, error: "Access denied: path out of bounds" }));
+            return;
+          }
 
           if (!fs.existsSync(fullPath)) {
             res.statusCode = 404;

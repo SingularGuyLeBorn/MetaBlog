@@ -5,12 +5,13 @@ layout: page
 ---
 
 <ClientOnly>
-  <RealLLMTraining />
+  <!-- RealLLMTraining 组件暂不可用 -->
+  <!-- <RealLLMTraining /> -->
 </ClientOnly>
 
-<script setup>
+<!-- <script setup>
 import RealLLMTraining from '@/components/demo/RealLLMTraining.vue'
-</script>
+</script> -->
 
 <style>
 /* 全宽布局 */

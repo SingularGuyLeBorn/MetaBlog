@@ -9,6 +9,50 @@ import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 
 const API_BASE = '/api'
 
+// ========== AI 文章操作安全边界 ==========
+const ALLOWED_SECTIONS = ['posts', 'knowledge', 'resources']
+const BLOCKED_SECTIONS = ['about', 'ai-research']
+
+/**
+ * 从文件路径中提取板块名
+ * e.g. "sections/posts/my-article.md" -> "posts"
+ */
+function extractSection(filePath: string): string | null {
+  const normalized = filePath.replace(/^sections\//, '').replace(/^\//, '')
+  const firstSlash = normalized.indexOf('/')
+  return firstSlash > 0 ? normalized.substring(0, firstSlash) : normalized
+}
+
+/**
+ * 校验板块是否在白名单内
+ */
+function validateSectionPath(filePath: string): { valid: boolean; error?: string } {
+  const section = extractSection(filePath)
+  if (!section) return { valid: false, error: '无法从路径中识别板块' }
+  if (ALLOWED_SECTIONS.includes(section)) return { valid: true }
+  if (BLOCKED_SECTIONS.includes(section)) {
+    return {
+      valid: false,
+      error: `板块 "${section}" 不允许AI操作。AI只能管理以下板块：${ALLOWED_SECTIONS.join('、')}`
+    }
+  }
+  return {
+    valid: false,
+    error: `板块 "${section}" 不存在。可用板块：${ALLOWED_SECTIONS.join('、')}`
+  }
+}
+
+/**
+ * 校验路径是否包含目录遍历（..）
+ */
+function validateNoTraversal(filePath: string): { valid: boolean; error?: string } {
+  if (filePath.includes('..')) {
+    return { valid: false, error: '路径中不允许使用 ".."' }
+  }
+  return { valid: true }
+}
+// ========================================
+
 /**
  * 标准化错误处理
  */
@@ -53,10 +97,10 @@ function normalizeFilePath(inputPath: string): string {
   
   if (path.endsWith('/')) {
     path = path + 'index.md'
-  }
-  
-  if (!path.endsWith('.md')) {
-    path = path + '.md'
+  } else if (!path.endsWith('.md')) {
+    // 新文件使用 index 模式：folder/index.md
+    // 如果 AI 明确传了 .md 后缀，保持原样（兼容旧 folder-note 文件）
+    path = path + '/index.md'
   }
   
   if (!path.startsWith('sections/')) {
@@ -90,6 +134,16 @@ export const getArticleContent: ToolExecutor = async (args) => {
   }
   
   const normalizedPath = normalizeFilePath(path)
+  
+  // 安全边界校验
+  const traversalCheck = validateNoTraversal(normalizedPath)
+  if (!traversalCheck.valid) {
+    return createErrorResult('Invalid path', traversalCheck.error)
+  }
+  const sectionCheck = validateSectionPath(normalizedPath)
+  if (!sectionCheck.valid) {
+    return createErrorResult('Section not allowed', sectionCheck.error)
+  }
   
   try {
     const response = await fetch(
@@ -192,6 +246,15 @@ export const searchArticles: ToolExecutor = async (args) => {
 export const listArticles: ToolExecutor = async (args) => {
   const { section, folder_path, limit = 50 } = args
   
+  // 如果指定了 section，校验是否在白名单
+  if (section && !ALLOWED_SECTIONS.includes(section)) {
+    return createErrorResult(
+      'Section not allowed',
+      `板块 "${section}" 不在允许范围内。`,
+      `可用板块：${ALLOWED_SECTIONS.join('、')}`
+    )
+  }
+  
   try {
     // 构建路径：默认 sections，如果有 section 则 sections/section
     let targetPath = 'sections'
@@ -211,7 +274,7 @@ export const listArticles: ToolExecutor = async (args) => {
     if (!result.success) return result
     
     // 过滤掉非文章相关的文件（如 node_modules）
-    const filteredItems = (result.data || []).filter((item: any) => {
+    let filteredItems = (result.data || []).filter((item: any) => {
       // 排除常见的非内容目录和文件
       const excludePatterns = [
         'node_modules', '.git', '.vitepress', '.data', '.skills',
@@ -220,6 +283,12 @@ export const listArticles: ToolExecutor = async (args) => {
       return !excludePatterns.some(pattern => 
         item.name.includes(pattern) || item.path.includes(pattern)
       )
+    })
+    
+    // 额外过滤：只保留白名单板块内的内容
+    filteredItems = filteredItems.filter((item: any) => {
+      const itemSection = extractSection(item.path || '')
+      return !itemSection || ALLOWED_SECTIONS.includes(itemSection)
     })
     
     return createSuccessResult(
@@ -250,6 +319,15 @@ export const createArticle: ToolExecutor = async (args) => {
     )
   }
 
+  // 安全边界：校验板块
+  const sectionToCheck = articlePath ? extractSection(articlePath) : section
+  if (sectionToCheck) {
+    const sectionCheck = validateSectionPath(`sections/${sectionToCheck}/`)
+    if (!sectionCheck.valid) {
+      return createErrorResult('Section not allowed', sectionCheck.error)
+    }
+  }
+
   try {
     const response = await fetch(`${API_BASE}/articles/create`, {
       method: 'POST',
@@ -270,9 +348,12 @@ export const createArticle: ToolExecutor = async (args) => {
       const promoted = data.promotedNodes && data.promotedNodes.length > 0
         ? `\n（自动提升叶子节点: ${data.promotedNodes.join(', ')}）`
         : ''
+      const autoIndex = data.notes && data.notes.length > 0
+        ? `\n（${data.notes.join('；')}）`
+        : ''
       return createSuccessResult(
         data,
-        `文章 "${title}" 创建成功！\n路径: ${data.path || articlePath}${promoted}`,
+        `文章 "${title}" 创建成功！\n路径: ${data.path || articlePath}${promoted}${autoIndex}`,
         'create_article',
         '可以使用 get_article_content 读取或 update_article 修改'
       )
@@ -300,10 +381,22 @@ export const updateArticle: ToolExecutor = async (args) => {
     )
   }
   
+  const normalizedPath = normalizeFilePath(articlePath)
+  
+  // 安全边界校验
+  const traversalCheck = validateNoTraversal(normalizedPath)
+  if (!traversalCheck.valid) {
+    return createErrorResult('Invalid path', traversalCheck.error)
+  }
+  const sectionCheck = validateSectionPath(normalizedPath)
+  if (!sectionCheck.valid) {
+    return createErrorResult('Section not allowed', sectionCheck.error)
+  }
+  
   try {
     // 先读取原内容
     const readResponse = await fetch(
-      `${API_BASE}/files/read?path=${encodeURIComponent(normalizeFilePath(articlePath))}`
+      `${API_BASE}/files/read?path=${encodeURIComponent(normalizedPath)}`
     )
     
     if (readResponse.status === 404) {
@@ -374,6 +467,18 @@ export const deleteArticle: ToolExecutor = async (args) => {
     )
   }
   
+  const normalizedPath = normalizeFilePath(articlePath)
+  
+  // 安全边界校验
+  const traversalCheck = validateNoTraversal(normalizedPath)
+  if (!traversalCheck.valid) {
+    return createErrorResult('Invalid path', traversalCheck.error)
+  }
+  const sectionCheck = validateSectionPath(normalizedPath)
+  if (!sectionCheck.valid) {
+    return createErrorResult('Section not allowed', sectionCheck.error)
+  }
+  
   // 危险操作提示（AI应该在调用前询问用户）
   if (!confirm) {
     return createErrorResult(
@@ -388,7 +493,7 @@ export const deleteArticle: ToolExecutor = async (args) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        path: normalizeFilePath(articlePath),
+        path: normalizedPath,
         permanent: !backup_first
       })
     })

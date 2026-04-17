@@ -14,6 +14,41 @@ export interface RouteContext {
 
 export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
+
+  // ========== AI 文章操作安全边界 ==========
+  const ALLOWED_SECTIONS = ["posts", "knowledge", "resources"];
+  const BLOCKED_SECTIONS = ["about", "ai-research"];
+
+  function validateSection(section: string): { valid: boolean; error?: string } {
+    if (ALLOWED_SECTIONS.includes(section)) return { valid: true };
+    if (BLOCKED_SECTIONS.includes(section)) {
+      return {
+        valid: false,
+        error: `板块 "${section}" 不允许AI操作。可用板块：${ALLOWED_SECTIONS.join("。")}`,
+      };
+    }
+    return {
+      valid: false,
+      error: `板块 "${section}" 不存在。可用板块：${ALLOWED_SECTIONS.join("。")}`,
+    };
+  }
+
+  function extractSection(articlePath: string): string | null {
+    const normalized = articlePath.replace(/^\//, "").replace(/^sections\//, "");
+    const firstSlash = normalized.indexOf("/");
+    return firstSlash > 0 ? normalized.substring(0, firstSlash) : normalized;
+  }
+
+  function validateArticlePath(articlePath: string): { valid: boolean; error?: string } {
+    if (articlePath.includes("..")) {
+      return { valid: false, error: '路径中不允许使用 ".."' };
+    }
+    const section = extractSection(articlePath);
+    if (!section) return { valid: false, error: "无法从路径中识别板块" };
+    return validateSection(section);
+  }
+  // ========================================
+
   // ============================================
   // Dynamic Sidebar API - 动态侧边栏
   // ============================================
@@ -138,8 +173,7 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
           articles.push(...subArticles);
         } else if (
           entry.isFile() &&
-          entry.name.endsWith(".md") &&
-          entry.name !== "index.md"
+          entry.name.endsWith(".md")
         ) {
           const content = await fs.promises.readFile(fullPath, "utf-8");
           const meta = extractArticleMeta(content, relativePath);
@@ -266,11 +300,10 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
     async (req, res, next) => {
       if (req.method === "GET") {
         try {
-          // 扫描所有 section，包含完整元数据
+          // 扫描白名单内的 section，包含完整元数据
           const allArticles: any[] = [];
-          const sections = ["posts", "knowledge", "resources", "about"];
 
-          for (const section of sections) {
+          for (const section of ALLOWED_SECTIONS) {
             const sectionPath = path.join(SECTIONS_PATH, section);
             if (fs.existsSync(sectionPath)) {
               // 使用 scanArticles 获取完整元数据（包括日期）
@@ -314,9 +347,8 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
             title: string;
             section: string;
           }> = [];
-          const sections = ["posts", "knowledge", "resources", "about"];
 
-          for (const section of sections) {
+          for (const section of ALLOWED_SECTIONS) {
             const sectionPath = path.join(SECTIONS_PATH, section);
             if (fs.existsSync(sectionPath)) {
               await scanArticlesForList(sectionPath, section, articles);
@@ -343,7 +375,7 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
     },
   );
 
-  // 搜索文章
+  // 搜索文章（只在白名单板块内搜索）
   server.middlewares.use(
     "/api/articles/search",
     async (req, res, next) => {
@@ -354,7 +386,17 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
         );
         const q = url.searchParams.get("q");
         try {
-          const articles = await scanArticles(SECTIONS_PATH);
+          const articles: any[] = [];
+          for (const section of ALLOWED_SECTIONS) {
+            const sectionPath = path.join(SECTIONS_PATH, section);
+            if (fs.existsSync(sectionPath)) {
+              const sectionArticles = await scanArticles(sectionPath);
+              sectionArticles.forEach((a) => {
+                a.path = `${section}/${a.path}`;
+              });
+              articles.push(...sectionArticles);
+            }
+          }
           const query = (q || "").toLowerCase();
           const results = articles.filter(
             (a) =>
@@ -391,6 +433,13 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
           res.end(
             JSON.stringify({ success: false, error: "Path required" }),
           );
+          return;
+        }
+        // 安全校验
+        const pathCheck = validateArticlePath(articlePath);
+        if (!pathCheck.valid) {
+          res.statusCode = 403;
+          res.end(JSON.stringify({ success: false, error: pathCheck.error }));
           return;
         }
         try {
@@ -493,6 +542,7 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
                   title,
                   fullPath: result.fullPath,
                   promotedNodes: result.promotedNodes,
+                  notes: result.notes,
                 },
               }),
             );
@@ -525,6 +575,18 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
           try {
             const body = JSON.parse(Buffer.concat(chunks).toString());
             const { path: articlePath, content } = body;
+            if (!articlePath) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ success: false, error: "Path required" }));
+              return;
+            }
+            // 安全校验
+            const pathCheck = validateArticlePath(articlePath);
+            if (!pathCheck.valid) {
+              res.statusCode = 403;
+              res.end(JSON.stringify({ success: false, error: pathCheck.error }));
+              return;
+            }
             const fullPath = path.join(SECTIONS_PATH, articlePath);
             await fs.promises.writeFile(fullPath, content, "utf-8");
             res.setHeader("Content-Type", "application/json");
@@ -612,6 +674,18 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
           try {
             const body = JSON.parse(Buffer.concat(chunks).toString());
             const { path: articlePath } = body;
+            if (!articlePath) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ success: false, error: "Path required" }));
+              return;
+            }
+            // 安全校验
+            const pathCheck = validateArticlePath(articlePath);
+            if (!pathCheck.valid) {
+              res.statusCode = 403;
+              res.end(JSON.stringify({ success: false, error: pathCheck.error }));
+              return;
+            }
             const fullPath = path.join(SECTIONS_PATH, articlePath);
 
             // 获取 section 名称用于清除缓存
@@ -657,6 +731,24 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
           try {
             const body = JSON.parse(Buffer.concat(chunks).toString());
             const { from, to } = body;
+            if (!from || !to) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ success: false, error: "from and to required" }));
+              return;
+            }
+            // 安全校验
+            const fromCheck = validateArticlePath(from);
+            if (!fromCheck.valid) {
+              res.statusCode = 403;
+              res.end(JSON.stringify({ success: false, error: `源路径: ${fromCheck.error}` }));
+              return;
+            }
+            const toCheck = validateArticlePath(to);
+            if (!toCheck.valid) {
+              res.statusCode = 403;
+              res.end(JSON.stringify({ success: false, error: `目标路径: ${toCheck.error}` }));
+              return;
+            }
             const sourcePath = path.join(SECTIONS_PATH, from);
             const destPath = path.join(SECTIONS_PATH, to);
 

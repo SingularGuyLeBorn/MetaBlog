@@ -10,7 +10,7 @@ layout: page
 />
 
 <script setup>
-import ArticleCards from '@/components/ArticleCards.vue'
+import ArticleCards from '@/theme/components/common/ArticleCards.vue'
 </script>
 
 <style>

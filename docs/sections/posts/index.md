@@ -11,5 +11,5 @@ title: 文章列表
 />
 
 <script setup>
-import SectionIndex from '@/components/SectionIndex.vue'
+import SectionIndex from '@/theme/components/common/SectionIndex.vue'
 </script>

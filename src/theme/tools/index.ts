@@ -243,11 +243,16 @@ import { getCurrentTime, testEcho, calculate, getWeather, getCurrentTimeDef, tes
 
 // ==================== 初始化函数 ====================
 
+let defaultToolsInitialized = false
+
 /**
  * 初始化所有默认工具
  * 在应用启动时调用，注册所有内置工具
  */
 export function initializeDefaultTools(): void {
+  if (defaultToolsInitialized) return
+  defaultToolsInitialized = true
+
   // 文章管理工具（6个）
   registerTools([
     { name: 'create_article', definition: createArticleDef, executor: createArticle },

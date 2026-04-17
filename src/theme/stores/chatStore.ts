@@ -297,11 +297,13 @@ export function useAIChat() {
             // 检查是否已存在相同ID的步骤，存在则更新，否则添加
             const existingIndex = targetMsg.metadata.thinkingSteps.findIndex(s => s.id === step.id)
             if (existingIndex >= 0) {
-              targetMsg.metadata.thinkingSteps[existingIndex] = step
+              targetMsg.metadata.thinkingSteps.splice(existingIndex, 1, step)
             } else {
               targetMsg.metadata.thinkingSteps.push(step)
             }
             targetMsg.updatedAt = Date.now()
+            // 强制触发 messageGroups 引用变化，使 currentMessages computed 重新计算
+            messageGroups.value[sessionId] = [...currentProxyGroups]
           },
           onComplete: () => {
             const currentProxyGroups = messageGroups.value[sessionId]
@@ -544,11 +546,16 @@ export function useAIChat() {
             }
             const existingIndex = targetMsg.metadata.thinkingSteps.findIndex(s => s.id === step.id)
             if (existingIndex >= 0) {
-              targetMsg.metadata.thinkingSteps[existingIndex] = step
+              targetMsg.metadata.thinkingSteps.splice(existingIndex, 1, step)
             } else {
               targetMsg.metadata.thinkingSteps.push(step)
             }
             targetMsg.updatedAt = Date.now()
+            // 强制触发引用变化使 Vue 重新渲染
+            const sessionGroups = messageGroups.value[sessionId]
+            if (sessionGroups) {
+              messageGroups.value[sessionId] = [...sessionGroups]
+            }
           },
           onToolRecord: (record) => {
             toolRecords.push(record)

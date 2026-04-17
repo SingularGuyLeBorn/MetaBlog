@@ -1131,11 +1131,11 @@ export const aiService = {
           const toolStartTime = Date.now()
           
           const toolStepId = `tool_${toolRound}_${toolStartTime}_${stepIndex}`
-          const toolStep: ThinkingStep = {
+          const runningStep: ThinkingStep = {
             id: toolStepId,
             type: 'tool_call',
-            round: toolRound,  // 标记轮次
-            index: stepIndex,  // 使用当前索引
+            round: toolRound,
+            index: stepIndex,
             toolRecord: {
               id: toolCall.id,
               name: toolCall.function.name,
@@ -1146,23 +1146,28 @@ export const aiService = {
             },
             createdAt: toolStartTime
           }
-          stepIndex++  // 递增索引
-          callbacks.onThinkingStep?.(toolStep)
+          stepIndex++
+          // 先显示 running 状态，让用户立刻看到工具正在执行
+          callbacks.onThinkingStep?.(runningStep)
           
           const { result, record } = await executeToolWithRecord(toolCall)
           toolRecords.push(record)
           
-          toolStep.toolRecord = {
-            id: toolCall.id,
-            name: toolCall.function.name,
-            arguments: args,
-            result: result,
-            status: 'success',
-            startTime: record.startTime,
-            endTime: record.endTime,
-            duration: record.duration
+          // 执行完成后创建新的 step 对象（确保 Vue 响应式系统检测到变化）
+          const successStep: ThinkingStep = {
+            ...runningStep,
+            toolRecord: {
+              id: toolCall.id,
+              name: toolCall.function.name,
+              arguments: args,
+              result: result,
+              status: result.success !== false ? 'success' : 'error',
+              startTime: record.startTime,
+              endTime: record.endTime,
+              duration: record.duration || (Date.now() - toolStartTime)
+            }
           }
-          callbacks.onThinkingStep?.(toolStep)
+          callbacks.onThinkingStep?.(successStep)
           
           apiDebugLogger.logNote('tool_call', '【UI展示】工具调用步骤', { 
             name: toolCall.function.name, 

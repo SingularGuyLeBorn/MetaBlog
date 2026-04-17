@@ -202,10 +202,10 @@ export const metaBlogRoutingPlugin = (): Plugin => ({
        *      将请求重写到 VitePress 的 @fs 路径，让其直接渲染文件
        */
 
-      // 辅助函数：检查路径是否是 folder-note 模式，返回实际文件路径
+      // 辅助函数：检查路径是否是 folder-note 模式
       function getFolderNoteInfo(
         urlPath: string,
-      ): { filePath: string; folderName: string } | null {
+      ): { folderName: string } | null {
         if (!urlPath.startsWith("/sections/")) return null;
 
         const pathParts = urlPath
@@ -232,7 +232,7 @@ export const metaBlogRoutingPlugin = (): Plugin => ({
           fs.statSync(targetDir).isDirectory()
         ) {
           if (fs.existsSync(folderNoteFile) && !fs.existsSync(indexFile)) {
-            return { filePath: folderNoteFile, folderName };
+            return { folderName };
           }
         }
         return null;
@@ -299,8 +299,8 @@ export const metaBlogRoutingPlugin = (): Plugin => ({
           // 运行时 folder-note 热更新处理
           const folderInfo = getFolderNoteInfo(url);
           if (folderInfo) {
-            // 重写为 VitePress 路由路径（不用 @fs，因为 @fs 绕过了 Markdown 渲染管线）
-            // VitePress 能识别 /sections/posts/.../folder/folder 并找到 folder/folder.md 渲染
+            // 重写为 VitePress 路由路径，让 VitePress 正常渲染 markdown
+            // （不用 @fs，@fs 会绕过 VitePress 的 frontmatter 解析和页面数据生成）
             const urlWithoutSlash = url.replace(/\/$/, "");
             const folderName = urlWithoutSlash.split("/").pop();
             const newUrl = `${urlWithoutSlash}/${folderName}`;
@@ -308,8 +308,6 @@ export const metaBlogRoutingPlugin = (): Plugin => ({
             console.log("[Routing] Folder-note detected:", {
               original: url,
               rewriteTo: newUrl,
-              filePath: folderInfo.filePath,
-              exists: fs.existsSync(folderInfo.filePath),
             });
 
             req.url = newUrl;
@@ -321,7 +319,6 @@ export const metaBlogRoutingPlugin = (): Plugin => ({
                 metadata: {
                   originalUrl: url,
                   newUrl,
-                  filePath: folderInfo.filePath,
                 },
               },
             );
@@ -357,11 +354,12 @@ export const metaBlogBffPlugin = (): Plugin => ({
     registerMcpRoutes(server, ctx);
     registerSessionsRoutes(server, ctx);
   },
-  handleHotUpdate({ file, server }) {
-    // 拦截 docs 目录下 markdown 文件的 HMR，防止 VitePress 自动 full-reload 导致聊天状态丢失
-    if (file.endsWith(".md") && file.includes(path.sep + "docs" + path.sep)) {
-      console.log("[HMR] Suppress markdown full-reload for:", file);
+  handleHotUpdate({ file }) {
+    // 只忽略数据目录的变更，避免不必要的 HMR
+    // 正常的 markdown 文件变更让 VitePress 自行处理，确保 frontmatter 更新后页面数据正确刷新
+    if (file.includes(path.sep + "data" + path.sep) || file.includes(path.sep + ".trash" + path.sep)) {
       return [];
     }
+    // 其他文件（包括 docs 下的 markdown）按 Vite 默认行为处理
   },
 });

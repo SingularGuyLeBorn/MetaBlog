@@ -130,6 +130,10 @@ export default defineConfig({
   // 支持中文文件名：确保中文路径正确处理
   rewrites: generateRewrites(),
 
+  head: [
+    ["link", { rel: "icon", href: "data:," }],
+  ],
+
   themeConfig: {
     nav: [
       { text: "首页", link: "/" },

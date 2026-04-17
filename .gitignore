@@ -11,3 +11,13 @@ cache
 .env.local
 .env.*.local
 .dev-log/
+
+# Runtime data
+.data/
+.logs/
+*.png
+.playwright-mcp/
+
+# OS
+Thumbs.db
+desktop.ini
