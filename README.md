@@ -47,7 +47,7 @@ MetaBlog 不是一个普通的博客系统，它代表了内容管理系统向�
 - [x] 文章管理工具（6个）：CRUD 操作 + 搜索 + 列表
 - [x] GitHub 工具（6个）：仓库、文件、提交、Issues、代码搜索
 - [x] 知识库工具（7个）：KB 的 CRUD + 文档管理
-- [x] 网络工具（3个）：fetch_url、web_search、fetch_arxiv
+- [x] 网络工具（2个）：`fetch_url`（通用 HTTP 代理）、`web_search`（DuckDuckGo 搜索）
 - [x] 文件工具（3个）：read/write/list
 - [x] 文本处理（4个）：摘要、格式化、翻译
 - [x] 代码工具（2个）：执行代码、分析代码
@@ -86,7 +86,7 @@ MetaBlog 不是一个普通的博客系统，它代表了内容管理系统向�
 #### 1. 工具功能不够完善
 | 工具 | 问题 | 期望功能 |
 |------|------|----------|
-| `web_search` | 未接入真实搜索引擎 | 接入 Google/Bing/百度 API |
+| `web_search` | ✅ 已接入 DuckDuckGo（零成本，免 API Key） | 支持 Tavily/Bing API 备选 |
 | `get_weather` | 返回模拟数据 | 接入真实天气 API（和风/心知） |
 | `execute_code` | 仅在浏览器执行 | 支持后端沙箱执行 Python/Node |
 | `translate_text` | 依赖 AI 自身能力 | 接入翻译 API（DeepL/百度） |
@@ -149,8 +149,8 @@ MetaBlog 不是一个普通的博客系统，它代表了内容管理系统向�
 #### 差距量化
 | 维度 | 当前 | 目标 | 差距 |
 |------|------|------|------|
-| 工具数量 | 41 | 100+ | 还需 60+ |
-| 真实数据工具 | ~60% | 100% | 还需完善 16 个 |
+| 工具数量 | 43 | 100+ | 还需 57+ |
+| 真实数据工具 | ~65% | 100% | 还需完善 15 个 |
 | 自主执行任务 | ❌ | ✅ | 需开发 L4 |
 | Meta-Agent | ❌ | ✅ | 需开发 L5 |
 | 状态监控 | ❌ | ✅ | 需开发 L6 |
@@ -160,16 +160,22 @@ MetaBlog 不是一个普通的博客系统，它代表了内容管理系统向�
 ### 🛠️ 近期优先修复（建议）
 
 1. **修复 mock 数据工具**（1-2 周）
-   - web_search → 接入搜索引擎 API
    - get_weather → 接入天气 API
    - ocr_image → 接入 OCR 服务
+   - execute_code → 后端沙箱执行
 
 2. **增强现有工具**（2-3 周）
-   - execute_code → 后端沙箱执行
    - fetch_url → 支持 JS 渲染
    - KB 系统 → 持久化存储
+   - web_search → 多引擎切换（Tavily/Bing）
 
-3. **补充核心工具**（3-4 周）
+3. **飞书 CLI 集成**（2-3 周）
+   - `run_lark_cli` 通用命令执行
+   - `lark_send_message` 发消息
+   - `lark_create_doc` 创建文档
+   - `lark_calendar_events` 查日程
+
+4. **补充核心工具**（3-4 周）
    - 图片处理工具
    - PDF 处理工具
    - 数据库查询工具
@@ -214,8 +220,8 @@ MetaBlog 不是一个普通的博客系统，它代表了内容管理系统向�
 #### 网络工具
 | 工具 | 功能 |
 |------|------|
-| `fetch_url` | 通用 HTTP 请求（GET/POST/PUT/DELETE），支持自定义 Header 和 Body |
-| `web_search` | 网络搜索（需要配置搜索引擎 API） |
+| `fetch_url` | 通用 HTTP 请求（GET/POST/PUT/DELETE），支持自定义 Header 和 Body，支持 HTML 文本提取 |
+| `web_search` | 网络搜索（DuckDuckGo HTML 版，零成本，中文友好） |
 
 #### 知识库工具（7个）
 | 工具 | 功能 |
@@ -505,9 +511,30 @@ vitepress/theme/components/ai-chat/
 
 ## 🔧 高级配置
 
+### 飞书 CLI 集成（进行中）
+
+MetaBlog 通过后端执行 `lark-cli` 命令，让 Agent 直接操作飞书办公套件。
+
+**前提**：本地安装并认证飞书 CLI
+```powershell
+# 安装
+npm install -g @larksuite/cli --registry=https://registry.npmmirror.com
+
+# 创建应用
+lark-cli config init --new
+
+# 用户授权（浏览器打开链接，扫码登录）
+lark-cli auth login
+```
+
+**后续 Agent 可用命令**：
+- `lark-cli im +messages-send --text "hello"`
+- `lark-cli docs +create --title "周报" --markdown "# 进展"`
+- `lark-cli calendar +agenda`
+
 ### 自定义工具
 
-在 `.vitepress/theme/components/ai-chat/core/tools/` 中添加：
+在 `src/theme/tools/<category>/` 中添加：
 
 ```typescript
 // definitions.ts
