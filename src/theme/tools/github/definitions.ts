@@ -81,7 +81,7 @@ export const githubGetFileContentDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'github_get_file_content',
-    description: `获取 GitHub 仓库中特定文件的内容。读取源代码、配置文件等。
+    description: `获取 GitHub 仓库中特定文件的内容。读取源代码、配置文件等。支持限制读取长度避免大文件占用过多上下文。
 
 使用场景：
 1. 查看源代码实现
@@ -92,7 +92,8 @@ export const githubGetFileContentDef: ToolDefinition = {
 注意：
 - 文件路径需要包含完整的相对路径
 - 支持获取文件的原始内容（自动解码 base64）
-- 可以指定特定分支或 commit`,
+- 可以指定特定分支或 commit
+- 大文件会自动截断，可通过 max_length 调整`,
     parameters: {
       type: 'object',
       properties: {
@@ -111,6 +112,11 @@ export const githubGetFileContentDef: ToolDefinition = {
         ref: {
           type: 'string',
           description: '分支、标签或 commit SHA，默认主分支'
+        },
+        max_length: {
+          type: 'number',
+          description: '最大读取字符数，默认 5000。大文件建议调大或分多次读取。',
+          default: 5000
         }
       },
       required: ['owner', 'repo', 'path']

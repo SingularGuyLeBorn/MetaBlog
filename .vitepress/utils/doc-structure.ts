@@ -188,11 +188,11 @@ function extractTitle(filePath: string): string | null {
     const content = require('fs').readFileSync(filePath, 'utf-8')
     
     // 1. 从 frontmatter 提取
-    const fmMatch = content.match(/^---\n[\s\S]*?\ntitle:\s*(.+?)\n/)
+    const fmMatch = content.match(/^---\r?\n[\s\S]*?\r?\ntitle:\s*(.+?)\r?\n/)
     if (fmMatch) return fmMatch[1].trim().replace(/^["']|["']$/g, '')
     
     // 2. 从 H1 提取
-    const h1Match = content.match(/^#\s+(.+)$/m)
+    const h1Match = content.match(/^#\s+(.+)\r?$/m)
     if (h1Match) return h1Match[1].trim()
     
     return null
@@ -207,7 +207,7 @@ function extractTitle(filePath: string): string | null {
 function extractDesc(filePath: string): string | null {
   try {
     const content = require('fs').readFileSync(filePath, 'utf-8')
-    const fmMatch = content.match(/^---\n[\s\S]*?\ndescription:\s*(.+?)\n/)
+    const fmMatch = content.match(/^---\r?\n[\s\S]*?\r?\ndescription:\s*(.+?)\r?\n/)
     if (fmMatch) return fmMatch[1].trim().replace(/^["']|["']$/g, '')
     return null
   } catch {

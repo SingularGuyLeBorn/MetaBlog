@@ -12,7 +12,7 @@ const API_BASE = '/api'
  * 读取文件
  */
 export const readFile: ToolExecutor = async (args): Promise<ToolResult> => {
-  const { path: filePath } = args
+  const { path: filePath, max_length = 8000 } = args
   
   if (!filePath) {
     return createErrorResult(
@@ -41,15 +41,25 @@ export const readFile: ToolExecutor = async (args): Promise<ToolResult> => {
       )
     }
     
-    const content = await response.text()
+    const rawContent = await response.text()
+    const isTruncated = rawContent.length > max_length
+    
+    // 截断时提示 AI 可以调大 max_length 重新读取
+    const content = isTruncated
+      ? rawContent.substring(0, max_length) +
+        `\n\n---` +
+        `\n[内容已截断] 文件共 ${rawContent.length} 字符，当前限制 ${max_length} 字符。` +
+        `\n如需读取更多内容，可重新调用 read_file(path="${filePath}", max_length=${Math.min(max_length * 2, 50000)})`
+      : rawContent
     
     return createSuccessResult(
       {
         path: filePath,
         content,
-        size: content.length
+        size: rawContent.length,
+        truncated: isTruncated
       },
-      `成功读取文件 (${content.length} 字符)`,
+      `成功读取文件 (${rawContent.length} 字符${isTruncated ? '，已截断至 ' + max_length : ''})`,
       'read_file'
     )
   } catch (error: any) {

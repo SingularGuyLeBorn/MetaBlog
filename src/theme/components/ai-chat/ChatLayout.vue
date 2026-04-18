@@ -76,6 +76,13 @@
           </div>
         </div>
         <div class="header-right">
+          <!-- Token 用量条 -->
+          <TokenUsageBar
+            v-if="currentSession"
+            :usage="tokenUsage"
+            :context-window="currentModelConfig.contextWindow"
+          />
+          
           <!-- 返回首页按钮 -->
           <button 
             class="icon-btn home-btn" 
@@ -239,6 +246,7 @@ import SettingsPanel from './SettingsPanel.vue'
 import { AgentAdmin, AgentChatDialog } from '@/theme/components/agent'
 import type { SessionConfig, ChatSession, MessageAttachment, Skill, Agent } from '@/theme/types'
 import { useAIChat, useAgentConfig } from '@/theme/stores'
+import TokenUsageBar from './TokenUsageBar.vue'
 
 const {
   sessions,
@@ -257,7 +265,8 @@ const {
   clearMessages,
   regenerateResponse,
   switchVersion,
-  updateSessionConfig
+  updateSessionConfig,
+  tokenUsage
 } = useAIChat()
 
 const { activeAgent, agents: allAgents, setActive } = useAgentConfig()
@@ -333,15 +342,15 @@ const currentAgentSystemPrompt = computed(() => {
 const currentModelConfig = computed(() => {
   const model = currentSession.value?.config?.model || 'deepseek-chat'
   // 从 aiService 获取模型配置
-  const configs: Record<string, { supportsVision?: boolean; supportsVideo?: boolean }> = {
-    'deepseek-chat': { supportsVision: false, supportsVideo: false },
-    'deepseek-reasoner': { supportsVision: false, supportsVideo: false },
-    'kimi-k2.5': { supportsVision: true, supportsVideo: true },
-    'kimi-k2-turbo-preview': { supportsVision: true, supportsVideo: false },
-    'kimi-k2-thinking': { supportsVision: true, supportsVideo: false },
-    'kimi-k2-thinking-turbo': { supportsVision: true, supportsVideo: false }
+  const configs: Record<string, { supportsVision?: boolean; supportsVideo?: boolean; contextWindow: number }> = {
+    'deepseek-chat': { supportsVision: false, supportsVideo: false, contextWindow: 128000 },
+    'deepseek-reasoner': { supportsVision: false, supportsVideo: false, contextWindow: 128000 },
+    'kimi-k2.5': { supportsVision: true, supportsVideo: true, contextWindow: 256000 },
+    'kimi-k2-turbo-preview': { supportsVision: true, supportsVideo: false, contextWindow: 256000 },
+    'kimi-k2-thinking': { supportsVision: true, supportsVideo: false, contextWindow: 256000 },
+    'kimi-k2-thinking-turbo': { supportsVision: true, supportsVideo: false, contextWindow: 256000 }
   }
-  return configs[model] || { supportsVision: false, supportsVideo: false }
+  return configs[model] || { supportsVision: false, supportsVideo: false, contextWindow: 64000 }
 })
 
 // 当前模型是否支持视觉

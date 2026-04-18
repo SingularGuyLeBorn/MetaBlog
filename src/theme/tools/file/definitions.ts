@@ -8,13 +8,18 @@ export const readFileDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'read_file',
-    description: '读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。',
+    description: '读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。支持限制读取长度避免大文件占用过多上下文。',
     parameters: {
       type: 'object',
       properties: {
         path: {
           type: 'string',
           description: '文件路径，例如 "docs/readme.md" 或 "src/config.ts"'
+        },
+        max_length: {
+          type: 'number',
+          description: '最大读取字符数，默认 8000。大文件建议分多次读取。',
+          default: 8000
         }
       },
       required: ['path']

@@ -156,6 +156,8 @@
       <span v-if="attachments.length > 0" class="hint-attachments">
         {{ attachments.length }}/{{ maxAttachments }} 附件
       </span>
+      <span class="hint-separator">·</span>
+      <span class="hint-tokens">{{ inputTokenCount }} tokens</span>
       <span v-if="supportsVision" class="model-badge vision">👁️ 视觉</span>
       <span v-if="supportsVideo" class="model-badge video">🎬 视频</span>
     </div>
@@ -224,6 +226,7 @@ import {
   formatFileSize,
   formatDuration 
 } from '@/theme/api/services/multimediaService'
+import { estimateTextTokens } from '@/theme/utils/tokenEstimator'
 
 const props = defineProps<{
   modelValue: string
@@ -267,6 +270,16 @@ const canSend = computed(() => {
   const hasText = inputValue.value.trim().length > 0
   const hasAttachments = attachments.value.length > 0
   return (hasText || hasAttachments) && !props.isStreaming
+})
+
+const inputTokenCount = computed(() => {
+  const text = inputValue.value.trim()
+  if (!text && attachments.value.length === 0) return 0
+  let count = estimateTextTokens(text)
+  // 附件图片占位 token
+  const imageCount = attachments.value.filter(a => a.type === 'image').length
+  count += imageCount * 500
+  return count
 })
 
 // 方法

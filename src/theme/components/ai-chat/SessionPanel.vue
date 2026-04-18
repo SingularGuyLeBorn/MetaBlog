@@ -73,8 +73,13 @@
               </div>
               <!-- 正常显示模式 -->
               <div v-else class="session-title">{{ session.title }}</div>
-              <div class="session-time">
-                {{ streamingIds.includes(session.id) ? '生成中...' : formatTime(session.updatedAt) }}
+              <div class="session-meta">
+                <span class="session-time">
+                  {{ streamingIds.includes(session.id) ? '生成中...' : formatTime(session.updatedAt) }}
+                </span>
+                <span v-if="getSessionTokenUsage(session.id).estimatedInput > 0" class="session-tokens">
+                  {{ formatTokenCount(getSessionTokenUsage(session.id).estimatedInput + getSessionTokenUsage(session.id).estimatedOutput) }} tokens
+                </span>
               </div>
             </div>
             <div class="session-actions" @click.stop>
@@ -97,6 +102,8 @@
 import { ref, computed, nextTick } from 'vue'
 import { Icon } from '@/theme/components/common'
 import type { ChatSession } from '@/theme/types'
+import { useAIChat } from '@/theme/stores'
+import { formatTokenCount } from '@/theme/utils/tokenEstimator'
 
 interface Props {
   sessions: ChatSession[]
@@ -110,6 +117,8 @@ const props = withDefaults(defineProps<Props>(), {
   streamingIds: () => [],
   agentName: ''
 })
+
+const { getSessionTokenUsage } = useAIChat()
 
 const emit = defineEmits<{
   create: []
@@ -478,15 +487,35 @@ function cancelRename() {
   color: #1e293b;
 }
 
+.session-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
 .session-time {
   font-size: 11px;
   color: #94a3b8;
-  margin-top: 4px;
   font-weight: 500;
+}
+
+.session-tokens {
+  font-size: 10px;
+  color: #b8a090;
+  font-family: monospace;
+  background: rgba(184, 160, 144, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .session-item-3d.active .session-time {
   color: rgba(107, 231, 142, 0.8);
+}
+
+.session-item-3d.active .session-tokens {
+  color: rgba(107, 231, 142, 0.7);
+  background: rgba(107, 231, 142, 0.1);
 }
 
 /* 操作按钮 */

@@ -271,6 +271,8 @@ export interface ModelConfig {
   supportsVideo: boolean
   supportsFunctionCalling: boolean
   maxTokens: number
+  /** 模型总上下文窗口大小（输入+输出） */
+  contextWindow: number
 }
 
 // 支持的模型配置 - 仅 DeepSeek 和 Kimi
@@ -286,7 +288,8 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsVision: false,
     supportsVideo: false,
     supportsFunctionCalling: true,
-    maxTokens: 8192
+    maxTokens: 8192,
+    contextWindow: 128000
   },
   'deepseek-reasoner': {
     provider: 'deepseek',
@@ -296,7 +299,8 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsVision: false,
     supportsVideo: false,
     supportsFunctionCalling: true,
-    maxTokens: 64000 // reasoner 支持更大的输出
+    maxTokens: 64000,
+    contextWindow: 128000
   },
   
   // ═══════════════════════════════════════════════════════════════
@@ -309,9 +313,10 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     baseURL: 'https://api.moonshot.cn/v1',
     apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
-    supportsVideo: false, // 文档未明确说明视频支持，先设为 false
+    supportsVideo: false,
     supportsFunctionCalling: true,
-    maxTokens: 8192
+    maxTokens: 8192,
+    contextWindow: 256000
   },
   // K2 Turbo 预览版
   'kimi-k2-turbo-preview': {
@@ -322,7 +327,8 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
-    maxTokens: 8192
+    maxTokens: 8192,
+    contextWindow: 256000
   },
   // K2 思考模式
   'kimi-k2-thinking': {
@@ -333,7 +339,8 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
-    maxTokens: 8192
+    maxTokens: 8192,
+    contextWindow: 256000
   },
   // K2 思考模式 Turbo
   'kimi-k2-thinking-turbo': {
@@ -344,7 +351,8 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
-    maxTokens: 8192
+    maxTokens: 8192,
+    contextWindow: 256000
   },
   // Vision 预览版系列
   'moonshot-v1-8k-vision-preview': {
@@ -355,7 +363,8 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
-    maxTokens: 8192
+    maxTokens: 8192,
+    contextWindow: 8192
   },
   'moonshot-v1-32k-vision-preview': {
     provider: 'kimi',
@@ -365,7 +374,8 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
-    maxTokens: 32000
+    maxTokens: 32000,
+    contextWindow: 32000
   },
   'moonshot-v1-128k-vision-preview': {
     provider: 'kimi',
@@ -375,7 +385,8 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
-    maxTokens: 128000
+    maxTokens: 128000,
+    contextWindow: 128000
   }
 }
 
@@ -406,6 +417,7 @@ export interface StreamCallbacks {
   onError: (error: Error) => void
   onToolRecord?: (record: ToolCallRecord) => void
   onThinkingStep?: (step: ThinkingStep) => void
+  onUsage?: (usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number }) => void
 }
 
 // ==================== 多模态消息处理 ====================
@@ -536,34 +548,160 @@ function cleanAIOutput(content: string): string {
     .trim()
 }
 
+// ==================== Token 估算（js-tiktoken）====================
+import { estimateTextTokens, estimateChatTokens } from '@/theme/utils/tokenEstimator'
+
 /**
- * 截断过长的消息内容，防止请求体过大
+ * 智能截断消息 —— 按模型上下文窗口动态调整
+ * 
+ * 三级策略：
+ * 1. 估算总 token，如果在预算内 → 不截断
+ * 2. 对 tool 结果按可用空间比例截断（保底 3k 字符，上限按模型定）
+ * 3. 如果还超 → 丢弃最早的消息，优先保留最近对话
  */
-function truncateMessages(messages: any[], maxContentLength: number = 128000): any[] {
-  return messages.map(m => {
-    // 只处理字符串类型的 content
-    if (typeof m.content !== 'string') {
-      return m
-    }
+function smartTruncateMessages(
+  messages: any[],
+  modelConfig: ModelConfig,
+  systemPrompt: string = ''
+): any[] {
+  const contextWindow = modelConfig.contextWindow
+  const outputReserve = modelConfig.maxTokens
+  const systemTokens = estimateTextTokens(systemPrompt) + 2000 // 工具定义约 2k tokens
+  const safetyMargin = 1000
+  
+  // 可用于历史消息的 token 预算
+  const availableTokens = contextWindow - outputReserve - systemTokens - safetyMargin
+  
+  // 计算当前总估算 token
+  const currentTokens = messages.reduce((sum, m) => {
+    const text = typeof m.content === 'string' ? m.content : JSON.stringify(m.content || '')
+    return sum + estimateTextTokens(text)
+  }, 0)
+  
+  // 没超预算，原样返回
+  if (currentTokens <= availableTokens) {
+    return messages
+  }
+  
+  console.log(`[smartTruncate] 当前 ${currentTokens} tokens > 预算 ${availableTokens}，开始截断`)
+  
+  // ═══════════════════════════════════════════════════════════════
+  // 第一阶段：截断 tool 结果（通常最长）
+  // ═══════════════════════════════════════════════════════════════
+  const toolMsgs = messages.filter(m => m.role === 'tool')
+  const nonToolMsgs = messages.filter(m => m.role !== 'tool')
+  
+  // 非 tool 消息的 token 占用
+  const nonToolTokens = nonToolMsgs.reduce((sum, m) => {
+    const text = typeof m.content === 'string' ? m.content : JSON.stringify(m.content || '')
+    return sum + estimateTextTokens(text)
+  }, 0)
+  
+  // 给 tool 消息分配的预算（至少留 30% 给 tool）
+  const toolBudget = Math.max(availableTokens - nonToolTokens, Math.floor(availableTokens * 0.3))
+  const perToolTokens = toolMsgs.length > 0 ? Math.floor(toolBudget / toolMsgs.length) : 0
+  
+  // 单条 tool 截断上限：按模型上下文分级
+  // 64k 模型 → 12k 字符, 128k → 24k, 256k → 48k
+  const maxToolChars = contextWindow >= 256000 ? 48000
+    : contextWindow >= 128000 ? 24000
+    : contextWindow >= 64000 ? 12000
+    : 4000
+  
+  // 保底 3000 字符，不超过上限
+  const toolTruncateLimit = Math.max(Math.min(perToolTokens * 3, maxToolChars), 3000)
+  
+  let processed = messages.map(m => {
+    if (m.role !== 'tool' || typeof m.content !== 'string') return m
+    if (m.content.length <= toolTruncateLimit) return m
     
-    // 处理 tool 角色的消息
-    if (m.role === 'tool' && m.content.length > maxContentLength) {
-      const truncated = m.content.substring(0, maxContentLength)
-      const truncatedLength = m.content.length - maxContentLength
+    return {
+      ...m,
+      content: m.content.substring(0, toolTruncateLimit) +
+        `\n\n---` +
+        `\n[历史消息中的工具结果被截断] 原长 ${m.content.length} 字符，当前限制 ${toolTruncateLimit} 字符。` +
+        `\n注意：这是之前某次工具调用的返回结果，因上下文长度限制被截断。如需完整信息，请重新调用相关工具。`
+    }
+  })
+  
+  // ═══════════════════════════════════════════════════════════════
+  // 第二阶段：检查还超不超，对早期 assistant 消息截断
+  // ═══════════════════════════════════════════════════════════════
+  const afterToolTokens = processed.reduce((sum, m) => {
+    const text = typeof m.content === 'string' ? m.content : JSON.stringify(m.content || '')
+    return sum + estimateTextTokens(text)
+  }, 0)
+  
+  if (afterToolTokens > availableTokens) {
+    // 保留最近 8 条（4轮）完整，更早的 assistant 消息截断到摘要
+    const keepRecent = 8
+    const recent = processed.slice(-keepRecent)
+    const older = processed.slice(0, -keepRecent)
+    
+    const truncatedOlder = older.map(m => {
+      if (m.role !== 'assistant' || typeof m.content !== 'string') return m
+      if (m.content.length <= 800) return m
       return {
         ...m,
-        content: truncated + `\n\n... [内容已截断，省略 ${truncatedLength} 字符]`
+        content: m.content.substring(0, 800) + `\n\n... [早期 assistant 消息已截断，仅保留摘要]`
+      }
+    })
+    
+    processed = [...truncatedOlder, ...recent]
+  }
+  
+  // ═══════════════════════════════════════════════════════════════
+  // 第三阶段：如果还超，逐步丢弃最早的消息
+  // ═══════════════════════════════════════════════════════════════
+  let finalTokens = processed.reduce((sum, m) => {
+    const text = typeof m.content === 'string' ? m.content : JSON.stringify(m.content || '')
+    return sum + estimateTextTokens(text)
+  }, 0)
+  
+  while (finalTokens > availableTokens && processed.length > 6) {
+    // 优先丢弃 tool 结果（通常最长且是"过去"的观察）
+    const toolIndex = processed.findIndex(m => m.role === 'tool')
+    if (toolIndex >= 0 && toolIndex < processed.length - 6) {
+      processed.splice(toolIndex, 1)
+    } else {
+      // 其次丢弃早期的 assistant 消息
+      const assistantIndex = processed.findIndex(m => m.role === 'assistant')
+      if (assistantIndex >= 0 && assistantIndex < processed.length - 6) {
+        processed.splice(assistantIndex, 1)
+      } else {
+        // 最后只能丢最早的任意消息
+        processed.shift()
       }
     }
     
-    // 处理 assistant 角色的消息
+    finalTokens = processed.reduce((sum, m) => {
+      const text = typeof m.content === 'string' ? m.content : JSON.stringify(m.content || '')
+      return sum + estimateTextTokens(text)
+    }, 0)
+  }
+  
+  console.log(`[smartTruncate] 截断后 ${finalTokens} tokens，保留 ${processed.length}/${messages.length} 条消息`)
+  return processed
+}
+
+/** @deprecated 兼容旧接口，内部转发到 smartTruncateMessages */
+function truncateMessages(messages: any[], maxContentLength: number = 128000): any[] {
+  // 旧接口不感知模型，按传入的 maxContentLength 做简单截断
+  return messages.map(m => {
+    if (typeof m.content !== 'string') return m
+    if (m.role === 'tool' && m.content.length > maxContentLength) {
+      return {
+        ...m,
+        content: m.content.substring(0, maxContentLength) +
+          `\n\n... [内容已截断，省略 ${m.content.length - maxContentLength} 字符]`
+      }
+    }
     if (m.role === 'assistant' && m.content.length > maxContentLength * 2) {
       return {
         ...m,
         content: m.content.substring(0, maxContentLength * 2) + `\n\n... [内容已截断]`
       }
     }
-    
     return m
   })
 }
@@ -575,7 +713,7 @@ async function chatNonStream(
   config: SessionConfig,
   includeTools: boolean,
   isToolContinuation: boolean = false
-): Promise<{ content?: string; toolCalls?: ToolCall[]; reasoningContent?: string; error?: string }> {
+): Promise<{ content?: string; toolCalls?: ToolCall[]; reasoningContent?: string; error?: string; usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number } }> {
   const modelConfig = getModelConfig(config.model)
   validateApiKey(modelConfig)
   
@@ -596,8 +734,8 @@ async function chatNonStream(
     })
   }
   
-  // 截断过长的消息，防止请求体过大
-  processedMessages = truncateMessages(processedMessages, 6000)
+  // 智能截断：按模型上下文动态调整
+  processedMessages = smartTruncateMessages(processedMessages, modelConfig, config.systemPrompt)
   
   const requestBody: any = {
     model: modelConfig.model,
@@ -669,7 +807,10 @@ async function chatNonStream(
       return { content: message?.content || '', toolCalls: message.tool_calls, reasoningContent }
     }
     
-    return { content: message?.content || '', reasoningContent }
+    // 提取 API 返回的 usage
+    const usage = result.usage
+    
+    return { content: message?.content || '', reasoningContent, usage }
   } catch (error) {
     const duration = Date.now() - startTime
     let errorMessage = error instanceof Error ? error.message : String(error)
@@ -715,7 +856,7 @@ async function chatStreamInternal(
     })
   }
   
-  processedMessages = truncateMessages(processedMessages, 6000)
+  processedMessages = smartTruncateMessages(processedMessages, modelConfig, config.systemPrompt)
   
   const requestBody: any = {
     model: modelConfig.model,
@@ -847,6 +988,12 @@ async function chatStreamInternal(
 
         try {
           const chunk = JSON.parse(data)
+          
+          // 捕获 API 返回的 usage（通常在最后一块中）
+          if (chunk.usage && callbacks.onUsage) {
+            callbacks.onUsage(chunk.usage)
+          }
+          
           const delta = chunk.choices?.[0]?.delta
           
           if (delta?.tool_calls) {
@@ -986,8 +1133,8 @@ export const aiService = {
         apiMessages.push({ role: 'system', content: enhancedPrompt })
       }
       
-      // 转换每条消息
-      for (const message of messages.slice(-10)) {
+      // 转换每条消息（不再硬编码 slice(-10)，由 smartTruncateMessages 在内部按需截断）
+      for (const message of messages) {
         const apiMsg = await convertMessageToApiFormat(message, modelConfig)
         apiMessages.push(apiMsg)
       }
@@ -1187,6 +1334,14 @@ export const aiService = {
             }
           } else {
             resultContent = String(result || '')
+          }
+          
+          // 工具结果截断：防止超长内容撑爆上下文窗口
+          const MAX_TOOL_RESULT_LENGTH = 6000
+          const originalLength = resultContent.length
+          if (originalLength > MAX_TOOL_RESULT_LENGTH) {
+            resultContent = resultContent.substring(0, MAX_TOOL_RESULT_LENGTH) + 
+              `\n\n... [内容已截断，原始长度 ${originalLength} 字符]`
           }
           
           toolResultMessages.push({

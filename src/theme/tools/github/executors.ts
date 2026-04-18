@@ -140,7 +140,7 @@ export const githubListRepoContents: ToolExecutor = async (args): Promise<ToolRe
  * 获取 GitHub 文件内容
  */
 export const githubGetFileContent: ToolExecutor = async (args): Promise<ToolResult> => {
-  const { owner, repo, path, ref } = args
+  const { owner, repo, path, ref, max_length = 5000 } = args
   
   if (!owner || !repo || !path) {
     return createErrorResult(
@@ -166,16 +166,26 @@ export const githubGetFileContent: ToolExecutor = async (args): Promise<ToolResu
       )
     }
     
-    const content = atob(data.content)
+    const rawContent = atob(data.content)
+    const isTruncated = rawContent.length > max_length
+    
+    // 截断时提示 AI 可以调大 max_length 重新获取
+    const content = isTruncated
+      ? rawContent.substring(0, max_length) +
+        `\n\n---` +
+        `\n[内容已截断] 文件共 ${rawContent.length} 字符，当前限制 ${max_length} 字符。` +
+        `\n如需读取更多内容，可重新调用 github_get_file_content(owner="${owner}", repo="${repo}", path="${path}"${ref ? ', ref="' + ref + '"' : ''}, max_length=${Math.min(max_length * 2, 50000)})`
+      : rawContent
     
     return createSuccessResult(
       {
         name: data.name,
         path: data.path,
         size: data.size,
-        content: content.substring(0, 5000) + (content.length > 5000 ? '...' : '')
+        content,
+        truncated: isTruncated
       },
-      `${data.name} (${data.size} bytes)`,
+      `${data.name} (${data.size} bytes${isTruncated ? '，已截断至 ' + max_length + ' 字符' : ''})`,
       'github_get_file_content'
     )
   } catch (error: any) {

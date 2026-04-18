@@ -12,6 +12,7 @@
           <span class="skill-name">{{ parsedMessage.skill.name }}</span>
         </div>
         <div class="message-text" v-html="parsedMessage.displayHtml"></div>
+        <div v-if="!isStreaming" class="message-token-count">{{ formatTokenCount(tokenCount) }} tokens</div>
       </div>
       <Avatar type="user" />
     </div>
@@ -167,6 +168,7 @@
 
         <!-- 操作按钮 -->
         <div class="message-actions">
+          <span v-if="!isStreaming" class="token-badge">{{ formatTokenCount(tokenCount) }} tokens</span>
           <button class="action-btn" :class="{ copied }" @click="copyContent">
             <Icon :name="copied ? 'check' : 'copy'" :size="14" />
             <span>{{ copied ? '已复制' : '复制' }}</span>
@@ -192,6 +194,7 @@ import DOMPurify from 'dompurify'
 import { Avatar, AIAvatar, Icon, TypewriterText } from '@/theme/components/common'
 import MessageVersions from './MessageVersions.vue'
 import type { ChatMessage, ChatMessage as ChatMessageType, ThinkingStep } from '@/theme/types'
+import { estimateTextTokens, formatTokenCount } from '@/theme/utils/tokenEstimator'
 
 interface VersionInfo {
   versions: ChatMessageType[]
@@ -243,6 +246,13 @@ function formatToolResult(result: any, itemId: string): string {
 }
 
 const typewriterRef = ref<InstanceType<typeof TypewriterText> | null>(null)
+
+// Token 计数
+const tokenCount = computed(() => {
+  const content = props.message.content || ''
+  const reasoning = (props.message as any).reasoning_content || ''
+  return estimateTextTokens(content) + estimateTextTokens(reasoning)
+})
 
 // ========== 计算属性 ==========
 const allThinkingSteps = computed((): ThinkingStep[] => {
@@ -909,11 +919,33 @@ async function copyContent() {
   40% { transform: scale(1); opacity: 1; }
 }
 
+/* ========== Token 计数 ========== */
+.token-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--sr-text-muted, #9a9588);
+  font-family: monospace;
+  user-select: none;
+}
+
+.message-token-count {
+  text-align: right;
+  font-size: 11px;
+  color: var(--sr-text-muted, #9a9588);
+  font-family: monospace;
+  margin-top: 4px;
+  padding-right: 4px;
+  user-select: none;
+}
+
 /* ========== 操作按钮 ========== */
 .message-actions {
   display: flex;
   gap: 8px;
   margin-top: 12px;
+  align-items: center;
 }
 
 .action-btn {

@@ -148,10 +148,13 @@ export const fetchUrl: ToolExecutor = async (args): Promise<ToolResult> => {
         .trim()
     }
 
-    // 截断内容
+    // 截断内容 — 截断时提示 AI 可以调大 max_length 重新获取
     const isTruncated = processedContent.length > max_length
     const displayContent = isTruncated
-      ? processedContent.substring(0, max_length) + '\n\n... [内容已截断]'
+      ? processedContent.substring(0, max_length) +
+        `\n\n---` +
+        `\n[内容已截断] 原始内容共 ${rawContent.length} 字符，当前限制 ${max_length} 字符。` +
+        `\n如需获取更多内容，可重新调用 fetch_url(url="${url}", max_length=${Math.min(max_length * 2, 50000)})`
       : processedContent
 
     return createSuccessResult(
@@ -163,7 +166,7 @@ export const fetchUrl: ToolExecutor = async (args): Promise<ToolResult> => {
         content: displayContent,
         truncated: isTruncated
       },
-      `请求成功 (${rawContent.length} 字符)`,
+      `请求成功 (${rawContent.length} 字符${isTruncated ? '，已截断至 ' + max_length : ''})`,
       'fetch_url'
     )
   } catch (error: any) {

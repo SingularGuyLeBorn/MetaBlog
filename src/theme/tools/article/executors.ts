@@ -6,6 +6,7 @@
 
 import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
 import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { notifyFileSystemChange } from '@/theme/composables/useDynamicSidebar'
 
 const API_BASE = '/api'
 
@@ -163,6 +164,7 @@ export const getArticleContent: ToolExecutor = async (args) => {
     if (!result.success) return result
     
     let content = result.data as string
+    const totalLines = content.split('\n').length
     
     // 按行号截取
     if (start_line || end_line) {
@@ -172,15 +174,21 @@ export const getArticleContent: ToolExecutor = async (args) => {
       content = lines.slice(startIdx, endIdx).join('\n')
     }
     
-    // 长度限制
-    if (content.length > max_length) {
-      content = content.substring(0, max_length) + 
-        `\n\n... [内容已截断，共 ${content.length} 字符]`
+    // 长度限制 — 截断时告诉 AI 怎么续读
+    const isTruncated = content.length > max_length
+    if (isTruncated) {
+      const truncatedContent = content.substring(0, max_length)
+      // 估算截断位置对应的行号
+      const truncatedLines = truncatedContent.split('\n').length
+      content = truncatedContent + 
+        `\n\n---` +
+        `\n[内容已截断] 本文共 ${totalLines} 行，当前显示前 ${truncatedLines} 行（约 ${max_length} 字符）。` +
+        `\n如需继续阅读，请调用 get_article_content(path="${path}", start_line=${truncatedLines + 1}, max_length=${max_length})`
     }
     
     return createSuccessResult(
       content,
-      `成功读取文章（${content.length} 字符）`,
+      `成功读取文章（${isTruncated ? '已截断，' : ''}${content.length} 字符）`,
       'get_article_content'
     )
   } catch (error) {
@@ -351,6 +359,10 @@ export const createArticle: ToolExecutor = async (args) => {
       const autoIndex = data.notes && data.notes.length > 0
         ? `\n（${data.notes.join('；')}）`
         : ''
+      // 触发侧边栏刷新
+      if (typeof window !== 'undefined') {
+        notifyFileSystemChange(section)
+      }
       return createSuccessResult(
         data,
         `文章 "${title}" 创建成功！\n路径: ${data.path || articlePath}${promoted}${autoIndex}`,
@@ -438,6 +450,10 @@ export const updateArticle: ToolExecutor = async (args) => {
     const result = await handleApiResponse(response, '更新文章')
     
     if (result.success) {
+      const section = extractSection(normalizedPath)
+      if (typeof window !== 'undefined' && section) {
+        notifyFileSystemChange(section)
+      }
       return createSuccessResult(
         { path: articlePath, mode },
         `文章更新成功！`,
@@ -501,6 +517,10 @@ export const deleteArticle: ToolExecutor = async (args) => {
     const result = await handleApiResponse(response, '删除文章')
     
     if (result.success) {
+      const section = extractSection(normalizedPath)
+      if (typeof window !== 'undefined' && section) {
+        notifyFileSystemChange(section)
+      }
       return createSuccessResult(
         { path: articlePath },
         `文章已删除${backup_first ? '（已备份到回收站）' : ''}`,
