@@ -15,6 +15,7 @@ import { registerAgentNativeRoutes } from "./routes/agent-native";
 import { registerContentRoutes } from "./routes/content";
 import { registerLogsRoutes } from "./routes/logs";
 import { registerProxyRoutes } from "./routes/proxy";
+import { registerLarkRoutes } from "./routes/lark";
 import { registerAgentSystemRoutes } from "./routes/agent-system";
 import { registerSkillsRoutes } from "./routes/skills";
 import { registerMemoriesRoutes } from "./routes/memories";
@@ -353,6 +354,7 @@ export const metaBlogBffPlugin = (): Plugin => ({
     registerMemoriesRoutes(server, ctx);
     registerMcpRoutes(server, ctx);
     registerSessionsRoutes(server, ctx);
+    registerLarkRoutes(server, ctx);
   },
   handleHotUpdate({ file }) {
     // 只忽略数据目录的变更，避免不必要的 HMR

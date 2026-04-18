@@ -241,6 +241,12 @@ import { webSearch, fetchUrl, webSearchDef, fetchUrlDef } from './network'
 // 系统工具
 import { getCurrentTime, testEcho, calculate, getWeather, getCurrentTimeDef, testEchoDef, calculateDef, getWeatherDef } from './system'
 
+// 飞书工具
+import {
+  runLarkCli, larkSendMessage, larkSearchDocs, larkCalendarEvents, larkSearchUser,
+  runLarkCliDef, larkSendMessageDef, larkSearchDocsDef, larkCalendarEventsDef, larkSearchUserDef
+} from './lark'
+
 // ==================== 初始化函数 ====================
 
 let defaultToolsInitialized = false
@@ -346,7 +352,25 @@ export function initializeDefaultTools(): void {
     { name: 'calculate', definition: calculateDef, executor: calculate },
     { name: 'test_echo', definition: testEchoDef, executor: testEcho }
   ])
+
+  // 飞书 Lark 工具（5个）
+  registerTools([
+    { name: 'run_lark_cli', definition: runLarkCliDef, executor: runLarkCli },
+    { name: 'lark_send_message', definition: larkSendMessageDef, executor: larkSendMessage },
+    { name: 'lark_search_docs', definition: larkSearchDocsDef, executor: larkSearchDocs },
+    { name: 'lark_calendar_events', definition: larkCalendarEventsDef, executor: larkCalendarEvents },
+    { name: 'lark_search_user', definition: larkSearchUserDef, executor: larkSearchUser }
+  ])
   
+  // 飞书 Lark 工具（5个）
+  registerTools([
+    { name: 'run_lark_cli', definition: runLarkCliDef, executor: runLarkCli },
+    { name: 'lark_send_message', definition: larkSendMessageDef, executor: larkSendMessage },
+    { name: 'lark_search_docs', definition: larkSearchDocsDef, executor: larkSearchDocs },
+    { name: 'lark_calendar_events', definition: larkCalendarEventsDef, executor: larkCalendarEvents },
+    { name: 'lark_search_user', definition: larkSearchUserDef, executor: larkSearchUser }
+  ])
+
   console.log(`[ToolSystem] ${getRegisteredToolNames().length} 个工具已初始化`)
 }
 
