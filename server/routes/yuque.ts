@@ -2,44 +2,59 @@ import type { ViteDevServer } from "vite";
 import type { RouteContext } from "./proxy";
 
 /**
- * 语雀 (Yuque) Open API 直连路由
- * 使用 Personal Access Token 直接调用语雀 REST API
- * 需要在 .env 中设置 YUQUE_TOKEN
- */
-
-const YUQUE_BASE = "https://www.yuque.com/api/v2";
-
-/** 获取语雀认证凭据
- * 支持两种方式（按优先级）：
- * 1. YUQUE_TOKEN: Personal Access Token（需超级会员）
- * 2. YUQUE_SESSION: 浏览器 Cookie 中的 _yuque_session 值（免费，任何人都能获取）
+ * 语雀 (Yuque) 内部 Web API 路由
+ * 使用浏览器 Cookie (_yuque_session + _ctoken) 直接调用语雀内部 Web API
+ * 无需 Personal Access Token（无需超级会员）
  *
- * 获取 _yuque_session 方法：
- * - 登录语雀网页版 → F12 打开开发者工具 → Application → Cookies → https://www.yuque.com
- * - 找到 Name 为 "_yuque_session" 的 Cookie，复制其 Value
- * - 粘贴到 .env: YUQUE_SESSION=复制的值
+ * 配置方法：
+ * 1. 登录语雀网页版
+ * 2. F12 → Application → Cookies → https://www.yuque.com
+ * 3. 复制 _yuque_session 和 _ctoken 的值到 .env：
+ *    YUQUE_SESSION=xxx
+ *    YUQUE_CTOKEN=xxx
  */
-function getYuqueToken(): string {
-  const token = process.env.YUQUE_TOKEN || process.env.YUQUE_SESSION;
-  if (!token) {
+
+const YUQUE_BASE = "https://www.yuque.com";
+
+/** 获取语雀认证凭据 */
+function getYuqueCredentials(): { session: string; ctoken: string } {
+  const session = process.env.YUQUE_SESSION;
+  const ctoken = process.env.YUQUE_CTOKEN;
+
+  if (!session || !ctoken) {
     throw new Error(
-      "YUQUE_TOKEN 或 YUQUE_SESSION 未配置。\n" +
-      "方式1（需超级会员）: YUQUE_TOKEN=your_personal_access_token\n" +
-      "方式2（免费）: YUQUE_SESSION=从浏览器Cookie复制的_yuque_session值\n" +
-      "获取方式: 登录语雀 → F12 → Application → Cookies → https://www.yuque.com → 复制 _yuque_session 的 Value"
+      "YUQUE_SESSION 或 YUQUE_CTOKEN 未配置。\n" +
+      "获取方法: 登录语雀网页版 → F12 → Application → Cookies → https://www.yuque.com\n" +
+      "复制 _yuque_session 和 _ctoken 的值到 .env"
     );
   }
-  return token;
+
+  return { session, ctoken };
 }
 
-/** 通用语雀 API 调用 */
+/** 构建通用请求头 */
+function buildHeaders(ctoken: string, referer?: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "X-CSRF-Token": ctoken,
+    "X-Requested-With": "XMLHttpRequest",
+  };
+  if (referer) {
+    headers["Referer"] = referer;
+  }
+  return headers;
+}
+
+/** 通用语雀 Web API 调用 */
 async function yuqueApi(
   method: string,
   path: string,
   body?: any,
-  query?: Record<string, string>
+  query?: Record<string, string>,
+  referer?: string
 ): Promise<any> {
-  const token = getYuqueToken();
+  const { session, ctoken } = getYuqueCredentials();
 
   let url = `${YUQUE_BASE}${path}`;
   if (query) {
@@ -47,10 +62,12 @@ async function yuqueApi(
     url += "?" + params.toString();
   }
 
-  const headers: Record<string, string> = {
-    "X-Auth-Token": token,
-    "Content-Type": "application/json",
-  };
+  const headers = buildHeaders(ctoken, referer);
+  headers["Cookie"] = `_yuque_session=${session}; _ctoken=${ctoken}`;
+
+  if (body && method !== "GET" && method !== "DELETE") {
+    headers["Content-Type"] = "application/json";
+  }
 
   const res = await fetch(url, {
     method,
@@ -71,7 +88,7 @@ function parseBody(req: any): Promise<any> {
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString()));
       } catch (e) {
-        reject(e);
+        resolve({});
       }
     });
     req.on("error", reject);
@@ -93,49 +110,37 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // GET /api/yuque/health
   // ============================================
   server.middlewares.use("/api/yuque/health", async (req, res, next) => {
-    if (req.method !== "GET") {
-      next();
-      return;
-    }
+    if (req.method !== "GET") { next(); return; }
     try {
-      const token = getYuqueToken();
-      const result = await yuqueApi("GET", "/user");
+      const { session, ctoken } = getYuqueCredentials();
+      const result = await yuqueApi("GET", "/api/books");
+      const books = result.data || [];
       sendJson(res, 200, {
         success: true,
         connected: true,
-        token_valid: !!token,
-        user: result.data?.login || null,
-        hint: "语雀 API 连接正常",
+        token_valid: true,
+        books_count: books.length,
+        hint: "语雀 Web API 连接正常",
       });
     } catch (e: any) {
       sendJson(res, 200, {
         success: false,
         connected: false,
         error: e.message,
-        hint: "请检查 YUQUE_TOKEN 或 YUQUE_SESSION 配置。免费方式：登录语雀 → F12 → Application → Cookies → 复制 _yuque_session 的 Value",
+        hint: "请检查 YUQUE_SESSION 和 YUQUE_CTOKEN 配置",
       });
     }
   });
 
   // ============================================
   // 知识库: 列出用户知识库
-  // GET /api/yuque/repos?login=:login
+  // GET /api/yuque/repos
   // ============================================
   server.middlewares.use("/api/yuque/repos", async (req, res, next) => {
-    if (req.method !== "GET") {
-      next();
-      return;
-    }
+    if (req.method !== "GET") { next(); return; }
     try {
-      const url = new URL(req.url!, `http://localhost`);
-      const login = url.searchParams.get("login");
-      if (!login) {
-        sendJson(res, 400, { code: -1, msg: "缺少 login 参数（用户/团队登录名）" });
-        return;
-      }
-
-      structuredLog.info("yuque.repos", "列出语雀知识库", { login });
-      const result = await yuqueApi("GET", `/users/${login}/repos`);
+      structuredLog.info("yuque.repos", "列出语雀知识库");
+      const result = await yuqueApi("GET", "/api/books");
       sendJson(res, result.data ? 200 : 400, result);
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
@@ -143,14 +148,11 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   });
 
   // ============================================
-  // 知识库: 获取知识库 TOC（目录结构）
+  // 知识库: 获取 TOC（目录结构）
   // GET /api/yuque/toc?repo_id=:repo_id
   // ============================================
   server.middlewares.use("/api/yuque/toc", async (req, res, next) => {
-    if (req.method !== "GET") {
-      next();
-      return;
-    }
+    if (req.method !== "GET") { next(); return; }
     try {
       const url = new URL(req.url!, `http://localhost`);
       const repoId = url.searchParams.get("repo_id");
@@ -160,32 +162,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       }
 
       structuredLog.info("yuque.toc", "获取语雀目录", { repo_id: repoId });
-      const result = await yuqueApi("GET", `/repos/${repoId}/toc`);
-      sendJson(res, result.data ? 200 : 400, result);
-    } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
-    }
-  });
-
-  // ============================================
-  // 文档: 列出知识库文档
-  // GET /api/yuque/docs?repo_id=:repo_id
-  // ============================================
-  server.middlewares.use("/api/yuque/docs", async (req, res, next) => {
-    if (req.method !== "GET") {
-      next();
-      return;
-    }
-    try {
-      const url = new URL(req.url!, `http://localhost`);
-      const repoId = url.searchParams.get("repo_id");
-      if (!repoId) {
-        sendJson(res, 400, { code: -1, msg: "缺少 repo_id 参数" });
-        return;
-      }
-
-      structuredLog.info("yuque.docs", "列出语雀文档", { repo_id: repoId });
-      const result = await yuqueApi("GET", `/repos/${repoId}/docs`);
+      const result = await yuqueApi("GET", `/api/books/${repoId}/toc`);
       sendJson(res, result.data ? 200 : 400, result);
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
@@ -194,24 +171,21 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
 
   // ============================================
   // 文档: 读取
-  // GET /api/yuque/doc/read?repo_id=:repo_id&doc_id=:doc_id
+  // GET /api/yuque/doc/read?repo_id=:repo_id&doc_slug=:doc_slug
   // ============================================
   server.middlewares.use("/api/yuque/doc/read", async (req, res, next) => {
-    if (req.method !== "GET") {
-      next();
-      return;
-    }
+    if (req.method !== "GET") { next(); return; }
     try {
       const url = new URL(req.url!, `http://localhost`);
       const repoId = url.searchParams.get("repo_id");
-      const docId = url.searchParams.get("doc_id");
-      if (!repoId || !docId) {
-        sendJson(res, 400, { code: -1, msg: "缺少 repo_id 或 doc_id 参数" });
+      const docSlug = url.searchParams.get("doc_slug");
+      if (!repoId || !docSlug) {
+        sendJson(res, 400, { code: -1, msg: "缺少 repo_id 或 doc_slug 参数" });
         return;
       }
 
-      structuredLog.info("yuque.doc.read", "读取语雀文档", { repo_id: repoId, doc_id: docId });
-      const result = await yuqueApi("GET", `/repos/${repoId}/docs/${docId}`);
+      structuredLog.info("yuque.doc.read", "读取语雀文档", { repo_id: repoId, doc_slug: docSlug });
+      const result = await yuqueApi("GET", `/api/docs/${docSlug}`, undefined, { book_id: repoId });
       sendJson(res, result.data ? 200 : 400, result);
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
@@ -221,16 +195,13 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // ============================================
   // 文档: 创建
   // POST /api/yuque/doc/create
-  // Body: { repo_id, title, body, format?, slug?, public? }
+  // Body: { repo_id, title, body, format?, public? }
   // ============================================
   server.middlewares.use("/api/yuque/doc/create", async (req, res, next) => {
-    if (req.method !== "POST") {
-      next();
-      return;
-    }
+    if (req.method !== "POST") { next(); return; }
     try {
       const body = await parseBody(req);
-      const { repo_id, title, body: docBody, format = "markdown", slug, public: isPublic } = body;
+      const { repo_id, title, body: docBody, format = "lake", public: isPublic } = body;
 
       if (!repo_id || !title) {
         sendJson(res, 400, { code: -1, msg: "缺少 repo_id 或 title 参数" });
@@ -238,15 +209,21 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       }
 
       const payload: any = {
+        book_id: Number(repo_id),
         title: String(title),
         format: String(format),
       };
       if (docBody !== undefined) payload.body = String(docBody);
-      if (slug) payload.slug = String(slug);
       if (isPublic !== undefined) payload.public = Number(isPublic);
 
       structuredLog.info("yuque.doc.create", "创建语雀文档", { repo_id, title });
-      const result = await yuqueApi("POST", `/repos/${repo_id}/docs`, payload);
+      const result = await yuqueApi(
+        "POST",
+        "/api/docs",
+        payload,
+        undefined,
+        `${YUQUE_BASE}/${repo_id}`
+      );
       sendJson(res, result.data ? 200 : 400, result);
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
@@ -259,13 +236,10 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // Body: { repo_id, doc_id, title?, body?, format? }
   // ============================================
   server.middlewares.use("/api/yuque/doc/update", async (req, res, next) => {
-    if (req.method !== "PUT" && req.method !== "POST") {
-      next();
-      return;
-    }
+    if (req.method !== "PUT" && req.method !== "POST") { next(); return; }
     try {
       const body = await parseBody(req);
-      const { repo_id, doc_id, title, body: docBody, format = "markdown" } = body;
+      const { repo_id, doc_id, title, body: docBody, format = "lake" } = body;
 
       if (!repo_id || !doc_id) {
         sendJson(res, 400, { code: -1, msg: "缺少 repo_id 或 doc_id 参数" });
@@ -277,7 +251,13 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       if (docBody !== undefined) payload.body = String(docBody);
 
       structuredLog.info("yuque.doc.update", "更新语雀文档", { repo_id, doc_id });
-      const result = await yuqueApi("PUT", `/repos/${repo_id}/docs/${doc_id}`, payload);
+      const result = await yuqueApi(
+        "PUT",
+        `/api/docs/${doc_id}`,
+        payload,
+        undefined,
+        `${YUQUE_BASE}/${repo_id}`
+      );
       sendJson(res, result.data ? 200 : 400, result);
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
@@ -290,10 +270,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // Body: { repo_id, doc_id }
   // ============================================
   server.middlewares.use("/api/yuque/doc/delete", async (req, res, next) => {
-    if (req.method !== "DELETE" && req.method !== "POST") {
-      next();
-      return;
-    }
+    if (req.method !== "DELETE" && req.method !== "POST") { next(); return; }
     try {
       const body = await parseBody(req);
       const { repo_id, doc_id } = body;
@@ -304,37 +281,14 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       }
 
       structuredLog.info("yuque.doc.delete", "删除语雀文档", { repo_id, doc_id });
-      const result = await yuqueApi("DELETE", `/repos/${repo_id}/docs/${doc_id}`);
+      const result = await yuqueApi(
+        "DELETE",
+        `/api/docs/${doc_id}`,
+        undefined,
+        { book_id: String(repo_id) },
+        `${YUQUE_BASE}/${repo_id}`
+      );
       sendJson(res, result.data !== undefined ? 200 : 400, result);
-    } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
-    }
-  });
-
-  // ============================================
-  // 搜索
-  // GET /api/yuque/search?q=:query&type=:type
-  // ============================================
-  server.middlewares.use("/api/yuque/search", async (req, res, next) => {
-    if (req.method !== "GET") {
-      next();
-      return;
-    }
-    try {
-      const url = new URL(req.url!, `http://localhost`);
-      const q = url.searchParams.get("q");
-      const type = url.searchParams.get("type") || "doc";
-      if (!q) {
-        sendJson(res, 400, { code: -1, msg: "缺少 q 参数（搜索关键词）" });
-        return;
-      }
-
-      structuredLog.info("yuque.search", "搜索语雀", { q, type });
-      const result = await yuqueApi("GET", "/search", undefined, {
-        q: String(q),
-        type: String(type),
-      });
-      sendJson(res, result.data ? 200 : 400, result);
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
     }

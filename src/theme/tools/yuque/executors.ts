@@ -1,6 +1,6 @@
 /**
- * 语雀 (Yuque) Open API 工具执行器
- * 直接调用后端 REST API，无需语雀 SDK
+ * 语雀 (Yuque) 内部 Web API 工具执行器
+ * 使用 Cookie 认证调用语雀内部 Web API，无需 Personal Access Token
  */
 
 import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
@@ -32,23 +32,16 @@ async function yuqueApi(method: string, path: string, body?: any, query?: Record
 
 /** 列出语雀知识库 */
 export const yuqueRepoList = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { login, type = 'user' } = args
-
-  if (!login) {
-    return createErrorResult('Missing login', '缺少 login 参数', '请提供用户或团队的登录名')
-  }
-
   try {
-    const endpoint = type === 'group' ? `/groups/${login}/repos` : `/users/${login}/repos`
-    const result = await yuqueApi('GET', endpoint)
+    const result = await yuqueApi('GET', '/repos')
 
     if (!result.data) {
-      return createErrorResult(result.msg || '请求失败', '获取知识库失败')
+      return createErrorResult(result.msg || result.message || '请求失败', '获取知识库失败')
     }
 
     const repos = result.data || []
     const formatted = repos.map((r: any, i: number) =>
-      `${i + 1}. ${r.name} (ID: ${r.id}, Type: ${r.type})\n   Slug: ${r.slug}\n   ${r.description || '无描述'}`
+      `${i + 1}. ${r.name} (ID: ${r.id}, Slug: ${r.slug})\n   ${r.description || '无描述'}`
     ).join('\n\n')
 
     return createSuccessResult(
@@ -70,17 +63,18 @@ export const yuqueTocGet = async (args: Record<string, any>): Promise<ToolResult
   }
 
   try {
-    const result = await yuqueApi('GET', `/repos/${repo_id}/toc`)
+    const result = await yuqueApi('GET', '/toc', undefined, { repo_id })
 
     if (!result.data) {
-      return createErrorResult(result.msg || '请求失败', '获取目录失败')
+      return createErrorResult(result.msg || result.message || '请求失败', '获取目录失败')
     }
 
-    const toc = result.data || []
+    // 内部 Web API 返回 { data: { toc: [...] } }
+    const toc = result.data?.toc || result.data || []
     const formatted = toc.map((item: any) => {
       const indent = '  '.repeat(item.depth || 0)
       const icon = item.type === 'DOC' ? '📄' : item.type === 'TITLE' ? '📁' : '🔗'
-      return `${indent}${icon} ${item.title}${item.slug ? ` (slug: ${item.slug})` : ''}`
+      return `${indent}${icon} ${item.title}${item.url ? ` (slug: ${item.url})` : ''}`
     }).join('\n')
 
     return createSuccessResult(
@@ -97,7 +91,7 @@ export const yuqueTocGet = async (args: Record<string, any>): Promise<ToolResult
 // 文档操作
 // ============================================
 
-/** 列出知识库文档 */
+/** 列出知识库文档（通过 TOC 获取） */
 export const yuqueDocList = async (args: Record<string, any>): Promise<ToolResult> => {
   const { repo_id } = args
 
@@ -106,19 +100,22 @@ export const yuqueDocList = async (args: Record<string, any>): Promise<ToolResul
   }
 
   try {
-    const result = await yuqueApi('GET', `/repos/${repo_id}/docs`)
+    // 内部 Web API 没有直接的 docs 列表端点，通过 TOC 过滤出 DOC 类型
+    const result = await yuqueApi('GET', '/toc', undefined, { repo_id })
 
     if (!result.data) {
-      return createErrorResult(result.msg || '请求失败', '获取文档列表失败')
+      return createErrorResult(result.msg || result.message || '请求失败', '获取文档列表失败')
     }
 
-    const docs = result.data || []
+    const toc = result.data?.toc || result.data || []
+    const docs = toc.filter((item: any) => item.type === 'DOC')
+
     const formatted = docs.map((d: any, i: number) =>
-      `${i + 1}. ${d.title} (ID: ${d.id}, Slug: ${d.slug})\n   更新: ${d.updated_at?.slice(0, 10) || 'N/A'}`
+      `${i + 1}. ${d.title} (Slug: ${d.url})`
     ).join('\n\n')
 
     return createSuccessResult(
-      result.data,
+      docs,
       docs.length > 0 ? formatted : '知识库中暂无文档',
       'yuque_doc_list'
     )
@@ -129,25 +126,26 @@ export const yuqueDocList = async (args: Record<string, any>): Promise<ToolResul
 
 /** 读取文档内容 */
 export const yuqueDocRead = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { repo_id, doc_id } = args
+  const { repo_id, doc_slug } = args
 
-  if (!repo_id || !doc_id) {
-    return createErrorResult('Missing parameters', '缺少参数', '需要 repo_id 和 doc_id')
+  if (!repo_id || !doc_slug) {
+    return createErrorResult('Missing parameters', '缺少参数', '需要 repo_id 和 doc_slug')
   }
 
   try {
-    const result = await yuqueApi('GET', `/repos/${repo_id}/docs/${doc_id}`)
+    const result = await yuqueApi('GET', '/doc/read', undefined, { repo_id, doc_slug })
 
     if (!result.data) {
-      return createErrorResult(result.msg || '请求失败', '读取文档失败')
+      return createErrorResult(result.msg || result.message || '请求失败', '读取文档失败')
     }
 
     const doc = result.data
-    const body = doc.body || ''
+    // 内部 Web API 的 content 字段是 Lake 格式 HTML
+    const content = doc.content || doc.body || doc.body_asl || ''
 
     return createSuccessResult(
       result.data,
-      `标题: ${doc.title}\n格式: ${doc.format}\n更新: ${doc.updated_at || 'N/A'}\n\n---\n\n${body.slice(0, 10000)}`,
+      `标题: ${doc.title}\n格式: ${doc.format || 'lake'}\n更新: ${doc.updated_at || 'N/A'}\n\n---\n\n${content.slice(0, 10000)}`,
       'yuque_doc_read'
     )
   } catch (error: any) {
@@ -157,28 +155,34 @@ export const yuqueDocRead = async (args: Record<string, any>): Promise<ToolResul
 
 /** 创建文档 */
 export const yuqueDocCreate = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { repo_id, title, content, slug, public: isPublic } = args
+  const { repo_id, title, content, public: isPublic } = args
 
   if (!repo_id || !title) {
     return createErrorResult('Missing parameters', '缺少参数', '需要 repo_id 和 title')
   }
 
   try {
-    const payload: any = { title: String(title), format: 'markdown' }
-    if (content !== undefined) payload.body = String(content)
-    if (slug) payload.slug = String(slug)
+    const payload: any = {
+      repo_id: String(repo_id),
+      title: String(title),
+      format: 'lake',
+    }
+    // 如果提供了 content，包装为 Lake 格式
+    if (content !== undefined) {
+      payload.body = `<!doctype lake>${String(content)}`
+    }
     if (isPublic !== undefined) payload.public = Number(isPublic)
 
-    const result = await yuqueApi('POST', `/repos/${repo_id}/docs`, payload)
+    const result = await yuqueApi('POST', '/doc/create', payload)
 
     if (!result.data) {
-      return createErrorResult(result.msg || '请求失败', '创建文档失败')
+      return createErrorResult(result.msg || result.message || '请求失败', '创建文档失败')
     }
 
     const doc = result.data
     return createSuccessResult(
       result.data,
-      `文档创建成功！\n标题: ${doc.title}\nID: ${doc.id}\nSlug: ${doc.slug}\nURL: https://www.yuque.com/${doc.book?.slug || repo_id}/${doc.slug}`,
+      `文档创建成功！\n标题: ${doc.title}\nID: ${doc.id}\nSlug: ${doc.slug}\nURL: https://www.yuque.com/${repo_id}/${doc.slug}`,
       'yuque_doc_create'
     )
   } catch (error: any) {
@@ -195,14 +199,14 @@ export const yuqueDocUpdate = async (args: Record<string, any>): Promise<ToolRes
   }
 
   try {
-    const payload: any = { format: 'markdown' }
+    const payload: any = { repo_id: String(repo_id), format: 'lake' }
     if (title !== undefined) payload.title = String(title)
-    if (content !== undefined) payload.body = String(content)
+    if (content !== undefined) payload.body = `<!doctype lake>${String(content)}`
 
-    const result = await yuqueApi('PUT', `/repos/${repo_id}/docs/${doc_id}`, payload)
+    const result = await yuqueApi('PUT', '/doc/update', payload)
 
     if (!result.data) {
-      return createErrorResult(result.msg || '请求失败', '更新文档失败')
+      return createErrorResult(result.msg || result.message || '请求失败', '更新文档失败')
     }
 
     const doc = result.data
@@ -225,10 +229,10 @@ export const yuqueDocDelete = async (args: Record<string, any>): Promise<ToolRes
   }
 
   try {
-    const result = await yuqueApi('DELETE', `/repos/${repo_id}/docs/${doc_id}`)
+    const result = await yuqueApi('DELETE', '/doc/delete', { repo_id, doc_id })
 
-    if (result.data === undefined && result.msg) {
-      return createErrorResult(result.msg, '删除文档失败')
+    if (result.data === undefined && (result.msg || result.message)) {
+      return createErrorResult(result.msg || result.message, '删除文档失败')
     }
 
     return createSuccessResult(
@@ -241,11 +245,7 @@ export const yuqueDocDelete = async (args: Record<string, any>): Promise<ToolRes
   }
 }
 
-// ============================================
-// 搜索操作
-// ============================================
-
-/** 搜索语雀 */
+/** 搜索语雀（内部 Web API 不支持搜索，返回提示） */
 export const yuqueSearch = async (args: Record<string, any>): Promise<ToolResult> => {
   const { query, type = 'doc' } = args
 
@@ -253,30 +253,9 @@ export const yuqueSearch = async (args: Record<string, any>): Promise<ToolResult
     return createErrorResult('Missing query', '缺少搜索关键词')
   }
 
-  try {
-    const result = await yuqueApi('GET', '/search', undefined, {
-      q: String(query),
-      type: String(type),
-    })
-
-    if (!result.data) {
-      return createErrorResult(result.msg || '请求失败', '搜索失败')
-    }
-
-    const items = result.data || []
-    const formatted = items.map((item: any, i: number) => {
-      if (type === 'repo') {
-        return `${i + 1}. ${item.name} (Slug: ${item.slug})\n   ${item.description || '无描述'}`
-      }
-      return `${i + 1}. ${item.title} (Slug: ${item.slug})\n   知识库: ${item.book?.name || 'N/A'}\n   摘要: ${item.summary?.slice(0, 100) || 'N/A'}`
-    }).join('\n\n')
-
-    return createSuccessResult(
-      result.data,
-      items.length > 0 ? formatted : '未找到匹配结果',
-      'yuque_search'
-    )
-  } catch (error: any) {
-    return createErrorResult(error.message, '搜索请求失败')
-  }
+  return createErrorResult(
+    '语雀内部 Web API 不支持搜索功能',
+    '搜索不可用',
+    '请使用 yuque_repo_list 获取知识库列表，然后用 yuque_toc_get 浏览目录'
+  )
 }
