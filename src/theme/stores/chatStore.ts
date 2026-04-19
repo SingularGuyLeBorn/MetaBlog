@@ -10,6 +10,7 @@ import { ref, computed, watch } from 'vue'
 import type { ChatSession, ChatMessage, SessionConfig, MessageGroup, ToolCallRecord, ThinkingStep, MessageAttachment } from '@/theme/types'
 import { storage, convertGroupsToMessages } from '@/theme/api/services/storage'
 import { aiService } from '@/theme/api/services/aiService'
+import { getRegisteredToolNames } from '@/theme/tools'
 import { logger, addLog } from '@/theme/api/services/logger'
 import { useAgentConfig } from '@/theme/stores/agentStore'
 import { estimateChatTokens, estimateTextTokens, formatTokenCount, calculateUsagePercent, getUsageStatus } from '@/theme/utils/tokenEstimator'
@@ -69,7 +70,7 @@ function estimateSessionInputTokens(sessionId: string): number {
 
 export function useAIChat() {
   // 获取 Agent 配置（用于工具权限校验）
-  const { activeAgent, skills, getEffectiveTools, matchSkills, invokeSkill } = useAgentConfig()
+  const { activeAgent, skills } = useAgentConfig()
   
   // ==================== 初始化 ====================
   async function initialize() {
@@ -280,47 +281,28 @@ export function useAIChat() {
     })
     
     try {
-      // ========== LOD-2: Skill 渐进式披露 ==========
-      // 1. 匹配用户输入对应的 Skills
-      const matchedSkillIds = activeAgent.value ? matchSkills(content, activeAgent.value) : []
-      
-      // 2. 注入匹配的 Skill 内容到对话历史
-      let skillInjections: ChatMessage[] = []
-      for (const skillId of matchedSkillIds) {
-        const skillContent = invokeSkill(skillId)
-        if (skillContent) {
-          skillInjections.push({
-            id: `skill_${skillId}_${Date.now()}`,
-            sessionId,
-            role: 'user',
-            content: skillContent.content,
-            status: 'completed',
-            createdAt: Date.now(),
-            updatedAt: Date.now()
-          })
-        }
-      }
-      
-      // 3. 构建历史记录（插入 Skill 注入消息）
-      const baseHistory = buildHistoryFromGroups(groups)
-      const history = [...baseHistory, ...skillInjections]
+      // 构建历史记录（不再前端预注入 Skill 内容）
+      // Skill 内容改为由 Agent 主动调用 load_skill 工具后注入
+      const history = buildHistoryFromGroups(groups)
       
       // 用于存储工具调用记录
       let toolRecords: ToolCallRecord[] = []
       
-      // 构建工具上下文（用于权限校验）
+      // 构建工具上下文：所有工具都可用（包括 load_skill）
+      // Agent 通过 load_skill 主动加载 Skill 后，按 Skill 指导使用工具
       const agent = activeAgent.value
       const skillIds = agent?.capabilities?.skillIds || []
+      const allToolNames = getRegisteredToolNames()
       const toolContext = agent ? {
         agentId: agent.id,
         availableSkills: skillIds,
         declaredTools: skills.value
           .filter(s => skillIds.includes(s.id))
           .flatMap(s => s.tools || []),
-        availableTools: getEffectiveTools(agent).map(t => t.name)
+        availableTools: allToolNames
       } : undefined
       
-      await aiService.chatStream(
+      const { toolRecords: records, injectedMessages } = await aiService.chatStream(
         history,
         config,
         {
@@ -524,6 +506,55 @@ export function useAIChat() {
         toolContext
       )
       
+      // ========== 保存 load_skill 注入的消息到对话历史 ==========
+      const currentProxyGroups = messageGroups.value[sessionId]
+      if (currentProxyGroups) {
+        const lastGroup = currentProxyGroups[currentProxyGroups.length - 1]
+        
+        // 补充更新 toolRecords（aiService 返回的完整记录）
+        if (records && records.length > 0) {
+          const targetMsg = lastGroup.aiVersions[0]
+          targetMsg.metadata = {
+            ...targetMsg.metadata,
+            toolRecords: records
+          }
+        }
+        
+        // 保存注入消息到 MessageGroup，使其在后续对话中持久化
+        if (injectedMessages && injectedMessages.length > 0) {
+          const existingInjected = lastGroup.injectedMessages || []
+          // 去重：避免同一轮次中重复注入相同内容
+          const existingContents = new Set(existingInjected.map(m => m.content))
+          const newInjected: ChatMessage[] = injectedMessages
+            .filter(msg => !existingContents.has(msg.content))
+            .map((msg, i) => ({
+              id: `inject_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
+              sessionId,
+              role: msg.role as 'user' | 'assistant' | 'system',
+              content: msg.content,
+              status: 'completed',
+              createdAt: Date.now(),
+              updatedAt: Date.now()
+            }))
+          if (newInjected.length > 0) {
+            lastGroup.injectedMessages = [...existingInjected, ...newInjected]
+            
+            // 持久化到存储
+            storage.saveMessageGroups(sessionId, currentProxyGroups)
+            syncCurrentMessages()
+            
+            addLog({
+              level: 'info',
+              category: 'chat',
+              event: 'skill_injected',
+              message: `保存 ${newInjected.length} 条注入消息到对话历史`,
+              sessionId,
+              data: { count: newInjected.length }
+            })
+          }
+        }
+      }
+      
       return true
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
@@ -618,19 +649,20 @@ export function useAIChat() {
       // 用于存储工具调用记录
       let toolRecords: ToolCallRecord[] = []
       
-      // 构建工具上下文（用于权限校验）
+      // 构建工具上下文：所有工具都可用
       const agent = activeAgent.value
       const skillIds = agent?.capabilities?.skillIds || []
+      const allToolNames = getRegisteredToolNames()
       const toolContext = agent ? {
         agentId: agent.id,
         availableSkills: skillIds,
         declaredTools: skills.value
           .filter(s => skillIds.includes(s.id))
           .flatMap(s => s.tools || []),
-        availableTools: getEffectiveTools(agent).map(t => t.name)
+        availableTools: allToolNames
       } : undefined
       
-      await aiService.chatStream(
+      const { toolRecords: records, injectedMessages } = await aiService.chatStream(
         history,
         config,
         {
@@ -685,9 +717,6 @@ export function useAIChat() {
               msg.updatedAt = Date.now()
             }
           },
-          onToolRecord: (record) => {
-            toolRecords.push(record)
-          },
           onUsage: (usage) => {
             const existingUsage = getCurrentTokenUsage(sessionId)
             tokenUsageMap.value[sessionId] = {
@@ -701,10 +730,6 @@ export function useAIChat() {
           onComplete: () => {
             targetGroup.aiVersions[versionIndex].status = 'completed'
             targetGroup.aiVersions[versionIndex].updatedAt = Date.now()
-            targetGroup.aiVersions[versionIndex].metadata = { 
-              model: config.model,
-              toolRecords  // 保存工具调用记录
-            }
             isStreaming.value = false
             storage.saveMessageGroups(sessionId, groups)
             syncCurrentMessages()
@@ -729,9 +754,37 @@ export function useAIChat() {
         },
         undefined,  // signal
         100,        // maxToolRounds
-        undefined,  // sessionId
+        sessionId,  // sessionId
         toolContext
       )
+      
+      // 补充更新 toolRecords 和注入消息
+      if (records && records.length > 0) {
+        targetGroup.aiVersions[versionIndex].metadata = {
+          ...targetGroup.aiVersions[versionIndex].metadata,
+          toolRecords: records
+        }
+      }
+      if (injectedMessages && injectedMessages.length > 0) {
+        const existingInjected = targetGroup.injectedMessages || []
+        const existingContents = new Set(existingInjected.map(m => m.content))
+        const newInjected: ChatMessage[] = injectedMessages
+          .filter(msg => !existingContents.has(msg.content))
+          .map((msg, i) => ({
+            id: `inject_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
+            sessionId,
+            role: msg.role as 'user' | 'assistant' | 'system',
+            content: msg.content,
+            status: 'completed',
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          }))
+        if (newInjected.length > 0) {
+          targetGroup.injectedMessages = [...existingInjected, ...newInjected]
+          storage.saveMessageGroups(sessionId, groups)
+          syncCurrentMessages()
+        }
+      }
       
       return true
     } catch (err) {
@@ -829,6 +882,11 @@ export function useAIChat() {
         // 确保 metadata 中的 toolCalls 被正确保留
         history.push(activeVersion)
       }
+      
+      // 添加系统注入的消息（如 load_skill 加载的 skill 内容）
+      if (group.injectedMessages && group.injectedMessages.length > 0) {
+        history.push(...group.injectedMessages)
+      }
     }
     return history
   }
@@ -845,6 +903,9 @@ export function useAIChat() {
       const activeVersion = group.aiVersions[group.currentVersionIndex]
       if (activeVersion) {
         history.push(activeVersion)
+      }
+      if (group.injectedMessages && group.injectedMessages.length > 0) {
+        history.push(...group.injectedMessages)
       }
     }
     // 添加目标用户消息

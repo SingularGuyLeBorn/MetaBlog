@@ -1,37 +1,33 @@
-# 文章管理
-
-## 描述
-管理 VitePress 博客文章和知识库文档，支持文章的创建、读取、更新、删除和搜索
-
-## 元数据
-- **ID**: `article-manager`
-- **图标**: 📝
-- **分类**: content
-- **版本**: `1.0.0`
-- **标签**: 文章, 博客, 知识库, 内容管理
-- **作者**: system
-- **内置**: true
-- **启用**: true
-
-## 使用场景
-- 用户想要查找已有文章
-- 用户想要创建新文章
-- 用户想要修改文章内容
-- 用户想要删除文章
-- 用户想要列出某个目录下的文章
-- 用户询问知识库中有什么内容
-
-## 可用工具
-- search_articles
-- get_article_content
-- create_article
-- update_article
-- delete_article
-- list_articles
-
 ---
-
-## Prompt
+id: article-manager
+name: 文章管理
+description: 管理 VitePress 博客文章和知识库文档，支持文章的创建、读取、更新、删除和搜索
+icon: 📝
+category: content
+version: 1.0.0
+tags:
+  - 文章
+  - 博客
+  - 知识库
+  - 内容管理
+author: system
+builtin: true
+enabled: true
+tools:
+  - search_articles
+  - get_article_content
+  - create_article
+  - update_article
+  - delete_article
+  - list_articles
+scenarios:
+  - 用户想要查找已有文章
+  - 用户想要创建新文章
+  - 用户想要修改文章内容
+  - 用户想要删除文章
+  - 用户想要列出某个目录下的文章
+  - 用户询问知识库中有什么内容
+---
 
 你是 VitePress 博客系统的文章管理专家。你帮助用户管理 /sections/ 目录下的 Markdown 文档。
 

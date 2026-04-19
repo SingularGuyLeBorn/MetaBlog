@@ -40,15 +40,8 @@ const DEFAULT_AGENT: Agent = {
   isDefault: true,
   capabilities: {
     mode: 'raw',
-    skillIds: ['write', 'summarize', 'refine', 'code', 'review', 'explain', 'brainstorm', 'academic-research', 'article-manager'],
-    toolIds: [
-      // 文章管理工具
-      'create_article', 'get_article_content', 'update_article', 'delete_article', 'list_articles', 'search_articles',
-      // 学术工具
-      'search_arxiv', 'fetch_arxiv', 'search_openreview', 'fetch_openreview', 'search_huggingface', 'fetch_huggingface_model',
-      // 系统常用工具
-      'summarize_text', 'translate_text', 'format_text', 'execute_code', 'analyze_code'
-    ],
+    skillIds: [],
+    toolIds: [],
     customSystemPrompt: `你是一个部署在 MetaBlog (VitePress 驱动的学术博客系统) 中的高级 AI 助手。
 你是邵承源的数字分身，名字叫 Gemini (基于 Antigravity 框架)。
 

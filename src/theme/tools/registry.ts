@@ -246,7 +246,7 @@ export async function executeTool(
  */
 export async function executeToolWithRecord(
   toolCall: ToolCall
-): Promise<{ result: ToolResult; record: ToolCallRecord }> {
+): Promise<{ result: ToolResult; record: ToolCallRecord; injectMessages?: Array<{ role: string; content: string }> }> {
   const recordId = generateRecordId()
   const { name } = toolCall.function
   
@@ -278,7 +278,7 @@ export async function executeToolWithRecord(
     record.result = result
     record.endTime = Date.now()
     
-    return { result, record }
+    return { result, record, injectMessages: result.injectMessages }
   } catch (error: any) {
     // 更新记录为错误状态
     record.status = 'error'
@@ -287,7 +287,8 @@ export async function executeToolWithRecord(
     
     return {
       result: createErrorResult(record.error || 'Unknown error'),
-      record
+      record,
+      injectMessages: undefined
     }
   }
 }

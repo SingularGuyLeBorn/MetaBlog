@@ -96,6 +96,13 @@ export interface ToolResult<T = any> {
   action?: string
   /** 建议的下一步操作 */
   suggestion?: string
+  /**
+   * 要注入到对话上下文中的额外消息
+   * 
+   * 用于 load_skill 等工具：调用后需要将 skill 内容
+   * 作为新消息注入到后续对话中，让 Agent 可以看到完整指导
+   */
+  injectMessages?: Array<{ role: string; content: string }>
 }
 
 /**

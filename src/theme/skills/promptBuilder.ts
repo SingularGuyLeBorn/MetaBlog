@@ -36,7 +36,7 @@ function buildLOD0SkillList(skills: SkillMetadata[]): string {
   const lines: string[] = [
     '## 可用 Skills',
     '',
-    '你可以使用以下技能来增强能力。当用户请求相关任务时，这些技能会自动激活：',
+    '以下技能可供使用。当你判断需要使用某个技能时，调用 `load_skill` 工具加载其完整内容：',
     ''
   ]
   
@@ -64,12 +64,19 @@ function buildLOD0SkillList(skills: SkillMetadata[]): string {
     lines.push('')
     
     for (const skill of categorySkills) {
-      lines.push(`- ${skill.icon} **${skill.name}** (${skill.id})`)
-      lines.push(`  ${skill.description}`)
+      const toolHint = skill.tools?.length ? ` [工具: ${skill.tools.join(', ')}]` : ''
+      lines.push(`- ${skill.icon} **${skill.name}** \`${skill.id}\``)
+      lines.push(`  ${skill.description}${toolHint}`)
     }
     
     lines.push('')
   }
+  
+  lines.push('---')
+  lines.push('')
+  lines.push('**如何加载 Skill**：当你需要使用某个技能时，调用 `load_skill` 工具，传入 `skill_id`（上表中的代码标记）。')
+  lines.push('加载后，该技能的完整工作流程会注入到对话中，你在后续回复中应遵循其指导。')
+  lines.push('')
   
   return lines.join('\n')
 }
@@ -197,7 +204,7 @@ export function buildSystemPrompt(
   const {
     includeLOD0 = true,
     includeLOD1 = true,
-    includeLOD2 = true,
+    includeLOD2 = false,
     showToolInstructions = true
   } = options
   
@@ -234,15 +241,6 @@ export function buildSystemPrompt(
   if (includeLOD1 && context.availableTools && context.availableTools.length > 0) {
     parts.push('')
     parts.push(buildLOD1ToolSummary(context.availableTools))
-  }
-  
-  // ═══════════════════════════════════════════════════════════════
-  // LOD-2: 激活的 Skills (动态注入)
-  // ═══════════════════════════════════════════════════════════════
-  
-  if (includeLOD2 && context.activeSkills.length > 0) {
-    parts.push('')
-    parts.push(buildLOD2ActiveSkills(context.activeSkills))
   }
   
   // ═══════════════════════════════════════════════════════════════

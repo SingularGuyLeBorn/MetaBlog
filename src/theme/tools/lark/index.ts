@@ -1,19 +1,28 @@
 /**
- * 飞书 Lark CLI 工具模块
+ * 飞书 Open API 工具模块
+ * 直接调用飞书 REST API，无需 lark-cli
  */
 
 export {
-  runLarkCli,
-  larkSendMessage,
-  larkSearchDocs,
-  larkCalendarEvents,
-  larkSearchUser
+  feishuDocCreate,
+  feishuDocRead,
+  feishuDocSearch,
+  feishuDocBlocks,
+  feishuDocAppend,
+  feishuDocUpdateBlock,
+  feishuDocDeleteBlock,
+  feishuImSend,
+  feishuUserSearch
 } from './executors'
 
 export {
-  runLarkCliDef,
-  larkSendMessageDef,
-  larkSearchDocsDef,
-  larkCalendarEventsDef,
-  larkSearchUserDef
+  feishuDocCreateDef,
+  feishuDocReadDef,
+  feishuDocSearchDef,
+  feishuDocBlocksDef,
+  feishuDocAppendDef,
+  feishuDocUpdateBlockDef,
+  feishuDocDeleteBlockDef,
+  feishuImSendDef,
+  feishuUserSearchDef
 } from './definitions'

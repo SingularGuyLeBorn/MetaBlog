@@ -14,7 +14,7 @@ import { addLog } from './logger'
 import {
   startSessionLog,
   addLogEntry,
-  logUserInput,
+  logUserInput, 
   logAIRequest,
   logAIResponse,
   logAIContent,
@@ -33,7 +33,6 @@ import {
   type ToolCall
 } from '@/theme/tools/index'
 import { 
-  buildFullPrompt,
   type SkillMetadata,
   type ActiveSkill
 } from '@/theme/skills/index'
@@ -1070,7 +1069,7 @@ export const aiService = {
       declaredTools?: string[]
       availableTools?: string[]
     }
-  ): Promise<{ toolRecords?: ToolCallRecord[] }> {
+  ): Promise<{ toolRecords?: ToolCallRecord[]; injectedMessages?: Array<{ role: string; content: string }> }> {
     const toolRecords: ToolCallRecord[] = []
     const startTime = Date.now()
     
@@ -1116,6 +1115,9 @@ export const aiService = {
       }
     })
     
+    // 收集所有轮次中需要注入到对话上下文的消息
+    const allInjectedMessages: Array<{ role: string; content: string }> = []
+    
     try {
       // 转换消息格式，支持多模态
       const apiMessages: any[] = []
@@ -1140,7 +1142,7 @@ export const aiService = {
       }
       
       // 过滤空消息
-      const filteredMessages = apiMessages.filter((m: any) => {
+      let filteredMessages = apiMessages.filter((m: any) => {
         if (m.role === 'assistant') {
           const hasContent = m.content?.trim().length > 0 || Array.isArray(m.content)
           const hasReasoning = m.reasoning_content?.trim().length > 0
@@ -1151,7 +1153,7 @@ export const aiService = {
       })
       
       if (isReasoningModel) {
-        processedMessages: filteredMessages.map((m: any) => {
+        filteredMessages = filteredMessages.map((m: any) => {
           if (m.role === 'assistant') {
             return { ...m, reasoning_content: m.reasoning_content || '' }
           }
@@ -1179,12 +1181,12 @@ export const aiService = {
 
         if (response.aborted) {
           callbacks.onComplete()
-          return { toolRecords }
+          return { toolRecords, injectedMessages: allInjectedMessages }
         }
 
         if (response.error) {
           callbacks.onError(new Error(response.error))
-          return { toolRecords }
+          return { toolRecords, injectedMessages: allInjectedMessages }
         }
         
         // 处理思考内容
@@ -1257,7 +1259,7 @@ export const aiService = {
           })
           
           await apiDebugLogger.flush()
-          return { toolRecords }
+          return { toolRecords, injectedMessages: allInjectedMessages }
         }
         
         // 达到最大轮次前，记录最后一轮的内容，用于轮次耗尽时给出总结
@@ -1273,6 +1275,8 @@ export const aiService = {
         })
         
         const toolResultMessages = []
+        const injectMessages: Array<{ role: string; content: string }> = []
+        
         for (const toolCall of toolCalls) {
           const args = JSON.parse(toolCall.function.arguments || '{}')
           const toolStartTime = Date.now()
@@ -1297,8 +1301,13 @@ export const aiService = {
           // 先显示 running 状态，让用户立刻看到工具正在执行
           callbacks.onThinkingStep?.(runningStep)
           
-          const { result, record } = await executeToolWithRecord(toolCall)
+          const { result, record, injectMessages: toolInjectMessages } = await executeToolWithRecord(toolCall)
           toolRecords.push(record)
+          
+          // 收集需要注入到对话上下文中的消息（如 load_skill 返回的 skill 内容）
+          if (toolInjectMessages && toolInjectMessages.length > 0) {
+            injectMessages.push(...toolInjectMessages)
+          }
           
           // 执行完成后创建新的 step 对象（确保 Vue 响应式系统检测到变化）
           const successStep: ThinkingStep = {
@@ -1337,6 +1346,7 @@ export const aiService = {
           }
           
           // 工具结果截断：防止超长内容撑爆上下文窗口
+          // load_skill 的结果通常较短（成功消息），其完整内容通过 injectMessages 注入
           const MAX_TOOL_RESULT_LENGTH = 6000
           const originalLength = resultContent.length
           if (originalLength > MAX_TOOL_RESULT_LENGTH) {
@@ -1369,6 +1379,19 @@ export const aiService = {
         
         filteredMessages.push(assistantMessage)
         filteredMessages.push(...toolResultMessages)
+        
+        // 注入 load_skill 等工具返回的额外消息（skill 内容等）
+        if (injectMessages.length > 0) {
+          for (const msg of injectMessages) {
+            filteredMessages.push(msg)
+            allInjectedMessages.push(msg)
+          }
+          addLog({
+            level: 'info', category: 'tool', component: 'aiService',
+            event: 'inject_messages', message: `注入 ${injectMessages.length} 条额外消息到对话上下文`,
+            data: { count: injectMessages.length, roles: injectMessages.map(m => m.role) }
+          })
+        }
         
         addLog({
           level: 'info', category: 'tool', component: 'aiService',
@@ -1415,7 +1438,7 @@ export const aiService = {
       endSessionLog()
       
       await apiDebugLogger.flush()
-      return { toolRecords }
+      return { toolRecords, injectedMessages: allInjectedMessages }
       
     } catch (error) {
       const duration = Date.now() - startTime
@@ -1437,7 +1460,7 @@ export const aiService = {
       }
       
       await apiDebugLogger.flush()
-      return { toolRecords }
+      return { toolRecords, injectedMessages: allInjectedMessages }
     }
   },
   

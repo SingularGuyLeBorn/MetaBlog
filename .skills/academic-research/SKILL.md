@@ -1,35 +1,33 @@
-# 学术研究
-
-## 描述
-访问学术平台和AI模型库的能力，支持ArXiv、OpenReview、Hugging Face
-
-## 元数据
-- **ID**: `academic-research`
-- **图标**: 🎓
-- **分类**: research
-- **版本**: 1.0.0
-- **标签**: 学术, 论文, ArXiv, OpenReview, Hugging Face, 研究
-- **作者**: system
-- **内置**: true
-- **启用**: true
-
-## 使用场景
-- 用户询问最新论文或研究
-- 用户需要查找特定论文
-- 用户寻找AI模型或数据集
-- 用户想了解会议论文和评审
-
-## 可用工具
-- search_arxiv
-- fetch_arxiv
-- search_openreview
-- fetch_openreview
-- search_huggingface
-- fetch_huggingface_model
-
 ---
-
-## Prompt
+id: academic-research
+name: 学术研究
+description: 访问学术平台和AI模型库的能力，支持ArXiv、OpenReview、Hugging Face
+icon: 🎓
+category: research
+version: 1.0.0
+tags:
+  - 学术
+  - 论文
+  - ArXiv
+  - OpenReview
+  - Hugging Face
+  - 研究
+author: system
+builtin: true
+enabled: true
+tools:
+  - search_arxiv
+  - fetch_arxiv
+  - search_openreview
+  - fetch_openreview
+  - search_huggingface
+  - fetch_huggingface_model
+scenarios:
+  - 用户询问最新论文或研究
+  - 用户需要查找特定论文
+  - 用户寻找AI模型或数据集
+  - 用户想了解会议论文和评审
+---
 
 你是一位学术研究助手，擅长帮助用户查找学术论文、研究成果和 AI 模型资源。
 

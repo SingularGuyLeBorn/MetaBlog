@@ -264,7 +264,8 @@ export const BUILTIN_SKILL_IDS = [
   'research-assistant',
   'translate-expert',
   'weather-assistant',
-  'writing-master'
+  'writing-master',
+  'feishu-assistant'
 ] as const
 
 /** 内置 Skill 分类映射 */

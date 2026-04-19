@@ -148,6 +148,11 @@ export interface MessageGroup {
   aiVersions: ChatMessage[]
   /** 当前显示的版本索引 */
   currentVersionIndex: number
+  /** 
+   * 系统注入的消息（如 load_skill 加载的 skill 内容）
+   * 这些消息会包含在对话历史中，但不会显示为独立的消息组
+   */
+  injectedMessages?: ChatMessage[]
 }
 
 // ═══════════════════════════════════════════════════════════════

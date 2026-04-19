@@ -26,7 +26,7 @@ import {
   buildFullPrompt,
   autoActivateSkills
 } from '@/theme/skills'
-import { getToolDefinitions, type ToolDefinition } from '@/theme/tools/index'
+import { getToolDefinitions, getRegisteredToolNames, type ToolDefinition } from '@/theme/tools/index'
 
 // ═══════════════════════════════════════════════════════════════
 // 类型定义
@@ -214,11 +214,13 @@ class SkillsContextManager {
   buildSystemPrompt(baseRole: string, userInput: string): string {
     const allTools = getToolDefinitions()
     
+    // 不再传入 activeSkills，System Prompt 只包含 Catalog（LOD-0）
+    // Skill 完整内容通过 Agent 调用 load_skill 工具后注入
     return buildFullPrompt(
       baseRole,
       userInput,
       this.availableSkills,
-      this.activeSkills,
+      [], // activeSkills: 空数组，不预注入 LOD-2
       allTools
     )
   }
@@ -287,62 +289,37 @@ export const skillIntegratedService = {
     callbacks: EnhancedStreamCallbacks,
     signal?: AbortSignal,
     sessionId?: string
-  ): Promise<{ toolRecords?: ToolCallRecord[]; skillActivation?: SkillActivationResult }> {
+  ): Promise<{ toolRecords?: ToolCallRecord[]; skillActivation?: SkillActivationResult; injectedMessages?: Array<{ role: string; content: string }> }> {
     
     // 提取最后一条用户消息
     const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
     const userInput = lastUserMessage?.content || ''
     
     // ═══════════════════════════════════════════════════════════════
-    // Step 1: Skills 匹配和激活
-    // ═══════════════════════════════════════════════════════════════
-    
-    let skillActivation: SkillActivationResult | undefined
-    
-    if (config.enableSkills !== false && userInput) {
-      skillActivation = skillsContext.activateSkillsForInput(userInput, {
-        threshold: config.skillMatchThreshold ?? 0.2,
-        maxMatches: config.maxActiveSkills ?? 3,
-        clearPrevious: false // 保持上下文连续性
-      })
-      
-      // 触发回调
-      if (skillActivation.activated.length > 0) {
-        callbacks.onSkillActivation?.(skillActivation)
-        console.log('[SkillIntegratedService] Activated skills:', 
-          skillActivation.activated.map(s => s.id))
-      }
-    }
-    
-    // ═══════════════════════════════════════════════════════════════
-    // Step 2: 构建增强的 System Prompt
+    // Step 1: 构建 System Prompt（仅 LOD-0 Catalog + LOD-1 工具列表）
     // ═══════════════════════════════════════════════════════════════
     
     let enhancedSystemPrompt = config.systemPrompt
     
     if (config.enableSkills !== false) {
       const baseRole = config.systemPrompt?.split('\n')[0] || 'MetaBlog AI 助手'
+      // 不再传入 activeSkills，System Prompt 只包含 Skill Catalog
       enhancedSystemPrompt = skillsContext.buildSystemPrompt(baseRole, userInput)
       
-      console.log('[SkillIntegratedService] Built enhanced system prompt:', {
-        length: enhancedSystemPrompt.length,
-        activeSkills: skillsContext.getActiveSkills().map(s => s.id)
+      console.log('[SkillIntegratedService] Built system prompt (catalog only):', {
+        length: enhancedSystemPrompt.length
       })
     }
     
     // ═══════════════════════════════════════════════════════════════
-    // Step 3: 确定可用工具
+    // Step 2: 所有工具都可用（Agent 通过 load_skill 自主加载 Skill 后使用）
     // ═══════════════════════════════════════════════════════════════
     
-    const activeTools = skillsContext.getActiveTools()
-    const availableTools = activeTools.length > 0 ? activeTools : undefined
-    
-    if (availableTools) {
-      console.log('[SkillIntegratedService] Available tools:', availableTools)
-    }
+    // 不再按 activeSkills 过滤工具，所有注册工具都可用
+    const allToolNames = getRegisteredToolNames()
     
     // ═══════════════════════════════════════════════════════════════
-    // Step 4: 调用底层 aiService
+    // Step 3: 调用底层 aiService
     // ═══════════════════════════════════════════════════════════════
     
     // 排除 SkillIntegratedConfig 特有的属性，只保留 SessionConfig 的属性
@@ -350,8 +327,8 @@ export const skillIntegratedService = {
     const enhancedConfig: SessionConfig = {
       ...sessionConfig,
       systemPrompt: enhancedSystemPrompt,
-      // 传递工具上下文
-      availableTools
+      // 不再过滤工具，所有工具都可用
+      availableTools: undefined
     }
     
     const result = await aiService.chatStream(
@@ -362,14 +339,15 @@ export const skillIntegratedService = {
       100, // maxToolRounds
       sessionId,
       {
-        availableTools,
-        availableSkills: skillsContext.getActiveSkills().map(s => s.id)
+        // 所有工具都可用
+        availableTools: allToolNames,
+        availableSkills: skillsContext.getAvailableSkills().map(s => s.id)
       }
     )
     
     return {
       ...result,
-      skillActivation
+      skillActivation: undefined // 不再由前端自动激活
     }
   },
   

@@ -32,13 +32,64 @@ export function registerSkillsRoutes(server: ViteDevServer, ctx: RouteContext) {
     }
   }
 
-  // 解析 SKILL.md 文件
+  // 简单 YAML 解析器（仅支持单层键值和列表）
+  function parseSimpleYAML(yaml: string): Record<string, any> {
+    const result: Record<string, any> = {}
+    const lines = yaml.split('\n')
+    let currentKey: string | null = null
+    let currentList: string[] = []
+    let isInList = false
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith('#')) continue
+
+      if (trimmed.startsWith('- ')) {
+        if (isInList && currentKey) {
+          currentList.push(trimmed.slice(2).trim().replace(/^["']|["']$/g, ''))
+        }
+        continue
+      }
+
+      const match = trimmed.match(/^([^:]+):\s*(.*)$/)
+      if (match) {
+        if (isInList && currentKey) {
+          result[currentKey] = currentList
+          currentList = []
+          isInList = false
+        }
+        const [, key, value] = match
+        currentKey = key.trim()
+        const trimmedValue = value.trim()
+        if (trimmedValue === '') {
+          isInList = true
+          currentList = []
+        } else {
+          result[currentKey] = trimmedValue.replace(/^["']|["']$/g, '')
+          isInList = false
+        }
+      }
+    }
+
+    if (isInList && currentKey) {
+      result[currentKey] = currentList
+    }
+
+    return result
+  }
+
+  function parseYAMLList(value: string | string[] | undefined): string[] {
+    if (!value) return []
+    if (Array.isArray(value)) return value
+    return value.split(',').map(s => s.trim()).filter(Boolean)
+  }
+
+  // 解析 SKILL.md 文件（YAML frontmatter 格式）
   function parseSkillMd(
     content: string,
     skillId: string,
     dirName: string,
   ): any {
-    const lines = content.split("\n");
     const skill: any = {
       id: skillId,
       name: dirName.replace(/-/g, " "),
@@ -58,107 +109,29 @@ export function registerSkillsRoutes(server: ViteDevServer, ctx: RouteContext) {
       author: "user",
     };
 
-    let section = "";
-    let promptLines: string[] = [];
-    let inPrompt = false;
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-
-      // 解析标题
-      if (line.startsWith("# ") && !line.startsWith("## ")) {
-        skill.name = line.substring(2).trim();
-        continue;
-      }
-
-      // 解析章节
-      if (line.startsWith("## ")) {
-        section = line.substring(3).trim().toLowerCase();
-        inPrompt = false;
-        continue;
-      }
-
-      // 解析元数据
-      if (section === "元数据" || section === "metadata") {
-        if (line.startsWith("- **")) {
-          const match = line.match(/- \*\*(\w+)\*\*:\s*`?(.+?)`?$/);
-          if (match) {
-            const [, key, value] = match;
-            switch (key.toLowerCase()) {
-              case "id":
-                skill.id = value;
-                break;
-              case "图标":
-              case "icon":
-                skill.icon = value;
-                break;
-              case "分类":
-              case "category":
-                skill.category = value;
-                break;
-              case "版本":
-              case "version":
-                skill.version = value;
-                break;
-              case "标签":
-              case "tags":
-                skill.tags = value.split(",").map((t) => t.trim());
-                break;
-              case "作者":
-              case "author":
-                skill.author = value;
-                break;
-              case "内置":
-              case "built-in":
-                skill.isBuiltIn = value === "true";
-                break;
-              case "启用":
-              case "enabled":
-                skill.enabled = value !== "false";
-                break;
-            }
-          }
-        }
-      }
-
-      // 解析描述
-      if (section === "描述" || section === "description") {
-        if (line.trim() && !line.startsWith("-")) {
-          skill.description = line.trim();
-        }
-      }
-
-      // 解析使用场景
-      if (
-        section === "使用场景" ||
-        section === "usage scenarios" ||
-        section === "usagescenarios"
-      ) {
-        if (line.startsWith("- ")) {
-          skill.usageScenarios.push(line.substring(2).trim());
-        }
-      }
-
-      // 解析可用工具
-      if (section === "可用工具" || section === "tools") {
-        if (line.startsWith("- ")) {
-          skill.tools.push(line.substring(2).trim());
-        }
-      }
-
-      // 解析 Prompt
-      if (section === "prompt" || (line.startsWith("---") && section)) {
-        if (line.startsWith("---")) {
-          inPrompt = true;
-          continue;
-        }
-        if (inPrompt || section === "prompt") {
-          promptLines.push(line);
-        }
-      }
+    const yamlMatch = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/);
+    if (!yamlMatch) {
+      throw new Error(`Invalid skill file format: missing YAML frontmatter in ${dirName}`);
     }
 
-    skill.content = promptLines.join("\n").trim();
+    const [, yamlContent, markdownContent] = yamlMatch;
+    const yaml = parseSimpleYAML(yamlContent);
+
+    skill.id = yaml.id || skillId;
+    skill.name = yaml.name || dirName.replace(/-/g, " ");
+    skill.description = yaml.description || "";
+    skill.icon = yaml.icon || "🔧";
+    skill.category = yaml.category || "custom";
+    skill.version = yaml.version || "1.0.0";
+    skill.author = yaml.author || "system";
+    skill.isBuiltIn = yaml.builtin === "true" || yaml.builtin === true;
+    skill.enabled = yaml.enabled !== "false" && yaml.enabled !== false;
+    skill.tags = parseYAMLList(yaml.tags);
+    skill.tools = parseYAMLList(yaml.tools);
+    skill.usageScenarios = parseYAMLList(yaml.scenarios);
+
+    const promptMatch = markdownContent.match(/##\s*Prompt\s*\n([\s\S]*)/i);
+    skill.content = promptMatch ? promptMatch[1].trim() : markdownContent.trim();
     skill.systemPrompt = skill.content;
     return skill;
   }

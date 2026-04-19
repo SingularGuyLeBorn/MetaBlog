@@ -1,200 +1,574 @@
 import type { ViteDevServer } from "vite";
-import { spawn } from "child_process";
 import type { RouteContext } from "./proxy";
 
 /**
- * 飞书 CLI 路由
- * 封装 lark-cli 命令执行，提供安全的命令代理
+ * 飞书 Open API 直连路由
+ * 使用 App ID + App Secret 获取 tenant_access_token，直接调用飞书 REST API
+ * 无需 lark-cli OAuth 登录
  */
 
-// 允许的 lark-cli 子命令白名单
-const ALLOWED_LARK_COMMANDS = new Set([
-  'api',
-  'im',
-  'docs',
-  'calendar',
-  'contact',
-  'drive',
-  'wiki',
-  'sheets',
-  'slides',
-  'task',
-  'base',
-  'approval',
-  'attendance',
-  'mail',
-  'minutes',
-  'okr',
-  'vc',
-  'whiteboard',
-  'event',
-  'schema',
-  'doctor',
-  'auth',
-  'config',
-  'profile',
-  'update',
-  'help',
-]);
+const FEISHU_BASE = "https://open.feishu.cn/open-apis";
 
-// 危险字符过滤
-const DANGEROUS_PATTERNS = /[;&|`$(){}[\]\n\r\\]|(\.\.)|(^\s*-)/;
+// Token 缓存
+let tokenCache: { token: string; expireAt: number } | null = null;
 
-function sanitizeArg(arg: string): boolean {
-  return !DANGEROUS_PATTERNS.test(arg);
+/** 获取 tenant_access_token（带缓存） */
+async function getTenantAccessToken(): Promise<string> {
+  if (tokenCache && tokenCache.expireAt > Date.now() + 5 * 60 * 1000) {
+    return tokenCache.token;
+  }
+
+  const appId = process.env.FEISHU_APP_ID || process.env.LARK_APP_ID;
+  const appSecret = process.env.FEISHU_APP_SECRET || process.env.LARK_APP_SECRET;
+
+  if (!appId || !appSecret) {
+    throw new Error(
+      "FEISHU_APP_ID / LARK_APP_ID 或 FEISHU_APP_SECRET / LARK_APP_SECRET 未配置。请在 .env 中设置: FEISHU_APP_ID=cli_xxx FEISHU_APP_SECRET=xxx"
+    );
+  }
+
+  const res = await fetch(`${FEISHU_BASE}/auth/v3/tenant_access_token/internal`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ app_id: appId, app_secret: appSecret }),
+  });
+
+  const data = await res.json();
+  if (data.code !== 0) {
+    throw new Error(`飞书认证失败: ${data.msg} (code: ${data.code})`);
+  }
+
+  tokenCache = {
+    token: data.tenant_access_token,
+    expireAt: Date.now() + data.expire * 1000,
+  };
+
+  return tokenCache.token;
 }
 
-function isAllowedCommand(cmd: string): boolean {
-  return ALLOWED_LARK_COMMANDS.has(cmd);
+/** 通用飞书 API 调用 */
+async function feishuApi(
+  method: string,
+  path: string,
+  body?: any,
+  query?: Record<string, string>
+): Promise<any> {
+  const token = await getTenantAccessToken();
+
+  let url = `${FEISHU_BASE}${path}`;
+  if (query) {
+    const params = new URLSearchParams(query);
+    url += "?" + params.toString();
+  }
+
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+  };
+  if (body) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const data = await res.json();
+  return data;
+}
+
+/** 解析 JSON body */
+function parseBody(req: any): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (chunk: Buffer) => chunks.push(chunk));
+    req.on("end", () => {
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString()));
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
+/** 发送 JSON 响应 */
+function sendJson(res: any, status: number, data: any) {
+  res.statusCode = status;
+  res.setHeader("Content-Type", "application/json");
+  res.end(JSON.stringify(data));
 }
 
 export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { structuredLog } = ctx;
 
   // ============================================
-  // 飞书 CLI 命令执行
-  // POST /api/lark/exec
+  // 文档: 创建
+  // POST /api/lark/doc/create
+  // Body: { title?: string, folder_token?: string }
   // ============================================
-  server.middlewares.use("/api/lark/exec", async (req, res, next) => {
+  server.middlewares.use("/api/lark/doc/create", async (req, res, next) => {
     if (req.method !== "POST") {
       next();
       return;
     }
+    try {
+      const body = await parseBody(req);
+      const payload: any = {};
+      if (body.title) payload.title = String(body.title);
+      if (body.folder_token) payload.folder_token = String(body.folder_token);
 
-    const chunks: Buffer[] = [];
-    req.on("data", (chunk) => chunks.push(chunk));
-    req.on("end", async () => {
-      try {
-        const body = JSON.parse(Buffer.concat(chunks).toString());
-        const {
-          command,
-          args = [],
-          timeout = 30000,
-          format = 'json'
-        } = body;
-
-        // 参数校验
-        if (!command || typeof command !== 'string') {
-          res.statusCode = 400;
-          res.end(JSON.stringify({ success: false, error: 'command is required' }));
-          return;
-        }
-
-        const parts = command.trim().split(/\s+/);
-        const mainCmd = parts[0];
-
-        // 白名单校验
-        if (!isAllowedCommand(mainCmd)) {
-          res.statusCode = 403;
-          res.end(JSON.stringify({
-            success: false,
-            error: `Command "${mainCmd}" is not allowed`,
-            allowed: Array.from(ALLOWED_LARK_COMMANDS)
-          }));
-          return;
-        }
-
-        // 构建参数列表
-        const cmdArgs = [...parts.slice(1), ...args];
-
-        // 安全过滤
-        for (const arg of cmdArgs) {
-          if (!sanitizeArg(arg)) {
-            res.statusCode = 403;
-            res.end(JSON.stringify({
-              success: false,
-              error: `Dangerous characters detected in argument: ${arg}`,
-            }));
-            return;
-          }
-        }
-
-        // 自动添加格式参数
-        if (format && !cmdArgs.includes('--format')) {
-          cmdArgs.push('--format', format);
-        }
-
-        structuredLog.info("lark.exec.started", `Executing: lark-cli ${mainCmd}`, {
-          command: mainCmd,
-          args: cmdArgs,
-          timeout,
-        });
-
-        // 执行命令
-        const startTime = Date.now();
-        const child = spawn('lark-cli', [mainCmd, ...cmdArgs], {
-          timeout,
-          windowsHide: true,
-          env: { ...process.env }
-        });
-
-        let stdout = '';
-        let stderr = '';
-
-        child.stdout.on('data', (data) => {
-          stdout += data.toString();
-        });
-
-        child.stderr.on('data', (data) => {
-          stderr += data.toString();
-        });
-
-        child.on('error', (error) => {
-          structuredLog.error("lark.exec.error", `lark-cli spawn error: ${error.message}`, { error: error.message });
-          res.statusCode = 500;
-          res.end(JSON.stringify({
-            success: false,
-            error: `Failed to spawn lark-cli: ${error.message}`,
-            hint: '请确认 lark-cli 已安装: npm install -g @larksuite/cli'
-          }));
-        });
-
-        child.on('close', (code) => {
-          const duration = Date.now() - startTime;
-
-          if (code !== 0 && code !== null) {
-            structuredLog.warn("lark.exec.failed", `lark-cli exited with code ${code}`, {
-              exitCode: code,
-              duration,
-              stderr: stderr.slice(0, 500),
-            });
-          } else {
-            structuredLog.success("lark.exec.completed", `lark-cli completed`, {
-              duration,
-              stdoutLength: stdout.length,
-            });
-          }
-
-          // 尝试解析 stdout 为 JSON（如果格式是 json）
-          let parsedOutput: any = null;
-          if (format === 'json' && stdout.trim()) {
-            try {
-              parsedOutput = JSON.parse(stdout);
-            } catch {
-              // 不是有效 JSON，保持原样
-            }
-          }
-
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({
-            success: code === 0 || code === null,
-            stdout: stdout.slice(0, 50000), // 限制返回大小
-            stderr: stderr.slice(0, 5000),
-            exitCode: code,
-            parsed: parsedOutput,
-            duration,
-          }));
-        });
-
-      } catch (e: any) {
-        res.statusCode = 500;
-        res.end(JSON.stringify({ success: false, error: String(e) }));
-      }
-    });
+      structuredLog.info("lark.doc.create", "创建飞书文档", { title: body.title });
+      const result = await feishuApi("POST", "/docx/v1/documents", payload);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
   });
 
   // ============================================
-  // 飞书 CLI 健康检查
+  // 文档: 读取纯文本
+  // GET /api/lark/doc/read?document_id=xxx
+  // ============================================
+  server.middlewares.use("/api/lark/doc/read", async (req, res, next) => {
+    if (req.method !== "GET") {
+      next();
+      return;
+    }
+    try {
+      const url = new URL(req.url!, `http://localhost`);
+      const documentId = url.searchParams.get("document_id");
+      if (!documentId) {
+        sendJson(res, 400, { code: -1, msg: "缺少 document_id 参数" });
+        return;
+      }
+
+      structuredLog.info("lark.doc.read", "读取飞书文档", { document_id: documentId });
+      const result = await feishuApi("GET", `/docx/v1/documents/${documentId}/raw_content`);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // 文档: 读取元数据（标题、所有者等）
+  // GET /api/lark/doc/meta?document_id=xxx
+  // ============================================
+  server.middlewares.use("/api/lark/doc/meta", async (req, res, next) => {
+    if (req.method !== "GET") {
+      next();
+      return;
+    }
+    try {
+      const url = new URL(req.url!, `http://localhost`);
+      const documentId = url.searchParams.get("document_id");
+      if (!documentId) {
+        sendJson(res, 400, { code: -1, msg: "缺少 document_id 参数" });
+        return;
+      }
+
+      const result = await feishuApi("GET", `/docx/v1/documents/${documentId}`);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // 文档: 搜索
+  // POST /api/lark/doc/search
+  // Body: { search_key: string, count?: number }
+  // ============================================
+  server.middlewares.use("/api/lark/doc/search", async (req, res, next) => {
+    if (req.method !== "POST") {
+      next();
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      if (!body.search_key) {
+        sendJson(res, 400, { code: -1, msg: "缺少 search_key 参数" });
+        return;
+      }
+
+      structuredLog.info("lark.doc.search", "搜索飞书文档", { search_key: body.search_key });
+      const payload = {
+        search_key: String(body.search_key),
+        count: Math.min(Number(body.count) || 20, 50),
+      };
+      const result = await feishuApi("POST", "/drive/v1/files/search", payload);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // 文档: 获取块结构
+  // GET /api/lark/doc/blocks?document_id=xxx&page_size=500
+  // ============================================
+  server.middlewares.use("/api/lark/doc/blocks", async (req, res, next) => {
+    if (req.method !== "GET") {
+      next();
+      return;
+    }
+    try {
+      const url = new URL(req.url!, `http://localhost`);
+      const documentId = url.searchParams.get("document_id");
+      if (!documentId) {
+        sendJson(res, 400, { code: -1, msg: "缺少 document_id 参数" });
+        return;
+      }
+
+      const pageSize = Math.min(Number(url.searchParams.get("page_size")) || 500, 500);
+      const result = await feishuApi(
+        "GET",
+        `/docx/v1/documents/${documentId}/blocks/${documentId}/children`,
+        undefined,
+        { page_size: String(pageSize) }
+      );
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // 文档: 追加内容块
+  // POST /api/lark/doc/append
+  // Body: { document_id, blocks: [{ block_type, content? }] }
+  //
+  // 特殊处理：table block (block_type: 31) 不支持嵌套 children，
+  // 需要先创建 table，再创建 cell blocks，最后更新 table.cells
+  // ============================================
+  server.middlewares.use("/api/lark/doc/append", async (req, res, next) => {
+    if (req.method !== "POST") {
+      next();
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      const documentId = body.document_id;
+      const blocks = body.blocks;
+
+      if (!documentId || !Array.isArray(blocks) || blocks.length === 0) {
+        sendJson(res, 400, { code: -1, msg: "缺少 document_id 或 blocks 参数" });
+        return;
+      }
+
+      structuredLog.info("lark.doc.append", "追加文档内容", {
+        document_id: documentId,
+        block_count: blocks.length,
+      });
+
+      const results: any[] = [];
+      let normalBatch: any[] = [];
+
+      for (const block of blocks) {
+        if (block.block_type === 31 && Array.isArray(block._cell_contents) && block._cell_contents.length > 0) {
+          // 先提交前面的普通 blocks
+          if (normalBatch.length > 0) {
+            const r = await feishuApi(
+              "POST",
+              `/docx/v1/documents/${documentId}/blocks/${documentId}/children`,
+              { children: normalBatch }
+            );
+            results.push(r);
+            if (r.code !== 0) {
+              sendJson(res, 400, r);
+              return;
+            }
+            normalBatch = [];
+          }
+
+          // 创建 table（多步：table → cells → update cells）
+          const tableResult = await createTableBlock(documentId, block);
+          results.push(tableResult);
+          if (tableResult.code !== 0) {
+            sendJson(res, 400, tableResult);
+            return;
+          }
+        } else {
+          normalBatch.push(block);
+        }
+      }
+
+      // 提交最后一批普通 blocks
+      if (normalBatch.length > 0) {
+        const r = await feishuApi(
+          "POST",
+          `/docx/v1/documents/${documentId}/blocks/${documentId}/children`,
+          { children: normalBatch }
+        );
+        results.push(r);
+        if (r.code !== 0) {
+          sendJson(res, 400, r);
+          return;
+        }
+      }
+
+      sendJson(res, 200, {
+        code: 0,
+        msg: "success",
+        data: { results },
+      });
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  /** 创建 table block（两步：创建空 table → POST text children 到每个 cell）
+   *  注意：当前应用权限下 PATCH/DELTE 不可用，因此采用 POST children 到 cell 的方案。
+   *  副作用：每个 cell 会有一个飞书自动生成的空 text child + 我们 POST 的内容 child。
+   */
+  async function createTableBlock(documentId: string, tableBlock: any): Promise<any> {
+    const cellContents: any[][] = tableBlock._cell_contents || [];
+    const { _cell_contents: _, ...tableData } = tableBlock;
+
+    // 1. 创建 table block（只含 property，不含 _cell_contents）
+    const tableResult = await feishuApi(
+      "POST",
+      `/docx/v1/documents/${documentId}/blocks/${documentId}/children`,
+      { children: [tableData] }
+    );
+
+    if (tableResult.code !== 0) return tableResult;
+
+    const tableId = tableResult.data?.children?.[0]?.block_id;
+    const cellIds: string[] = tableResult.data?.children?.[0]?.table?.cells || [];
+
+    if (!tableId || cellIds.length === 0) {
+      return { code: -1, msg: "创建 table block 后未返回 block_id 或 cell_ids" };
+    }
+
+    // 校验 _cell_contents 长度
+    if (cellContents.length !== cellIds.length) {
+      return {
+        code: -1,
+        msg: `cell 内容数量不匹配: _cell_contents=${cellContents.length}, cell_ids=${cellIds.length}`
+      };
+    }
+
+    // 2. 对每个 cell POST text block child
+    const results: any[] = [];
+    for (let i = 0; i < cellIds.length; i++) {
+      const cellId = cellIds[i];
+      const elements = cellContents[i] || [];
+
+      // 跳过真正空的 cell（没有任何有效内容）
+      const hasContent = elements.some(
+        (el: any) => el.text_run?.content || el.equation?.content
+      );
+      if (!hasContent) continue;
+
+      // QPS 保护：每 3 个请求后延时 400ms（飞书限制 3 QPS）
+      if (i > 0 && i % 3 === 0) {
+        await new Promise((r) => setTimeout(r, 400));
+      }
+
+      const cellResult = await feishuApi(
+        "POST",
+        `/docx/v1/documents/${documentId}/blocks/${cellId}/children`,
+        {
+          children: [{
+            block_type: 2,
+            text: { elements }
+          }]
+        }
+      );
+
+      results.push(cellResult);
+      if (cellResult.code !== 0) {
+        return {
+          code: cellResult.code,
+          msg: `Cell ${i} 填充失败: ${cellResult.msg}`,
+          data: { table_id: tableId, cell_results: results }
+        };
+      }
+    }
+
+    return {
+      code: 0,
+      msg: "success",
+      data: { table_id: tableId, cell_ids: cellIds, cell_results: results }
+    };
+  }
+
+  // ============================================
+  // 文档: 更新块
+  // PATCH /api/lark/doc/block
+  // Body: { document_id, block_id, block_type, content }
+  // ============================================
+  server.middlewares.use("/api/lark/doc/block", async (req, res, next) => {
+    if (req.method !== "PATCH") {
+      next();
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      // 过滤 block_type，飞书 PATCH /blocks/{id} 不需要此字段
+      const { document_id, block_id, block_type, ...updateData } = body;
+
+      if (!document_id || !block_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 document_id 或 block_id 参数" });
+        return;
+      }
+
+      structuredLog.info("lark.doc.update_block", "更新文档块", { document_id, block_id });
+      const result = await feishuApi(
+        "PATCH",
+        `/docx/v1/documents/${document_id}/blocks/${block_id}`,
+        updateData
+      );
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // 文档: 删除块
+  // DELETE /api/lark/doc/block
+  // Body: { document_id, block_id }
+  // 后端自动查索引后调用 batch_delete
+  // ============================================
+  server.middlewares.use("/api/lark/doc/block", async (req, res, next) => {
+    if (req.method !== "DELETE") {
+      next();
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      const documentId = body.document_id;
+      const blockId = body.block_id;
+
+      if (!documentId || !blockId) {
+        sendJson(res, 400, { code: -1, msg: "缺少 document_id 或 block_id 参数" });
+        return;
+      }
+
+      structuredLog.info("lark.doc.delete_block", "删除文档块", { document_id: documentId, block_id: blockId });
+
+      // 1. 获取父块（文档根 Page）的所有子块，查找目标索引
+      const listResult = await feishuApi(
+        "GET",
+        `/docx/v1/documents/${documentId}/blocks/${documentId}/children`,
+        undefined,
+        { page_size: "500" }
+      );
+      if (listResult.code !== 0) {
+        sendJson(res, 400, listResult);
+        return;
+      }
+
+      const items = listResult.data?.items || [];
+      const index = items.findIndex((item: any) => item.block_id === blockId);
+      if (index === -1) {
+        sendJson(res, 400, { code: -1, msg: "未找到指定 block_id 的块" });
+        return;
+      }
+
+      // 2. 调用 batch_delete 按索引删除
+      const result = await feishuApi(
+        "DELETE",
+        `/docx/v1/documents/${documentId}/blocks/${documentId}/children/batch_delete`,
+        { start_index: index, end_index: index + 1 }
+      );
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // 消息: 发送
+  // POST /api/lark/im/send
+  // Body: { receive_id, receive_id_type, msg_type, content }
+  // ============================================
+  server.middlewares.use("/api/lark/im/send", async (req, res, next) => {
+    if (req.method !== "POST") {
+      next();
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      const {
+        receive_id,
+        receive_id_type = "open_id",
+        msg_type = "text",
+        content,
+      } = body;
+
+      if (!receive_id || !content) {
+        sendJson(res, 400, { code: -1, msg: "缺少 receive_id 或 content 参数" });
+        return;
+      }
+
+      let messageContent = content;
+      if (msg_type === "text" && !content.startsWith("{")) {
+        messageContent = JSON.stringify({ text: content });
+      }
+
+      structuredLog.info("lark.im.send", "发送飞书消息", { receive_id, msg_type });
+      const result = await feishuApi(
+        "POST",
+        "/im/v1/messages",
+        {
+          receive_id: String(receive_id),
+          msg_type: String(msg_type),
+          content: String(messageContent),
+        },
+        { receive_id_type: String(receive_id_type) }
+      );
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // 用户: 搜索/查找
+  // POST /api/lark/user/search
+  // Body: { query?, email? }
+  // ============================================
+  server.middlewares.use("/api/lark/user/search", async (req, res, next) => {
+    if (req.method !== "POST") {
+      next();
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+
+      if (body.email) {
+        // 通过邮箱查找用户
+        const result = await feishuApi("POST", "/contact/v3/users/batch_get_id", {
+          emails: Array.isArray(body.email) ? body.email : [String(body.email)],
+        });
+        sendJson(res, result.code === 0 ? 200 : 400, result);
+        return;
+      }
+
+      if (body.query) {
+        // 搜索用户
+        const result = await feishuApi("GET", "/contact/v3/users", undefined, {
+          query: String(body.query),
+          page_size: "20",
+        });
+        sendJson(res, result.code === 0 ? 200 : 400, result);
+        return;
+      }
+
+      sendJson(res, 400, { code: -1, msg: "缺少 query 或 email 参数" });
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // 健康检查
   // GET /api/lark/health
   // ============================================
   server.middlewares.use("/api/lark/health", async (req, res, next) => {
@@ -202,48 +576,21 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       next();
       return;
     }
-
     try {
-      const child = spawn('lark-cli', ['doctor'], {
-        timeout: 10000,
-        windowsHide: true,
+      const token = await getTenantAccessToken();
+      sendJson(res, 200, {
+        success: true,
+        connected: true,
+        token_valid: !!token,
+        hint: "飞书 Open API 连接正常",
       });
-
-      let stdout = '';
-      let stderr = '';
-
-      child.stdout.on('data', (data) => stdout += data.toString());
-      child.stderr.on('data', (data) => stderr += data.toString());
-
-      child.on('close', (code) => {
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({
-          success: code === 0,
-          installed: true,
-          version: '1.0.14',
-          doctorOutput: stdout.slice(0, 2000),
-          doctorError: stderr.slice(0, 1000),
-          hint: code !== 0
-            ? '请运行 "lark-cli auth login" 完成飞书 OAuth 登录'
-            : undefined
-        }));
-      });
-
-      child.on('error', () => {
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({
-          success: false,
-          installed: false,
-          error: 'lark-cli not found',
-          hint: '请安装: npm install -g @larksuite/cli'
-        }));
-      });
-    } catch {
-      res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({
+    } catch (e: any) {
+      sendJson(res, 200, {
         success: false,
-        installed: false,
-      }));
+        connected: false,
+        error: e.message,
+        hint: "请检查 FEISHU_APP_ID / LARK_APP_ID 和 FEISHU_APP_SECRET / LARK_APP_SECRET 配置",
+      });
     }
   });
 }

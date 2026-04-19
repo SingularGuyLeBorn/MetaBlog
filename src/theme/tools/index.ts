@@ -190,6 +190,28 @@ export {
   getWeatherDef
 } from './system'
 
+// ==================== 飞书工具 ====================
+export {
+  feishuDocCreate, feishuDocRead, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
+  feishuDocUpdateBlock, feishuDocDeleteBlock, feishuImSend, feishuUserSearch,
+  feishuDocCreateDef, feishuDocReadDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
+  feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuImSendDef, feishuUserSearchDef
+} from './lark'
+
+// ==================== Skill 加载工具 ====================
+export {
+  loadSkillDef,
+  executeLoadSkill
+} from './load_skill'
+
+// ==================== Meta 工具 ====================
+export {
+  getAllToolsDef,
+  getAllSkillsDef,
+  executeGetAllTools,
+  executeGetAllSkills
+} from './meta'
+
 // ==================== 导入用于初始化 ====================
 import { registerTools, getRegisteredToolNames } from './registry'
 
@@ -243,9 +265,17 @@ import { getCurrentTime, testEcho, calculate, getWeather, getCurrentTimeDef, tes
 
 // 飞书工具
 import {
-  runLarkCli, larkSendMessage, larkSearchDocs, larkCalendarEvents, larkSearchUser,
-  runLarkCliDef, larkSendMessageDef, larkSearchDocsDef, larkCalendarEventsDef, larkSearchUserDef
+  feishuDocCreate, feishuDocRead, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
+  feishuDocUpdateBlock, feishuDocDeleteBlock, feishuImSend, feishuUserSearch,
+  feishuDocCreateDef, feishuDocReadDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
+  feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuImSendDef, feishuUserSearchDef
 } from './lark'
+
+// Skill 加载工具
+import { loadSkillDef, executeLoadSkill } from './load_skill'
+
+// Meta 工具
+import { getAllToolsDef, getAllSkillsDef, executeGetAllTools, executeGetAllSkills } from './meta'
 
 // ==================== 初始化函数 ====================
 
@@ -353,22 +383,28 @@ export function initializeDefaultTools(): void {
     { name: 'test_echo', definition: testEchoDef, executor: testEcho }
   ])
 
-  // 飞书 Lark 工具（5个）
+  // 飞书文档工具（9个）
   registerTools([
-    { name: 'run_lark_cli', definition: runLarkCliDef, executor: runLarkCli },
-    { name: 'lark_send_message', definition: larkSendMessageDef, executor: larkSendMessage },
-    { name: 'lark_search_docs', definition: larkSearchDocsDef, executor: larkSearchDocs },
-    { name: 'lark_calendar_events', definition: larkCalendarEventsDef, executor: larkCalendarEvents },
-    { name: 'lark_search_user', definition: larkSearchUserDef, executor: larkSearchUser }
+    { name: 'feishu_doc_create', definition: feishuDocCreateDef, executor: feishuDocCreate },
+    { name: 'feishu_doc_read', definition: feishuDocReadDef, executor: feishuDocRead },
+    { name: 'feishu_doc_search', definition: feishuDocSearchDef, executor: feishuDocSearch },
+    { name: 'feishu_doc_blocks', definition: feishuDocBlocksDef, executor: feishuDocBlocks },
+    { name: 'feishu_doc_append', definition: feishuDocAppendDef, executor: feishuDocAppend },
+    { name: 'feishu_doc_update_block', definition: feishuDocUpdateBlockDef, executor: feishuDocUpdateBlock },
+    { name: 'feishu_doc_delete_block', definition: feishuDocDeleteBlockDef, executor: feishuDocDeleteBlock },
+    { name: 'feishu_im_send', definition: feishuImSendDef, executor: feishuImSend },
+    { name: 'feishu_user_search', definition: feishuUserSearchDef, executor: feishuUserSearch }
   ])
-  
-  // 飞书 Lark 工具（5个）
+
+  // Skill 加载工具（1个）- 让 Agent 主动加载 Skill 内容
   registerTools([
-    { name: 'run_lark_cli', definition: runLarkCliDef, executor: runLarkCli },
-    { name: 'lark_send_message', definition: larkSendMessageDef, executor: larkSendMessage },
-    { name: 'lark_search_docs', definition: larkSearchDocsDef, executor: larkSearchDocs },
-    { name: 'lark_calendar_events', definition: larkCalendarEventsDef, executor: larkCalendarEvents },
-    { name: 'lark_search_user', definition: larkSearchUserDef, executor: larkSearchUser }
+    { name: 'load_skill', definition: loadSkillDef, executor: executeLoadSkill }
+  ])
+
+  // Meta 查询工具（2个）- 让 Agent 查询系统能力全貌
+  registerTools([
+    { name: 'get_all_tools', definition: getAllToolsDef, executor: executeGetAllTools },
+    { name: 'get_all_skills', definition: getAllSkillsDef, executor: executeGetAllSkills }
   ])
 
   console.log(`[ToolSystem] ${getRegisteredToolNames().length} 个工具已初始化`)

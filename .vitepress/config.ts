@@ -14,9 +14,11 @@ const DATA_DIR = path.join(process.cwd(), ".data");
 // 加载 .env 文件
 const env = loadEnv("", process.cwd(), "VITE_");
 const serverEnv = loadEnv("", process.cwd(), "LLM_");
+const feishuEnv = loadEnv("", process.cwd(), "FEISHU_");
+const larkEnv = loadEnv("", process.cwd(), "LARK_");
 
 // 合并环境变量到 process.env
-Object.assign(process.env, env, serverEnv);
+Object.assign(process.env, env, serverEnv, feishuEnv, larkEnv);
 import {
   generateSectionSidebar,
   clearSidebarCache,
