@@ -9,12 +9,24 @@ import type { RouteContext } from "./proxy";
 
 const YUQUE_BASE = "https://www.yuque.com/api/v2";
 
-/** 获取语雀 Token */
+/** 获取语雀认证凭据
+ * 支持两种方式（按优先级）：
+ * 1. YUQUE_TOKEN: Personal Access Token（需超级会员）
+ * 2. YUQUE_SESSION: 浏览器 Cookie 中的 _yuque_session 值（免费，任何人都能获取）
+ *
+ * 获取 _yuque_session 方法：
+ * - 登录语雀网页版 → F12 打开开发者工具 → Application → Cookies → https://www.yuque.com
+ * - 找到 Name 为 "_yuque_session" 的 Cookie，复制其 Value
+ * - 粘贴到 .env: YUQUE_SESSION=复制的值
+ */
 function getYuqueToken(): string {
-  const token = process.env.YUQUE_TOKEN;
+  const token = process.env.YUQUE_TOKEN || process.env.YUQUE_SESSION;
   if (!token) {
     throw new Error(
-      "YUQUE_TOKEN 未配置。请在 .env 中设置: YUQUE_TOKEN=your_personal_access_token"
+      "YUQUE_TOKEN 或 YUQUE_SESSION 未配置。\n" +
+      "方式1（需超级会员）: YUQUE_TOKEN=your_personal_access_token\n" +
+      "方式2（免费）: YUQUE_SESSION=从浏览器Cookie复制的_yuque_session值\n" +
+      "获取方式: 登录语雀 → F12 → Application → Cookies → https://www.yuque.com → 复制 _yuque_session 的 Value"
     );
   }
   return token;
@@ -100,7 +112,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
         success: false,
         connected: false,
         error: e.message,
-        hint: "请检查 YUQUE_TOKEN 配置",
+        hint: "请检查 YUQUE_TOKEN 或 YUQUE_SESSION 配置。免费方式：登录语雀 → F12 → Application → Cookies → 复制 _yuque_session 的 Value",
       });
     }
   });
