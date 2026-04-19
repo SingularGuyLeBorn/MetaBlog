@@ -246,10 +246,11 @@ export const yuqueDocCreate = async (args: Record<string, any>): Promise<ToolRes
       format: 'lake',
     }
     // 如果提供了 content，包装为 Lake 格式
+    // 【关键】语雀内部 Web API 使用 body_asl 字段保存内容，不是 body！
     if (content !== undefined) {
       const bodyStr = String(content)
       // 如果用户已经提供了 doctype 前缀，直接使用；否则包装
-      payload.body = bodyStr.startsWith('<!doctype lake>') ? bodyStr : `<!doctype lake>${bodyStr}`
+      payload.body_asl = bodyStr.startsWith('<!doctype lake>') ? bodyStr : `<!doctype lake>${bodyStr}`
     }
     if (isPublic !== undefined) payload.public = Number(isPublic)
 
@@ -285,11 +286,12 @@ export const yuqueDocUpdate = async (args: Record<string, any>): Promise<ToolRes
   }
 
   try {
-    const payload: any = { repo_id: String(repo_id), format: 'lake' }
+    const payload: any = { repo_id: String(repo_id), doc_id: String(doc_id), format: 'lake' }
     if (title !== undefined) payload.title = String(title)
+    // 【关键】语雀内部 Web API 使用 body_asl 字段保存内容，不是 body！
     if (content !== undefined) {
       const bodyStr = String(content)
-      payload.body = bodyStr.startsWith('<!doctype lake>') ? bodyStr : `<!doctype lake>${bodyStr}`
+      payload.body_asl = bodyStr.startsWith('<!doctype lake>') ? bodyStr : `<!doctype lake>${bodyStr}`
     }
 
     const result = await yuqueApi('PUT', '/doc/update', payload)

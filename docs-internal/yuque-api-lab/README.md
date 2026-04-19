@@ -62,6 +62,17 @@
 | PUT | `/api/docs/{id}` | `{title, body, format}` | 更新文档（id 是数字 ID） |
 | DELETE | `/api/docs/{id}?book_id={id}` | - | 删除文档（id 是数字 ID） |
 
+### 关键字段说明
+
+**body_asl（创建/更新必需）**
+- 语雀内部 Web API 使用 `body_asl` 字段保存文档内容
+- 使用 `body` 字段会导致 API 返回成功但内容为空（content 长度为 0）
+- 格式为 Lake HTML，以 `<!doctype lake>` 开头
+
+**content（读取返回）**
+- 读取文档时返回 `content` 字段（已渲染的 Lake HTML）
+- 不是 `body` 也不是 `body_asl`
+
 ### 请求头模板
 
 ```python

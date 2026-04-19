@@ -324,7 +324,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
     if (req.method !== "POST") { next(); return; }
     try {
       const body = await parseBody(req);
-      const { repo_id, title, body: docBody, format = "lake", public: isPublic } = body;
+      const { repo_id, title, body_asl: docBody, format = "lake", public: isPublic } = body;
 
       if (!repo_id || !title) {
         sendJson(res, 400, { code: -1, msg: "缺少 repo_id 或 title 参数" });
@@ -336,7 +336,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
         title: String(title),
         format: String(format),
       };
-      if (docBody !== undefined) payload.body = String(docBody);
+      if (docBody !== undefined) payload.body_asl = String(docBody);
       if (isPublic !== undefined) payload.public = Number(isPublic);
 
       structuredLog.info("yuque.doc.create", "创建语雀文档", { repo_id, title });
@@ -368,7 +368,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
     if (req.method !== "PUT" && req.method !== "POST") { next(); return; }
     try {
       const body = await parseBody(req);
-      const { repo_id, doc_id, title, body: docBody, format = "lake" } = body;
+      const { repo_id, doc_id, title, body_asl: docBody, format = "lake" } = body;
 
       if (!repo_id || !doc_id) {
         sendJson(res, 400, { code: -1, msg: "缺少 repo_id 或 doc_id 参数" });
@@ -377,7 +377,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
 
       const payload: any = { format: String(format) };
       if (title !== undefined) payload.title = String(title);
-      if (docBody !== undefined) payload.body = String(docBody);
+      if (docBody !== undefined) payload.body_asl = String(docBody);
 
       structuredLog.info("yuque.doc.update", "更新语雀文档", { repo_id, doc_id });
       const result = await yuqueApi(

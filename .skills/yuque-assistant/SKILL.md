@@ -41,6 +41,16 @@ usageScenarios:
 
 ## 核心概念
 
+### body_asl 字段（重要！）
+
+语雀内部 Web API 使用 `body_asl` 字段保存文档内容，**不是 `body` 字段**。
+
+使用 `body` 字段会导致 API 返回成功，但文档内容为空（content 长度为 0）。
+这是内部 Web API 与 Open API v2 的重要区别之一。
+
+- **创建/更新**：传入 `body_asl` 字段
+- **读取**：返回 `content` 字段
+
 ### repo_id（知识库 ID）
 
 语雀知识库的唯一标识，是一个**数字 ID**。
@@ -122,7 +132,8 @@ yuque_doc_create(
 ```
 
 **⚠️ 注意**：
-- `content` 支持 HTML 标签，系统会自动包装为 Lake 格式
+- `content` 参数底层映射为 `body_asl` 字段提交给语雀 API
+- 支持 HTML 标签，系统会自动包装为 Lake 格式
 - 创建后文档**不会自动出现在知识库目录中**，如需加入目录请后续在语雀网页版手动调整
 
 ### 5. 更新文档
@@ -163,6 +174,12 @@ yuque_doc_read(repo_id="68025057", doc_slug="abc123")
 - 使用浏览器 Cookie（`_yuque_session` + `_ctoken`），不是 Token
 - Cookie 获取方法：登录语雀 → F12 → Application → Cookies → 复制值
 - **切勿泄露 Cookie，切勿提交到 Git！**
+
+### body_asl 字段
+
+- **创建/更新时必须使用 `body_asl` 字段**，使用 `body` 会导致内容为空
+- `content` 参数底层映射为 `body_asl`
+- 读取时返回 `content` 字段（已渲染的 Lake HTML）
 
 ### 内容格式
 

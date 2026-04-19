@@ -257,7 +257,7 @@ yuque_doc_create(repo_id="68025057", title="项目文档", content="<h1>标题</
         },
         content: {
           type: 'string',
-          description: '文档正文（HTML 格式，系统会自动包装为 Lake 格式）',
+          description: '文档正文（HTML 格式，系统会自动包装为 Lake 格式）。注意：底层使用 body_asl 字段提交给语雀 API。',
         },
         slug: {
           type: 'string',
