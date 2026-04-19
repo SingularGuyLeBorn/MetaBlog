@@ -198,6 +198,14 @@ export {
   feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuImSendDef, feishuUserSearchDef
 } from './lark'
 
+// ==================== 语雀工具 ====================
+export {
+  yuqueRepoList, yuqueTocGet, yuqueDocList, yuqueDocRead, yuqueDocCreate,
+  yuqueDocUpdate, yuqueDocDelete, yuqueSearch,
+  yuqueRepoListDef, yuqueTocGetDef, yuqueDocListDef, yuqueDocReadDef, yuqueDocCreateDef,
+  yuqueDocUpdateDef, yuqueDocDeleteDef, yuqueSearchDef
+} from './yuque'
+
 // ==================== Skill 加载工具 ====================
 export {
   loadSkillDef,
@@ -270,6 +278,14 @@ import {
   feishuDocCreateDef, feishuDocReadDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
   feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuImSendDef, feishuUserSearchDef
 } from './lark'
+
+// 语雀工具
+import {
+  yuqueRepoList, yuqueTocGet, yuqueDocList, yuqueDocRead, yuqueDocCreate,
+  yuqueDocUpdate, yuqueDocDelete, yuqueSearch,
+  yuqueRepoListDef, yuqueTocGetDef, yuqueDocListDef, yuqueDocReadDef, yuqueDocCreateDef,
+  yuqueDocUpdateDef, yuqueDocDeleteDef, yuqueSearchDef
+} from './yuque'
 
 // Skill 加载工具
 import { loadSkillDef, executeLoadSkill } from './load_skill'
@@ -394,6 +410,18 @@ export function initializeDefaultTools(): void {
     { name: 'feishu_doc_delete_block', definition: feishuDocDeleteBlockDef, executor: feishuDocDeleteBlock },
     { name: 'feishu_im_send', definition: feishuImSendDef, executor: feishuImSend },
     { name: 'feishu_user_search', definition: feishuUserSearchDef, executor: feishuUserSearch }
+  ])
+
+  // 语雀文档工具（8个）
+  registerTools([
+    { name: 'yuque_repo_list', definition: yuqueRepoListDef, executor: yuqueRepoList },
+    { name: 'yuque_toc_get', definition: yuqueTocGetDef, executor: yuqueTocGet },
+    { name: 'yuque_doc_list', definition: yuqueDocListDef, executor: yuqueDocList },
+    { name: 'yuque_doc_read', definition: yuqueDocReadDef, executor: yuqueDocRead },
+    { name: 'yuque_doc_create', definition: yuqueDocCreateDef, executor: yuqueDocCreate },
+    { name: 'yuque_doc_update', definition: yuqueDocUpdateDef, executor: yuqueDocUpdate },
+    { name: 'yuque_doc_delete', definition: yuqueDocDeleteDef, executor: yuqueDocDelete },
+    { name: 'yuque_search', definition: yuqueSearchDef, executor: yuqueSearch },
   ])
 
   // Skill 加载工具（1个）- 让 Agent 主动加载 Skill 内容

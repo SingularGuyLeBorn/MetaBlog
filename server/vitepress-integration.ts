@@ -16,6 +16,7 @@ import { registerContentRoutes } from "./routes/content";
 import { registerLogsRoutes } from "./routes/logs";
 import { registerProxyRoutes } from "./routes/proxy";
 import { registerLarkRoutes } from "./routes/lark";
+import { registerYuqueRoutes } from "./routes/yuque";
 import { registerAgentSystemRoutes } from "./routes/agent-system";
 import { registerSkillsRoutes } from "./routes/skills";
 import { registerMemoriesRoutes } from "./routes/memories";
@@ -355,6 +356,7 @@ export const metaBlogBffPlugin = (): Plugin => ({
     registerMcpRoutes(server, ctx);
     registerSessionsRoutes(server, ctx);
     registerLarkRoutes(server, ctx);
+    registerYuqueRoutes(server, ctx);
   },
   handleHotUpdate({ file }) {
     // 只忽略数据目录的变更，避免不必要的 HMR

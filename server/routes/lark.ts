@@ -320,9 +320,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
     }
   });
 
-  /** 创建 table block（两步：创建空 table → POST text children 到每个 cell）
-   *  注意：当前应用权限下 PATCH/DELTE 不可用，因此采用 POST children 到 cell 的方案。
-   *  副作用：每个 cell 会有一个飞书自动生成的空 text child + 我们 POST 的内容 child。
+  /** 创建 table block（两步：创建空 table → GET cell → PATCH auto-generated text child）
+   *  用 PATCH update_text_elements 更新飞书自动生成的空 text child，消除空 child 副作用。
    */
   async function createTableBlock(documentId: string, tableBlock: any): Promise<any> {
     const cellContents: any[][] = tableBlock._cell_contents || [];
@@ -344,7 +343,6 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       return { code: -1, msg: "创建 table block 后未返回 block_id 或 cell_ids" };
     }
 
-    // 校验 _cell_contents 长度
     if (cellContents.length !== cellIds.length) {
       return {
         code: -1,
@@ -352,39 +350,55 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       };
     }
 
-    // 2. 对每个 cell POST text block child
+    // 2. 对每个 cell：GET 获取 auto-generated text child → PATCH update_text_elements
     const results: any[] = [];
     for (let i = 0; i < cellIds.length; i++) {
       const cellId = cellIds[i];
       const elements = cellContents[i] || [];
 
-      // 跳过真正空的 cell（没有任何有效内容）
       const hasContent = elements.some(
         (el: any) => el.text_run?.content || el.equation?.content
       );
       if (!hasContent) continue;
 
-      // QPS 保护：每 3 个请求后延时 400ms（飞书限制 3 QPS）
+      // QPS 保护：每 3 个 cell 后延时 400ms（每个 cell 2 个请求）
       if (i > 0 && i % 3 === 0) {
         await new Promise((r) => setTimeout(r, 400));
       }
 
+      // 2a. GET cell 获取 auto-generated text child
       const cellResult = await feishuApi(
-        "POST",
-        `/docx/v1/documents/${documentId}/blocks/${cellId}/children`,
-        {
-          children: [{
-            block_type: 2,
-            text: { elements }
-          }]
-        }
+        "GET",
+        `/docx/v1/documents/${documentId}/blocks/${cellId}`
       );
-
-      results.push(cellResult);
       if (cellResult.code !== 0) {
         return {
           code: cellResult.code,
-          msg: `Cell ${i} 填充失败: ${cellResult.msg}`,
+          msg: `Cell ${i} GET 失败: ${cellResult.msg}`,
+          data: { results }
+        };
+      }
+
+      const textChildId = cellResult.data?.block?.children?.[0];
+      if (!textChildId) {
+        return {
+          code: -1,
+          msg: `Cell ${i} 未找到 auto-generated text child`,
+          data: { results }
+        };
+      }
+
+      // 2b. PATCH text child
+      const patchResult = await feishuApi(
+        "PATCH",
+        `/docx/v1/documents/${documentId}/blocks/${textChildId}`,
+        { update_text_elements: { elements } }
+      );
+      results.push(patchResult);
+      if (patchResult.code !== 0) {
+        return {
+          code: patchResult.code,
+          msg: `Cell ${i} PATCH 失败: ${patchResult.msg}`,
           data: { table_id: tableId, cell_results: results }
         };
       }
@@ -395,6 +409,23 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       msg: "success",
       data: { table_id: tableId, cell_ids: cellIds, cell_results: results }
     };
+  }
+
+  /** 把前端传来的 block content 转换为飞书 PATCH 所需的格式
+   *  text/heading/bullet/ordered/code/quote → update_text_elements
+   */
+  function convertPatchBody(updateData: any): any {
+    const blockTypeFields = [
+      "text", "heading1", "heading2", "heading3", "heading4",
+      "heading5", "heading6", "heading7", "heading8", "heading9",
+      "bullet", "ordered", "code", "quote"
+    ];
+    for (const field of blockTypeFields) {
+      if (updateData[field] && Array.isArray(updateData[field].elements)) {
+        return { update_text_elements: { elements: updateData[field].elements } };
+      }
+    }
+    return updateData;
   }
 
   // ============================================
@@ -418,10 +449,11 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       }
 
       structuredLog.info("lark.doc.update_block", "更新文档块", { document_id, block_id });
+      const patchBody = convertPatchBody(updateData);
       const result = await feishuApi(
         "PATCH",
         `/docx/v1/documents/${document_id}/blocks/${block_id}`,
-        updateData
+        patchBody
       );
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
