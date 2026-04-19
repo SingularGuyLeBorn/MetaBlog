@@ -24,7 +24,7 @@
         "fullstack-developer",
         "academic-research"
       ],
-      "customSystemPrompt": "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。"
+      "customSystemPrompt": "你是 Kimi，一个有帮助的 AI 助手。"
     },
     "memory": {
       "enabled": true,
@@ -36,7 +36,7 @@
     "callCount": 0,
     "isDefault": true,
     "createdAt": 1773231241953,
-    "updatedAt": 1776342090194,
+    "updatedAt": 1776531384356,
     "lastActiveAt": 1776342090193
   },
   {
