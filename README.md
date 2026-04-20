@@ -31,6 +31,15 @@ MetaBlog 不是一个普通的博客系统，它代表了内容管理系统向�
 | **L5: Meta-Agent** | 🚧 规划中 | 能创建和配置其他 Agent 的超级 Agent |
 | **L6: 状态监控** | 🚧 规划中 | 实时监控 Agent 运行状态（休眠/唤醒/执行中） |
 
+<p align="center">
+  <br>
+  <strong>智能终端编辑模式 (L1 ~ L3)</strong><br>
+  <img src="./docs/public/images/ui_scenarios/scenario_editor.png" width="80%" alt="Scenario Editor">
+  <br><br>
+  <strong>Agent 控制中心与自治网络 (L4 ~ L6)</strong><br>
+  <img src="./docs/public/images/ui_scenarios/scenario_dashboard.png" width="80%" alt="Scenario Dashboard">
+</p>
+
 ---
 
 ## 📊 当前进度 vs 最终目标
@@ -169,11 +178,12 @@ MetaBlog 不是一个普通的博客系统，它代表了内容管理系统向�
    - KB 系统 → 持久化存储
    - web_search → 多引擎切换（Tavily/Bing）
 
-3. **飞书 CLI 集成**（2-3 周）
-   - `run_lark_cli` 通用命令执行
-   - `lark_send_message` 发消息
-   - `lark_create_doc` 创建文档
-   - `lark_calendar_events` 查日程
+3. **飞书 CLI 集成**（已完成）
+   - [x] `feishu_doc_create` 自动化权限下放
+   - [x] `feishu_doc_append` 数学公式 ($latex$) 渲染支持
+   - [x] `feishu_doc_update_block` 高级排版增强
+   - [x] `feishu_im_send` 多接收者类型支持
+   - [x] `feishu_user_search` 身份自动锁定 (OpenID)
 
 4. **补充核心工具**（3-4 周）
    - 图片处理工具
@@ -401,6 +411,14 @@ npm run docs:preview
 
 ## 🏗️ 架构设计
 
+<p align="center">
+  <strong>系统演进架构 (L1-L6)</strong><br>
+  <img src="./docs/public/images/architecture/architecture_evolution.png" width="80%" alt="Evolution Architecture">
+  <br><br>
+  <strong>全域工具链与 MCP 拓扑网络</strong><br>
+  <img src="./docs/public/images/architecture/architecture_topology.png" width="80%" alt="MCP Topology Architecture">
+</p>
+
 ### 技术栈
 
 | 层级 | 技术 |
@@ -625,3 +643,22 @@ MIT License
 <p align="center">
   <strong>让 AI 成为博客的共创者，而不只是对话者</strong>
 </p>
+---
+
+## 结尾：语义对照表
+
+> 技术应当承载人文温度，以下是本项目使用的术语及其浪漫释义。
+
+| 术语 | Term | 释义 |
+|------|------|------|
+| 部署 | Deploy | *让我们的代码抵达它该在的地方* |
+| 量化 | Quantize | *在精度与空间的缝隙中寻找平衡* |
+| 推理 | Inference | *模型在沉默中得出结论的时刻* |
+| 微调 | Fine-tune | *用少量数据，唤醒模型的潜在记忆* |
+| 显存 | VRAM | *承载着参数重量的数字海洋* |
+| 迭代 | Iterate | *向着局部最优，不断攀登* |
+| 星辰大海 | The Stars | *我们的未来是星辰大海* |
+
+---
+
+*愿你的代码如电路般精确，如诗歌般优雅。*

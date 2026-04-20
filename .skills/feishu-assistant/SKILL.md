@@ -10,26 +10,21 @@ tags:
   - 消息
   - Lark
 tools:
-  - feishu_doc_create
+  - feishu_doc_create # 支持 owner_email/owner_mobile 自动下放权限
   - feishu_doc_read
   - feishu_doc_search
   - feishu_doc_blocks
-  - feishu_doc_append
-  - feishu_doc_update_block
+  - feishu_doc_append # 支持 $latex$ 公式转换与代码语言高亮
+  - feishu_doc_update_block # 支持 $latex$ 公式转换与样式叠加
   - feishu_doc_delete_block
   - feishu_im_send
   - feishu_user_search
 usageScenarios:
-  - 创建飞书文档
-  - 读取飞书文档内容
-  - 搜索飞书文档
-  - 在文档中追加内容
-  - 修改文档内容
-  - 删除文档中的某段内容
-  - 发送飞书消息
-  - 查找飞书用户
-  - 把内容写入飞书文档
-  - 从飞书文档提取信息
+  - 创建并自动分配权限的飞书文档
+  - 在文档中插入数学公式 ($latex$)
+  - 具有语法高亮的代码片段写入
+  - 读取、搜索并修改文档内容
+  - 发送消息并查找用户
 ---
 
 # 飞书助手
@@ -51,13 +46,20 @@ usageScenarios:
 
 ## 工作流
 
-### 1. 创建并写入文档
+### 1. 创建并自动分配权限
+```typescript
+feishu_doc_create(
+  title="量子力学笔记", 
+  owner_email="user@example.com" // 可选，指定后自动分配 Full Access 权限
+) 
 ```
-feishu_doc_create(title="会议纪") 
-  → feishu_doc_append(document_id="xxx", content="会议内容...")
-```
+- 创建成功后，工具会返回 `permission_result` 告知权限分配状态。
 
-### 2. 读取文档内容
+### 2. 插入复杂排版 (公式与代码)
+- **数学公式**：直接在文本中使用 `$公式内容$`，如 `$\int_{0}^{\infty} e^{-x^2} dx$`。后端会自动将其转换为飞书原生公式节点。
+- **代码块**：在创建 `code` 类型的块时，可以指定语言。
+
+### 3. 读取文档内容
 ```
 feishu_doc_read(document_id="xxx")
 ```

@@ -107,7 +107,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   // ============================================
   // 文档: 创建
   // POST /api/lark/doc/create
-  // Body: { title?: string, folder_token?: string }
+  // Body: { title?: string, folder_token?: string, owner_email?: string, owner_mobile?: string }
   // ============================================
   server.middlewares.use("/api/lark/doc/create", async (req, res, next) => {
     if (req.method !== "POST") {
@@ -122,6 +122,46 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
 
       structuredLog.info("lark.doc.create", "创建飞书文档", { title: body.title });
       const result = await feishuApi("POST", "/docx/v1/documents", payload);
+      
+      if (result.code === 0 && result.document) {
+        const docId = result.document.document_id;
+        
+        // --- 权限自动下放逻辑 ---
+        const ownerEmail = body.owner_email;
+        const ownerMobile = body.owner_mobile;
+        
+        if (ownerEmail || ownerMobile) {
+          try {
+            // 1. 获取用户 OpenID
+            const searchPayload: any = {};
+            if (ownerEmail) searchPayload.emails = [ownerEmail];
+            if (ownerMobile) searchPayload.mobiles = [ownerMobile];
+            
+            const userRes = await feishuApi("POST", "/contact/v3/users/batch_get_id", searchPayload, { user_id_type: "open_id" });
+            const openId = userRes.data?.user_list?.[0]?.user_id; // 飞书返回的字段名为 user_id，不论请求类型如何
+            
+            if (openId) {
+              // 2. 赋予管理权限 (同步进行，确保调用方能收到反馈)
+              const permResult = await feishuApi("POST", `/drive/v1/permissions/${docId}/members`, {
+                member_type: "openid",
+                member_id: openId,
+                perm: "full_access"
+              }, { type: "docx" });
+              
+              (result as any).permission_result = permResult;
+              
+              if (permResult.code === 0) {
+                structuredLog.info("lark.doc.permission", "权限已自动下放", { email: ownerEmail, mobile: ownerMobile, open_id: openId });
+              } else {
+                structuredLog.error("lark.doc.permission", "权限下放失败", { email: ownerEmail, mobile: ownerMobile, error: permResult });
+              }
+            }
+          } catch (e) {
+            structuredLog.warn("lark.doc.permission", "身份识别失败，跳过权限下放", e);
+          }
+        }
+      }
+
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
@@ -412,7 +452,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   }
 
   /** 把前端传来的 block content 转换为飞书 PATCH 所需的格式
-   *  text/heading/bullet/ordered/code/quote → update_text_elements
+   *  处理常规文本块以及数学公式块的特殊 Schema 映射
    */
   function convertPatchBody(updateData: any): any {
     const blockTypeFields = [
@@ -420,9 +460,35 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       "heading5", "heading6", "heading7", "heading8", "heading9",
       "bullet", "ordered", "code", "quote"
     ];
+
     for (const field of blockTypeFields) {
       if (updateData[field] && Array.isArray(updateData[field].elements)) {
-        return { update_text_elements: { elements: updateData[field].elements } };
+        // 对 elements 进行深度修复，转换数学公式节点
+        const elements = updateData[field].elements.map((el: any) => {
+          // 如果是一个特殊的数学公式标记块
+          if (el.equation && typeof el.equation === 'string') {
+            return {
+              equation: { content: el.equation }
+            };
+          }
+          // 支持直接传入文本
+          if (typeof el === 'string') {
+            return { text_run: { content: el } };
+          }
+          return el;
+        });
+
+        // 如果是代码块，需要确保 language 被正确映射
+        if (field === "code" && updateData.code.style) {
+          return {
+            update_code: {
+              elements,
+              style: updateData.code.style
+            }
+          };
+        }
+
+        return { update_text_elements: { elements } };
       }
     }
     return updateData;
