@@ -1,5 +1,6 @@
 import type { ViteDevServer } from "vite";
 import type { RouteContext } from "./proxy";
+import { markdownToLake } from "../utils/lake-builder";
 
 // =============================================================================
 // 语雀 (Yuque) 内部 Web API 路由
@@ -142,16 +143,24 @@ async function yuqueApi(
     headers["Content-Type"] = "application/json";
   }
 
-  // 5. 发送请求
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  // 5. 发送请求 (设置 15s 超时)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-  // 6. 解析响应
-  const data = await res.json();
-  return data;
+  try {
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+    
+    // 6. 解析响应
+    const data = await res.json();
+    return data;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 // =============================================================================
@@ -182,6 +191,40 @@ function sendJson(res: any, status: number, data: any) {
   res.end(JSON.stringify(data));
 }
 
+/**
+ * 调用语雀内部 Web API（支持 multipart/form-data）
+ *
+ * 用于图片上传等需要文件上传的场景。
+ */
+async function yuqueApiMultipart(
+  path: string,
+  formData: FormData,
+  referer?: string
+): Promise<any> {
+  const { session, ctoken } = getYuqueCredentials();
+
+  const url = `${YUQUE_BASE}${path}`;
+  const headers = buildHeaders(ctoken, referer);
+  headers["Cookie"] = `_yuque_session=${session}; _ctoken=${ctoken}`;
+  // 注意：不设置 Content-Type，让 fetch 自动设置 multipart boundary
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+      signal: controller.signal,
+    });
+    const data = await res.json();
+    return data;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 // =============================================================================
 // 路由注册
 // =============================================================================
@@ -208,6 +251,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
         hint: "语雀 Web API 连接正常",
       });
     } catch (e: any) {
+      console.error("[Yuque API Health Check Error]", e);
       sendJson(res, 200, {
         success: false,
         connected: false,
@@ -311,11 +355,16 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // 5. 文档：创建
   // ==========================================================================
   // POST /api/yuque/doc/create
-  // Body: { repo_id, title, body?, format?, public? }
+  // Body: { repo_id, title, content?, format?, public? }
+  //
+  // 【format 参数说明】
+  //   - "lake" (默认): 内容必须是 Lake HTML，非 Lake 格式会自动调用 markdownToLake 转换
+  //   - "markdown": 直接上传 Markdown 原文，语雀服务端自动解析渲染
+  //   - "html": 直接上传 HTML，语雀服务端自动转换
   //
   // 【注意】
-  //   - body 必须是 Lake 格式 HTML（以 <!doctype lake> 开头）
-  //   - 必须提供 Referer，否则 403
+  //   - lake 格式必须提供 Referer，否则 403
+  //   - markdown 格式上传时，传 body 字段（不是 body_asl）
   //
   // 响应示例：
   //   {"data": {"id": 266476793, "slug": "nxh6ktx04drq0uft", "title": "...", ...}}
@@ -324,7 +373,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
     if (req.method !== "POST") { next(); return; }
     try {
       const body = await parseBody(req);
-      const { repo_id, title, body_asl: docBody, format = "lake", public: isPublic } = body;
+      const { repo_id, title, body_asl, content, format = "lake", public: isPublic } = body;
 
       if (!repo_id || !title) {
         sendJson(res, 400, { code: -1, msg: "缺少 repo_id 或 title 参数" });
@@ -336,10 +385,26 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
         title: String(title),
         format: String(format),
       };
-      if (docBody !== undefined) payload.body_asl = String(docBody);
       if (isPublic !== undefined) payload.public = Number(isPublic);
 
-      structuredLog.info("yuque.doc.create", "创建语雀文档", { repo_id, title });
+      // 内容处理策略根据 format 不同而不同
+      const finalContent = body_asl || content;
+      if (finalContent !== undefined) {
+        if (format === "markdown" || format === "html") {
+          // 直接传 body，让语雀服务端自己解析
+          payload.body = String(finalContent);
+        } else {
+          // lake 格式：如果不是标准 Lake HTML，自动转换
+          let lakeContent = String(finalContent);
+          if (!lakeContent.startsWith("<!doctype lake>")) {
+            structuredLog.info("yuque.doc.create", "检测到非 Lake 格式，正在转换为 Lake HTML");
+            lakeContent = markdownToLake(lakeContent);
+          }
+          payload.body_asl = lakeContent;
+        }
+      }
+
+      structuredLog.info("yuque.doc.create", "创建语雀文档", { repo_id, title, format });
       const result = await yuqueApi(
         "POST",
         "/api/docs",
@@ -357,7 +422,12 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // 6. 文档：更新
   // ==========================================================================
   // PUT /api/yuque/doc/update
-  // Body: { repo_id, doc_id, title?, body?, format? }
+  // Body: { repo_id, doc_id, title?, content?, format? }
+  //
+  // 【format 参数说明】
+  //   - "lake" (默认): 内容必须是 Lake HTML，非 Lake 格式会自动调用 markdownToLake 转换
+  //   - "markdown": 直接上传 Markdown 原文，语雀服务端自动解析渲染
+  //   - "html": 直接上传 HTML，语雀服务端自动转换
   //
   // 【注意】
   //   - doc_id 是数字 ID，不是 slug
@@ -368,7 +438,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
     if (req.method !== "PUT" && req.method !== "POST") { next(); return; }
     try {
       const body = await parseBody(req);
-      const { repo_id, doc_id, title, body_asl: docBody, format = "lake" } = body;
+      const { repo_id, doc_id, title, body_asl, content, format = "lake", replace_text } = body;
 
       if (!repo_id || !doc_id) {
         sendJson(res, 400, { code: -1, msg: "缺少 repo_id 或 doc_id 参数" });
@@ -377,9 +447,86 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
 
       const payload: any = { format: String(format) };
       if (title !== undefined) payload.title = String(title);
-      if (docBody !== undefined) payload.body_asl = String(docBody);
 
-      structuredLog.info("yuque.doc.update", "更新语雀文档", { repo_id, doc_id });
+      // 如果提供了 replace_text，先读取文档内容，执行局部替换，再提交
+      let finalContent = body_asl || content;
+      if (replace_text && typeof replace_text === "object" && replace_text.old !== undefined) {
+        structuredLog.info("yuque.doc.update", "执行局部文本替换", {
+          repo_id, doc_id, old: replace_text.old, new: replace_text.new,
+        });
+
+        // 1. 读取当前文档
+        const readResult = await yuqueApi(
+          "GET",
+          `/api/docs/${doc_id}`,
+          undefined,
+          { book_id: String(repo_id) },
+          `${YUQUE_BASE}/${repo_id}`
+        );
+        const docData = readResult.data || {};
+
+        // 2. 获取可编辑内容：优先原始格式字段，回退到 content
+        let currentContent = docData.body || docData.body_asl || docData.content || "";
+
+        if (!currentContent) {
+          sendJson(res, 400, {
+            code: -1,
+            msg: "替换失败：无法读取文档内容",
+            hint: "语雀 API 未返回 body/body_asl/content 字段，建议改用 content 参数进行全量更新",
+          });
+          return;
+        }
+
+        // 3. 执行替换
+        const oldText = String(replace_text.old);
+        const newText = String(replace_text.new || "");
+        if (!currentContent.includes(oldText)) {
+          // 尝试规范化匹配：去除 HTML 标签和多余空白
+          const textVersion = currentContent.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+          const searchText = oldText.replace(/\s+/g, " ").trim();
+          if (searchText && textVersion.includes(searchText)) {
+            // 纯文本匹配成功，在原始内容中直接替换
+            finalContent = currentContent.replace(oldText, newText);
+          } else {
+            sendJson(res, 400, {
+              code: -1,
+              msg: `替换失败：文档中未找到指定文本 "${oldText.slice(0, 50)}"`,
+              hint: "replace_text 只能替换文档中确切存在的文本片段，请确保 old 文本与文档内容完全一致（包括空格）",
+              preview: currentContent.slice(0, 200),
+            });
+            return;
+          }
+        } else {
+          finalContent = currentContent.replace(oldText, newText);
+        }
+
+        // 4. 智能选择提交字段
+        // 如果原始内容来自 body/body_asl，保持原字段；否则传 body
+        if (!docData.body && !docData.body_asl && docData.content) {
+          // 只能从 content 获取内容，传 body 让服务端解析
+          if (format === "lake" && !finalContent.startsWith("<!doctype lake>")) {
+            payload.format = "markdown";
+          }
+        }
+      }
+
+      // 内容处理策略根据 format 不同而不同
+      if (finalContent !== undefined) {
+        if (format === "markdown" || format === "html") {
+          // 直接传 body，让语雀服务端自己解析
+          payload.body = String(finalContent);
+        } else {
+          // lake 格式：如果不是标准 Lake HTML，自动转换
+          let lakeContent = String(finalContent);
+          if (!lakeContent.startsWith("<!doctype lake>")) {
+            structuredLog.info("yuque.doc.update", "检测到非 Lake 格式，正在转换为 Lake HTML");
+            lakeContent = markdownToLake(lakeContent);
+          }
+          payload.body_asl = lakeContent;
+        }
+      }
+
+      structuredLog.info("yuque.doc.update", "更新语雀文档", { repo_id, doc_id, format });
       const result = await yuqueApi(
         "PUT",
         `/api/docs/${doc_id}`,
@@ -423,6 +570,70 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
         `${YUQUE_BASE}/${repo_id}`
       );
       sendJson(res, result.data !== undefined ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ==========================================================================
+  // 8. 图片：上传
+  // ==========================================================================
+  // POST /api/yuque/image/upload
+  // Body: { image_base64, file_name? }
+  //
+  // 将图片上传到语雀 CDN，返回可直接使用的图片 URL。
+  // ==========================================================================
+  server.middlewares.use("/api/yuque/image/upload", async (req, res, next) => {
+    if (req.method !== "POST") { next(); return; }
+    try {
+      const body = await parseBody(req);
+      const { image_base64, file_name } = body;
+
+      if (!image_base64) {
+        sendJson(res, 400, { code: -1, msg: "缺少 image_base64 参数" });
+        return;
+      }
+
+      // 解码 base64
+      const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, "");
+      const imageBuffer = Buffer.from(base64Data, "base64");
+
+      if (imageBuffer.length === 0) {
+        sendJson(res, 400, { code: -1, msg: "图片数据为空或 base64 解码失败" });
+        return;
+      }
+
+      // 构造 multipart form-data
+      const formData = new FormData();
+      const blob = new Blob([imageBuffer]);
+      const ext = (file_name || "image.png").split(".").pop() || "png";
+      const mimeType = ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
+                       ext === "gif" ? "image/gif" :
+                       ext === "webp" ? "image/webp" :
+                       ext === "svg" ? "image/svg+xml" : "image/png";
+      formData.append("image", blob, file_name || "image.png");
+      formData.append("attach_type", "image");
+
+      structuredLog.info("yuque.image.upload", "上传图片到语雀", {
+        file_name: file_name || "image.png",
+        size: imageBuffer.length,
+      });
+
+      const result = await yuqueApiMultipart("/api/upload/attach", formData, `${YUQUE_BASE}`);
+
+      if (result.data && result.data.url) {
+        sendJson(res, 200, {
+          code: 0,
+          msg: "success",
+          data: {
+            url: result.data.url,
+            filekey: result.data.filekey,
+            name: result.data.name || file_name || "image.png",
+          }
+        });
+      } else {
+        sendJson(res, 400, result);
+      }
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
     }

@@ -101,6 +101,25 @@ function sendJson(res: any, status: number, data: any) {
   res.end(JSON.stringify(data));
 }
 
+/** 通用飞书 API 调用（支持 multipart/form-data） */
+async function feishuApiMultipart(
+  path: string,
+  formData: FormData
+): Promise<any> {
+  const token = await getTenantAccessToken();
+
+  const res = await fetch(`${FEISHU_BASE}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  const data = await res.json();
+  return data;
+}
+
 export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { structuredLog } = ctx;
 
@@ -575,6 +594,56 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         `/docx/v1/documents/${documentId}/blocks/${documentId}/children/batch_delete`,
         { start_index: index, end_index: index + 1 }
       );
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // 图片: 上传（用于文档）
+  // POST /api/lark/image/upload
+  // Body: { document_id, file_name, image_base64 }
+  // ============================================
+  server.middlewares.use("/api/lark/image/upload", async (req, res, next) => {
+    if (req.method !== "POST") {
+      next();
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      const { document_id, file_name, image_base64 } = body;
+
+      if (!document_id || !image_base64) {
+        sendJson(res, 400, { code: -1, msg: "缺少 document_id 或 image_base64 参数" });
+        return;
+      }
+
+      // 解码 base64
+      const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, "");
+      const imageBuffer = Buffer.from(base64Data, "base64");
+
+      if (imageBuffer.length === 0) {
+        sendJson(res, 400, { code: -1, msg: "图片数据为空或 base64 解码失败" });
+        return;
+      }
+
+      // 构造 multipart form-data
+      const formData = new FormData();
+      const blob = new Blob([imageBuffer]);
+      formData.append("file", blob, file_name || "image.png");
+      formData.append("file_name", file_name || "image.png");
+      formData.append("parent_type", "doc_image");
+      formData.append("parent_node", String(document_id));
+      formData.append("size", String(imageBuffer.length));
+
+      structuredLog.info("lark.image.upload", "上传图片到飞书文档", {
+        document_id,
+        file_name: file_name || "image.png",
+        size: imageBuffer.length,
+      });
+
+      const result = await feishuApiMultipart("/drive/v1/medias/upload_all", formData);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });

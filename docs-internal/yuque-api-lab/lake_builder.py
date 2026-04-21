@@ -42,7 +42,9 @@
 #   """)
 # =============================================================================
 
+import json
 import re
+import urllib.parse
 import html as html_module
 
 
@@ -90,6 +92,7 @@ def _parse_inline(text: str) -> str:
     - *斜体* → <span style="font-style: italic">...</span>
     - `代码` → <code>...</code>
     - $公式$ → <span data-latex="...">$$...$$</span>
+    - $$公式$$ → <span data-latex="...">$$...$$</span>
     """
     result = []
     i = 0
@@ -101,6 +104,15 @@ def _parse_inline(text: str) -> str:
                 code_text = text[i+1:end]
                 result.append(f'<code>{_escape(code_text)}</code>')
                 i = end + 1
+                continue
+        
+        # 公式: $$xxx$$ (优先匹配)
+        if text[i:i+2] == '$$':
+            end = text.find('$$', i + 2)
+            if end != -1 and end > i + 2:
+                latex_text = text[i+2:end]
+                result.append(_wrap_span(latex_text, latex=True))
+                i = end + 2
                 continue
         
         # 公式: $xxx$
@@ -201,20 +213,20 @@ def ol(items: list[str]) -> str:
     return f'<ol data-lake-id="{uid}" id="{uid}">\n{lis}\n</ol>'
 
 
+def _encode_card_value(data: dict) -> str:
+    """编码语雀 Card 标签的 value 属性"""
+    return "data:" + urllib.parse.quote(json.dumps(data, ensure_ascii=False))
+
+
 def code_block(language: str, code: str) -> str:
     """
-    代码块
+    代码块 —— 使用语雀 Lake 标准 <card name="codeblock"> 格式
     
-    注意：语雀 Lake HTML 中的代码块格式为：
-    <pre data-lake-id="..." id="..."><code class="language-xxx">...</code></pre>
+    语雀 Lake 的代码块不是 <pre><code>，而是嵌入的卡片：
+    <card name="codeblock" value="data:%7B%22code%22%3A%22...%22%7D"></card>
     """
-    uid = _uid()
-    escaped_code = _escape(code)
-    return (
-        f'<pre data-lake-id="{uid}" id="{uid}">'
-        f'<code class="language-{language}">{escaped_code}</code>'
-        f'</pre>'
-    )
+    data = {"code": code, "mode": language or "text"}
+    return f'<card name="codeblock" value="{_encode_card_value(data)}"></card>'
 
 
 def table(rows: list[list[str]], header: list[str] = None, col_widths: list[int] = None) -> str:
@@ -261,7 +273,8 @@ def table(rows: list[list[str]], header: list[str] = None, col_widths: list[int]
             for cell in row
         )
         trs.append(f'<tr data-lake-id="u{_uid()}" id="u{_uid()}">{tds}</tr>')
-    tbody = f'<tbody>\n{"\n".join(trs)}\n</tbody>'
+    trs_str = '\n'.join(trs)
+    tbody = f'<tbody>\n{trs_str}\n</tbody>'
     
     return (
         f'<table data-lake-id="{uid}" id="{uid}" class="lake-table" style="width: {total_width}px">'
@@ -368,14 +381,23 @@ def markdown_to_lake(md: str) -> str:
             continue
         
         # 表格
-        if line.startswith('|') and i + 1 < len(lines) and '|---' in lines[i + 1]:
-            # 解析表头
-            header = [c.strip() for c in line.split('|')[1:-1]]
+        def _is_table_separator(line: str) -> bool:
+            if not line.strip().startswith('|'):
+                return False
+            inner = line.strip()[1:]
+            if inner.endswith('|'):
+                inner = inner[:-1]
+            parts = inner.split('|')
+            return all(re.match(r'^\s*:?-+:?\s*$', p) for p in parts)
+        
+        if line.startswith('|') and i + 1 < len(lines) and _is_table_separator(lines[i + 1]):
+            # 解析表头（过滤掉首尾空字符串）
+            header = [c.strip() for c in line.split('|') if c.strip() != '']
             i += 2  # skip header + separator
             # 解析数据行
             rows = []
             while i < len(lines) and lines[i].strip().startswith('|'):
-                row = [c.strip() for c in lines[i].split('|')[1:-1]]
+                row = [c.strip() for c in lines[i].split('|') if c.strip() != '']
                 rows.append(row)
                 i += 1
             elements.append(table(rows, header=header))
@@ -428,12 +450,24 @@ def markdown_to_lake(md: str) -> str:
             i += 1
             continue
         
-        # 普通段落（支持行间公式 $$...$$）
-        if line.startswith('$$') and line.endswith('$$') and len(line) > 4:
-            latex = line[2:-2].strip()
-            elements.append(formula(latex, display=True))
-            i += 1
-            continue
+        # 行间公式 $$...$$（支持多行）
+        if line.startswith('$$'):
+            if line.endswith('$$') and len(line) > 4:
+                latex = line[2:-2].strip()
+                elements.append(formula(latex, display=True))
+                i += 1
+                continue
+            else:
+                formula_lines = [line[2:]]
+                i += 1
+                while i < len(lines) and not lines[i].strip().endswith('$$'):
+                    formula_lines.append(lines[i])
+                    i += 1
+                if i < len(lines):
+                    formula_lines.append(lines[i].strip()[:-2])
+                    i += 1
+                elements.append(formula('\n'.join(formula_lines).strip(), display=True))
+                continue
         
         # 普通段落
         elements.append(p(line))

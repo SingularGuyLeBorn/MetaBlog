@@ -37,8 +37,10 @@
 ================================================================================
 """
 
+import json
 import os
 import re
+import urllib.parse
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
@@ -242,6 +244,7 @@ class YuqueClient:
         title: str,
         content: Optional[str] = None,
         public: int = 0,
+        format: str = "lake",
     ) -> Dict[str, Any]:
         """
         在指定知识库中创建新文档
@@ -249,27 +252,34 @@ class YuqueClient:
         参数:
             book_id: 知识库数字 ID
             title:   文档标题
-            content: 文档正文（HTML 格式）。如果提供，会自动包装为 Lake HTML。
+            content: 文档正文内容
             public:  可见性（0=私密, 1=互联网公开, 2=空间成员公开）
+            format:  内容格式（"lake"=自动转Lake HTML, "markdown"=直接传Markdown, "html"=直接传HTML）
 
         返回:
             新创建的文档信息，包含 id 和 slug
 
         重要:
-            底层使用 body_asl 字段提交给语雀 API。使用 body 字段会导致内容为空。
+            - format="lake" 时，底层使用 body_asl 字段，非 Lake HTML 会自动包装
+            - format="markdown" 时，底层使用 body 字段，语雀服务端自动解析渲染
         """
         payload: Dict[str, Any] = {
             "book_id": book_id,
             "title": title,
-            "format": "lake",
+            "format": format,
             "public": public,
         }
 
         if content is not None:
-            body_str = str(content)
-            if not body_str.startswith("<!doctype lake>"):
-                body_str = f"<!doctype lake>{body_str}"
-            payload["body_asl"] = body_str
+            if format == "markdown" or format == "html":
+                # 直接传 body，让语雀服务端自己解析
+                payload["body"] = str(content)
+            else:
+                # lake 格式：如果不是标准 Lake HTML，自动包装
+                body_str = str(content)
+                if not body_str.startswith("<!doctype lake>"):
+                    body_str = f"<!doctype lake>{body_str}"
+                payload["body_asl"] = body_str
 
         result = self.api(
             "POST",
@@ -284,31 +294,106 @@ class YuqueClient:
         doc_id: int,
         title: Optional[str] = None,
         content: Optional[str] = None,
+        format: str = "lake",
+        replace_text: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """
         更新已有文档的标题或内容
 
         参数:
-            doc_id:  文档数字 ID（不是 slug！从 read_doc 结果中获取）
-            title:   新标题（可选）
-            content: 新正文（HTML 格式，可选）
+            doc_id:       文档数字 ID（不是 slug！从 read_doc 结果中获取）
+            title:        新标题（可选）
+            content:      新正文（可选，传入则全量替换）
+            format:       内容格式（"lake"=自动转Lake HTML, "markdown"=直接传Markdown, "html"=直接传HTML）
+            replace_text: 局部替换（可选），传入 {"old": "原文本", "new": "新文本"}
+                          后端自动读取当前内容 → 替换 → 提交
 
         返回:
             更新后的文档信息
 
         重要:
             - doc_id 是数字 ID，不是 slug！
-            - 底层使用 body_asl 字段提交给语雀 API
+            - 不传 content 只传 title → 只改标题，保留内容
+            - 传了 content → 全量替换
+            - 传了 replace_text → 局部替换一句话（不需要自己读取拼接）
         """
-        payload: Dict[str, Any] = {"format": "lake"}
+        payload: Dict[str, Any] = {"format": format}
 
         if title is not None:
             payload["title"] = title
-        if content is not None:
-            body_str = str(content)
-            if not body_str.startswith("<!doctype lake>"):
-                body_str = f"<!doctype lake>{body_str}"
-            payload["body_asl"] = body_str
+
+        # 如果提供了 replace_text，先读取文档 → 替换 → 提交
+        if replace_text is not None:
+            old_text = replace_text.get("old", "")
+            new_text = replace_text.get("new", "")
+            if not old_text:
+                raise ValueError("replace_text 必须包含 'old' 字段")
+
+            # 读取当前文档
+            current_doc = self.api("GET", f"/api/docs/{doc_id}", referer=f"{self.BASE_URL}")
+            doc_data = current_doc.get("data", {})
+
+            # 获取可编辑内容：优先原始格式字段，回退到 content
+            current_content = (
+                doc_data.get("body")
+                or doc_data.get("body_asl")
+                or doc_data.get("content")
+                or ""
+            )
+
+            if not current_content:
+                raise ValueError(
+                    "替换失败：无法读取文档内容。"
+                    "语雀 API 可能未返回 body/body_asl/content 字段。"
+                    "建议改用 content 参数进行全量更新。"
+                )
+
+            # 尝试精确匹配
+            if old_text in current_content:
+                replaced_content = current_content.replace(old_text, new_text, 1)
+            else:
+                # 尝试规范化匹配：去除 HTML 标签和多余空白
+                import re
+                text_version = re.sub(r"<[^>]+>", "", current_content)
+                text_version = re.sub(r"\s+", " ", text_version).strip()
+                search_text = re.sub(r"\s+", " ", old_text).strip()
+
+                if search_text in text_version:
+                    # 在原始内容中定位并替换（简化处理：直接替换第一次出现的纯文本）
+                    # 注意：这可能在 HTML 属性中误匹配，但对于普通文本通常安全
+                    replaced_content = current_content.replace(old_text, new_text, 1)
+                else:
+                    preview = current_content[:200].replace("\n", " ")
+                    raise ValueError(
+                        f'替换失败：文档中未找到 "{old_text[:50]}"\n'
+                        f'文档内容前 200 字符：{preview}...\n'
+                        f'提示：请确保 old 文本与文档中的文本完全一致（包括空格）。'
+                    )
+
+            # 放入 payload：根据内容类型智能选择字段
+            # 如果原始内容来自 body/body_asl，优先保持原字段
+            # 如果原始内容来自 content（渲染后的 HTML），传 body 让服务端解析
+            if doc_data.get("body"):
+                payload["body"] = replaced_content
+            elif doc_data.get("body_asl"):
+                payload["body_asl"] = replaced_content
+            else:
+                # 只能从 content 获取到内容，传 body 让服务端解析
+                payload["body"] = replaced_content
+                # 如果当前 format 是 lake 但 content 是渲染后的 HTML，
+                # 改为 markdown 格式让服务端正确解析
+                if format == "lake" and not replaced_content.startswith("<!doctype lake>"):
+                    payload["format"] = "markdown"
+        elif content is not None:
+            if format == "markdown" or format == "html":
+                # 直接传 body，让语雀服务端自己解析
+                payload["body"] = str(content)
+            else:
+                # lake 格式：如果不是标准 Lake HTML，自动包装
+                body_str = str(content)
+                if not body_str.startswith("<!doctype lake>"):
+                    body_str = f"<!doctype lake>{body_str}"
+                payload["body_asl"] = body_str
 
         result = self.api(
             "PUT",
@@ -343,6 +428,45 @@ class YuqueClient:
     # -------------------------------------------------------------------------
     # 工具方法
     # -------------------------------------------------------------------------
+
+    def upload_image(self, image_path: str) -> Dict[str, Any]:
+        """
+        上传图片到语雀 CDN
+
+        参数:
+            image_path: 本地图片文件路径
+
+        返回:
+            { url: "https://cdn.nlark.com/...", filekey: "...", name: "..." }
+        """
+        from pathlib import Path
+        path = Path(image_path)
+        if not path.exists():
+            raise FileNotFoundError(f"图片文件不存在: {image_path}")
+
+        url = f"{self.BASE_URL}/api/upload/attach"
+        headers = {
+            "Cookie": self.cookie,
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "X-CSRF-Token": self.ctoken,
+            "X-Requested-With": "XMLHttpRequest",
+            "Referer": f"{self.BASE_URL}",
+        }
+
+        with open(path, "rb") as f:
+            files = {"image": (path.name, f, f"image/{path.suffix.lstrip('.')}")}
+            data = {"attach_type": "image"}
+            response = requests.post(url, headers=headers, files=files, data=data)
+
+        result = response.json()
+        if result.get("data", {}).get("url"):
+            return {
+                "url": result["data"]["url"],
+                "filekey": result["data"].get("filekey"),
+                "name": result["data"].get("name", path.name),
+            }
+        raise RuntimeError(f"上传失败: {result}")
 
     def get_referer(self, book_id: int) -> str:
         """获取指定知识库的 Referer URL（写操作必需）"""
@@ -411,7 +535,8 @@ def lake_table(headers: List[str], rows: List[List[str]], col_widths: Optional[L
     for row in rows:
         tds = "".join(f'<td><p><span>{cell}</span></p></td>' for cell in row)
         trs.append(f"<tr>{tds}</tr>")
-    tbody = f"<tbody>\n{'\n'.join(trs)}\n</tbody>"
+    trs_str = '\n'.join(trs)
+    tbody = f"<tbody>\n{trs_str}\n</tbody>"
 
     return (
         f'<table class="lake-table" style="width: {total_width}px">'
@@ -420,14 +545,23 @@ def lake_table(headers: List[str], rows: List[List[str]], col_widths: Optional[L
     )
 
 
+def _encode_card_value(data: Dict[str, Any]) -> str:
+    """编码语雀 Card 标签的 value 属性"""
+    return "data:" + urllib.parse.quote(json.dumps(data, ensure_ascii=False))
+
+
 def lake_code_block(language: str, code: str) -> str:
     """
-    创建语雀 Lake HTML 代码块
+    创建语雀 Lake HTML 代码块（使用标准 <card> 格式）
+
+    语雀 Lake 的代码块不是 <pre><code>，而是嵌入的卡片：
+    <card name="codeblock" value="data:%7B%22code%22%3A%22...%22%7D"></card>
 
     示例:
         block = lake_code_block("python", "print('hello')")
     """
-    return f'<pre><code class="language-{language}">{code}</code></pre>'
+    data = {"code": code, "mode": language or "text"}
+    return f'<card name="codeblock" value="{_encode_card_value(data)}"></card>'
 
 
 def lake_formula(latex: str, display: bool = False) -> str:

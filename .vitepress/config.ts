@@ -16,9 +16,10 @@ const env = loadEnv("", process.cwd(), "VITE_");
 const serverEnv = loadEnv("", process.cwd(), "LLM_");
 const feishuEnv = loadEnv("", process.cwd(), "FEISHU_");
 const larkEnv = loadEnv("", process.cwd(), "LARK_");
+const yuqueEnv = loadEnv("", process.cwd(), "YUQUE_");
 
 // 合并环境变量到 process.env
-Object.assign(process.env, env, serverEnv, feishuEnv, larkEnv);
+Object.assign(process.env, env, serverEnv, feishuEnv, larkEnv, yuqueEnv);
 import {
   generateSectionSidebar,
   clearSidebarCache,

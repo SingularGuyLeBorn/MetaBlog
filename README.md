@@ -138,7 +138,7 @@ MetaBlog 不是一个普通的博客系统，它代表了内容管理系统向�
 #### 当前状态（L3 基本完成）
 ```
 ✅ ChatBot 能使用工具
-✅ 41 个基础工具
+✅ 55+ 个基础工具
 ✅ Agent 配置管理
 ✅ 会话管理
 ⚠️  部分工具用 mock 数据
@@ -158,7 +158,7 @@ MetaBlog 不是一个普通的博客系统，它代表了内容管理系统向�
 #### 差距量化
 | 维度 | 当前 | 目标 | 差距 |
 |------|------|------|------|
-| 工具数量 | 43 | 100+ | 还需 57+ |
+| 工具数量 | 55+ | 100+ | 还需 45+ |
 | 真实数据工具 | ~65% | 100% | 还需完善 15 个 |
 | 自主执行任务 | ❌ | ✅ | 需开发 L4 |
 | Meta-Agent | ❌ | ✅ | 需开发 L5 |
@@ -178,14 +178,21 @@ MetaBlog 不是一个普通的博客系统，它代表了内容管理系统向�
    - KB 系统 → 持久化存储
    - web_search → 多引擎切换（Tavily/Bing）
 
-3. **飞书 CLI 集成**（已完成）
+3. **飞书深度集成**（已完成）
    - [x] `feishu_doc_create` 自动化权限下放
    - [x] `feishu_doc_append` 数学公式 ($latex$) 渲染支持
    - [x] `feishu_doc_update_block` 高级排版增强
    - [x] `feishu_im_send` 多接收者类型支持
    - [x] `feishu_user_search` 身份自动锁定 (OpenID)
+   - [x] `feishu_image_upload` 图片上传到飞书云文档
 
-4. **补充核心工具**（3-4 周）
+4. **语雀深度集成**（已完成）
+   - [x] `yuque_doc_create` 支持 Markdown/Lake/HTML 格式
+   - [x] `yuque_doc_update` 支持局部替换 (replace_text)
+   - [x] `yuque_image_upload` 图片上传到语雀 CDN
+   - [x] 完整的 CRUD + 目录 + 搜索工具链
+
+5. **补充核心工具**（3-4 周）
    - 图片处理工具
    - PDF 处理工具
    - 数据库查询工具
@@ -200,10 +207,10 @@ MetaBlog 不是一个普通的博客系统，它代表了内容管理系统向�
 - **多轮对话**：支持上下文理解的多轮对话
 - **流式响应**：实时显示 AI 回复，支持打字机效果
 - **思考模式**：可展示 AI 的推理过程（Chain of Thought）
-- **工具调用**：AI 可调用 41 种工具操作博客和外部资源
+- **工具调用**：AI 可调用 55+ 种工具操作博客和外部资源
 - **工具测试平台**：可视化测试所有工具，支持一键批量测试和报告生成
 
-### 🛠️ 强大的工具系统（41个工具）
+### 🛠️ 强大的工具系统（55+ 个工具）
 
 > ⚠️ **当前状态**：工具系统已完成基础架构，但部分工具仍使用 mock 数据，详见上方「当前进度 vs 最终目标」章节。
 
@@ -244,12 +251,39 @@ MetaBlog 不是一个普通的博客系统，它代表了内容管理系统向�
 | `kb_document_add` | 向知识库添加文档 |
 | `kb_document_delete` | 从知识库删除文档 |
 
+#### 语雀工具（9个）
+| 工具 | 功能 |
+|------|------|
+| `yuque_repo_list` | 列出知识库 |
+| `yuque_toc_get` | 获取目录结构 |
+| `yuque_doc_list` | 列出文档 |
+| `yuque_doc_read` | 读取文档内容 |
+| `yuque_doc_create` | 创建文档（支持 Markdown/Lake/HTML） |
+| `yuque_doc_update` | 更新文档（支持局部替换 replace_text） |
+| `yuque_doc_delete` | 删除文档 |
+| `yuque_image_upload` | 上传图片到语雀 CDN |
+| `yuque_search` | 搜索文档 |
+
+#### 飞书工具（10个）
+| 工具 | 功能 |
+|------|------|
+| `feishu_doc_create` | 创建飞书文档 |
+| `feishu_doc_read` | 读取飞书文档 |
+| `feishu_doc_search` | 搜索飞书文档 |
+| `feishu_doc_blocks` | 获取文档块列表 |
+| `feishu_doc_append` | 追加内容（支持表格、代码块、图片） |
+| `feishu_doc_update_block` | 更新文档块 |
+| `feishu_doc_delete_block` | 删除文档块 |
+| `feishu_im_send` | 发送 IM 消息 |
+| `feishu_user_search` | 搜索用户 |
+| `feishu_image_upload` | 上传图片到飞书 |
+
 #### 其他工具
 - **文件操作**：`read_file`, `write_file`, `list_files`
 - **代码工具**：`execute_code`, `analyze_code`
 - **文本处理**：`summarize_text`, `format_text`, `translate_text`
 - **系统工具**：`get_current_time`, `get_weather`, `calculate`, `test_echo`
-- **平台解析**：`parse_zhihu`, `parse_xiaohongshu`, `parse_wechat`, `ocr_image`
+- **平台解析**：`parse_zhihu`, `parse_xiaohongshu`, `parse_wechat`, `ocr_image`, `process_image`
 
 ### 🎨 Skills 技能系统
 

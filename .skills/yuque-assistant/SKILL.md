@@ -12,11 +12,12 @@ tags:
 tools:
   - yuque_repo_list
   - yuque_toc_get
-   - yuque_doc_list
+  - yuque_doc_list
   - yuque_doc_read
   - yuque_doc_create
   - yuque_doc_update
   - yuque_doc_delete
+  - yuque_image_upload
   - yuque_search
 usageScenarios:
   - 列出语雀知识库
@@ -26,6 +27,7 @@ usageScenarios:
   - 创建语雀文档
   - 更新语雀文档
   - 删除语雀文档
+  - 上传图片到语雀 CDN
   - 在语雀中管理知识库
 ---
 
@@ -40,16 +42,6 @@ usageScenarios:
 ---
 
 ## 核心概念
-
-### body_asl 字段（重要！）
-
-语雀内部 Web API 使用 `body_asl` 字段保存文档内容，**不是 `body` 字段**。
-
-使用 `body` 字段会导致 API 返回成功，但文档内容为空（content 长度为 0）。
-这是内部 Web API 与 Open API v2 的重要区别之一。
-
-- **创建/更新**：传入 `body_asl` 字段
-- **读取**：返回 `content` 字段
 
 ### repo_id（知识库 ID）
 
@@ -120,42 +112,102 @@ yuque_doc_read(repo_id="68025057", doc_slug="abc123")
 - 内容格式是 Lake HTML，不是纯 Markdown
 - 返回值中包含 `doc_id`，这是后续更新/删除的必需参数
 
-### 4. 创建文档
+### 4. 上传图片到语雀 CDN
+
+```
+yuque_image_upload(
+  image_base64="data:image/png;base64,iVBORw0KGgo...",
+  file_name="chart.png"
+)
+  → 返回 { url: "https://cdn.nlark.com/yuque/0/...", filekey: "..." }
+```
+
+**使用图片**：获取 URL 后，在文档内容中用 Markdown 图片语法引用：
+```
+yuque_doc_create(
+  repo_id="68025057",
+  title="带图片的文档",
+  content="# 标题\n\n![图表描述](https://cdn.nlark.com/yuque/0/...)",
+  format="markdown"
+)
+```
+
+### 5. 创建文档（推荐 Markdown 格式）
+
+**最佳实践**：传 `format="markdown"`，直接上传标准 Markdown，语雀服务端自动渲染。
 
 ```
 yuque_doc_create(
   repo_id="68025057",
   title="新文档标题",
-  content="<h1>标题</h1><p>正文内容</p>"
+  content="# 标题\n\n$E=mc^2$\n\n| a | b |\n|---|---|\n| 1 | 2 |",
+  format="markdown"
 )
   → 返回新文档的 id 和 slug
 ```
 
-**⚠️ 注意**：
-- `content` 参数底层映射为 `body_asl` 字段提交给语雀 API
-- 支持 HTML 标签，系统会自动包装为 Lake 格式
-- 创建后文档**不会自动出现在知识库目录中**，如需加入目录请后续在语雀网页版手动调整
+**✅ 强大功能**：
+- **Markdown 原生渲染**：`format="markdown"` 时语雀服务端自动解析，公式/表格/代码块都能正确渲染
+- **数学公式支持**：支持 `$formula$` (行内) 和 `$$formula$$` (行间) LaTeX 语法
+- **表格支持**：支持标准的 Markdown 表格语法
+- **代码高亮**：支持 ```python 等 fenced code block
+- **图片支持**：`![Alt text](URL)` 语法，配合 yuque_image_upload 使用
+- **注意**：创建后文档**不会自动出现在知识库目录中**
 
-### 5. 更新文档
+**旧方式（Lake 格式，不推荐）**：
+```
+yuque_doc_create(
+  repo_id="68025057",
+  title="新文档标题",
+  content="<h1>标题</h1><p>正文</p>"
+  # format 默认为 "lake"
+)
+```
+
+### 6. 更新文档
 
 **必须先读取文档获取 doc_id：**
 
 ```
 yuque_doc_read(repo_id="68025057", doc_slug="abc123")
   → 获取 doc_id（如 266422684）
-  → yuque_doc_update(
-       repo_id="68025057",
-       doc_id="266422684",
-       title="新标题",
-       content="<h1>新内容</h1>"
-     )
 ```
 
-**⚠️ 重要**：
-- `doc_id` 是数字 ID，不是 slug！
-- 必须先调用 `yuque_doc_read` 获取 doc_id
+**⚠️ 更新行为：全量替换，不是追加！**
 
-### 6. 删除文档
+| 传参方式 | 效果 |
+|---------|------|
+| 只传 `title` | ✅ 只改标题，保留原有内容 |
+| 传 `content` | ⚠️ 整个文档内容被替换为新内容 |
+| 传 `replace_text` | ✅ 智能局部替换（只改一句话） |
+
+**方式1：只更新标题（最安全）**
+```
+yuque_doc_update(repo_id="68025057", doc_id="266422684", title="新标题")
+```
+
+**方式2：局部替换一句话（推荐）**
+```
+yuque_doc_update(
+  repo_id="68025057",
+  doc_id="266422684",
+  replace_text={ "old": "错误句子B", "new": "正确句子B'" }
+)
+```
+后端自动完成：读取当前内容 → 替换指定文本 → 提交更新。
+
+**方式3：全量替换内容**
+```
+yuque_doc_update(
+  repo_id="68025057",
+  doc_id="266422684",
+  title="新标题",
+  content="# 新标题\n\n新内容",
+  format="markdown"
+)
+```
+
+### 7. 删除文档
 
 ```
 yuque_doc_read(repo_id="68025057", doc_slug="abc123")
@@ -175,17 +227,52 @@ yuque_doc_read(repo_id="68025057", doc_slug="abc123")
 - Cookie 获取方法：登录语雀 → F12 → Application → Cookies → 复制值
 - **切勿泄露 Cookie，切勿提交到 Git！**
 
-### body_asl 字段
-
-- **创建/更新时必须使用 `body_asl` 字段**，使用 `body` 会导致内容为空
-- `content` 参数底层映射为 `body_asl`
-- 读取时返回 `content` 字段（已渲染的 Lake HTML）
-
 ### 内容格式
 
-- 创建/更新时，`content` 参数支持 HTML 标签
-- 系统会自动包装为 Lake HTML 格式（语雀自研格式）
-- 读取时返回的内容也是 Lake HTML 格式
+| format | 字段 | 说明 |
+|--------|------|------|
+| `markdown` (推荐) | `body` | 直接传标准 Markdown，语雀服务端自动渲染 |
+| `lake` (默认) | `body_asl` | 传入 Lake HTML，非 Lake 格式会自动转换 |
+| `html` | `body` | 直接传 HTML，语雀服务端自动转换 |
+
+- **Markdown 优先**：强烈推荐 `format="markdown"`，公式、表格、代码块都能正确渲染
+- **兼容性**：如果传入的内容已经以 `<!doctype lake>` 开头，lake 模式下将跳过转换直接提交
+
+### Markdown 格式规范
+
+为确保语雀正确渲染，请遵守以下规范：
+
+1. **段落顶格**：任何独立行的行首严禁出现前导空格
+2. **无序列表**：统一使用 `-`（减号后跟一个空格），不要用 `*` 或 `+`
+3. **图片**：`![Alt text](URL)`，图注用引用格式 `> 图1: 描述`
+4. **加粗**：`**` 必须紧密包裹文本，内侧不含空格或标点。如 `**重点**` ✅，`** 重点 **` ❌
+5. **公式**：行内用 `$E=mc^2$`，块级用顶格的 `$$...$$`
+6. **标点**：使用英文半角标点 `.` `,` `(` `)` `:` `"` 等
+7. **分隔**：不同内容块之间用一个空行分隔
+
+### ⚠️ 公式转义陷阱（必看）
+
+Python 字符串中 `\f` 会被当作 **form feed (换页符)** 吃掉！这会导致 LaTeX 公式中的 `\frac`、`\pm`、`\sqrt` 等命令损坏。
+
+**错误示例**（会产生 `rac` 而不是 `\frac`）：
+```python
+content="$$x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$$"
+# 实际变成: $$x = rac{-b m qrt{b^2-4ac}}{2a}$$
+```
+
+**正确写法**（三选一）：
+```python
+# 方法1: 双反斜杠
+content="$$x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$"
+
+# 方法2: 原始字符串（推荐）
+content=r"$$x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$$"
+
+# 方法3: 用 ^ 替代 frac（避免反斜杠）
+content="$$x = (-b + (b^2-4ac)^(1/2)) / (2a)$$"
+```
+
+常见需要转义的 LaTeX 命令：`\frac` `\pm` `\sqrt` `\sum` `\int` `\alpha` `\beta` 等
 
 ### 搜索不可用
 
@@ -233,16 +320,17 @@ yuque_toc_get(repo_id="68025057")
 yuque_doc_read(repo_id="68025057", doc_slug="abc123")
 ```
 
-### 示例 3：创建文档
+### 示例 3：创建带公式的文档
 
-**用户**："在那个知识库里创建一篇新文档"
+**用户**："在那个知识库里创建一篇关于数学公式的文档"
 
 **Agent**：
 ```
 yuque_doc_create(
   repo_id="68025057",
-  title="项目计划",
-  content="<h1>项目计划</h1><p>这是项目计划的内容...</p>"
+  title="数学公式速查",
+  content="# 数学公式速查\n\n## 1. 二次方程求根公式\n\n$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$\n\n## 2. 质能方程\n\n质能方程是 $E = mc^2$。\n\n## 3. 常用公式表\n\n| 公式 | 说明 |\n|------|------|\n| $E=mc^2$ | 质能方程 |\n| $a^2+b^2=c^2$ | 勾股定理 |",
+  format="markdown"
 )
 ```
 
@@ -272,6 +360,25 @@ yuque_doc_read(repo_id="68025057", doc_slug="刚才创建的slug")
 yuque_doc_delete(repo_id="68025057", doc_id="266422684")
 ```
 
+### 示例 6：创建带图片的文档
+
+**用户**："创建一篇带图片的文档"
+
+**Agent**：
+```
+# 1. 上传图片
+yuque_image_upload(image_base64="data:image/png;base64,iVBORw0KGgo...", file_name="chart.png")
+  → 返回 url: https://cdn.nlark.com/yuque/0/...
+
+# 2. 创建带图片的文档
+yuque_doc_create(
+  repo_id="68025057",
+  title="项目报告",
+  content="# 项目报告\n\n## 数据图表\n\n![项目数据图表](https://cdn.nlark.com/yuque/0/...)\n\n> 图1: 2024年Q1数据概览\n\n## 说明\n\n- 数据来源：内部统计\n- 更新时间：2024年3月",
+  format="markdown"
+)
+```
+
 ---
 
 ## 相关文件
@@ -279,4 +386,6 @@ yuque_doc_delete(repo_id="68025057", doc_id="266422684")
 - **后端路由**：`server/routes/yuque.ts`
 - **前端工具定义**：`src/theme/tools/yuque/definitions.ts`
 - **前端工具执行器**：`src/theme/tools/yuque/executors.ts`
-- **测试 Notebook**：`docs-internal/yuque-api-lab/01_yuque_webapi.ipynb`
+- **Python 客户端**：`docs-internal/yuque-api-lab/yuque_client.py`
+- **Lake 构建器**：`docs-internal/yuque-api-lab/lake_builder.py`
+- **测试 Notebook**：`docs-internal/yuque-api-lab/99_yuque_api_showcase.ipynb`

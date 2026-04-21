@@ -193,17 +193,17 @@ export {
 // ==================== 飞书工具 ====================
 export {
   feishuDocCreate, feishuDocRead, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
-  feishuDocUpdateBlock, feishuDocDeleteBlock, feishuImSend, feishuUserSearch,
+  feishuDocUpdateBlock, feishuDocDeleteBlock, feishuImageUpload, feishuImSend, feishuUserSearch,
   feishuDocCreateDef, feishuDocReadDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
-  feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuImSendDef, feishuUserSearchDef
+  feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuImageUploadDef, feishuImSendDef, feishuUserSearchDef
 } from './lark'
 
 // ==================== 语雀工具 ====================
 export {
   yuqueRepoList, yuqueTocGet, yuqueDocList, yuqueDocRead, yuqueDocCreate,
-  yuqueDocUpdate, yuqueDocDelete, yuqueSearch,
+  yuqueDocUpdate, yuqueDocDelete, yuqueImageUpload, yuqueSearch,
   yuqueRepoListDef, yuqueTocGetDef, yuqueDocListDef, yuqueDocReadDef, yuqueDocCreateDef,
-  yuqueDocUpdateDef, yuqueDocDeleteDef, yuqueSearchDef
+  yuqueDocUpdateDef, yuqueDocDeleteDef, yuqueImageUploadDef, yuqueSearchDef
 } from './yuque'
 
 // ==================== Skill 加载工具 ====================
@@ -274,17 +274,17 @@ import { getCurrentTime, testEcho, calculate, getWeather, getCurrentTimeDef, tes
 // 飞书工具
 import {
   feishuDocCreate, feishuDocRead, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
-  feishuDocUpdateBlock, feishuDocDeleteBlock, feishuImSend, feishuUserSearch,
+  feishuDocUpdateBlock, feishuDocDeleteBlock, feishuImageUpload, feishuImSend, feishuUserSearch,
   feishuDocCreateDef, feishuDocReadDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
-  feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuImSendDef, feishuUserSearchDef
+  feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuImageUploadDef, feishuImSendDef, feishuUserSearchDef
 } from './lark'
 
 // 语雀工具
 import {
   yuqueRepoList, yuqueTocGet, yuqueDocList, yuqueDocRead, yuqueDocCreate,
-  yuqueDocUpdate, yuqueDocDelete, yuqueSearch,
+  yuqueDocUpdate, yuqueDocDelete, yuqueImageUpload, yuqueSearch,
   yuqueRepoListDef, yuqueTocGetDef, yuqueDocListDef, yuqueDocReadDef, yuqueDocCreateDef,
-  yuqueDocUpdateDef, yuqueDocDeleteDef, yuqueSearchDef
+  yuqueDocUpdateDef, yuqueDocDeleteDef, yuqueImageUploadDef, yuqueSearchDef
 } from './yuque'
 
 // Skill 加载工具
@@ -399,7 +399,7 @@ export function initializeDefaultTools(): void {
     { name: 'test_echo', definition: testEchoDef, executor: testEcho }
   ])
 
-  // 飞书文档工具（9个）
+  // 飞书文档工具（10个）
   registerTools([
     { name: 'feishu_doc_create', definition: feishuDocCreateDef, executor: feishuDocCreate },
     { name: 'feishu_doc_read', definition: feishuDocReadDef, executor: feishuDocRead },
@@ -408,11 +408,12 @@ export function initializeDefaultTools(): void {
     { name: 'feishu_doc_append', definition: feishuDocAppendDef, executor: feishuDocAppend },
     { name: 'feishu_doc_update_block', definition: feishuDocUpdateBlockDef, executor: feishuDocUpdateBlock },
     { name: 'feishu_doc_delete_block', definition: feishuDocDeleteBlockDef, executor: feishuDocDeleteBlock },
+    { name: 'feishu_image_upload', definition: feishuImageUploadDef, executor: feishuImageUpload },
     { name: 'feishu_im_send', definition: feishuImSendDef, executor: feishuImSend },
     { name: 'feishu_user_search', definition: feishuUserSearchDef, executor: feishuUserSearch }
   ])
 
-  // 语雀文档工具（8个）
+  // 语雀文档工具（9个）
   registerTools([
     { name: 'yuque_repo_list', definition: yuqueRepoListDef, executor: yuqueRepoList },
     { name: 'yuque_toc_get', definition: yuqueTocGetDef, executor: yuqueTocGet },
@@ -421,6 +422,7 @@ export function initializeDefaultTools(): void {
     { name: 'yuque_doc_create', definition: yuqueDocCreateDef, executor: yuqueDocCreate },
     { name: 'yuque_doc_update', definition: yuqueDocUpdateDef, executor: yuqueDocUpdate },
     { name: 'yuque_doc_delete', definition: yuqueDocDeleteDef, executor: yuqueDocDelete },
+    { name: 'yuque_image_upload', definition: yuqueImageUploadDef, executor: yuqueImageUpload },
     { name: 'yuque_search', definition: yuqueSearchDef, executor: yuqueSearch },
   ])
 

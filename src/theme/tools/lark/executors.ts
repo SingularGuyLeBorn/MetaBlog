@@ -322,6 +322,40 @@ export const feishuDocDeleteBlock = async (args: Record<string, any>): Promise<T
 }
 
 // ============================================
+// 图片操作
+// ============================================
+
+/** 上传图片到飞书文档 */
+export const feishuImageUpload = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { document_id, image_base64, file_name } = args
+
+  if (!document_id || !image_base64) {
+    return createErrorResult('Missing parameters', '缺少参数', '需要 document_id 和 image_base64')
+  }
+
+  try {
+    const result = await larkApi('POST', '/image/upload', {
+      document_id,
+      image_base64,
+      file_name: file_name || 'image.png',
+    })
+
+    if (result.code !== 0) {
+      return createErrorResult(result.msg, '上传图片失败', `错误码: ${result.code}`)
+    }
+
+    const fileToken = result.data?.file_token
+    return createSuccessResult(
+      result.data,
+      `图片上传成功！\nfile_token: ${fileToken}\n\n接下来可以在 feishu_doc_append 中使用 block: { "block_type": 27, "image": { "token": "${fileToken}" } }`,
+      'feishu_image_upload'
+    )
+  } catch (error: any) {
+    return createErrorResult(error.message, '上传图片请求失败')
+  }
+}
+
+// ============================================
 // 消息操作
 // ============================================
 

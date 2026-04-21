@@ -3,7 +3,7 @@
 > 让 Agent 不再孤军奋战，而是以群体智能协作完成复杂任务。
 
 <p align="center">
-  <img src="../docs/public/images/agent-swarm-overview.png" width="600" alt="Agent Swarm Overview">
+  <img src="../docs/public/images/architecture/agent-swarm-overview.png" width="600" alt="Agent Swarm Overview">
 </p>
 
 MetaBlog 的终极愿景是构建一个 **Agent Swarm（智能体蜂群）** 系统——多个专精 Agent 在 Meta-Agent 的调度下协同工作，像一个高效团队一样自主完成博客运营的全链路任务。
@@ -37,7 +37,7 @@ MetaBlog 的终极愿景是构建一个 **Agent Swarm（智能体蜂群）** 系
 ## 🏗️ 架构概览
 
 <p align="center">
-  <img src="../docs/public/images/swarm-architecture.png" width="600" alt="Swarm Architecture">
+  <img src="../docs/public/images/architecture/swarm-architecture.png" width="600" alt="Swarm Architecture">
 </p>
 
 ### 三层架构
@@ -93,7 +93,7 @@ Meta-Agent 是 Swarm 的大脑，负责：
 ## 🔄 协作流程
 
 <p align="center">
-  <img src="../docs/public/images/swarm-collaboration.png" width="600" alt="Swarm Collaboration">
+  <img src="../docs/public/images/roadmaps/swarm-collaboration.png" width="600" alt="Swarm Collaboration">
 </p>
 
 ### 典型场景：自动化周报生成
@@ -156,7 +156,7 @@ interface TaskDAG {
 ## 🐝 Agent 生命周期
 
 <p align="center">
-  <img src="../docs/public/images/swarm-lifecycle.png" width="600" alt="Agent Lifecycle">
+  <img src="../docs/public/images/roadmaps/swarm-lifecycle.png" width="600" alt="Agent Lifecycle">
 </p>
 
 ### 六阶段模型

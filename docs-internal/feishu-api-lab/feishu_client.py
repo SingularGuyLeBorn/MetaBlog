@@ -103,6 +103,7 @@ class FeishuClient:
         json_data: Optional[Dict] = None,
         params: Optional[Dict] = None,
         files: Optional[Dict] = None,
+        data: Optional[Dict] = None,
         timeout: int = 30
     ) -> Dict[str, Any]:
         """发送飞书 API 请求"""
@@ -122,20 +123,22 @@ class FeishuClient:
         headers = {"Authorization": f"Bearer {token}"}
 
         if files:
-            # multipart/form-data 上传文件
-            resp = requests.request(method, url, headers=headers, files=files, timeout=timeout)
+            # multipart/form-data 上传文件（可同时传 data form fields）
+            resp = requests.request(method, url, headers=headers, files=files, data=data, timeout=timeout)
         elif json_data is not None:
             headers["Content-Type"] = "application/json"
             resp = requests.request(method, url, headers=headers, json=json_data, timeout=timeout)
+        elif data is not None:
+            resp = requests.request(method, url, headers=headers, data=data, timeout=timeout)
         else:
             resp = requests.request(method, url, headers=headers, timeout=timeout)
 
         try:
-            data = resp.json()
+            result_data = resp.json()
         except Exception:
-            data = {"raw_text": resp.text, "status_code": resp.status_code}
+            result_data = {"raw_text": resp.text, "status_code": resp.status_code}
 
-        return data
+        return result_data
 
     def api(self, method: str, path: str, **kwargs) -> Any:
         """发送 API 请求并自动检查错误码，返回 data 字段"""
@@ -146,6 +149,46 @@ class FeishuClient:
         return result.get("data", result)
 
     # ============ 便捷方法 ============
+
+    def upload_image(self, document_id: str, image_path: str) -> Dict[str, Any]:
+        """
+        上传图片到飞书文档素材库
+
+        参数:
+            document_id: 飞书文档 ID（docx 的 document_id）
+            image_path: 本地图片文件路径
+
+        返回:
+            { file_token: "boxcnxxx" }
+        """
+        from pathlib import Path
+        path = Path(image_path)
+        if not path.exists():
+            raise FileNotFoundError(f"图片文件不存在: {image_path}")
+
+        file_size = path.stat().st_size
+        ext = path.suffix.lstrip(".").lower()
+        mime_type = {
+            "jpg": "image/jpeg", "jpeg": "image/jpeg",
+            "png": "image/png", "gif": "image/gif",
+            "webp": "image/webp", "bmp": "image/bmp",
+        }.get(ext, "image/png")
+
+        with open(path, "rb") as f:
+            files = {
+                "file": (path.name, f, mime_type),
+            }
+            form_data = {
+                "file_name": path.name,
+                "parent_type": "doc_image",
+                "parent_node": document_id,
+                "size": str(file_size),
+            }
+            result = self.request("POST", "/drive/v1/medias/upload_all", files=files, data=form_data)
+
+        if result.get("code", 0) != 0:
+            raise RuntimeError(f"上传失败: {result.get('msg')} (code: {result.get('code')})")
+        return {"file_token": result["data"]["file_token"]}
 
     def health_check(self) -> Dict:
         """健康检查：尝试获取 token 并返回状态"""

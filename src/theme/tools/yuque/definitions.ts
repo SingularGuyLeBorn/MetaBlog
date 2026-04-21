@@ -125,6 +125,54 @@ yuque_toc_get(repo_id="68025057")
 }
 
 // =============================================================================
+// 图片操作
+// =============================================================================
+
+/**
+ * 工具：上传图片到语雀 CDN
+ *
+ * 将图片上传到语雀的图床（cdn.nlark.com），返回可直接在文档中引用的 URL。
+ * 上传后可在 yuque_doc_create / yuque_doc_update 的 content 中用 Markdown 图片语法引用：
+ *   ![描述](https://cdn.nlark.com/...)
+ *
+ * 【使用示例】
+ *   yuque_image_upload(image_base64="data:image/png;base64,iVBORw0KGgo...", file_name="chart.png")
+ *   → 返回 { url: "https://cdn.nlark.com/yuque/0/...", filekey: "..." }
+ */
+export const yuqueImageUploadDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'yuque_image_upload',
+    description: `上传图片到语雀 CDN，获取可在文档中直接使用的图片 URL。
+
+使用流程:
+1. 调用 yuque_image_upload(image_base64="...", file_name="demo.png")
+2. 获取返回的 url（如 https://cdn.nlark.com/yuque/0/...）
+3. 在 yuque_doc_create / yuque_doc_update 的 content 中用 Markdown 引用:
+   ![图片描述](https://cdn.nlark.com/...)
+
+注意事项:
+- image_base64 必须是完整的 base64 字符串，可带 data:image/...;base64, 前缀
+- 支持格式: png, jpg, jpeg, gif, webp, svg
+- 图片会自动上传到语雀 CDN（cdn.nlark.com），公网可访问`,
+    parameters: {
+      type: 'object',
+      properties: {
+        image_base64: {
+          type: 'string',
+          description: '图片的 base64 编码字符串，可包含 data:image/png;base64, 前缀',
+        },
+        file_name: {
+          type: 'string',
+          description: '图片文件名（含扩展名），如 demo.png',
+        },
+      },
+      required: ['image_base64'],
+    },
+  },
+}
+
+// =============================================================================
 // 文档操作
 // =============================================================================
 
@@ -235,12 +283,26 @@ export const yuqueDocCreateDef: ToolDefinition = {
     name: 'yuque_doc_create',
     description: `在语雀知识库中创建新文档。
 
-content 参数支持 HTML 语法，系统会自动将其包装为语雀 Lake 格式。
+【内容格式选择】
+- format="markdown" (推荐): 直接传标准 Markdown，语雀服务端自动渲染。支持 $公式$、$$公式块$$、表格、代码块、图片等。
+- format="lake" (默认): 系统会自动将 content 转换为语雀 Lake HTML。
+
+【图片插入】
+1. 先调用 yuque_image_upload(image_base64="...") 上传图片，获取返回的 url
+2. 在 content 中用 Markdown 图片语法引用: ![描述](https://cdn.nlark.com/yuque/0/...)
+
+【⚠️ 公式转义警告】
+Python 字符串中 \f 会被当作 form feed 吃掉！LaTeX 公式中 \frac、\pm、\sqrt 等必须写成双反斜杠或使用原始字符串 r"..."
+示例: content=r"$$x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$$"
 
 ⚠️ 创建后文档不会自动出现在知识库目录中，如需加入目录请后续在语雀网页版手动调整。
 
 示例:
-yuque_doc_create(repo_id="68025057", title="项目文档", content="<h1>标题</h1><p>正文内容</p>")
+# Markdown 格式（推荐，公式/表格/代码块/图片都能正确渲染）
+yuque_doc_create(repo_id="68025057", title="项目文档", content="# 标题\n\n正文", format="markdown")
+
+# 带图片的文档
+yuque_doc_create(repo_id="68025057", title="带图片的文档", content="# 标题\n\n![图1](https://cdn.nlark.com/yuque/0/...)", format="markdown")
 
 支持参数:
 - public: 0=私密, 1=互联网公开, 2=空间成员公开`,
@@ -257,7 +319,13 @@ yuque_doc_create(repo_id="68025057", title="项目文档", content="<h1>标题</
         },
         content: {
           type: 'string',
-          description: '文档正文（HTML 格式，系统会自动包装为 Lake 格式）。注意：底层使用 body_asl 字段提交给语雀 API。',
+          description: '文档正文内容',
+        },
+        format: {
+          type: 'string',
+          enum: ['lake', 'markdown', 'html'],
+          description: '内容格式: markdown=直接上传Markdown(推荐), lake=自动转Lake HTML(默认), html=直接上传HTML',
+          default: 'lake',
         },
         slug: {
           type: 'string',
@@ -293,14 +361,36 @@ export const yuqueDocUpdateDef: ToolDefinition = {
     name: 'yuque_doc_update',
     description: `更新语雀文档的标题或内容。
 
-【重要】doc_id 是数字 ID（如 266422684），不是 slug！
+【重要】doc_id 是数字 ID，不是 slug！
 更新前必须先调用 yuque_doc_read 获取 doc_id。
 
-示例:
-yuque_doc_read(repo_id="68025057", doc_slug="abc123")  → 获取 doc_id
-yuque_doc_update(repo_id="68025057", doc_id="266422684", title="新标题", content="<h1>新内容</h1>")
+【内容格式选择】
+- format="markdown" (推荐): 直接传标准 Markdown，语雀服务端自动渲染。
+- format="lake" (默认): 系统会自动将 content 转换为语雀 Lake HTML。
 
-可以只更新标题、只更新内容，或同时更新两者。`,
+【⚠️ 更新行为说明】
+- 语雀 update_doc 是【全量替换】，不是追加！
+- 如果只传 title 不传 content：只改标题，保留原有内容 ✅
+- 如果传了 content：整个文档内容会被替换为新的 content
+
+【局部替换（推荐）】
+使用 replace_text 参数实现"只改一句话"：
+yuque_doc_update(
+  repo_id="68025057",
+  doc_id="266422684",
+  replace_text={ "old": "原文本B", "new": "修改后的B'" }
+)
+后端会自动：读取当前内容 → 替换指定文本 → 提交更新。
+
+示例:
+# 只更新标题（保留内容）
+yuque_doc_update(repo_id="68025057", doc_id="266422684", title="新标题")
+
+# 全量替换内容
+yuque_doc_update(repo_id="68025057", doc_id="266422684", title="新标题", content="# 新标题\n\n新内容", format="markdown")
+
+# 局部替换一句话
+yuque_doc_update(repo_id="68025057", doc_id="266422684", replace_text={"old": "错误句子", "new": "正确句子"})`,
     parameters: {
       type: 'object',
       properties: {
@@ -314,11 +404,21 @@ yuque_doc_update(repo_id="68025057", doc_id="266422684", title="新标题", cont
         },
         title: {
           type: 'string',
-          description: '新标题（可选）',
+          description: '新标题（可选，只传 title 时不影响内容）',
         },
         content: {
           type: 'string',
-          description: '新正文（HTML 格式，可选）',
+          description: '新正文（可选，如果传入会全量替换原有内容）',
+        },
+        format: {
+          type: 'string',
+          enum: ['lake', 'markdown', 'html'],
+          description: '内容格式: markdown=直接上传Markdown(推荐), lake=自动转Lake HTML(默认), html=直接上传HTML',
+          default: 'lake',
+        },
+        replace_text: {
+          type: 'object',
+          description: '局部替换（可选）。传入 { old: "原文本", new: "新文本" } 实现只改一句话，不需要自己读取拼接',
         },
       },
       required: ['repo_id', 'doc_id'],

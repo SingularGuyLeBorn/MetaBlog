@@ -9,6 +9,42 @@ import type { ToolDefinition } from '@/theme/tools/types'
 // 文档操作
 // ============================================
 
+export const feishuImageUploadDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'feishu_image_upload',
+    description: `上传图片到飞书文档，获取 file_token，用于在文档中插入图片。
+使用流程:
+1. 先调用 feishu_image_upload(document_id="xxx", image_base64="data:image/png;base64,...", file_name="demo.png")
+2. 获取返回的 file_token
+3. 在 feishu_doc_append 的 blocks 参数中构造 image block:
+   { "block_type": 27, "image": { "token": "file_token" } }
+
+注意事项:
+- image_base64 必须是完整的 base64 字符串，可带 data:image/...;base64, 前缀
+- 图片大小不得超过 20MB
+- parent_type 固定为 doc_image，图片会上传到指定文档的素材库`,
+    parameters: {
+      type: 'object',
+      properties: {
+        document_id: {
+          type: 'string',
+          description: '飞书文档 ID（docx 的 document_id）',
+        },
+        image_base64: {
+          type: 'string',
+          description: '图片的 base64 编码字符串，可包含 data:image/png;base64, 前缀',
+        },
+        file_name: {
+          type: 'string',
+          description: '图片文件名（含扩展名），如 demo.png',
+        },
+      },
+      required: ['document_id', 'image_base64'],
+    },
+  },
+}
+
 export const feishuDocCreateDef: ToolDefinition = {
   type: 'function',
   function: {

@@ -17,12 +17,14 @@ tools:
   - feishu_doc_append # 支持 $latex$ 公式转换与代码语言高亮
   - feishu_doc_update_block # 支持 $latex$ 公式转换与样式叠加
   - feishu_doc_delete_block
+  - feishu_image_upload # 上传图片到文档，获取 file_token
   - feishu_im_send
   - feishu_user_search
 usageScenarios:
   - 创建并自动分配权限的飞书文档
   - 在文档中插入数学公式 ($latex$)
   - 具有语法高亮的代码片段写入
+  - 上传图片并插入文档
   - 读取、搜索并修改文档内容
   - 发送消息并查找用户
 ---
@@ -59,12 +61,12 @@ feishu_doc_create(
 - **数学公式**：直接在文本中使用 `$公式内容$`，如 `$\int_{0}^{\infty} e^{-x^2} dx$`。后端会自动将其转换为飞书原生公式节点。
 - **代码块**：在创建 `code` 类型的块时，可以指定语言。
 
-### 3. 读取文档内容
+### 4. 读取文档内容
 ```
 feishu_doc_read(document_id="xxx")
 ```
 
-### 3. 修改文档中的某段内容
+### 5. 修改文档中的某段内容
 **必须先获取块结构，再更新：**
 ```
 feishu_doc_blocks(document_id="xxx")
@@ -76,7 +78,7 @@ feishu_doc_blocks(document_id="xxx")
      )
 ```
 
-### 4. 删除文档中的某段内容
+### 6. 删除文档中的某段内容
 **同样需要先获取块结构：**
 ```
 feishu_doc_blocks(document_id="xxx")
@@ -84,14 +86,14 @@ feishu_doc_blocks(document_id="xxx")
   → feishu_doc_delete_block(document_id="xxx", block_id="block_xxx")
 ```
 
-### 5. 发送飞书消息
+### 7. 发送飞书消息
 ```
 feishu_im_send(receive_id="ou_xxx", content="消息内容")
 ```
 - `receive_id` 可以是 open_id、user_id、chat_id 或 email
 - 默认 msg_type="text"
 
-### 6. 查找用户
+### 8. 查找用户
 ```
 feishu_user_search(email="zhangsan@company.com")
 ```

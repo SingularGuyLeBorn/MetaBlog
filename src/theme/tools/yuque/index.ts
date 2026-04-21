@@ -11,6 +11,7 @@ export {
   yuqueDocCreate,
   yuqueDocUpdate,
   yuqueDocDelete,
+  yuqueImageUpload,
   yuqueSearch,
 } from './executors'
 
@@ -22,5 +23,6 @@ export {
   yuqueDocCreateDef,
   yuqueDocUpdateDef,
   yuqueDocDeleteDef,
+  yuqueImageUploadDef,
   yuqueSearchDef,
 } from './definitions'

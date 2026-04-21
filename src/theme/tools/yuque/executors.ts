@@ -139,6 +139,44 @@ export const yuqueTocGet = async (args: Record<string, any>): Promise<ToolResult
 }
 
 // =============================================================================
+// 图片操作
+// =============================================================================
+
+/**
+ * 执行器：上传图片到语雀 CDN
+ *
+ * 调用后端 POST /api/yuque/image/upload
+ * 返回可直接在文档中引用的图片 URL。
+ */
+export const yuqueImageUpload = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { image_base64, file_name } = args
+
+  if (!image_base64) {
+    return createErrorResult('Missing image_base64', '缺少图片数据', '请提供 image_base64 参数')
+  }
+
+  try {
+    const result = await yuqueApi('POST', '/image/upload', {
+      image_base64,
+      file_name: file_name || 'image.png',
+    })
+
+    if (result.code !== 0 || !result.data?.url) {
+      return createErrorResult(result.msg || result.message || '上传失败', '上传图片到语雀失败')
+    }
+
+    const { url, filekey, name } = result.data
+    return createSuccessResult(
+      result.data,
+      `图片上传成功！\nURL: ${url}\nfilekey: ${filekey || 'N/A'}\n\n接下来可以在文档内容中用 Markdown 引用：\n![${name || '图片'}](${url})`,
+      'yuque_image_upload'
+    )
+  } catch (error: any) {
+    return createErrorResult(error.message, '上传图片请求失败')
+  }
+}
+
+// =============================================================================
 // 文档操作
 // =============================================================================
 
@@ -233,7 +271,7 @@ export const yuqueDocRead = async (args: Record<string, any>): Promise<ToolResul
  * 如果用户已经提供了 <!doctype lake> 前缀，不会重复包装。
  */
 export const yuqueDocCreate = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { repo_id, title, content, public: isPublic } = args
+  const { repo_id, title, content, format, public: isPublic } = args
 
   if (!repo_id || !title) {
     return createErrorResult('Missing parameters', '缺少参数', '需要 repo_id 和 title')
@@ -243,15 +281,10 @@ export const yuqueDocCreate = async (args: Record<string, any>): Promise<ToolRes
     const payload: any = {
       repo_id: String(repo_id),
       title: String(title),
-      format: 'lake',
+      format: format || 'lake',
     }
-    // 如果提供了 content，包装为 Lake 格式
-    // 【关键】语雀内部 Web API 使用 body_asl 字段保存内容，不是 body！
-    if (content !== undefined) {
-      const bodyStr = String(content)
-      // 如果用户已经提供了 doctype 前缀，直接使用；否则包装
-      payload.body_asl = bodyStr.startsWith('<!doctype lake>') ? bodyStr : `<!doctype lake>${bodyStr}`
-    }
+    // 直接传递 content，由后端根据 format 决定如何处理
+    if (content !== undefined) payload.content = String(content)
     if (isPublic !== undefined) payload.public = Number(isPublic)
 
     const result = await yuqueApi('POST', '/doc/create', payload)
@@ -279,20 +312,19 @@ export const yuqueDocCreate = async (args: Record<string, any>): Promise<ToolRes
  * 【重要】doc_id 是数字 ID，不是 slug！
  */
 export const yuqueDocUpdate = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { repo_id, doc_id, title, content } = args
+  const { repo_id, doc_id, title, content, format, replace_text } = args
 
   if (!repo_id || !doc_id) {
     return createErrorResult('Missing parameters', '缺少参数', '需要 repo_id 和 doc_id')
   }
 
   try {
-    const payload: any = { repo_id: String(repo_id), doc_id: String(doc_id), format: 'lake' }
+    const payload: any = { repo_id: String(repo_id), doc_id: String(doc_id), format: format || 'lake' }
     if (title !== undefined) payload.title = String(title)
-    // 【关键】语雀内部 Web API 使用 body_asl 字段保存内容，不是 body！
-    if (content !== undefined) {
-      const bodyStr = String(content)
-      payload.body_asl = bodyStr.startsWith('<!doctype lake>') ? bodyStr : `<!doctype lake>${bodyStr}`
-    }
+    // 直接传递 content，由后端根据 format 决定如何处理
+    if (content !== undefined) payload.content = String(content)
+    // 局部替换参数
+    if (replace_text !== undefined) payload.replace_text = replace_text
 
     const result = await yuqueApi('PUT', '/doc/update', payload)
 

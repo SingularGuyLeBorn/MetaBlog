@@ -11,6 +11,7 @@ export {
   feishuDocAppend,
   feishuDocUpdateBlock,
   feishuDocDeleteBlock,
+  feishuImageUpload,
   feishuImSend,
   feishuUserSearch
 } from './executors'
@@ -23,6 +24,7 @@ export {
   feishuDocAppendDef,
   feishuDocUpdateBlockDef,
   feishuDocDeleteBlockDef,
+  feishuImageUploadDef,
   feishuImSendDef,
   feishuUserSearchDef
 } from './definitions'
