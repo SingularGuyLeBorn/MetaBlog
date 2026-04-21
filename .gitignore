@@ -15,7 +15,6 @@ cache
 # Runtime data
 .data/
 .logs/
-*.png
 .playwright-mcp/
 
 # OS
