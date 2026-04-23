@@ -7,11 +7,16 @@ import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
 import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 
 /**
- * 执行代码
+ * 执行代码（通过后端沙箱）
+ *
+ * 支持的沙箱模式：
+ * - Python: Monty 解释器（Rust 编写，完全隔离宿主机）
+ * - JavaScript: 独立子进程 + vm.runInNewContext
+ * - Bash: 受限命令白名单
  */
 export const executeCode: ToolExecutor = async (args): Promise<ToolResult> => {
-  const { code, language } = args
-  
+  const { code, language, inputs = {} } = args
+
   if (!code || !language) {
     return createErrorResult(
       'Missing required parameters',
@@ -19,9 +24,9 @@ export const executeCode: ToolExecutor = async (args): Promise<ToolResult> => {
       '示例: execute_code(code="console.log(1)", language="javascript")'
     )
   }
-  
+
   const supportedLanguages = ['javascript', 'python', 'bash', 'shell', 'typescript']
-  
+
   if (!supportedLanguages.includes(language.toLowerCase())) {
     return createErrorResult(
       'Unsupported language',
@@ -29,13 +34,42 @@ export const executeCode: ToolExecutor = async (args): Promise<ToolResult> => {
       `支持的语言: ${supportedLanguages.join(', ')}`
     )
   }
-  
-  // 安全提示：代码执行需要在服务器端进行
-  return createErrorResult(
-    'Code execution not available',
-    '代码执行需要在服务器端进行',
-    '当前仅支持代码分析和审查。如需执行代码，请配置后端沙箱环境（如 Docker 或 VM）'
-  )
+
+  try {
+    const response = await fetch('/api/sandbox/exec', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, language, inputs })
+    })
+
+    const result = await response.json()
+
+    if (!result.success) {
+      return createErrorResult(
+        'EXECUTION_FAILED',
+        result.error || '代码执行失败',
+        result.stderr || ''
+      )
+    }
+
+    return createSuccessResult(
+      {
+        result: result.result,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        executionTime: result.executionTime,
+      },
+      `执行成功 (${result.executionTime || '?'}ms)`,
+      'execute_code'
+    )
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error)
+    return createErrorResult(
+      'NETWORK_ERROR',
+      `沙箱服务调用失败: ${msg}`,
+      '请检查后端服务是否正常运行'
+    )
+  }
 }
 
 /**

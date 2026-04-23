@@ -76,79 +76,83 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
     const clean = (v: string | undefined) =>
       v?.trim().replace(/^["']|["']$/g, "");
 
+    // 辅助函数：按优先级读取环境变量（LLM_ 优先，兼容 VITE_ 回退）
+    const env = (key: string): string | undefined => {
+      const llmKey = `LLM_${key}`;
+      const viteKey = `VITE_${key}`;
+      return clean(process.env[llmKey]) || clean(process.env[viteKey]);
+    };
+
     // 构建 providers 配置
     const providers: Record<string, any> = {};
 
     // DeepSeek
-    const deepseekKey = clean(process.env.VITE_DEEPSEEK_API_KEY);
+    const deepseekKey = env("DEEPSEEK_API_KEY");
     if (deepseekKey && !deepseekKey.includes("your-api-key")) {
       providers.deepseek = {
         apiKey: deepseekKey,
-        model:
-          clean(process.env.VITE_DEEPSEEK_MODEL) || "deepseek-chat",
-        baseURL: clean(process.env.VITE_DEEPSEEK_BASE_URL),
+        model: env("DEEPSEEK_MODEL") || "deepseek-chat",
+        baseURL: env("DEEPSEEK_BASE_URL"),
       };
     }
 
     // OpenAI
-    const openaiKey = clean(process.env.VITE_OPENAI_API_KEY);
+    const openaiKey = env("OPENAI_API_KEY");
     if (openaiKey && !openaiKey.includes("your-api-key")) {
       providers.openai = {
         apiKey: openaiKey,
-        model: clean(process.env.VITE_OPENAI_MODEL) || "gpt-4o",
-        baseURL: clean(process.env.VITE_OPENAI_BASE_URL),
+        model: env("OPENAI_MODEL") || "gpt-4o",
+        baseURL: env("OPENAI_BASE_URL"),
       };
     }
 
     // Anthropic
-    const anthropicKey = clean(process.env.VITE_ANTHROPIC_API_KEY);
+    const anthropicKey = env("ANTHROPIC_API_KEY");
     if (anthropicKey && !anthropicKey.includes("your-api-key")) {
       providers.anthropic = {
         apiKey: anthropicKey,
-        model:
-          clean(process.env.VITE_ANTHROPIC_MODEL) ||
-          "claude-3-5-sonnet",
-        baseURL: clean(process.env.VITE_ANTHROPIC_BASE_URL),
+        model: env("ANTHROPIC_MODEL") || "claude-3-5-sonnet",
+        baseURL: env("ANTHROPIC_BASE_URL"),
       };
     }
 
     // Gemini
-    const geminiKey = clean(process.env.VITE_GEMINI_API_KEY);
+    const geminiKey = env("GEMINI_API_KEY");
     if (geminiKey && !geminiKey.includes("your-api-key")) {
       providers.gemini = {
         apiKey: geminiKey,
-        model: clean(process.env.VITE_GEMINI_MODEL) || "gemini-1.5-pro",
-        baseURL: clean(process.env.VITE_GEMINI_BASE_URL),
+        model: env("GEMINI_MODEL") || "gemini-1.5-pro",
+        baseURL: env("GEMINI_BASE_URL"),
       };
     }
 
     // Zhipu
-    const zhipuKey = clean(process.env.VITE_ZHIPU_API_KEY);
+    const zhipuKey = env("ZHIPU_API_KEY");
     if (zhipuKey && !zhipuKey.includes("your-api-key")) {
       providers.zhipu = {
         apiKey: zhipuKey,
-        model: clean(process.env.VITE_ZHIPU_MODEL) || "glm-4",
-        baseURL: clean(process.env.VITE_ZHIPU_BASE_URL),
+        model: env("ZHIPU_MODEL") || "glm-4",
+        baseURL: env("ZHIPU_BASE_URL"),
       };
     }
 
     // Qwen
-    const qwenKey = clean(process.env.VITE_QWEN_API_KEY);
+    const qwenKey = env("QWEN_API_KEY");
     if (qwenKey && !qwenKey.includes("your-api-key")) {
       providers.qwen = {
         apiKey: qwenKey,
-        model: clean(process.env.VITE_QWEN_MODEL) || "qwen-plus",
-        baseURL: clean(process.env.VITE_QWEN_BASE_URL),
+        model: env("QWEN_MODEL") || "qwen-plus",
+        baseURL: env("QWEN_BASE_URL"),
       };
     }
 
     // Kimi
-    const kimiKey = clean(process.env.VITE_KIMI_API_KEY);
+    const kimiKey = env("KIMI_API_KEY");
     if (kimiKey && !kimiKey.includes("your-api-key")) {
       providers.kimi = {
         apiKey: kimiKey,
-        model: clean(process.env.VITE_KIMI_MODEL) || "kimi-k2.5",
-        baseURL: clean(process.env.VITE_KIMI_BASE_URL),
+        model: env("KIMI_MODEL") || "kimi-k2.5",
+        baseURL: env("KIMI_BASE_URL"),
       };
     }
 

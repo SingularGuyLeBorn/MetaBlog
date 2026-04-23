@@ -1047,6 +1047,70 @@ export const aiService = {
     
     apiDebugLogger.startSession(debugSessionId)
     
+    // ═══════════════════════════════════════════════════════════════
+    // 【渐进式披露】核心工具列表与动态激活机制
+    // ═══════════════════════════════════════════════════════════════
+    //
+    // 设计背景：
+    //   OpenAI 官方建议每轮对话暴露的工具不超过 20 个。
+    //   本系统有 80+ 个工具，全部暴露会导致：
+    //   - Context bloat（工具定义占 40-50% 上下文）
+    //   - LLM 选择困惑（从 80+ 个工具中挑选）
+    //   - Token 浪费和响应延迟增加
+    //
+    // 解决方案：
+    //   1. 默认只暴露 ~7 个核心元工具（CORE_TOOL_NAMES）
+    //   2. 领域工具默认隐藏，通过以下方式动态激活：
+    //      - search_capabilities 搜索匹配 → 自动暴露 schema
+    //      - load_skill 加载 Skill → 自动暴露关联工具 schema
+    //   3. 激活状态保存在 sessionActiveTools（Set）中，跨轮次持久
+    //   4. 每轮对话前 buildDynamicToolContext() 合并核心+激活工具
+    //
+    // 核心工具（始终暴露）：
+    const CORE_TOOL_NAMES = [
+      'search_capabilities',   // 能力发现器：搜索并激活匹配工具
+      'load_skill',            // 工作流加载器：加载 Skill 指导+激活工具
+      'get_all_tools',         // 工具目录浏览（文本形式，不暴露 schema）
+      'get_all_skills',        // Skill 目录浏览（文本形式，不暴露 schema）
+      'get_current_time',      // 通用基础工具
+      'calculate',             // 通用基础工具
+      'web_search'             // 通用网络搜索
+    ]
+    
+    // sessionActiveTools：本轮对话中已动态激活的工具名称集合
+    // 
+    // 激活触发点：
+    // - search_capabilities 执行后 → result.activateTools 中的工具被加入
+    // - load_skill 执行后 → skill.tools 中的工具被加入
+    // - 一旦加入，后续所有轮次都保持可用，直到会话结束
+    const sessionActiveTools = new Set<string>()
+    
+    /**
+     * 构建动态 toolContext
+     * 
+     * 将外部传入的 toolContext 与 sessionActiveTools 合并，
+     * 生成每轮对话实际使用的可用工具列表。
+     * 
+     * 合并规则：
+     * - 如果外部 toolContext 未传入 availableTools，默认使用 CORE_TOOL_NAMES
+     * - 将 sessionActiveTools 中的工具追加到基础列表
+     * - 使用 Set 去重，避免同一工具重复暴露
+     * 
+     * @returns 包含 merged availableTools 的 toolContext 对象；
+     *          如果外部未传入 toolContext，返回 undefined
+     */
+    const buildDynamicToolContext = () => {
+      if (!toolContext) return undefined
+      // 基础工具列表：外部配置优先，未配置则使用核心工具
+      const baseTools = toolContext.availableTools || CORE_TOOL_NAMES
+      // 合并核心工具 + 会话中动态激活的工具，自动去重
+      const merged = [...new Set([...baseTools, ...sessionActiveTools])]
+      return {
+        ...toolContext,
+        availableTools: merged
+      }
+    }
+    
     // 启动 Session 日志
     startSessionLog(debugSessionId, {
       model: config.model,
@@ -1142,8 +1206,9 @@ export const aiService = {
           data: { round: toolRound }
         })
         
-        const hasAnyTools = !!(toolContext?.availableTools?.length)
-        const response = await chatStreamInternal(filteredMessages, config, callbacks, signal, toolRound > 1, hasAnyTools, toolContext, sessionId)
+        const dynamicContext = buildDynamicToolContext()
+        const hasAnyTools = !!(dynamicContext?.availableTools?.length)
+        const response = await chatStreamInternal(filteredMessages, config, callbacks, signal, toolRound > 1, hasAnyTools, dynamicContext, sessionId)
 
         if (response.aborted) {
           callbacks.onComplete()
@@ -1267,10 +1332,40 @@ export const aiService = {
           // 先显示 running 状态，让用户立刻看到工具正在执行
           callbacks.onThinkingStep?.(runningStep)
           
-          const { result, record, injectMessages: toolInjectMessages } = await executeToolWithRecord(toolCall)
+          // 执行工具并获取结果
+          // executeToolWithRecord 返回：
+          // - result: ToolResult（执行结果）
+          // - record: ToolCallRecord（调用记录，用于 UI 展示）
+          // - injectMessages: 需要注入对话上下文的额外消息（如 load_skill 的 Skill 内容）
+          // - activateTools: 执行后应动态激活的工具名称列表（渐进式披露关键字段）
+          const { result, record, injectMessages: toolInjectMessages, activateTools: toolActivated } = await executeToolWithRecord(toolCall)
           toolRecords.push(record)
           
-          // 收集需要注入到对话上下文中的消息（如 load_skill 返回的 skill 内容）
+          // ─────────────────────────────────────────────────────────────
+          // 【渐进式披露】动态工具激活
+          // ─────────────────────────────────────────────────────────────
+          // search_capabilities、load_skill 等元工具执行后，会在 result.activateTools
+          // 中返回需要激活的领域工具名称。将这些工具加入 sessionActiveTools，
+          // 下轮对话的 buildDynamicToolContext() 会自动将其 schema 暴露给模型。
+          //
+          // 示例流程：
+          //   Round 1: search_capabilities("github repo") → activateTools: ["github_get_repo"]
+          //   Round 2: buildDynamicToolContext() → availableTools 包含 "github_get_repo"
+          //           → 模型可以调用 github_get_repo
+          if (toolActivated && toolActivated.length > 0) {
+            for (const toolName of toolActivated) {
+              sessionActiveTools.add(toolName)
+            }
+            addLog({
+              level: 'info', category: 'tool', component: 'aiService',
+              event: 'tools_activated', message: `动态激活 ${toolActivated.length} 个工具`,
+              data: { activated: toolActivated, totalActive: sessionActiveTools.size }
+            })
+          }
+          
+          // 收集需要注入到对话上下文中的消息
+          // 典型场景：load_skill 执行后，将 Skill 完整内容作为新消息注入，
+          // 让模型在下一轮可以看到工作流指导（LOD-2 渐进式披露）
           if (toolInjectMessages && toolInjectMessages.length > 0) {
             injectMessages.push(...toolInjectMessages)
           }
@@ -1381,7 +1476,8 @@ export const aiService = {
           role: 'user',
           content: '请基于以上搜索结果，直接给出最终回答，不要再调用任何工具。'
         })
-        const finalResponse = await chatStreamInternal(filteredMessages, config, callbacks, signal, true, false, toolContext, sessionId)
+        const finalContext = buildDynamicToolContext()
+        const finalResponse = await chatStreamInternal(filteredMessages, config, callbacks, signal, true, false, finalContext, sessionId)
         if (!finalResponse.error) {
           if (finalResponse.content) {
             callbacks.onContent(cleanAIOutput(finalResponse.content))

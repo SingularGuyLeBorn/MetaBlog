@@ -26,7 +26,7 @@ import {
   buildFullPrompt,
   autoActivateSkills
 } from '@/theme/skills'
-import { getToolDefinitions, getRegisteredToolNames, type ToolDefinition } from '@/theme/tools/index'
+import { getToolDefinitions, getRegisteredToolNames, CORE_TOOL_NAMES, type ToolDefinition } from '@/theme/tools/index'
 
 // ═══════════════════════════════════════════════════════════════
 // 类型定义
@@ -327,7 +327,7 @@ export const skillIntegratedService = {
     const enhancedConfig: SessionConfig = {
       ...sessionConfig,
       systemPrompt: enhancedSystemPrompt,
-      // 不再过滤工具，所有工具都可用
+      // 渐进式披露：默认只暴露核心工具 schema
       availableTools: undefined
     }
     
@@ -339,8 +339,8 @@ export const skillIntegratedService = {
       100, // maxToolRounds
       sessionId,
       {
-        // 所有工具都可用
-        availableTools: allToolNames,
+        // 渐进式披露：默认只暴露核心工具，领域工具通过 search/load 动态激活
+        availableTools: CORE_TOOL_NAMES,
         availableSkills: skillsContext.getAvailableSkills().map(s => s.id)
       }
     )

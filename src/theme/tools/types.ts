@@ -103,6 +103,13 @@ export interface ToolResult<T = any> {
    * 作为新消息注入到后续对话中，让 Agent 可以看到完整指导
    */
   injectMessages?: Array<{ role: string; content: string }>
+  /**
+   * 执行此工具后应激活的其他工具名称列表
+   * 
+   * 用于渐进式披露：search_capabilities、load_skill 等元工具
+   * 执行后，将匹配的工具 schema 加入下轮对话的可用工具列表
+   */
+  activateTools?: string[]
 }
 
 /**

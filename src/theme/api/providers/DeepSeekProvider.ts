@@ -20,7 +20,10 @@ export class DeepSeekProvider extends BaseProvider {
     super({
       apiConfig: {
         baseURL: 'https://api.deepseek.com/v1',
-        apiKey: apiKey || import.meta.env.VITE_DEEPSEEK_API_KEY || '',
+        // 注意：前端不应直接持有 API Key。
+        // 生产环境由后端 /api/chat 代理所有 LLM 请求，Key 仅存在于服务端。
+        // 此处 apiKey 仅在服务端 SSR 或测试场景下由调用方传入。
+        apiKey: apiKey || '',
         model: 'deepseek-chat'
       }
     })

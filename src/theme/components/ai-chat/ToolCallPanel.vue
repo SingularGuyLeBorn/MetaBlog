@@ -28,7 +28,7 @@
           <div class="section-title">结果</div>
           <!-- 字符串结果 -->
           <div v-if="isStringResult(record.result)" class="result-success">
-            <pre class="code-block">{{ record.result.slice(0, 500) }}{{ record.result.length > 500 ? '...' : '' }}</pre>
+            <pre class="code-block" v-html="linkifyText(record.result.slice(0, 500) + (record.result.length > 500 ? '...' : ''))"></pre>
           </div>
           <!-- ToolResult 对象 -->
           <div v-else-if="isToolResult(record.result)">
@@ -36,9 +36,15 @@
               <div v-if="record.result.message" class="result-message">
                 {{ record.result.message }}
               </div>
-              <pre v-if="record.result.data" class="code-block">{{
-                formatData(record.result.data)
-              }}</pre>
+              <!-- 实体链接卡片（从结果中提取） -->
+              <div v-if="getResultLinks(record).length > 0" class="result-links">
+                <EntityLinkCard
+                  v-for="link in getResultLinks(record)"
+                  :key="link.url"
+                  :link="link"
+                />
+              </div>
+              <pre v-if="record.result.data" class="code-block" v-html="linkifyText(formatData(record.result.data))"></pre>
             </div>
             <div v-else class="result-error">
               <div class="error-message">{{ record.result.message || record.result.error }}</div>
@@ -67,6 +73,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { ToolCallRecord, ToolResult } from '@/theme/tools/types'
+import EntityLinkCard from './EntityLinkCard.vue'
+import { extractEntityLinks } from '@/theme/utils/extractEntityLinks'
 
 interface Props {
   records: ToolCallRecord[]
@@ -143,6 +151,22 @@ function formatData(data: unknown): string {
   }
   const jsonStr = JSON.stringify(data, null, 2)
   return jsonStr.slice(0, 500) + (jsonStr.length > 500 ? '...' : '')
+}
+
+// 从工具结果中提取实体链接
+function getResultLinks(record: ToolCallRecord) {
+  if (!record.result || typeof record.result !== 'object') return []
+  const result = record.result as ToolResult
+  if (!result.success) return []
+  return extractEntityLinks(record.toolName || '', result.data || result)
+}
+
+// 将文本中的 URL 转换为可点击链接（简单版，仅用于展示）
+function linkifyText(text: string): string {
+  const urlRegex = /(https?:\/\/[^\s<>"'{}|\\^`[\]]+)/g
+  return text.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="tool-result-link">${url}</a>`
+  })
 }
 </script>
 
@@ -288,5 +312,22 @@ function formatData(data: unknown): string {
   padding: 20px;
   text-align: center;
   color: var(--vp-c-text-2);
+}
+
+.result-links {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tool-result-link {
+  color: var(--vp-c-brand-1);
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.tool-result-link:hover {
+  color: var(--vp-c-brand-2);
 }
 </style>

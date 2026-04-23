@@ -148,6 +148,18 @@
           <div class="response-body" v-html="renderedHtml"></div>
         </div>
 
+        <!-- 实体链接卡片（工具执行产生的可点击链接） -->
+        <div v-if="entityLinks.length > 0" class="entity-links-section">
+          <div class="entity-links-label">生成的链接</div>
+          <div class="entity-links-list">
+            <EntityLinkCard
+              v-for="link in entityLinks"
+              :key="link.url"
+              :link="link"
+            />
+          </div>
+        </div>
+
         <!-- 思考中占位 -->
         <div v-else-if="isStreaming" class="typing-placeholder">
           <span class="typing-dot"></span>
@@ -193,6 +205,8 @@ import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { Avatar, AIAvatar, Icon, TypewriterText } from '@/theme/components/common'
 import MessageVersions from './MessageVersions.vue'
+import EntityLinkCard from './EntityLinkCard.vue'
+import { extractAllEntityLinks, type EntityLink } from '@/theme/utils/extractEntityLinks'
 import type { ChatMessage, ChatMessage as ChatMessageType, ThinkingStep } from '@/theme/types'
 import { estimateTextTokens, formatTokenCount } from '@/theme/utils/tokenEstimator'
 
@@ -279,6 +293,12 @@ const timelineItems = computed((): ThinkingStep[] => {
 })
 
 const hasTimelineItems = computed(() => timelineItems.value.length > 0)
+
+// 从工具记录中提取实体链接（飞书/GitHub/语雀等）
+const entityLinks = computed((): EntityLink[] => {
+  if (!props.message.metadata?.toolRecords?.length) return []
+  return extractAllEntityLinks(props.message.metadata.toolRecords)
+})
 
 // 初始化折叠状态：thinking 默认展开，tool_call 默认折叠
 watch(
@@ -985,6 +1005,27 @@ async function copyContent() {
   font-size: 13px;
   color: var(--sr-text-secondary, #6a6560);
   vertical-align: middle;
+}
+
+/* ========== 实体链接卡片区域 ========== */
+.entity-links-section {
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.entity-links-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vp-c-text-2);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.entity-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* ========== 响应式 ========== */

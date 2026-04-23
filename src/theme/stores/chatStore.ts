@@ -10,7 +10,7 @@ import { ref, computed, watch } from 'vue'
 import type { ChatSession, ChatMessage, SessionConfig, MessageGroup, ToolCallRecord, ThinkingStep, MessageAttachment } from '@/theme/types'
 import { storage, convertGroupsToMessages } from '@/theme/api/services/storage'
 import { aiService } from '@/theme/api/services/aiService'
-import { getRegisteredToolNames } from '@/theme/tools'
+import { getRegisteredToolNames, CORE_TOOL_NAMES } from '@/theme/tools'
 import { logger, addLog } from '@/theme/api/services/logger'
 import { useAgentConfig } from '@/theme/stores/agentStore'
 import { estimateChatTokens, estimateTextTokens, formatTokenCount, calculateUsagePercent, getUsageStatus } from '@/theme/utils/tokenEstimator'
@@ -288,18 +288,17 @@ export function useAIChat() {
       // 用于存储工具调用记录
       let toolRecords: ToolCallRecord[] = []
       
-      // 构建工具上下文：所有工具都可用（包括 load_skill）
-      // Agent 通过 load_skill 主动加载 Skill 后，按 Skill 指导使用工具
+      // 构建工具上下文：渐进式披露
+      // 默认只暴露核心工具（~7个），领域工具通过 search_capabilities / load_skill 动态激活
       const agent = activeAgent.value
       const skillIds = agent?.capabilities?.skillIds || []
-      const allToolNames = getRegisteredToolNames()
       const toolContext = agent ? {
         agentId: agent.id,
         availableSkills: skillIds,
         declaredTools: skills.value
           .filter(s => skillIds.includes(s.id))
           .flatMap(s => s.tools || []),
-        availableTools: allToolNames
+        availableTools: CORE_TOOL_NAMES
       } : undefined
       
       const { toolRecords: records, injectedMessages } = await aiService.chatStream(
@@ -649,17 +648,16 @@ export function useAIChat() {
       // 用于存储工具调用记录
       let toolRecords: ToolCallRecord[] = []
       
-      // 构建工具上下文：所有工具都可用
+      // 构建工具上下文：渐进式披露（默认只暴露核心工具）
       const agent = activeAgent.value
       const skillIds = agent?.capabilities?.skillIds || []
-      const allToolNames = getRegisteredToolNames()
       const toolContext = agent ? {
         agentId: agent.id,
         availableSkills: skillIds,
         declaredTools: skills.value
           .filter(s => skillIds.includes(s.id))
           .flatMap(s => s.tools || []),
-        availableTools: allToolNames
+        availableTools: CORE_TOOL_NAMES
       } : undefined
       
       const { toolRecords: records, injectedMessages } = await aiService.chatStream(

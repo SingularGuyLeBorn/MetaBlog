@@ -27,17 +27,35 @@ interface ModelConfig {
   contextWindow: number;
 }
 
-// 环境变量兼容：优先 LLM_ 前缀，回退 VITE_ 前缀
+/**
+ * 读取环境变量（兼容 LLM_ 和 VITE_ 前缀）
+ *
+ * 设计说明：
+ *   依赖 server/vitepress-integration.ts 顶部预加载的 process.env。
+ *   由于 .env 在 server entry 点已加载，此处直接使用 process.env 即可，
+ *   无需每次调用 loadEnv() 读文件。
+ *
+ * 优先级：
+ *   1. process.env[key]（精确匹配）
+ *   2. process.env[key.replace("LLM_", "VITE_")]（VITE_ 前缀回退）
+ *   3. fallback（默认值）
+ */
 function env(key: string, fallback: string = ""): string {
   return process.env[key] || process.env[key.replace("LLM_", "VITE_")] || fallback;
 }
 
-const MODEL_CONFIGS: Record<string, ModelConfig> = {
+/**
+ * 模型配置模板（不含动态 apiKey）
+ *
+ * 注意：apiKey 等敏感配置在 getModelConfig() 中动态读取，
+ * 避免模块级常量导致的初始化时机问题。
+ */
+const MODEL_CONFIG_TEMPLATES: Record<string, Omit<ModelConfig, "apiKey"> & { apiKeyEnv: string }> = {
   "deepseek-chat": {
     provider: "deepseek",
     model: "deepseek-chat",
     baseURL: "https://api.deepseek.com/v1",
-    apiKey: env("LLM_DEEPSEEK_API_KEY"),
+    apiKeyEnv: "LLM_DEEPSEEK_API_KEY",
     supportsVision: false,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -48,7 +66,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "deepseek",
     model: "deepseek-reasoner",
     baseURL: "https://api.deepseek.com/v1",
-    apiKey: env("LLM_DEEPSEEK_API_KEY"),
+    apiKeyEnv: "LLM_DEEPSEEK_API_KEY",
     supportsVision: false,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -59,7 +77,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "kimi",
     model: "kimi-k2.5",
     baseURL: "https://api.moonshot.cn/v1",
-    apiKey: env("LLM_KIMI_API_KEY"),
+    apiKeyEnv: "LLM_KIMI_API_KEY",
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -70,7 +88,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "kimi",
     model: "kimi-k2-turbo-preview",
     baseURL: "https://api.moonshot.cn/v1",
-    apiKey: env("LLM_KIMI_API_KEY"),
+    apiKeyEnv: "LLM_KIMI_API_KEY",
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -81,7 +99,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "kimi",
     model: "kimi-k2-thinking",
     baseURL: "https://api.moonshot.cn/v1",
-    apiKey: env("LLM_KIMI_API_KEY"),
+    apiKeyEnv: "LLM_KIMI_API_KEY",
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -92,7 +110,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "kimi",
     model: "kimi-k2-thinking-turbo",
     baseURL: "https://api.moonshot.cn/v1",
-    apiKey: env("LLM_KIMI_API_KEY"),
+    apiKeyEnv: "LLM_KIMI_API_KEY",
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -103,7 +121,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "kimi",
     model: "moonshot-v1-8k-vision-preview",
     baseURL: "https://api.moonshot.cn/v1",
-    apiKey: env("LLM_KIMI_API_KEY"),
+    apiKeyEnv: "LLM_KIMI_API_KEY",
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -114,7 +132,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "kimi",
     model: "moonshot-v1-32k-vision-preview",
     baseURL: "https://api.moonshot.cn/v1",
-    apiKey: env("LLM_KIMI_API_KEY"),
+    apiKeyEnv: "LLM_KIMI_API_KEY",
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -125,7 +143,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "kimi",
     model: "moonshot-v1-128k-vision-preview",
     baseURL: "https://api.moonshot.cn/v1",
-    apiKey: env("LLM_KIMI_API_KEY"),
+    apiKeyEnv: "LLM_KIMI_API_KEY",
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -134,10 +152,27 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
   },
 };
 
+/**
+ * 获取模型配置（惰性初始化）
+ *
+ * 每次调用时从 process.env 动态读取 apiKey，确保：
+ * 1. 不依赖模块加载顺序（.env 预加载后 process.env 始终可用）
+ * 2. 支持运行时更换 Key（无需重启服务器）
+ * 3. 避免模块级常量导致的初始化时机问题
+ *
+ * @param modelName - 模型名称，如 "deepseek-chat"、"kimi-k2.5"
+ * @returns 完整的 ModelConfig（含动态读取的 apiKey）
+ * @throws Error 当模型名称不存在时
+ */
 function getModelConfig(modelName: string): ModelConfig {
-  const config = MODEL_CONFIGS[modelName];
-  if (config) return config;
-  throw new Error(`不支持的模型: ${modelName}`);
+  const template = MODEL_CONFIG_TEMPLATES[modelName];
+  if (!template) {
+    throw new Error(`不支持的模型: ${modelName}`);
+  }
+  return {
+    ...template,
+    apiKey: env(template.apiKeyEnv),
+  };
 }
 
 function validateApiKey(config: ModelConfig): void {

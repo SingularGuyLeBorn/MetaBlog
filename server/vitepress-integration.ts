@@ -1,8 +1,34 @@
 import type { Plugin } from "vite";
 import type { ViteDevServer } from "vite";
+import { loadEnv } from "vite";
 import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 服务端环境变量加载（必须在其他 server 模块 import 之前执行）
+// ═════════════════════════════════════════════════════════════════════════════
+//
+// 背景问题：
+//   server/routes/chat.ts 中的 MODEL_CONFIGS 是模块级常量，在 import 时就初始化。
+//   而 .vitepress/config.ts 中的 Object.assign(process.env, ...) 在配置加载时才执行。
+//   如果 chat.ts 被 import 的时间早于 config.ts 的 Object.assign，
+//   process.env 中还没有 .env 的变量，导致 apiKey 为空。
+//
+// 解决方案：
+//   在 vitepress-integration.ts（server 的 entry 点）顶部，
+//   使用 Vite 内置的 loadEnv 提前将 .env 加载到 process.env 中。
+//   这样所有 server 模块在 import 时都能读取到正确的环境变量。
+//
+// 社区最佳实践：
+//   - API Key 等敏感配置只存在于服务端，不以 VITE_ 前缀暴露给前端
+//   - 服务端在启动时一次性加载 .env，而非每次请求时读取
+//   - 配置使用 process.env 读取，不依赖模块加载顺序
+//
+const envFromFile = loadEnv("", process.cwd(), "");
+Object.assign(process.env, envFromFile);
+// ─────────────────────────────────────────────────────────────────────────────
+
 import { clearSidebarCache } from "../.vitepress/utils/global-sidebar";
 import { scanDocStructure, toSidebarFormat, toDirectoryTree, type DocNode } from "../.vitepress/utils/doc-structure";
 import { getTaskManager } from "./mcp-tools/task-manager";
@@ -24,6 +50,7 @@ import { registerMemoriesRoutes } from "./routes/memories";
 import { registerMcpRoutes } from "./routes/mcp";
 import { registerSessionsRoutes } from "./routes/sessions";
 import { registerChatRoutes } from "./routes/chat";
+import { registerSandboxRoutes } from "./routes/sandbox";
 
 
 // 简化的日志系统
@@ -358,6 +385,7 @@ export const metaBlogBffPlugin = (): Plugin => ({
     registerMcpRoutes(server, ctx);
     registerSessionsRoutes(server, ctx);
     registerChatRoutes(server, ctx);
+    registerSandboxRoutes(server);
     registerLarkRoutes(server, ctx);
     registerYuqueRoutes(server, ctx);
     registerPlatformParserRoutes(server, ctx);

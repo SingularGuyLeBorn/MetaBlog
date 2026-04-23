@@ -127,6 +127,29 @@ export {
   githubCreateIssue,
   githubListWorkflows,
   githubListWorkflowRuns,
+  githubCreateOrUpdateFile,
+  githubDeleteFile,
+  githubCreatePullRequest,
+  githubMergePullRequest,
+  githubCreateIssueComment,
+  githubUpdateIssue,
+  githubCreateBranch,
+  githubDeleteBranch,
+  githubForkRepo,
+  githubCreateRelease,
+  githubListBranches,
+  githubCompareCommits,
+  githubTriggerWorkflow,
+  githubGetReadme,
+  githubSearchRepos,
+  githubSearchIssues,
+  githubCreateRepo,
+  githubUpdateRepo,
+  githubDeleteRepo,
+  githubListIssueComments,
+  githubGetPullRequestFiles,
+  githubCreatePullRequestReview,
+  githubGetRateLimit,
   githubGetRepoDef,
   githubListRepoContentsDef,
   githubGetFileContentDef,
@@ -137,7 +160,30 @@ export {
   githubGetPullDef,
   githubCreateIssueDef,
   githubListWorkflowsDef,
-  githubListWorkflowRunsDef
+  githubListWorkflowRunsDef,
+  githubCreateOrUpdateFileDef,
+  githubDeleteFileDef,
+  githubCreatePullRequestDef,
+  githubMergePullRequestDef,
+  githubCreateIssueCommentDef,
+  githubUpdateIssueDef,
+  githubCreateBranchDef,
+  githubDeleteBranchDef,
+  githubForkRepoDef,
+  githubCreateReleaseDef,
+  githubListBranchesDef,
+  githubCompareCommitsDef,
+  githubTriggerWorkflowDef,
+  githubGetReadmeDef,
+  githubSearchReposDef,
+  githubSearchIssuesDef,
+  githubCreateRepoDef,
+  githubUpdateRepoDef,
+  githubDeleteRepoDef,
+  githubListIssueCommentsDef,
+  githubGetPullRequestFilesDef,
+  githubCreatePullRequestReviewDef,
+  githubGetRateLimitDef
 } from './github'
 
 
@@ -221,6 +267,12 @@ export {
   executeGetAllSkills
 } from './meta'
 
+// ==================== 能力搜索工具 ====================
+export {
+  searchCapabilitiesDef,
+  executeSearchCapabilities
+} from './search_capabilities'
+
 // ==================== 导入用于初始化 ====================
 import { registerTools, getRegisteredToolNames } from './registry'
 
@@ -249,8 +301,20 @@ import {
 import {
   githubGetRepo, githubListRepoContents, githubGetFileContent, githubSearchCode, githubGetCommitHistory, githubGetIssues,
   githubListPulls, githubGetPull, githubCreateIssue, githubListWorkflows, githubListWorkflowRuns,
+  githubCreateOrUpdateFile, githubDeleteFile, githubCreatePullRequest, githubMergePullRequest,
+  githubCreateIssueComment, githubUpdateIssue, githubCreateBranch, githubDeleteBranch,
+  githubForkRepo, githubCreateRelease, githubListBranches, githubCompareCommits,
+  githubTriggerWorkflow, githubGetReadme,
+  githubSearchRepos, githubSearchIssues, githubCreateRepo, githubUpdateRepo, githubDeleteRepo,
+  githubListIssueComments, githubGetPullRequestFiles, githubCreatePullRequestReview, githubGetRateLimit,
   githubGetRepoDef, githubListRepoContentsDef, githubGetFileContentDef, githubSearchCodeDef, githubGetCommitHistoryDef, githubGetIssuesDef,
-  githubListPullsDef, githubGetPullDef, githubCreateIssueDef, githubListWorkflowsDef, githubListWorkflowRunsDef
+  githubListPullsDef, githubGetPullDef, githubCreateIssueDef, githubListWorkflowsDef, githubListWorkflowRunsDef,
+  githubCreateOrUpdateFileDef, githubDeleteFileDef, githubCreatePullRequestDef, githubMergePullRequestDef,
+  githubCreateIssueCommentDef, githubUpdateIssueDef, githubCreateBranchDef, githubDeleteBranchDef,
+  githubForkRepoDef, githubCreateReleaseDef, githubListBranchesDef, githubCompareCommitsDef,
+  githubTriggerWorkflowDef, githubGetReadmeDef,
+  githubSearchReposDef, githubSearchIssuesDef, githubCreateRepoDef, githubUpdateRepoDef, githubDeleteRepoDef,
+  githubListIssueCommentsDef, githubGetPullRequestFilesDef, githubCreatePullRequestReviewDef, githubGetRateLimitDef
 } from './github'
 
 
@@ -292,6 +356,31 @@ import { loadSkillDef, executeLoadSkill } from './load_skill'
 
 // Meta 工具
 import { getAllToolsDef, getAllSkillsDef, executeGetAllTools, executeGetAllSkills } from './meta'
+
+// 能力搜索工具
+import { searchCapabilitiesDef, executeSearchCapabilities } from './search_capabilities'
+
+// ==================== 核心工具列表（始终暴露） ====================
+
+/**
+ * 核心工具名称列表 - 始终通过 Function Calling schema 暴露
+ * 
+ * 渐进式披露设计：
+ * - 核心工具（~7个）始终暴露
+ * - 领域工具（~69个）默认隐藏，通过 search_capabilities / load_skill 动态激活
+ * 
+ * 参考：OpenAI 建议每轮对话不超过 10-15 个工具，
+ * MCP 专家建议不超过 10-15 个，graph-tool-call 项目 248→5 减少 79% token
+ */
+export const CORE_TOOL_NAMES = [
+  'search_capabilities',   // 能力发现器 - 搜索所有工具和 Skills
+  'load_skill',            // 工作流加载器 - 加载 Skill 工作流指导
+  'get_all_tools',         // 工具目录 - 获取完整工具列表（文本形式）
+  'get_all_skills',        // Skill 目录 - 获取完整 Skill 列表（文本形式）
+  'get_current_time',      // 通用基础工具
+  'calculate',             // 通用基础工具
+  'web_search'             // 通用网络搜索
+]
 
 // ==================== 初始化函数 ====================
 
@@ -347,19 +436,42 @@ export function initializeDefaultTools(): void {
     { name: 'process_image', definition: processImageDef, executor: processImage }
   ])
   
-  // GitHub 工具（11个）
+  // GitHub 工具（34个）
   registerTools([
     { name: 'github_get_repo', definition: githubGetRepoDef, executor: githubGetRepo },
     { name: 'github_list_repo_contents', definition: githubListRepoContentsDef, executor: githubListRepoContents },
     { name: 'github_get_file_content', definition: githubGetFileContentDef, executor: githubGetFileContent },
     { name: 'github_search_code', definition: githubSearchCodeDef, executor: githubSearchCode },
+    { name: 'github_search_repos', definition: githubSearchReposDef, executor: githubSearchRepos },
+    { name: 'github_search_issues', definition: githubSearchIssuesDef, executor: githubSearchIssues },
     { name: 'github_get_commit_history', definition: githubGetCommitHistoryDef, executor: githubGetCommitHistory },
     { name: 'github_get_issues', definition: githubGetIssuesDef, executor: githubGetIssues },
     { name: 'github_list_pulls', definition: githubListPullsDef, executor: githubListPulls },
     { name: 'github_get_pull', definition: githubGetPullDef, executor: githubGetPull },
+    { name: 'github_get_pull_request_files', definition: githubGetPullRequestFilesDef, executor: githubGetPullRequestFiles },
+    { name: 'github_create_pull_request_review', definition: githubCreatePullRequestReviewDef, executor: githubCreatePullRequestReview },
     { name: 'github_create_issue', definition: githubCreateIssueDef, executor: githubCreateIssue },
+    { name: 'github_list_issue_comments', definition: githubListIssueCommentsDef, executor: githubListIssueComments },
+    { name: 'github_create_issue_comment', definition: githubCreateIssueCommentDef, executor: githubCreateIssueComment },
+    { name: 'github_update_issue', definition: githubUpdateIssueDef, executor: githubUpdateIssue },
     { name: 'github_list_workflows', definition: githubListWorkflowsDef, executor: githubListWorkflows },
-    { name: 'github_list_workflow_runs', definition: githubListWorkflowRunsDef, executor: githubListWorkflowRuns }
+    { name: 'github_list_workflow_runs', definition: githubListWorkflowRunsDef, executor: githubListWorkflowRuns },
+    { name: 'github_create_or_update_file', definition: githubCreateOrUpdateFileDef, executor: githubCreateOrUpdateFile },
+    { name: 'github_delete_file', definition: githubDeleteFileDef, executor: githubDeleteFile },
+    { name: 'github_create_pull_request', definition: githubCreatePullRequestDef, executor: githubCreatePullRequest },
+    { name: 'github_merge_pull_request', definition: githubMergePullRequestDef, executor: githubMergePullRequest },
+    { name: 'github_create_branch', definition: githubCreateBranchDef, executor: githubCreateBranch },
+    { name: 'github_delete_branch', definition: githubDeleteBranchDef, executor: githubDeleteBranch },
+    { name: 'github_fork_repo', definition: githubForkRepoDef, executor: githubForkRepo },
+    { name: 'github_create_repo', definition: githubCreateRepoDef, executor: githubCreateRepo },
+    { name: 'github_update_repo', definition: githubUpdateRepoDef, executor: githubUpdateRepo },
+    { name: 'github_delete_repo', definition: githubDeleteRepoDef, executor: githubDeleteRepo },
+    { name: 'github_create_release', definition: githubCreateReleaseDef, executor: githubCreateRelease },
+    { name: 'github_list_branches', definition: githubListBranchesDef, executor: githubListBranches },
+    { name: 'github_compare_commits', definition: githubCompareCommitsDef, executor: githubCompareCommits },
+    { name: 'github_trigger_workflow', definition: githubTriggerWorkflowDef, executor: githubTriggerWorkflow },
+    { name: 'github_get_readme', definition: githubGetReadmeDef, executor: githubGetReadme },
+    { name: 'github_get_rate_limit', definition: githubGetRateLimitDef, executor: githubGetRateLimit }
   ])
   
   // 笔记工具（3个）
@@ -434,6 +546,11 @@ export function initializeDefaultTools(): void {
   registerTools([
     { name: 'get_all_tools', definition: getAllToolsDef, executor: executeGetAllTools },
     { name: 'get_all_skills', definition: getAllSkillsDef, executor: executeGetAllSkills }
+  ])
+
+  // 能力搜索工具（1个）- 让 Agent 通过关键词搜索工具和 Skills
+  registerTools([
+    { name: 'search_capabilities', definition: searchCapabilitiesDef, executor: executeSearchCapabilities }
   ])
 
   console.log(`[ToolSystem] ${getRegisteredToolNames().length} 个工具已初始化`)

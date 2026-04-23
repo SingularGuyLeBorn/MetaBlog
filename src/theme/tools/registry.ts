@@ -239,14 +239,28 @@ export async function executeTool(
 /**
  * 执行工具并记录（带可视化支持）
  * 
- * 这个函数在执行工具的同时记录调用过程，用于 UI 展示。
+ * 本函数是工具执行的核心编排层，职责包括：
+ * 1. 解析 AI 返回的工具调用参数（JSON 反序列化）
+ * 2. 创建 ToolCallRecord 记录（running 状态，用于 UI 实时展示）
+ * 3. 调用实际工具执行器（executeTool）
+ * 4. 更新记录状态（success/error）并补全执行时间
+ * 5. 传递 injectMessages（Skill 内容注入）和 activateTools（动态工具激活）
  * 
- * @param toolCall - AI 返回的工具调用
- * @returns 执行结果和调用记录
+ * 错误处理：
+ * - 参数解析失败：返回参数解析错误，记录 error 状态
+ * - 执行器抛出异常：捕获后返回通用错误，记录 error 状态
+ * - 执行器正常返回：按 result.success 更新记录状态
+ * 
+ * @param toolCall - AI 返回的工具调用对象，包含工具名和参数 JSON
+ * @returns 包含以下字段的对象：
+ *   - result: ToolResult，工具执行结果（成功/失败、数据、消息等）
+ *   - record: ToolCallRecord，调用记录（含状态、时间戳，用于 UI 展示）
+ *   - injectMessages: 可选，需要注入对话上下文的额外消息（如 Skill 内容）
+ *   - activateTools: 可选，执行后应激活的工具名称列表（渐进式披露）
  */
 export async function executeToolWithRecord(
   toolCall: ToolCall
-): Promise<{ result: ToolResult; record: ToolCallRecord; injectMessages?: Array<{ role: string; content: string }> }> {
+): Promise<{ result: ToolResult; record: ToolCallRecord; injectMessages?: Array<{ role: string; content: string }>; activateTools?: string[] }> {
   const recordId = generateRecordId()
   const { name } = toolCall.function
   
@@ -278,7 +292,7 @@ export async function executeToolWithRecord(
     record.result = result
     record.endTime = Date.now()
     
-    return { result, record, injectMessages: result.injectMessages }
+    return { result, record, injectMessages: result.injectMessages, activateTools: result.activateTools }
   } catch (error: any) {
     // 更新记录为错误状态
     record.status = 'error'
@@ -288,7 +302,8 @@ export async function executeToolWithRecord(
     return {
       result: createErrorResult(record.error || 'Unknown error'),
       record,
-      injectMessages: undefined
+      injectMessages: undefined,
+      activateTools: undefined
     }
   }
 }

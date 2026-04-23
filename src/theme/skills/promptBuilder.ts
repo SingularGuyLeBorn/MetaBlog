@@ -36,7 +36,7 @@ function buildLOD0SkillList(skills: SkillMetadata[]): string {
   const lines: string[] = [
     '## 可用 Skills',
     '',
-    '以下技能可供使用。当你判断需要使用某个技能时，调用 `load_skill` 工具加载其完整内容：',
+    '以下技能包含各领域的**工作流指导**（最佳实践、标准流程、注意事项）。复杂任务加载对应 Skill 可以获得更专业的执行方案：',
     ''
   ]
   
@@ -74,8 +74,13 @@ function buildLOD0SkillList(skills: SkillMetadata[]): string {
   
   lines.push('---')
   lines.push('')
-  lines.push('**如何加载 Skill**：当你需要使用某个技能时，调用 `load_skill` 工具，传入 `skill_id`（上表中的代码标记）。')
-  lines.push('加载后，该技能的完整工作流程会注入到对话中，你在后续回复中应遵循其指导。')
+  lines.push('**Skill 与工具的关系**：')
+  lines.push('- Skill 加载的是**工作流指导**（告诉你这个领域该怎么组合工具、按什么顺序、注意什么）')
+  lines.push('- **不是工具权限**：所有工具始终可用，不需要加载 Skill 就能调用')
+  lines.push('- 简单任务（如查一个 GitHub 仓库）直接调工具即可')
+  lines.push('- 复杂任务（如完整的 PR 审查、文档排版）加载 Skill 后遵循其指导')
+  lines.push('')
+  lines.push('**如何加载 Skill**：调用 `load_skill` 工具，传入 `skill_id`（上表中的代码标记）。')
   lines.push('')
   
   return lines.join('\n')
@@ -249,21 +254,36 @@ export function buildSystemPrompt(
   
   if (showToolInstructions && context.availableTools && context.availableTools.length > 0) {
     parts.push('')
-    parts.push(`## 工具使用指南
+    parts.push(`## 工具与 Skill 使用指南
+
+### 核心设计：三层能力模型
+
+1. **工具层（动态暴露）**: 
+   - 默认只暴露**核心工具**（search_capabilities, load_skill, web_search 等约 7 个）的调用 schema。
+   - **领域工具**（GitHub、飞书、学术等约 69 个）的 schema 默认隐藏，需要**激活**后才能调用。
+   - 激活方式：调用 <search_capabilities> 搜索相关工具 → 系统自动暴露其 schema；或调用 <load_skill> 加载 Skill → 自动暴露关联工具 schema。
+   - 注：下文的"工具分类摘要"列出了所有可用工具的目录（供你参考），但只有被激活的工具才能真正调用。
+
+2. **Skill 层（按需加载）**: Skill 加载的不是"工具权限"，而是**工作流指导**（告诉你这个领域该怎么组合工具、按什么顺序、注意什么）。加载 Skill 后会自动激活其关联工具的 schema。
+
+3. **搜索层（发现入口）**: 
+   - <search_capabilities> 是"能力发现器"，搜索后会自动暴露匹配工具的 schema。
+   - <get_all_tools> 可查看完整工具目录（文本形式，不暴露 schema）。
 
 ### 决策流程
-1. 分析用户需求
-2. 判断是否需要工具
-3. 如果需要，选择合适的工具
-4. 构建正确的参数
-5. 等待工具执行结果
-6. 基于结果回复用户
+1. **分析用户需求**
+2. **如果需要领域工具 → 先调用 <search_capabilities> 搜索并激活相关工具 schema**
+3. **如果是复杂领域任务 → 调用 <load_skill> 加载 Skill（同时激活关联工具 + 注入工作流指导）**
+4. **工具 schema 激活后 → 直接调用具体工具**
+5. **构建正确参数 → 执行 → 基于结果回复**
 
 ### 重要提示
-- **不需要工具时**: 直接回答，不要强行调用
-- **工具失败时**: 告知用户并提供替代方案
-- **多步骤任务**: 分步执行，每步确认结果
-- **参数准确性**: 确保参数符合 schema 要求`)
+- **schema 分层暴露**: 默认只有核心工具的 schema 可用。想调用 github_get_repo 等工具？先 search_capabilities("github repo") 激活其 schema。
+- **Skill 加载自动激活工具**: load_skill 不仅注入工作流，还会自动暴露该 Skill 关联的所有工具 schema。
+- **search_capabilities 是入口**: 不确定有什么工具时，用它搜索；搜索后匹配的工具会自动变为可调用。
+- **不需要工具时**: 直接回答，不要强行调用。
+- **工具失败时**: 告知用户并提供替代方案，或调用 <search_capabilities> 找替代工具。
+- **多步骤任务**: 分步执行，每步确认结果。`)
   }
   
   // ═══════════════════════════════════════════════════════════════
