@@ -53,9 +53,6 @@ const TODO_RE = /^(\s*)-\s+\[([ xX])\]\s+(.+)$/
 /** 分割线：---、***、___、* * * */
 const DIVIDER_RE = /^(---+|\*\*\*|___|\*\s+\*\s+\*)\s*$/
 
-/** 图片 */
-const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/
-
 /** 代码块起始 */
 const CODE_FENCE_RE = /^```(.*)$/
 
@@ -241,28 +238,6 @@ function parseBlock(lines: string[], i: number): { block: any; nextIndex: number
     return { block: { block_type: 22, divider: {} }, nextIndex: i + 1 }
   }
 
-  // --- 图片（单独一行）---
-  const imageMatch = line.match(IMAGE_RE)
-  if (imageMatch) {
-    return {
-      block: {
-        block_type: 2,
-        text: {
-          elements: [
-            { text_run: { content: `[图片: ${imageMatch[1] || '未命名'}] ` } },
-            {
-              text_run: {
-                content: imageMatch[2],
-                text_element_style: { link: { url: imageMatch[2] } },
-              },
-            },
-          ],
-        },
-      },
-      nextIndex: i + 1,
-    }
-  }
-
   // --- 表格 ---
   if (isTableLine(line) && i + 1 < lines.length && isTableDivider(lines[i + 1])) {
     const tableLines: string[] = [line]
@@ -312,7 +287,6 @@ function isBlockStart(line: string): boolean {
     ORDERED_RE.test(line) ||
     line.startsWith('>') ||
     DIVIDER_RE.test(line) ||
-    IMAGE_RE.test(line) ||
     isTableLine(line)
   )
 }

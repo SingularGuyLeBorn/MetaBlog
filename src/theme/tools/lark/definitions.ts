@@ -9,27 +9,30 @@ import type { ToolDefinition } from '@/theme/tools/types'
 // 文档操作
 // ============================================
 
-export const feishuImageUploadDef: ToolDefinition = {
+export const feishuDocInsertImageDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_image_upload',
-    description: `上传图片到飞书文档，获取 file_token，用于在文档中插入图片。
-使用流程:
-1. 先调用 feishu_image_upload(document_id="xxx", image_base64="data:image/png;base64,...", file_name="demo.png")
-2. 获取返回的 file_token
-3. 在 feishu_doc_append 的 blocks 参数中构造 image block:
-   { "block_type": 27, "image": { "token": "file_token" } }
+    name: 'feishu_doc_insert_image',
+    description: `插入图片到飞书文档（自动完成三步法：创建空图片块 → 上传素材 → 绑定）。
+
+支持两种方式（二选一）：
+1. 网络图片: feishu_doc_insert_image(document_id="xxx", image_url="https://example.com/pic.png")
+2. Base64 图片: feishu_doc_insert_image(document_id="xxx", image_base64="data:image/png;base64,...")
 
 注意事项:
-- image_base64 必须是完整的 base64 字符串，可带 data:image/...;base64, 前缀
+- image_url 优先于 image_base64
 - 图片大小不得超过 20MB
-- parent_type 固定为 doc_image，图片会上传到指定文档的素材库`,
+- 可选 caption 参数添加图注`,
     parameters: {
       type: 'object',
       properties: {
         document_id: {
           type: 'string',
           description: '飞书文档 ID（docx 的 document_id）',
+        },
+        image_url: {
+          type: 'string',
+          description: '网络图片 URL，支持 http/https',
         },
         image_base64: {
           type: 'string',
@@ -39,8 +42,12 @@ export const feishuImageUploadDef: ToolDefinition = {
           type: 'string',
           description: '图片文件名（含扩展名），如 demo.png',
         },
+        caption: {
+          type: 'string',
+          description: '图片下方图注文字',
+        },
       },
-      required: ['document_id', 'image_base64'],
+      required: ['document_id'],
     },
   },
 }
@@ -54,6 +61,7 @@ export const feishuDocCreateDef: ToolDefinition = {
 使用示例：
 - 创建空文档: feishu_doc_create(title="项目计划")
 - 在指定文件夹创建: feishu_doc_create(title="周报", folder_token="Flxxx")
+- 创建并自动分享给用户: feishu_doc_create(title="周报", owner_email="user@company.com")
 
 文档创建后，建议立即用 feishu_doc_append 写入内容。`,
     parameters: {
@@ -66,6 +74,19 @@ export const feishuDocCreateDef: ToolDefinition = {
         folder_token: {
           type: 'string',
           description: '父文件夹 token（可选），不填则创建在应用云空间根目录',
+        },
+        owner_email: {
+          type: 'string',
+          description: '文档所有者的企业邮箱（可选）。传入后自动将该用户添加为协作者',
+        },
+        owner_mobile: {
+          type: 'string',
+          description: '文档所有者的手机号（可选）。与 owner_email 二选一即可',
+        },
+        enable_permission: {
+          type: 'boolean',
+          description: '是否自动分享权限给 owner_email/owner_mobile 指定的用户。默认 true，传 false 可关闭',
+          default: true,
         },
       },
       required: ['title'],
@@ -291,6 +312,94 @@ export const feishuDocDeleteBlockDef: ToolDefinition = {
 }
 
 // ============================================
+// 权限操作
+// ============================================
+
+export const feishuDocShareDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'feishu_doc_share',
+    description: `分享飞书文档权限给指定用户，让对方可以查看或编辑文档。
+
+使用示例:
+- 通过 open_id: feishu_doc_share(document_id="xxx", member_id="ou_xxx")
+- 通过邮箱: feishu_doc_share(document_id="xxx", member_id="user@company.com", member_type="email")
+- 通过手机号: feishu_doc_share(document_id="xxx", member_id="13800138000", member_type="phone")
+
+权限级别:
+- full_access: 可管理（最高权限，可编辑、分享、删除）
+- edit: 可编辑
+- view: 仅查看
+
+member_type 说明:
+- openid: 开放平台用户 ID（默认）
+- userid: 用户自定义 ID
+- unionid: 跨应用统一 ID
+- email: 企业邮箱（无需查 ID，直接分享）
+- phone: 手机号（后端自动查 open_id 后分享，需要 contact:user.id:readonly 权限）`,
+    parameters: {
+      type: 'object',
+      properties: {
+        document_id: {
+          type: 'string',
+          description: '飞书文档 ID',
+        },
+        member_id: {
+          type: 'string',
+          description: '用户标识（open_id / user_id / union_id / 邮箱 / 手机号）',
+        },
+        member_type: {
+          type: 'string',
+          enum: ['openid', 'userid', 'unionid', 'email', 'phone'],
+          description: '用户标识类型',
+          default: 'openid',
+        },
+        perm: {
+          type: 'string',
+          enum: ['full_access', 'edit', 'view'],
+          description: '权限级别',
+          default: 'full_access',
+        },
+      },
+      required: ['document_id', 'member_id'],
+    },
+  },
+}
+
+export const feishuDocUnshareDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'feishu_doc_unshare',
+    description: `取消飞书文档对指定用户的权限分享。
+
+使用示例:
+- feishu_doc_unshare(document_id="xxx", member_id="ou_xxx")
+- feishu_doc_unshare(document_id="xxx", member_id="user@company.com", member_type="email")
+- feishu_doc_unshare(document_id="xxx", member_id="13800138000", member_type="phone")`,
+    parameters: {
+      type: 'object',
+      properties: {
+        document_id: {
+          type: 'string',
+          description: '飞书文档 ID',
+        },
+        member_id: {
+          type: 'string',
+          description: '用户标识',
+        },
+        member_type: {
+          type: 'string',
+          enum: ['openid', 'userid', 'unionid', 'email', 'phone'],
+          description: '用户标识类型',
+          default: 'openid',
+        },
+      },
+      required: ['document_id', 'member_id'],
+    },
+  },
+}
+
+// ============================================
 // 消息操作
 // ============================================
 
@@ -336,26 +445,31 @@ export const feishuUserSearchDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'feishu_user_search',
-    description: `搜索或查找飞书用户。
+    description: `搜索或查找飞书用户，获取用户的 open_id 等信息。
 
-通过邮箱查找（精确匹配）:
-feishu_user_search(email="zhangsan@company.com")
+按类型查找（精确匹配，只需要 contact:user.id:readonly 权限）：
+- 通过手机号: feishu_user_search(query="13800138000", type="phone")
+- 通过邮箱: feishu_user_search(query="zhangsan@company.com", type="email")
 
-通过关键词搜索（姓名、部门等）:
-feishu_user_search(query="张三")`,
+按关键词搜索（姓名、部门等，需要 contact:contact.base:readonly 权限）：
+- feishu_user_search(query="张三", type="keyword")
+
+注意：如果应用未开通 contact:contact.base:readonly 权限，type="keyword" 会失败，此时应改用 phone 或 email 精确查找。`,
     parameters: {
       type: 'object',
       properties: {
         query: {
           type: 'string',
-          description: '搜索关键词（姓名、部门等）',
+          description: '查询内容（手机号、邮箱、姓名等）',
         },
-        email: {
+        type: {
           type: 'string',
-          description: '用户邮箱（精确查找）',
+          enum: ['phone', 'email', 'keyword'],
+          description: '查询类型：phone=手机号, email=邮箱, keyword=姓名/部门关键词（默认 keyword）',
+          default: 'keyword',
         },
       },
-      required: [],
+      required: ['query'],
     },
   },
 }

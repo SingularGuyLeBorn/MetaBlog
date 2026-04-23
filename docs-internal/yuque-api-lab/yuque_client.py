@@ -236,7 +236,10 @@ class YuqueClient:
             f"/api/docs/{doc_slug}",
             query={"book_id": str(book_id)},
         )
-        return result.get("data", {})
+        data = result.get("data", {})
+        if isinstance(data, list):
+            return data[0] if data else {}
+        return data if isinstance(data, dict) else {}
 
     def create_doc(
         self,

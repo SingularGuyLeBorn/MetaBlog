@@ -193,9 +193,11 @@ export {
 // ==================== 飞书工具 ====================
 export {
   feishuDocCreate, feishuDocRead, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
-  feishuDocUpdateBlock, feishuDocDeleteBlock, feishuImageUpload, feishuImSend, feishuUserSearch,
+  feishuDocUpdateBlock, feishuDocDeleteBlock, feishuDocInsertImage, feishuDocShare, feishuDocUnshare,
+  feishuImSend, feishuUserSearch,
   feishuDocCreateDef, feishuDocReadDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
-  feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuImageUploadDef, feishuImSendDef, feishuUserSearchDef
+  feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuDocInsertImageDef, feishuDocShareDef,
+  feishuDocUnshareDef, feishuImSendDef, feishuUserSearchDef
 } from './lark'
 
 // ==================== 语雀工具 ====================
@@ -274,9 +276,11 @@ import { getCurrentTime, testEcho, calculate, getWeather, getCurrentTimeDef, tes
 // 飞书工具
 import {
   feishuDocCreate, feishuDocRead, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
-  feishuDocUpdateBlock, feishuDocDeleteBlock, feishuImageUpload, feishuImSend, feishuUserSearch,
+  feishuDocUpdateBlock, feishuDocDeleteBlock, feishuDocInsertImage, feishuDocShare, feishuDocUnshare,
+  feishuImSend, feishuUserSearch,
   feishuDocCreateDef, feishuDocReadDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
-  feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuImageUploadDef, feishuImSendDef, feishuUserSearchDef
+  feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuDocInsertImageDef, feishuDocShareDef,
+  feishuDocUnshareDef, feishuImSendDef, feishuUserSearchDef
 } from './lark'
 
 // 语雀工具
@@ -399,7 +403,7 @@ export function initializeDefaultTools(): void {
     { name: 'test_echo', definition: testEchoDef, executor: testEcho }
   ])
 
-  // 飞书文档工具（10个）
+  // 飞书文档工具（12个）
   registerTools([
     { name: 'feishu_doc_create', definition: feishuDocCreateDef, executor: feishuDocCreate },
     { name: 'feishu_doc_read', definition: feishuDocReadDef, executor: feishuDocRead },
@@ -408,7 +412,9 @@ export function initializeDefaultTools(): void {
     { name: 'feishu_doc_append', definition: feishuDocAppendDef, executor: feishuDocAppend },
     { name: 'feishu_doc_update_block', definition: feishuDocUpdateBlockDef, executor: feishuDocUpdateBlock },
     { name: 'feishu_doc_delete_block', definition: feishuDocDeleteBlockDef, executor: feishuDocDeleteBlock },
-    { name: 'feishu_image_upload', definition: feishuImageUploadDef, executor: feishuImageUpload },
+    { name: 'feishu_doc_insert_image', definition: feishuDocInsertImageDef, executor: feishuDocInsertImage },
+    { name: 'feishu_doc_share', definition: feishuDocShareDef, executor: feishuDocShare },
+    { name: 'feishu_doc_unshare', definition: feishuDocUnshareDef, executor: feishuDocUnshare },
     { name: 'feishu_im_send', definition: feishuImSendDef, executor: feishuImSend },
     { name: 'feishu_user_search', definition: feishuUserSearchDef, executor: feishuUserSearch }
   ])

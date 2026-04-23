@@ -33,10 +33,10 @@ async function larkApi(method: string, path: string, body?: any, query?: Record<
 
 /** 创建飞书文档 */
 export const feishuDocCreate = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { title, folder_token } = args
+  const { title, folder_token, owner_email, owner_mobile, enable_permission } = args
 
   try {
-    const result = await larkApi('POST', '/doc/create', { title, folder_token })
+    const result = await larkApi('POST', '/doc/create', { title, folder_token, owner_email, owner_mobile, enable_permission })
     if (result.code !== 0) {
       return createErrorResult(result.msg, '创建文档失败', `错误码: ${result.code}`)
     }
@@ -325,33 +325,102 @@ export const feishuDocDeleteBlock = async (args: Record<string, any>): Promise<T
 // 图片操作
 // ============================================
 
-/** 上传图片到飞书文档 */
-export const feishuImageUpload = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { document_id, image_base64, file_name } = args
+/** 插入图片到飞书文档（三步法封装：创建空块 → 上传素材 → PATCH 绑定） */
+export const feishuDocInsertImage = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { document_id, image_url, image_base64, file_name, caption } = args
 
-  if (!document_id || !image_base64) {
-    return createErrorResult('Missing parameters', '缺少参数', '需要 document_id 和 image_base64')
+  if (!document_id) {
+    return createErrorResult('Missing document_id', '缺少文档 ID')
+  }
+  if (!image_url && !image_base64) {
+    return createErrorResult('Missing image source', '缺少图片源', '需要 image_url（网络图片链接）或 image_base64（base64 编码）')
   }
 
   try {
-    const result = await larkApi('POST', '/image/upload', {
+    const result = await larkApi('POST', '/doc/image/insert', {
       document_id,
+      image_url,
       image_base64,
       file_name: file_name || 'image.png',
+      caption,
     })
 
     if (result.code !== 0) {
-      return createErrorResult(result.msg, '上传图片失败', `错误码: ${result.code}`)
+      return createErrorResult(result.msg, '插入图片失败', `错误码: ${result.code}`)
     }
 
+    const blockId = result.data?.block_id
     const fileToken = result.data?.file_token
     return createSuccessResult(
       result.data,
-      `图片上传成功！\nfile_token: ${fileToken}\n\n接下来可以在 feishu_doc_append 中使用 block: { "block_type": 27, "image": { "token": "${fileToken}" } }`,
-      'feishu_image_upload'
+      `图片插入成功！\nblock_id: ${blockId}\nfile_token: ${fileToken}${caption ? '\n图注: ' + caption : ''}`,
+      'feishu_doc_insert_image'
     )
   } catch (error: any) {
-    return createErrorResult(error.message, '上传图片请求失败')
+    return createErrorResult(error.message, '插入图片请求失败')
+  }
+}
+
+// ============================================
+// 权限操作
+// ============================================
+
+/** 分享飞书文档权限 */
+export const feishuDocShare = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { document_id, member_id, member_type, perm } = args
+
+  if (!document_id || !member_id) {
+    return createErrorResult('Missing parameters', '缺少参数', '需要 document_id 和 member_id')
+  }
+
+  try {
+    const result = await larkApi('POST', '/doc/share', {
+      document_id,
+      member_id,
+      member_type: member_type || 'openid',
+      perm: perm || 'full_access',
+    })
+
+    if (result.code !== 0) {
+      return createErrorResult(result.msg, '分享权限失败', `错误码: ${result.code}`)
+    }
+
+    return createSuccessResult(
+      result.data,
+      `文档权限分享成功！\n文档: ${document_id}\n用户: ${member_id}\n权限: ${perm || 'full_access'}`,
+      'feishu_doc_share'
+    )
+  } catch (error: any) {
+    return createErrorResult(error.message, '分享权限请求失败')
+  }
+}
+
+/** 取消飞书文档权限 */
+export const feishuDocUnshare = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { document_id, member_id, member_type } = args
+
+  if (!document_id || !member_id) {
+    return createErrorResult('Missing parameters', '缺少参数', '需要 document_id 和 member_id')
+  }
+
+  try {
+    const result = await larkApi('DELETE', '/doc/share', {
+      document_id,
+      member_id,
+      member_type: member_type || 'openid',
+    })
+
+    if (result.code !== 0) {
+      return createErrorResult(result.msg, '取消权限失败', `错误码: ${result.code}`)
+    }
+
+    return createSuccessResult(
+      result.data,
+      `文档权限已取消！\n文档: ${document_id}\n用户: ${member_id}`,
+      'feishu_doc_unshare'
+    )
+  } catch (error: any) {
+    return createErrorResult(error.message, '取消权限请求失败')
   }
 }
 
@@ -389,14 +458,14 @@ export const feishuImSend = async (args: Record<string, any>): Promise<ToolResul
 
 /** 搜索/查找飞书用户 */
 export const feishuUserSearch = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { query, email } = args
+  const { query, type } = args
 
-  if (!query && !email) {
-    return createErrorResult('Missing parameters', '缺少参数', '请提供 query（关键词搜索）或 email（邮箱查找）')
+  if (!query) {
+    return createErrorResult('Missing query', '缺少 query 参数', '请提供 query（查询内容）和 type（查询类型: phone/email/keyword）')
   }
 
   try {
-    const result = await larkApi('POST', '/user/search', { query, email })
+    const result = await larkApi('POST', '/user/search', { query, type: type || 'keyword' })
     if (result.code !== 0) {
       return createErrorResult(result.msg, '查找用户失败', `错误码: ${result.code}`)
     }

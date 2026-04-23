@@ -148,8 +148,9 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         // --- 权限自动下放逻辑 ---
         const ownerEmail = body.owner_email;
         const ownerMobile = body.owner_mobile;
+        const enablePermission = body.enable_permission !== false; // 默认开启
         
-        if (ownerEmail || ownerMobile) {
+        if (enablePermission && (ownerEmail || ownerMobile)) {
           try {
             // 1. 获取用户 OpenID
             const searchPayload: any = {};
@@ -258,7 +259,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         search_key: String(body.search_key),
         count: Math.min(Number(body.count) || 20, 50),
       };
-      const result = await feishuApi("POST", "/drive/v1/files/search", payload);
+      const result = await feishuApi("POST", "/suite/docs-api/search/object", payload);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
@@ -285,7 +286,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const pageSize = Math.min(Number(url.searchParams.get("page_size")) || 500, 500);
       const result = await feishuApi(
         "GET",
-        `/docx/v1/documents/${documentId}/blocks/${documentId}/children`,
+        `/docx/v1/documents/${documentId}/blocks`,
         undefined,
         { page_size: String(pageSize) }
       );
@@ -601,49 +602,267 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   });
 
   // ============================================
-  // 图片: 上传（用于文档）
-  // POST /api/lark/image/upload
-  // Body: { document_id, file_name, image_base64 }
+  // 图片: 插入文档（三步法封装）
+  // POST /api/lark/doc/image/insert
+  // Body: { document_id, image_url?, image_base64?, file_name?, caption? }
   // ============================================
-  server.middlewares.use("/api/lark/image/upload", async (req, res, next) => {
+  server.middlewares.use("/api/lark/doc/image/insert", async (req, res, next) => {
     if (req.method !== "POST") {
       next();
       return;
     }
     try {
       const body = await parseBody(req);
-      const { document_id, file_name, image_base64 } = body;
+      const { document_id, image_url, image_base64, file_name, caption } = body;
 
-      if (!document_id || !image_base64) {
-        sendJson(res, 400, { code: -1, msg: "缺少 document_id 或 image_base64 参数" });
+      if (!document_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 document_id 参数" });
+        return;
+      }
+      if (!image_url && !image_base64) {
+        sendJson(res, 400, { code: -1, msg: "缺少 image_url 或 image_base64 参数" });
         return;
       }
 
-      // 解码 base64
-      const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, "");
-      const imageBuffer = Buffer.from(base64Data, "base64");
+      // Step 1: 创建空图片块
+      const emptyImageBlock = { block_type: 27, image: {} };
+      const createResult = await feishuApi(
+        "POST",
+        `/docx/v1/documents/${document_id}/blocks/${document_id}/children`,
+        { children: caption ? [{ block_type: 2, text: { elements: [{ text_run: { content: caption } }] } }, emptyImageBlock] : [emptyImageBlock] }
+      );
+      if (createResult.code !== 0) {
+        sendJson(res, 400, { code: createResult.code, msg: `创建图片块失败: ${createResult.msg}` });
+        return;
+      }
+
+      const children = createResult.data?.children || [];
+      const imageBlockResult = children.find((c: any) => c.block_type === 27);
+      if (!imageBlockResult) {
+        sendJson(res, 500, { code: -1, msg: "创建图片块后未返回 block_id" });
+        return;
+      }
+      const imageBlockId = imageBlockResult.block_id;
+
+      // Step 2: 准备图片数据
+      let imageBuffer: Buffer;
+      let finalFileName: string;
+
+      if (image_url) {
+        const imgRes = await fetch(image_url, { timeout: 30000 } as any);
+        if (!imgRes.ok) {
+          sendJson(res, 400, { code: -1, msg: `下载图片失败: ${imgRes.status} ${imgRes.statusText}` });
+          return;
+        }
+        imageBuffer = Buffer.from(await imgRes.arrayBuffer());
+        finalFileName = image_url.split('/').pop()?.split('?')[0] || 'image.png';
+        if (!finalFileName.includes('.')) finalFileName += '.png';
+      } else {
+        const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, "");
+        imageBuffer = Buffer.from(base64Data, "base64");
+        finalFileName = file_name || 'image.png';
+      }
 
       if (imageBuffer.length === 0) {
-        sendJson(res, 400, { code: -1, msg: "图片数据为空或 base64 解码失败" });
+        sendJson(res, 400, { code: -1, msg: "图片数据为空" });
         return;
       }
 
-      // 构造 multipart form-data
+      // Step 3: 上传素材（parent_node 必须是图片块 ID）
       const formData = new FormData();
-      const blob = new Blob([imageBuffer]);
-      formData.append("file", blob, file_name || "image.png");
-      formData.append("file_name", file_name || "image.png");
-      formData.append("parent_type", "doc_image");
-      formData.append("parent_node", String(document_id));
+      const blob = new Blob([new Uint8Array(imageBuffer)]);
+      formData.append("file", blob, finalFileName);
+      formData.append("file_name", finalFileName);
+      formData.append("parent_type", "docx_image");
+      formData.append("parent_node", imageBlockId);
       formData.append("size", String(imageBuffer.length));
 
-      structuredLog.info("lark.image.upload", "上传图片到飞书文档", {
+      structuredLog.info("lark.image.insert", "插入图片到飞书文档", {
         document_id,
-        file_name: file_name || "image.png",
+        image_block_id: imageBlockId,
+        source: image_url ? 'url' : 'base64',
         size: imageBuffer.length,
       });
 
-      const result = await feishuApiMultipart("/drive/v1/medias/upload_all", formData);
+      const uploadResult = await feishuApiMultipart("/drive/v1/medias/upload_all", formData);
+      if (uploadResult.code !== 0) {
+        sendJson(res, 400, { code: uploadResult.code, msg: `上传素材失败: ${uploadResult.msg}` });
+        return;
+      }
+
+      const fileToken = uploadResult.data?.file_token;
+
+      // Step 4: PATCH 绑定图片
+      const patchResult = await feishuApi(
+        "PATCH",
+        `/docx/v1/documents/${document_id}/blocks/${imageBlockId}`,
+        { replace_image: { token: fileToken } }
+      );
+      if (patchResult.code !== 0) {
+        sendJson(res, 400, { code: patchResult.code, msg: `绑定图片失败: ${patchResult.msg}` });
+        return;
+      }
+
+      sendJson(res, 200, {
+        code: 0,
+        msg: "success",
+        data: {
+          block_id: imageBlockId,
+          file_token: fileToken,
+          image_url: image_url || undefined,
+        },
+      });
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // 文档: 分享权限
+  // POST /api/lark/doc/share
+  // Body: { document_id, member_id, member_type?, perm? }
+  //
+  // 智能转换：
+  // - member_id 为邮箱格式 → 自动使用 member_type="email"
+  // - member_id 为手机号格式 → 自动调用 batch_get_id 获取 open_id
+  // ============================================
+  server.middlewares.use("/api/lark/doc/share", async (req, res, next) => {
+    if (req.method !== "POST") {
+      next();
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      let { document_id, member_id, member_type = "openid", perm = "full_access" } = body;
+
+      if (!document_id || !member_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 document_id 或 member_id 参数" });
+        return;
+      }
+
+      member_id = String(member_id).trim();
+
+      // 判断格式
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member_id);
+      const isMobile = /^\+?\d{7,15}$/.test(member_id);
+
+      let finalMemberId = member_id;
+      let finalMemberType = member_type;
+
+      if (finalMemberType === "email" || isEmail) {
+        // 邮箱格式 → 直接用 email 类型分享（无需查 ID）
+        finalMemberType = "email";
+      } else if (finalMemberType === "phone" || finalMemberType === "mobile" || isMobile) {
+        // 手机号格式 → 先通过 batch_get_id 获取 open_id
+        const idResult = await feishuApi(
+          "POST",
+          "/contact/v3/users/batch_get_id",
+          { mobiles: [member_id] },
+          { user_id_type: "open_id" }
+        );
+        if (idResult.code !== 0) {
+          sendJson(res, 400, {
+            code: idResult.code,
+            msg: `手机号转 open_id 失败: ${idResult.msg}。请确认应用有 contact:user.id:readonly 权限，或改用邮箱分享。`,
+          });
+          return;
+        }
+        const openId = idResult.data?.user_list?.[0]?.user_id;
+        if (!openId) {
+          sendJson(res, 400, {
+            code: -1,
+            msg: `未找到手机号 ${member_id} 对应的用户。请确认手机号正确且已加入企业通讯录。`,
+          });
+          return;
+        }
+        finalMemberId = openId;
+        finalMemberType = "openid";
+      }
+
+      structuredLog.info("lark.doc.share", "分享文档权限", {
+        document_id,
+        member_id: finalMemberId,
+        member_type: finalMemberType,
+        perm,
+      });
+      const result = await feishuApi(
+        "POST",
+        `/drive/v1/permissions/${document_id}/members`,
+        { member_type: finalMemberType, member_id: finalMemberId, perm },
+        { type: "docx" }
+      );
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // 文档: 取消权限
+  // DELETE /api/lark/doc/share
+  // Body: { document_id, member_id, member_type? }
+  //
+  // 智能转换：
+  // - member_id 为邮箱格式 → 自动使用 member_type="email"
+  // - member_id 为手机号格式 → 自动调用 batch_get_id 获取 open_id（再调用删除）
+  // ============================================
+  server.middlewares.use("/api/lark/doc/share", async (req, res, next) => {
+    if (req.method !== "DELETE") {
+      next();
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      let { document_id, member_id, member_type = "openid" } = body;
+
+      if (!document_id || !member_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 document_id 或 member_id 参数" });
+        return;
+      }
+
+      member_id = String(member_id).trim();
+
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member_id);
+      const isMobile = /^\+?\d{7,15}$/.test(member_id);
+
+      let finalMemberId = member_id;
+      let finalMemberType = member_type;
+
+      if (finalMemberType === "email" || isEmail) {
+        finalMemberType = "email";
+      } else if (finalMemberType === "phone" || finalMemberType === "mobile" || isMobile) {
+        const idResult = await feishuApi(
+          "POST",
+          "/contact/v3/users/batch_get_id",
+          { mobiles: [member_id] },
+          { user_id_type: "open_id" }
+        );
+        if (idResult.code !== 0) {
+          sendJson(res, 400, {
+            code: idResult.code,
+            msg: `手机号转 open_id 失败: ${idResult.msg}。请确认应用有 contact:user.id:readonly 权限，或改用邮箱。`,
+          });
+          return;
+        }
+        const openId = idResult.data?.user_list?.[0]?.user_id;
+        if (!openId) {
+          sendJson(res, 400, {
+            code: -1,
+            msg: `未找到手机号 ${member_id} 对应的用户。`,
+          });
+          return;
+        }
+        finalMemberId = openId;
+        finalMemberType = "openid";
+      }
+
+      structuredLog.info("lark.doc.unshare", "取消文档权限", { document_id, member_id: finalMemberId });
+      const result = await feishuApi(
+        "DELETE",
+        `/drive/v1/permissions/${document_id}/members/${finalMemberId}`,
+        undefined,
+        { type: "docx", member_type: finalMemberType }
+      );
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
@@ -699,7 +918,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   // ============================================
   // 用户: 搜索/查找
   // POST /api/lark/user/search
-  // Body: { query?, email? }
+  // Body: { query, type? }
+  //   type: "phone" | "email" | "keyword" (默认 keyword)
   // ============================================
   server.middlewares.use("/api/lark/user/search", async (req, res, next) => {
     if (req.method !== "POST") {
@@ -708,27 +928,48 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
     }
     try {
       const body = await parseBody(req);
+      const query = body.query ? String(body.query).trim() : "";
+      const type = body.type ? String(body.type).trim().toLowerCase() : "keyword";
 
-      if (body.email) {
-        // 通过邮箱查找用户
-        const result = await feishuApi("POST", "/contact/v3/users/batch_get_id", {
-          emails: Array.isArray(body.email) ? body.email : [String(body.email)],
-        });
+      if (!query) {
+        sendJson(res, 400, { code: -1, msg: "缺少 query 参数" });
+        return;
+      }
+
+      if (type === "phone" || type === "mobile") {
+        // 手机号 → batch_get_id（只需要 contact:user.id:readonly）
+        const result = await feishuApi(
+          "POST",
+          "/contact/v3/users/batch_get_id",
+          { mobiles: [query] },
+          { user_id_type: "open_id" }
+        );
         sendJson(res, result.code === 0 ? 200 : 400, result);
         return;
       }
 
-      if (body.query) {
-        // 搜索用户
-        const result = await feishuApi("GET", "/contact/v3/users", undefined, {
-          query: String(body.query),
-          page_size: "20",
-        });
+      if (type === "email") {
+        // 邮箱 → batch_get_id
+        const result = await feishuApi(
+          "POST",
+          "/contact/v3/users/batch_get_id",
+          { emails: [query] },
+          { user_id_type: "open_id" }
+        );
         sendJson(res, result.code === 0 ? 200 : 400, result);
         return;
       }
 
-      sendJson(res, 400, { code: -1, msg: "缺少 query 或 email 参数" });
+      // 默认 keyword → GET /contact/v3/users（需要 contact:contact.base:readonly）
+      const result = await feishuApi("GET", "/contact/v3/users", undefined, {
+        query: query,
+        page_size: "20",
+      });
+      // 权限错误时给 Agent 更清晰的提示
+      if (result.code !== 0 && result.code === 99991672) {
+        result.msg = `${result.msg} | 提示：搜索姓名/部门需要 contact:contact.base:readonly 权限。如果只有 contact:user.id:readonly 权限，请使用 type="phone" 或 type="email" 精确查找。`;
+      }
+      sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
     }
