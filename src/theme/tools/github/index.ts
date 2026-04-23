@@ -9,7 +9,12 @@ export {
   githubGetFileContent,
   githubSearchCode,
   githubGetCommitHistory,
-  githubGetIssues
+  githubGetIssues,
+  githubListPulls,
+  githubGetPull,
+  githubCreateIssue,
+  githubListWorkflows,
+  githubListWorkflowRuns
 } from './executors'
 
 export {
@@ -18,5 +23,10 @@ export {
   githubGetFileContentDef,
   githubSearchCodeDef,
   githubGetCommitHistoryDef,
-  githubGetIssuesDef
+  githubGetIssuesDef,
+  githubListPullsDef,
+  githubGetPullDef,
+  githubCreateIssueDef,
+  githubListWorkflowsDef,
+  githubListWorkflowRunsDef
 } from './definitions'

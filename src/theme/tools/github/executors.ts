@@ -8,6 +8,14 @@ import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 
 const GITHUB_API_BASE = 'https://api.github.com'
 
+function getGitHubToken(): string {
+  try {
+    return (import.meta as any).env?.VITE_GITHUB_TOKEN || ''
+  } catch {
+    return ''
+  }
+}
+
 /**
  * GitHub 错误码翻译
  */
@@ -51,11 +59,13 @@ function translateGitHubError(errorMsg: string): { message: string; suggestion: 
  */
 async function githubRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
   const url = `${GITHUB_API_BASE}${endpoint}`
+  const token = getGitHubToken()
   const response = await fetch(url, {
     ...options,
     headers: {
       'Accept': 'application/vnd.github.v3+json',
       'User-Agent': 'MetaBlog-AI-Chat',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...options.headers
     }
   })
@@ -321,6 +331,205 @@ export const githubGetIssues: ToolExecutor = async (args): Promise<ToolResult> =
       items,
       `${owner}/${repo} 的 ${state} Issues (${items.length} 条)`,
       'github_get_issues'
+    )
+  } catch (error: any) {
+    const translated = translateGitHubError(error.message)
+    return createErrorResult(error.message, translated.message, translated.suggestion)
+  }
+}
+
+/**
+ * 获取 GitHub Pull Requests
+ */
+export const githubListPulls: ToolExecutor = async (args): Promise<ToolResult> => {
+  const { owner, repo, state = 'open', per_page = 10 } = args
+  
+  if (!owner || !repo) {
+    return createErrorResult(
+      'Missing required parameters',
+      '请提供 owner 和 repo',
+      '示例: github_list_pulls(owner="facebook", repo="react")'
+    )
+  }
+  
+  try {
+    const pulls = await githubRequest(`/repos/${owner}/${repo}/pulls?state=${state}&per_page=${per_page}`)
+    
+    const items = pulls.map((pr: any) => ({
+      number: pr.number,
+      title: pr.title,
+      state: pr.state,
+      author: pr.user.login,
+      branch: `${pr.head.ref} → ${pr.base.ref}`,
+      draft: pr.draft,
+      createdAt: pr.created_at
+    }))
+    
+    return createSuccessResult(
+      items,
+      `${owner}/${repo} 的 ${state} PRs (${items.length} 条)`,
+      'github_list_pulls'
+    )
+  } catch (error: any) {
+    const translated = translateGitHubError(error.message)
+    return createErrorResult(error.message, translated.message, translated.suggestion)
+  }
+}
+
+/**
+ * 获取单个 GitHub Pull Request 详情
+ */
+export const githubGetPull: ToolExecutor = async (args): Promise<ToolResult> => {
+  const { owner, repo, number } = args
+  
+  if (!owner || !repo || !number) {
+    return createErrorResult(
+      'Missing required parameters',
+      '请提供 owner、repo 和 PR number',
+      '示例: github_get_pull(owner="facebook", repo="react", number=123)'
+    )
+  }
+  
+  try {
+    const pr = await githubRequest(`/repos/${owner}/${repo}/pulls/${number}`)
+    
+    return createSuccessResult(
+      {
+        number: pr.number,
+        title: pr.title,
+        state: pr.state,
+        author: pr.user.login,
+        body: pr.body,
+        branch: `${pr.head.ref} → ${pr.base.ref}`,
+        draft: pr.draft,
+        commits: pr.commits,
+        additions: pr.additions,
+        deletions: pr.deletions,
+        changedFiles: pr.changed_files,
+        merged: pr.merged,
+        mergeable: pr.mergeable,
+        url: pr.html_url,
+        createdAt: pr.created_at,
+        updatedAt: pr.updated_at
+      },
+      `PR #${pr.number}: ${pr.title} (${pr.state})`,
+      'github_get_pull'
+    )
+  } catch (error: any) {
+    const translated = translateGitHubError(error.message)
+    return createErrorResult(error.message, translated.message, translated.suggestion)
+  }
+}
+
+/**
+ * 创建 GitHub Issue
+ */
+export const githubCreateIssue: ToolExecutor = async (args): Promise<ToolResult> => {
+  const { owner, repo, title, body, labels } = args
+  
+  if (!owner || !repo || !title) {
+    return createErrorResult(
+      'Missing required parameters',
+      '请提供 owner、repo 和 title',
+      '示例: github_create_issue(owner="facebook", repo="react", title="Bug report", body="...")'
+    )
+  }
+  
+  try {
+    const payload: any = { title }
+    if (body) payload.body = body
+    if (labels && Array.isArray(labels)) payload.labels = labels
+    
+    const issue = await githubRequest(`/repos/${owner}/${repo}/issues`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    
+    return createSuccessResult(
+      {
+        number: issue.number,
+        title: issue.title,
+        state: issue.state,
+        url: issue.html_url,
+        createdAt: issue.created_at
+      },
+      `成功创建 Issue #${issue.number}: ${issue.title}`,
+      'github_create_issue'
+    )
+  } catch (error: any) {
+    const translated = translateGitHubError(error.message)
+    return createErrorResult(error.message, translated.message, translated.suggestion)
+  }
+}
+
+/**
+ * 列出 GitHub Actions 工作流
+ */
+export const githubListWorkflows: ToolExecutor = async (args): Promise<ToolResult> => {
+  const { owner, repo } = args
+  
+  if (!owner || !repo) {
+    return createErrorResult(
+      'Missing required parameters',
+      '请提供 owner 和 repo',
+      '示例: github_list_workflows(owner="facebook", repo="react")'
+    )
+  }
+  
+  try {
+    const data = await githubRequest(`/repos/${owner}/${repo}/actions/workflows`)
+    const items = (data.workflows || []).map((wf: any) => ({
+      id: wf.id,
+      name: wf.name,
+      path: wf.path,
+      state: wf.state,
+      url: wf.html_url
+    }))
+    
+    return createSuccessResult(
+      items,
+      `${owner}/${repo} 的工作流 (${items.length} 个)`,
+      'github_list_workflows'
+    )
+  } catch (error: any) {
+    const translated = translateGitHubError(error.message)
+    return createErrorResult(error.message, translated.message, translated.suggestion)
+  }
+}
+
+/**
+ * 列出 GitHub Actions 运行记录
+ */
+export const githubListWorkflowRuns: ToolExecutor = async (args): Promise<ToolResult> => {
+  const { owner, repo, per_page = 10 } = args
+  
+  if (!owner || !repo) {
+    return createErrorResult(
+      'Missing required parameters',
+      '请提供 owner 和 repo',
+      '示例: github_list_workflow_runs(owner="facebook", repo="react")'
+    )
+  }
+  
+  try {
+    const data = await githubRequest(`/repos/${owner}/${repo}/actions/runs?per_page=${per_page}`)
+    const items = (data.workflow_runs || []).map((run: any) => ({
+      id: run.id,
+      name: run.name,
+      branch: run.head_branch,
+      status: run.status,
+      conclusion: run.conclusion,
+      event: run.event,
+      runNumber: run.run_number,
+      url: run.html_url,
+      createdAt: run.created_at
+    }))
+    
+    return createSuccessResult(
+      items,
+      `${owner}/${repo} 的运行记录 (${items.length} 次)`,
+      'github_list_workflow_runs'
     )
   } catch (error: any) {
     const translated = translateGitHubError(error.message)

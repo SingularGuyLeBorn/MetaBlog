@@ -39,8 +39,18 @@ async function readBody(req: any): Promise<any> {
   });
 }
 
-async function fetchHtml(url: string, headers?: Record<string, string>): Promise<string> {
-  const res = await fetch(url, {
+async function fetchWithTimeout(url: string, timeoutMs = 15000, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchHtml(url: string, headers?: Record<string, string>, timeoutMs = 15000): Promise<string> {
+  const res = await fetchWithTimeout(url, timeoutMs, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -223,44 +233,158 @@ async function parseWeibo(url: string, html: string): Promise<ParseResult> {
 }
 
 // ---------- 小红书 ----------
-async function parseXiaohongshu(url: string, html: string): Promise<ParseResult> {
-  const title = extractMeta(html, "og:title") || "小红书笔记";
-  const desc = extractMeta(html, "og:description") || "";
+async function parseXiaohongshu(url: string, html: string, renderedByPlaywright = false): Promise<ParseResult> {
+  let title = extractMeta(html, "og:title") || "";
+  let author = "未知用户";
+  let content = "";
+  let images: string[] = [];
+
+  // 1. 尝试从渲染后的 DOM 提取标题（h1 优先级最高）
+  const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  if (h1Match) {
+    title = h1Match[1].replace(/<[^>]+>/g, "").trim() || title;
+  }
+  if (!title) {
+    const titleMatch = html.match(/<div[^>]*class="[^"]*title[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+    if (titleMatch) title = titleMatch[1].replace(/<[^>]+>/g, "").trim();
+  }
+
+  // 2. 尝试提取正文（多层 fallback）
+  // 小红书渲染后的正文通常在 detail-desc 或 desc 相关节点中
+  const descPatterns = [
+    /<div[^>]*id="detail-desc"[^>]*>([\s\S]*?)<\/div>/i,
+    /<div[^>]*class="[^"]*desc[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<span[^>]*class="[^"]*desc[^"]*"[^>]*>([\s\S]*?)<\/span>/i,
+  ];
+  for (const re of descPatterns) {
+    const m = html.match(re);
+    if (m) {
+      content = m[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      if (content.length > 20) break; // 过滤掉太短的误匹配
+    }
+  }
+
+  // 3. 尝试提取作者
+  const authorPatterns = [
+    /<a[^>]*class="[^"]*author[^"]*"[^>]*>([\s\S]*?)<\/a>/i,
+    /<div[^>]*class="[^"]*nickname[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<span[^>]*class="[^"]*nickname[^"]*"[^>]*>([\s\S]*?)<\/span>/i,
+  ];
+  for (const re of authorPatterns) {
+    const m = html.match(re);
+    if (m) {
+      author = m[1].replace(/<[^>]+>/g, "").trim();
+      if (author) break;
+    }
+  }
+
+  // 4. 提取图片（渲染后图片通常已加载到 src）
+  const imgMatches = html.matchAll(/<img[^>]*src="(https?:\/\/[^"]+)"/g);
+  images = Array.from(imgMatches)
+    .map((m) => m[1])
+    .filter((src) => !src.includes("avatar") && !src.includes("icon") && src.length > 10)
+    .slice(0, 20);
+
+  // 5. 如果 DOM 提取不足，用 OG 兜底
+  if (!content) {
+    content = extractMeta(html, "og:description") || "";
+  }
+  if (!title) {
+    title = "小红书笔记";
+  }
   const ogImage = extractMeta(html, "og:image");
+  if (ogImage && !images.includes(ogImage)) {
+    images.unshift(ogImage);
+  }
 
   return {
     title,
-    author: "未知用户",
-    content: desc.slice(0, 5000),
-    images: ogImage ? [ogImage] : [],
+    author,
+    content: content.slice(0, 8000),
+    images: images.slice(0, 20),
     videos: [],
     comments: [],
-    metadata: { source: "xiaohongshu", note: "小红书有反爬机制，完整内容可能需要 Playwright 渲染" },
-    method: "og-extract",
+    metadata: { source: "xiaohongshu", method: renderedByPlaywright ? "playwright-render" : "og-extract" },
+    method: renderedByPlaywright ? "playwright-render" : "og-extract",
     platform: "xiaohongshu",
     url,
   };
 }
 
 // ---------- 抖音 ----------
-async function parseDouyin(url: string, html: string): Promise<ParseResult> {
-  const title = extractMeta(html, "og:title") || "抖音视频";
-  const desc = extractMeta(html, "og:description") || "";
+async function parseDouyin(url: string, html: string, renderedByPlaywright = false): Promise<ParseResult> {
+  let title = extractMeta(html, "og:title") || "";
+  let author = "未知用户";
+  let content = "";
   const ogImage = extractMeta(html, "og:image");
   let videos: string[] = [];
+  let images: string[] = ogImage ? [ogImage] : [];
 
-  const videoMatch = html.match(/<video[^>]*src="([^"]*)"/);
-  if (videoMatch) videos.push(videoMatch[1]);
+  // 1. 尝试从渲染后的 DOM 提取标题
+  const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  if (h1Match) {
+    title = h1Match[1].replace(/<[^>]+>/g, "").trim() || title;
+  }
+  if (!title) {
+    const titleMatch = html.match(/<div[^>]*class="[^"]*title[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+    if (titleMatch) title = titleMatch[1].replace(/<[^>]+>/g, "").trim();
+  }
+
+  // 2. 尝试提取作者
+  const authorPatterns = [
+    /<a[^>]*class="[^"]*author[^"]*"[^>]*>([\s\S]*?)<\/a>/i,
+    /<div[^>]*class="[^"]*nickname[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<span[^>]*class="[^"]*nickname[^"]*"[^>]*>([\s\S]*?)<\/span>/i,
+  ];
+  for (const re of authorPatterns) {
+    const m = html.match(re);
+    if (m) {
+      author = m[1].replace(/<[^>]+>/g, "").trim();
+      if (author) break;
+    }
+  }
+
+  // 3. 尝试提取描述/正文
+  const descPatterns = [
+    /<div[^>]*class="[^"]*desc[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<span[^>]*class="[^"]*desc[^"]*"[^>]*>([\s\S]*?)<\/span>/i,
+  ];
+  for (const re of descPatterns) {
+    const m = html.match(re);
+    if (m) {
+      content = m[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      if (content.length > 10) break;
+    }
+  }
+  if (!content) {
+    content = extractMeta(html, "og:description") || "";
+  }
+
+  // 4. 提取视频地址
+  const videoMatches = html.matchAll(/<video[^>]*src="([^"]+)"/g);
+  videos = Array.from(videoMatches).map((m) => m[1]).filter(Boolean).slice(0, 5);
+
+  // 5. 提取封面图
+  const imgMatches = html.matchAll(/<img[^>]*src="(https?:\/\/[^"]+)"/g);
+  const extraImages = Array.from(imgMatches)
+    .map((m) => m[1])
+    .filter((src) => !src.includes("avatar") && !src.includes("icon") && src.length > 10)
+    .slice(0, 10);
+  for (const img of extraImages) {
+    if (!images.includes(img)) images.push(img);
+  }
+
+  if (!title) title = "抖音视频";
 
   return {
     title,
-    author: "未知用户",
-    content: desc.slice(0, 3000),
-    images: ogImage ? [ogImage] : [],
+    author,
+    content: content.slice(0, 5000),
+    images: images.slice(0, 10),
     videos: videos.slice(0, 5),
     comments: [],
-    metadata: { source: "douyin", note: "抖音有反爬机制，完整内容可能需要 Playwright 渲染" },
-    method: "og-extract",
+    metadata: { source: "douyin", method: renderedByPlaywright ? "playwright-render" : "og-extract" },
+    method: renderedByPlaywright ? "playwright-render" : "og-extract",
     platform: "douyin",
     url,
   };
@@ -268,21 +392,85 @@ async function parseDouyin(url: string, html: string): Promise<ParseResult> {
 
 // ---------- 通用网页 ----------
 async function parseGeneric(url: string, html: string): Promise<ParseResult> {
-  const title = extractMeta(html, "og:title") || html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim() || "未知标题";
-  const desc = extractMeta(html, "og:description") || extractMeta(html, "description") || "";
-  const ogImage = extractMeta(html, "og:image");
+  let title = "";
+  let content = "";
+  let method = "";
+  let images: string[] = [];
 
-  let content = cleanHtml(html).slice(0, 5000);
+  // L1: Jina Reader（零 Key 云端 API，最快）
+  // 官方格式：https://r.jina.ai/http://example.com（保留原始协议）
+  try {
+    const jinaUrl = `https://r.jina.ai/http://${url}`;
+    const jinaRes = await fetchWithTimeout(jinaUrl, 8000);
+    if (jinaRes.ok) {
+      const jinaText = await jinaRes.text();
+      const lines = jinaText.split("\n");
+      // Jina 返回 Markdown。如果第一行是 # 标题则提取，否则整段作为正文
+      const firstLine = lines[0]?.trim() || "";
+      if (firstLine.startsWith("# ")) {
+        title = firstLine.replace(/^#\s+/, "").trim();
+        content = lines.slice(1).join("\n").trim();
+      } else if (firstLine.startsWith("## ") || firstLine.startsWith("### ")) {
+        title = firstLine.replace(/^#+\s+/, "").trim();
+        content = jinaText.trim();
+      } else {
+        content = jinaText.trim();
+      }
+      method = "jina-reader";
+    }
+  } catch {
+    // Jina 失败，继续下一层
+  }
+
+  // L2: Readability.js（本地最强去噪，需要 jsdom）
+  if (!content) {
+    try {
+      const { JSDOM } = await import("jsdom");
+      const { Readability } = await import("@mozilla/readability");
+      const dom = new JSDOM(html, { url });
+      const reader = new Readability(dom.window.document);
+      const article = reader.parse();
+      if (article) {
+        title = title || article.title || "";
+        // Readability 返回的是 HTML，转成纯文本
+        const textDom = new JSDOM(article.content || "");
+        content = textDom.window.document.body.textContent || "";
+        method = "readability-js";
+        // 从 Readability 提取的正文中提取图片（比原始 HTML 更干净）
+        const articleImgMatches = (article.content || "").matchAll(/<img[^>]*src="(https?:\/\/[^"]+)"/g);
+        images = Array.from(articleImgMatches).map((m) => m[1]).filter(Boolean).slice(0, 10);
+      }
+    } catch {
+      // Readability 失败，继续兜底
+    }
+  }
+
+  // L3: OG + cleanHtml 兜底
+  if (!title) {
+    title = extractMeta(html, "og:title") || html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim() || "未知标题";
+  }
+  if (!content) {
+    content = extractMeta(html, "og:description") || "";
+    method = method || "generic-og-extract";
+  }
+  if (!method) method = "generic-og-extract";
+
+  const ogImage = extractMeta(html, "og:image");
+  if (ogImage && !images.includes(ogImage)) images.unshift(ogImage);
+
+  // 如果前面都没提取到正文，用 cleanHtml 兜底
+  // 注意：content 可能是空字符串（falsy），要用长度判断
+  const finalContent = (content && content.trim().length > 0) ? content : cleanHtml(html);
 
   return {
     title,
     author: "",
-    content,
-    images: ogImage ? [ogImage] : [],
+    content: finalContent.slice(0, 8000),
+    images: images.slice(0, 10),
     videos: [],
     comments: [],
-    metadata: { source: "generic" },
-    method: "generic-og-extract",
+    metadata: { source: "generic", method },
+    method,
     platform: "unknown",
     url,
   };
@@ -295,7 +483,7 @@ export function registerPlatformParserRoutes(server: ViteDevServer, _ctx: RouteC
 
     try {
       const body = await readBody(req);
-      const { url, usePlaywright = false } = body;
+      const { url, usePlaywright } = body;
 
       if (!url) {
         res.statusCode = 400;
@@ -316,16 +504,19 @@ export function registerPlatformParserRoutes(server: ViteDevServer, _ctx: RouteC
       }
 
       const hostname = targetUrl.hostname;
+      const isAntiCrawlPlatform = hostname.includes("xiaohongshu") || hostname.includes("douyin");
+      // 对反爬平台默认启用 Playwright，但允许前端通过 usePlaywright: false 显式关闭
+      const shouldUsePlaywright = usePlaywright !== false && isAntiCrawlPlatform;
       let html = "";
 
-      // Playwright 兜底（如果启用且平台需要）
-      if (usePlaywright && (hostname.includes("xiaohongshu") || hostname.includes("douyin"))) {
+      // Playwright 渲染（反爬平台默认启用）
+      if (shouldUsePlaywright) {
         try {
           // 动态导入 playwright，避免未安装时崩溃
           const { chromium } = await import("playwright");
           const browser = await chromium.launch({ headless: true });
           const page = await browser.newPage();
-          await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
+          await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
           html = await page.content();
           await browser.close();
         } catch (pwErr: any) {
@@ -347,9 +538,9 @@ export function registerPlatformParserRoutes(server: ViteDevServer, _ctx: RouteC
       } else if (hostname.includes("weibo.com") || hostname.includes("weibo.cn")) {
         result = await parseWeibo(url, html);
       } else if (hostname.includes("xiaohongshu.com") || hostname.includes("xhslink.com")) {
-        result = await parseXiaohongshu(url, html);
+        result = await parseXiaohongshu(url, html, shouldUsePlaywright);
       } else if (hostname.includes("douyin.com") || hostname.includes("iesdouyin.com")) {
-        result = await parseDouyin(url, html);
+        result = await parseDouyin(url, html, shouldUsePlaywright);
       } else {
         result = await parseGeneric(url, html);
       }

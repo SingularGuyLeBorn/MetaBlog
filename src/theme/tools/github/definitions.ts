@@ -238,3 +238,154 @@ export const githubGetIssuesDef: ToolDefinition = {
     }
   }
 }
+
+export const githubListPullsDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'github_list_pulls',
+    description: `获取 GitHub 仓库的 Pull Requests（PR）。查看待合并的代码变更。
+
+使用场景：
+1. 了解项目正在进行的开发
+2. 查看代码审查状态
+3. 了解新功能进展
+4. 追踪 bug 修复进度`,
+    parameters: {
+      type: 'object',
+      properties: {
+        owner: {
+          type: 'string',
+          description: '仓库所有者'
+        },
+        repo: {
+          type: 'string',
+          description: '仓库名称'
+        },
+        state: {
+          type: 'string',
+          description: 'PR 状态：open（开放）、closed（已关闭）、all（全部），默认 open',
+          enum: ['open', 'closed', 'all'],
+          default: 'open'
+        },
+        per_page: {
+          type: 'number',
+          description: '返回数量，默认 10，最大 30',
+          default: 10
+        }
+      },
+      required: ['owner', 'repo']
+    }
+  }
+}
+
+export const githubGetPullDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'github_get_pull',
+    description: `获取单个 GitHub Pull Request 的详细信息。查看 PR 的代码变更统计、合并状态等。`,
+    parameters: {
+      type: 'object',
+      properties: {
+        owner: {
+          type: 'string',
+          description: '仓库所有者'
+        },
+        repo: {
+          type: 'string',
+          description: '仓库名称'
+        },
+        number: {
+          type: 'number',
+          description: 'PR 编号'
+        }
+      },
+      required: ['owner', 'repo', 'number']
+    }
+  }
+}
+
+export const githubCreateIssueDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'github_create_issue',
+    description: `在 GitHub 仓库创建 Issue。提交 bug 报告、功能请求或任务。
+
+注意：需要 GITHUB_TOKEN 且有对应仓库的 write 权限。`,
+    parameters: {
+      type: 'object',
+      properties: {
+        owner: {
+          type: 'string',
+          description: '仓库所有者'
+        },
+        repo: {
+          type: 'string',
+          description: '仓库名称'
+        },
+        title: {
+          type: 'string',
+          description: 'Issue 标题'
+        },
+        body: {
+          type: 'string',
+          description: 'Issue 正文内容（支持 Markdown）'
+        },
+        labels: {
+          type: 'array',
+          items: { type: 'string' },
+          description: '标签列表，例如 ["bug", "enhancement"]'
+        }
+      },
+      required: ['owner', 'repo', 'title']
+    }
+  }
+}
+
+export const githubListWorkflowsDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'github_list_workflows',
+    description: `列出 GitHub 仓库的 Actions 工作流。查看 CI/CD 流水线配置。`,
+    parameters: {
+      type: 'object',
+      properties: {
+        owner: {
+          type: 'string',
+          description: '仓库所有者'
+        },
+        repo: {
+          type: 'string',
+          description: '仓库名称'
+        }
+      },
+      required: ['owner', 'repo']
+    }
+  }
+}
+
+export const githubListWorkflowRunsDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'github_list_workflow_runs',
+    description: `列出 GitHub 仓库的 Actions 工作流运行记录。查看 CI/CD 执行状态。`,
+    parameters: {
+      type: 'object',
+      properties: {
+        owner: {
+          type: 'string',
+          description: '仓库所有者'
+        },
+        repo: {
+          type: 'string',
+          description: '仓库名称'
+        },
+        per_page: {
+          type: 'number',
+          description: '返回数量，默认 10',
+          default: 10
+        }
+      },
+      required: ['owner', 'repo']
+    }
+  }
+}

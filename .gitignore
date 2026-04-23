@@ -20,3 +20,9 @@ cache
 # OS
 Thumbs.db
 desktop.ini
+# External projects
+web-access/
+
+# pnpm workspace (auto-generated)
+pnpm-workspace.yaml
+

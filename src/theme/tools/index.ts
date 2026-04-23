@@ -122,12 +122,22 @@ export {
   githubSearchCode,
   githubGetCommitHistory,
   githubGetIssues,
+  githubListPulls,
+  githubGetPull,
+  githubCreateIssue,
+  githubListWorkflows,
+  githubListWorkflowRuns,
   githubGetRepoDef,
   githubListRepoContentsDef,
   githubGetFileContentDef,
   githubSearchCodeDef,
   githubGetCommitHistoryDef,
-  githubGetIssuesDef
+  githubGetIssuesDef,
+  githubListPullsDef,
+  githubGetPullDef,
+  githubCreateIssueDef,
+  githubListWorkflowsDef,
+  githubListWorkflowRunsDef
 } from './github'
 
 
@@ -238,7 +248,9 @@ import {
 // GitHub 工具
 import {
   githubGetRepo, githubListRepoContents, githubGetFileContent, githubSearchCode, githubGetCommitHistory, githubGetIssues,
-  githubGetRepoDef, githubListRepoContentsDef, githubGetFileContentDef, githubSearchCodeDef, githubGetCommitHistoryDef, githubGetIssuesDef
+  githubListPulls, githubGetPull, githubCreateIssue, githubListWorkflows, githubListWorkflowRuns,
+  githubGetRepoDef, githubListRepoContentsDef, githubGetFileContentDef, githubSearchCodeDef, githubGetCommitHistoryDef, githubGetIssuesDef,
+  githubListPullsDef, githubGetPullDef, githubCreateIssueDef, githubListWorkflowsDef, githubListWorkflowRunsDef
 } from './github'
 
 
@@ -335,14 +347,19 @@ export function initializeDefaultTools(): void {
     { name: 'process_image', definition: processImageDef, executor: processImage }
   ])
   
-  // GitHub 工具（6个）
+  // GitHub 工具（11个）
   registerTools([
     { name: 'github_get_repo', definition: githubGetRepoDef, executor: githubGetRepo },
     { name: 'github_list_repo_contents', definition: githubListRepoContentsDef, executor: githubListRepoContents },
     { name: 'github_get_file_content', definition: githubGetFileContentDef, executor: githubGetFileContent },
     { name: 'github_search_code', definition: githubSearchCodeDef, executor: githubSearchCode },
     { name: 'github_get_commit_history', definition: githubGetCommitHistoryDef, executor: githubGetCommitHistory },
-    { name: 'github_get_issues', definition: githubGetIssuesDef, executor: githubGetIssues }
+    { name: 'github_get_issues', definition: githubGetIssuesDef, executor: githubGetIssues },
+    { name: 'github_list_pulls', definition: githubListPullsDef, executor: githubListPulls },
+    { name: 'github_get_pull', definition: githubGetPullDef, executor: githubGetPull },
+    { name: 'github_create_issue', definition: githubCreateIssueDef, executor: githubCreateIssue },
+    { name: 'github_list_workflows', definition: githubListWorkflowsDef, executor: githubListWorkflows },
+    { name: 'github_list_workflow_runs', definition: githubListWorkflowRunsDef, executor: githubListWorkflowRuns }
   ])
   
   // 笔记工具（3个）
