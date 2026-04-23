@@ -4,7 +4,7 @@
 - **Percy Liang (讲师)**: 欢迎大家来到 CS336！我对此课程充满期待,因为它将带领大家端到端地体验构建语言模型的完整流程,涵盖从数据、系统到建模的方方面面.
 - **Tatsunori Hashimoto (联合讲师)**: 我和 Percy 花了很长时间思考,希望把真正有深度的技术教给学生. 我们坚信一个理念: “**唯有亲手从零构建,方能真正理解 (you gotta build it from scratch to understand it)**”. 这便是本课程的核心精神.
 - **我(小卡拉米学生):** 我不能同意更多
-![](%E6%95%99%E8%81%8C%E4%BB%8B%E7%BB%8D.png)
+undefined
 ### 教学团队 (Teaching Assistants, TAs)
 - **Rohith**: 他开玩笑说自己曾经挂掉这门课,但现在成为了你们的助教.
 - **Neil**: 一位计算机系的博士三年级学生,研究兴趣在于模型、推理和合成数据.
@@ -122,7 +122,7 @@
   - 你需要自己做软件设计决策.
   - **策略**: 先在本地用小数据集实现和调试,再到集群上进行基准测试.
   - 有些作业会有一个leaderboard排行榜,谁能在有限资源下让perplexity降到最低
-    > [如何理解PPL](prerplexity.md)
+    > 如何理解PPL
 - **计算集群**:
   - 感谢 Together AI 提供的 H100 GPU 集群.  [集群使用指南](https://docs.google.com/document/d/1BSSig7zInyjDKcbNGftVxubiHlwJ-ZqahQewIzBmBOo/edit)
   - 请尽早开始作业,因为截止日期前集群会非常拥堵.
@@ -133,7 +133,7 @@
 本课程围绕**效率**这一核心原则,分为五大支柱,探讨在给定的硬件和数据预算下如何做出最优的设计决策.
 如果有一个CommomCrawl(一个大型的开放式网络爬虫数据集),一个网络数据转储和32块H100,然后两周时间,该怎么做?
 本课程将其分为五个阶段
-![](%E4%BA%94%E4%B8%AA%E9%98%B6%E6%AE%B5.png)
+undefined
 > “网络转储”(Web Dump)是指**对互联网或其中一部分内容进行大规模抓取、复制,并将其保存为一个可供离线访问、分析或处理的数据集合**
 > 
 > 可以将其理解为: 
@@ -170,7 +170,7 @@
   - [Scaling Laws for Neural Language Models](https://arxiv.org/pdf/2001.08361) By OpenAI 2020
   - [Training Compute-Optimal Large Language Models](https://arxiv.org/pdf/2203.15556) By DeepMind 2022
   - 每个算力量级都有最优的参数量,当把图画出来的时候,惊人的发现他们是线性关系
-<img src="../../.files/THxhih5qE18mGFk.png" alt="" height="255" />
+<!-- 图片缺失: ../../.files/THxhih5qE18mGFk.png -->
 - **内容**:
   - **Chinchilla 最优**: 学习在给定的计算预算下,如何平衡模型大小 (model size) 和训练数据量,以达到最优性能.
   - **经验法则**: `模型参数量 × 20 ≈ 最佳训练 Token 数`  但局限性是这没考虑到推理成本
@@ -182,7 +182,7 @@
 ### 支柱四: 数据 (Data)
 - **目标**: 理解数据如何决定模型的能力.
   模型的功能完全(或者说大部分)是由数据决定的,如果用多语言数据训练就会有多语言能力等等
-<img src="../../.files/bKwzlsnbBVWwsMN.png" alt="" height="330" />
+<!-- 图片缺失: ../../.files/bKwzlsnbBVWwsMN.png -->
 数据来源多种多样,这张图是四年前的,但依然适用
 - **内容**:
   - **评估 (Evaluation)**: 学习如何评估模型,包括困惑度 (Perplexity)、标准化测试 (如 MMLU) 和对指令遵循能力的评估.

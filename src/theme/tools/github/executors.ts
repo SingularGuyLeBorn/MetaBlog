@@ -9,6 +9,44 @@ import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 const GITHUB_API_BASE = 'https://api.github.com'
 
 /**
+ * GitHub 错误码翻译
+ */
+function translateGitHubError(errorMsg: string): { message: string; suggestion: string } {
+  const statusMatch = errorMsg.match(/(\d{3})/)
+  const status = statusMatch ? parseInt(statusMatch[1]) : 0
+
+  if (status === 401) {
+    return { message: 'GitHub Token 无效或已过期', suggestion: '请检查是否配置了 GITHUB_TOKEN 环境变量' }
+  }
+  if (status === 403) {
+    if (errorMsg.includes('rate limit')) {
+      return { message: 'GitHub API 速率限制', suggestion: '未认证请求每小时 60 次限制，建议配置 GITHUB_TOKEN' }
+    }
+    return { message: '没有权限访问该资源', suggestion: '请检查 Token 是否有对应仓库的访问权限' }
+  }
+  if (status === 404) {
+    return { message: '仓库或资源不存在', suggestion: '请检查 owner、repo、path 参数是否正确' }
+  }
+  if (status === 422) {
+    return { message: '请求参数验证失败', suggestion: '请检查参数格式是否符合 GitHub API 要求' }
+  }
+  if (status === 429) {
+    return { message: '请求过于频繁', suggestion: '请稍后再试' }
+  }
+  if (status === 500) {
+    return { message: 'GitHub 服务器内部错误', suggestion: '请稍后重试' }
+  }
+  if (status === 502) {
+    return { message: 'GitHub 网关错误', suggestion: 'GitHub 服务暂时不可用，请稍后重试' }
+  }
+  if (status === 503) {
+    return { message: 'GitHub 服务维护中', suggestion: '请稍后重试' }
+  }
+
+  return { message: errorMsg, suggestion: '请检查参数或稍后重试' }
+}
+
+/**
  * GitHub API 请求封装
  */
 async function githubRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
@@ -23,7 +61,8 @@ async function githubRequest(endpoint: string, options: RequestInit = {}): Promi
   })
   
   if (!response.ok) {
-    throw new Error(`GitHub API ${response.status}`)
+    const text = await response.text().catch(() => '')
+    throw new Error(`GitHub API ${response.status}: ${text}`)
   }
   
   return response.json()
@@ -64,25 +103,8 @@ export const githubGetRepo: ToolExecutor = async (args): Promise<ToolResult> => 
       'github_get_repo'
     )
   } catch (error: any) {
-    if (error.message.includes('404')) {
-      return createErrorResult(
-        'Repository not found',
-        '仓库不存在',
-        '请检查 owner 和 repo 参数'
-      )
-    }
-    if (error.message.includes('403')) {
-      return createErrorResult(
-        'Rate limit exceeded',
-        'GitHub API 速率限制',
-        '请稍后再试（未认证请求每小时 60 次限制）'
-      )
-    }
-    return createErrorResult(
-      error.message,
-      '获取仓库信息失败',
-      '请稍后重试'
-    )
+    const translated = translateGitHubError(error.message)
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }
 
@@ -128,11 +150,8 @@ export const githubListRepoContents: ToolExecutor = async (args): Promise<ToolRe
       'github_list_repo_contents'
     )
   } catch (error: any) {
-    return createErrorResult(
-      error.message,
-      '获取仓库内容失败',
-      '请检查参数或稍后重试'
-    )
+    const translated = translateGitHubError(error.message)
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }
 
@@ -189,11 +208,8 @@ export const githubGetFileContent: ToolExecutor = async (args): Promise<ToolResu
       'github_get_file_content'
     )
   } catch (error: any) {
-    return createErrorResult(
-      error.message,
-      '获取文件内容失败',
-      '请检查路径或稍后重试'
-    )
+    const translated = translateGitHubError(error.message)
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }
 
@@ -231,11 +247,8 @@ export const githubSearchCode: ToolExecutor = async (args): Promise<ToolResult> 
       'github_search_code'
     )
   } catch (error: any) {
-    return createErrorResult(
-      error.message,
-      '搜索代码失败',
-      '请稍后重试'
-    )
+    const translated = translateGitHubError(error.message)
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }
 
@@ -274,11 +287,8 @@ export const githubGetCommitHistory: ToolExecutor = async (args): Promise<ToolRe
       'github_get_commit_history'
     )
   } catch (error: any) {
-    return createErrorResult(
-      error.message,
-      '获取提交历史失败',
-      '请稍后重试'
-    )
+    const translated = translateGitHubError(error.message)
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }
 
@@ -313,10 +323,7 @@ export const githubGetIssues: ToolExecutor = async (args): Promise<ToolResult> =
       'github_get_issues'
     )
   } catch (error: any) {
-    return createErrorResult(
-      error.message,
-      '获取 Issues 失败',
-      '请稍后重试'
-    )
+    const translated = translateGitHubError(error.message)
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }

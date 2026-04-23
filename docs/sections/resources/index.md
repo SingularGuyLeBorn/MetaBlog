@@ -10,6 +10,4 @@ title: 公开资源
   sectionLabel="资源"
 />
 
-<script setup>
-import SectionIndex from '@/theme/components/common/SectionIndex.vue'
-</script>
+

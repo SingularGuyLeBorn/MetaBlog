@@ -57,18 +57,18 @@
 
       <div class="memory-list">
         <LiquidGlass
-          v-for="(memory, idx) in filteredMemories"
+          v-for="memory in filteredMemories"
           :key="memory.id"
           class="memory-item-glass"
-          :glow-color="memory.agentColor"
+          :glow-color="getCategoryInfo(memory.category).color"
           :intensity="0.2"
         >
           <div class="memory-item">
-            <div class="memory-avatar">{{ memory.agentAvatar }}</div>
+            <div class="memory-avatar">{{ memory.agentAvatar || getCategoryInfo(memory.category).emoji }}</div>
             <div class="memory-content">
               <div class="memory-header">
-                <span class="memory-agent">{{ memory.agentName }}</span>
-                <span class="memory-time">{{ memory.time }}</span>
+                <span class="memory-agent">{{ memory.agentName || getCategoryInfo(memory.category).label }}</span>
+                <span class="memory-time">{{ formatRelativeTime(memory.createdAt) }}</span>
               </div>
               <p class="memory-text">{{ memory.content }}</p>
             </div>
@@ -78,8 +78,14 @@
           </div>
         </LiquidGlass>
 
+        <!-- 加载状态 -->
+        <div v-if="loading" class="empty-state">
+          <Icon name="loader" class="empty-icon" />
+          <p>加载中...</p>
+        </div>
+
         <!-- 空状态-->
-        <div v-if="filteredMemories.length === 0" class="empty-state">
+        <div v-if="!loading && filteredMemories.length === 0" class="empty-state">
           <Icon name="database" class="empty-icon" />
           <p>暂无记忆数据</p>
           <span>Agent 会在对话中自动学习和存储记忆</span>
@@ -100,44 +106,131 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Icon } from '@/theme/components/common'
 import { LiquidGlass } from '@/theme/components/common'
 
+interface Memory {
+  id: string
+  content: string
+  agentName?: string
+  agentAvatar?: string
+  agentColor?: string
+  category?: string
+  createdAt: number
+  enabled?: boolean
+}
+
 const searchQuery = ref('')
+const memories = ref<Memory[]>([])
+const loading = ref(false)
 
-const stats = [
-  { id: 'total', label: '总记忆数', value: '128', icon: 'layers', gradient: 'linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8))', glowColor: 'var(--sr-accent-star, #b8a090)' },
-  { id: 'agents', label: '涉及 Agents', value: '6', icon: 'users', gradient: 'linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), #2563eb)', glowColor: 'var(--sr-morandi-blue, #9daab8)' },
-  { id: 'size', label: '存储大小', value: '2.4MB', icon: 'hard-drive', gradient: 'linear-gradient(135deg, var(--sr-morandi-green, #a8b3a8), var(--sr-morandi-green, #a8b3a8))', glowColor: 'var(--sr-morandi-green, #a8b3a8)' },
-  { id: 'today', label: '今日新增', value: '12', icon: 'trending-up', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', glowColor: '#f59e0b' }
-]
+// 分类映射：中文标签 + emoji
+const categoryMap: Record<string, { label: string; emoji: string; color: string }> = {
+  preference: { label: '用户偏好', emoji: '👤', color: 'var(--sr-morandi-blue, #9daab8)' },
+  skill: { label: '技能记忆', emoji: '🛠️', color: 'var(--sr-morandi-green, #a8b3a8)' },
+  fact: { label: '事实知识', emoji: '📚', color: 'var(--sr-accent-star, #b8a090)' },
+  session: { label: '会话上下文', emoji: '💬', color: '#ec4899' },
+  default: { label: '通用记忆', emoji: '🤖', color: 'var(--sr-accent-star, #b8a090)' }
+}
 
-const memories = ref([
-  { id: '1', agentName: '代码助手', agentAvatar: '👨‍💻', agentColor: 'var(--sr-morandi-blue, #9daab8)', content: '用户偏好使用 TypeScript 和 Vue 3 组合式 API', time: '2小时前' },
-  { id: '2', agentName: '写作专家', agentAvatar: '✍️', agentColor: '#ec4899', content: '用户喜欢简洁明了的文风，避免冗长描述', time: '5小时前' },
-  { id: '3', agentName: '数据分析师', agentAvatar: '📊', agentColor: 'var(--sr-morandi-green, #a8b3a8)', content: '用户经常请求 CSV 格式的数据导出', time: '昨天' },
-  { id: '4', agentName: '通用助手', agentAvatar: '🤖', agentColor: 'var(--sr-accent-star, #b8a090)', content: '用户对 AI 伦理话题感兴趣，经常询问相关问题', time: '2天前' },
-])
+function getCategoryInfo(category?: string) {
+  return categoryMap[category || ''] || categoryMap.default
+}
+
+// 相对时间格式化
+function formatRelativeTime(ts: number): string {
+  const diff = Date.now() - ts
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes}分钟前`
+  if (hours < 24) return `${hours}小时前`
+  if (days < 7) return `${days}天前`
+  return new Date(ts).toLocaleDateString('zh-CN')
+}
+
+// 从后端加载记忆
+async function loadMemories() {
+  loading.value = true
+  try {
+    const res = await fetch('/api/memories')
+    const json = await res.json()
+    if (json.success && Array.isArray(json.data)) {
+      memories.value = json.data
+    }
+  } catch (e) {
+    console.error('[MemoryManager] 加载记忆失败:', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadMemories)
+
+// 实时统计
+const stats = computed(() => {
+  const total = memories.value.length
+  const agents = new Set(memories.value.map(m => m.agentName || m.category || '通用')).size
+  const sizeBytes = JSON.stringify(memories.value).length
+  const size = sizeBytes > 1048576
+    ? `${(sizeBytes / 1048576).toFixed(1)}MB`
+    : sizeBytes > 1024
+      ? `${(sizeBytes / 1024).toFixed(1)}KB`
+      : `${sizeBytes}B`
+  const todayStart = new Date().setHours(0, 0, 0, 0)
+  const today = memories.value.filter(m => (m.createdAt || 0) >= todayStart).length
+
+  return [
+    { id: 'total', label: '总记忆数', value: String(total), icon: 'layers', gradient: 'linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8))', glowColor: 'var(--sr-accent-star, #b8a090)' },
+    { id: 'agents', label: '涉及 Agents', value: String(agents), icon: 'users', gradient: 'linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), #2563eb)', glowColor: 'var(--sr-morandi-blue, #9daab8)' },
+    { id: 'size', label: '存储大小', value: size, icon: 'hard-drive', gradient: 'linear-gradient(135deg, var(--sr-morandi-green, #a8b3a8), var(--sr-morandi-green, #a8b3a8))', glowColor: 'var(--sr-morandi-green, #a8b3a8)' },
+    { id: 'today', label: '今日新增', value: String(today), icon: 'trending-up', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', glowColor: '#f59e0b' }
+  ]
+})
 
 const filteredMemories = computed(() => {
   if (!searchQuery.value) return memories.value
   const q = searchQuery.value.toLowerCase()
-  return memories.value.filter(m => 
-    m.content.toLowerCase().includes(q) ||
-    m.agentName.toLowerCase().includes(q)
+  return memories.value.filter(m =>
+    (m.content || '').toLowerCase().includes(q) ||
+    (m.agentName || '').toLowerCase().includes(q) ||
+    (m.category || '').toLowerCase().includes(q)
   )
 })
 
-function deleteMemory(id: string) {
-  if (confirm('确定要删除这条记忆吗？')) {
-    memories.value = memories.value.filter(m => m.id !== id)
+async function deleteMemory(id: string) {
+  if (!confirm('确定要删除这条记忆吗？')) return
+  try {
+    const res = await fetch('/api/memories/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    })
+    const json = await res.json()
+    if (json.success) {
+      memories.value = memories.value.filter(m => m.id !== id)
+    } else {
+      alert('删除失败: ' + (json.error || '未知错误'))
+    }
+  } catch (e) {
+    alert('删除失败: 网络错误')
   }
 }
 
-function clearAll() {
-  if (confirm('确定要清空所有记忆吗？此操作不可恢复。')) {
-    memories.value = []
+async function clearAll() {
+  if (!confirm('确定要清空所有记忆吗？此操作不可恢复。')) return
+  try {
+    const res = await fetch('/api/memories/clear', { method: 'POST' })
+    const json = await res.json()
+    if (json.success) {
+      memories.value = []
+    } else {
+      alert('清空失败: ' + (json.error || '未知错误'))
+    }
+  } catch (e) {
+    alert('清空失败: 网络错误')
   }
 }
 

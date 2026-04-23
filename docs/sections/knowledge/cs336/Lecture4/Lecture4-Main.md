@@ -22,16 +22,16 @@ MoE的理念出奇地简单. 传统的Transformer模型在每一层都有一个�
 大量研究表明, 在相同的训练计算量下, MoE模型能更快地降低损失函数, 达到更高的性能.
 
 - **谷歌的经典研究** 显示, 随着专家数量的增加(从1个到256个), 模型的测试损失持续下降(keep going own and down and down ).
-  ![img.png](img.png)
+  undefined
 
   这并非没有代价, 需要考虑每个专家的内存, 还要考虑多专家路由, 这会带来很高的系统复杂性, 并且专家数量多容易训飞
   [Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://arxiv.org/abs/2101.03961)
 - **AI2的Olmo模型** 的严格对比实验也验证了这一点, MoE模型(粉色线)的训练损失下降速度远快于稠密模型(蓝色线).
-  ![img_1.png](img_1.png)
+  undefined
   [OLMoE: Open Mixture-of-Experts Language Models](https://arxiv.org/abs/2409.02060)
 
   这个团队做了一系列消融实验, 对Dense和MoE模型精心控制过的比较
-  ![img_2.png](img_2.png)
+  undefined
   这种特性使得MoE模型在性能-计算成本的权衡上极具竞争力, 这也是DeepSeek-V2等模型能在“激活参数”较少的情况下, 在MMLU等基准测试上取得优异成绩的原因.
 
 ## 2. MoE架构的设计选择
@@ -48,7 +48,7 @@ MoE的理念出奇地简单. 传统的Transformer模型在每一层都有一个�
 
 ### 那么MoE长什么样呢？
 
-![img_3.png](img_3.png)
+undefined
 
 > 人家的图画的真的很好看
 

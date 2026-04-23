@@ -6,7 +6,7 @@
 > 因此LLM可以认为是一个巨大的矩阵
 > A tokenizer is something that converts between strings and sequences of integer.
 正如这句话所说, 分词器将原始文本字符串, 转换为一个整数序列 (即Token ID), 反之亦然. 每一个ID都对应着词汇表 (Vocabulary) 中的一个特定“片段” (Token).
-![](tokenizer%E5%BD%A2%E8%B1%A1%E8%A7%A3%E9%87%8A.png)
+undefined
 这个过程可以分解为三步:
 1. **输入 (Input):** 我们有一个完整的句子, 就像一张写满文字的纸.
 2. **分词 (Tokenization):** Tokenizer就像一个智能碎纸机. 它不是随意地把纸切成碎片, 而是按照预先学好的规则, 将句子切分成一系列有意义的、大小不一的片段. 这些片段就是**Tokens**. 比如, “tokenizer”这个词可能保持完整, 而“unbelievable”可能会被切分成“un”和“believable”.
@@ -47,7 +47,7 @@ BPE的实现分为两个阶段: **训练阶段** (学习合并规则) 和 **分�
 3. 当无法再进行任何合并时, 最终得到的序列就是分词结果.
 这个过程巧妙地解决了OOV问题. 即使遇到一个从未见过的词, 如 "GPTtokenizer", BPE最差也能将其拆分为一系列已知的子词或单个字节, 例如 `['GPT', 'token', 'izer']`. **模型永远不会遇到完全未知的东西.**
 ### 4. 实例分析
-![](GPTtokenizer.png)
+undefined
 图片来源: [https://platform.openai.com/tokenizer](https://platform.openai.com/tokenizer)
 > **句子:** "A tokenizer is something that converts between strings and sequences of integer"
 > **对应的Token ID:** `[32, 99665, 382, 3543, 484, 64809, 2870, 18279, 326, 45665, 328, 16336, 198]`

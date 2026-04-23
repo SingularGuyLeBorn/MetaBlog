@@ -243,4 +243,4 @@ $$r^{GSPO} = \exp\left(\sum_t \log\pi_\theta(y_t) - \sum_t \log\pi_{old}(y_t)\ri
 
 ---
 
-**下一章预告**：[第11章：GMPO与几何均值](../11_GMPO/01_Theory_Derivation.md)
+**下一章预告**：

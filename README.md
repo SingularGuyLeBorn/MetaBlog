@@ -586,35 +586,139 @@ lark-cli auth login
 
 ### 自定义工具
 
-在 `src/theme/tools/<category>/` 中添加：
+在 `src/theme/tools/<category>/` 目录下创建三个文件，按以下四步规范实现：
+
+#### 第 1 步：目录结构
+
+```
+src/theme/tools/
+├── <category>/
+│   ├── definitions.ts   # 工具 Schema 定义
+│   ├── executors.ts     # 工具执行逻辑
+│   └── index.ts         # 统一导出
+├── index.ts             # 全局注册入口
+```
+
+#### 第 2 步：编写 `definitions.ts`
 
 ```typescript
-// definitions.ts
+import type { ToolDefinition } from '@/theme/tools/types'
+
 export const myToolDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'my_tool',
-    description: '我的自定义工具',
+    description: '一句话描述工具功能，让 AI 知道何时调用它',
     parameters: {
       type: 'object',
       properties: {
-        param1: { type: 'string' }
+        param1: {
+          type: 'string',
+          description: '参数说明：格式要求、取值范围、示例值'
+        }
       },
       required: ['param1']
     }
   }
 }
-
-// executors.ts
-export const myTool: ToolExecutor = async (args) => {
-  const { param1 } = args
-  // 实现工具逻辑
-  return `结果: ${param1}`
-}
-
-// index.ts - 注册工具
-{ name: 'my_tool', definition: myToolDef, executor: myTool }
 ```
+
+**Schema 编写要点**：
+- `description` 是 AI 决定是否调用的唯一依据，必须清晰准确
+- 每个 `properties` 都要有 `description`，说明格式和示例
+- `required` 数组必须包含所有不可省略的参数
+
+#### 第 3 步：编写 `executors.ts`
+
+```typescript
+import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
+import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+
+export const myTool: ToolExecutor = async (args): Promise<ToolResult> => {
+  const { param1 } = args
+
+  // 1. 参数校验
+  if (!param1) {
+    return createErrorResult(
+      'Missing param1',
+      '缺少必要参数 param1',
+      '示例: my_tool(param1="xxx")'
+    )
+  }
+
+  try {
+    // 2. 执行工具逻辑
+    const result = await doSomething(param1)
+
+    // 3. 返回成功结果
+    return createSuccessResult(
+      result,
+      `操作成功: ${result.summary}`,
+      'my_tool'
+    )
+  } catch (error: any) {
+    // 4. 返回错误（带翻译）
+    return createErrorResult(
+      error.message,
+      '操作失败',
+      '请检查参数或稍后重试'
+    )
+  }
+}
+```
+
+**错误码翻译最佳实践**：
+
+为每个第三方 API 编写 `translateXxxError` 函数，将 HTTP 状态码翻译为中文提示：
+
+```typescript
+function translateMyApiError(result: any): { message: string; suggestion: string } {
+  const status = result?.status || 500
+  if (status === 401) {
+    return { message: 'Token 无效或已过期', suggestion: '请检查 .env 中的 API_KEY 配置' }
+  }
+  if (status === 403) {
+    return { message: '没有权限', suggestion: '请确认 Token 有对应权限' }
+  }
+  if (status === 429) {
+    return { message: '请求过于频繁', suggestion: '请稍后再试' }
+  }
+  return {
+    message: result?.msg || '请求失败',
+    suggestion: '请检查参数或稍后重试'
+  }
+}
+```
+
+#### 第 4 步：注册到系统
+
+在 `src/theme/tools/<category>/index.ts` 中导出：
+
+```typescript
+export { myTool } from './executors'
+export { myToolDef } from './definitions'
+```
+
+在 `src/theme/tools/index.ts` 中导入并注册：
+
+```typescript
+// 1. 导入
+import { myTool, myToolDef } from './<category>'
+
+// 2. 在 initializeDefaultTools() 中注册
+registerTools([
+  { name: 'my_tool', definition: myToolDef, executor: myTool }
+])
+```
+
+#### 平台解析扩展建议
+
+如果要新增平台链接解析（如新增 `parse_twitter`）：
+
+1. 在 `server/routes/platform-parser.ts` 的 `registerPlatformParserRoutes` 中添加域名判断和解析函数
+2. 在 `src/theme/tools/platform/executors.ts` 中新增执行器（可直接调用 `parsePlatformLink`）
+3. 在 `src/theme/tools/platform/definitions.ts` 中新增 ToolDefinition
+4. 在 `src/theme/tools/platform/index.ts` 和 `src/theme/tools/index.ts` 中导出并注册
 
 ### MCP Server 扩展
 

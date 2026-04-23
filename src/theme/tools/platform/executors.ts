@@ -248,11 +248,11 @@ export const parseWechat: ToolExecutor = async (args): Promise<ToolResult> => {
 }
 
 /**
- * 通用平台链接解析
+ * 通用平台链接解析（优先调用后端 /api/platform/parse）
  */
 export const parsePlatformLink: ToolExecutor = async (args) => {
-  const { url, extract_content = true, max_content_length = 5000 } = args
-  
+  const { url, extract_content = true, max_content_length = 5000, extract_images = false, extract_comments = false } = args
+
   if (!url) {
     return createErrorResult(
       'Missing url parameter',
@@ -261,78 +261,46 @@ export const parsePlatformLink: ToolExecutor = async (args) => {
     )
   }
 
-  // 识别平台类型并路由到特定解析器
-  if (url.includes('zhihu.com')) {
-    return await parseZhihu({ url })
-  }
-  if (url.includes('xiaohongshu.com') || url.includes('xhslink.com')) {
-    return await parseXiaohongshu({ url })
-  }
-  if (url.includes('mp.weixin.qq.com')) {
-    return await parseWechat({ url })
-  }
-
+  // 优先调用后端统一解析器
   try {
-    // 通用解析
-    const response = await fetch(`${API_BASE}/proxy/fetch`, {
+    const response = await fetch(`${API_BASE}/platform/parse`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        url,
-        headers: { 
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      })
+      body: JSON.stringify({ url })
     })
 
     if (!response.ok) {
       return createErrorResult(
         `HTTP ${response.status}`,
-        '获取链接内容失败',
-        '请检查链接是否有效'
+        '平台解析服务请求失败',
+        '请检查链接是否有效或稍后重试'
       )
     }
-    
-    const html = await response.text()
-    
-    // 提取 Open Graph 元数据
-    const titleMatch = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]*)"/i) ||
-                      html.match(/<title[^>]*>([^<]*)<\/title>/i)
-    const title = titleMatch ? titleMatch[1].trim() : '未知标题'
-    
-    const descMatch = html.match(/<meta[^>]*property="og:description"[^>]*content="([^"]*)"/i) ||
-                     html.match(/<meta[^>]*name="description"[^>]*content="([^"]*)"/i)
-    const description = descMatch ? descMatch[1].trim() : ''
-    
-    const imageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]*)"/i)
-    const image = imageMatch ? imageMatch[1] : ''
 
-    // 提取正文内容
-    let content = ''
-    if (extract_content) {
-      let text = html
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-        .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
-        .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
-        .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-      
-      content = text.slice(0, max_content_length)
+    const result = await response.json()
+    if (!result.success) {
+      return createErrorResult(result.error, '平台解析失败')
+    }
+
+    const data = result.data
+    let content = data.content || ''
+    if (content && max_content_length) {
+      content = content.slice(0, max_content_length)
     }
 
     return createSuccessResult(
       {
-        title,
-        description,
-        url,
-        image,
+        title: data.title,
+        author: data.author,
+        url: data.url,
+        platform: data.platform,
         content: content || undefined,
-        platform: 'unknown'
+        images: extract_images ? (data.images || []) : undefined,
+        comments: extract_comments ? (data.comments || []) : undefined,
+        metadata: data.metadata,
+        method: data.method
       },
-      `成功解析链接: ${title}`,
+      `成功解析 [${data.platform}] ${data.title}`,
       'parse_platform_link'
     )
   } catch (error: any) {
@@ -342,6 +310,39 @@ export const parsePlatformLink: ToolExecutor = async (args) => {
       '请检查链接是否有效或稍后重试'
     )
   }
+}
+
+/**
+ * 解析抖音内容
+ */
+export const parseDouyin: ToolExecutor = async (args) => {
+  const { url } = args
+  if (!url) {
+    return createErrorResult('Missing url', '请提供抖音链接')
+  }
+  return parsePlatformLink({ url, extract_content: true })
+}
+
+/**
+ * 解析 B站内容
+ */
+export const parseBilibili: ToolExecutor = async (args) => {
+  const { url } = args
+  if (!url) {
+    return createErrorResult('Missing url', '请提供B站链接')
+  }
+  return parsePlatformLink({ url, extract_content: true })
+}
+
+/**
+ * 解析微博内容
+ */
+export const parseWeibo: ToolExecutor = async (args) => {
+  const { url } = args
+  if (!url) {
+    return createErrorResult('Missing url', '请提供微博链接')
+  }
+  return parsePlatformLink({ url, extract_content: true })
 }
 
 /**

@@ -65,12 +65,12 @@ export const parsePlatformLinkDef: ToolDefinition = {
     description: `通用平台链接解析，支持多种平台的内容提取。
 
 支持的平台：
-- 社交媒体：知乎、小红书、微博
-- 技术社区：GitHub、CSDN、掘金
+- 社交媒体：知乎、小红书、微博、抖音
+- 技术社区：GitHub、CSDN、掘金、B站
 - 新闻资讯：公众号、今日头条
 - 其他：任何有公开元数据的网页
 
-自动识别平台类型并调用相应的解析器。`,
+自动识别平台类型并调用相应的解析器。优先使用后端统一解析服务，获取更完整的结构化数据。`,
     parameters: {
       type: 'object',
       properties: {
@@ -87,7 +87,62 @@ export const parsePlatformLinkDef: ToolDefinition = {
           type: 'number',
           description: '提取内容的最大长度',
           default: 5000
+        },
+        extract_images: {
+          type: 'boolean',
+          description: '是否提取图片链接',
+          default: false
+        },
+        extract_comments: {
+          type: 'boolean',
+          description: '是否提取评论（当前版本可能为空）',
+          default: false
         }
+      },
+      required: ['url']
+    }
+  }
+}
+
+export const parseDouyinDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'parse_douyin',
+    description: '解析抖音视频链接，提取标题、描述、封面图等信息。',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: '抖音视频分享链接' }
+      },
+      required: ['url']
+    }
+  }
+}
+
+export const parseBilibiliDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'parse_bilibili',
+    description: '解析 B站视频链接，提取标题、UP主、描述、封面图等信息。',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: 'B站视频链接，如 https://www.bilibili.com/video/BVxxx' }
+      },
+      required: ['url']
+    }
+  }
+}
+
+export const parseWeiboDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'parse_weibo',
+    description: '解析微博链接，提取标题、作者、正文、图片等信息。',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: '微博链接' }
       },
       required: ['url']
     }

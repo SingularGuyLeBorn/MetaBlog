@@ -41,6 +41,43 @@ const API_BASE = '/api/yuque'
  * @param query   URL 查询参数对象
  * @returns       后端返回的 JSON 数据
  */
+/**
+ * 语雀错误码翻译
+ * 将 HTTP 状态码和语雀错误码翻译为中文提示
+ */
+function translateYuqueError(result: any): { message: string; suggestion: string } {
+  const code = result?.code ?? result?.status
+  const status = result?.status ?? 500
+
+  // 语雀内部 Web API 常见错误码
+  if (code === 401 || status === 401) {
+    return { message: '语雀 Token 无效或已过期', suggestion: '请检查 .env 中的 YUQUE_TOKEN 是否正确' }
+  }
+  if (code === 403 || status === 403) {
+    return { message: '没有权限访问该资源', suggestion: '请确认 Token 有对应知识库的读写权限' }
+  }
+  if (code === 404 || status === 404) {
+    return { message: '资源不存在', suggestion: '请检查 repo_id / doc_slug / doc_id 是否正确' }
+  }
+  if (code === 429 || status === 429) {
+    return { message: '请求过于频繁，触发限流', suggestion: '请稍后再试（建议间隔 1-2 秒）' }
+  }
+  if (code === 500 || status === 500) {
+    return { message: '语雀服务器内部错误', suggestion: '请稍后重试，如持续报错请联系语雀支持' }
+  }
+  if (code === 502 || status === 502) {
+    return { message: '语雀网关错误', suggestion: '语雀服务暂时不可用，请稍后重试' }
+  }
+  if (code === 503 || status === 503) {
+    return { message: '语雀服务维护中', suggestion: '请稍后重试' }
+  }
+
+  return {
+    message: result?.msg || result?.message || '语雀请求失败',
+    suggestion: '请检查参数或稍后重试'
+  }
+}
+
 async function yuqueApi(method: string, path: string, body?: any, query?: Record<string, string>): Promise<any> {
   // 拼接完整 URL
   let url = `${API_BASE}${path}`
@@ -58,7 +95,12 @@ async function yuqueApi(method: string, path: string, body?: any, query?: Record
 
   // 发送请求并解析 JSON
   const res = await fetch(url, options)
-  return res.json()
+  const data = await res.json()
+  // 注入 HTTP 状态码，便于错误翻译
+  if (!data.status && !res.ok) {
+    data.status = res.status
+  }
+  return data
 }
 
 // =============================================================================
@@ -91,7 +133,8 @@ export const yuqueRepoList = async (args: Record<string, any>): Promise<ToolResu
       'yuque_repo_list'
     )
   } catch (error: any) {
-    return createErrorResult(error.message, '获取知识库请求失败')
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }
 
@@ -134,7 +177,8 @@ export const yuqueTocGet = async (args: Record<string, any>): Promise<ToolResult
       'yuque_toc_get'
     )
   } catch (error: any) {
-    return createErrorResult(error.message, '获取目录请求失败')
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }
 
@@ -172,7 +216,8 @@ export const yuqueImageUpload = async (args: Record<string, any>): Promise<ToolR
       'yuque_image_upload'
     )
   } catch (error: any) {
-    return createErrorResult(error.message, '上传图片请求失败')
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }
 
@@ -217,7 +262,8 @@ export const yuqueDocList = async (args: Record<string, any>): Promise<ToolResul
       'yuque_doc_list'
     )
   } catch (error: any) {
-    return createErrorResult(error.message, '获取文档列表请求失败')
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }
 
@@ -256,7 +302,8 @@ export const yuqueDocRead = async (args: Record<string, any>): Promise<ToolResul
       'yuque_doc_read'
     )
   } catch (error: any) {
-    return createErrorResult(error.message, '读取文档请求失败')
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }
 
@@ -300,7 +347,8 @@ export const yuqueDocCreate = async (args: Record<string, any>): Promise<ToolRes
       'yuque_doc_create'
     )
   } catch (error: any) {
-    return createErrorResult(error.message, '创建文档请求失败')
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }
 
@@ -339,7 +387,8 @@ export const yuqueDocUpdate = async (args: Record<string, any>): Promise<ToolRes
       'yuque_doc_update'
     )
   } catch (error: any) {
-    return createErrorResult(error.message, '更新文档请求失败')
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }
 
@@ -370,7 +419,8 @@ export const yuqueDocDelete = async (args: Record<string, any>): Promise<ToolRes
       'yuque_doc_delete'
     )
   } catch (error: any) {
-    return createErrorResult(error.message, '删除文档请求失败')
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
   }
 }
 

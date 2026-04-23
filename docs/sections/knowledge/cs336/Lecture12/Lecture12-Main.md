@@ -473,7 +473,7 @@ Answer:
 - OpenAI: 每天 1000 亿 Token
 - Cursor: 10 亿行代码
 
-![OpenAI 日流量](images/openai-100b-tokens.png)
+undefined
 
 然而, 大多数基准 (如 MMLU) 与**真实使用场景**相去甚远.
 

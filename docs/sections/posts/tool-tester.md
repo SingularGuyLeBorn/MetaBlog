@@ -4,7 +4,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import ToolTester from '../../../.vitepress/theme/components/ToolTester.vue'
 </script>
 
 <ToolTester />

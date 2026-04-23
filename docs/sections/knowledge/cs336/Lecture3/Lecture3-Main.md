@@ -72,7 +72,7 @@
 | Gemma 3                      | 2025          | RMSNorm       | Serial                  | ☐        | RoPE                          | GeGLU                  | Pre+post norm, QK-norm            |
 | SmolLM2 (1.7B)               | 2025          | RMSNorm       | Serial                  | ☐        | RoPE                          | SwiGLU                 |                                   |
 
-[主流大模型演进历程](%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%BC%94%E8%BF%9B%E5%8E%86%E7%A8%8B.md)
+主流大模型演进历程
 
 ## 2. 核心架构变体分析
 

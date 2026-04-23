@@ -6,7 +6,7 @@
 
 首先，我们脑海中应该有这样一幅硬件层级图景：我们有多个计算节点（Node），每个节点内有多张GPU（通常是8张）。每张GPU内部又有多个流式多处理器（Streaming Multiprocessors, SMs）来执行实际的计算任务。
 
-![GPU节点概览图](placeholder.png)
+undefined
 **[插入图片: lecture_08.py, image call "images/gpu-node-overview.png", 描述: 展示了从节点到GPU再到SM的硬件层级结构，以及L1缓存、高带宽内存HBM和GPU间连接。]**
 
 计算发生在SM中的算术逻辑单元（ALU）上，而计算所需的输入数据和产生的输出结果通常存储在远离计算单元的内存中。无论是单GPU还是多GPU场景，一个共同的主题始终是如何编排计算以避免数据传输瓶颈。
@@ -34,19 +34,19 @@
 **常见的集体操作：**
 
 *   **Broadcast (广播)**: 将rank 0上的一个张量复制并发送给所有其他ranks。
-    ![Broadcast示意图](placeholder.png)
+    undefined
 *   **Scatter (分散)**: 将rank 0上的一个张量切分成多块，并将每一块分别发送给一个rank。每个rank接收到的数据是不同的。
-    ![Scatter示意图](placeholder.png)
+    undefined
 *   **Gather (收集)**: Scatter的逆操作。将所有rank上的张量收集到一个目标rank上，并沿指定维度拼接起来。
-    ![Gather示意图](placeholder.png)
+    undefined
 *   **Reduce (规约)**: 与Gather类似，也是将所有rank的数据汇集到一个rank，但不是拼接，而是对它们执行一个规约操作（如求和、求最大/最小值）。
-    ![Reduce示意图](placeholder.png)
+    undefined
 *   **All-gather (全局收集)**: 与Gather类似，但目标不是单个rank，而是所有rank。操作完成后，每个rank都拥有了所有其他rank数据的完整拼接副本。
-    ![All-gather示意图](placeholder.png)
+    undefined
 *   **Reduce-scatter (规约分散)**: 这是一个复合操作。首先像Reduce一样，对所有rank的数据进行规约（如求和），然后像Scatter一样，将规约后的结果切分并分散给所有rank。
-    ![Reduce-scatter示意图](placeholder.png)
+    undefined
 *   **All-reduce (全局规约)**: 同样是复合操作，相当于先执行Reduce操作，再执行Broadcast操作。最终，所有rank都拥有了对全体数据进行规约后的相同结果。
-    ![All-reduce示意图](placeholder.png)
+    undefined
 
 一个重要的恒等式是：**All-reduce = Reduce-scatter + All-gather**。
 
@@ -134,7 +134,7 @@ def collective_operations_main(rank: int, world_size: int):
 
 ### **数据并行 (Data Parallelism)**
 
-![数据并行示意图](placeholder.png)
+undefined
 **[插入图片: lecture_08.py, image call "images/data-parallelism.png", 描述: 模型被完整复制到每个设备上，而数据（批次维度）被切分，每个设备处理一部分数据。]**
 
 **分片策略**: 将数据（沿着batch维度）切分，每个rank获得一小批（mini-batch）数据。模型参数在所有rank上完全复制。
@@ -176,7 +176,7 @@ def data_parallelism_main(rank: int, world_size: int, ...):
 
 ### **张量并行 (Tensor Parallelism)**
 
-![张量并行示意图](placeholder.png)
+undefined
 **[插入图片: lecture_08.py, image call "images/tensor-parallelism.png", 描述: 数据在所有设备上是完整的，而模型的每一层（宽度/隐藏层维度）被切分到不同设备上。]**
 
 **分片策略**: 数据在所有rank上是完整的，但模型的每一层（例如MLP的权重矩阵）都沿着隐藏层维度（宽度）被切分。每个rank只拥有模型参数的一部分。
@@ -215,7 +215,7 @@ def tensor_parallelism_main(rank: int, world_size: int, ...):
 
 ### **流水线并行 (Pipeline Parallelism)**
 
-![流水线并行示意图](placeholder.png)
+undefined
 **[插入图片: lecture_08.py, image call "images/pipeline-parallelism.png", 描述: 数据在所有设备上是完整的，而模型的不同层（深度）被分配到不同设备上。]**
 
 **分片策略**: 数据在所有rank上是完整的，但模型的层（沿着深度方向）被切分。例如，rank 0拥有模型的第1-2层，rank 1拥有第3-4层。

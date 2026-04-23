@@ -98,12 +98,18 @@ export {
   parseXiaohongshu,
   parseWechat,
   parsePlatformLink,
+  parseDouyin,
+  parseBilibili,
+  parseWeibo,
   ocrImage,
   processImage,
   parseZhihuDef,
   parseXiaohongshuDef,
   parseWechatDef,
   parsePlatformLinkDef,
+  parseDouyinDef,
+  parseBilibiliDef,
+  parseWeiboDef,
   ocrImageDef,
   processImageDef
 } from './platform'
@@ -124,23 +130,6 @@ export {
   githubGetIssuesDef
 } from './github'
 
-// ==================== 知识库工具 ====================
-export {
-  kbList,
-  kbCreate,
-  kbDelete,
-  kbQuery,
-  kbListDocuments,
-  kbDocumentAdd,
-  kbDocumentDelete,
-  kbListDef,
-  kbCreateDef,
-  kbDeleteDef,
-  kbQueryDef,
-  kbListDocumentsDef,
-  kbDocumentAddDef,
-  kbDocumentDeleteDef
-} from './kb'
 
 // ==================== 笔记工具 ====================
 export {
@@ -242,8 +231,8 @@ import { readFile, writeFile, listFiles, readFileDef, writeFileDef, listFilesDef
 
 // 平台解析工具
 import {
-  parseZhihu, parseXiaohongshu, parseWechat, parsePlatformLink, ocrImage, processImage,
-  parseZhihuDef, parseXiaohongshuDef, parseWechatDef, parsePlatformLinkDef, ocrImageDef, processImageDef
+  parseZhihu, parseXiaohongshu, parseWechat, parsePlatformLink, parseDouyin, parseBilibili, parseWeibo, ocrImage, processImage,
+  parseZhihuDef, parseXiaohongshuDef, parseWechatDef, parsePlatformLinkDef, parseDouyinDef, parseBilibiliDef, parseWeiboDef, ocrImageDef, processImageDef
 } from './platform'
 
 // GitHub 工具
@@ -252,11 +241,6 @@ import {
   githubGetRepoDef, githubListRepoContentsDef, githubGetFileContentDef, githubSearchCodeDef, githubGetCommitHistoryDef, githubGetIssuesDef
 } from './github'
 
-// 知识库工具
-import {
-  kbList, kbCreate, kbDelete, kbQuery, kbListDocuments, kbDocumentAdd, kbDocumentDelete,
-  kbListDef, kbCreateDef, kbDeleteDef, kbQueryDef, kbListDocumentsDef, kbDocumentAddDef, kbDocumentDeleteDef
-} from './kb'
 
 // 笔记工具
 import { createNote, listNotes, queryKnowledge, createNoteDef, listNotesDef, queryKnowledgeDef } from './note'
@@ -338,12 +322,15 @@ export function initializeDefaultTools(): void {
     { name: 'list_files', definition: listFilesDef, executor: listFiles }
   ])
   
-  // 平台解析工具（6个）
+  // 平台解析工具（9个）
   registerTools([
     { name: 'parse_zhihu', definition: parseZhihuDef, executor: parseZhihu },
     { name: 'parse_xiaohongshu', definition: parseXiaohongshuDef, executor: parseXiaohongshu },
     { name: 'parse_wechat', definition: parseWechatDef, executor: parseWechat },
     { name: 'parse_platform_link', definition: parsePlatformLinkDef, executor: parsePlatformLink },
+    { name: 'parse_douyin', definition: parseDouyinDef, executor: parseDouyin },
+    { name: 'parse_bilibili', definition: parseBilibiliDef, executor: parseBilibili },
+    { name: 'parse_weibo', definition: parseWeiboDef, executor: parseWeibo },
     { name: 'ocr_image', definition: ocrImageDef, executor: ocrImage },
     { name: 'process_image', definition: processImageDef, executor: processImage }
   ])
@@ -356,17 +343,6 @@ export function initializeDefaultTools(): void {
     { name: 'github_search_code', definition: githubSearchCodeDef, executor: githubSearchCode },
     { name: 'github_get_commit_history', definition: githubGetCommitHistoryDef, executor: githubGetCommitHistory },
     { name: 'github_get_issues', definition: githubGetIssuesDef, executor: githubGetIssues }
-  ])
-  
-  // 知识库工具（7个）
-  registerTools([
-    { name: 'kb_list', definition: kbListDef, executor: kbList },
-    { name: 'kb_create', definition: kbCreateDef, executor: kbCreate },
-    { name: 'kb_delete', definition: kbDeleteDef, executor: kbDelete },
-    { name: 'kb_query', definition: kbQueryDef, executor: kbQuery },
-    { name: 'kb_list_documents', definition: kbListDocumentsDef, executor: kbListDocuments },
-    { name: 'kb_document_add', definition: kbDocumentAddDef, executor: kbDocumentAdd },
-    { name: 'kb_document_delete', definition: kbDocumentDeleteDef, executor: kbDocumentDelete }
   ])
   
   // 笔记工具（3个）

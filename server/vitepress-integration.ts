@@ -17,11 +17,13 @@ import { registerLogsRoutes } from "./routes/logs";
 import { registerProxyRoutes } from "./routes/proxy";
 import { registerLarkRoutes } from "./routes/lark";
 import { registerYuqueRoutes } from "./routes/yuque";
+import { registerPlatformParserRoutes } from "./routes/platform-parser";
 import { registerAgentSystemRoutes } from "./routes/agent-system";
 import { registerSkillsRoutes } from "./routes/skills";
 import { registerMemoriesRoutes } from "./routes/memories";
 import { registerMcpRoutes } from "./routes/mcp";
 import { registerSessionsRoutes } from "./routes/sessions";
+import { registerChatRoutes } from "./routes/chat";
 
 
 // 简化的日志系统
@@ -355,8 +357,10 @@ export const metaBlogBffPlugin = (): Plugin => ({
     registerMemoriesRoutes(server, ctx);
     registerMcpRoutes(server, ctx);
     registerSessionsRoutes(server, ctx);
+    registerChatRoutes(server, ctx);
     registerLarkRoutes(server, ctx);
     registerYuqueRoutes(server, ctx);
+    registerPlatformParserRoutes(server, ctx);
   },
   handleHotUpdate({ file }) {
     // 只忽略数据目录的变更，避免不必要的 HMR

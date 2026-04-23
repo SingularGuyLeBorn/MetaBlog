@@ -418,4 +418,4 @@ $$\text{clip}(r, 1-\epsilon, 1+\epsilon) = \begin{cases} 1-\epsilon & \text{if }
 
 ---
 
-**下一章预告**：[第6章：RLHF与人类反馈对齐](../06_RLHF/01_Theory_Derivation.md)
+**下一章预告**：

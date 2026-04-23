@@ -379,4 +379,4 @@ REINFORCE的两个主要问题：
 
 ---
 
-**下一章预告**：[第4章：Actor-Critic方法](../04_Actor_Critic/01_Theory_Derivation.md)
+**下一章预告**：

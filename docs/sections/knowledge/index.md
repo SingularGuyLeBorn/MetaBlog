@@ -10,6 +10,4 @@ title: 知识库
   sectionLabel="知识体系"
 />
 
-<script setup>
-import SectionIndex from '@/theme/components/common/SectionIndex.vue'
-</script>
+

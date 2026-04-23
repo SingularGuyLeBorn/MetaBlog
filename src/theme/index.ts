@@ -45,6 +45,7 @@ import RAGSearch from "./components/features/RAGSearch.vue";
 
 // Dashboards
 import AboutProfile from "./components/common/AboutProfile.vue";
+import { ArticleCards, SectionIndex } from "./components/common";
 
 // Legacy
 import ControlCenter from "./components/common/ControlCenter.vue";
@@ -95,5 +96,9 @@ export default {
     // ========== Register Legacy ==========
     app.component("ControlCenter", ControlCenter);
     app.component("FullScreenPanel", FullScreenPanel);
+
+    // ========== Register Section Components ==========
+    app.component("ArticleCards", ArticleCards);
+    app.component("SectionIndex", SectionIndex);
   },
 } satisfies Theme;

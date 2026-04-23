@@ -15,11 +15,14 @@ export function registerMemoriesRoutes(server: ViteDevServer, ctx: RouteContext)
   // Memory API - 记忆管理
   // ============================================
 
-  const MEMORIES_FILE = path.join(
-    process.cwd(),
-    ".data",
-    "memories.json",
-  );
+  const MEMORIES_DIR = path.join(process.cwd(), ".data", "memories");
+  const MEMORIES_FILE = path.join(MEMORIES_DIR, "index.json");
+
+  function ensureDir() {
+    if (!fs.existsSync(MEMORIES_DIR)) {
+      fs.mkdirSync(MEMORIES_DIR, { recursive: true });
+    }
+  }
 
   function readMemories(): any[] {
     try {
@@ -34,6 +37,7 @@ export function registerMemoriesRoutes(server: ViteDevServer, ctx: RouteContext)
 
   function writeMemories(memories: any[]) {
     try {
+      ensureDir();
       fs.writeFileSync(
         MEMORIES_FILE,
         JSON.stringify(memories, null, 2),

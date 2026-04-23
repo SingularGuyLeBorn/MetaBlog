@@ -8,6 +8,9 @@ export {
   parseXiaohongshu,
   parseWechat,
   parsePlatformLink,
+  parseDouyin,
+  parseBilibili,
+  parseWeibo,
   ocrImage,
   processImage
 } from './executors'
@@ -17,6 +20,9 @@ export {
   parseXiaohongshuDef,
   parseWechatDef,
   parsePlatformLinkDef,
+  parseDouyinDef,
+  parseBilibiliDef,
+  parseWeiboDef,
   ocrImageDef,
   processImageDef
 } from './definitions'

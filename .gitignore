@@ -10,7 +10,7 @@ cache
 .env
 .env.local
 .env.*.local
-.dev-log/
+# .dev-log/
 
 # Runtime data
 .data/

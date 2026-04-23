@@ -265,7 +265,6 @@ export interface ModelConfig {
   provider: ModelProvider
   model: string
   baseURL: string
-  apiKey: string
   supportsVision: boolean
   supportsVideo: boolean
   supportsFunctionCalling: boolean
@@ -283,7 +282,6 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: 'deepseek',
     model: 'deepseek-chat',
     baseURL: 'https://api.deepseek.com/v1',
-    apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || '',
     supportsVision: false,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -294,7 +292,6 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: 'deepseek',
     model: 'deepseek-reasoner',
     baseURL: 'https://api.deepseek.com/v1',
-    apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || '',
     supportsVision: false,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -310,7 +307,6 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: 'kimi',
     model: 'kimi-k2.5',
     baseURL: 'https://api.moonshot.cn/v1',
-    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -322,7 +318,6 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: 'kimi',
     model: 'kimi-k2-turbo-preview',
     baseURL: 'https://api.moonshot.cn/v1',
-    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -334,7 +329,6 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: 'kimi',
     model: 'kimi-k2-thinking',
     baseURL: 'https://api.moonshot.cn/v1',
-    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -346,7 +340,6 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: 'kimi',
     model: 'kimi-k2-thinking-turbo',
     baseURL: 'https://api.moonshot.cn/v1',
-    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -358,7 +351,6 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: 'kimi',
     model: 'moonshot-v1-8k-vision-preview',
     baseURL: 'https://api.moonshot.cn/v1',
-    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -369,7 +361,6 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: 'kimi',
     model: 'moonshot-v1-32k-vision-preview',
     baseURL: 'https://api.moonshot.cn/v1',
-    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -380,7 +371,6 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: 'kimi',
     model: 'moonshot-v1-128k-vision-preview',
     baseURL: 'https://api.moonshot.cn/v1',
-    apiKey: import.meta.env.VITE_KIMI_API_KEY || '',
     supportsVision: true,
     supportsVideo: false,
     supportsFunctionCalling: true,
@@ -400,12 +390,6 @@ function getModelConfig(modelName: string): ModelConfig {
   throw new Error(`不支持的模型: ${modelName}。请使用 DeepSeek 或 Kimi 系列模型。`)
 }
 
-// 验证 API Key
-function validateApiKey(config: ModelConfig): void {
-  if (!config.apiKey || config.apiKey.includes('your-api-key')) {
-    throw new Error(`${config.provider} API Key not configured`)
-  }
-}
 
 // ==================== 类型定义 ====================
 
@@ -417,6 +401,7 @@ export interface StreamCallbacks {
   onToolRecord?: (record: ToolCallRecord) => void
   onThinkingStep?: (step: ThinkingStep) => void
   onUsage?: (usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number }) => void
+  onTokenEstimate?: (estimate: { input: number }) => void
 }
 
 // ==================== 多模态消息处理 ====================
@@ -714,13 +699,11 @@ async function chatNonStream(
   isToolContinuation: boolean = false
 ): Promise<{ content?: string; toolCalls?: ToolCall[]; reasoningContent?: string; error?: string; usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number } }> {
   const modelConfig = getModelConfig(config.model)
-  validateApiKey(modelConfig)
   
   const startTime = Date.now()
   
   const isReasoningModel = config.model === 'deepseek-reasoner'
   const isThinkingEnabled = config.enableReasoning && config.model === 'deepseek-chat'
-  const isReasoningMode = isReasoningModel || isThinkingEnabled
   
   let processedMessages = messages
   if (isThinkingEnabled && !isToolContinuation) {
@@ -733,52 +716,38 @@ async function chatNonStream(
     })
   }
   
-  // 智能截断：按模型上下文动态调整
-  processedMessages = smartTruncateMessages(processedMessages, modelConfig, config.systemPrompt)
-  
-  const requestBody: any = {
-    model: modelConfig.model,
-    messages: processedMessages,
-    max_tokens: Math.min(config.maxTokens, modelConfig.maxTokens),
-    stream: false
+  // 构建工具定义
+  let tools: any[] | undefined
+  if (includeTools && modelConfig.supportsFunctionCalling) {
+    tools = getToolDefinitions()
   }
   
-  if (!isReasoningModel) {
-    requestBody.temperature = config.temperature
-  }
-  
-  if (isThinkingEnabled) {
-    requestBody.thinking = { type: 'enabled' }
-  }
-  
-  // Kimi K2.5的思考模式需要特殊处理（与内置工具冲突）
+  // Kimi K2.5 思考模式与内置工具冲突
   if (config.model === 'kimi-k2.5' && config.enableReasoning) {
-    // 如果启用了思考模式且使用了内置工具，需要禁用思考模式
     const hasBuiltinTools = includeTools && getToolDefinitions().some((t: ToolDefinition) => 
       t.function.name.startsWith('$')
     )
     if (hasBuiltinTools) {
-      requestBody.thinking = { type: 'disabled' }
-    } else {
-      requestBody.thinking = { type: 'enabled' }
+      config = { ...config, enableReasoning: false }
     }
   }
-  
-  if (includeTools && modelConfig.supportsFunctionCalling) {
-    const toolDefs = getToolDefinitions()
-    requestBody.tools = toolDefs
+
+  const proxyBody = {
+    messages: processedMessages,
+    config,
+    stream: false,
+    tools
   }
 
-  logApiRequest('/chat/completions (non-stream)', requestBody)
+  logApiRequest('/api/chat (non-stream)', proxyBody)
 
   try {
-    const response = await fetch(`${modelConfig.baseURL}/chat/completions`, {
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${modelConfig.apiKey}`
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(proxyBody)
     })
 
     const duration = Date.now() - startTime
@@ -786,14 +755,19 @@ async function chatNonStream(
     if (!response.ok) {
       const errorText = await response.text()
       const error = new Error(`HTTP ${response.status}: ${errorText}`)
-      logApiError('/chat/completions (non-stream)', error, duration, requestBody)
+      logApiError('/api/chat (non-stream)', error, duration, proxyBody)
       return { error: `API Error: ${errorText}` }
     }
 
     const result = await response.json()
-    logApiResponse('/chat/completions (non-stream)', result, duration)
+    if (!result.success) {
+      return { error: result.error || 'Chat failed' }
+    }
     
-    const message = result.choices?.[0]?.message
+    logApiResponse('/api/chat (non-stream)', result.data, duration)
+    
+    const data = result.data
+    const message = data.choices?.[0]?.message
     const reasoningContent = message?.reasoning_content
     
     if (message?.tool_calls?.length > 0) {
@@ -806,17 +780,15 @@ async function chatNonStream(
       return { content: message?.content || '', toolCalls: message.tool_calls, reasoningContent }
     }
     
-    // 提取 API 返回的 usage
-    const usage = result.usage
-    
+    const usage = data.usage
     return { content: message?.content || '', reasoningContent, usage }
   } catch (error) {
     const duration = Date.now() - startTime
     let errorMessage = error instanceof Error ? error.message : String(error)
     if (errorMessage.includes('Failed to fetch')) {
-      errorMessage = `网络请求失败。可能原因: 1) CORS 限制 2) 网络问题 3) 请求体过大。详细信息: ${errorMessage}`
+      errorMessage = `网络请求失败。可能原因: 1) 网络问题 2) 请求体过大。详细信息: ${errorMessage}`
     }
-    logApiError('/chat/completions (non-stream)', new Error(errorMessage), duration, requestBody)
+    logApiError('/api/chat (non-stream)', new Error(errorMessage), duration, proxyBody)
     return { error: errorMessage }
   }
 }
@@ -833,10 +805,10 @@ async function chatStreamInternal(
     availableSkills?: string[]
     declaredTools?: string[]
     availableTools?: string[]
-  }
+  },
+  sessionId?: string
 ): Promise<{ content?: string; toolCalls?: ToolCall[]; reasoningContent?: string; error?: string; aborted?: boolean }> {
   const modelConfig = getModelConfig(config.model)
-  validateApiKey(modelConfig)
   
   const startTime = Date.now()
   
@@ -854,47 +826,37 @@ async function chatStreamInternal(
       return m
     })
   }
-  
-  processedMessages = smartTruncateMessages(processedMessages, modelConfig, config.systemPrompt)
-  
-  const requestBody: any = {
-    model: modelConfig.model,
-    messages: processedMessages,
-    max_tokens: Math.min(config.maxTokens, modelConfig.maxTokens),
-    stream: true
+
+  // 构建工具定义
+  let tools: ToolDefinition[] | undefined
+  if (includeTools && modelConfig.supportsFunctionCalling) {
+    const allDefs = getToolDefinitions()
+    if (toolContext?.availableTools) {
+      tools = allDefs.filter(d => toolContext.availableTools!.includes(d.function.name))
+    } else {
+      tools = allDefs
+    }
   }
   
-  if (!isReasoningModel) {
-    requestBody.temperature = config.temperature
-  }
-  
-  if (isThinkingEnabled) {
-    requestBody.thinking = { type: 'enabled' }
-  }
-  
+  // Kimi K2.5 思考模式与内置工具冲突
   if (config.model === 'kimi-k2.5' && config.enableReasoning) {
     const hasBuiltinTools = includeTools && getToolDefinitions().some((t: ToolDefinition) => 
       t.function.name.startsWith('$')
     )
     if (hasBuiltinTools) {
-      requestBody.thinking = { type: 'disabled' }
-    } else {
-      requestBody.thinking = { type: 'enabled' }
+      config = { ...config, enableReasoning: false }
     }
   }
 
-  if (includeTools && modelConfig.supportsFunctionCalling) {
-    const allDefs = getToolDefinitions()
-    let activeDefs = allDefs
-    if (toolContext?.availableTools) {
-      activeDefs = allDefs.filter(d => toolContext.availableTools!.includes(d.function.name))
-    }
-    if (activeDefs.length > 0) {
-      requestBody.tools = activeDefs
-    }
+  const proxyBody: any = {
+    messages: processedMessages,
+    config,
+    stream: true,
+    tools,
+    sessionId
   }
   
-  logApiRequest('/chat/completions (stream)', requestBody)
+  logApiRequest('/api/chat (stream)', proxyBody)
 
   const decoder = new TextDecoder()
   let buffer = ''
@@ -939,13 +901,12 @@ async function chatStreamInternal(
   }, 30000)
 
   try {
-    const response = await fetch(`${modelConfig.baseURL}/chat/completions`, {
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${modelConfig.apiKey}`
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify(proxyBody),
       signal: internalController.signal
     })
 
@@ -955,7 +916,7 @@ async function chatStreamInternal(
     if (!response.ok) {
       const errorText = await response.text()
       const errorStr = `HTTP ${response.status}: ${errorText}`
-      logApiError('/chat/completions (stream)', new Error(errorStr), Date.now() - startTime, requestBody)
+      logApiError('/api/chat (stream)', new Error(errorStr), Date.now() - startTime, proxyBody)
       return { error: errorStr }
     }
 
@@ -987,6 +948,11 @@ async function chatStreamInternal(
 
         try {
           const chunk = JSON.parse(data)
+          
+          // 捕获后端注入的 token 估算
+          if (chunk.token_estimate && callbacks.onTokenEstimate) {
+            callbacks.onTokenEstimate(chunk.token_estimate)
+          }
           
           // 捕获 API 返回的 usage（通常在最后一块中）
           if (chunk.usage && callbacks.onUsage) {
@@ -1045,7 +1011,7 @@ async function chatStreamInternal(
         aborted: true
       }
     }
-    logApiError('/chat/completions (stream)', errorObj, Date.now() - startTime, requestBody)
+    logApiError('/api/chat (stream)', errorObj, Date.now() - startTime, proxyBody)
     return { error: errorObj.message }
   } finally {
     clearIdleTimer()
@@ -1177,7 +1143,7 @@ export const aiService = {
         })
         
         const hasAnyTools = !!(toolContext?.availableTools?.length)
-        const response = await chatStreamInternal(filteredMessages, config, callbacks, signal, toolRound > 1, hasAnyTools, toolContext)
+        const response = await chatStreamInternal(filteredMessages, config, callbacks, signal, toolRound > 1, hasAnyTools, toolContext, sessionId)
 
         if (response.aborted) {
           callbacks.onComplete()
@@ -1415,7 +1381,7 @@ export const aiService = {
           role: 'user',
           content: '请基于以上搜索结果，直接给出最终回答，不要再调用任何工具。'
         })
-        const finalResponse = await chatStreamInternal(filteredMessages, config, callbacks, signal, true, false, toolContext)
+        const finalResponse = await chatStreamInternal(filteredMessages, config, callbacks, signal, true, false, toolContext, sessionId)
         if (!finalResponse.error) {
           if (finalResponse.content) {
             callbacks.onContent(cleanAIOutput(finalResponse.content))

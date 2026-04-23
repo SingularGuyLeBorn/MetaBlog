@@ -10,6 +10,4 @@ title: 文章列表
   sectionLabel="文章"
 />
 
-<script setup>
-import SectionIndex from '@/theme/components/common/SectionIndex.vue'
-</script>
+

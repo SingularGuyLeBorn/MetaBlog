@@ -9,9 +9,7 @@ layout: page
   icon="📐"
 />
 
-<script setup>
-import ArticleCards from '@/theme/components/common/ArticleCards.vue'
-</script>
+
 
 <style>
 /* 隐藏默认的 markdown 内容 */
