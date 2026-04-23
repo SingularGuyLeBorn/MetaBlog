@@ -1,11 +1,10 @@
 /**
  * 从工具执行结果中提取可点击的实体链接
  *
- * 支持的工具类型：
- * - 飞书文档/表格/知识库
- * - GitHub Repo / Issue / PR
- * - 语雀文档
- * - 通用 URL（自动检测）
+ * 设计原则：工具执行成功后，系统立即从结果中捕捉 URL 并渲染为卡片，
+ * 不依赖 AI 在回复文本中提及链接。
+ *
+ * 支持：飞书文档、GitHub Repo/Issue/PR、语雀文档、通用 URL 扫描
  */
 
 export interface EntityLink {
@@ -18,67 +17,65 @@ export interface EntityLink {
 /** URL 正则 */
 const URL_REGEX = /https?:\/\/[^\s<>"'{}|\\^`[\]]+/gi
 
-/** 已知工具类型的 URL 字段映射 */
+/** 已知工具类型的 URL 字段映射（支持嵌套路径，如 document.document_id） */
 const TOOL_URL_FIELDS: Record<string, string[]> = {
   // 飞书
-  feishu_doc_create: ['url', 'docUrl', 'link', 'web_url', 'document_id'],
+  feishu_doc_create: ['url', 'docUrl', 'link', 'web_url', 'document.document_id'],
   feishu_share_doc: ['url', 'docUrl'],
   feishu_doc_append: ['url', 'docUrl'],
   // GitHub
   github_create_repo: ['html_url', 'url'],
   github_create_issue: ['html_url', 'url'],
   github_create_pull_request: ['html_url', 'url'],
+  github_get_repo: ['html_url', 'url'],
   // 语雀
   yuque_create_doc: ['url', 'webUrl', 'slug_url'],
 }
 
 /**
- * 从工具结果中提取实体链接
+ * 从单个 ToolResult 中提取实体链接
+ *
+ * 扫描顺序：
+ * 1. 已知字段（从 data 中按路径提取）
+ * 2. message 文本中的 URL
+ * 3. data 全量递归 URL 扫描（兜底）
  */
-export function extractEntityLinks(toolName: string, result: any): EntityLink[] {
+export function extractEntityLinks(toolName: string, toolResult: any): EntityLink[] {
   const links: EntityLink[] = []
-  if (!result) return links
+  if (!toolResult) return links
 
-  // 1. 按工具类型提取已知字段
+  const data = toolResult.data
+  const message = toolResult.message
+
+  // 1. 按工具类型从 data 中提取已知字段
   const knownFields = TOOL_URL_FIELDS[toolName] || []
-  for (const field of knownFields) {
-    const val = getNestedValue(result, field)
-    if (typeof val === 'string') {
-      // 飞书特殊处理：document_id 需要拼接成 URL
-      if (field === 'document_id' && toolName.includes('feishu')) {
-        links.push(createEntityLink(`https://feishu.cn/docx/${val}`, toolName, result))
-      } else if (isValidUrl(val)) {
-        links.push(createEntityLink(val, toolName, result))
-      }
+  for (const fieldPath of knownFields) {
+    const val = getNestedValue(data, fieldPath)
+    if (typeof val !== 'string') continue
+
+    // 飞书特殊处理：document.document_id 拼接成 URL
+    if (fieldPath === 'document.document_id' && toolName.includes('feishu')) {
+      links.push(createEntityLink(`https://feishu.cn/docx/${val}`, toolName, data))
+    } else if (isValidUrl(val)) {
+      links.push(createEntityLink(val, toolName, data))
     }
   }
 
-  // 2. 扫描 message 字段中的 URL（很多工具把链接放在 message 字符串里）
-  if (result.message && typeof result.message === 'string') {
-    const msgLinks = extractUrlsFromText(result.message)
+  // 2. 从 message 文本中提取 URL（很多工具把链接放在 message 里）
+  if (typeof message === 'string') {
+    const msgLinks = extractUrlsFromText(message)
     for (const url of msgLinks) {
-      links.push(createEntityLink(url, toolName, result))
+      links.push(createEntityLink(url, toolName, data))
     }
   }
 
-  // 3. 通用 URL 扫描（递归遍历 JSON）
-  if (links.length === 0) {
-    scanUrlsRecursive(result, links, toolName)
+  // 3. 从 data 全量递归扫描 URL（兜底）
+  if (links.length === 0 && data) {
+    scanUrlsRecursive(data, links, toolName)
   }
 
   // 去重
-  const seen = new Set<string>()
-  return links.filter(link => {
-    if (seen.has(link.url)) return false
-    seen.add(link.url)
-    return true
-  })
-}
-
-/** 从文本中提取 URL */
-function extractUrlsFromText(text: string): string[] {
-  const matches = text.match(URL_REGEX)
-  return matches ? matches.filter(isValidUrl) : []
+  return deduplicateLinks(links)
 }
 
 /**
@@ -87,21 +84,20 @@ function extractUrlsFromText(text: string): string[] {
 export function extractAllEntityLinks(toolRecords: any[]): EntityLink[] {
   const all: EntityLink[] = []
   for (const record of toolRecords) {
-    if (record?.result?.success && record.result.data) {
-      const links = extractEntityLinks(record.name, record.result.data)
-      all.push(...links)
-    } else if (record?.result?.success && typeof record.result === 'object') {
-      const links = extractEntityLinks(record.name, record.result)
-      all.push(...links)
-    }
+    const result = record?.result
+    if (!result || typeof result !== 'object') continue
+    if (!result.success) continue
+
+    const links = extractEntityLinks(record.name || record.toolName || '', result)
+    all.push(...links)
   }
-  // 去重
-  const seen = new Set<string>()
-  return all.filter(link => {
-    if (seen.has(link.url)) return false
-    seen.add(link.url)
-    return true
-  })
+  return deduplicateLinks(all)
+}
+
+/** 从单个工具记录中提取链接 */
+export function extractLinksFromRecord(record: any): EntityLink[] {
+  if (!record?.result?.success) return []
+  return extractEntityLinks(record.name || record.toolName || '', record.result)
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -114,6 +110,20 @@ function getNestedValue(obj: any, path: string): any {
 
 function isValidUrl(str: string): boolean {
   return str.startsWith('http://') || str.startsWith('https://')
+}
+
+function extractUrlsFromText(text: string): string[] {
+  const matches = text.match(URL_REGEX)
+  return matches ? matches.filter(isValidUrl) : []
+}
+
+function deduplicateLinks(links: EntityLink[]): EntityLink[] {
+  const seen = new Set<string>()
+  return links.filter(link => {
+    if (seen.has(link.url)) return false
+    seen.add(link.url)
+    return true
+  })
 }
 
 function createEntityLink(url: string, toolName: string, context: any): EntityLink {
@@ -150,19 +160,18 @@ function getIcon(type: EntityLink['type']): string {
 }
 
 function extractTitle(context: any, type: EntityLink['type'], url: string): string {
-  // 优先从上下文提取名称
   const candidates = [
-    context?.name,
     context?.title,
+    context?.name,
     context?.doc_name,
     context?.repo_name,
     context?.full_name,
+    context?.document?.title,
   ]
   for (const c of candidates) {
     if (typeof c === 'string' && c.trim()) return c.trim()
   }
 
-  // 从 URL 路径提取最后一段作为标题
   try {
     const pathname = new URL(url).pathname
     const lastSegment = pathname.split('/').filter(Boolean).pop()

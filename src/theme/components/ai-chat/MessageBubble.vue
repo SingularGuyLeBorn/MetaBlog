@@ -72,6 +72,16 @@
                     {{ getToolArgsSummary(item.toolRecord.arguments) }}
                   </span>
                   <span class="spacer"></span>
+                  <!-- 工具执行成功后的实体链接卡片（无需展开直接可见） -->
+                  <template v-if="item.toolRecord.status === 'success'">
+                    <EntityLinkCard
+                      v-for="link in getToolLinks(item.toolRecord).slice(0, 1)"
+                      :key="link.url"
+                      :link="link"
+                      class="timeline-link-card"
+                      @click.stop
+                    />
+                  </template>
                   <span
                     v-if="item.toolRecord.duration"
                     class="tool-time"
@@ -206,7 +216,7 @@ import DOMPurify from 'dompurify'
 import { Avatar, AIAvatar, Icon, TypewriterText } from '@/theme/components/common'
 import MessageVersions from './MessageVersions.vue'
 import EntityLinkCard from './EntityLinkCard.vue'
-import { extractAllEntityLinks, type EntityLink } from '@/theme/utils/extractEntityLinks'
+import { extractAllEntityLinks, extractLinksFromRecord, type EntityLink } from '@/theme/utils/extractEntityLinks'
 import type { ChatMessage, ChatMessage as ChatMessageType, ThinkingStep } from '@/theme/types'
 import { estimateTextTokens, formatTokenCount } from '@/theme/utils/tokenEstimator'
 
@@ -257,6 +267,15 @@ function formatToolResult(result: any, itemId: string): string {
     return str
   }
   return str.slice(0, RESULT_TRUNCATE_LENGTH) + '\n\n... [内容已截断，点击展开查看全部]'
+}
+
+// 从单个工具记录中提取链接（用于 timeline 中每个 tool_call 项）
+function getToolLinks(toolRecord: any): EntityLink[] {
+  const links = extractLinksFromRecord(toolRecord)
+  if (links.length > 0) {
+    // 提取链接（调试用日志已移除）
+  }
+  return links
 }
 
 const typewriterRef = ref<InstanceType<typeof TypewriterText> | null>(null)
@@ -1026,6 +1045,26 @@ async function copyContent() {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* timeline 头部的紧凑链接卡片 */
+.timeline-link-card {
+  max-width: 280px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+.timeline-link-card .entity-icon {
+  font-size: 16px;
+}
+.timeline-link-card .entity-title {
+  font-size: 12px;
+}
+.timeline-link-card .entity-url {
+  font-size: 10px;
+}
+.timeline-link-card .entity-arrow {
+  font-size: 12px;
 }
 
 /* ========== 响应式 ========== */

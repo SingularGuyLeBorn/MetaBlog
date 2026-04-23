@@ -124,8 +124,9 @@ function parseBlocks(markdown: string): any[] {
 function parseBlock(lines: string[], i: number): { block: any; nextIndex: number } {
   const line = lines[i]
 
-  // --- 块级公式 $$...$$ ---
+  // --- 块级公式 $$...$$（支持多行和单行） ---
   if (line === '$$') {
+    // 多行: $$\n...\n$$
     const formulaLines: string[] = []
     i++
     while (i < lines.length && lines[i] !== '$$') {
@@ -137,6 +138,20 @@ function parseBlock(lines: string[], i: number): { block: any; nextIndex: number
         block_type: 2,
         text: {
           elements: [{ equation: { content: formulaLines.join('\n') } }],
+        },
+      },
+      nextIndex: i + 1,
+    }
+  }
+
+  // 单行块级公式: $$\nabla J(\theta) = ...$$
+  const singleLineEqMatch = line.match(/^\$\$(.+)\$\$$/)
+  if (singleLineEqMatch) {
+    return {
+      block: {
+        block_type: 2,
+        text: {
+          elements: [{ equation: { content: singleLineEqMatch[1] } }],
         },
       },
       nextIndex: i + 1,
@@ -280,6 +295,7 @@ function parseBlock(lines: string[], i: number): { block: any; nextIndex: number
 function isBlockStart(line: string): boolean {
   return (
     line === '$$' ||
+    /^\$\$.+\$\$$/.test(line) ||
     HEADING_RE.test(line) ||
     CODE_FENCE_RE.test(line) ||
     TODO_RE.test(line) ||
@@ -527,7 +543,18 @@ function tryParseStrikethrough(text: string, i: number): { innerText: string; en
 }
 
 function tryParseEquation(text: string, i: number): { content: string; endPos: number } | null {
-  if (text[i] !== '$' || text.slice(i, i + 2) === '$$') return null
+  if (text[i] !== '$') return null
+
+  // 优先匹配 $$...$$（常见于列表项/段落中的块级公式写法）
+  if (text.slice(i, i + 2) === '$$') {
+    const end = text.indexOf('$$', i + 2)
+    if (end !== -1 && end > i + 2) {
+      return { content: text.slice(i + 2, end), endPos: end + 2 }
+    }
+    return null
+  }
+
+  // 普通 $...$ 行内公式
   const end = text.indexOf('$', i + 1)
   if (end === -1 || end === i + 1) return null
   return { content: text.slice(i + 1, end), endPos: end + 1 }
