@@ -6,16 +6,32 @@
 export {
   feishuDocCreate,
   feishuDocRead,
+  feishuDocMeta,
   feishuDocSearch,
   feishuDocBlocks,
   feishuDocAppend,
   feishuDocUpdateBlock,
   feishuDocDeleteBlock,
+} from './doc'
+
+export {
   feishuDocInsertImage,
+} from './image'
+
+export {
   feishuDocShare,
   feishuDocUnshare,
+} from './permission'
+
+export {
   feishuImSend,
+} from './im'
+
+export {
   feishuUserSearch,
+} from './user'
+
+export {
   feishuWikiSpaceCreate,
   feishuWikiSpaceList,
   feishuWikiSpaceGet,
@@ -24,22 +40,42 @@ export {
   feishuWikiNodeCreate,
   feishuWikiNodeList,
   feishuWikiNodeDelete,
+  feishuWikiNodeMove,
   feishuWikiMoveDoc,
-} from './executors'
+  feishuWikiMemberList,
+  feishuWikiMemberAdd,
+  feishuWikiMemberRemove,
+} from './wiki'
 
 export {
   feishuDocCreateDef,
   feishuDocReadDef,
+  feishuDocMetaDef,
   feishuDocSearchDef,
   feishuDocBlocksDef,
   feishuDocAppendDef,
   feishuDocUpdateBlockDef,
   feishuDocDeleteBlockDef,
+} from './doc'
+
+export {
   feishuDocInsertImageDef,
+} from './image'
+
+export {
   feishuDocShareDef,
   feishuDocUnshareDef,
+} from './permission'
+
+export {
   feishuImSendDef,
+} from './im'
+
+export {
   feishuUserSearchDef,
+} from './user'
+
+export {
   feishuWikiSpaceCreateDef,
   feishuWikiSpaceListDef,
   feishuWikiSpaceGetDef,
@@ -48,5 +84,9 @@ export {
   feishuWikiNodeCreateDef,
   feishuWikiNodeListDef,
   feishuWikiNodeDeleteDef,
+  feishuWikiNodeMoveDef,
   feishuWikiMoveDocDef,
-} from './definitions'
+  feishuWikiMemberListDef,
+  feishuWikiMemberAddDef,
+  feishuWikiMemberRemoveDef,
+} from './wiki'

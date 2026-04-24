@@ -35,9 +35,9 @@ tags:
 ## 🛠️ 集成 SOP (标准操作程序)
 
 ### 第一阶段：实验室验证 (Lab)
-1. 使用 `docs-internal/feishu-api-lab/build_showcase.py` 生成特定的 `99_lark_api_showcase.ipynb`。
+1. 使用 `project/experiments/feishu-api/99_feishu_api_showcase.ipynb` 进行 API 验证。
 2. 运行 **Section 0 (诊断区)**：打印原始 JSON，确认字段名和 ID 映射。
-3. 运行 **Section 5/6 (压测区)**：验证复杂块（公式/表格）的极限渲染。
+3. 运行 **Section 4/5 (压测区)**：验证复杂块（公式/表格）的极限渲染。
 
 ### 第二阶段：生产封装 (BFF)
 1. 在 `server/routes/lark.ts` 中实现对应的路由。
@@ -45,7 +45,7 @@ tags:
 
 ### 第三阶段：Agent 工具化
 1. 更新 `.skills/feishu-assistant/SKILL.md`。
-2. 在 `definitions.ts` 中完成参数声明。
+2. 在 `src/theme/tools/lark/` 下的对应分类文件（如 `doc.ts`、`wiki.ts` 等）中完成参数声明。
 
 ## 示例对话
 用户：“我想给飞书加一个‘自动生成甘特图’的功能，怎么开始？”

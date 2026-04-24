@@ -12,14 +12,30 @@ tags:
 tools:
   - feishu_doc_create # 支持 owner_email/owner_mobile 自动下放权限
   - feishu_doc_read
+  - feishu_doc_meta
   - feishu_doc_search
   - feishu_doc_blocks
   - feishu_doc_append # 支持 $latex$ 公式转换与代码语言高亮
   - feishu_doc_update_block # 支持 $latex$ 公式转换与样式叠加
   - feishu_doc_delete_block
-  - feishu_image_upload # 上传图片到文档，获取 file_token
+  - feishu_doc_insert_image # 插入图片到文档
+  - feishu_doc_share # 分享文档权限
+  - feishu_doc_unshare # 取消文档权限
   - feishu_im_send
   - feishu_user_search
+  - feishu_wiki_space_create
+  - feishu_wiki_space_list
+  - feishu_wiki_space_get
+  - feishu_wiki_space_update
+  - feishu_wiki_space_delete
+  - feishu_wiki_node_create
+  - feishu_wiki_node_list
+  - feishu_wiki_node_delete
+  - feishu_wiki_node_move
+  - feishu_wiki_move_doc
+  - feishu_wiki_member_list
+  - feishu_wiki_member_add
+  - feishu_wiki_member_remove
 usageScenarios:
   - 创建并自动分配权限的飞书文档
   - 在文档中插入数学公式 ($latex$)
@@ -93,7 +109,15 @@ feishu_im_send(receive_id="ou_xxx", content="消息内容")
 - `receive_id` 可以是 open_id、user_id、chat_id 或 email
 - 默认 msg_type="text"
 
-### 8. 查找用户
+### 8. 知识库 (Wiki) 操作
+```
+feishu_wiki_space_list()                          # 列出知识库
+feishu_wiki_node_create(space_id="xxx", title="新文档")   # 在知识库中创建节点
+feishu_wiki_member_list(space_id="xxx")           # 获取成员列表
+feishu_wiki_member_add(space_id="xxx", member_id="ou_xxx", perm="view")  # 添加成员
+```
+
+### 9. 查找用户
 ```
 feishu_user_search(email="zhangsan@company.com")
 ```

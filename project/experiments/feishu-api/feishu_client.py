@@ -160,13 +160,34 @@ class FeishuClient:
 
         return result_data
 
-    def api(self, method: str, path: str, **kwargs) -> Any:
-        """发送 API 请求并自动检查错误码，返回 data 字段"""
-        result = self.request(method, path, **kwargs)
-        code = result.get("code", 0)
-        if code != 0:
-            raise RuntimeError(f"API 错误 {code}: {result.get('msg')} | path={path}")
-        return result.get("data", result)
+    def api(self, method: str, path: str, retries: int = 2, **kwargs) -> Any:
+        """发送 API 请求并自动检查错误码，返回 data 字段
+        
+        对可重试错误（429/502/503/504）自动重试，指数退避。
+        """
+        import time
+        import random
+        last_error = None
+        for attempt in range(retries + 1):
+            try:
+                result = self.request(method, path, **kwargs)
+                code = result.get("code", 0)
+                if code != 0:
+                    # 可重试错误码
+                    if code in (429, 502, 503, 504) and attempt < retries:
+                        delay = (2 ** attempt) + random.uniform(0, 1)
+                        time.sleep(delay)
+                        continue
+                    raise RuntimeError(f"API 错误 {code}: {result.get('msg')} | path={path}")
+                return result.get("data", result)
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+                last_error = e
+                if attempt < retries:
+                    delay = (2 ** attempt) + random.uniform(0, 1)
+                    time.sleep(delay)
+                    continue
+                raise RuntimeError(f"请求失败（已重试 {retries} 次）: {e} | path={path}")
+        raise RuntimeError(f"请求失败: {last_error} | path={path}")
 
     # ============ 便捷方法 ============
 
@@ -396,21 +417,11 @@ class FeishuClient:
         """
         删除知识库节点
 
-        【重要】飞书开放平台目前没有提供通过 API 删除 Wiki 节点或底层文档的公开接口。
-        请在飞书客户端手动删除：知识库 → 找到文档 → 右键 → 删除
-
         参数:
             space_id: 知识库空间 ID
             node_token: 节点 token
-
-        返回:
-            提示信息
         """
-        return {
-            "code": -1,
-            "msg": "飞书开放平台未提供 Wiki 节点删除 API",
-            "hint": "请在飞书客户端手动删除：知识库 → 找到文档 → 右键 → 删除"
-        }
+        return self.api("DELETE", f"/wiki/v2/spaces/{space_id}/nodes/{node_token}")
 
     def list_wiki_members(self, space_id: str, page_size: int = 100) -> List[Dict[str, Any]]:
         """
@@ -454,109 +465,738 @@ class FeishuClient:
         """
         self.api("DELETE", f"/wiki/v2/spaces/{space_id}/members/{member_id}")
 
+    # ============ 文档权限操作 ============
 
-# ============ Markdown → 飞书块 转换器 ============
+    def share_doc(self, document_id: str, member_id: str, member_type: str = "openid",
+                  perm: str = "full_access") -> Dict[str, Any]:
+        """
+        分享飞书文档权限给指定用户
 
-def md_to_blocks(text: str) -> List[Dict[str, Any]]:
+        参数:
+            document_id: 飞书文档 ID
+            member_id: 用户标识（open_id / 邮箱 / 手机号）
+            member_type: 用户标识类型，默认 openid
+            perm: 权限级别，默认 full_access
+        """
+        return self.api("POST", f"/drive/v1/permissions/{document_id}/members", json_data={
+            "member_type": member_type,
+            "member_id": member_id,
+            "perm": perm,
+        }, params={"type": "docx"})
+
+    def unshare_doc(self, document_id: str, member_id: str, member_type: str = "openid") -> Dict[str, Any]:
+        """
+        取消飞书文档对指定用户的权限分享
+
+        参数:
+            document_id: 飞书文档 ID
+            member_id: 用户标识
+            member_type: 用户标识类型，默认 openid
+        """
+        return self.api("DELETE", f"/drive/v1/permissions/{document_id}/members/{member_id}",
+                        params={"type": "docx", "member_type": member_type})
+
+    # ============ 消息操作 ============
+
+    def send_im(self, receive_id: str, content: str, msg_type: str = "text",
+                receive_id_type: str = "open_id") -> Dict[str, Any]:
+        """
+        发送飞书即时消息
+
+        参数:
+            receive_id: 接收者 ID
+            content: 消息内容
+            msg_type: 消息类型，默认 text
+            receive_id_type: 接收者 ID 类型，默认 open_id
+        """
+        message_content = content
+        if msg_type == "text" and not content.startswith("{"):
+            import json as _json
+            message_content = _json.dumps({"text": content})
+        return self.api("POST", "/im/v1/messages", json_data={
+            "receive_id": receive_id,
+            "msg_type": msg_type,
+            "content": message_content,
+        }, params={"receive_id_type": receive_id_type})
+
+    # ============ 用户操作 ============
+
+    def search_user_keyword(self, query: str, page_size: int = 20) -> Dict[str, Any]:
+        """
+        按关键词搜索飞书用户（姓名、部门等）
+
+        参数:
+            query: 搜索关键词
+            page_size: 每页数量
+        """
+        return self.api("GET", "/contact/v3/users", params={"query": query, "page_size": str(page_size)})
+
+    # ============ 文档搜索与块操作 ============
+
+    def search_docs(self, search_key: str, count: int = 20) -> Dict[str, Any]:
+        """
+        在飞书云空间中搜索文档
+
+        参数:
+            search_key: 搜索关键词
+            count: 返回结果数量，最大 50
+        """
+        return self.api("POST", "/suite/docs-api/search/object", json_data={
+            "search_key": search_key,
+            "count": min(count, 50),
+        })
+
+    def get_doc_blocks(self, document_id: str, page_size: int = 500) -> Dict[str, Any]:
+        """
+        获取飞书文档的块结构列表
+
+        参数:
+            document_id: 文档 ID
+            page_size: 每页块数量
+        """
+        return self.api("GET", f"/docx/v1/documents/{document_id}/blocks", params={"page_size": str(page_size)})
+
+    def update_doc_block(self, document_id: str, block_id: str, update_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        更新飞书文档中的指定块内容
+
+        参数:
+            document_id: 文档 ID
+            block_id: 块 ID
+            update_data: 更新内容，如 {"update_text_elements": {"elements": [...]}}
+        """
+        return self.api("PATCH", f"/docx/v1/documents/{document_id}/blocks/{block_id}", json_data=update_data)
+
+    def delete_doc_block(self, document_id: str, block_id: str) -> Dict[str, Any]:
+        """
+        删除飞书文档中的指定块
+
+        参数:
+            document_id: 文档 ID
+            block_id: 块 ID
+        """
+        # 1. 获取父块的所有子块，查找目标索引
+        list_result = self.api("GET", f"/docx/v1/documents/{document_id}/blocks/{document_id}/children",
+                               params={"page_size": "500"})
+        items = list_result.get("items", [])
+        index = next((i for i, item in enumerate(items) if item.get("block_id") == block_id), -1)
+        if index == -1:
+            raise RuntimeError(f"未找到指定 block_id 的块: {block_id}")
+        # 2. 调用 batch_delete 按索引删除
+        return self.api("DELETE", f"/docx/v1/documents/{document_id}/blocks/{document_id}/children/batch_delete",
+                        json_data={"start_index": index, "end_index": index + 1})
+
+    # ============ 图片插入（三步法封装） ============
+
+    def insert_image_to_doc(self, document_id: str, image_url: Optional[str] = None,
+                            image_base64: Optional[str] = None, file_name: str = "image.png",
+                            caption: Optional[str] = None) -> Dict[str, Any]:
+        """
+        插入图片到飞书文档（完整三步法封装）
+
+        参数:
+            document_id: 飞书文档 ID
+            image_url: 网络图片 URL（与 image_base64 二选一）
+            image_base64: Base64 编码的图片数据（与 image_url 二选一）
+            file_name: 图片文件名
+            caption: 图注文字（可选）
+        """
+        import time
+        # Step 1: 创建空图片块
+        empty_image_block = {"block_type": 27, "image": {}}
+        children = [empty_image_block]
+        if caption:
+            children.insert(0, {"block_type": 2, "text": {"elements": [{"text_run": {"content": caption}}]}})
+        create_result = self.api("POST",
+                                 f"/docx/v1/documents/{document_id}/blocks/{document_id}/children",
+                                 json_data={"children": children})
+        image_block_result = next((c for c in create_result.get("children", []) if c.get("block_type") == 27), None)
+        if not image_block_result:
+            raise RuntimeError("创建图片块后未返回 block_id")
+        image_block_id = image_block_result["block_id"]
+
+        time.sleep(0.5)
+
+        # Step 2: 准备图片数据
+        if image_url:
+            img_res = requests.get(image_url, timeout=30)
+            img_res.raise_for_status()
+            image_buffer = img_res.content
+            final_file_name = image_url.split('/')[-1].split('?')[0] or file_name
+        elif image_base64:
+            import base64
+            base64_data = image_base64.replace("data:image/", "")
+            if ";base64," in base64_data:
+                base64_data = base64_data.split(";base64,")[1]
+            image_buffer = base64.b64decode(base64_data)
+            final_file_name = file_name
+        else:
+            raise ValueError("需要提供 image_url 或 image_base64")
+
+        # Step 3: 上传素材
+        form_data = {
+            "file_name": final_file_name,
+            "parent_type": "docx_image",
+            "parent_node": image_block_id,
+            "size": str(len(image_buffer)),
+        }
+        files = {"file": (final_file_name, image_buffer, "image/png")}
+        upload_result = self.request("POST", "/drive/v1/medias/upload_all", files=files, data=form_data)
+        if upload_result.get("code", 0) != 0:
+            raise RuntimeError(f"上传素材失败: {upload_result.get('msg')}")
+        file_token = upload_result.get("data", {}).get("file_token")
+
+        # Step 4: PATCH 绑定图片
+        self.api("PATCH", f"/docx/v1/documents/{document_id}/blocks/{image_block_id}",
+                 json_data={"replace_image": {"token": file_token}})
+
+        return {
+            "code": 0,
+            "msg": "success",
+            "data": {"block_id": image_block_id, "file_token": file_token},
+        }
+
+
+# ============ Markdown → 飞书块 转换器 (Robust版，与TS对齐) ============
+
+import re as _re
+
+_ZERO_WIDTH_CHARS = _re.compile(r'[\u200B-\u200D\uFEFF\u2060]')
+_HEADING_RE = _re.compile(r'^(#{1,9})\s+(.+?)(?:\s+#*)?$')
+_BULLET_RE = _re.compile(r'^(\s*)-\s+(.+)$')
+_ORDERED_RE = _re.compile(r'^(\s*)(\d+)\.\s+(.+)$')
+_TODO_RE = _re.compile(r'^(\s*)-\s+\[([ xX])\]\s+(.+)$')
+_DIVIDER_RE = _re.compile(r'^(---+|\*\*\*|___|\*\s+\*\s+\*)\s*$')
+_CODE_FENCE_RE = _re.compile(r'^```(.*)$')
+
+
+def md_to_blocks(markdown: str) -> List[Dict[str, Any]]:
     """
-    将简单 Markdown 文本转换为飞书 docx v1 块格式
+    将 Markdown 文本转换为飞书 docx v1 块格式（鲁棒版）
 
     支持的语法:
-    - # 标题1 → heading1
-    - ## 标题2 → heading2
-    - ### 标题3 → heading3
-    - - 列表 → bullet
-    - 1. 有序列表 → ordered
-    - 普通文本 → text
+    - 块级: 标题(1-9)、无序/有序列表、任务列表、代码块、引用、分割线、表格、公式块
+    - 行内: 粗体、斜体、删除线、行内代码、链接、公式
     """
-    blocks = []
-    for line in text.split("\n"):
-        line = line.rstrip()
-        if not line:
-            continue
+    cleaned = _clean_input(markdown)
+    blocks = _parse_blocks(cleaned)
+    return [_merge_block_text_elements(b) for b in blocks]
 
-        if line.startswith("### "):
+
+def _clean_input(text: str) -> str:
+    text = text.lstrip('\ufeff')
+    text = _ZERO_WIDTH_CHARS.sub('', text)
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    return text
+
+
+def _parse_blocks(markdown: str) -> List[Dict[str, Any]]:
+    lines = markdown.split('\n')
+    blocks: List[Dict[str, Any]] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if not line or line.strip() == '':
+            i += 1
+            continue
+        try:
+            result = _parse_block(lines, i)
+            blocks.append(result['block'])
+            i = result['next_index']
+        except Exception:
+            para_lines = [line]
+            i += 1
+            while i < len(lines) and lines[i].strip() != '' and not _is_block_start(lines[i]):
+                para_lines.append(lines[i])
+                i += 1
             blocks.append({
-                "block_type": 5,
-                "heading3": {
-                    "elements": [{"text_run": {"content": line[4:], "text_element_style": {}}}]
-                }
-            })
-        elif line.startswith("## "):
-            blocks.append({
-                "block_type": 4,
-                "heading2": {
-                    "elements": [{"text_run": {"content": line[3:], "text_element_style": {}}}]
-                }
-            })
-        elif line.startswith("# "):
-            blocks.append({
-                "block_type": 3,
-                "heading1": {
-                    "elements": [{"text_run": {"content": line[2:], "text_element_style": {}}}]
-                }
-            })
-        elif line.startswith("- ") or line.startswith("* "):
-            blocks.append({
-                "block_type": 12,
-                "bullet": {
-                    "elements": [{"text_run": {"content": line[2:], "text_element_style": {}}}]
-                }
-            })
-        elif len(line) > 2 and line[0].isdigit() and line[1:3] == ". ":
-            blocks.append({
-                "block_type": 13,
-                "ordered": {
-                    "elements": [{"text_run": {"content": line[3:], "text_element_style": {}}}]
-                }
-            })
-        elif line.startswith("> "):
-            blocks.append({
-                "block_type": 15,
-                "quote": {
-                    "elements": [{"text_run": {"content": line[2:], "text_element_style": {}}}]
-                }
-            })
-        else:
-            blocks.append({
-                "block_type": 2,
-                "text": {
-                    "elements": [{"text_run": {"content": line, "text_element_style": {}}}]
-                }
+                'block_type': 2,
+                'text': {'elements': [{'text_run': {'content': '\n'.join(para_lines)}}]},
             })
     return blocks
 
 
+def _parse_block(lines, i):
+    line = lines[i]
+
+    if line == '$$':
+        formula_lines = []
+        i += 1
+        while i < len(lines) and lines[i] != '$$':
+            formula_lines.append(lines[i])
+            i += 1
+        return {
+            'block': {
+                'block_type': 2,
+                'text': {'elements': [{'equation': {'content': '\n'.join(formula_lines)}}]},
+            },
+            'next_index': i + 1,
+        }
+
+    m = _re.match(r'^\$\$(.+)\$\$$', line)
+    if m:
+        return {
+            'block': {
+                'block_type': 2,
+                'text': {'elements': [{'equation': {'content': m.group(1)}}]},
+            },
+            'next_index': i + 1,
+        }
+
+    cm = _CODE_FENCE_RE.match(line)
+    if cm:
+        lang = cm.group(1).strip()
+        code_lines = []
+        i += 1
+        while i < len(lines) and not _CODE_FENCE_RE.match(lines[i]):
+            code_lines.append(lines[i])
+            i += 1
+        block = {
+            'block_type': 14,
+            'code': {'elements': [{'text_run': {'content': '\n'.join(code_lines)}}]},
+        }
+        if lang:
+            block['code']['style'] = {'language': _map_code_language(lang)}
+        return {'block': block, 'next_index': i + 1}
+
+    hm = _HEADING_RE.match(line)
+    if hm:
+        level = min(len(hm.group(1)), 9)
+        return {
+            'block': {
+                'block_type': 2 + level,
+                f'heading{level}': {
+                    'elements': _parse_inline_elements(hm.group(2)),
+                },
+            },
+            'next_index': i + 1,
+        }
+
+    tm = _TODO_RE.match(line)
+    if tm:
+        return {
+            'block': {
+                'block_type': 17,
+                'todo': {
+                    'elements': _parse_inline_elements(tm.group(3)),
+                    'style': {'done': tm.group(2).lower() == 'x'},
+                },
+            },
+            'next_index': i + 1,
+        }
+
+    bm = _BULLET_RE.match(line)
+    if bm:
+        return {
+            'block': {
+                'block_type': 12,
+                'bullet': {'elements': _parse_inline_elements(bm.group(2))},
+            },
+            'next_index': i + 1,
+        }
+
+    om = _ORDERED_RE.match(line)
+    if om:
+        return {
+            'block': {
+                'block_type': 13,
+                'ordered': {'elements': _parse_inline_elements(om.group(3))},
+            },
+            'next_index': i + 1,
+        }
+
+    if line.startswith('>'):
+        quote_lines = []
+        while i < len(lines) and lines[i].startswith('>'):
+            stripped = _re.sub(r'^>\s?', '', lines[i])
+            quote_lines.append(stripped)
+            i += 1
+        return {
+            'block': {
+                'block_type': 15,
+                'quote': {'elements': _parse_inline_elements('\n'.join(quote_lines))},
+            },
+            'next_index': i,
+        }
+
+    if _DIVIDER_RE.match(line):
+        return {'block': {'block_type': 22, 'divider': {}}, 'next_index': i + 1}
+
+    if _is_table_line(line) and i + 1 < len(lines) and _is_table_divider(lines[i + 1]):
+        table_lines = [line]
+        i += 1
+        while i < len(lines) and _is_table_line(lines[i]):
+            table_lines.append(lines[i])
+            i += 1
+        parsed = _parse_markdown_table(table_lines)
+        if parsed:
+            return {'block': parsed, 'next_index': i}
+        return {
+            'block': {
+                'block_type': 2,
+                'text': {'elements': [{'text_run': {'content': '\n'.join(table_lines)}}]},
+            },
+            'next_index': i,
+        }
+
+    para_lines = [line]
+    i += 1
+    while i < len(lines) and lines[i].strip() != '' and not _is_block_start(lines[i]):
+        para_lines.append(lines[i])
+        i += 1
+    return {
+        'block': {
+            'block_type': 2,
+            'text': {'elements': _parse_inline_elements('\n'.join(para_lines))},
+        },
+        'next_index': i,
+    }
+
+
+def _is_block_start(line):
+    return (
+        line == '$$' or
+        _re.match(r'^\$\$.+\$\$$', line) is not None or
+        _HEADING_RE.match(line) is not None or
+        _CODE_FENCE_RE.match(line) is not None or
+        _TODO_RE.match(line) is not None or
+        _BULLET_RE.match(line) is not None or
+        _ORDERED_RE.match(line) is not None or
+        line.startswith('>') or
+        _DIVIDER_RE.match(line) is not None or
+        _is_table_line(line)
+    )
+
+
+def _is_table_line(line):
+    return bool(_re.match(r'^\s*\|', line)) or bool(_re.search(r'\|\s*$', line))
+
+
+def _is_table_divider(line):
+    return bool(_re.match(r'^\s*\|?[-:\|\s]+\|?\s*$', line))
+
+
+def _parse_markdown_table(lines):
+    if len(lines) < 2:
+        return None
+    header_cells = _split_table_cells(lines[0])
+    col_count = len(header_cells)
+    if col_count == 0:
+        return None
+    if not _is_table_divider(lines[1]):
+        return None
+    cell_contents = []
+    for cell in header_cells:
+        cell_contents.append(_parse_inline_elements(cell))
+    for r in range(2, len(lines)):
+        cells = _split_table_cells(lines[r])
+        for c in range(col_count):
+            cell_contents.append(_parse_inline_elements(cells[c] if c < len(cells) else ''))
+    row_count = len(lines) - 1
+    return {
+        'block_type': 31,
+        'table': {
+            'property': {
+                'column_size': col_count,
+                'row_size': row_count,
+            },
+        },
+        '_cell_contents': cell_contents,
+    }
+
+
+def _split_table_cells(line):
+    content = line.strip()
+    if content.startswith('|'):
+        content = content[1:]
+    if content.endswith('|'):
+        content = content[:-1]
+    return [s.strip() for s in content.split('|')]
+
+
+def _parse_inline_elements(text):
+    return _parse_inline(text, 0)
+
+
+def _parse_inline(text, start):
+    elements = []
+    i = start
+    while i < len(text):
+        link = _try_parse_link(text, i)
+        if link:
+            inner = _parse_inline(link['inner_text'], 0)
+            elements.extend(_apply_style(inner, 'link', link['url']))
+            i = link['end_pos']
+            continue
+
+        code = _try_parse_code(text, i)
+        if code:
+            elements.append({
+                'text_run': {
+                    'content': code['text'],
+                    'text_element_style': {'inline_code': True},
+                },
+            })
+            i = code['end_pos']
+            continue
+
+        bold = _try_parse_bold(text, i)
+        if bold:
+            inner = _parse_inline(bold['inner_text'], 0)
+            elements.extend(_apply_style(inner, 'bold'))
+            i = bold['end_pos']
+            continue
+
+        italic = _try_parse_italic(text, i)
+        if italic:
+            inner = _parse_inline(italic['inner_text'], 0)
+            elements.extend(_apply_style(inner, 'italic'))
+            i = italic['end_pos']
+            continue
+
+        strike = _try_parse_strikethrough(text, i)
+        if strike:
+            inner = _parse_inline(strike['inner_text'], 0)
+            elements.extend(_apply_style(inner, 'strikethrough'))
+            i = strike['end_pos']
+            continue
+
+        eq = _try_parse_equation(text, i)
+        if eq:
+            elements.append({'equation': {'content': eq['content']}})
+            i = eq['end_pos']
+            continue
+
+        plain_start = i
+        while i < len(text) and not _is_inline_marker_start(text, i):
+            i += 1
+        if i > plain_start:
+            elements.append({'text_run': {'content': text[plain_start:i]}})
+        else:
+            elements.append({'text_run': {'content': text[i]}})
+            i += 1
+
+    return _merge_plain_text(elements)
+
+
+def _is_inline_marker_start(text, i):
+    ch = text[i]
+    return (
+        ch == '[' or
+        ch == '`' or
+        ch == '$' or
+        (ch == '*' and i + 1 < len(text) and text[i + 1] == '*') or
+        (ch == '*' and (i + 1 >= len(text) or text[i + 1] != '*')) or
+        (ch == '~' and i + 1 < len(text) and text[i + 1] == '~')
+    )
+
+
+def _try_parse_link(text, i):
+    if text[i] != '[':
+        return None
+    depth = 1
+    j = i + 1
+    while j < len(text) and depth > 0:
+        if text[j] == '\\':
+            j += 2
+            continue
+        if text[j] == '[':
+            depth += 1
+        elif text[j] == ']':
+            depth -= 1
+        j += 1
+    if depth != 0:
+        return None
+    close_bracket = j - 1
+    if j >= len(text) or text[j] != '(':
+        return None
+    depth = 1
+    j += 1
+    while j < len(text) and depth > 0:
+        if text[j] == '\\':
+            j += 2
+            continue
+        if text[j] == '(':
+            depth += 1
+        elif text[j] == ')':
+            depth -= 1
+        j += 1
+    if depth != 0:
+        return None
+    close_paren = j - 1
+    return {
+        'inner_text': text[i + 1:close_bracket],
+        'url': text[close_bracket + 2:close_paren],
+        'end_pos': j,
+    }
+
+
+def _try_parse_code(text, i):
+    if text[i] != '`':
+        return None
+    end = text.find('`', i + 1)
+    if end == -1 or end == i + 1:
+        return None
+    return {'text': text[i + 1:end], 'end_pos': end + 1}
+
+
+def _try_parse_bold(text, i):
+    if text[i:i + 2] != '**':
+        return None
+    end = text.find('**', i + 2)
+    if end == -1 or end == i + 2:
+        return None
+    return {'inner_text': text[i + 2:end], 'end_pos': end + 2}
+
+
+def _try_parse_italic(text, i):
+    if text[i] != '*' or text[i:i + 2] == '**':
+        return None
+    end = text.find('*', i + 1)
+    if end == -1 or end == i + 1 or text[end:end + 2] == '**':
+        return None
+    return {'inner_text': text[i + 1:end], 'end_pos': end + 1}
+
+
+def _try_parse_strikethrough(text, i):
+    if text[i:i + 2] != '~~':
+        return None
+    end = text.find('~~', i + 2)
+    if end == -1 or end == i + 2:
+        return None
+    return {'inner_text': text[i + 2:end], 'end_pos': end + 2}
+
+
+def _try_parse_equation(text, i):
+    if text[i] != '$':
+        return None
+    if text[i:i + 2] == '$$':
+        end = text.find('$$', i + 2)
+        if end != -1 and end > i + 2:
+            return {'content': text[i + 2:end], 'end_pos': end + 2}
+        return None
+    end = text.find('$', i + 1)
+    if end == -1 or end == i + 1:
+        return None
+    return {'content': text[i + 1:end], 'end_pos': end + 1}
+
+
+def _apply_style(elements, style_type, url=None):
+    result = []
+    for el in elements:
+        if 'equation' in el:
+            result.append(el)
+            continue
+        style = dict(el.get('text_run', {}).get('text_element_style', {}) or {})
+        if style_type == 'bold':
+            style['bold'] = True
+        elif style_type == 'italic':
+            style['italic'] = True
+        elif style_type == 'strikethrough':
+            style['strikethrough'] = True
+        elif style_type == 'link' and url:
+            style['link'] = {'url': url}
+        result.append({'text_run': {'content': el['text_run']['content'], 'text_element_style': style}})
+    return result
+
+
+def _merge_plain_text(elements):
+    result = []
+    current = ''
+    for el in elements:
+        tr = el.get('text_run')
+        if tr and (not tr.get('text_element_style') or len(tr['text_element_style']) == 0):
+            current += tr['content']
+        else:
+            if current:
+                result.append({'text_run': {'content': current}})
+                current = ''
+            result.append(el)
+    if current:
+        result.append({'text_run': {'content': current}})
+    return result
+
+
+def _merge_block_text_elements(block):
+    block_type = next((k for k in block if k != 'block_type'), None)
+    if not block_type:
+        return block
+    data = block[block_type]
+    if not data or not isinstance(data.get('elements'), list):
+        return block
+    return {
+        **block,
+        block_type: {
+            **data,
+            'elements': _merge_plain_text(data['elements']),
+        },
+    }
+
+
+_CODE_LANGUAGE_MAP = {
+    'plaintext': 1, 'abap': 2, 'ada': 3, 'apache': 4, 'apex': 5,
+    'assembly': 6, 'bash': 7, 'sh': 7, 'shell': 60, 'zsh': 7,
+    'csharp': 8, 'cs': 8, 'c#': 8, 'cpp': 9, 'c++': 9, 'c': 10,
+    'cobol': 11, 'css': 12, 'coffeescript': 13, 'coffee': 13,
+    'd': 14, 'dart': 15, 'delphi': 16, 'django': 17, 'dockerfile': 18,
+    'docker': 18, 'erlang': 19, 'fortran': 20, 'foxpro': 21,
+    'go': 22, 'golang': 22, 'groovy': 23, 'html': 24, 'htmlbars': 25,
+    'http': 26, 'haskell': 27, 'json': 28, 'java': 29,
+    'javascript': 30, 'js': 30, 'jsx': 30, 'julia': 31, 'kotlin': 32,
+    'latex': 33, 'lisp': 34, 'logo': 35, 'lua': 36, 'matlab': 37,
+    'makefile': 38, 'markdown': 39, 'md': 39, 'nginx': 40,
+    'objective': 41, 'objectivec': 41, 'openedgeabl': 42, 'php': 43,
+    'perl': 44, 'postscript': 45, 'power': 46, 'powershell': 46,
+    'prolog': 47, 'protobuf': 48, 'python': 49, 'py': 49, 'r': 50,
+    'rpg': 51, 'ruby': 52, 'rb': 52, 'rust': 53, 'sas': 54, 'scss': 55,
+    'sql': 56, 'scala': 57, 'scheme': 58, 'scratch': 59, 'swift': 61,
+    'thrift': 62, 'typescript': 63, 'ts': 63, 'tsx': 63, 'vbscript': 64,
+    'visual': 65, 'xml': 66, 'yaml': 67, 'yml': 67, 'cmake': 68,
+    'diff': 69, 'gherkin': 70, 'graphql': 71, 'glsl': 72,
+    'properties': 73, 'solidity': 74, 'toml': 75,
+}
+
+
+def _map_code_language(lang):
+    return _CODE_LANGUAGE_MAP.get(lang.lower(), 1)
+
+
+# ============================================================
+# 兼容层 helper
+# ============================================================
+
 def make_text_block(content: str) -> Dict[str, Any]:
     """创建一个纯文本块"""
     return {
-        "block_type": 2,
-        "text": {
-            "elements": [{"text_run": {"content": content, "text_element_style": {}}}]
-        }
+        'block_type': 2,
+        'text': {
+            'elements': [{'text_run': {'content': content}}],
+        },
     }
 
 
 def make_heading_block(content: str, level: int = 1) -> Dict[str, Any]:
     """创建一个标题块 (level: 1-9)"""
-    block_type = 2 + level  # heading1 = 3, heading2 = 4, ...
-    field_name = f"heading{level}"
+    block_type = 2 + level
+    field_name = f'heading{level}'
     return {
-        "block_type": block_type,
+        'block_type': block_type,
         field_name: {
-            "elements": [{"text_run": {"content": content, "text_element_style": {}}}]
-        }
+            'elements': [{'text_run': {'content': content}}],
+        },
     }
 
 
 def make_code_block(content: str) -> Dict[str, Any]:
     """创建一个代码块"""
     return {
-        "block_type": 14,
-        "code": {
-            "elements": [{"text_run": {"content": content, "text_element_style": {}}}]
-        }
+        'block_type': 14,
+        'code': {
+            'elements': [{'text_run': {'content': content}}],
+        },
     }
+
+
 
 
 def extract_text_from_block(block: Dict) -> str:

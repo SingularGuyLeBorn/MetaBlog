@@ -237,16 +237,18 @@ export {
 
 // ==================== 飞书工具 ====================
 export {
-  feishuDocCreate, feishuDocRead, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
+  feishuDocCreate, feishuDocRead, feishuDocMeta, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
   feishuDocUpdateBlock, feishuDocDeleteBlock, feishuDocInsertImage, feishuDocShare, feishuDocUnshare,
   feishuImSend, feishuUserSearch,
   feishuWikiSpaceCreate, feishuWikiSpaceList, feishuWikiSpaceGet, feishuWikiSpaceUpdate, feishuWikiSpaceDelete,
-  feishuWikiNodeCreate, feishuWikiNodeList, feishuWikiNodeDelete, feishuWikiMoveDoc,
-  feishuDocCreateDef, feishuDocReadDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
+  feishuWikiNodeCreate, feishuWikiNodeList, feishuWikiNodeDelete, feishuWikiNodeMove, feishuWikiMoveDoc,
+  feishuWikiMemberList, feishuWikiMemberAdd, feishuWikiMemberRemove,
+  feishuDocCreateDef, feishuDocReadDef, feishuDocMetaDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
   feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuDocInsertImageDef, feishuDocShareDef,
   feishuDocUnshareDef, feishuImSendDef, feishuUserSearchDef,
   feishuWikiSpaceCreateDef, feishuWikiSpaceListDef, feishuWikiSpaceGetDef, feishuWikiSpaceUpdateDef, feishuWikiSpaceDeleteDef,
-  feishuWikiNodeCreateDef, feishuWikiNodeListDef, feishuWikiNodeDeleteDef, feishuWikiMoveDocDef,
+  feishuWikiNodeCreateDef, feishuWikiNodeListDef, feishuWikiNodeDeleteDef, feishuWikiNodeMoveDef, feishuWikiMoveDocDef,
+  feishuWikiMemberListDef, feishuWikiMemberAddDef, feishuWikiMemberRemoveDef,
 } from './lark'
 
 // ==================== 语雀工具 ====================
@@ -341,16 +343,18 @@ import { getCurrentTime, testEcho, calculate, getWeather, getCurrentTimeDef, tes
 
 // 飞书工具
 import {
-  feishuDocCreate, feishuDocRead, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
+  feishuDocCreate, feishuDocRead, feishuDocMeta, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
   feishuDocUpdateBlock, feishuDocDeleteBlock, feishuDocInsertImage, feishuDocShare, feishuDocUnshare,
   feishuImSend, feishuUserSearch,
   feishuWikiSpaceCreate, feishuWikiSpaceList, feishuWikiSpaceGet, feishuWikiSpaceUpdate, feishuWikiSpaceDelete,
-  feishuWikiNodeCreate, feishuWikiNodeList, feishuWikiNodeDelete, feishuWikiMoveDoc,
-  feishuDocCreateDef, feishuDocReadDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
+  feishuWikiNodeCreate, feishuWikiNodeList, feishuWikiNodeDelete, feishuWikiNodeMove, feishuWikiMoveDoc,
+  feishuWikiMemberList, feishuWikiMemberAdd, feishuWikiMemberRemove,
+  feishuDocCreateDef, feishuDocReadDef, feishuDocMetaDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
   feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuDocInsertImageDef, feishuDocShareDef,
   feishuDocUnshareDef, feishuImSendDef, feishuUserSearchDef,
   feishuWikiSpaceCreateDef, feishuWikiSpaceListDef, feishuWikiSpaceGetDef, feishuWikiSpaceUpdateDef, feishuWikiSpaceDeleteDef,
-  feishuWikiNodeCreateDef, feishuWikiNodeListDef, feishuWikiNodeDeleteDef, feishuWikiMoveDocDef,
+  feishuWikiNodeCreateDef, feishuWikiNodeListDef, feishuWikiNodeDeleteDef, feishuWikiNodeMoveDef, feishuWikiMoveDocDef,
+  feishuWikiMemberListDef, feishuWikiMemberAddDef, feishuWikiMemberRemoveDef,
 } from './lark'
 
 // 语雀工具
@@ -520,10 +524,11 @@ export function initializeDefaultTools(): void {
     { name: 'test_echo', definition: testEchoDef, executor: testEcho }
   ])
 
-  // 飞书文档工具（12个）
+  // 飞书文档工具（13个）
   registerTools([
     { name: 'feishu_doc_create', definition: feishuDocCreateDef, executor: feishuDocCreate },
     { name: 'feishu_doc_read', definition: feishuDocReadDef, executor: feishuDocRead },
+    { name: 'feishu_doc_meta', definition: feishuDocMetaDef, executor: feishuDocMeta },
     { name: 'feishu_doc_search', definition: feishuDocSearchDef, executor: feishuDocSearch },
     { name: 'feishu_doc_blocks', definition: feishuDocBlocksDef, executor: feishuDocBlocks },
     { name: 'feishu_doc_append', definition: feishuDocAppendDef, executor: feishuDocAppend },
@@ -536,7 +541,7 @@ export function initializeDefaultTools(): void {
     { name: 'feishu_user_search', definition: feishuUserSearchDef, executor: feishuUserSearch }
   ])
 
-  // 飞书 Wiki 知识库工具（8个）
+  // 飞书 Wiki 知识库工具（13个）
   registerTools([
     { name: 'feishu_wiki_space_create', definition: feishuWikiSpaceCreateDef, executor: feishuWikiSpaceCreate },
     { name: 'feishu_wiki_space_list', definition: feishuWikiSpaceListDef, executor: feishuWikiSpaceList },
@@ -546,7 +551,11 @@ export function initializeDefaultTools(): void {
     { name: 'feishu_wiki_node_create', definition: feishuWikiNodeCreateDef, executor: feishuWikiNodeCreate },
     { name: 'feishu_wiki_node_list', definition: feishuWikiNodeListDef, executor: feishuWikiNodeList },
     { name: 'feishu_wiki_node_delete', definition: feishuWikiNodeDeleteDef, executor: feishuWikiNodeDelete },
+    { name: 'feishu_wiki_node_move', definition: feishuWikiNodeMoveDef, executor: feishuWikiNodeMove },
     { name: 'feishu_wiki_move_doc', definition: feishuWikiMoveDocDef, executor: feishuWikiMoveDoc },
+    { name: 'feishu_wiki_member_list', definition: feishuWikiMemberListDef, executor: feishuWikiMemberList },
+    { name: 'feishu_wiki_member_add', definition: feishuWikiMemberAddDef, executor: feishuWikiMemberAdd },
+    { name: 'feishu_wiki_member_remove', definition: feishuWikiMemberRemoveDef, executor: feishuWikiMemberRemove },
   ])
 
   // 语雀文档工具（9个）

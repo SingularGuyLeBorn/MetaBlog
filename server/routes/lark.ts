@@ -101,10 +101,21 @@ async function feishuApi(
 }
 
 /** 解析 JSON body */
+const MAX_BODY_SIZE = 10 * 1024 * 1024; // 10MB
+
 function parseBody(req: any): Promise<any> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on("data", (chunk: Buffer) => chunks.push(chunk));
+    let totalLength = 0;
+    req.on("data", (chunk: Buffer) => {
+      totalLength += chunk.length;
+      if (totalLength > MAX_BODY_SIZE) {
+        req.destroy();
+        reject(new Error("Request body too large (max 10MB)"));
+        return;
+      }
+      chunks.push(chunk);
+    });
     req.on("end", () => {
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString()));
@@ -121,6 +132,24 @@ function sendJson(res: any, status: number, data: any) {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json");
   res.end(JSON.stringify(data));
+}
+
+/** 统一布尔值转换 */
+function normalizeBoolean(value: any): boolean {
+  return value === true || value === 'true' || value === 1 || value === '1';
+}
+
+/** 快速参数校验 */
+function requireParams(res: any, params: Record<string, any>, ...keys: string[]): boolean {
+  const missing = keys.filter((k) => {
+    const v = params[k];
+    return v === undefined || v === null || v === '';
+  });
+  if (missing.length > 0) {
+    sendJson(res, 400, { code: -1, msg: `缺少参数: ${missing.join(', ')}` });
+    return false;
+  }
+  return true;
 }
 
 /** 通用飞书 API 调用（支持 multipart/form-data） */
@@ -163,7 +192,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
     }
     try {
       const body = await parseBody(req);
-      const useUserToken = body.use_user_token === true || body.use_user_token === "true" || body.use_user_token === 1 || body.use_user_token === "1";
+      const useUserToken = normalizeBoolean(body.use_user_token);
       const payload: any = {};
       if (body.title) payload.title = String(body.title);
       if (body.folder_token) payload.folder_token = String(body.folder_token);
@@ -262,7 +291,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       }
 
       structuredLog.info("lark.doc.read", "读取飞书文档", { document_id: documentId });
-      const useUserToken = url.searchParams.get("use_user_token") === "1" || url.searchParams.get("use_user_token") === "true";
+      const useUserToken = normalizeBoolean(url.searchParams.get("use_user_token"));
       const result = await feishuApi("GET", `/docx/v1/documents/${documentId}/raw_content`, undefined, undefined, useUserToken);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
@@ -287,7 +316,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         return;
       }
 
-      const useUserToken = url.searchParams.get("use_user_token") === "1" || url.searchParams.get("use_user_token") === "true";
+      const useUserToken = normalizeBoolean(url.searchParams.get("use_user_token"));
       const result = await feishuApi("GET", `/docx/v1/documents/${documentId}`, undefined, undefined, useUserToken);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
@@ -381,7 +410,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         document_id: documentId,
         block_count: blocks.length,
       });
-      const useUserToken = body.use_user_token === true || body.use_user_token === "true" || body.use_user_token === 1 || body.use_user_token === "1";
+      const useUserToken = normalizeBoolean(body.use_user_token);
 
       const results: any[] = [];
       let normalBatch: any[] = [];
@@ -604,7 +633,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
 
       structuredLog.info("lark.doc.update_block", "更新文档块", { document_id, block_id });
       const patchBody = convertPatchBody(updateData);
-      const useUserToken = body.use_user_token === true || body.use_user_token === "true" || body.use_user_token === 1 || body.use_user_token === "1";
+      const useUserToken = normalizeBoolean(body.use_user_token);
       const result = await feishuApi(
         "PATCH",
         `/docx/v1/documents/${document_id}/blocks/${block_id}`,
@@ -640,7 +669,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       }
 
       structuredLog.info("lark.doc.delete_block", "删除文档块", { document_id: documentId, block_id: blockId });
-      const useUserTokenDel = body.use_user_token === true || body.use_user_token === "true" || body.use_user_token === 1 || body.use_user_token === "1";
+      const useUserTokenDel = normalizeBoolean(body.use_user_token);
 
       // 1. 获取父块（文档根 Page）的所有子块，查找目标索引
       const listResult = await feishuApi(
@@ -759,7 +788,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         size: imageBuffer.length,
       });
 
-      const useUserTokenImg = body.use_user_token === true || body.use_user_token === "true" || body.use_user_token === 1 || body.use_user_token === "1";
+      const useUserTokenImg = normalizeBoolean(body.use_user_token);
       const uploadResult = await feishuApiMultipart("/drive/v1/medias/upload_all", formData, useUserTokenImg);
       if (uploadResult.code !== 0) {
         sendJson(res, 400, { code: uploadResult.code, msg: `上传素材失败: ${uploadResult.msg}` });
@@ -863,7 +892,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         member_type: finalMemberType,
         perm,
       });
-      const useUserTokenShare = body.use_user_token === true || body.use_user_token === "true" || body.use_user_token === 1 || body.use_user_token === "1";
+      const useUserTokenShare = normalizeBoolean(body.use_user_token);
       const result = await feishuApi(
         "POST",
         `/drive/v1/permissions/${document_id}/members`,
@@ -937,7 +966,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       }
 
       structuredLog.info("lark.doc.unshare", "取消文档权限", { document_id, member_id: finalMemberId });
-      const useUserTokenUnshare = body.use_user_token === true || body.use_user_token === "true" || body.use_user_token === 1 || body.use_user_token === "1";
+      const useUserTokenUnshare = normalizeBoolean(body.use_user_token);
       const result = await feishuApi(
         "DELETE",
         `/drive/v1/permissions/${document_id}/members/${finalMemberId}`,
@@ -1076,7 +1105,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   });
 
   // ============================================
-  // Wiki 知识库: 列出空间
+  // Wiki 知识库: 列出空间（自动翻页）
   // GET /api/lark/wiki/space/list
   // ============================================
   server.middlewares.use("/api/lark/wiki/space/list", async (req, res, next) => {
@@ -1085,8 +1114,29 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const url = new URL(req.url || "", `http://localhost`);
       const page_size = url.searchParams.get("page_size") || "10";
       structuredLog.info("lark.wiki.space.list", "获取飞书知识库列表");
-      const result = await feishuApi("GET", "/wiki/v2/spaces", undefined, { page_size });
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+
+      const allItems: any[] = [];
+      let pageToken: string | null = null;
+      while (true) {
+        const params: Record<string, string> = { page_size };
+        if (pageToken) params.page_token = pageToken;
+        const result = await feishuApi("GET", "/wiki/v2/spaces", undefined, params);
+        if (result.code !== 0) {
+          sendJson(res, 400, result);
+          return;
+        }
+        const items = result.data?.items || [];
+        allItems.push(...items);
+        if (!result.data?.has_more) break;
+        pageToken = result.data?.page_token;
+        if (!pageToken) break;
+      }
+
+      sendJson(res, 200, {
+        code: 0,
+        msg: "success",
+        data: { items: allItems },
+      });
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
     }
@@ -1186,7 +1236,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   });
 
   // ============================================
-  // Wiki 知识库: 列出节点
+  // Wiki 知识库: 列出节点（自动翻页）
   // GET /api/lark/wiki/node/list
   // ============================================
   server.middlewares.use("/api/lark/wiki/node/list", async (req, res, next) => {
@@ -1198,12 +1248,33 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         sendJson(res, 400, { code: -1, msg: "缺少 space_id 参数" });
         return;
       }
-      const params: Record<string, string> = { page_size: url.searchParams.get("page_size") || "10" };
+      const pageSize = url.searchParams.get("page_size") || "10";
       const parent_node_token = url.searchParams.get("parent_node_token");
-      if (parent_node_token) params.parent_node_token = parent_node_token;
       structuredLog.info("lark.wiki.node.list", "获取飞书知识库节点列表", { space_id });
-      const result = await feishuApi("GET", `/wiki/v2/spaces/${space_id}/nodes`, undefined, params);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+
+      const allItems: any[] = [];
+      let pageToken: string | null = null;
+      while (true) {
+        const params: Record<string, string> = { page_size: pageSize };
+        if (parent_node_token) params.parent_node_token = parent_node_token;
+        if (pageToken) params.page_token = pageToken;
+        const result = await feishuApi("GET", `/wiki/v2/spaces/${space_id}/nodes`, undefined, params);
+        if (result.code !== 0) {
+          sendJson(res, 400, result);
+          return;
+        }
+        const items = result.data?.items || [];
+        allItems.push(...items);
+        if (!result.data?.has_more) break;
+        pageToken = result.data?.page_token;
+        if (!pageToken) break;
+      }
+
+      sendJson(res, 200, {
+        code: 0,
+        msg: "success",
+        data: { items: allItems },
+      });
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
     }
@@ -1251,6 +1322,113 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       if (body.title) payload.title = String(body.title);
       structuredLog.info("lark.wiki.move_doc", "将文档迁入 Wiki", { space_id, doc_token });
       const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/nodes/move_docs_to_wiki`, payload, undefined, true);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // 文档: 读取元数据
+  // GET /api/lark/doc/meta?document_id=xxx
+  // ============================================
+  server.middlewares.use("/api/lark/doc/meta", async (req, res, next) => {
+    if (req.method !== "GET") { next(); return; }
+    try {
+      const url = new URL(req.url!, `http://localhost`);
+      const documentId = url.searchParams.get("document_id");
+      if (!documentId) {
+        sendJson(res, 400, { code: -1, msg: "缺少 document_id 参数" });
+        return;
+      }
+      const useUserToken = normalizeBoolean(url.searchParams.get("use_user_token"));
+      const result = await feishuApi("GET", `/docx/v1/documents/${documentId}`, undefined, undefined, useUserToken);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // Wiki 知识库: 移动节点
+  // POST /api/lark/wiki/node/move
+  // ============================================
+  server.middlewares.use("/api/lark/wiki/node/move", async (req, res, next) => {
+    if (req.method !== "POST") { next(); return; }
+    try {
+      const body = await parseBody(req);
+      const space_id = body.space_id;
+      const node_token = body.node_token;
+      if (!requireParams(res, body, 'space_id', 'node_token')) return;
+      const payload: any = {};
+      if (body.parent_node_token) payload.parent_node_token = String(body.parent_node_token);
+      structuredLog.info("lark.wiki.node.move", "移动飞书知识库节点", { space_id, node_token });
+      const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/nodes/${node_token}/move`, payload, undefined, true);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // Wiki 知识库: 成员列表
+  // GET /api/lark/wiki/member/list?space_id=xxx
+  // ============================================
+  server.middlewares.use("/api/lark/wiki/member/list", async (req, res, next) => {
+    if (req.method !== "GET") { next(); return; }
+    try {
+      const url = new URL(req.url || "", `http://localhost`);
+      const space_id = url.searchParams.get("space_id");
+      if (!space_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 space_id 参数" });
+        return;
+      }
+      const page_size = url.searchParams.get("page_size") || "100";
+      structuredLog.info("lark.wiki.member.list", "获取飞书知识库成员列表", { space_id });
+      const result = await feishuApi("GET", `/wiki/v2/spaces/${space_id}/members`, undefined, { page_size });
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // Wiki 知识库: 添加成员
+  // POST /api/lark/wiki/member/add
+  // ============================================
+  server.middlewares.use("/api/lark/wiki/member/add", async (req, res, next) => {
+    if (req.method !== "POST") { next(); return; }
+    try {
+      const body = await parseBody(req);
+      const space_id = body.space_id;
+      const member_id = body.member_id;
+      if (!requireParams(res, body, 'space_id', 'member_id')) return;
+      const payload = {
+        member_type: body.member_type || "user",
+        member_id: String(member_id),
+        perm: body.perm || "view",
+      };
+      structuredLog.info("lark.wiki.member.add", "添加飞书知识库成员", { space_id, member_id });
+      const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/members`, payload);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // Wiki 知识库: 移除成员
+  // POST /api/lark/wiki/member/remove
+  // ============================================
+  server.middlewares.use("/api/lark/wiki/member/remove", async (req, res, next) => {
+    if (req.method !== "POST") { next(); return; }
+    try {
+      const body = await parseBody(req);
+      const space_id = body.space_id;
+      const member_id = body.member_id;
+      if (!requireParams(res, body, 'space_id', 'member_id')) return;
+      structuredLog.info("lark.wiki.member.remove", "移除飞书知识库成员", { space_id, member_id });
+      const result = await feishuApi("DELETE", `/wiki/v2/spaces/${space_id}/members/${member_id}`);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
