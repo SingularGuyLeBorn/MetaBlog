@@ -49,4 +49,4 @@ tags:
 
 ## 示例对话
 用户：“我想给飞书加一个‘自动生成甘特图’的功能，怎么开始？”
-引导：“先别急着写 TS，我们先去 /docs-internal/feishu-api-lab 跑一个 Python 压测脚本，确认一下飞书甘特块的 JSON Schema...”
+引导：“先别急着写 TS，我们先去 project/experiments/feishu-api 跑一个 Python 压测脚本，确认一下飞书甘特块的 JSON Schema...”
