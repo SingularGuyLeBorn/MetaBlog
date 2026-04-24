@@ -58,14 +58,29 @@ tools/
 │
 ├── article/               # 文章管理工具
 │   ├── index.ts          # 导出所有工具
-│   ├── definitions.ts    # 工具定义（给 AI 看）
-│   └── executors.ts      # 执行器（实际实现）
+│   └── <feature>.ts      # 工具定义 + 执行器（同一文件）
 │
+├── lark/                  # 飞书工具（已拆分）
+│   ├── index.ts
+│   ├── doc.ts            # 文档工具
+│   ├── wiki.ts           # Wiki 工具
+│   ├── im.ts             # IM 工具
+│   ├── user.ts           # 用户工具
+│   ├── image.ts          # 图片工具
+│   └── permission.ts     # 权限工具
+│
+├── yuque/                 # 语雀工具（已拆分）
+│   ├── index.ts
+│   ├── repo.ts           # 知识库工具
+│   ├── doc.ts            # 文档工具
+│   ├── image.ts          # 图片工具
+│   ├── search.ts         # 搜索工具
+│   └── toc.ts            # 目录工具
+│
+├── github/                # GitHub 操作工具
 ├── academic/              # 学术研究工具
 ├── file/                  # 文件操作工具
 ├── platform/              # 平台解析工具
-├── github/                # GitHub 操作工具
-├── kb/                    # 知识库工具
 ├── note/                  # 笔记工具
 ├── text/                  # 文本处理工具
 ├── code/                  # 代码工具
@@ -75,43 +90,14 @@ tools/
 
 ## 如何添加新工具
 
-### 步骤 1: 创建执行器
-在对应目录的 `executors.ts` 中添加：
-```typescript
-export const myTool: ToolExecutor = async (args): Promise<ToolResult> => {
-  // 1. 参数验证
-  if (!args.requiredParam) {
-    return createErrorResult(
-      'Missing required parameter',
-      '请提供必需的参数',
-      '示例: my_tool(requiredParam="值")'
-    )
-  }
-  
-  // 2. 执行业务逻辑
-  try {
-    const result = await doSomething(args)
-    
-    // 3. 返回成功结果
-    return createSuccessResult(
-      result,
-      '操作成功',
-      'my_tool'
-    )
-  } catch (error: any) {
-    // 4. 返回错误结果
-    return createErrorResult(
-      error.message,
-      '操作失败',
-      '请稍后重试'
-    )
-  }
-}
-```
+### 步骤 1: 创建分类文件
+在对应目录创建 `<feature>.ts`，同时包含定义和执行器：
 
-### 步骤 2: 创建定义
-在对应目录的 `definitions.ts` 中添加：
 ```typescript
+import type { ToolDefinition, ToolExecutor } from '@/theme/tools/types'
+import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+
+// --- 工具定义（给 AI 看） ---
 export const myToolDef: ToolDefinition = {
   type: 'function',
   function: {
@@ -134,16 +120,37 @@ export const myToolDef: ToolDefinition = {
     }
   }
 }
+// --- 执行器（实际实现） ---
+export const myTool: ToolExecutor = async (args): Promise<ToolResult> => {
+  // 1. 参数验证
+  if (!args.requiredParam) {
+    return createErrorResult(
+      'Missing required parameter',
+      '请提供必需的参数',
+      '示例: my_tool(requiredParam="值")'
+    )
+  }
+
+  // 2. 执行业务逻辑
+  try {
+    const result = await doSomething(args)
+
+    // 3. 返回成功结果
+    return createSuccessResult(result, '操作成功', 'my_tool')
+  } catch (error: any) {
+    // 4. 返回错误结果
+    return createErrorResult(error.message, '操作失败', '请稍后重试')
+  }
+}
 ```
 
-### 步骤 3: 导出工具
+### 步骤 2: 导出工具
 在对应目录的 `index.ts` 中导出：
 ```typescript
-export { myTool } from './executors'
-export { myToolDef } from './definitions'
+export { myTool, myToolDef } from './feature'
 ```
 
-### 步骤 4: 注册工具
+### 步骤 3: 注册工具
 在 `index.ts` 的 `initializeDefaultTools()` 中注册：
 ```typescript
 import { myTool, myToolDef } from './xxx'
