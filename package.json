@@ -14,6 +14,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:python": "cd project/experiments/feishu-api && python -m pytest test_feishu_client.py -v && cd ../yuque-api && python -m pytest test_lake_builder.py -v",
     "check:structure": "node scripts/structure-checker.js",
     "check:structure:dry": "node scripts/structure-checker.js --dry-run",
     "check:structure:verbose": "node scripts/structure-checker.js --verbose",
