@@ -26,3 +26,7 @@ web-access/
 # pnpm workspace (auto-generated)
 pnpm-workspace.yaml
 
+# Python
+__pycache__/
+*.pyc
+*.pyo

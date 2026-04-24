@@ -386,6 +386,6 @@ yuque_doc_create(
 - **后端路由**：`server/routes/yuque.ts`
 - **前端工具定义**：`src/theme/tools/yuque/definitions.ts`
 - **前端工具执行器**：`src/theme/tools/yuque/executors.ts`
-- **Python 客户端**：`docs-internal/yuque-api-lab/yuque_client.py`
-- **Lake 构建器**：`docs-internal/yuque-api-lab/lake_builder.py`
-- **测试 Notebook**：`docs-internal/yuque-api-lab/99_yuque_api_showcase.ipynb`
+- **Python 客户端**：`project/experiments/yuque-api/yuque_client.py`
+- **Lake 构建器**：`project/experiments/yuque-api/lake_builder.py`
+- **测试 Notebook**：`project/experiments/yuque-api/99_yuque_api_showcase.ipynb`
