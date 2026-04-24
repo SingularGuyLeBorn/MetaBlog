@@ -203,6 +203,185 @@ class FeishuClient:
         except Exception as e:
             return {"ok": False, "error": str(e)}
 
+    # ============ Wiki 知识库 API ============
+
+    def create_wiki_space(self, name: str, description: Optional[str] = None) -> Dict[str, Any]:
+        """
+        创建知识库空间（Wiki Space）
+
+        参数:
+            name: 知识库名称
+            description: 知识库描述
+
+        返回:
+            { space: { space_id, name, description, ... } }
+        """
+        payload = {"name": name}
+        if description:
+            payload["description"] = description
+        return self.api("POST", "/wiki/v2/spaces", json_data=payload)
+
+    def list_wiki_spaces(self, page_size: int = 10) -> List[Dict[str, Any]]:
+        """
+        获取知识库空间列表
+
+        参数:
+            page_size: 每页数量 (1-50)
+
+        返回:
+            知识库空间列表
+        """
+        result = self.api("GET", "/wiki/v2/spaces", params={"page_size": page_size})
+        return result.get("items", [])
+
+    def get_wiki_space(self, space_id: str) -> Dict[str, Any]:
+        """
+        获取知识库空间详情
+
+        参数:
+            space_id: 知识库空间 ID
+        """
+        return self.api("GET", f"/wiki/v2/spaces/{space_id}")
+
+    def update_wiki_space(self, space_id: str, name: Optional[str] = None,
+                          description: Optional[str] = None) -> Dict[str, Any]:
+        """
+        更新知识库空间信息
+
+        参数:
+            space_id: 知识库空间 ID
+            name: 新名称
+            description: 新描述
+        """
+        payload = {}
+        if name is not None:
+            payload["name"] = name
+        if description is not None:
+            payload["description"] = description
+        return self.api("PATCH", f"/wiki/v2/spaces/{space_id}", json_data=payload)
+
+    def delete_wiki_space(self, space_id: str) -> None:
+        """
+        删除知识库空间
+
+        参数:
+            space_id: 知识库空间 ID
+        """
+        self.api("DELETE", f"/wiki/v2/spaces/{space_id}")
+
+    def list_wiki_nodes(self, space_id: str, parent_node_token: Optional[str] = None,
+                        page_size: int = 10) -> List[Dict[str, Any]]:
+        """
+        获取知识库节点列表
+
+        参数:
+            space_id: 知识库空间 ID
+            parent_node_token: 父节点 token，不传则获取根节点
+            page_size: 每页数量
+
+        返回:
+            节点列表，每项包含 node_token, obj_type, title, has_child 等
+        """
+        params = {"page_size": page_size}
+        if parent_node_token:
+            params["parent_node_token"] = parent_node_token
+        result = self.api("GET", f"/wiki/v2/spaces/{space_id}/nodes", params=params)
+        return result.get("items", [])
+
+    def create_wiki_node(self, space_id: str, node_type: str = "origin",
+                         obj_type: str = "docx", parent_node_token: Optional[str] = None,
+                         title: Optional[str] = None,
+                         node_token: Optional[str] = None) -> Dict[str, Any]:
+        """
+        在知识库中创建节点
+
+        参数:
+            space_id: 知识库空间 ID
+            node_type: 节点类型，默认 "origin"（普通节点）
+            obj_type: 对象类型，默认 "docx"
+            parent_node_token: 父节点 token，不传则挂载到根节点
+            title: 节点标题（创建 docx 时需要）
+            node_token: 指定节点 token（可选）
+
+        返回:
+            { node: { node_token, obj_token, ... } }
+        """
+        payload: Dict[str, Any] = {"node_type": node_type, "obj_type": obj_type}
+        if parent_node_token:
+            payload["parent_node_token"] = parent_node_token
+        if title:
+            payload["title"] = title
+        if node_token:
+            payload["node_token"] = node_token
+        return self.api("POST", f"/wiki/v2/spaces/{space_id}/nodes", json_data=payload)
+
+    def move_wiki_node(self, space_id: str, node_token: str,
+                       parent_node_token: Optional[str] = None) -> Dict[str, Any]:
+        """
+        移动知识库节点
+
+        参数:
+            space_id: 知识库空间 ID
+            node_token: 要移动的节点 token
+            parent_node_token: 目标父节点 token，不传则移动到根节点
+        """
+        payload: Dict[str, Any] = {}
+        if parent_node_token:
+            payload["parent_node_token"] = parent_node_token
+        return self.api("PATCH", f"/wiki/v2/spaces/{space_id}/nodes/{node_token}", json_data=payload)
+
+    def delete_wiki_node(self, space_id: str, node_token: str) -> None:
+        """
+        删除知识库节点
+
+        参数:
+            space_id: 知识库空间 ID
+            node_token: 节点 token
+        """
+        self.api("DELETE", f"/wiki/v2/spaces/{space_id}/nodes/{node_token}")
+
+    def list_wiki_members(self, space_id: str, page_size: int = 100) -> List[Dict[str, Any]]:
+        """
+        获取知识库成员列表
+
+        参数:
+            space_id: 知识库空间 ID
+            page_size: 每页数量
+
+        返回:
+            成员列表
+        """
+        result = self.api("GET", f"/wiki/v2/spaces/{space_id}/members", params={"page_size": page_size})
+        return result.get("items", [])
+
+    def add_wiki_member(self, space_id: str, member_type: str, member_id: str,
+                        perm: str = "view") -> Dict[str, Any]:
+        """
+        添加知识库成员
+
+        参数:
+            space_id: 知识库空间 ID
+            member_type: 成员类型，"user" 或 "chat"
+            member_id: 成员 open_id 或 chat_id
+            perm: 权限，"view"（可阅读）或 "edit"（可编辑）
+        """
+        payload = {
+            "member_type": member_type,
+            "member_id": member_id,
+            "perm": perm,
+        }
+        return self.api("POST", f"/wiki/v2/spaces/{space_id}/members", json_data=payload)
+
+    def remove_wiki_member(self, space_id: str, member_id: str) -> None:
+        """
+        移除知识库成员
+
+        参数:
+            space_id: 知识库空间 ID
+            member_id: 成员 ID
+        """
+        self.api("DELETE", f"/wiki/v2/spaces/{space_id}/members/{member_id}")
+
 
 # ============ Markdown → 飞书块 转换器 ============
 

@@ -213,6 +213,161 @@ class YuqueClient:
         result = self.api("GET", f"/api/books/{book_id}/toc")
         return result.get("data", {}).get("toc", [])
 
+    def create_book(
+        self,
+        name: str,
+        slug: Optional[str] = None,
+        description: Optional[str] = None,
+        type: str = "Book",
+        public: int = 0,
+    ) -> Dict[str, Any]:
+        """
+        创建知识库
+
+        参数:
+            name:        知识库名称
+            slug:        知识库路径（URL 标识，如 "api-test"）
+            description: 知识库描述
+            type:        类型，"Book"（普通知识库）或 "Design"（设计知识库）
+            public:      可见性（0=私密, 1=互联网公开, 2=空间成员公开）
+
+        返回:
+            创建的知识库信息，包含 id, slug, name 等
+        """
+        payload: Dict[str, Any] = {
+            "name": name,
+            "type": type,
+            "public": public,
+        }
+        if slug:
+            payload["slug"] = slug
+        if description:
+            payload["description"] = description
+
+        result = self.api(
+            "POST",
+            "/api/books",
+            data=payload,
+            referer=f"{self.BASE_URL}/dashboard/books",
+        )
+        # 创建成功后清除缓存
+        self._books_cache = None
+        return result.get("data", {})
+
+    def update_book(
+        self,
+        book_id: int,
+        name: Optional[str] = None,
+        slug: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        更新知识库信息
+
+        参数:
+            book_id:     知识库数字 ID
+            name:        新名称（可选）
+            slug:        新路径（可选）
+            description: 新描述（可选）
+
+        返回:
+            更新后的知识库信息
+        """
+        payload: Dict[str, Any] = {}
+        if name is not None:
+            payload["name"] = name
+        if slug is not None:
+            payload["slug"] = slug
+        if description is not None:
+            payload["description"] = description
+
+        result = self.api(
+            "PUT",
+            f"/api/books/{book_id}",
+            data=payload,
+            referer=f"{self.BASE_URL}/{book_id}",
+        )
+        self._books_cache = None
+        return result.get("data", {})
+
+    def delete_book(self, book_id: int) -> bool:
+        """
+        删除知识库
+
+        参数:
+            book_id: 知识库数字 ID
+
+        返回:
+            True 表示删除成功
+
+        警告:
+            删除操作不可逆！会同时删除知识库下的所有文档。
+        """
+        result = self.api(
+            "DELETE",
+            f"/api/books/{book_id}",
+            referer=f"{self.BASE_URL}/{book_id}",
+        )
+        self._books_cache = None
+        return "data" in result
+
+    def get_book_detail(self, book_id: int) -> Dict[str, Any]:
+        """
+        获取知识库详情
+
+        参数:
+            book_id: 知识库数字 ID
+
+        返回:
+            知识库详细信息
+        """
+        result = self.api("GET", f"/api/books/{book_id}")
+        return result.get("data", {})
+
+    def get_book_setting(self, book_id: int) -> Dict[str, Any]:
+        """
+        获取知识库设置
+
+        参数:
+            book_id: 知识库数字 ID
+
+        返回:
+            知识库设置信息，包含 public（可见性）、comment_status（评论设置）等
+        """
+        result = self.api("GET", f"/api/books/{book_id}/setting")
+        return result.get("data", {})
+
+    def update_book_setting(
+        self,
+        book_id: int,
+        public: Optional[int] = None,
+        comment_status: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """
+        更新知识库设置
+
+        参数:
+            book_id:        知识库数字 ID
+            public:         可见性（0=私密, 1=互联网公开, 2=空间成员公开）
+            comment_status: 评论设置（0=关闭, 1=开启）
+
+        返回:
+            更新后的设置信息
+        """
+        payload: Dict[str, Any] = {}
+        if public is not None:
+            payload["public"] = public
+        if comment_status is not None:
+            payload["comment_status"] = comment_status
+
+        result = self.api(
+            "PUT",
+            f"/api/books/{book_id}/setting",
+            data=payload,
+            referer=f"{self.BASE_URL}/{book_id}/setting",
+        )
+        return result.get("data", {})
+
     # -------------------------------------------------------------------------
     # 便捷方法：文档操作
     # -------------------------------------------------------------------------
