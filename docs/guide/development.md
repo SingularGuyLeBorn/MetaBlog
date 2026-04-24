@@ -56,6 +56,9 @@ MetaBlog/
 │       ├── types/             # TypeScript 类型
 │       └── utils/             # 工具函数
 │
+├── tests/                     # 测试套件
+│   └── markdown-to-blocks.test.ts  # Markdown 转飞书块测试
+│
 ├── scripts/                   # 构建脚本
 │   ├── migrate-data.cjs       # 数据迁移
 │   └── structure-checker.js   # 文档结构检查
