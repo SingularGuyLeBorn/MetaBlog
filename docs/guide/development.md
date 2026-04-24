@@ -98,18 +98,17 @@ MetaBlog/
 
 ### 工具开发规范
 
-1. **定义文件**（`definitions.ts`）：
+1. **分类文件**（如 `doc.ts`、`wiki.ts`、`repo.ts`）：
+   - 每个文件同时包含 **ToolDefinition**（Schema 定义）和 **ToolExecutor**（执行器）
    - `description` 必须清晰，让 AI 知道何时调用
    - 每个参数都要有 `description`
    - `required` 必须包含所有不可省略的参数
-
-2. **执行器文件**（`executors.ts`）：
    - 必须做参数校验
    - 使用 `createSuccessResult` / `createErrorResult` 返回
    - 错误信息需要中英文双语
 
-3. **注册文件**（`index.ts`）：
-   - 统一导出定义和执行器
+2. **注册文件**（`index.ts`）：
+   - 统一从分类文件导出定义和执行器
    - 在 `src/theme/tools/index.ts` 中注册
 
 ---

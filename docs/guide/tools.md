@@ -204,17 +204,19 @@ Function Calling (OpenAI 格式)
 
 ```
 src/theme/tools/<category>/
-├── definitions.ts   # 工具 Schema 定义
-├── executors.ts     # 工具执行逻辑
+├── <feature>.ts     # 工具定义 + 执行器（同一文件）
+├── ...              # 其他功能分类文件
 └── index.ts         # 统一导出
 ```
 
-### 第 1 步：定义工具 Schema
+### 第 1 步：定义工具 Schema 和执行器
 
 ```typescript
-// src/theme/tools/my-category/definitions.ts
-import type { ToolDefinition } from '@/theme/tools/types'
+// src/theme/tools/my-category/feature.ts
+import type { ToolDefinition, ToolExecutor } from '@/theme/tools/types'
+import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 
+// --- 定义 ---
 export const myToolDef: ToolDefinition = {
   type: 'function',
   function: {
@@ -232,15 +234,8 @@ export const myToolDef: ToolDefinition = {
     }
   }
 }
-```
 
-### 第 2 步：实现执行器
-
-```typescript
-// src/theme/tools/my-category/executors.ts
-import type { ToolExecutor } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
-
+// --- 执行器 ---
 export const myTool: ToolExecutor = async (args) => {
   const { param1 } = args
 
@@ -263,8 +258,7 @@ export const myTool: ToolExecutor = async (args) => {
 
 ```typescript
 // src/theme/tools/my-category/index.ts
-export { myTool } from './executors'
-export { myToolDef } from './definitions'
+export { myTool, myToolDef } from './feature'
 
 // src/theme/tools/index.ts
 import { myTool, myToolDef } from './my-category'

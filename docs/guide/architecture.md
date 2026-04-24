@@ -63,9 +63,12 @@ vitepress/
 │   │       ├── AgentPanel.vue
 │   │       └── ...
 │   ├── tools/             # 工具系统
-│   │   ├── definitions.ts # 工具 Schema 定义
-│   │   ├── executors.ts   # 工具执行器
-│   │   └── registry.ts    # 工具注册表
+│   │   ├── article/       # 文章管理工具
+│   │   ├── github/        # GitHub 工具
+│   │   ├── lark/          # 飞书工具（按功能分类：doc.ts, wiki.ts, ...）
+│   │   ├── yuque/         # 语雀工具（按功能分类：repo.ts, doc.ts, ...）
+│   │   ├── registry.ts    # 工具注册表
+│   │   └── index.ts       # 统一入口
 │   ├── composables/       # Vue 组合式函数
 │   ├── services/          # 前端服务层
 │   └── stores/            # Pinia 状态管理
