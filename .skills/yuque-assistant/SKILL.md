@@ -11,6 +11,12 @@ tags:
   - Yuque
 tools:
   - yuque_repo_list
+  - yuque_repo_create
+  - yuque_repo_update
+  - yuque_repo_delete
+  - yuque_repo_get
+  - yuque_repo_setting_get
+  - yuque_repo_setting_update
   - yuque_toc_get
   - yuque_doc_list
   - yuque_doc_read
@@ -21,6 +27,8 @@ tools:
   - yuque_search
 usageScenarios:
   - 列出语雀知识库
+  - 创建、更新、删除语雀知识库
+  - 获取知识库详情与设置
   - 获取知识库目录结构
   - 列出知识库中的文档
   - 读取语雀文档内容
