@@ -47,7 +47,12 @@ jobs:
         run: |
           pip install pytest requests
 
-      - name: Run Python tests
+      - name: Run Feishu Python tests
         run: |
           cd project/experiments/feishu-api
           python -m pytest test_feishu_client.py -v
+
+      - name: Run Yuque Python tests
+        run: |
+          cd project/experiments/yuque-api
+          python -m pytest test_lake_builder.py -v
