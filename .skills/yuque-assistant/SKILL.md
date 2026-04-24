@@ -392,8 +392,12 @@ yuque_doc_create(
 ## 相关文件
 
 - **后端路由**：`server/routes/yuque.ts`
-- **前端工具定义**：`src/theme/tools/yuque/definitions.ts`
-- **前端工具执行器**：`src/theme/tools/yuque/executors.ts`
+- **前端工具定义与执行器**：`src/theme/tools/yuque/` 下按功能分类的文件
+  - `repo.ts`（知识库管理）
+  - `doc.ts`（文档操作）
+  - `image.ts`（图片上传）
+  - `search.ts`（搜索）
+  - `toc.ts`（目录获取）
 - **Python 客户端**：`project/experiments/yuque-api/yuque_client.py`
 - **Lake 构建器**：`project/experiments/yuque-api/lake_builder.py`
 - **测试 Notebook**：`project/experiments/yuque-api/99_yuque_api_showcase.ipynb`
