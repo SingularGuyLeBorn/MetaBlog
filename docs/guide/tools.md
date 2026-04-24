@@ -42,7 +42,7 @@ Function Calling (OpenAI 格式)
 | `update_article` | 更新文章 | `update_article(path="...", content="...", mode="append")` |
 | `delete_article` | 删除文章 | `delete_article(path="...", confirm=true)` |
 
-### GitHub（6个）
+### GitHub 仓库查询与管理（13个）
 
 | 工具名 | 功能 |
 |--------|------|
@@ -51,7 +51,60 @@ Function Calling (OpenAI 格式)
 | `github_get_file_content` | 读取源码文件 |
 | `github_search_code` | 搜索开源代码 |
 | `github_get_commit_history` | 查看提交历史 |
+| `github_get_readme` | 获取 README |
+| `github_compare_commits` | 对比提交差异 |
+| `github_get_rate_limit` | 查看 API 限额 |
+| `github_search_repos` | 搜索仓库 |
+| `github_create_repo` | 创建仓库 |
+| `github_update_repo` | 更新仓库 |
+| `github_delete_repo` | 删除仓库 |
+| `github_create_release` | 创建 Release |
+
+### GitHub Issue（6个）
+
+| 工具名 | 功能 |
+|--------|------|
 | `github_get_issues` | 查看 Issues |
+| `github_create_issue` | 创建 Issue |
+| `github_create_issue_comment` | 创建评论 |
+| `github_update_issue` | 更新 Issue |
+| `github_list_issue_comments` | 列出评论 |
+| `github_search_issues` | 搜索 Issues |
+
+### GitHub Pull Request（6个）
+
+| 工具名 | 功能 |
+|--------|------|
+| `github_list_pulls` | 列出 PR |
+| `github_get_pull` | 获取 PR 详情 |
+| `github_create_pull_request` | 创建 PR |
+| `github_merge_pull_request` | 合并 PR |
+| `github_get_pull_request_files` | 获取 PR 文件变更 |
+| `github_create_pull_request_review` | 创建 PR Review |
+
+### GitHub 文件操作（2个）
+
+| 工具名 | 功能 |
+|--------|------|
+| `github_create_or_update_file` | 创建/更新文件 |
+| `github_delete_file` | 删除文件 |
+
+### GitHub 分支与 Fork（4个）
+
+| 工具名 | 功能 |
+|--------|------|
+| `github_create_branch` | 创建分支 |
+| `github_delete_branch` | 删除分支 |
+| `github_fork_repo` | Fork 仓库 |
+| `github_list_branches` | 列出分支 |
+
+### GitHub 工作流（3个）
+
+| 工具名 | 功能 |
+|--------|------|
+| `github_list_workflows` | 列出工作流 |
+| `github_list_workflow_runs` | 列出工作流运行 |
+| `github_trigger_workflow` | 触发工作流 |
 
 ### 飞书文档（13个）
 
