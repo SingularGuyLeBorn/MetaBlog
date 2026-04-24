@@ -202,6 +202,19 @@ function sendJson(res: any, status: number, data: any) {
   res.end(JSON.stringify(data));
 }
 
+/** 快速参数校验 */
+function requireParams(res: any, params: Record<string, any>, ...keys: string[]): boolean {
+  const missing = keys.filter((k) => {
+    const v = params[k];
+    return v === undefined || v === null || v === '';
+  });
+  if (missing.length > 0) {
+    sendJson(res, 400, { code: -1, msg: `缺少参数: ${missing.join(', ')}` });
+    return false;
+  }
+  return true;
+}
+
 // =============================================================================
 // 路由注册辅助函数
 // =============================================================================
@@ -395,10 +408,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       const body = await parseBody(req);
       const { repo_id, title, body_asl, content, format = "lake", public: isPublic } = body;
 
-      if (!repo_id || !title) {
-        sendJson(res, 400, { code: -1, msg: "缺少 repo_id 或 title 参数" });
-        return;
-      }
+      if (!requireParams(res, body, 'repo_id', 'title')) return;
 
       const payload: any = {
         book_id: Number(repo_id),
@@ -460,10 +470,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       const body = await parseBody(req);
       const { repo_id, doc_id, title, body_asl, content, format = "lake", replace_text } = body;
 
-      if (!repo_id || !doc_id) {
-        sendJson(res, 400, { code: -1, msg: "缺少 repo_id 或 doc_id 参数" });
-        return;
-      }
+      if (!requireParams(res, body, 'repo_id', 'doc_id')) return;
 
       const payload: any = { format: String(format) };
       if (title !== undefined) payload.title = String(title);
@@ -574,10 +581,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
     const body = await parseBody(req);
     const { repo_id, doc_id } = body;
 
-    if (!repo_id || !doc_id) {
-      sendJson(res, 400, { code: -1, msg: "缺少 repo_id 或 doc_id 参数" });
-      return;
-    }
+    if (!requireParams(res, body, 'repo_id', 'doc_id')) return;
 
     structuredLog.info("yuque.doc.delete", "删除语雀文档", { repo_id, doc_id });
     const result = await yuqueApi(
@@ -604,10 +608,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       const body = await parseBody(req);
       const { image_base64, file_name } = body;
 
-      if (!image_base64) {
-        sendJson(res, 400, { code: -1, msg: "缺少 image_base64 参数" });
-        return;
-      }
+      if (!requireParams(res, body, 'image_base64')) return;
 
       // 解码 base64
       const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, "");
@@ -664,10 +665,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
     const body = await parseBody(req);
     const { name, slug, description, type, public: publicVal } = body;
 
-    if (!name || !slug) {
-      sendJson(res, 400, { code: -1, msg: "缺少 name 或 slug 参数" });
-      return;
-    }
+    if (!requireParams(res, body, 'name', 'slug')) return;
 
     const payload: any = { name: String(name), slug: String(slug), type: type || "Book", public: publicVal !== undefined ? Number(publicVal) : 0 };
     if (description !== undefined) payload.description = String(description);
@@ -685,11 +683,8 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // ==========================================================================
   registerRoute(server, "/api/yuque/repo/update", ["PUT", "POST"], async (req, res) => {
     const body = await parseBody(req);
+    if (!requireParams(res, body, 'repo_id')) return;
     const repo_id = body.repo_id;
-    if (!repo_id) {
-      sendJson(res, 400, { code: -1, msg: "缺少 repo_id 参数" });
-      return;
-    }
 
     const payload: any = {};
     if (body.name !== undefined) payload.name = String(body.name);
@@ -709,11 +704,8 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // ==========================================================================
   registerRoute(server, "/api/yuque/repo/delete", ["DELETE", "POST"], async (req, res) => {
     const body = await parseBody(req);
+    if (!requireParams(res, body, 'repo_id')) return;
     const repo_id = body.repo_id;
-    if (!repo_id) {
-      sendJson(res, 400, { code: -1, msg: "缺少 repo_id 参数" });
-      return;
-    }
 
     structuredLog.info("yuque.repo.delete", "删除语雀知识库", { repo_id });
     const result = await yuqueApi("DELETE", `/api/books/${repo_id}`, undefined, undefined, `${YUQUE_BASE}/${repo_id}`);
@@ -766,11 +758,8 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // ==========================================================================
   registerRoute(server, "/api/yuque/repo/setting/update", ["PUT", "POST"], async (req, res) => {
     const body = await parseBody(req);
+    if (!requireParams(res, body, 'repo_id')) return;
     const repo_id = body.repo_id;
-    if (!repo_id) {
-      sendJson(res, 400, { code: -1, msg: "缺少 repo_id 参数" });
-      return;
-    }
 
     const payload: any = {};
     if (body.public !== undefined) payload.public = Number(body.public);
