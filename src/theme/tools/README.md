@@ -77,7 +77,16 @@ tools/
 │   ├── search.ts         # 搜索工具
 │   └── toc.ts            # 目录工具
 │
-├── github/                # GitHub 操作工具
+├── github/                # GitHub 操作工具（已拆分）
+│   ├── index.ts
+│   ├── repo.ts           # 仓库查询与管理
+│   ├── issue.ts          # Issue 操作
+│   ├── pull-request.ts   # PR 操作
+│   ├── file.ts           # 文件操作
+│   ├── branch.ts         # 分支与 Fork
+│   ├── workflow.ts       # 工作流
+│   └── utils.ts          # 共享辅助函数
+│
 ├── academic/              # 学术研究工具
 ├── file/                  # 文件操作工具
 ├── platform/              # 平台解析工具
