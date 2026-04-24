@@ -24,7 +24,7 @@ MetaBlog 是一个将**静态博客**、**AI 对话**和**自主 Agent**融为�
 |------|------|
 | 📝 **智能博客** | VitePress 驱动的 Markdown 博客，支持数学公式、代码高亮、Wiki 链接 |
 | 🤖 **AI 对话** | 多模型支持（DeepSeek/Kimi/Zhipu/OpenAI 等），流式响应，思考过程展示 |
-| 🛠️ **工具调用** | 55+ 内置工具 + MCP 外部扩展，AI 可直接操作文件、GitHub、飞书、语雀等 |
+| 🛠️ **工具调用** | 100+ 内置工具 + MCP 外部扩展，AI 可直接操作文件、GitHub、飞书、语雀等 |
 | 🧪 **代码沙箱** | 后端安全执行 Python/JavaScript/Bash，支持数学计算和代码验证 |
 | 👤 **Agent 系统** | 多 Agent 管理、Skill 技能组合、独立会话、工具权限控制 |
 
@@ -127,21 +127,23 @@ pnpm docs:preview
 
 ## 🛠️ 工具系统
 
-内置 **55+** 工具，覆盖 12 个类别：
+内置 **100+** 工具，覆盖 15+ 个类别：
 
 | 类别 | 代表工具 | 数量 |
 |------|---------|------|
 | 文章管理 | `create_article`, `update_article`, `search_articles` | 6 |
-| GitHub | `github_get_repo`, `github_search_code`, `github_get_issues` | 6 |
-| 飞书 | `feishu_doc_create`, `feishu_doc_append`, `feishu_im_send` | 10 |
-| 语雀 | `yuque_doc_create`, `yuque_doc_update`, `yuque_image_upload` | 9 |
-| 网络 | `web_search`, `fetch_url` | 2 |
-| 代码 | `execute_code`, `analyze_code` | 2 |
+| GitHub | `github_get_repo`, `github_create_pr`, `github_merge_pr` | 34 |
+| 飞书文档 | `feishu_doc_create`, `feishu_doc_append`, `feishu_doc_insert_image` | 13 |
+| 飞书 Wiki | `feishu_wiki_space_create`, `feishu_wiki_node_create` | 13 |
+| 语雀文档 | `yuque_doc_create`, `yuque_doc_update`, `yuque_image_upload` | 9 |
+| 语雀知识库 | `yuque_repo_create`, `yuque_repo_setting_update` | 6 |
+| 学术研究 | `search_arxiv`, `fetch_arxiv`, `search_huggingface` | 8 |
+| 平台解析 | `parse_zhihu`, `parse_xiaohongshu`, `ocr_image` | 9 |
 | 文件 | `read_file`, `write_file`, `list_files` | 3 |
-| 平台解析 | `parse_zhihu`, `parse_xiaohongshu`, `ocr_image` | 5 |
-| 文本处理 | `summarize_text`, `translate_text`, `format_text` | 4 |
+| 文本处理 | `summarize_text`, `translate_text`, `format_text` | 3 |
+| 代码 | `execute_code`, `analyze_code` | 2 |
+| 网络 | `web_search`, `fetch_url` | 2 |
 | 系统 | `get_current_time`, `get_weather`, `calculate` | 4 |
-| 知识库 | `kb_create`, `kb_query`, `kb_document_add` | 7 |
 
 **MCP 扩展**：通过 MCP (Model Context Protocol) 接入外部工具，支持 GitHub、Slack、Notion、数据库等 20+ 预设配置。
 
