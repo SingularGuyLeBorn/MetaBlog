@@ -5,36 +5,60 @@
 
 export {
   yuqueRepoList,
-  yuqueTocGet,
-  yuqueDocList,
-  yuqueDocRead,
-  yuqueDocCreate,
-  yuqueDocUpdate,
-  yuqueDocDelete,
-  yuqueImageUpload,
-  yuqueSearch,
   yuqueRepoCreate,
   yuqueRepoUpdate,
   yuqueRepoDelete,
   yuqueRepoGet,
   yuqueRepoSettingGet,
   yuqueRepoSettingUpdate,
-} from './executors'
+} from './repo'
+
+export {
+  yuqueDocList,
+  yuqueDocRead,
+  yuqueDocCreate,
+  yuqueDocUpdate,
+  yuqueDocDelete,
+} from './doc'
+
+export {
+  yuqueImageUpload,
+} from './image'
+
+export {
+  yuqueSearch,
+} from './search'
+
+export {
+  yuqueTocGet,
+} from './toc'
 
 export {
   yuqueRepoListDef,
-  yuqueTocGetDef,
-  yuqueDocListDef,
-  yuqueDocReadDef,
-  yuqueDocCreateDef,
-  yuqueDocUpdateDef,
-  yuqueDocDeleteDef,
-  yuqueImageUploadDef,
-  yuqueSearchDef,
   yuqueRepoCreateDef,
   yuqueRepoUpdateDef,
   yuqueRepoDeleteDef,
   yuqueRepoGetDef,
   yuqueRepoSettingGetDef,
   yuqueRepoSettingUpdateDef,
-} from './definitions'
+} from './repo'
+
+export {
+  yuqueDocListDef,
+  yuqueDocReadDef,
+  yuqueDocCreateDef,
+  yuqueDocUpdateDef,
+  yuqueDocDeleteDef,
+} from './doc'
+
+export {
+  yuqueImageUploadDef,
+} from './image'
+
+export {
+  yuqueSearchDef,
+} from './search'
+
+export {
+  yuqueTocGetDef,
+} from './toc'
