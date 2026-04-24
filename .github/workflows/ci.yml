@@ -29,8 +29,11 @@ jobs:
       - name: TypeScript type check
         run: npx tsc --noEmit
 
-      - name: Run tests
+      - name: Run frontend tests
         run: pnpm test:run
+
+      - name: Run backend route tests
+        run: npx vitest run tests/server/ --reporter=verbose
 
   python-test:
     runs-on: ubuntu-latest
