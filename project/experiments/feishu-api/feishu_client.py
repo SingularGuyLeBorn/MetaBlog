@@ -22,9 +22,10 @@ BASE_URL = "https://open.feishu.cn/open-apis"
 class FeishuClient:
     """飞书 API 客户端"""
 
-    def __init__(self, app_id: Optional[str] = None, app_secret: Optional[str] = None):
+    def __init__(self, app_id: Optional[str] = None, app_secret: Optional[str] = None, user_access_token: Optional[str] = None):
         self.app_id = app_id or os.environ.get("FEISHU_APP_ID") or os.environ.get("LARK_APP_ID")
         self.app_secret = app_secret or os.environ.get("FEISHU_APP_SECRET") or os.environ.get("LARK_APP_SECRET")
+        self.user_access_token = user_access_token or os.environ.get("FEISHU_USER_ACCESS_TOKEN")
 
         if not self.app_id or not self.app_secret:
             raise ValueError(
