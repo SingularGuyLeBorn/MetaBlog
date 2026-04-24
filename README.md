@@ -6,9 +6,10 @@
 
 <p align="center">
   <a href="./docs/guide/quickstart.md">快速开始</a> •
-  <a href="./docs/guide/architecture.md">架构设计</a> •
+  <a href="./project/docs/architecture.md">架构设计</a> •
   <a href="./docs/guide/tools.md">工具系统</a> •
-  <a href="./docs/guide/agent-system.md">Agent 系统</a>
+  <a href="./docs/guide/agent-system.md">Agent 系统</a> •
+  <a href="./project/requirements/backlog.md">需求清单</a>
 </p>
 
 ---
@@ -193,11 +194,14 @@ pnpm docs:preview
 | 文档 | 内容 |
 |------|------|
 | [快速开始](./docs/guide/quickstart.md) | 安装、配置、启动、常见问题 |
-| [架构设计](./docs/guide/architecture.md) | 系统架构、数据流、模块说明 |
+| [架构设计](./project/docs/architecture.md) | 系统架构、数据流、模块说明 |
+| [开发路线图](./project/docs/roadmap.md) | 近期/中期/长期开发计划 |
 | [工具系统](./docs/guide/tools.md) | 工具列表、使用示例、自定义工具开发 |
 | [Agent 系统](./docs/guide/agent-system.md) | Agent 配置、Skill 开发、会话管理 |
 | [开发指南](./docs/guide/development.md) | 目录结构、开发规范、调试技巧 |
 | [环境变量](./docs/guide/environment.md) | 完整环境变量说明与配置示例 |
+| [需求清单](./project/requirements/backlog.md) | 功能需求 backlog |
+| [已完成](./project/requirements/completed.md) | 已完成需求记录 |
 
 ---
 
