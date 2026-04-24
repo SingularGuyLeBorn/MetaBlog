@@ -24,6 +24,7 @@ export {
   feishuWikiNodeCreate,
   feishuWikiNodeList,
   feishuWikiNodeDelete,
+  feishuWikiMoveDoc,
 } from './executors'
 
 export {
@@ -47,4 +48,5 @@ export {
   feishuWikiNodeCreateDef,
   feishuWikiNodeListDef,
   feishuWikiNodeDeleteDef,
+  feishuWikiMoveDocDef,
 } from './definitions'

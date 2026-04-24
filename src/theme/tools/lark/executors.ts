@@ -10,8 +10,15 @@ import { markdownToBlocks } from './markdown-to-blocks'
 const API_BASE = '/api/lark'
 
 /** 通用 fetch 封装 */
-async function larkApi(method: string, path: string, body?: any, query?: Record<string, string>): Promise<any> {
+async function larkApi(method: string, path: string, body?: any, query?: Record<string, string>, useUserToken?: boolean): Promise<any> {
   let url = `${API_BASE}${path}`
+
+  // GET 请求通过 query 传递 use_user_token
+  if (useUserToken !== undefined && method === 'GET') {
+    query = query || {}
+    query.use_user_token = useUserToken ? '1' : '0'
+  }
+
   if (query) {
     const params = new URLSearchParams(query)
     url += '?' + params.toString()
@@ -20,6 +27,10 @@ async function larkApi(method: string, path: string, body?: any, query?: Record<
   const options: RequestInit = { method }
   if (body) {
     options.headers = { 'Content-Type': 'application/json' }
+    // POST/PATCH/DELETE 请求通过 body 传递 use_user_token
+    if (useUserToken !== undefined) {
+      body.use_user_token = useUserToken
+    }
     options.body = JSON.stringify(body)
   }
 
@@ -33,10 +44,10 @@ async function larkApi(method: string, path: string, body?: any, query?: Record<
 
 /** 创建飞书文档 */
 export const feishuDocCreate = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { title, folder_token, owner_email, owner_mobile, enable_permission } = args
+  const { title, folder_token, owner_email, owner_mobile, enable_permission, use_user_token } = args
 
   try {
-    const result = await larkApi('POST', '/doc/create', { title, folder_token, owner_email, owner_mobile, enable_permission })
+    const result = await larkApi('POST', '/doc/create', { title, folder_token, owner_email, owner_mobile, enable_permission }, undefined, use_user_token)
     if (result.code !== 0) {
       return createErrorResult(result.msg, '创建文档失败', `错误码: ${result.code}`)
     }
@@ -54,14 +65,14 @@ export const feishuDocCreate = async (args: Record<string, any>): Promise<ToolRe
 
 /** 读取飞书文档纯文本 */
 export const feishuDocRead = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { document_id } = args
+  const { document_id, use_user_token } = args
 
   if (!document_id) {
     return createErrorResult('Missing document_id', '缺少文档ID', 'document_id 可从飞书文档 URL 中获取，如 docx/xxx 中的 xxx')
   }
 
   try {
-    const result = await larkApi('GET', '/doc/read', undefined, { document_id })
+    const result = await larkApi('GET', '/doc/read', undefined, { document_id }, use_user_token)
     if (result.code !== 0) {
       return createErrorResult(result.msg, '读取文档失败', `错误码: ${result.code}`)
     }
@@ -108,14 +119,14 @@ export const feishuDocSearch = async (args: Record<string, any>): Promise<ToolRe
 
 /** 获取文档块结构 */
 export const feishuDocBlocks = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { document_id, page_size = 500 } = args
+  const { document_id, page_size = 500, use_user_token } = args
 
   if (!document_id) {
     return createErrorResult('Missing document_id', '缺少文档ID')
   }
 
   try {
-    const result = await larkApi('GET', '/doc/blocks', undefined, { document_id, page_size: String(page_size) })
+    const result = await larkApi('GET', '/doc/blocks', undefined, { document_id, page_size: String(page_size) }, use_user_token)
     if (result.code !== 0) {
       return createErrorResult(result.msg, '获取文档块失败', `错误码: ${result.code}`)
     }
@@ -167,7 +178,7 @@ function extractTextFromBlock(block: any): string {
 
 /** 在文档末尾追加内容块 */
 export const feishuDocAppend = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { document_id, blocks, content } = args
+  const { document_id, blocks, content, use_user_token } = args
 
   if (!document_id) {
     return createErrorResult('Missing document_id', '缺少文档ID')
@@ -207,7 +218,7 @@ export const feishuDocAppend = async (args: Record<string, any>): Promise<ToolRe
         await new Promise(r => setTimeout(r, QPS_DELAY_MS))
       }
 
-      const result = await larkApi('POST', '/doc/append', { document_id, blocks: batch })
+      const result = await larkApi('POST', '/doc/append', { document_id, blocks: batch }, undefined, use_user_token)
 
       if (result.code !== 0) {
         const code = result.code
@@ -256,7 +267,7 @@ export const feishuDocAppend = async (args: Record<string, any>): Promise<ToolRe
 
 /** 更新文档块 */
 export const feishuDocUpdateBlock = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { document_id, block_id, block_type, ...contentData } = args
+  const { document_id, block_id, block_type, use_user_token, ...contentData } = args
 
   if (!document_id || !block_id) {
     return createErrorResult('Missing parameters', '缺少参数', '需要 document_id 和 block_id')
@@ -281,7 +292,7 @@ export const feishuDocUpdateBlock = async (args: Record<string, any>): Promise<T
   }
 
   try {
-    const result = await larkApi('PATCH', '/doc/block', payload)
+    const result = await larkApi('PATCH', '/doc/block', payload, undefined, use_user_token)
     if (result.code !== 0) {
       return createErrorResult(result.msg, '更新块失败', `错误码: ${result.code}`)
     }
@@ -298,7 +309,7 @@ export const feishuDocUpdateBlock = async (args: Record<string, any>): Promise<T
 
 /** 删除文档块 */
 export const feishuDocDeleteBlock = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { document_id, block_id } = args
+  const { document_id, block_id, use_user_token } = args
 
   if (!document_id || !block_id) {
     return createErrorResult('Missing parameters', '缺少参数', '需要 document_id 和 block_id')
@@ -306,7 +317,7 @@ export const feishuDocDeleteBlock = async (args: Record<string, any>): Promise<T
 
   try {
     // 后端会自动查索引并调用 batch_delete
-    const result = await larkApi('DELETE', '/doc/block', { document_id, block_id })
+    const result = await larkApi('DELETE', '/doc/block', { document_id, block_id }, undefined, use_user_token)
     if (result.code !== 0) {
       return createErrorResult(result.msg, '删除块失败', `错误码: ${result.code}`)
     }
@@ -367,7 +378,7 @@ export const feishuDocInsertImage = async (args: Record<string, any>): Promise<T
 
 /** 分享飞书文档权限 */
 export const feishuDocShare = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { document_id, member_id, member_type, perm } = args
+  const { document_id, member_id, member_type, perm, use_user_token } = args
 
   if (!document_id || !member_id) {
     return createErrorResult('Missing parameters', '缺少参数', '需要 document_id 和 member_id')
@@ -379,7 +390,7 @@ export const feishuDocShare = async (args: Record<string, any>): Promise<ToolRes
       member_id,
       member_type: member_type || 'openid',
       perm: perm || 'full_access',
-    })
+    }, undefined, use_user_token)
 
     if (result.code !== 0) {
       return createErrorResult(result.msg, '分享权限失败', `错误码: ${result.code}`)
@@ -397,7 +408,7 @@ export const feishuDocShare = async (args: Record<string, any>): Promise<ToolRes
 
 /** 取消飞书文档权限 */
 export const feishuDocUnshare = async (args: Record<string, any>): Promise<ToolResult> => {
-  const { document_id, member_id, member_type } = args
+  const { document_id, member_id, member_type, use_user_token } = args
 
   if (!document_id || !member_id) {
     return createErrorResult('Missing parameters', '缺少参数', '需要 document_id 和 member_id')
@@ -408,7 +419,7 @@ export const feishuDocUnshare = async (args: Record<string, any>): Promise<ToolR
       document_id,
       member_id,
       member_type: member_type || 'openid',
-    })
+    }, undefined, use_user_token)
 
     if (result.code !== 0) {
       return createErrorResult(result.msg, '取消权限失败', `错误码: ${result.code}`)
@@ -643,6 +654,28 @@ export const feishuWikiNodeDelete = async (args: Record<string, any>): Promise<T
     return createSuccessResult(result.data, `节点 ${node_token} 已删除`, 'feishu_wiki_node_delete')
   } catch (error: any) {
     return createErrorResult(error.message, '删除节点请求失败')
+  }
+}
+
+/** 将外部文档迁入 Wiki 知识库 */
+export const feishuWikiMoveDoc = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { space_id, doc_token, parent_node_token, title } = args
+  if (!space_id || !doc_token) {
+    return createErrorResult('Missing parameters', '缺少参数', '需要 space_id 和 doc_token')
+  }
+  try {
+    const result = await larkApi('POST', '/wiki/move_doc', { space_id, doc_token, parent_node_token, title })
+    if (result.code !== 0) {
+      return createErrorResult(result.msg, '迁入 Wiki 失败', `错误码: ${result.code}`)
+    }
+    const node = result.data?.node
+    return createSuccessResult(
+      result.data,
+      `文档迁入 Wiki 成功！\n节点Token: ${node?.node_token || 'N/A'}\n文档Token: ${node?.obj_token || doc_token}`,
+      'feishu_wiki_move_doc'
+    )
+  } catch (error: any) {
+    return createErrorResult(error.message, '迁入 Wiki 请求失败')
   }
 }
 

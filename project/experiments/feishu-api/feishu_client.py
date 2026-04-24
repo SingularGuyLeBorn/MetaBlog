@@ -122,6 +122,10 @@ class FeishuClient:
                     "请在初始化时传入 user_access_token，或在 .env 中设置 FEISHU_USER_ACCESS_TOKEN。\n"
                     "获取方式：登录飞书开放平台 → 你的应用 → API 调试台 → 获取 Token"
                 )
+        elif self.user_access_token and path.startswith('/wiki/'):
+            # Wiki 相关 API：如果配置了 user_access_token，优先使用它。
+            # 因为用 user token 创建的知识库，tenant token 默认没有访问权限。
+            token = self.user_access_token
         else:
             token = self.get_tenant_access_token()
         url = f"{BASE_URL}{path}"
@@ -242,7 +246,7 @@ class FeishuClient:
 
     def list_wiki_spaces(self, page_size: int = 10) -> List[Dict[str, Any]]:
         """
-        获取知识库空间列表
+        获取知识库空间列表（自动翻页获取全部）
 
         参数:
             page_size: 每页数量 (1-50)
@@ -250,8 +254,19 @@ class FeishuClient:
         返回:
             知识库空间列表
         """
-        result = self.api("GET", "/wiki/v2/spaces", params={"page_size": page_size})
-        return result.get("items", [])
+        all_items = []
+        page_token = None
+        while True:
+            params: Dict[str, Any] = {"page_size": page_size}
+            if page_token:
+                params["page_token"] = page_token
+            result = self.api("GET", "/wiki/v2/spaces", params=params)
+            items = result.get("items", [])
+            all_items.extend(items)
+            if not result.get("has_more"):
+                break
+            page_token = result.get("page_token")
+        return all_items
 
     def get_wiki_space(self, space_id: str) -> Dict[str, Any]:
         """
@@ -277,21 +292,24 @@ class FeishuClient:
             payload["name"] = name
         if description is not None:
             payload["description"] = description
-        return self.api("PATCH", f"/wiki/v2/spaces/{space_id}", json_data=payload)
+        return self.api("PUT", f"/wiki/v2/spaces/{space_id}", json_data=payload)
 
-    def delete_wiki_space(self, space_id: str) -> None:
+    def delete_wiki_space(self, space_id: str) -> Dict[str, Any]:
         """
         删除知识库空间
 
         参数:
             space_id: 知识库空间 ID
+
+        返回:
+            API 返回结果
         """
-        self.api("DELETE", f"/wiki/v2/spaces/{space_id}")
+        return self.api("DELETE", f"/wiki/v2/spaces/{space_id}", use_user_token=True)
 
     def list_wiki_nodes(self, space_id: str, parent_node_token: Optional[str] = None,
                         page_size: int = 10) -> List[Dict[str, Any]]:
         """
-        获取知识库节点列表
+        获取知识库节点列表（自动翻页获取全部）
 
         参数:
             space_id: 知识库空间 ID
@@ -301,11 +319,21 @@ class FeishuClient:
         返回:
             节点列表，每项包含 node_token, obj_type, title, has_child 等
         """
-        params = {"page_size": page_size}
-        if parent_node_token:
-            params["parent_node_token"] = parent_node_token
-        result = self.api("GET", f"/wiki/v2/spaces/{space_id}/nodes", params=params)
-        return result.get("items", [])
+        all_items = []
+        page_token = None
+        while True:
+            params: Dict[str, Any] = {"page_size": page_size}
+            if parent_node_token:
+                params["parent_node_token"] = parent_node_token
+            if page_token:
+                params["page_token"] = page_token
+            result = self.api("GET", f"/wiki/v2/spaces/{space_id}/nodes", params=params)
+            items = result.get("items", [])
+            all_items.extend(items)
+            if not result.get("has_more"):
+                break
+            page_token = result.get("page_token")
+        return all_items
 
     def create_wiki_node(self, space_id: str, node_type: str = "origin",
                          obj_type: str = "docx", parent_node_token: Optional[str] = None,
@@ -347,17 +375,42 @@ class FeishuClient:
         payload: Dict[str, Any] = {}
         if parent_node_token:
             payload["parent_node_token"] = parent_node_token
-        return self.api("PATCH", f"/wiki/v2/spaces/{space_id}/nodes/{node_token}", json_data=payload)
+        return self.api("POST", f"/wiki/v2/spaces/{space_id}/nodes/{node_token}/move", json_data=payload, use_user_token=True)
 
-    def delete_wiki_node(self, space_id: str, node_token: str) -> None:
+    def move_doc_to_wiki(self, space_id: str, doc_token: str,
+                         parent_node_token: Optional[str] = None) -> Dict[str, Any]:
+        """
+        将已有云文档迁移/挂载到知识库
+
+        参数:
+            space_id: 知识库空间 ID
+            doc_token: 文档 token（如 docx 的 document_id）
+            parent_node_token: 目标父节点 token，不传则挂载到根节点
+        """
+        payload: Dict[str, Any] = {"obj_token": doc_token, "obj_type": "docx"}
+        if parent_node_token:
+            payload["parent_node_token"] = parent_node_token
+        return self.api("POST", f"/wiki/v2/spaces/{space_id}/nodes/move_docs_to_wiki", json_data=payload, use_user_token=True)
+
+    def delete_wiki_node(self, space_id: str, node_token: str) -> Dict[str, Any]:
         """
         删除知识库节点
+
+        【重要】飞书开放平台目前没有提供通过 API 删除 Wiki 节点或底层文档的公开接口。
+        请在飞书客户端手动删除：知识库 → 找到文档 → 右键 → 删除
 
         参数:
             space_id: 知识库空间 ID
             node_token: 节点 token
+
+        返回:
+            提示信息
         """
-        self.api("DELETE", f"/wiki/v2/spaces/{space_id}/nodes/{node_token}")
+        return {
+            "code": -1,
+            "msg": "飞书开放平台未提供 Wiki 节点删除 API",
+            "hint": "请在飞书客户端手动删除：知识库 → 找到文档 → 右键 → 删除"
+        }
 
     def list_wiki_members(self, space_id: str, page_size: int = 100) -> List[Dict[str, Any]]:
         """

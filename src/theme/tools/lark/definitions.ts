@@ -88,6 +88,11 @@ export const feishuDocCreateDef: ToolDefinition = {
           description: '是否自动分享权限给 owner_email/owner_mobile 指定的用户。默认 true，传 false 可关闭',
           default: true,
         },
+        use_user_token: {
+          type: 'boolean',
+          description: '是否使用 user_access_token 创建文档。默认 false（用 tenant token）。若后续要将文档迁入 Wiki，建议传 true，这样用户才是文档拥有者',
+          default: false,
+        },
       },
       required: ['title'],
     },
@@ -110,6 +115,11 @@ document_id 从飞书文档 URL 中获取：
         document_id: {
           type: 'string',
           description: '文档 ID，从飞书 URL 的 docx/ 后面获取',
+        },
+        use_user_token: {
+          type: 'boolean',
+          description: '是否使用 user_access_token 读取。默认 false（用 tenant token）。仅当文档是用 user token 创建且 tenant token 无权限时才需要传 true',
+          default: false,
         },
       },
       required: ['document_id'],
@@ -170,6 +180,11 @@ export const feishuDocBlocksDef: ToolDefinition = {
           type: 'number',
           description: '每页块数量，默认 500，最大 500',
           default: 500,
+        },
+        use_user_token: {
+          type: 'boolean',
+          description: '是否使用 user_access_token 操作。默认 false（用 tenant token）。仅当文档是用 user token 创建且 tenant token 无权限时才需要传 true',
+          default: false,
         },
       },
       required: ['document_id'],
@@ -234,6 +249,11 @@ feishu_doc_append(document_id="xxx", blocks=[
           description: '飞书块格式数组（与 content 二选一）。每个块需包含 block_type 和对应类型的内容',
           items: { type: 'object' },
         },
+        use_user_token: {
+          type: 'boolean',
+          description: '是否使用 user_access_token 操作。默认 false（用 tenant token）。仅当文档是用 user token 创建且 tenant token 无权限时才需要传 true',
+          default: false,
+        },
       },
       required: ['document_id'],
     },
@@ -278,6 +298,11 @@ feishu_doc_update_block(
           type: 'number',
           description: '块类型（2=text, 3=heading1, 4=heading2, ... 14=code 等）',
         },
+        use_user_token: {
+          type: 'boolean',
+          description: '是否使用 user_access_token 操作。默认 false（用 tenant token）。仅当文档是用 user token 创建且 tenant token 无权限时才需要传 true',
+          default: false,
+        },
       },
       required: ['document_id', 'block_id', 'block_type'],
       // 额外属性允许传入 text/heading1/code 等内容
@@ -304,6 +329,11 @@ export const feishuDocDeleteBlockDef: ToolDefinition = {
         block_id: {
           type: 'string',
           description: '块 ID',
+        },
+        use_user_token: {
+          type: 'boolean',
+          description: '是否使用 user_access_token 操作。默认 false（用 tenant token）。仅当文档是用 user token 创建且 tenant token 无权限时才需要传 true',
+          default: false,
         },
       },
       required: ['document_id', 'block_id'],
@@ -360,6 +390,11 @@ member_type 说明:
           description: '权限级别',
           default: 'full_access',
         },
+        use_user_token: {
+          type: 'boolean',
+          description: '是否使用 user_access_token 操作。默认 false（用 tenant token）。仅当文档是用 user token 创建且 tenant token 无权限时才需要传 true',
+          default: false,
+        },
       },
       required: ['document_id', 'member_id'],
     },
@@ -392,6 +427,11 @@ export const feishuDocUnshareDef: ToolDefinition = {
           enum: ['openid', 'userid', 'unionid', 'email', 'phone'],
           description: '用户标识类型',
           default: 'openid',
+        },
+        use_user_token: {
+          type: 'boolean',
+          description: '是否使用 user_access_token 操作。默认 false（用 tenant token）。仅当文档是用 user token 创建且 tenant token 无权限时才需要传 true',
+          default: false,
         },
       },
       required: ['document_id', 'member_id'],
@@ -673,6 +713,42 @@ export const feishuWikiNodeDeleteDef: ToolDefinition = {
         },
       },
       required: ['space_id', 'node_token'],
+    },
+  },
+}
+
+export const feishuWikiMoveDocDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'feishu_wiki_move_doc',
+    description: `将外部云文档（docx）迁入飞书 Wiki 知识库。
+
+【重要】文档必须用 user_access_token 创建，用户才是文档拥有者，才有权限迁入 Wiki。
+使用示例：
+- 迁入根节点: feishu_wiki_move_doc(space_id="xxx", doc_token="doxxx")
+- 迁入指定父节点: feishu_wiki_move_doc(space_id="xxx", doc_token="doxxx", parent_node_token="nodexxx")
+- 迁入并指定标题: feishu_wiki_move_doc(space_id="xxx", doc_token="doxxx", title="新标题")`,
+    parameters: {
+      type: 'object',
+      properties: {
+        space_id: {
+          type: 'string',
+          description: '知识库空间 ID',
+        },
+        doc_token: {
+          type: 'string',
+          description: '要迁入的文档 token（docx 的 document_id）',
+        },
+        parent_node_token: {
+          type: 'string',
+          description: '目标父节点 token（可选），不传则挂载到根节点',
+        },
+        title: {
+          type: 'string',
+          description: '迁入后的节点标题（可选），不传则使用原文档标题',
+        },
+      },
+      required: ['space_id', 'doc_token'],
     },
   },
 }
