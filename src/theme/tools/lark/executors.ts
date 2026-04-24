@@ -485,6 +485,168 @@ export const feishuUserSearch = async (args: Record<string, any>): Promise<ToolR
 }
 
 // ============================================
+// Wiki 知识库操作
+// ============================================
+
+/** 创建知识库空间 */
+export const feishuWikiSpaceCreate = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { name, description } = args
+  if (!name) {
+    return createErrorResult('Missing name', '缺少 name 参数', '需要提供知识库名称')
+  }
+  try {
+    const result = await larkApi('POST', '/wiki/space/create', { name, description })
+    if (result.code !== 0) {
+      return createErrorResult(result.msg, '创建知识库失败', `错误码: ${result.code}`)
+    }
+    const space = result.data?.space
+    return createSuccessResult(
+      result.data,
+      `知识库创建成功！\n名称: ${space?.name}\n空间ID: ${space?.space_id}`,
+      'feishu_wiki_space_create'
+    )
+  } catch (error: any) {
+    return createErrorResult(error.message, '创建知识库请求失败')
+  }
+}
+
+/** 列出知识库空间 */
+export const feishuWikiSpaceList = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { page_size } = args
+  try {
+    const result = await larkApi('GET', '/wiki/space/list', undefined, { page_size: String(page_size || 10) })
+    if (result.code !== 0) {
+      return createErrorResult(result.msg, '获取知识库列表失败', `错误码: ${result.code}`)
+    }
+    const items = result.data?.items || []
+    const formatted = items.length > 0
+      ? items.map((s: any, i: number) => `${i + 1}. ${s.name} (ID: ${s.space_id})`).join('\n')
+      : '暂无知识库'
+    return createSuccessResult(result.data, formatted, 'feishu_wiki_space_list')
+  } catch (error: any) {
+    return createErrorResult(error.message, '获取知识库列表请求失败')
+  }
+}
+
+/** 获取知识库空间详情 */
+export const feishuWikiSpaceGet = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { space_id } = args
+  if (!space_id) {
+    return createErrorResult('Missing space_id', '缺少 space_id 参数')
+  }
+  try {
+    const result = await larkApi('GET', '/wiki/space/get', undefined, { space_id })
+    if (result.code !== 0) {
+      return createErrorResult(result.msg, '获取知识库详情失败', `错误码: ${result.code}`)
+    }
+    const space = result.data?.space || result.data
+    return createSuccessResult(
+      result.data,
+      `知识库: ${space?.name}\n描述: ${space?.description || '无'}\nID: ${space?.space_id}`,
+      'feishu_wiki_space_get'
+    )
+  } catch (error: any) {
+    return createErrorResult(error.message, '获取知识库详情请求失败')
+  }
+}
+
+/** 更新知识库空间 */
+export const feishuWikiSpaceUpdate = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { space_id, name, description } = args
+  if (!space_id) {
+    return createErrorResult('Missing space_id', '缺少 space_id 参数')
+  }
+  try {
+    const result = await larkApi('POST', '/wiki/space/update', { space_id, name, description })
+    if (result.code !== 0) {
+      return createErrorResult(result.msg, '更新知识库失败', `错误码: ${result.code}`)
+    }
+    return createSuccessResult(result.data, '知识库更新成功', 'feishu_wiki_space_update')
+  } catch (error: any) {
+    return createErrorResult(error.message, '更新知识库请求失败')
+  }
+}
+
+/** 删除知识库空间 */
+export const feishuWikiSpaceDelete = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { space_id } = args
+  if (!space_id) {
+    return createErrorResult('Missing space_id', '缺少 space_id 参数')
+  }
+  try {
+    const result = await larkApi('POST', '/wiki/space/delete', { space_id })
+    if (result.code !== 0) {
+      return createErrorResult(result.msg, '删除知识库失败', `错误码: ${result.code}`)
+    }
+    return createSuccessResult(result.data, `知识库 ${space_id} 已删除`, 'feishu_wiki_space_delete')
+  } catch (error: any) {
+    return createErrorResult(error.message, '删除知识库请求失败')
+  }
+}
+
+/** 创建知识库节点 */
+export const feishuWikiNodeCreate = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { space_id, title, parent_node_token, obj_type } = args
+  if (!space_id || !title) {
+    return createErrorResult('Missing parameters', '缺少参数', '需要 space_id 和 title')
+  }
+  try {
+    const result = await larkApi('POST', '/wiki/node/create', { space_id, title, parent_node_token, obj_type: obj_type || 'docx' })
+    if (result.code !== 0) {
+      return createErrorResult(result.msg, '创建节点失败', `错误码: ${result.code}`)
+    }
+    const node = result.data?.node
+    return createSuccessResult(
+      result.data,
+      `节点创建成功！\n标题: ${node?.title}\n节点Token: ${node?.node_token}\n文档Token: ${node?.obj_token}`,
+      'feishu_wiki_node_create'
+    )
+  } catch (error: any) {
+    return createErrorResult(error.message, '创建节点请求失败')
+  }
+}
+
+/** 列出知识库节点 */
+export const feishuWikiNodeList = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { space_id, parent_node_token, page_size } = args
+  if (!space_id) {
+    return createErrorResult('Missing space_id', '缺少 space_id 参数')
+  }
+  try {
+    const query: Record<string, string> = { space_id, page_size: String(page_size || 10) }
+    if (parent_node_token) query.parent_node_token = parent_node_token
+    const result = await larkApi('GET', '/wiki/node/list', undefined, query)
+    if (result.code !== 0) {
+      return createErrorResult(result.msg, '获取节点列表失败', `错误码: ${result.code}`)
+    }
+    const items = result.data?.items || []
+    const formatted = items.length > 0
+      ? items.map((n: any, i: number) => `${i + 1}. ${n.title} (${n.obj_type}, token=${n.node_token})`).join('\n')
+      : '暂无节点'
+    return createSuccessResult(result.data, formatted, 'feishu_wiki_node_list')
+  } catch (error: any) {
+    return createErrorResult(error.message, '获取节点列表请求失败')
+  }
+}
+
+/** 删除知识库节点 */
+export const feishuWikiNodeDelete = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { space_id, node_token } = args
+  if (!space_id || !node_token) {
+    return createErrorResult('Missing parameters', '缺少参数', '需要 space_id 和 node_token')
+  }
+  try {
+    const result = await larkApi('POST', '/wiki/node/delete', { space_id, node_token })
+    if (result.code !== 0) {
+      return createErrorResult(result.msg, '删除节点失败', `错误码: ${result.code}`)
+    }
+    return createSuccessResult(result.data, `节点 ${node_token} 已删除`, 'feishu_wiki_node_delete')
+  } catch (error: any) {
+    return createErrorResult(error.message, '删除节点请求失败')
+  }
+}
+
+// ============================================
 // Markdown → Blocks 辅助函数
 // ============================================
 

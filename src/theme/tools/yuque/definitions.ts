@@ -505,3 +505,165 @@ export const yuqueSearchDef: ToolDefinition = {
     },
   },
 }
+
+// =============================================================================
+// 知识库管理操作
+// =============================================================================
+
+export const yuqueRepoCreateDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'yuque_repo_create',
+    description: `创建语雀知识库（Book/Repo）。
+
+使用示例：
+- 创建普通知识库: yuque_repo_create(name="产品文档", slug="product-docs")
+- 创建私密知识库: yuque_repo_create(name="内部资料", slug="internal", public=0)
+
+创建成功后返回知识库信息，包含 id、slug 等字段。`,
+    parameters: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: '知识库名称',
+        },
+        slug: {
+          type: 'string',
+          description: '知识库路径（URL 标识，如 "api-test"）',
+        },
+        description: {
+          type: 'string',
+          description: '知识库描述（可选）',
+        },
+        type: {
+          type: 'string',
+          enum: ['Book', 'Design'],
+          description: '类型: Book=普通知识库, Design=设计知识库',
+          default: 'Book',
+        },
+        public: {
+          type: 'number',
+          enum: [0, 1, 2],
+          description: '可见性: 0=私密, 1=互联网公开, 2=空间成员公开',
+          default: 0,
+        },
+      },
+      required: ['name', 'slug'],
+    },
+  },
+}
+
+export const yuqueRepoUpdateDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'yuque_repo_update',
+    description: '更新语雀知识库的名称、路径或描述。',
+    parameters: {
+      type: 'object',
+      properties: {
+        repo_id: {
+          type: 'string',
+          description: '知识库数字 ID',
+        },
+        name: {
+          type: 'string',
+          description: '新名称（可选）',
+        },
+        slug: {
+          type: 'string',
+          description: '新路径（可选）',
+        },
+        description: {
+          type: 'string',
+          description: '新描述（可选）',
+        },
+      },
+      required: ['repo_id'],
+    },
+  },
+}
+
+export const yuqueRepoDeleteDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'yuque_repo_delete',
+    description: `删除语雀知识库。
+
+【⚠️ 警告】删除操作不可逆！会同时删除知识库下的所有文档。`,
+    parameters: {
+      type: 'object',
+      properties: {
+        repo_id: {
+          type: 'string',
+          description: '知识库数字 ID',
+        },
+      },
+      required: ['repo_id'],
+    },
+  },
+}
+
+export const yuqueRepoGetDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'yuque_repo_get',
+    description: '获取语雀知识库的详细信息。',
+    parameters: {
+      type: 'object',
+      properties: {
+        repo_id: {
+          type: 'string',
+          description: '知识库数字 ID',
+        },
+      },
+      required: ['repo_id'],
+    },
+  },
+}
+
+export const yuqueRepoSettingGetDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'yuque_repo_setting_get',
+    description: '获取语雀知识库的设置信息（可见性、评论设置等）。',
+    parameters: {
+      type: 'object',
+      properties: {
+        repo_id: {
+          type: 'string',
+          description: '知识库数字 ID',
+        },
+      },
+      required: ['repo_id'],
+    },
+  },
+}
+
+export const yuqueRepoSettingUpdateDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'yuque_repo_setting_update',
+    description: '更新语雀知识库的设置（可见性、评论设置等）。',
+    parameters: {
+      type: 'object',
+      properties: {
+        repo_id: {
+          type: 'string',
+          description: '知识库数字 ID',
+        },
+        public: {
+          type: 'number',
+          enum: [0, 1, 2],
+          description: '可见性: 0=私密, 1=互联网公开, 2=空间成员公开',
+        },
+        comment_status: {
+          type: 'number',
+          enum: [0, 1],
+          description: '评论设置: 0=关闭, 1=开启',
+        },
+      },
+      required: ['repo_id'],
+    },
+  },
+}

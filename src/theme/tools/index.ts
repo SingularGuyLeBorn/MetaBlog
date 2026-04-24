@@ -240,17 +240,23 @@ export {
   feishuDocCreate, feishuDocRead, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
   feishuDocUpdateBlock, feishuDocDeleteBlock, feishuDocInsertImage, feishuDocShare, feishuDocUnshare,
   feishuImSend, feishuUserSearch,
+  feishuWikiSpaceCreate, feishuWikiSpaceList, feishuWikiSpaceGet, feishuWikiSpaceUpdate, feishuWikiSpaceDelete,
+  feishuWikiNodeCreate, feishuWikiNodeList, feishuWikiNodeDelete,
   feishuDocCreateDef, feishuDocReadDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
   feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuDocInsertImageDef, feishuDocShareDef,
-  feishuDocUnshareDef, feishuImSendDef, feishuUserSearchDef
+  feishuDocUnshareDef, feishuImSendDef, feishuUserSearchDef,
+  feishuWikiSpaceCreateDef, feishuWikiSpaceListDef, feishuWikiSpaceGetDef, feishuWikiSpaceUpdateDef, feishuWikiSpaceDeleteDef,
+  feishuWikiNodeCreateDef, feishuWikiNodeListDef, feishuWikiNodeDeleteDef,
 } from './lark'
 
 // ==================== 语雀工具 ====================
 export {
   yuqueRepoList, yuqueTocGet, yuqueDocList, yuqueDocRead, yuqueDocCreate,
   yuqueDocUpdate, yuqueDocDelete, yuqueImageUpload, yuqueSearch,
+  yuqueRepoCreate, yuqueRepoUpdate, yuqueRepoDelete, yuqueRepoGet, yuqueRepoSettingGet, yuqueRepoSettingUpdate,
   yuqueRepoListDef, yuqueTocGetDef, yuqueDocListDef, yuqueDocReadDef, yuqueDocCreateDef,
-  yuqueDocUpdateDef, yuqueDocDeleteDef, yuqueImageUploadDef, yuqueSearchDef
+  yuqueDocUpdateDef, yuqueDocDeleteDef, yuqueImageUploadDef, yuqueSearchDef,
+  yuqueRepoCreateDef, yuqueRepoUpdateDef, yuqueRepoDeleteDef, yuqueRepoGetDef, yuqueRepoSettingGetDef, yuqueRepoSettingUpdateDef,
 } from './yuque'
 
 // ==================== Skill 加载工具 ====================
@@ -338,17 +344,23 @@ import {
   feishuDocCreate, feishuDocRead, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
   feishuDocUpdateBlock, feishuDocDeleteBlock, feishuDocInsertImage, feishuDocShare, feishuDocUnshare,
   feishuImSend, feishuUserSearch,
+  feishuWikiSpaceCreate, feishuWikiSpaceList, feishuWikiSpaceGet, feishuWikiSpaceUpdate, feishuWikiSpaceDelete,
+  feishuWikiNodeCreate, feishuWikiNodeList, feishuWikiNodeDelete,
   feishuDocCreateDef, feishuDocReadDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
   feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuDocInsertImageDef, feishuDocShareDef,
-  feishuDocUnshareDef, feishuImSendDef, feishuUserSearchDef
+  feishuDocUnshareDef, feishuImSendDef, feishuUserSearchDef,
+  feishuWikiSpaceCreateDef, feishuWikiSpaceListDef, feishuWikiSpaceGetDef, feishuWikiSpaceUpdateDef, feishuWikiSpaceDeleteDef,
+  feishuWikiNodeCreateDef, feishuWikiNodeListDef, feishuWikiNodeDeleteDef,
 } from './lark'
 
 // 语雀工具
 import {
   yuqueRepoList, yuqueTocGet, yuqueDocList, yuqueDocRead, yuqueDocCreate,
   yuqueDocUpdate, yuqueDocDelete, yuqueImageUpload, yuqueSearch,
+  yuqueRepoCreate, yuqueRepoUpdate, yuqueRepoDelete, yuqueRepoGet, yuqueRepoSettingGet, yuqueRepoSettingUpdate,
   yuqueRepoListDef, yuqueTocGetDef, yuqueDocListDef, yuqueDocReadDef, yuqueDocCreateDef,
-  yuqueDocUpdateDef, yuqueDocDeleteDef, yuqueImageUploadDef, yuqueSearchDef
+  yuqueDocUpdateDef, yuqueDocDeleteDef, yuqueImageUploadDef, yuqueSearchDef,
+  yuqueRepoCreateDef, yuqueRepoUpdateDef, yuqueRepoDeleteDef, yuqueRepoGetDef, yuqueRepoSettingGetDef, yuqueRepoSettingUpdateDef,
 } from './yuque'
 
 // Skill 加载工具
@@ -524,6 +536,18 @@ export function initializeDefaultTools(): void {
     { name: 'feishu_user_search', definition: feishuUserSearchDef, executor: feishuUserSearch }
   ])
 
+  // 飞书 Wiki 知识库工具（8个）
+  registerTools([
+    { name: 'feishu_wiki_space_create', definition: feishuWikiSpaceCreateDef, executor: feishuWikiSpaceCreate },
+    { name: 'feishu_wiki_space_list', definition: feishuWikiSpaceListDef, executor: feishuWikiSpaceList },
+    { name: 'feishu_wiki_space_get', definition: feishuWikiSpaceGetDef, executor: feishuWikiSpaceGet },
+    { name: 'feishu_wiki_space_update', definition: feishuWikiSpaceUpdateDef, executor: feishuWikiSpaceUpdate },
+    { name: 'feishu_wiki_space_delete', definition: feishuWikiSpaceDeleteDef, executor: feishuWikiSpaceDelete },
+    { name: 'feishu_wiki_node_create', definition: feishuWikiNodeCreateDef, executor: feishuWikiNodeCreate },
+    { name: 'feishu_wiki_node_list', definition: feishuWikiNodeListDef, executor: feishuWikiNodeList },
+    { name: 'feishu_wiki_node_delete', definition: feishuWikiNodeDeleteDef, executor: feishuWikiNodeDelete },
+  ])
+
   // 语雀文档工具（9个）
   registerTools([
     { name: 'yuque_repo_list', definition: yuqueRepoListDef, executor: yuqueRepoList },
@@ -535,6 +559,16 @@ export function initializeDefaultTools(): void {
     { name: 'yuque_doc_delete', definition: yuqueDocDeleteDef, executor: yuqueDocDelete },
     { name: 'yuque_image_upload', definition: yuqueImageUploadDef, executor: yuqueImageUpload },
     { name: 'yuque_search', definition: yuqueSearchDef, executor: yuqueSearch },
+  ])
+
+  // 语雀知识库管理工具（6个）
+  registerTools([
+    { name: 'yuque_repo_create', definition: yuqueRepoCreateDef, executor: yuqueRepoCreate },
+    { name: 'yuque_repo_update', definition: yuqueRepoUpdateDef, executor: yuqueRepoUpdate },
+    { name: 'yuque_repo_delete', definition: yuqueRepoDeleteDef, executor: yuqueRepoDelete },
+    { name: 'yuque_repo_get', definition: yuqueRepoGetDef, executor: yuqueRepoGet },
+    { name: 'yuque_repo_setting_get', definition: yuqueRepoSettingGetDef, executor: yuqueRepoSettingGet },
+    { name: 'yuque_repo_setting_update', definition: yuqueRepoSettingUpdateDef, executor: yuqueRepoSettingUpdate },
   ])
 
   // Skill 加载工具（1个）- 让 Agent 主动加载 Skill 内容

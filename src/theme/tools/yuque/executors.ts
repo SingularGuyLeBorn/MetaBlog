@@ -447,3 +447,167 @@ export const yuqueSearch = async (args: Record<string, any>): Promise<ToolResult
     '请使用 yuque_repo_list 获取知识库列表，然后用 yuque_toc_get 浏览目录'
   )
 }
+
+// =============================================================================
+// 知识库管理操作
+// =============================================================================
+
+/** 创建知识库 */
+export const yuqueRepoCreate = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { name, slug, description, type, public: publicVal } = args
+
+  if (!name || !slug) {
+    return createErrorResult('Missing parameters', '缺少参数', '需要 name 和 slug')
+  }
+
+  try {
+    const payload: any = { name, slug, type: type || 'Book', public: publicVal !== undefined ? publicVal : 0 }
+    if (description !== undefined) payload.description = description
+
+    const result = await yuqueApi('POST', '/repo/create', payload)
+
+    if (!result.data) {
+      return createErrorResult(result.msg || result.message || '请求失败', '创建知识库失败')
+    }
+
+    const repo = result.data
+    return createSuccessResult(
+      result.data,
+      `知识库创建成功！\n名称: ${repo.name}\nID: ${repo.id}\nSlug: ${repo.slug}\nURL: https://www.yuque.com/${repo.slug}`,
+      'yuque_repo_create'
+    )
+  } catch (error: any) {
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
+  }
+}
+
+/** 更新知识库 */
+export const yuqueRepoUpdate = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { repo_id, name, slug, description } = args
+
+  if (!repo_id) {
+    return createErrorResult('Missing repo_id', '缺少 repo_id 参数')
+  }
+
+  try {
+    const payload: any = {}
+    if (name !== undefined) payload.name = name
+    if (slug !== undefined) payload.slug = slug
+    if (description !== undefined) payload.description = description
+
+    const result = await yuqueApi('PUT', '/repo/update', { repo_id, ...payload })
+
+    if (!result.data) {
+      return createErrorResult(result.msg || result.message || '请求失败', '更新知识库失败')
+    }
+
+    return createSuccessResult(result.data, '知识库更新成功', 'yuque_repo_update')
+  } catch (error: any) {
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
+  }
+}
+
+/** 删除知识库 */
+export const yuqueRepoDelete = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { repo_id } = args
+
+  if (!repo_id) {
+    return createErrorResult('Missing repo_id', '缺少 repo_id 参数')
+  }
+
+  try {
+    const result = await yuqueApi('DELETE', '/repo/delete', { repo_id })
+
+    if (result.data === undefined && (result.msg || result.message)) {
+      return createErrorResult(result.msg || result.message, '删除知识库失败')
+    }
+
+    return createSuccessResult(result.data, `知识库 ${repo_id} 已删除`, 'yuque_repo_delete')
+  } catch (error: any) {
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
+  }
+}
+
+/** 获取知识库详情 */
+export const yuqueRepoGet = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { repo_id } = args
+
+  if (!repo_id) {
+    return createErrorResult('Missing repo_id', '缺少 repo_id 参数')
+  }
+
+  try {
+    const result = await yuqueApi('GET', '/repo/get', undefined, { repo_id: String(repo_id) })
+
+    if (!result.data) {
+      return createErrorResult(result.msg || result.message || '请求失败', '获取知识库详情失败')
+    }
+
+    const repo = result.data
+    return createSuccessResult(
+      result.data,
+      `知识库: ${repo.name}\n描述: ${repo.description || '无'}\nID: ${repo.id}\nSlug: ${repo.slug}`,
+      'yuque_repo_get'
+    )
+  } catch (error: any) {
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
+  }
+}
+
+/** 获取知识库设置 */
+export const yuqueRepoSettingGet = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { repo_id } = args
+
+  if (!repo_id) {
+    return createErrorResult('Missing repo_id', '缺少 repo_id 参数')
+  }
+
+  try {
+    const result = await yuqueApi('GET', '/repo/setting/get', undefined, { repo_id: String(repo_id) })
+
+    if (!result.data) {
+      return createErrorResult(result.msg || result.message || '请求失败', '获取知识库设置失败')
+    }
+
+    const setting = result.data
+    const publicText = setting.public === 0 ? '私密' : setting.public === 1 ? '互联网公开' : '空间成员公开'
+    return createSuccessResult(
+      result.data,
+      `可见性: ${publicText}\n评论: ${setting.comment_status === 1 ? '开启' : '关闭'}`,
+      'yuque_repo_setting_get'
+    )
+  } catch (error: any) {
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
+  }
+}
+
+/** 更新知识库设置 */
+export const yuqueRepoSettingUpdate = async (args: Record<string, any>): Promise<ToolResult> => {
+  const { repo_id, public: publicVal, comment_status } = args
+
+  if (!repo_id) {
+    return createErrorResult('Missing repo_id', '缺少 repo_id 参数')
+  }
+
+  try {
+    const payload: any = { repo_id }
+    if (publicVal !== undefined) payload.public = publicVal
+    if (comment_status !== undefined) payload.comment_status = comment_status
+
+    const result = await yuqueApi('PUT', '/repo/setting/update', payload)
+
+    if (!result.data) {
+      return createErrorResult(result.msg || result.message || '请求失败', '更新知识库设置失败')
+    }
+
+    return createSuccessResult(result.data, '知识库设置更新成功', 'yuque_repo_setting_update')
+  } catch (error: any) {
+    const translated = translateYuqueError({ message: error.message })
+    return createErrorResult(error.message, translated.message, translated.suggestion)
+  }
+}

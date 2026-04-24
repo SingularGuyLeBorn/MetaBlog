@@ -13,6 +13,12 @@ export {
   yuqueDocDelete,
   yuqueImageUpload,
   yuqueSearch,
+  yuqueRepoCreate,
+  yuqueRepoUpdate,
+  yuqueRepoDelete,
+  yuqueRepoGet,
+  yuqueRepoSettingGet,
+  yuqueRepoSettingUpdate,
 } from './executors'
 
 export {
@@ -25,4 +31,10 @@ export {
   yuqueDocDeleteDef,
   yuqueImageUploadDef,
   yuqueSearchDef,
+  yuqueRepoCreateDef,
+  yuqueRepoUpdateDef,
+  yuqueRepoDeleteDef,
+  yuqueRepoGetDef,
+  yuqueRepoSettingGetDef,
+  yuqueRepoSettingUpdateDef,
 } from './definitions'

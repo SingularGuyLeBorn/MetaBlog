@@ -638,4 +638,161 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       sendJson(res, 500, { code: -1, msg: e.message });
     }
   });
+
+  // ==========================================================================
+  // 9. 知识库：创建
+  // ==========================================================================
+  // POST /api/yuque/repo/create
+  // Body: { name, slug, description?, type?, public? }
+  // ==========================================================================
+  server.middlewares.use("/api/yuque/repo/create", async (req, res, next) => {
+    if (req.method !== "POST") { next(); return; }
+    try {
+      const body = await parseBody(req);
+      const { name, slug, description, type, public: publicVal } = body;
+
+      if (!name || !slug) {
+        sendJson(res, 400, { code: -1, msg: "缺少 name 或 slug 参数" });
+        return;
+      }
+
+      const payload: any = { name: String(name), slug: String(slug), type: type || "Book", public: publicVal !== undefined ? Number(publicVal) : 0 };
+      if (description !== undefined) payload.description = String(description);
+
+      structuredLog.info("yuque.repo.create", "创建语雀知识库", { name, slug });
+      const result = await yuqueApi("POST", "/api/books", payload, undefined, `${YUQUE_BASE}/dashboard/books`);
+      sendJson(res, result.data ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ==========================================================================
+  // 10. 知识库：更新
+  // ==========================================================================
+  // PUT /api/yuque/repo/update
+  // Body: { repo_id, name?, slug?, description? }
+  // ==========================================================================
+  server.middlewares.use("/api/yuque/repo/update", async (req, res, next) => {
+    if (req.method !== "PUT" && req.method !== "POST") { next(); return; }
+    try {
+      const body = await parseBody(req);
+      const repo_id = body.repo_id;
+      if (!repo_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 repo_id 参数" });
+        return;
+      }
+
+      const payload: any = {};
+      if (body.name !== undefined) payload.name = String(body.name);
+      if (body.slug !== undefined) payload.slug = String(body.slug);
+      if (body.description !== undefined) payload.description = String(body.description);
+
+      structuredLog.info("yuque.repo.update", "更新语雀知识库", { repo_id });
+      const result = await yuqueApi("PUT", `/api/books/${repo_id}`, payload, undefined, `${YUQUE_BASE}/${repo_id}`);
+      sendJson(res, result.data ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ==========================================================================
+  // 11. 知识库：删除
+  // ==========================================================================
+  // DELETE /api/yuque/repo/delete
+  // Body: { repo_id }
+  // ==========================================================================
+  server.middlewares.use("/api/yuque/repo/delete", async (req, res, next) => {
+    if (req.method !== "DELETE" && req.method !== "POST") { next(); return; }
+    try {
+      const body = await parseBody(req);
+      const repo_id = body.repo_id;
+      if (!repo_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 repo_id 参数" });
+        return;
+      }
+
+      structuredLog.info("yuque.repo.delete", "删除语雀知识库", { repo_id });
+      const result = await yuqueApi("DELETE", `/api/books/${repo_id}`, undefined, undefined, `${YUQUE_BASE}/${repo_id}`);
+      sendJson(res, result.data !== undefined ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ==========================================================================
+  // 12. 知识库：获取详情
+  // ==========================================================================
+  // GET /api/yuque/repo/get
+  // Query: { repo_id }
+  // ==========================================================================
+  server.middlewares.use("/api/yuque/repo/get", async (req, res, next) => {
+    if (req.method !== "GET") { next(); return; }
+    try {
+      const url = new URL(req.url || "", `http://localhost`);
+      const repo_id = url.searchParams.get("repo_id");
+      if (!repo_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 repo_id 参数" });
+        return;
+      }
+
+      structuredLog.info("yuque.repo.get", "获取语雀知识库详情", { repo_id });
+      const result = await yuqueApi("GET", `/api/books/${repo_id}`);
+      sendJson(res, result.data ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ==========================================================================
+  // 13. 知识库：获取设置
+  // ==========================================================================
+  // GET /api/yuque/repo/setting/get
+  // Query: { repo_id }
+  // ==========================================================================
+  server.middlewares.use("/api/yuque/repo/setting/get", async (req, res, next) => {
+    if (req.method !== "GET") { next(); return; }
+    try {
+      const url = new URL(req.url || "", `http://localhost`);
+      const repo_id = url.searchParams.get("repo_id");
+      if (!repo_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 repo_id 参数" });
+        return;
+      }
+
+      structuredLog.info("yuque.repo.setting.get", "获取语雀知识库设置", { repo_id });
+      const result = await yuqueApi("GET", `/api/books/${repo_id}/setting`);
+      sendJson(res, result.data ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ==========================================================================
+  // 14. 知识库：更新设置
+  // ==========================================================================
+  // PUT /api/yuque/repo/setting/update
+  // Body: { repo_id, public?, comment_status? }
+  // ==========================================================================
+  server.middlewares.use("/api/yuque/repo/setting/update", async (req, res, next) => {
+    if (req.method !== "PUT" && req.method !== "POST") { next(); return; }
+    try {
+      const body = await parseBody(req);
+      const repo_id = body.repo_id;
+      if (!repo_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 repo_id 参数" });
+        return;
+      }
+
+      const payload: any = {};
+      if (body.public !== undefined) payload.public = Number(body.public);
+      if (body.comment_status !== undefined) payload.comment_status = Number(body.comment_status);
+
+      structuredLog.info("yuque.repo.setting.update", "更新语雀知识库设置", { repo_id });
+      const result = await yuqueApi("PUT", `/api/books/${repo_id}/setting`, payload, undefined, `${YUQUE_BASE}/${repo_id}/setting`);
+      sendJson(res, result.data ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
 }

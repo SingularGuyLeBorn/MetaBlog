@@ -473,3 +473,206 @@ export const feishuUserSearchDef: ToolDefinition = {
     },
   },
 }
+
+// ============================================
+// Wiki 知识库操作
+// ============================================
+
+export const feishuWikiSpaceCreateDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'feishu_wiki_space_create',
+    description: `创建飞书知识库空间（Wiki Space）。
+
+使用示例：
+- 创建知识库: feishu_wiki_space_create(name="产品文档库", description="存放产品相关文档")
+
+创建成功后，可用 feishu_wiki_node_create 在知识库中挂载文档。`,
+    parameters: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: '知识库名称',
+        },
+        description: {
+          type: 'string',
+          description: '知识库描述（可选）',
+        },
+      },
+      required: ['name'],
+    },
+  },
+}
+
+export const feishuWikiSpaceListDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'feishu_wiki_space_list',
+    description: '列出当前用户可访问的飞书知识库空间列表。',
+    parameters: {
+      type: 'object',
+      properties: {
+        page_size: {
+          type: 'number',
+          description: '每页数量（1-50，默认 10）',
+          default: 10,
+        },
+      },
+      required: [],
+    },
+  },
+}
+
+export const feishuWikiSpaceGetDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'feishu_wiki_space_get',
+    description: '获取飞书知识库空间的详细信息。',
+    parameters: {
+      type: 'object',
+      properties: {
+        space_id: {
+          type: 'string',
+          description: '知识库空间 ID',
+        },
+      },
+      required: ['space_id'],
+    },
+  },
+}
+
+export const feishuWikiSpaceUpdateDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'feishu_wiki_space_update',
+    description: '更新飞书知识库空间的名称或描述。',
+    parameters: {
+      type: 'object',
+      properties: {
+        space_id: {
+          type: 'string',
+          description: '知识库空间 ID',
+        },
+        name: {
+          type: 'string',
+          description: '新名称（可选）',
+        },
+        description: {
+          type: 'string',
+          description: '新描述（可选）',
+        },
+      },
+      required: ['space_id'],
+    },
+  },
+}
+
+export const feishuWikiSpaceDeleteDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'feishu_wiki_space_delete',
+    description: `删除飞书知识库空间。
+
+【⚠️ 警告】删除操作不可逆！会同时删除知识库下的所有节点。`,
+    parameters: {
+      type: 'object',
+      properties: {
+        space_id: {
+          type: 'string',
+          description: '知识库空间 ID',
+        },
+      },
+      required: ['space_id'],
+    },
+  },
+}
+
+export const feishuWikiNodeCreateDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'feishu_wiki_node_create',
+    description: `在飞书知识库中创建节点（挂载文档）。
+
+使用示例：
+- 在知识库根节点创建文档: feishu_wiki_node_create(space_id="xxx", title="新文档")
+- 在指定父节点下创建: feishu_wiki_node_create(space_id="xxx", parent_node_token="yyy", title="子文档")
+
+创建成功后返回 node_token，可用于后续操作。`,
+    parameters: {
+      type: 'object',
+      properties: {
+        space_id: {
+          type: 'string',
+          description: '知识库空间 ID',
+        },
+        title: {
+          type: 'string',
+          description: '节点标题（创建 docx 时需要）',
+        },
+        parent_node_token: {
+          type: 'string',
+          description: '父节点 token（可选），不传则挂载到根节点',
+        },
+        obj_type: {
+          type: 'string',
+          enum: ['docx', 'sheet', 'bitable', 'mindnote'],
+          description: '对象类型，默认 docx',
+          default: 'docx',
+        },
+      },
+      required: ['space_id', 'title'],
+    },
+  },
+}
+
+export const feishuWikiNodeListDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'feishu_wiki_node_list',
+    description: '列出飞书知识库中的节点（文档列表）。',
+    parameters: {
+      type: 'object',
+      properties: {
+        space_id: {
+          type: 'string',
+          description: '知识库空间 ID',
+        },
+        parent_node_token: {
+          type: 'string',
+          description: '父节点 token（可选），不传则获取根节点下的节点',
+        },
+        page_size: {
+          type: 'number',
+          description: '每页数量（默认 10）',
+          default: 10,
+        },
+      },
+      required: ['space_id'],
+    },
+  },
+}
+
+export const feishuWikiNodeDeleteDef: ToolDefinition = {
+  type: 'function',
+  function: {
+    name: 'feishu_wiki_node_delete',
+    description: `删除飞书知识库中的节点。
+
+【⚠️ 警告】删除操作不可逆！`,
+    parameters: {
+      type: 'object',
+      properties: {
+        space_id: {
+          type: 'string',
+          description: '知识库空间 ID',
+        },
+        node_token: {
+          type: 'string',
+          description: '节点 token',
+        },
+      },
+      required: ['space_id', 'node_token'],
+    },
+  },
+}

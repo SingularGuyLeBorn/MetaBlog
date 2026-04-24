@@ -976,6 +976,180 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   });
 
   // ============================================
+  // Wiki 知识库: 创建空间
+  // POST /api/lark/wiki/space/create
+  // ============================================
+  server.middlewares.use("/api/lark/wiki/space/create", async (req, res, next) => {
+    if (req.method !== "POST") { next(); return; }
+    try {
+      const body = await parseBody(req);
+      const payload: any = { name: String(body.name) };
+      if (body.description) payload.description = String(body.description);
+      structuredLog.info("lark.wiki.space.create", "创建飞书知识库", { name: body.name });
+      const result = await feishuApi("POST", "/wiki/v2/spaces", payload);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // Wiki 知识库: 列出空间
+  // GET /api/lark/wiki/space/list
+  // ============================================
+  server.middlewares.use("/api/lark/wiki/space/list", async (req, res, next) => {
+    if (req.method !== "GET") { next(); return; }
+    try {
+      const url = new URL(req.url || "", `http://localhost`);
+      const page_size = url.searchParams.get("page_size") || "10";
+      structuredLog.info("lark.wiki.space.list", "获取飞书知识库列表");
+      const result = await feishuApi("GET", "/wiki/v2/spaces", undefined, { page_size });
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // Wiki 知识库: 获取空间详情
+  // GET /api/lark/wiki/space/get
+  // ============================================
+  server.middlewares.use("/api/lark/wiki/space/get", async (req, res, next) => {
+    if (req.method !== "GET") { next(); return; }
+    try {
+      const url = new URL(req.url || "", `http://localhost`);
+      const space_id = url.searchParams.get("space_id");
+      if (!space_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 space_id 参数" });
+        return;
+      }
+      structuredLog.info("lark.wiki.space.get", "获取飞书知识库详情", { space_id });
+      const result = await feishuApi("GET", `/wiki/v2/spaces/${space_id}`);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // Wiki 知识库: 更新空间
+  // POST /api/lark/wiki/space/update
+  // ============================================
+  server.middlewares.use("/api/lark/wiki/space/update", async (req, res, next) => {
+    if (req.method !== "POST") { next(); return; }
+    try {
+      const body = await parseBody(req);
+      const space_id = body.space_id;
+      if (!space_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 space_id 参数" });
+        return;
+      }
+      const payload: any = {};
+      if (body.name !== undefined) payload.name = String(body.name);
+      if (body.description !== undefined) payload.description = String(body.description);
+      structuredLog.info("lark.wiki.space.update", "更新飞书知识库", { space_id });
+      const result = await feishuApi("PATCH", `/wiki/v2/spaces/${space_id}`, payload);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // Wiki 知识库: 删除空间
+  // POST /api/lark/wiki/space/delete
+  // ============================================
+  server.middlewares.use("/api/lark/wiki/space/delete", async (req, res, next) => {
+    if (req.method !== "POST") { next(); return; }
+    try {
+      const body = await parseBody(req);
+      const space_id = body.space_id;
+      if (!space_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 space_id 参数" });
+        return;
+      }
+      structuredLog.info("lark.wiki.space.delete", "删除飞书知识库", { space_id });
+      const result = await feishuApi("DELETE", `/wiki/v2/spaces/${space_id}`);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // Wiki 知识库: 创建节点
+  // POST /api/lark/wiki/node/create
+  // ============================================
+  server.middlewares.use("/api/lark/wiki/node/create", async (req, res, next) => {
+    if (req.method !== "POST") { next(); return; }
+    try {
+      const body = await parseBody(req);
+      const space_id = body.space_id;
+      if (!space_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 space_id 参数" });
+        return;
+      }
+      const payload: any = {
+        node_type: "origin",
+        obj_type: body.obj_type || "docx",
+      };
+      if (body.title) payload.title = String(body.title);
+      if (body.parent_node_token) payload.parent_node_token = String(body.parent_node_token);
+      structuredLog.info("lark.wiki.node.create", "创建飞书知识库节点", { space_id, title: body.title });
+      const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/nodes`, payload);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // Wiki 知识库: 列出节点
+  // GET /api/lark/wiki/node/list
+  // ============================================
+  server.middlewares.use("/api/lark/wiki/node/list", async (req, res, next) => {
+    if (req.method !== "GET") { next(); return; }
+    try {
+      const url = new URL(req.url || "", `http://localhost`);
+      const space_id = url.searchParams.get("space_id");
+      if (!space_id) {
+        sendJson(res, 400, { code: -1, msg: "缺少 space_id 参数" });
+        return;
+      }
+      const params: Record<string, string> = { page_size: url.searchParams.get("page_size") || "10" };
+      const parent_node_token = url.searchParams.get("parent_node_token");
+      if (parent_node_token) params.parent_node_token = parent_node_token;
+      structuredLog.info("lark.wiki.node.list", "获取飞书知识库节点列表", { space_id });
+      const result = await feishuApi("GET", `/wiki/v2/spaces/${space_id}/nodes`, undefined, params);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // Wiki 知识库: 删除节点
+  // POST /api/lark/wiki/node/delete
+  // ============================================
+  server.middlewares.use("/api/lark/wiki/node/delete", async (req, res, next) => {
+    if (req.method !== "POST") { next(); return; }
+    try {
+      const body = await parseBody(req);
+      const space_id = body.space_id;
+      const node_token = body.node_token;
+      if (!space_id || !node_token) {
+        sendJson(res, 400, { code: -1, msg: "缺少 space_id 或 node_token 参数" });
+        return;
+      }
+      structuredLog.info("lark.wiki.node.delete", "删除飞书知识库节点", { space_id, node_token });
+      const result = await feishuApi("DELETE", `/wiki/v2/spaces/${space_id}/nodes/${node_token}`);
+      sendJson(res, result.code === 0 ? 200 : 400, result);
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
   // 健康检查
   // GET /api/lark/health
   // ============================================

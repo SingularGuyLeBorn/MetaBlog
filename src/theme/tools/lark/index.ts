@@ -15,7 +15,15 @@ export {
   feishuDocShare,
   feishuDocUnshare,
   feishuImSend,
-  feishuUserSearch
+  feishuUserSearch,
+  feishuWikiSpaceCreate,
+  feishuWikiSpaceList,
+  feishuWikiSpaceGet,
+  feishuWikiSpaceUpdate,
+  feishuWikiSpaceDelete,
+  feishuWikiNodeCreate,
+  feishuWikiNodeList,
+  feishuWikiNodeDelete,
 } from './executors'
 
 export {
@@ -30,5 +38,13 @@ export {
   feishuDocShareDef,
   feishuDocUnshareDef,
   feishuImSendDef,
-  feishuUserSearchDef
+  feishuUserSearchDef,
+  feishuWikiSpaceCreateDef,
+  feishuWikiSpaceListDef,
+  feishuWikiSpaceGetDef,
+  feishuWikiSpaceUpdateDef,
+  feishuWikiSpaceDeleteDef,
+  feishuWikiNodeCreateDef,
+  feishuWikiNodeListDef,
+  feishuWikiNodeDeleteDef,
 } from './definitions'
