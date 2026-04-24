@@ -60,10 +60,10 @@ MetaBlog/
 │   ├── migrate-data.cjs       # 数据迁移
 │   └── structure-checker.js   # 文档结构检查
 │
-├── docs-internal/             # 内部设计文档
-│   ├── agent/                 # Agent 设计
-│   ├── feishu-api-lab/        # 飞书 API 实验
-│   └── ...
+├── project/                   # 实验与原型
+│   ├── experiments/           # API 实验（飞书、语雀、GitHub 等）
+│   ├── docs/                  # 项目文档
+│   └── requirements/          # 需求文档
 │
 ├── .env                       # 环境变量（Git 忽略）
 ├── package.json

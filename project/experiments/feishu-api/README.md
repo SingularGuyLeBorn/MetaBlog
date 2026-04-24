@@ -5,14 +5,13 @@
 ## 文件结构
 
 ```
-feishu-api-lab/
+feishu-api/
 ├── README.md                    # 本文件
 ├── requirements.txt             # Python 依赖
 ├── feishu_client.py             # 飞书 API 客户端封装
-├── 01_auth_and_token.ipynb      # 认证 & Token 获取测试
-├── 02_doc_crud.ipynb            # 文档 CRUD 测试（创建/读取/更新/删除）
-├── 03_search_msg_user.ipynb     # 搜索/消息/用户测试
-└── 04_advanced_blocks.ipynb     # 高级块操作测试
+├── test_feishu_client.py        # pytest 测试套件
+├── 99_feishu_api_showcase.ipynb # 全流程验证 Notebook
+└── ...
 ```
 
 ## 快速开始
@@ -20,7 +19,7 @@ feishu-api-lab/
 ### 1. 安装依赖
 
 ```bash
-cd docs-internal/feishu-api-lab
+cd project/experiments/feishu-api
 pip install -r requirements.txt
 ```
 

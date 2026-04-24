@@ -21,7 +21,7 @@
 ## 文件结构
 
 ```
-github-cli-lab/
+github-api/
 ├── README.md                         # 本文件
 ├── requirements.txt                  # Python 依赖
 ├── github_client.py                  # GitHub API 客户端封装
@@ -33,7 +33,7 @@ github-cli-lab/
 ### 1. 安装依赖
 
 ```bash
-cd docs-internal/github-cli-lab
+cd project/experiments/github-api
 pip install -r requirements.txt
 ```
 
