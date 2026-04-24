@@ -104,10 +104,25 @@ class FeishuClient:
         params: Optional[Dict] = None,
         files: Optional[Dict] = None,
         data: Optional[Dict] = None,
-        timeout: int = 30
+        timeout: int = 30,
+        use_user_token: bool = False,
     ) -> Dict[str, Any]:
-        """发送飞书 API 请求"""
-        token = self.get_tenant_access_token()
+        """发送飞书 API 请求
+
+        参数:
+            use_user_token: 是否使用 user_access_token（而非 tenant_access_token）。
+                            创建 Wiki 知识库等 API 必须使用 user_access_token。
+        """
+        if use_user_token:
+            token = self.user_access_token
+            if not token:
+                raise RuntimeError(
+                    "该 API 需要 user_access_token。\n"
+                    "请在初始化时传入 user_access_token，或在 .env 中设置 FEISHU_USER_ACCESS_TOKEN。\n"
+                    "获取方式：登录飞书开放平台 → 你的应用 → API 调试台 → 获取 Token"
+                )
+        else:
+            token = self.get_tenant_access_token()
         url = f"{BASE_URL}{path}"
 
         # 飞书 docx API 需要 document_revision_id，默认 -1 忽略版本锁
@@ -209,6 +224,9 @@ class FeishuClient:
         """
         创建知识库空间（Wiki Space）
 
+        【重要】此 API 必须使用 user_access_token，不支持 tenant_access_token。
+        请在初始化时传入 user_access_token 或在 .env 中设置 FEISHU_USER_ACCESS_TOKEN。
+
         参数:
             name: 知识库名称
             description: 知识库描述
@@ -219,7 +237,7 @@ class FeishuClient:
         payload = {"name": name}
         if description:
             payload["description"] = description
-        return self.api("POST", "/wiki/v2/spaces", json_data=payload)
+        return self.api("POST", "/wiki/v2/spaces", json_data=payload, use_user_token=True)
 
     def list_wiki_spaces(self, page_size: int = 10) -> List[Dict[str, Any]]:
         """

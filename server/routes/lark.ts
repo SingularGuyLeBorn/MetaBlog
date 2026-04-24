@@ -46,14 +46,29 @@ async function getTenantAccessToken(): Promise<string> {
   return tokenCache.token;
 }
 
+/** 获取 user_access_token（从环境变量读取） */
+function getUserAccessToken(): string {
+  const token = process.env.FEISHU_USER_ACCESS_TOKEN;
+  if (!token) {
+    throw new Error(
+      "FEISHU_USER_ACCESS_TOKEN 未配置。\n" +
+      "该 API 必须使用 user_access_token（不支持 tenant_access_token）。\n" +
+      "获取方式：登录飞书开放平台 → 你的应用 → API 调试台 → 获取 Token\n" +
+      "然后在 .env 中添加：FEISHU_USER_ACCESS_TOKEN=u-xxxxxxxx"
+    );
+  }
+  return token;
+}
+
 /** 通用飞书 API 调用 */
 async function feishuApi(
   method: string,
   path: string,
   body?: any,
-  query?: Record<string, string>
+  query?: Record<string, string>,
+  useUserToken: boolean = false
 ): Promise<any> {
-  const token = await getTenantAccessToken();
+  const token = useUserToken ? getUserAccessToken() : await getTenantAccessToken();
 
   let url = `${FEISHU_BASE}${path}`;
   if (query) {
@@ -986,7 +1001,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const payload: any = { name: String(body.name) };
       if (body.description) payload.description = String(body.description);
       structuredLog.info("lark.wiki.space.create", "创建飞书知识库", { name: body.name });
-      const result = await feishuApi("POST", "/wiki/v2/spaces", payload);
+      const result = await feishuApi("POST", "/wiki/v2/spaces", payload, undefined, true);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
       sendJson(res, 500, { code: -1, msg: e.message });
