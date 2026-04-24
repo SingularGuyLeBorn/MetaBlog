@@ -53,22 +53,43 @@ Function Calling (OpenAI 格式)
 | `github_get_commit_history` | 查看提交历史 |
 | `github_get_issues` | 查看 Issues |
 
-### 飞书（10个）
+### 飞书文档（13个）
 
 | 工具名 | 功能 |
 |--------|------|
-| `feishu_doc_create` | 创建飞书文档 |
+| `feishu_doc_create` | 创建飞书文档（支持自动分配权限） |
 | `feishu_doc_read` | 读取文档内容 |
+| `feishu_doc_meta` | 获取文档元信息 |
 | `feishu_doc_search` | 搜索文档 |
 | `feishu_doc_blocks` | 获取文档块列表 |
 | `feishu_doc_append` | 追加内容（支持表格、代码块、公式） |
 | `feishu_doc_update_block` | 更新文档块 |
 | `feishu_doc_delete_block` | 删除文档块 |
+| `feishu_doc_insert_image` | 插入图片到文档 |
+| `feishu_doc_share` | 分享文档权限 |
+| `feishu_doc_unshare` | 取消文档权限 |
 | `feishu_im_send` | 发送 IM 消息 |
 | `feishu_user_search` | 搜索用户 |
-| `feishu_image_upload` | 上传图片 |
 
-### 语雀（9个）
+### 飞书 Wiki 知识库（13个）
+
+| 工具名 | 功能 |
+|--------|------|
+| `feishu_wiki_space_create` | 创建知识库空间 |
+| `feishu_wiki_space_list` | 列出知识库空间 |
+| `feishu_wiki_space_get` | 获取空间详情 |
+| `feishu_wiki_space_update` | 更新空间信息 |
+| `feishu_wiki_space_delete` | 删除空间 |
+| `feishu_wiki_node_create` | 创建 Wiki 节点 |
+| `feishu_wiki_node_list` | 列出节点 |
+| `feishu_wiki_node_delete` | 删除节点 |
+| `feishu_wiki_node_move` | 移动节点 |
+| `feishu_wiki_move_doc` | 将外部文档迁入 Wiki |
+| `feishu_wiki_member_list` | 获取成员列表 |
+| `feishu_wiki_member_add` | 添加成员 |
+| `feishu_wiki_member_remove` | 移除成员 |
+
+### 语雀文档（9个）
 
 | 工具名 | 功能 |
 |--------|------|
@@ -81,6 +102,17 @@ Function Calling (OpenAI 格式)
 | `yuque_doc_delete` | 删除文档 |
 | `yuque_image_upload` | 上传图片 |
 | `yuque_search` | 搜索文档 |
+
+### 语雀知识库管理（6个）
+
+| 工具名 | 功能 |
+|--------|------|
+| `yuque_repo_create` | 创建知识库 |
+| `yuque_repo_update` | 更新知识库 |
+| `yuque_repo_delete` | 删除知识库 |
+| `yuque_repo_get` | 获取知识库详情 |
+| `yuque_repo_setting_get` | 获取知识库设置 |
+| `yuque_repo_setting_update` | 更新知识库设置 |
 
 ### 网络（2个）
 
