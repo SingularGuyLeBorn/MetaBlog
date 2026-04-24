@@ -13,7 +13,7 @@ Function Calling (OpenAI 格式)
     ↓
 工具注册表 (registry.ts)
     ↓
-工具执行器 (executors.ts)
+分类工具执行器 (article/*.ts, github/*.ts, lark/*.ts, yuque/*.ts, ...)
     ↓
 结果处理 → 返回给 AI
 ```
