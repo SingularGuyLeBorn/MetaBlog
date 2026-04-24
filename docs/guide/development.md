@@ -57,7 +57,10 @@ MetaBlog/
 │       └── utils/             # 工具函数
 │
 ├── tests/                     # 测试套件
-│   └── markdown-to-blocks.test.ts  # Markdown 转飞书块测试
+│   ├── markdown-to-blocks.test.ts  # Markdown 转飞书块测试
+│   └── server/                # 后端路由 HTTP 测试
+│       ├── lark-routes.test.ts
+│       └── yuque-routes.test.ts
 │
 ├── scripts/                   # 构建脚本
 │   ├── migrate-data.cjs       # 数据迁移
