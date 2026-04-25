@@ -46,19 +46,22 @@
             @keydown.stop
           />
         </div>
-        <div class="dropdown-list">
+        <div class="dropdown-list mention-list">
           <div 
             v-for="(article, index) in filteredArticles" 
             :key="article.path"
-            class="dropdown-item"
+            class="dropdown-item mention-item"
             :class="{ active: index === mentionIndex }"
             @click="selectMention(article)"
             @mouseenter="mentionIndex = index"
           >
-            <span class="item-icon">📄</span>
-            <div class="item-content">
+            <span class="item-icon mention-icon">📄</span>
+            <div class="item-content mention-content">
               <div class="item-title">{{ article.title }}</div>
-              <div class="item-path">{{ article.path }}</div>
+              <div class="item-meta">
+                <span v-if="article.section" class="section-tag">{{ article.section }}</span>
+                <span class="item-path">{{ article.path }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -113,6 +116,7 @@ export interface Mention {
 interface Article {
   title: string
   path: string
+  section?: string
 }
 
 const props = withDefaults(defineProps<{
@@ -218,25 +222,15 @@ watch(() => props.selectedSkill, (skill) => {
 // 加载文章列表
 async function loadArticles() {
   try {
-    // 扫描 docs 目录下的所有 markdown 文件
-    const response = await fetch('/api/files/list?path=docs&recursive=true')
+    const response = await fetch('/api/articles/list-all')
     if (response.ok) {
       const result = await response.json()
-      const files = result.data || []
-      const mdFiles = files.filter((f: any) => f.path.endsWith('.md'))
-      
-      articles.value = mdFiles.map((f: any) => {
-        // 从 path 提取标题（去掉 .md 后缀）
-        const fileName = f.path.split('/').pop() || ''
-        const title = fileName.replace(/\.md$/, '')
-        // 显示相对于 docs 的路径
-        const displayPath = f.path.replace(/^docs\//, '')
-        
-        return {
-          title: f.title || title,
-          path: displayPath
-        }
-      }).filter((a: Article) => a.path !== 'index.md') // 排除根目录的 index
+      const list = result.data || []
+      articles.value = list.map((a: any) => ({
+        title: a.title || a.path.split('/').pop()?.replace(/\.md$/, '') || a.path,
+        path: a.path,
+        section: a.section
+      }))
     }
   } catch (e) {
     console.error('[MentionInput] Failed to load articles:', e)
@@ -485,6 +479,49 @@ defineExpose({
 .dropdown-list {
   overflow-y: auto;
   max-height: 200px;
+}
+
+.mention-list {
+  max-height: 260px;
+}
+
+.mention-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.mention-item:last-child {
+  border-bottom: none;
+}
+
+.mention-icon {
+  margin-top: 2px;
+}
+
+.mention-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.section-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  background: #eef2ff;
+  color: #6366f1;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .dropdown-item {

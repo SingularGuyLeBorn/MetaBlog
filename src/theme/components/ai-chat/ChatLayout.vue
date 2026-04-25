@@ -138,6 +138,7 @@
         v-model="inputText"
         :is-streaming="isStreaming"
         :selected-skill="selectedSkill"
+        :skills="allSkills"
         :supports-vision="currentModelSupportsVision"
         :supports-video="currentModelSupportsVideo"
         :max-attachments="10"
@@ -269,7 +270,7 @@ const {
   tokenUsage
 } = useAIChat()
 
-const { activeAgent, agents: allAgents, setActive } = useAgentConfig()
+const { activeAgent, agents: allAgents, skills: allSkills, setActive } = useAgentConfig()
 const { buildSystemPrompt } = useAgentConfig()
 
 // UI 状态
@@ -537,7 +538,8 @@ async function handleRegenerate() {
 }
 
 async function handleSend(content: string, attachments: MessageAttachment[] = [], skillInfo?: Skill) {
-  if ((!content.trim() && attachments.length === 0) || isStreaming.value) return
+  if (!content.trim() && attachments.length === 0) return
+  // isStreaming 时不再阻止发送，消息会进入队列
   
   inputText.value = ''
   

@@ -33,6 +33,12 @@ const isStreaming = ref(false)
 const isInitialized = ref(false)
 // 每个会话独立的 AbortController（切换会话不中断）
 const sessionControllers = new Map<string, AbortController>()
+// 消息发送队列（AI 执行期间用户发送的消息暂存于此）
+const pendingMessages = ref<Record<string, Array<{
+  content: string
+  attachments?: MessageAttachment[]
+  skillInfo?: { id: string; name: string; icon: string; content: string }
+}>>>({})
 
 // Token 用量追踪（按会话）
 interface TokenUsage {
@@ -193,15 +199,53 @@ export function useAIChat() {
   }
 
   // ==================== 消息发送 ====================
-  async function sendMessage(content: string, attachments?: MessageAttachment[], skillInfo?: { id: string; name: string; icon: string; content: string }): Promise<boolean> {
+  async function sendMessage(content: string, attachments?: MessageAttachment[], skillInfo?: { id: string; name: string; icon: string; content: string }, _isQueued = false): Promise<boolean> {
     if (!currentSession.value || (!content.trim() && (!attachments || attachments.length === 0))) return false
     
     const sessionId = currentSessionId.value!
     const config = currentSession.value.config
     const groups = messageGroups.value[sessionId] || []
     
-    // 自动重命名（第一条消息）
-    if (groups.length === 0) {
+    // 如果当前会话正在流式输出，将消息加入队列并立即显示用户消息
+    if (isStreaming.value && sessionId === currentSessionId.value && !_isQueued) {
+      const userMsg: ChatMessage = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        sessionId,
+        role: 'user',
+        content: content.trim(),
+        status: 'completed',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        attachments: attachments && attachments.length > 0 ? attachments : undefined,
+        metadata: skillInfo ? { skill: skillInfo } : undefined
+      }
+      groups.push({
+        userMessage: userMsg,
+        aiVersions: [],
+        currentVersionIndex: 0
+      })
+      messageGroups.value[sessionId] = groups
+      if (sessionId === currentSessionId.value) {
+        syncCurrentMessages()
+      }
+      
+      const queue = pendingMessages.value[sessionId] || []
+      queue.push({ content: content.trim(), attachments, skillInfo })
+      pendingMessages.value[sessionId] = queue
+      
+      addLog({
+        level: 'info',
+        category: 'chat',
+        event: 'message_queued',
+        message: '用户消息已加入队列',
+        sessionId,
+        data: { content: content.slice(0, 200), queueLength: queue.length }
+      })
+      return true
+    }
+    
+    // 自动重命名（第一条消息）—— 仅非队列消息
+    if (groups.length === 0 && !_isQueued) {
       await autoRenameSession(sessionId, content.trim())
     }
     
@@ -214,17 +258,29 @@ export function useAIChat() {
       lastUpdated: Date.now()
     }
     
-    // 创建用户消息（@引用已经直接包含在 content 中）
-    const userMsg: ChatMessage = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      sessionId,
-      role: 'user',
-      content: content.trim(),
-      status: 'completed',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      attachments: attachments && attachments.length > 0 ? attachments : undefined,
-      metadata: skillInfo ? { skill: skillInfo } : undefined
+    let userMsg: ChatMessage
+    
+    if (_isQueued) {
+      // 队列消费模式：复用最后一个没有 aiVersions 的消息组
+      const lastGroup = groups[groups.length - 1]
+      if (!lastGroup || lastGroup.aiVersions.length > 0) {
+        console.error('[sendMessage] Queued message group not found')
+        return false
+      }
+      userMsg = lastGroup.userMessage
+    } else {
+      // 创建用户消息（@引用已经直接包含在 content 中）
+      userMsg = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        sessionId,
+        role: 'user',
+        content: content.trim(),
+        status: 'completed',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        attachments: attachments && attachments.length > 0 ? attachments : undefined,
+        metadata: skillInfo ? { skill: skillInfo } : undefined
+      }
     }
     
     // 创建第一个 AI 响应版本
@@ -240,15 +296,21 @@ export function useAIChat() {
       isActiveVersion: true
     }
     
-    // 创建消息组
-    const newGroup: MessageGroup = {
-      userMessage: userMsg,
-      aiVersions: [aiMsg],
-      currentVersionIndex: 0
+    if (_isQueued) {
+      // 队列消费模式：为现有组添加 AI 响应
+      groups[groups.length - 1].aiVersions = [aiMsg]
+      groups[groups.length - 1].currentVersionIndex = 0
+      messageGroups.value[sessionId] = groups
+    } else {
+      // 创建消息组
+      const newGroup: MessageGroup = {
+        userMessage: userMsg,
+        aiVersions: [aiMsg],
+        currentVersionIndex: 0
+      }
+      groups.push(newGroup)
+      messageGroups.value[sessionId] = groups
     }
-    
-    groups.push(newGroup)
-    messageGroups.value[sessionId] = groups
     
     // 同步 currentMessages 反映新消息
     if (sessionId === currentSessionId.value) {
@@ -423,6 +485,14 @@ export function useAIChat() {
                 hasToolCalls: (toolRecords?.length || 0) > 0
               }
             })
+            
+            // 消费队列中的下一条消息
+            const queue = pendingMessages.value[sessionId]
+            if (queue && queue.length > 0) {
+              const next = queue.shift()!
+              pendingMessages.value[sessionId] = queue
+              sendMessage(next.content, next.attachments, next.skillInfo, true)
+            }
           },
           onError: (err) => {
             const currentProxyGroups = messageGroups.value[sessionId]
@@ -472,6 +542,14 @@ export function useAIChat() {
                 type: err.name || 'UnknownError'
               }
             })
+            
+            // 消费队列中的下一条消息（即使出错也继续）
+            const queue = pendingMessages.value[sessionId]
+            if (queue && queue.length > 0) {
+              const next = queue.shift()!
+              pendingMessages.value[sessionId] = queue
+              sendMessage(next.content, next.attachments, next.skillInfo, true)
+            }
           },
           onToolRecord: (record) => {
             // 保存到本地数组
@@ -572,6 +650,14 @@ export function useAIChat() {
         targetMsg.content = `错误：${error.message}`
         targetMsg.updatedAt = Date.now()
         storage.saveMessageGroups(sessionId, groups)
+      }
+      
+      // 消费队列中的下一条消息（即使异常也继续）
+      const queue = pendingMessages.value[sessionId]
+      if (queue && queue.length > 0) {
+        const next = queue.shift()!
+        pendingMessages.value[sessionId] = queue
+        sendMessage(next.content, next.attachments, next.skillInfo, true)
       }
       
       // 记录详细错误日志

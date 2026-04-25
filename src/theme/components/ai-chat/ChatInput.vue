@@ -88,12 +88,16 @@
             <button class="menu-item" @click="triggerImageInput">
               <Icon name="image" :size="18" />
               <span>图片</span>
-              <span class="menu-hint">支持 PNG, JPG, WebP, GIF</span>
+              <span class="menu-hint">
+                {{ props.supportsVision ? '支持 PNG, JPG, WebP, GIF' : '当前模型不支持图片输入' }}
+              </span>
             </button>
             <button class="menu-item" @click="triggerVideoInput">
               <Icon name="video" :size="18" />
               <span>视频</span>
-              <span class="menu-hint">支持 MP4, MOV, WebM</span>
+              <span class="menu-hint">
+                {{ props.supportsVideo ? '支持 MP4, MOV, WebM' : '当前模型不支持视频输入' }}
+              </span>
             </button>
             <button class="menu-item" @click="triggerFileInput">
               <Icon name="file" :size="18" />
@@ -116,6 +120,7 @@
           v-model="inputValue"
           :placeholder="getPlaceholder()"
           :selected-skill="effectiveSkill"
+          :skills="skills"
           @skill-change="handleSkillChange"
           @mentions-change="handleMentionsChange"
           @send="handleSend"
@@ -232,6 +237,7 @@ const props = defineProps<{
   modelValue: string
   isStreaming: boolean
   selectedSkill?: Skill
+  skills?: Skill[]
   supportsVision?: boolean
   supportsVideo?: boolean
   maxAttachments?: number
@@ -269,7 +275,8 @@ const effectiveSkill = computed(() => props.selectedSkill || currentSkill.value)
 const canSend = computed(() => {
   const hasText = inputValue.value.trim().length > 0
   const hasAttachments = attachments.value.length > 0
-  return (hasText || hasAttachments) && !props.isStreaming
+  return hasText || hasAttachments
+  // 注意：isStreaming 时仍然允许发送，消息会进入队列
 })
 
 const inputTokenCount = computed(() => {
@@ -333,14 +340,12 @@ async function handleFileSelect(event: Event, expectedType: 'image' | 'video' | 
       continue
     }
     
-    // 检查模型是否支持该媒体类型
+    // 检查模型是否支持该媒体类型（不再阻止上传，仅做标记）
     if (mediaType === 'image' && !props.supportsVision) {
-      alert('当前模型不支持图片输入。请切换到 Kimi 系列模型以使用视觉功能。')
-      continue
+      console.warn('[ChatInput] 当前模型不支持图片输入，附件将以链接形式发送')
     }
     if (mediaType === 'video' && !props.supportsVideo) {
-      alert('当前模型不支持视频输入。请使用 kimi-k2.5 模型以使用视频功能。')
-      continue
+      console.warn('[ChatInput] 当前模型不支持视频输入，附件将以链接形式发送')
     }
 
     // 创建附件对象
