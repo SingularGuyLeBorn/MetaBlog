@@ -236,6 +236,7 @@ export function buildSystemPrompt(
     '3. **禁止公式纯文本输出**：所有数学公式必须用 `$...$` 或 `$$...$$` 包裹，禁止写成 `J(theta) = ...` 这类纯文本',
     '4. **禁止搜索死循环**：一次 searchCapabilities 没找到，可换关键词再搜一次；仍找不到就告诉用户，禁止连续三次以上搜索',
     '5. **禁止在 JSON 参数中写 Markdown 代码块**：参数值应该是纯文本或纯 LaTeX，不要用反引号包裹',
+    '6. **禁止在回复文本中模拟工具调用**：禁止在 content 中输出 `<| DSML | tool_calls>`、`function call`、XML 标签等工具调用格式。需要调用工具时，必须通过框架的 tool_calls 机制，禁止把工具调用信息混入普通回复文本',
     '',
     '## 核心原则',
     '',
@@ -377,7 +378,8 @@ export function buildSystemPrompt(
       '- **searchCapabilities 是万能入口**：不确定时先用它搜，它能同时搜工具和 Skills。',
       '- **getAllTools 只是目录**：getAllTools 返回文本列表（不暴露 schema），适合"看看有什么"；想调用具体工具必须用 searchCapabilities 激活 schema。',
       '- **不需要工具时**：直接回答，不要强行调用 searchCapabilities。',
-      '- **多步骤任务**：分步执行，每步确认结果后再继续，不要把多步参数塞进一次调用。'
+      '- **多步骤任务**：分步执行，每步确认结果后再继续，不要把多步参数塞进一次调用。',
+      '- **禁止伪工具调用**：绝对禁止在回复文本中输出 `<| DSML | tool_calls>`、`function(...)`、XML 标签等模拟工具调用的内容。想调用工具必须通过框架机制，不要把工具调用混入普通回复。'
     ].join('\n'))
   }
   
