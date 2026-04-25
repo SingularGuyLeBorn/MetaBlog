@@ -177,6 +177,48 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
       suggestion: "请在 .env 中配置 FEISHU_USER_ACCESS_TOKEN，或显式设置 use_user_token=true",
     };
   }
+  if (bizCode === 1770001 || lower.includes("1770001")) {
+    return {
+      message: "飞书文档 API 参数不合法",
+      suggestion: "传入的参数不符合飞书文档 API 要求。常见原因：1) block_type 与内容不匹配（如用 text block 传了公式内容）；2) content 字段格式错误；3) 缺少必填参数（如 document_id、block_id）。请检查参数类型和格式，参考飞书文档 API 规范",
+    };
+  }
+  if (bizCode === 1770002 || lower.includes("1770002")) {
+    return {
+      message: "文档或文档块不存在",
+      suggestion: "请确认 document_id 或 block_id 是否正确，或文档是否已被删除",
+    };
+  }
+  if (bizCode === 1770003 || lower.includes("1770003")) {
+    return {
+      message: "无权限访问该文档",
+      suggestion: "当前用户或应用没有该文档的访问权限，请确认文档已分享给当前用户，或应用有 docs:document:readonly 权限",
+    };
+  }
+  if (bizCode === 1770004 || lower.includes("1770004")) {
+    return {
+      message: "文档块不存在",
+      suggestion: "请确认 block_id 是否正确，或该块是否已被删除",
+    };
+  }
+  if (bizCode === 1770005 || lower.includes("1770005")) {
+    return {
+      message: "文档块已被删除",
+      suggestion: "该文档块已被删除，无法更新。请尝试重新创建该块",
+    };
+  }
+  if (bizCode === 1770006 || lower.includes("1770006")) {
+    return {
+      message: "文档版本冲突（并发编辑）",
+      suggestion: "该文档正在被其他用户或应用编辑，请稍后重试",
+    };
+  }
+  if (bizCode === 1770007 || lower.includes("1770007")) {
+    return {
+      message: "请求体过大",
+      suggestion: "单次请求的内容过大，请拆分为多个小块分批发送",
+    };
+  }
   if (bizCode === 177004 || lower.includes("177004")) {
     return {
       message: "文档已被删除",
@@ -291,6 +333,14 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
     return {
       message: "飞书网关超时",
       suggestion: "请求在飞书服务端处理超时，请稍后重试或简化请求参数",
+    };
+  }
+
+  // ── 兜底：如果提取到了业务错误码但未覆盖，给出更详细的提示 ──
+  if (bizCode) {
+    return {
+      message: errorMsg || "飞书 API 请求失败",
+      suggestion: `错误码 ${bizCode} 暂无详细翻译。建议：1) 查阅飞书开放平台官方文档；2) 检查请求参数是否符合该 API 的 schema 要求；3) 如果是文档块操作，确认 block_type 与 content 内容匹配`,
     };
   }
 

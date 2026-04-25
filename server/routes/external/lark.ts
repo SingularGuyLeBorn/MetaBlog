@@ -447,7 +447,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
             );
             results.push(r);
             if (r.code !== 0) {
-              sendJson(res, 400, r);
+              sendLarkResult(res, r);
               return;
             }
             normalBatch = [];
@@ -457,7 +457,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
           const tableResult = await createTableBlock(documentId, block, useUserToken);
           results.push(tableResult);
           if (tableResult.code !== 0) {
-            sendJson(res, 400, tableResult);
+            sendLarkResult(res, tableResult);
             return;
           }
         } else {
@@ -474,7 +474,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         );
         results.push(r);
         if (r.code !== 0) {
-          sendJson(res, 400, r);
+          sendLarkResult(res, r);
           return;
         }
       }
