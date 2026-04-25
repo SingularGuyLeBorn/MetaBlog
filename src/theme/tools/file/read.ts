@@ -10,7 +10,7 @@ const API_BASE = '/api'
 export const readFileDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'read_file',
+    name: 'readFile',
     description: '读取指定文件的内容。当用户需要查看文件内容、检查配置文件或读取代码文件时使用。支持限制读取长度避免大文件占用过多上下文。',
     parameters: {
       type: 'object',
@@ -21,8 +21,8 @@ export const readFileDef: ToolDefinition = {
         },
         max_length: {
           type: 'number',
-          description: '最大读取字符数，默认 8000。大文件建议分多次读取。',
-          default: 8000
+          description: '最大读取字符数，默认 200000。大文件建议分多次读取。',
+          default: 200000
         }
       },
       required: ['path']
@@ -34,13 +34,13 @@ export const readFileDef: ToolDefinition = {
  * 读取文件
  */
 export const readFile: ToolExecutor = async (args): Promise<ToolResult> => {
-  const { path: filePath, max_length = 8000 } = args
+  const { path: filePath, max_length = 200000 } = args
   
   if (!filePath) {
     return createErrorResult(
       'Missing path parameter',
       '请提供文件路径',
-      '示例: read_file(path="docs/readme.md")'
+      '示例: readFile(path="docs/readme.md")'
     )
   }
   
@@ -71,7 +71,7 @@ export const readFile: ToolExecutor = async (args): Promise<ToolResult> => {
       ? rawContent.substring(0, max_length) +
         `\n\n---` +
         `\n[内容已截断] 文件共 ${rawContent.length} 字符，当前限制 ${max_length} 字符。` +
-        `\n如需读取更多内容，可重新调用 read_file(path="${filePath}", max_length=${Math.min(max_length * 2, 50000)})`
+        `\n如需读取更多内容，可重新调用 readFile(path="${filePath}", max_length=${max_length * 2})`
       : rawContent
     
     return createSuccessResult(
@@ -82,7 +82,7 @@ export const readFile: ToolExecutor = async (args): Promise<ToolResult> => {
         truncated: isTruncated
       },
       `成功读取文件 (${rawContent.length} 字符${isTruncated ? '，已截断至 ' + max_length : ''})`,
-      'read_file'
+      'readFile'
     )
   } catch (error: any) {
     return createErrorResult(

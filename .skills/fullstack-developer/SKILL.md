@@ -14,13 +14,13 @@ author: system
 builtin: true
 enabled: true
 tools:
-  - execute_code
-  - analyze_code
-  - read_file
-  - write_file
-  - list_files
-  - web_search
-  - fetch_url
+  - executeCode
+  - analyzeCode
+  - readFile
+  - writeFile
+  - listFiles
+  - webSearch
+  - fetchUrl
 scenarios:
   - 用户需要构建全栈应用
   - 用户需要系统架构设计

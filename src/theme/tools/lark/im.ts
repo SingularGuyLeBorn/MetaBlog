@@ -15,13 +15,20 @@ async function larkApi(method: string, path: string, body?: any, query?: Record<
     options.body = JSON.stringify(body)
   }
   const res = await fetch(url, options)
-  return res.json()
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`Non-JSON response (${res.status}): ${text.slice(0, 200)}`)
+  }
+  const data = await res.json()
+  if (!data.code && !res.ok) data.code = res.status
+  return data
 }
 
 export const feishuImSendDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_im_send',
+    name: 'feishuImSend',
     description: '发送飞书即时消息。支持单聊和群聊。',
     parameters: {
       type: 'object',
@@ -42,7 +49,7 @@ export const feishuImSend = async (args: Record<string, any>): Promise<ToolResul
   try {
     const result = await larkApi('POST', '/im/send', { receive_id, receive_id_type, msg_type, content })
     if (result.code !== 0) return createErrorResult(result.msg, '发送消息失败', `错误码: ${result.code}`)
-    return createSuccessResult(result.data, `消息发送成功！message_id: ${result.data?.message_id}`, 'feishu_im_send')
+    return createSuccessResult(result.data, `消息发送成功！message_id: ${result.data?.message_id}`, 'feishuImSend')
   } catch (error: any) {
     return createErrorResult(error.message, '发送消息请求失败')
   }

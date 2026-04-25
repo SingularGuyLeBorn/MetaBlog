@@ -10,7 +10,7 @@ const API_BASE = '/api'
 export const writeFileDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'write_file',
+    name: 'writeFile',
     description: '写入内容到指定文件。当用户需要创建新文件或覆盖现有文件时使用。',
     parameters: {
       type: 'object',
@@ -39,7 +39,7 @@ export const writeFile: ToolExecutor = async (args): Promise<ToolResult> => {
     return createErrorResult(
       'Missing path parameter',
       '请提供文件路径',
-      '示例: write_file(path="docs/file.md", content="内容")'
+      '示例: writeFile(path="docs/file.md", content="内容")'
     )
   }
   
@@ -47,7 +47,7 @@ export const writeFile: ToolExecutor = async (args): Promise<ToolResult> => {
     return createErrorResult(
       'Missing content parameter',
       '请提供文件内容',
-      '示例: write_file(path="file.md", content="内容")'
+      '示例: writeFile(path="file.md", content="内容")'
     )
   }
   
@@ -69,7 +69,7 @@ export const writeFile: ToolExecutor = async (args): Promise<ToolResult> => {
     return createSuccessResult(
       { path: filePath, size: content.length },
       `文件写入成功 (${content.length} 字符)`,
-      'write_file'
+      'writeFile'
     )
   } catch (error: any) {
     return createErrorResult(

@@ -204,6 +204,18 @@ function sendJson(res: any, status: number, data: any) {
   res.setHeader("Content-Type", "application/json");
   res.end(JSON.stringify(data));
 }
+/** 发送 Yuque 业务结果（自动翻译错误） */
+function sendYuqueResult(res: any, result: any) {
+  if (result.data !== undefined) {
+    sendJson(res, 200, result);
+  } else {
+    const errorMsg = result.message || result.msg || result.error || JSON.stringify(result);
+    const status = result.status || 400;
+    const translated = translateYuqueError(errorMsg, status);
+    sendJson(res, 400, { code: status, msg: translated.message, suggestion: translated.suggestion, original: result });
+  }
+}
+
 
 /** 快速参数校验 */
 function requireParams(res: any, params: Record<string, any>, ...keys: string[]): boolean {
@@ -329,7 +341,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   registerRoute(server, "/api/yuque/repos", "GET", async (req, res) => {
     structuredLog.info("yuque.repos", "列出语雀知识库");
     const result = await yuqueApi("GET", "/api/books");
-    sendJson(res, result.data ? 200 : 400, result);
+    sendYuqueResult(res, result);
   });
 
   // ==========================================================================
@@ -354,7 +366,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
 
     structuredLog.info("yuque.toc", "获取语雀目录", { repo_id: repoId });
     const result = await yuqueApi("GET", `/api/books/${repoId}/toc`);
-    sendJson(res, result.data ? 200 : 400, result);
+    sendYuqueResult(res, result);
   });
 
   // ==========================================================================
@@ -386,7 +398,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
 
     structuredLog.info("yuque.doc.read", "读取语雀文档", { repo_id: repoId, doc_slug: docSlug });
     const result = await yuqueApi("GET", `/api/docs/${docSlug}`, undefined, { book_id: repoId });
-    sendJson(res, result.data ? 200 : 400, result);
+    sendYuqueResult(res, result);
   });
 
   // ==========================================================================
@@ -447,7 +459,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
         undefined,
         `${YUQUE_BASE}/${repo_id}`
       );
-      sendJson(res, result.data ? 200 : 400, result);
+      sendYuqueResult(res, result);
     } catch (e: any) {
       const translated = translateYuqueError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -567,7 +579,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
         undefined,
         `${YUQUE_BASE}/${repo_id}`
       );
-      sendJson(res, result.data ? 200 : 400, result);
+      sendYuqueResult(res, result);
     } catch (e: any) {
       const translated = translateYuqueError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -598,7 +610,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       { book_id: String(repo_id) },
       `${YUQUE_BASE}/${repo_id}`
     );
-    sendJson(res, result.data !== undefined ? 200 : 400, result);
+    sendYuqueResult(res, result);
   });
 
   // ==========================================================================
@@ -680,7 +692,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
 
     structuredLog.info("yuque.repo.create", "创建语雀知识库", { name, slug });
     const result = await yuqueApi("POST", "/api/books", payload, undefined, `${YUQUE_BASE}/dashboard/books`);
-    sendJson(res, result.data ? 200 : 400, result);
+    sendYuqueResult(res, result);
   });
 
   // ==========================================================================
@@ -701,7 +713,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
 
     structuredLog.info("yuque.repo.update", "更新语雀知识库", { repo_id });
     const result = await yuqueApi("PUT", `/api/books/${repo_id}`, payload, undefined, `${YUQUE_BASE}/${repo_id}`);
-    sendJson(res, result.data ? 200 : 400, result);
+    sendYuqueResult(res, result);
   });
 
   // ==========================================================================
@@ -717,7 +729,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
 
     structuredLog.info("yuque.repo.delete", "删除语雀知识库", { repo_id });
     const result = await yuqueApi("DELETE", `/api/books/${repo_id}`, undefined, undefined, `${YUQUE_BASE}/${repo_id}`);
-    sendJson(res, result.data !== undefined ? 200 : 400, result);
+    sendYuqueResult(res, result);
   });
 
   // ==========================================================================
@@ -736,7 +748,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
 
     structuredLog.info("yuque.repo.get", "获取语雀知识库详情", { repo_id });
     const result = await yuqueApi("GET", `/api/books/${repo_id}`);
-    sendJson(res, result.data ? 200 : 400, result);
+    sendYuqueResult(res, result);
   });
 
   // ==========================================================================
@@ -755,7 +767,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
 
     structuredLog.info("yuque.repo.setting.get", "获取语雀知识库设置", { repo_id });
     const result = await yuqueApi("GET", `/api/books/${repo_id}/setting`);
-    sendJson(res, result.data ? 200 : 400, result);
+    sendYuqueResult(res, result);
   });
 
   // ==========================================================================
@@ -775,6 +787,6 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
 
     structuredLog.info("yuque.repo.setting.update", "更新语雀知识库设置", { repo_id });
     const result = await yuqueApi("PUT", `/api/books/${repo_id}/setting`, payload, undefined, `${YUQUE_BASE}/${repo_id}/setting`);
-    sendJson(res, result.data ? 200 : 400, result);
+    sendYuqueResult(res, result);
   });
 }

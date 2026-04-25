@@ -12,7 +12,7 @@ import { proxyFetch } from './other'
 export const searchHuggingFaceDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'search_huggingface',
+    name: 'searchHuggingface',
     description: '搜索 HuggingFace 模型库。支持模型名称、任务类型过滤',
     parameters: {
       type: 'object',
@@ -29,7 +29,7 @@ export const searchHuggingFaceDef: ToolDefinition = {
 export const fetchHuggingFaceModelDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'fetch_huggingface_model',
+    name: 'fetchHuggingfaceModel',
     description: '获取 HuggingFace 模型详情',
     parameters: {
       type: 'object',
@@ -50,7 +50,7 @@ export const searchHuggingFace: ToolExecutor = async (args): Promise<ToolResult>
     return createErrorResult(
       'Missing query parameter',
       '请提供搜索关键词',
-      '示例: search_huggingface(query="bert")'
+      '示例: searchHuggingface(query="bert")'
     )
   }
   
@@ -74,7 +74,7 @@ export const searchHuggingFace: ToolExecutor = async (args): Promise<ToolResult>
       return createSuccessResult(
         [],
         `未找到与 "${query}" 相关的模型`,
-        'search_huggingface',
+        'searchHuggingface',
         '尝试使用不同的关键词'
       )
     }
@@ -90,8 +90,8 @@ export const searchHuggingFace: ToolExecutor = async (args): Promise<ToolResult>
     return createSuccessResult(
       formattedModels,
       `找到 ${models.length} 个相关模型`,
-      'search_huggingface',
-      '使用 fetch_huggingface_model(model_id="xxx") 获取模型详情'
+      'searchHuggingface',
+      '使用 fetchHuggingfaceModel(model_id="xxx") 获取模型详情'
     )
   } catch (error: any) {
     if (error.name === 'AbortError') {
@@ -116,7 +116,7 @@ export const fetchHuggingFaceModel: ToolExecutor = async (args): Promise<ToolRes
     return createErrorResult(
       'Missing model_id parameter',
       '请提供模型 ID',
-      '示例: fetch_huggingface_model(model_id="bert-base-chinese")'
+      '示例: fetchHuggingfaceModel(model_id="bert-base-chinese")'
     )
   }
   
@@ -156,7 +156,7 @@ export const fetchHuggingFaceModel: ToolExecutor = async (args): Promise<ToolRes
     return createSuccessResult(
       modelData,
       `成功获取模型: ${m.id}`,
-      'fetch_huggingface_model'
+      'fetchHuggingfaceModel'
     )
   } catch (error: any) {
     if (error.name === 'AbortError') {

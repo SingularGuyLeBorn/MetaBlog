@@ -20,13 +20,20 @@ async function larkApi(method: string, path: string, body?: any, query?: Record<
     options.body = JSON.stringify(body)
   }
   const res = await fetch(url, options)
-  return res.json()
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`Non-JSON response (${res.status}): ${text.slice(0, 200)}`)
+  }
+  const data = await res.json()
+  if (!data.code && !res.ok) data.code = res.status
+  return data
 }
 
 export const feishuDocInsertImageDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_doc_insert_image',
+    name: 'feishuDocInsertImage',
     description: '插入图片到飞书文档（自动完成三步法：创建空图片块 → 上传素材 → 绑定）。支持网络图片 URL 或 Base64 编码。',
     parameters: {
       type: 'object',
@@ -51,7 +58,7 @@ export const feishuDocInsertImage = async (args: Record<string, any>): Promise<T
     if (result.code !== 0) return createErrorResult(result.msg, '插入图片失败', `错误码: ${result.code}`)
     const blockId = result.data?.block_id
     const fileToken = result.data?.file_token
-    return createSuccessResult(result.data, `图片插入成功！\nblock_id: ${blockId}\nfile_token: ${fileToken}${caption ? '\n图注: ' + caption : ''}`, 'feishu_doc_insert_image')
+    return createSuccessResult(result.data, `图片插入成功！\nblock_id: ${blockId}\nfile_token: ${fileToken}${caption ? '\n图注: ' + caption : ''}`, 'feishuDocInsertImage')
   } catch (error: any) {
     return createErrorResult(error.message, '插入图片请求失败')
   }

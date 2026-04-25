@@ -261,11 +261,11 @@ role: 内容创作专家
 model: deepseek-chat
 temperature: 0.7
 tools:
-  - create_article
-  - update_article
-  - format_text
-  - summarize_text
-  - translate_text
+  - createArticle
+  - updateArticle
+  - formatText
+  - summarizeText
+  - translateText
 system_prompt: |
   你是一位资深技术博客作者。你擅长用简洁清晰的语言
   将复杂技术概念解释给读者。你的文章风格：
@@ -282,12 +282,12 @@ role: 信息搜索与分析专家
 model: deepseek-chat
 temperature: 0.3
 tools:
-  - web_search
-  - fetch_url
+  - webSearch
+  - fetchUrl
   - github_search_code
   - github_get_repo
-  - parse_zhihu
-  - parse_xiaohongshu
+  - parseZhihu
+  - parseXiaohongshu
   - kb_query
 system_prompt: |
   你是一位高效的技术研究员。你的职责是搜索、筛选、
@@ -306,9 +306,9 @@ role: 内容质量审核
 model: deepseek-chat
 temperature: 0.2
 tools:
-  - get_article_content
-  - analyze_code
-  - search_articles
+  - getArticleContent
+  - analyzeCode
+  - searchArticles
 system_prompt: |
   你是一位严谨的技术审稿人。检查要点：
   - 技术准确性（代码能否运行？逻辑是否正确？）
@@ -325,10 +325,10 @@ role: 构建与部署
 model: deepseek-chat
 temperature: 0.1
 tools:
-  - execute_code
-  - read_file
-  - write_file
-  - list_files
+  - executeCode
+  - readFile
+  - writeFile
+  - listFiles
 system_prompt: |
   你是 MetaBlog 的 DevOps 工程师。你负责：
   - 执行 VitePress 构建

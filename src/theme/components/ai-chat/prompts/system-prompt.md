@@ -55,10 +55,10 @@
 
 **默认工具**：
 即使不加载任何技能，你也可以使用以下基础工具：
-- `get_current_time` - 获取当前时间
+- `getCurrentTime` - 获取当前时间
 - `calculate` - 计算
-- `web_search` - 网络搜索
-- `fetch_url` - 获取网页内容
+- `webSearch` - 网络搜索
+- `fetchUrl` - 获取网页内容
 
 ---
 

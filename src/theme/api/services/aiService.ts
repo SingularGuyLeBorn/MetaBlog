@@ -158,11 +158,11 @@ function logApiRequest(endpoint: string, data: any) {
       msg.content_parts = m.content.map((c: any) => c.type)
     } else if (typeof m.content === 'string') {
       msg.content_length = m.content.length
-      msg.content_preview = m.content.substring(0, 200) + (m.content.length > 200 ? '...' : '')
+      msg.content_preview = m.content.substring(0, 2000) + (m.content.length > 2000 ? '...' : '')
     } else {
       // 其他类型（null, undefined, object等）
       msg.content_type = typeof m.content
-      msg.content_preview = String(m.content || '').substring(0, 200)
+      msg.content_preview = String(m.content || '').substring(0, 2000)
     }
     if (m.tool_calls) {
       msg.tool_calls = m.tool_calls.map((tc: any) => ({ id: tc.id, name: tc.function?.name }))
@@ -206,13 +206,13 @@ function logApiResponse(endpoint: string, data: any, duration: number) {
   const simplifiedMessage = message ? {
     role: message.role,
     content_length: contentStr.length,
-    content_preview: contentStr.substring(0, 300) + (contentStr.length > 300 ? '...' : ''),
+    content_preview: contentStr.substring(0, 2000) + (contentStr.length > 2000 ? '...' : ''),
     has_reasoning: !!message.reasoning_content,
     reasoning_length: reasoningStr.length,
-    reasoning_preview: reasoningStr.substring(0, 200) + (reasoningStr.length > 200 ? '...' : ''),
+    reasoning_preview: reasoningStr.substring(0, 1000) + (reasoningStr.length > 1000 ? '...' : ''),
     tool_calls: message.tool_calls?.map((tc: any) => ({
       id: tc.id, name: tc.function?.name,
-      arguments_preview: tc.function?.arguments?.substring(0, 100) + (tc.function?.arguments?.length > 100 ? '...' : '')
+      arguments_preview: tc.function?.arguments?.substring(0, 500) + (tc.function?.arguments?.length > 500 ? '...' : '')
     }))
   } : null
   
@@ -567,7 +567,7 @@ function smartTruncateMessages(
     return messages
   }
   
-  console.log(`[smartTruncate] 当前 ${currentTokens} tokens > 预算 ${availableTokens}，开始截断`)
+  console.log(`[smartTruncate] 当前 ${currentTokens} tokens > 预算 ${availableTokens}，开始处理`)
   
   // ═══════════════════════════════════════════════════════════════
   // 第一阶段：截断 tool 结果（通常最长）
@@ -585,15 +585,16 @@ function smartTruncateMessages(
   const toolBudget = Math.max(availableTokens - nonToolTokens, Math.floor(availableTokens * 0.3))
   const perToolTokens = toolMsgs.length > 0 ? Math.floor(toolBudget / toolMsgs.length) : 0
   
-  // 单条 tool 截断上限：按模型上下文分级
-  // 64k 模型 → 12k 字符, 128k → 24k, 256k → 48k
-  const maxToolChars = contextWindow >= 256000 ? 48000
-    : contextWindow >= 128000 ? 24000
-    : contextWindow >= 64000 ? 12000
-    : 4000
+  // 单条 tool 截断上限：1M 上下文时代，不设固定上限，由 budget 决定
+  // 小模型仍保留保护上限防止单条结果撑爆上下文
+  const maxToolChars = contextWindow >= 1000000 ? Infinity
+    : contextWindow >= 256000 ? 200000
+    : contextWindow >= 128000 ? 100000
+    : contextWindow >= 64000 ? 50000
+    : 20000
   
-  // 保底 3000 字符，不超过上限
-  const toolTruncateLimit = Math.max(Math.min(perToolTokens * 3, maxToolChars), 3000)
+  // 保底 12000 字符，不超过上限
+  const toolTruncateLimit = Math.max(Math.min(perToolTokens * 3, maxToolChars), 12000)
   
   let processed = messages.map(m => {
     if (m.role !== 'tool' || typeof m.content !== 'string') return m
@@ -617,21 +618,13 @@ function smartTruncateMessages(
   }, 0)
   
   if (afterToolTokens > availableTokens) {
-    // 保留最近 8 条（4轮）完整，更早的 assistant 消息截断到摘要
+    // 保留最近 8 条（4轮）完整，更早的 assistant 消息保留完整内容
+    // 1M 上下文时代，完整信息比碎片更有价值；如仍超预算，第三阶段会丢弃最早消息
     const keepRecent = 8
     const recent = processed.slice(-keepRecent)
     const older = processed.slice(0, -keepRecent)
     
-    const truncatedOlder = older.map(m => {
-      if (m.role !== 'assistant' || typeof m.content !== 'string') return m
-      if (m.content.length <= 800) return m
-      return {
-        ...m,
-        content: m.content.substring(0, 800) + `\n\n... [早期 assistant 消息已截断，仅保留摘要]`
-      }
-    })
-    
-    processed = [...truncatedOlder, ...recent]
+    processed = [...older, ...recent]
   }
   
   // ═══════════════════════════════════════════════════════════════
@@ -664,7 +657,7 @@ function smartTruncateMessages(
     }, 0)
   }
   
-  console.log(`[smartTruncate] 截断后 ${finalTokens} tokens，保留 ${processed.length}/${messages.length} 条消息`)
+  console.log(`[smartTruncate] 处理后 ${finalTokens} tokens，保留 ${processed.length}/${messages.length} 条消息`)
   return processed
 }
 
@@ -1061,27 +1054,27 @@ export const aiService = {
     // 解决方案：
     //   1. 默认只暴露 ~7 个核心元工具（CORE_TOOL_NAMES）
     //   2. 领域工具默认隐藏，通过以下方式动态激活：
-    //      - search_capabilities 搜索匹配 → 自动暴露 schema
-    //      - load_skill 加载 Skill → 自动暴露关联工具 schema
+    //      - searchCapabilities 搜索匹配 → 自动暴露 schema
+    //      - loadSkill 加载 Skill → 自动暴露关联工具 schema
     //   3. 激活状态保存在 sessionActiveTools（Set）中，跨轮次持久
     //   4. 每轮对话前 buildDynamicToolContext() 合并核心+激活工具
     //
     // 核心工具（始终暴露）：
     const CORE_TOOL_NAMES = [
-      'search_capabilities',   // 能力发现器：搜索并激活匹配工具
-      'load_skill',            // 工作流加载器：加载 Skill 指导+激活工具
-      'get_all_tools',         // 工具目录浏览（文本形式，不暴露 schema）
-      'get_all_skills',        // Skill 目录浏览（文本形式，不暴露 schema）
-      'get_current_time',      // 通用基础工具
+      'searchCapabilities',   // 能力发现器：搜索并激活匹配工具
+      'loadSkill',            // 工作流加载器：加载 Skill 指导+激活工具
+      'getAllTools',         // 工具目录浏览（文本形式，不暴露 schema）
+      'getAllSkills',        // Skill 目录浏览（文本形式，不暴露 schema）
+      'getCurrentTime',      // 通用基础工具
       'calculate',             // 通用基础工具
-      'web_search'             // 通用网络搜索
+      'webSearch'             // 通用网络搜索
     ]
     
     // sessionActiveTools：本轮对话中已动态激活的工具名称集合
     // 
     // 激活触发点：
-    // - search_capabilities 执行后 → result.activateTools 中的工具被加入
-    // - load_skill 执行后 → skill.tools 中的工具被加入
+    // - searchCapabilities 执行后 → result.activateTools 中的工具被加入
+    // - loadSkill 执行后 → skill.tools 中的工具被加入
     // - 一旦加入，后续所有轮次都保持可用，直到会话结束
     const sessionActiveTools = new Set<string>()
     
@@ -1336,7 +1329,7 @@ export const aiService = {
           // executeToolWithRecord 返回：
           // - result: ToolResult（执行结果）
           // - record: ToolCallRecord（调用记录，用于 UI 展示）
-          // - injectMessages: 需要注入对话上下文的额外消息（如 load_skill 的 Skill 内容）
+          // - injectMessages: 需要注入对话上下文的额外消息（如 loadSkill 的 Skill 内容）
           // - activateTools: 执行后应动态激活的工具名称列表（渐进式披露关键字段）
           const { result, record, injectMessages: toolInjectMessages, activateTools: toolActivated } = await executeToolWithRecord(toolCall)
           toolRecords.push(record)
@@ -1344,14 +1337,14 @@ export const aiService = {
           // ─────────────────────────────────────────────────────────────
           // 【渐进式披露】动态工具激活
           // ─────────────────────────────────────────────────────────────
-          // search_capabilities、load_skill 等元工具执行后，会在 result.activateTools
+          // searchCapabilities、loadSkill 等元工具执行后，会在 result.activateTools
           // 中返回需要激活的领域工具名称。将这些工具加入 sessionActiveTools，
           // 下轮对话的 buildDynamicToolContext() 会自动将其 schema 暴露给模型。
           //
           // 示例流程：
-          //   Round 1: search_capabilities("github repo") → activateTools: ["github_get_repo"]
-          //   Round 2: buildDynamicToolContext() → availableTools 包含 "github_get_repo"
-          //           → 模型可以调用 github_get_repo
+          //   Round 1: searchCapabilities("github repo") → activateTools: ["githubGetRepo"]
+          //   Round 2: buildDynamicToolContext() → availableTools 包含 "githubGetRepo"
+          //           → 模型可以调用 githubGetRepo
           if (toolActivated && toolActivated.length > 0) {
             for (const toolName of toolActivated) {
               sessionActiveTools.add(toolName)
@@ -1364,7 +1357,7 @@ export const aiService = {
           }
           
           // 收集需要注入到对话上下文中的消息
-          // 典型场景：load_skill 执行后，将 Skill 完整内容作为新消息注入，
+          // 典型场景：loadSkill 执行后，将 Skill 完整内容作为新消息注入，
           // 让模型在下一轮可以看到工作流指导（LOD-2 渐进式披露）
           if (toolInjectMessages && toolInjectMessages.length > 0) {
             injectMessages.push(...toolInjectMessages)
@@ -1406,9 +1399,9 @@ export const aiService = {
             resultContent = String(result || '')
           }
           
-          // 工具结果截断：防止超长内容撑爆上下文窗口
-          // load_skill 的结果通常较短（成功消息），其完整内容通过 injectMessages 注入
-          const MAX_TOOL_RESULT_LENGTH = 6000
+          // 工具结果截断：单条结果上限大幅提高（1M 上下文时代）
+          // loadSkill 的结果通常较短（成功消息），其完整内容通过 injectMessages 注入
+          const MAX_TOOL_RESULT_LENGTH = 100000
           const originalLength = resultContent.length
           if (originalLength > MAX_TOOL_RESULT_LENGTH) {
             resultContent = resultContent.substring(0, MAX_TOOL_RESULT_LENGTH) + 
@@ -1441,7 +1434,7 @@ export const aiService = {
         filteredMessages.push(assistantMessage)
         filteredMessages.push(...toolResultMessages)
         
-        // 注入 load_skill 等工具返回的额外消息（skill 内容等）
+        // 注入 loadSkill 等工具返回的额外消息（skill 内容等）
         if (injectMessages.length > 0) {
           for (const msg of injectMessages) {
             filteredMessages.push(msg)

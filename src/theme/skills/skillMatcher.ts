@@ -186,7 +186,7 @@ const MATCH_RULES: MatchRule[] = [
       
       return { 
         score: similarity > 0.2 ? similarity * 0.4 : 0,
-        keywords: similarity > 0.2 ? [skill.description.slice(0, 20) + '...'] : []
+        keywords: similarity > 0.2 ? [skill.description] : []
       }
     }
   }
@@ -360,7 +360,7 @@ export function quickMatchSkills(
         for (const token of scenarioTokens) {
           if (inputLower.includes(token)) {
             score = 0.6
-            keywords.push(scenario.slice(0, 15) + '...')
+            keywords.push(scenario)
             break
           }
         }

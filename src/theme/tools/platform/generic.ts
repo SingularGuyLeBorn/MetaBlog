@@ -8,7 +8,7 @@ import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 export const parsePlatformLinkDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'parse_platform_link',
+    name: 'parsePlatformLink',
     description: `通用平台链接解析，支持多种平台的内容提取。
 
 支持的平台：
@@ -54,7 +54,7 @@ export const parsePlatformLinkDef: ToolDefinition = {
 export const ocrImageDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'ocr_image',
+    name: 'ocrImage',
     description: 'OCR 识别图片中的文字内容。',
     parameters: {
       type: 'object',
@@ -75,7 +75,7 @@ export const ocrImageDef: ToolDefinition = {
 export const processImageDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'process_image',
+    name: 'processImage',
     description: `处理用户上传的图片。分析图片内容、提取文字、生成描述等。
 
 支持的操作：
@@ -119,7 +119,7 @@ export const parsePlatformLink: ToolExecutor = async (args) => {
     return createErrorResult(
       'Missing url parameter',
       '请提供要解析的链接 URL',
-      '示例: parse_platform_link(url="https://example.com")'
+      '示例: parsePlatformLink(url="https://example.com")'
     )
   }
 
@@ -163,7 +163,7 @@ export const parsePlatformLink: ToolExecutor = async (args) => {
         method: data.method
       },
       `成功解析 [${data.platform}] ${data.title}`,
-      'parse_platform_link'
+      'parsePlatformLink'
     )
   } catch (error: any) {
     return createErrorResult(
@@ -184,7 +184,7 @@ export const ocrImage: ToolExecutor = async (args): Promise<ToolResult> => {
     return createErrorResult(
       'Missing image parameter',
       '请提供图片 URL 或图片数据',
-      '示例: ocr_image(imageUrl="https://example.com/image.jpg")'
+      '示例: ocrImage(imageUrl="https://example.com/image.jpg")'
     )
   }
 
@@ -206,7 +206,7 @@ export const processImage: ToolExecutor = async (args) => {
     return createErrorResult(
       'Missing image_url parameter',
       '请提供图片 URL',
-      '示例: process_image(image_url="https://example.com/image.jpg", operation="describe")'
+      '示例: processImage(image_url="https://example.com/image.jpg", operation="describe")'
     )
   }
 
@@ -237,7 +237,7 @@ export const processImage: ToolExecutor = async (args) => {
             ]
           },
           `图片信息: ${contentType}`,
-          'process_image',
+          'processImage',
           '如需深度分析，请配置 Vision API'
         )
     }

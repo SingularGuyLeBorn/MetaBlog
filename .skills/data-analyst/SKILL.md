@@ -15,9 +15,9 @@ builtin: true
 enabled: true
 tools:
   - calculate
-  - summarize_text
-  - format_text
-  - query_knowledge
+  - summarizeText
+  - formatText
+  - queryKnowledge
 scenarios:
   - 用户需要数据分析
   - 用户需要统计计算

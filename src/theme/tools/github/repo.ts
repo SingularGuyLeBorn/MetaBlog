@@ -96,7 +96,7 @@ export const githubGetFileContentDef: ToolDefinition = {
 - 文件路径需要包含完整的相对路径
 - 支持获取文件的原始内容（自动解码 base64）
 - 可以指定特定分支或 commit
-- 大文件会自动截断，可通过 max_length 调整`,
+- 大文件可通过 max_length 调整读取长度`,
     parameters: {
       type: 'object',
       properties: {

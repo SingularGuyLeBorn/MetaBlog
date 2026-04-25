@@ -21,7 +21,14 @@ async function larkApi(method: string, path: string, body?: any, query?: Record<
     options.body = JSON.stringify(body)
   }
   const res = await fetch(url, options)
-  return res.json()
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`Non-JSON response (${res.status}): ${text.slice(0, 200)}`)
+  }
+  const data = await res.json()
+  if (!data.code && !res.ok) data.code = res.status
+  return data
 }
 
 // ============ 定义 ============
@@ -29,7 +36,7 @@ async function larkApi(method: string, path: string, body?: any, query?: Record<
 export const feishuDocCreateDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_doc_create',
+    name: 'feishuDocCreate',
     description: '创建一个新的飞书文档（docx 格式），返回文档 ID 和链接。支持创建后自动分享给指定用户。',
     parameters: {
       type: 'object',
@@ -49,7 +56,7 @@ export const feishuDocCreateDef: ToolDefinition = {
 export const feishuDocReadDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_doc_read',
+    name: 'feishuDocRead',
     description: '读取飞书文档的纯文本内容。document_id 从飞书文档 URL 中获取：链接形如 https://xxx.feishu.cn/docx/AbCdEfGh → document_id = AbCdEfGh',
     parameters: {
       type: 'object',
@@ -65,7 +72,7 @@ export const feishuDocReadDef: ToolDefinition = {
 export const feishuDocMetaDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_doc_meta',
+    name: 'feishuDocMeta',
     description: '读取飞书文档的元数据（标题、所有者、创建时间等）。',
     parameters: {
       type: 'object',
@@ -81,7 +88,7 @@ export const feishuDocMetaDef: ToolDefinition = {
 export const feishuDocSearchDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_doc_search',
+    name: 'feishuDocSearch',
     description: '在飞书云空间中搜索文档，返回文档名称、链接、类型等信息。',
     parameters: {
       type: 'object',
@@ -97,7 +104,7 @@ export const feishuDocSearchDef: ToolDefinition = {
 export const feishuDocBlocksDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_doc_blocks',
+    name: 'feishuDocBlocks',
     description: '获取飞书文档的块（block）结构列表。常见 block_type：2=text, 3-11=heading1-9, 12=bullet, 13=ordered, 14=code, 15=quote, 17=todo, 22=divider, 27=image, 31=table',
     parameters: {
       type: 'object',
@@ -114,8 +121,8 @@ export const feishuDocBlocksDef: ToolDefinition = {
 export const feishuDocAppendDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_doc_append',
-    description: '在飞书文档末尾追加内容。content 参数支持 Markdown 语法，会自动解析为飞书 block 格式。超过 50 个块自动分批写入。',
+    name: 'feishuDocAppend',
+    description: '在飞书文档末尾追加内容。content 参数支持 Markdown 语法，会自动解析为飞书 block 格式。超过 50 个块自动分批写入。\n\n⚠️ 重要：content 中包含数学公式（如 $...$）时，公式里的反斜杠在 JSON 参数中必须双重转义，例如 \\pi、\\theta、\\frac、\\cdot。未转义会导致参数解析失败。',
     parameters: {
       type: 'object',
       properties: {
@@ -132,8 +139,8 @@ export const feishuDocAppendDef: ToolDefinition = {
 export const feishuDocUpdateBlockDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_doc_update_block',
-    description: '更新飞书文档中的指定块内容。需要先调用 feishu_doc_blocks 获取 block_id。',
+    name: 'feishuDocUpdateBlock',
+    description: '更新飞书文档中的指定块内容。需要先调用 feishuDocBlocks 获取 block_id。\n\n⚠️ 重要：text / heading 等字段中的 content 如果包含数学公式，反斜杠必须双重转义（如 \\pi、\\theta、\\frac），否则 JSON 参数解析会失败。',
     parameters: {
       type: 'object',
       properties: {
@@ -150,8 +157,8 @@ export const feishuDocUpdateBlockDef: ToolDefinition = {
 export const feishuDocDeleteBlockDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_doc_delete_block',
-    description: '删除飞书文档中的指定块。需要先调用 feishu_doc_blocks 获取 block_id。',
+    name: 'feishuDocDeleteBlock',
+    description: '删除飞书文档中的指定块。需要先调用 feishuDocBlocks 获取 block_id。',
     parameters: {
       type: 'object',
       properties: {
@@ -172,7 +179,7 @@ export const feishuDocCreate = async (args: Record<string, any>): Promise<ToolRe
     const result = await larkApi('POST', '/doc/create', { title, folder_token, owner_email, owner_mobile, enable_permission }, undefined, use_user_token)
     if (result.code !== 0) return createErrorResult(result.msg, '创建文档失败', `错误码: ${result.code}`)
     const doc = result.data?.document
-    return createSuccessResult(result.data, `文档创建成功！\n标题: ${doc?.title || title || '未命名'}\n文档ID: ${doc?.document_id}\nURL: https://feishu.cn/docx/${doc?.document_id}`, 'feishu_doc_create')
+    return createSuccessResult(result.data, `文档创建成功！\n标题: ${doc?.title || title || '未命名'}\n文档ID: ${doc?.document_id}\nURL: https://feishu.cn/docx/${doc?.document_id}`, 'feishuDocCreate')
   } catch (error: any) {
     return createErrorResult(error.message, '创建文档请求失败')
   }
@@ -185,7 +192,7 @@ export const feishuDocRead = async (args: Record<string, any>): Promise<ToolResu
     const result = await larkApi('GET', '/doc/read', undefined, { document_id }, use_user_token)
     if (result.code !== 0) return createErrorResult(result.msg, '读取文档失败', `错误码: ${result.code}`)
     const content = result.data?.content || ''
-    return createSuccessResult(result.data, content.slice(0, 10000), 'feishu_doc_read')
+    return createSuccessResult(result.data, content, 'feishuDocRead')
   } catch (error: any) {
     return createErrorResult(error.message, '读取文档请求失败')
   }
@@ -198,7 +205,7 @@ export const feishuDocMeta = async (args: Record<string, any>): Promise<ToolResu
     const result = await larkApi('GET', '/doc/meta', undefined, { document_id }, use_user_token)
     if (result.code !== 0) return createErrorResult(result.msg, '读取文档元数据失败', `错误码: ${result.code}`)
     const doc = result.data?.document || result.data
-    return createSuccessResult(result.data, `文档: ${doc?.title || '未命名'}\n所有者: ${doc?.owner_id || 'N/A'}\n创建时间: ${doc?.create_time || 'N/A'}`, 'feishu_doc_meta')
+    return createSuccessResult(result.data, `文档: ${doc?.title || '未命名'}\n所有者: ${doc?.owner_id || 'N/A'}\n创建时间: ${doc?.create_time || 'N/A'}`, 'feishuDocMeta')
   } catch (error: any) {
     return createErrorResult(error.message, '读取文档元数据请求失败')
   }
@@ -212,7 +219,7 @@ export const feishuDocSearch = async (args: Record<string, any>): Promise<ToolRe
     if (result.code !== 0) return createErrorResult(result.msg, '搜索文档失败', `错误码: ${result.code}`)
     const files = result.data?.files || []
     const formatted = files.map((f: any, i: number) => `${i + 1}. ${f.name} (${f.type})\n   URL: ${f.url}\n   Token: ${f.token}`).join('\n\n')
-    return createSuccessResult(result.data, files.length > 0 ? formatted : '未找到匹配的文档', 'feishu_doc_search')
+    return createSuccessResult(result.data, files.length > 0 ? formatted : '未找到匹配的文档', 'feishuDocSearch')
   } catch (error: any) {
     return createErrorResult(error.message, '搜索文档请求失败')
   }
@@ -234,9 +241,9 @@ export const feishuDocBlocks = async (args: Record<string, any>): Promise<ToolRe
     const formatted = items.map((item: any) => {
       const typeName = typeNames[item.block_type] || `type_${item.block_type}`
       const text = extractTextFromBlock(item)
-      return `- [${typeName}] block_id: ${item.block_id} | "${text.slice(0, 80)}"`
+      return `- [${typeName}] block_id: ${item.block_id} | "${text}"`
     }).join('\n')
-    return createSuccessResult(result.data, `文档块列表 (${items.length} 个):\n${formatted}`, 'feishu_doc_blocks')
+    return createSuccessResult(result.data, `文档块列表 (${items.length} 个):\n${formatted}`, 'feishuDocBlocks')
   } catch (error: any) {
     return createErrorResult(error.message, '获取文档块请求失败')
   }
@@ -286,7 +293,7 @@ export const feishuDocAppend = async (args: Record<string, any>): Promise<ToolRe
     }
   }
 
-  return createSuccessResult({ appendedCount, totalBlocks, totalBatches }, `成功追加 ${appendedCount} 个内容块到文档 ${document_id}${totalBatches > 1 ? `（分 ${totalBatches} 批写入）` : ''}`, 'feishu_doc_append')
+  return createSuccessResult({ appendedCount, totalBlocks, totalBatches }, `成功追加 ${appendedCount} 个内容块到文档 ${document_id}${totalBatches > 1 ? `（分 ${totalBatches} 批写入）` : ''}`, 'feishuDocAppend')
 }
 
 export const feishuDocUpdateBlock = async (args: Record<string, any>): Promise<ToolResult> => {
@@ -307,7 +314,7 @@ export const feishuDocUpdateBlock = async (args: Record<string, any>): Promise<T
   try {
     const result = await larkApi('PATCH', '/doc/block', payload, undefined, use_user_token)
     if (result.code !== 0) return createErrorResult(result.msg, '更新块失败', `错误码: ${result.code}`)
-    return createSuccessResult(result.data, `块 ${block_id} 更新成功`, 'feishu_doc_update_block')
+    return createSuccessResult(result.data, `块 ${block_id} 更新成功`, 'feishuDocUpdateBlock')
   } catch (error: any) {
     return createErrorResult(error.message, '更新块请求失败')
   }
@@ -319,7 +326,7 @@ export const feishuDocDeleteBlock = async (args: Record<string, any>): Promise<T
   try {
     const result = await larkApi('DELETE', '/doc/block', { document_id, block_id }, undefined, use_user_token)
     if (result.code !== 0) return createErrorResult(result.msg, '删除块失败', `错误码: ${result.code}`)
-    return createSuccessResult(result.data, `块 ${block_id} 删除成功`, 'feishu_doc_delete_block')
+    return createSuccessResult(result.data, `块 ${block_id} 删除成功`, 'feishuDocDeleteBlock')
   } catch (error: any) {
     return createErrorResult(error.message, '删除块请求失败')
   }

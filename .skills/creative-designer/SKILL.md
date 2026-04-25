@@ -14,10 +14,10 @@ author: system
 builtin: true
 enabled: true
 tools:
-  - get_current_time
-  - summarize_text
-  - format_text
-  - web_search
+  - getCurrentTime
+  - summarizeText
+  - formatText
+  - webSearch
 scenarios:
   - 用户需要设计灵感
   - 用户需要创意建议

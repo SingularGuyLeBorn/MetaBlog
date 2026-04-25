@@ -17,7 +17,7 @@
  * const getWeatherDef: ToolDefinition = {
  *   type: 'function',
  *   function: {
- *     name: 'get_weather',
+ *     name: 'getWeather',
  *     description: '获取指定城市的天气',
  *     parameters: {
  *       type: 'object',
@@ -96,17 +96,22 @@ export interface ToolResult<T = any> {
   action?: string
   /** 建议的下一步操作 */
   suggestion?: string
+  /** 
+   * 错误码（HTTP 状态码或业务错误码），供 AI 根据码做不同决策
+   * 例如 422→"仓库已存在，改用查询"，401→"Token 无效，告知用户配置"，429→"速率限制，等待重试"
+   */
+  code?: string | number
   /**
    * 要注入到对话上下文中的额外消息
    * 
-   * 用于 load_skill 等工具：调用后需要将 skill 内容
+   * 用于 loadSkill 等工具：调用后需要将 skill 内容
    * 作为新消息注入到后续对话中，让 Agent 可以看到完整指导
    */
   injectMessages?: Array<{ role: string; content: string }>
   /**
    * 执行此工具后应激活的其他工具名称列表
    * 
-   * 用于渐进式披露：search_capabilities、load_skill 等元工具
+   * 用于渐进式披露：searchCapabilities、loadSkill 等元工具
    * 执行后，将匹配的工具 schema 加入下轮对话的可用工具列表
    */
   activateTools?: string[]
@@ -173,7 +178,7 @@ export interface ToolCallRecord {
  *   "id": "call_abc123",
  *   "type": "function",
  *   "function": {
- *     "name": "get_weather",
+ *     "name": "getWeather",
  *     "arguments": "{\"city\": \"北京\"}"
  *   }
  * }
@@ -224,8 +229,8 @@ export interface ThinkingStep {
  * return createSuccessResult(
  *   articles,
  *   `找到 ${articles.length} 篇文章`,
- *   'search_articles',
- *   '使用 get_article_content 读取文章详情'
+ *   'searchArticles',
+ *   '使用 getArticleContent 读取文章详情'
  * )
  * ```
  */
@@ -233,14 +238,16 @@ export function createSuccessResult<T>(
   data: T,
   message?: string,
   action?: string,
-  suggestion?: string
+  suggestion?: string,
+  code?: string | number
 ): ToolResult<T> {
   return {
     success: true,
     data,
     message,
     action,
-    suggestion
+    suggestion,
+    code
   }
 }
 
@@ -264,12 +271,14 @@ export function createSuccessResult<T>(
 export function createErrorResult(
   error: string,
   message?: string,
-  suggestion?: string
+  suggestion?: string,
+  code?: string | number
 ): ToolResult {
   return {
     success: false,
     error,
     message: message || `操作失败: ${error}`,
-    suggestion: suggestion || '请检查参数后重试，或尝试其他方式'
+    suggestion: suggestion || '请检查参数后重试，或尝试其他方式',
+    code
   }
 }

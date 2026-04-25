@@ -17,7 +17,7 @@ import {
 export const searchArticlesDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'search_articles',
+    name: 'searchArticles',
     description: '在博客中搜索文章。只搜索允许板块内的文章（posts、knowledge、resources）。',
     parameters: {
       type: 'object',
@@ -33,7 +33,7 @@ export const searchArticlesDef: ToolDefinition = {
 export const listArticlesDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'list_articles',
+    name: 'listArticles',
     description: '列出博客中的文章及其路径信息。只列出允许板块内的文章（posts、knowledge、resources）。',
     parameters: {
       type: 'object',
@@ -72,7 +72,7 @@ export const searchArticles: ToolExecutor = async (args) => {
       return createSuccessResult(
         [],
         `未找到包含 "${query}" 的文章`,
-        'search_articles',
+        'searchArticles',
         '尝试使用不同的关键词，或创建新文章'
       )
     }
@@ -80,8 +80,8 @@ export const searchArticles: ToolExecutor = async (args) => {
     return createSuccessResult(
       articles,
       `找到 ${articles.length} 篇相关文章`,
-      'search_articles',
-      '使用 get_article_content(path="文章路径") 读取内容'
+      'searchArticles',
+      '使用 getArticleContent(path="文章路径") 读取内容'
     )
   } catch (error) {
     return createErrorResult(
@@ -144,7 +144,7 @@ export const listArticles: ToolExecutor = async (args) => {
     return createSuccessResult(
       filteredItems,
       `找到 ${filteredItems.length} 个条目`,
-      'list_articles',
+      'listArticles',
       section ? `当前位置: sections/${section}/` : '当前位置: sections/'
     )
   } catch (error) {

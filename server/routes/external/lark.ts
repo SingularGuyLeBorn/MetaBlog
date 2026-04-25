@@ -136,6 +136,16 @@ function sendJson(res: any, status: number, data: any) {
   res.setHeader("Content-Type", "application/json");
   res.end(JSON.stringify(data));
 }
+/** 发送 Lark 业务结果（自动翻译错误） */
+function sendLarkResult(res: any, result: any) {
+  if (result.code === 0) {
+    sendJson(res, 200, result);
+  } else {
+    const translated = translateLarkError(result.msg, result.code);
+    sendJson(res, 400, { code: result.code, msg: translated.message, suggestion: translated.suggestion, original: result });
+  }
+}
+
 
 /** 统一布尔值转换 */
 function normalizeBoolean(value: any): boolean {
@@ -271,7 +281,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         }
       }
 
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -298,7 +308,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       structuredLog.info("lark.doc.read", "读取飞书文档", { document_id: documentId });
       const useUserToken = normalizeBoolean(url.searchParams.get("use_user_token"));
       const result = await feishuApi("GET", `/docx/v1/documents/${documentId}/raw_content`, undefined, undefined, useUserToken);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -324,7 +334,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
 
       const useUserToken = normalizeBoolean(url.searchParams.get("use_user_token"));
       const result = await feishuApi("GET", `/docx/v1/documents/${documentId}`, undefined, undefined, useUserToken);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -354,7 +364,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         count: Math.min(Number(body.count) || 20, 50),
       };
       const result = await feishuApi("POST", "/suite/docs-api/search/object", payload);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -385,7 +395,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         undefined,
         { page_size: String(pageSize) }
       );
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -651,7 +661,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         undefined,
         useUserToken
       );
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -710,7 +720,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         undefined,
         useUserTokenDel
       );
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -913,7 +923,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         { type: "docx" },
         useUserTokenShare
       );
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -988,7 +998,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         { type: "docx", member_type: finalMemberType },
         useUserTokenUnshare
       );
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1035,7 +1045,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         },
         { receive_id_type: String(receive_id_type) }
       );
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1071,7 +1081,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
           { mobiles: [query] },
           { user_id_type: "open_id" }
         );
-        sendJson(res, result.code === 0 ? 200 : 400, result);
+        sendLarkResult(res, result);
         return;
       }
 
@@ -1083,7 +1093,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
           { emails: [query] },
           { user_id_type: "open_id" }
         );
-        sendJson(res, result.code === 0 ? 200 : 400, result);
+        sendLarkResult(res, result);
         return;
       }
 
@@ -1096,7 +1106,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       if (result.code !== 0 && result.code === 99991672) {
         result.msg = `${result.msg} | 提示：搜索姓名/部门需要 contact:contact.base:readonly 权限。如果只有 contact:user.id:readonly 权限，请使用 type="phone" 或 type="email" 精确查找。`;
       }
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1115,7 +1125,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       if (body.description) payload.description = String(body.description);
       structuredLog.info("lark.wiki.space.create", "创建飞书知识库", { name: body.name });
       const result = await feishuApi("POST", "/wiki/v2/spaces", payload, undefined, true);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1176,7 +1186,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       }
       structuredLog.info("lark.wiki.space.get", "获取飞书知识库详情", { space_id });
       const result = await feishuApi("GET", `/wiki/v2/spaces/${space_id}`);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1201,7 +1211,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       if (body.description !== undefined) payload.description = String(body.description);
       structuredLog.info("lark.wiki.space.update", "更新飞书知识库", { space_id });
       const result = await feishuApi("PATCH", `/wiki/v2/spaces/${space_id}`, payload);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1223,7 +1233,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       }
       structuredLog.info("lark.wiki.space.delete", "删除飞书知识库", { space_id });
       const result = await feishuApi("DELETE", `/wiki/v2/spaces/${space_id}`);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1251,7 +1261,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       if (body.parent_node_token) payload.parent_node_token = String(body.parent_node_token);
       structuredLog.info("lark.wiki.node.create", "创建飞书知识库节点", { space_id, title: body.title });
       const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/nodes`, payload);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1320,7 +1330,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       }
       structuredLog.info("lark.wiki.node.delete", "删除飞书知识库节点", { space_id, node_token });
       const result = await feishuApi("DELETE", `/wiki/v2/spaces/${space_id}/nodes/${node_token}`);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1347,7 +1357,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       if (body.title) payload.title = String(body.title);
       structuredLog.info("lark.wiki.move_doc", "将文档迁入 Wiki", { space_id, doc_token });
       const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/nodes/move_docs_to_wiki`, payload, undefined, true);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1369,7 +1379,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       }
       const useUserToken = normalizeBoolean(url.searchParams.get("use_user_token"));
       const result = await feishuApi("GET", `/docx/v1/documents/${documentId}`, undefined, undefined, useUserToken);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1391,7 +1401,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       if (body.parent_node_token) payload.parent_node_token = String(body.parent_node_token);
       structuredLog.info("lark.wiki.node.move", "移动飞书知识库节点", { space_id, node_token });
       const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/nodes/${node_token}/move`, payload, undefined, true);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1414,7 +1424,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const page_size = url.searchParams.get("page_size") || "100";
       structuredLog.info("lark.wiki.member.list", "获取飞书知识库成员列表", { space_id });
       const result = await feishuApi("GET", `/wiki/v2/spaces/${space_id}/members`, undefined, { page_size });
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1439,7 +1449,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       };
       structuredLog.info("lark.wiki.member.add", "添加飞书知识库成员", { space_id, member_id });
       const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/members`, payload);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1459,7 +1469,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       if (!requireParams(res, body, 'space_id', 'member_id')) return;
       structuredLog.info("lark.wiki.member.remove", "移除飞书知识库成员", { space_id, member_id });
       const result = await feishuApi("DELETE", `/wiki/v2/spaces/${space_id}/members/${member_id}`);
-      sendJson(res, result.code === 0 ? 200 : 400, result);
+      sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });

@@ -69,9 +69,9 @@ Skill：写作专家
 
 ```
 工具选择：
-☑ create_article    ☑ update_article
-☑ web_search        ☑ execute_code
-☐ feishu_doc_create ☐ yuque_doc_create
+☑ createArticle    ☑ updateArticle
+☑ webSearch        ☑ executeCode
+☐ feishuDocCreate ☐ yuqueDocCreate
 ```
 
 ### 4. 混合模式
@@ -80,7 +80,7 @@ Skill + 额外工具扩展。最灵活的配置方式。
 
 ```
 Skill：编程助手
-额外工具：feishu_doc_create, feishu_im_send
+额外工具：feishuDocCreate, feishuImSend
 → 编程助手能力 + 飞书文档/消息能力
 ```
 
@@ -186,7 +186,7 @@ Skill：编程助手
 
 - 每个 Agent 只能调用被授权的工具
 - 未授权的工具即使 AI 想调用也会被拒绝
-- 系统工具（如 `test_echo`）默认对所有 Agent 可用
+- 系统工具（如 `testEcho`）默认对所有 Agent 可用
 
 ### 文件操作边界
 
@@ -204,8 +204,8 @@ Skill：编程助手
 用户：帮我写一篇关于 Docker 的入门教程
 
 Agent（写作专家）:
-1. 调用 web_search 搜索 Docker 最新信息
-2. 调用 create_article 创建文章
+1. 调用 webSearch 搜索 Docker 最新信息
+2. 调用 createArticle 创建文章
 3. 文章保存到 docs/sections/posts/docker-guide.md
 4. 自动触发 Git 提交
 ```

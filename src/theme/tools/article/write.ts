@@ -20,7 +20,7 @@ import {
 export const createArticleDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'create_article',
+    name: 'createArticle',
     description: '创建一篇新文章。只能在允许的板块内创建：posts（文章列表）、knowledge（知识库）、resources（公开资源）。创建时会自动为文章配备同名文件夹（folder/index.md），以预留资源文件夹并符合侧边栏渲染规范。',
     parameters: {
       type: 'object',
@@ -40,7 +40,7 @@ export const createArticleDef: ToolDefinition = {
 export const updateArticleDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'update_article',
+    name: 'updateArticle',
     description: '更新/覆盖已有文章的完整内容。只能操作允许板块内的文章（posts、knowledge、resources）。',
     parameters: {
       type: 'object',
@@ -57,7 +57,7 @@ export const updateArticleDef: ToolDefinition = {
 export const deleteArticleDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'delete_article',
+    name: 'deleteArticle',
     description: '删除指定文章（操作不可逆，会同时清理缓存）。只能删除允许板块内的文章（posts、knowledge、resources）。',
     parameters: {
       type: 'object',
@@ -120,8 +120,8 @@ export const createArticle: ToolExecutor = async (args) => {
       return createSuccessResult(
         data,
         `文章 "${title}" 创建成功！\n路径: ${data.path || articlePath}${promoted}${autoIndex}`,
-        'create_article',
-        '可以使用 get_article_content 读取或 update_article 修改'
+        'createArticle',
+        '可以使用 getArticleContent 读取或 updateArticle 修改'
       )
     }
 
@@ -167,7 +167,7 @@ export const updateArticle: ToolExecutor = async (args) => {
       return createErrorResult(
         'File not found',
         `文章不存在: ${articlePath}`,
-        '请检查路径，或使用 create_article 创建新文章'
+        '请检查路径，或使用 createArticle 创建新文章'
       )
     }
 
@@ -209,7 +209,7 @@ export const updateArticle: ToolExecutor = async (args) => {
       return createSuccessResult(
         { path: articlePath, mode },
         `文章更新成功！`,
-        'update_article'
+        'updateArticle'
       )
     }
 
@@ -274,7 +274,7 @@ export const deleteArticle: ToolExecutor = async (args) => {
       return createSuccessResult(
         { path: articlePath },
         `文章已删除${backup_first ? '（已备份到回收站）' : ''}`,
-        'delete_article'
+        'deleteArticle'
       )
     }
 

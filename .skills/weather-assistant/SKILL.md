@@ -14,9 +14,9 @@ author: system
 builtin: true
 enabled: true
 tools:
-  - get_weather
-  - get_current_time
-  - web_search
+  - getWeather
+  - getCurrentTime
+  - webSearch
 scenarios:
   - 用户需要查询天气
   - 用户需要出行建议

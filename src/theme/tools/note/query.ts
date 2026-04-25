@@ -1,5 +1,5 @@
 /**
- * 笔记工具定义 — query_knowledge
+ * 笔记工具定义 — queryKnowledge
  */
 
 import type { ToolDefinition } from '@/theme/tools/types'
@@ -9,7 +9,7 @@ import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 export const queryKnowledgeDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'query_knowledge',
+    name: 'queryKnowledge',
     description: '查询知识库中的信息。当用户询问项目知识、技术文档或概念解释时使用。',
     parameters: {
       type: 'object',
@@ -34,7 +34,7 @@ export const queryKnowledge: ToolExecutor = async (args): Promise<ToolResult> =>
     return createErrorResult(
       'Missing query parameter',
       '请提供查询内容',
-      '示例: query_knowledge(query="Docker 使用方法")'
+      '示例: queryKnowledge(query="Docker 使用方法")'
     )
   }
   
@@ -42,7 +42,7 @@ export const queryKnowledge: ToolExecutor = async (args): Promise<ToolResult> =>
   return createSuccessResult(
     { query },
     `知识库查询: ${query}`,
-    'query_knowledge',
-    '建议使用 search_articles 搜索本地文章'
+    'queryKnowledge',
+    '建议使用 searchArticles 搜索本地文章'
   )
 }

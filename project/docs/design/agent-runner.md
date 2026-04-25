@@ -150,7 +150,7 @@ Cron 触发（每 5 分钟）→ 唤醒调度器 Agent
     "这个任务需要：
      1. 查日历（calendar-agent）
      2. 查任务（task-agent）
-     3. 搜新闻（researcher-agent + web_search）
+     3. 搜新闻（researcher-agent + webSearch）
      4. 生成周报（writer-agent）
      5. 发飞书（messenger-agent）"
     ↓

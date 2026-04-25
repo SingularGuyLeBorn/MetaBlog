@@ -69,7 +69,7 @@ tags: [tools, testing, development]
 3. 点击「▶ 执行工具」按�?
 4. 在右侧查看执行结果和日志
 
-示例：测�?`test_echo`
+示例：测�?`testEcho`
 ```
 message: "Hello World"
 repeat_count: 3
@@ -96,9 +96,9 @@ repeat_count: 3
 总计: 25    成功: 20    失败: 5    成功�? 80%
 
 详细结果:
-�?test_echo (45ms)
-�?get_current_time (12ms)
-�?web_search - HTTP 错误: 429
+�?testEcho (45ms)
+�?getCurrentTime (12ms)
+�?webSearch - HTTP 错误: 429
 �?github_get_repo (234ms)
 ...
 ```
@@ -139,7 +139,7 @@ repeat_count: 3
 
 ## 注意事项
 
-1. **网络工具限制**：部分网络工具（�?web_search）可能受 API 速率限制
+1. **网络工具限制**：部分网络工具（�?webSearch）可能受 API 速率限制
 2. **GitHub 限制**：未认证请求每小时限�?60 �?
 3. **ArXiv 限制**：请求过于频繁会被暂时封�?
 4. **文件操作**：测试文件工具时注意不要删除重要文件

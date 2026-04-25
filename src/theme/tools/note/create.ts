@@ -1,5 +1,5 @@
 /**
- * 笔记工具定义 — create_note
+ * 笔记工具定义 — createNote
  */
 
 import type { ToolDefinition } from '@/theme/tools/types'
@@ -9,7 +9,7 @@ import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 export const createNoteDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'create_note',
+    name: 'createNote',
     description: '创建一条笔记。当用户需要记录信息、保存想法或创建备忘录时使用。',
     parameters: {
       type: 'object',
@@ -46,7 +46,7 @@ export const createNote: ToolExecutor = async (args): Promise<ToolResult> => {
     return createErrorResult(
       'Missing required parameters',
       '请提供标题和内容',
-      '示例: create_note(title="笔记标题", content="笔记内容", tags=["tag1"])'
+      '示例: createNote(title="笔记标题", content="笔记内容", tags=["tag1"])'
     )
   }
   
@@ -73,7 +73,7 @@ export const createNote: ToolExecutor = async (args): Promise<ToolResult> => {
     return createSuccessResult(
       { title, tags },
       `笔记创建成功: ${title}`,
-      'create_note'
+      'createNote'
     )
   } catch (error: any) {
     return createErrorResult(

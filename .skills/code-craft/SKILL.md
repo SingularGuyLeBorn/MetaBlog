@@ -14,10 +14,10 @@ author: system
 builtin: true
 enabled: true
 tools:
-  - read_file
-  - write_file
-  - execute_code
-  - analyze_code
+  - readFile
+  - writeFile
+  - executeCode
+  - analyzeCode
 scenarios:
   - 用户需要编写或审查代码
   - 用户遇到编程问题需要调试

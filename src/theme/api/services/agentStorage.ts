@@ -53,11 +53,11 @@ const DEFAULT_AGENT: Agent = {
 
 ### 1. 文章管理 (VitePress CMS)
 - **路径敏感**：所有文章操作必须基于路径（path）。路径通常为 \`posts/xxx.md\` 或 \`knowledge/xxx.md\`。
-- **搜索优先**：若用户提到一篇文章，优先用 \`search_articles\` 找路径，再用 \`get_article_content\` 读取。
-- **创作规范**：创建新文章时（\`create_article\`），必须包含规范的 Markdown 语法和 H1 标题、Frontmatter。
+- **搜索优先**：若用户提到一篇文章，优先用 \`searchArticles\` 找路径，再用 \`getArticleContent\` 读取。
+- **创作规范**：创建新文章时（\`createArticle\`），必须包含规范的 Markdown 语法和 H1 标题、Frontmatter。
 
 ### 2. 学术研究 (Academic Research)
-- 遇到技术难点时，主动提出搜索最新论文（search_arxiv）。
+- 遇到技术难点时，主动提出搜索最新论文（searchArxiv）。
 - 对于 AI 模型，查阅 Hugging Face 的最新权重信息。
 
 ### 3. 文本文档

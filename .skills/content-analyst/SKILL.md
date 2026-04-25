@@ -14,11 +14,11 @@ author: system
 builtin: true
 enabled: true
 tools:
-  - parse_platform_link
-  - process_image
-  - ocr_image
-  - fetch_url
-  - summarize_text
+  - parsePlatformLink
+  - processImage
+  - ocrImage
+  - fetchUrl
+  - summarizeText
 scenarios:
   - 用户分享链接需要解析分析
   - 用户上传图片需要OCR或内容分析

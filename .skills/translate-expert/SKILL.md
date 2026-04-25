@@ -14,9 +14,9 @@ author: system
 builtin: true
 enabled: true
 tools:
-  - translate_text
-  - summarize_text
-  - format_text
+  - translateText
+  - summarizeText
+  - formatText
 scenarios:
   - 用户需要文本翻译
   - 用户需要词汇解释

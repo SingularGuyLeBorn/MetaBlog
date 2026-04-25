@@ -1,5 +1,5 @@
 /**
- * 笔记工具定义 — list_notes
+ * 笔记工具定义 — listNotes
  */
 
 import type { ToolDefinition } from '@/theme/tools/types'
@@ -9,7 +9,7 @@ import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 export const listNotesDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'list_notes',
+    name: 'listNotes',
     description: '列出所有笔记。当用户需要查看笔记列表或查找特定笔记时使用。',
     parameters: {
       type: 'object',
@@ -41,7 +41,7 @@ export const listNotes: ToolExecutor = async (): Promise<ToolResult> => {
     return createSuccessResult(
       data.data || [],
       `获取笔记列表`,
-      'list_notes'
+      'listNotes'
     )
   } catch (error: any) {
     return createErrorResult(

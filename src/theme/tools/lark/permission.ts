@@ -20,13 +20,20 @@ async function larkApi(method: string, path: string, body?: any, query?: Record<
     options.body = JSON.stringify(body)
   }
   const res = await fetch(url, options)
-  return res.json()
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`Non-JSON response (${res.status}): ${text.slice(0, 200)}`)
+  }
+  const data = await res.json()
+  if (!data.code && !res.ok) data.code = res.status
+  return data
 }
 
 export const feishuDocShareDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_doc_share',
+    name: 'feishuDocShare',
     description: '分享飞书文档权限给指定用户。支持 open_id、邮箱、手机号。权限级别: full_access / edit / view。',
     parameters: {
       type: 'object',
@@ -45,7 +52,7 @@ export const feishuDocShareDef: ToolDefinition = {
 export const feishuDocUnshareDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_doc_unshare',
+    name: 'feishuDocUnshare',
     description: '取消飞书文档对指定用户的权限分享。',
     parameters: {
       type: 'object',
@@ -66,7 +73,7 @@ export const feishuDocShare = async (args: Record<string, any>): Promise<ToolRes
   try {
     const result = await larkApi('POST', '/doc/share', { document_id, member_id, member_type: member_type || 'openid', perm: perm || 'full_access' }, undefined, use_user_token)
     if (result.code !== 0) return createErrorResult(result.msg, '分享权限失败', `错误码: ${result.code}`)
-    return createSuccessResult(result.data, `文档权限分享成功！\n文档: ${document_id}\n用户: ${member_id}\n权限: ${perm || 'full_access'}`, 'feishu_doc_share')
+    return createSuccessResult(result.data, `文档权限分享成功！\n文档: ${document_id}\n用户: ${member_id}\n权限: ${perm || 'full_access'}`, 'feishuDocShare')
   } catch (error: any) {
     return createErrorResult(error.message, '分享权限请求失败')
   }
@@ -78,7 +85,7 @@ export const feishuDocUnshare = async (args: Record<string, any>): Promise<ToolR
   try {
     const result = await larkApi('DELETE', '/doc/share', { document_id, member_id, member_type: member_type || 'openid' }, undefined, use_user_token)
     if (result.code !== 0) return createErrorResult(result.msg, '取消权限失败', `错误码: ${result.code}`)
-    return createSuccessResult(result.data, `文档权限已取消！\n文档: ${document_id}\n用户: ${member_id}`, 'feishu_doc_unshare')
+    return createSuccessResult(result.data, `文档权限已取消！\n文档: ${document_id}\n用户: ${member_id}`, 'feishuDocUnshare')
   } catch (error: any) {
     return createErrorResult(error.message, '取消权限请求失败')
   }

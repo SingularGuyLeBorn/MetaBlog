@@ -25,12 +25,12 @@ import { yuqueApi, translateYuqueError } from './repo'
  * 目录是层级结构，通过 depth 字段表示层级深度。
  *
  * 【使用示例】
- *   yuque_toc_get(repo_id="68025057")
+ *   yuqueTocGet(repo_id="68025057")
  */
 export const yuqueTocGetDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'yuque_toc_get',
+    name: 'yuqueTocGet',
     description: `获取语雀知识库的目录结构（TOC）。
 
 返回知识库中所有文档的层级关系，包括：
@@ -40,7 +40,7 @@ export const yuqueTocGetDef: ToolDefinition = {
 每个条目包含 title、slug（字段名为 url）、depth 层级等。
 
 使用示例:
-yuque_toc_get(repo_id="68025057")
+yuqueTocGet(repo_id="68025057")
 
 返回示例:
 📁 第一章 (slug: xxx)
@@ -53,7 +53,7 @@ yuque_toc_get(repo_id="68025057")
       properties: {
         repo_id: {
           type: 'string',
-          description: '知识库 ID（从 yuque_repo_list 结果中获取）',
+          description: '知识库 ID（从 yuqueRepoList 结果中获取）',
         },
       },
       required: ['repo_id'],
@@ -82,7 +82,7 @@ export const yuqueTocGet = async (args: Record<string, any>): Promise<ToolResult
     const result = await yuqueApi('GET', '/toc', undefined, { repo_id })
 
     if (!result.data) {
-      return createErrorResult(result.msg || result.message || '请求失败', '获取目录失败')
+      return createErrorResult(result.msg || result.message || '请求失败', '获取目录失败', undefined, result.status || result.code)
     }
 
     // 内部 Web API: { data: { toc: [...] } }
@@ -97,7 +97,7 @@ export const yuqueTocGet = async (args: Record<string, any>): Promise<ToolResult
     return createSuccessResult(
       result.data,
       `目录结构 (${toc.length} 项):\n${formatted}`,
-      'yuque_toc_get'
+      'yuqueTocGet'
     )
   } catch (error: any) {
     const translated = translateYuqueError({ message: error.message })

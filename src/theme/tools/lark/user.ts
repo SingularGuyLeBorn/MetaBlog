@@ -15,13 +15,20 @@ async function larkApi(method: string, path: string, body?: any, query?: Record<
     options.body = JSON.stringify(body)
   }
   const res = await fetch(url, options)
-  return res.json()
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`Non-JSON response (${res.status}): ${text.slice(0, 200)}`)
+  }
+  const data = await res.json()
+  if (!data.code && !res.ok) data.code = res.status
+  return data
 }
 
 export const feishuUserSearchDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'feishu_user_search',
+    name: 'feishuUserSearch',
     description: '搜索或查找飞书用户，获取用户的 open_id 等信息。按手机号/邮箱精确匹配只需要 contact:user.id:readonly 权限；按关键词搜索需要 contact:contact.base:readonly 权限。',
     parameters: {
       type: 'object',
@@ -47,7 +54,7 @@ export const feishuUserSearch = async (args: Record<string, any>): Promise<ToolR
           return `${i + 1}. ${info?.name || '未知'} (${info?.email || info?.mobile || ''})\n   open_id: ${info?.open_id || info?.user_id || ''}`
         }).join('\n\n')
       : '未找到用户'
-    return createSuccessResult(result.data, formatted, 'feishu_user_search')
+    return createSuccessResult(result.data, formatted, 'feishuUserSearch')
   } catch (error: any) {
     return createErrorResult(error.message, '查找用户请求失败')
   }

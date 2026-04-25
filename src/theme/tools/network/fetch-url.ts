@@ -10,7 +10,7 @@ const API_BASE = '/api'
 export const fetchUrlDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'fetch_url',
+    name: 'fetchUrl',
     description: `获取指定 URL 的网页内容。支持静态网页、API 接口、JSON 数据等。
 
 使用场景：
@@ -48,8 +48,8 @@ export const fetchUrlDef: ToolDefinition = {
         },
         max_length: {
           type: 'number',
-          description: '返回内容最大长度（字符），默认 15000',
-          default: 15000
+          description: '返回内容最大长度（字符），默认 200000',
+          default: 200000
         }
       },
       required: ['url']
@@ -67,14 +67,14 @@ export const fetchUrl: ToolExecutor = async (args): Promise<ToolResult> => {
     headers = {},
     body,
     timeout = 10000,
-    max_length = 15000
+    max_length = 200000
   } = args
 
   if (!url) {
     return createErrorResult(
       'Missing url parameter',
       '请提供 URL',
-      '示例: fetch_url(url="https://api.github.com/users/octocat")'
+      '示例: fetchUrl(url="https://api.github.com/users/octocat")'
     )
   }
 
@@ -169,7 +169,7 @@ export const fetchUrl: ToolExecutor = async (args): Promise<ToolResult> => {
       ? processedContent.substring(0, max_length) +
         `\n\n---` +
         `\n[内容已截断] 原始内容共 ${rawContent.length} 字符，当前限制 ${max_length} 字符。` +
-        `\n如需获取更多内容，可重新调用 fetch_url(url="${url}", max_length=${Math.min(max_length * 2, 50000)})`
+        `\n如需获取更多内容，可重新调用 fetchUrl(url="${url}", max_length=${max_length * 2})`
       : processedContent
 
     return createSuccessResult(
@@ -182,7 +182,7 @@ export const fetchUrl: ToolExecutor = async (args): Promise<ToolResult> => {
         truncated: isTruncated
       },
       `请求成功 (${rawContent.length} 字符${isTruncated ? '，已截断至 ' + max_length : ''})`,
-      'fetch_url'
+      'fetchUrl'
     )
   } catch (error: any) {
     if (error.name === 'AbortError') {

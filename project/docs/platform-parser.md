@@ -14,7 +14,7 @@ Agent 读取网页的能力由 **Backend 统一解析器** + **Frontend 工具�
 用户输入链接
     │
     ▼
-LLM 选择工具（parse_platform_link / parse_zhihu / parse_bilibili ...）
+LLM 选择工具（parsePlatformLink / parseZhihu / parseBilibili ...）
     │
     ▼
 Frontend Tool Executor ─────────────────────────────┐
@@ -379,7 +379,7 @@ function isArticlePage(url: string, html: string): boolean {
     "xsec_token 机制：部分回答需要特定 token 才能访问",
     "登录墙：未登录时部分内容折叠"
   ],
-  "recommendedTool": "parse_zhihu"
+  "recommendedTool": "parseZhihu"
 }
 ```
 
@@ -509,7 +509,7 @@ import { parseTwitterDef } from './platform/definitions';
 toolDefinitions.push(parseTwitterDef);
 ```
 
-**完成**。`parse_platform_link` 自动覆盖，无需改 LLM prompt。
+**完成**。`parsePlatformLink` 自动覆盖，无需改 LLM prompt。
 
 ### 6.2 环境准备检查清单
 
@@ -535,15 +535,15 @@ pnpm exec playwright chromium --version
 
 | 工具名 | 类型 | 后端依赖 | 解析深度 |
 |---|---|---|---|
-| `parse_platform_link` | 统一入口 | `/api/platform/parse` | 按平台自动 |
-| `parse_zhihu` | Legacy 独立 | `/api/proxy/fetch` | ⭐⭐⭐⭐⭐ |
-| `parse_xiaohongshu` | Legacy 独立 | `/api/proxy/fetch` | ⭐⭐ |
-| `parse_wechat` | Legacy 独立 | `/api/proxy/fetch` | ⭐⭐⭐⭐⭐ |
-| `parse_douyin` | 薄包装 | `/api/platform/parse` | ⭐⭐ |
-| `parse_bilibili` | 薄包装 | `/api/platform/parse` | ⭐⭐⭐⭐ |
-| `parse_weibo` | 薄包装 | `/api/platform/parse` | ⭐⭐ |
-| `ocr_image` | 未实现 | — | ❌ |
-| `process_image` | 元数据 | HEAD 请求 | ⭐ |
+| `parsePlatformLink` | 统一入口 | `/api/platform/parse` | 按平台自动 |
+| `parseZhihu` | Legacy 独立 | `/api/proxy/fetch` | ⭐⭐⭐⭐⭐ |
+| `parseXiaohongshu` | Legacy 独立 | `/api/proxy/fetch` | ⭐⭐ |
+| `parseWechat` | Legacy 独立 | `/api/proxy/fetch` | ⭐⭐⭐⭐⭐ |
+| `parseDouyin` | 薄包装 | `/api/platform/parse` | ⭐⭐ |
+| `parseBilibili` | 薄包装 | `/api/platform/parse` | ⭐⭐⭐⭐ |
+| `parseWeibo` | 薄包装 | `/api/platform/parse` | ⭐⭐ |
+| `ocrImage` | 未实现 | — | ❌ |
+| `processImage` | 元数据 | HEAD 请求 | ⭐ |
 
 ### 7.2 相关文件索引
 

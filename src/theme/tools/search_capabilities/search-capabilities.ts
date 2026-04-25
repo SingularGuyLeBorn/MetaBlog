@@ -1,5 +1,5 @@
 /**
- * search_capabilities 工具定义 + 执行器
+ * searchCapabilities 工具定义 + 执行器
  *
  * 让 Agent 通过关键词主动搜索自己拥有的工具和 Skills，
  * 解决"工具太多不知道用哪个"的问题。
@@ -30,7 +30,7 @@ import { getGlobalSkills } from '@/theme/skills/skillLoader'
 export const searchCapabilitiesDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'search_capabilities',
+    name: 'searchCapabilities',
     description: `通过关键词搜索系统中可用的工具和 Skills，找到最适合当前任务的能力。
 
 使用场景：
@@ -59,8 +59,8 @@ export const searchCapabilitiesDef: ToolDefinition = {
         },
         limit: {
           type: 'number',
-          description: '返回结果数量，默认 10',
-          default: 10
+          description: '返回结果数量上限，0 表示不限制（返回全部）',
+          default: 0
         }
       },
       required: ['keyword']
@@ -163,16 +163,27 @@ function calculateMatchScore(
     const matchedScenarios = scenariosLower.filter((s) => s.includes(kw))
     if (matchedScenarios.length > 0) {
       score += 0.5
-      reasons.push(`场景匹配: ${matchedScenarios[0].slice(0, 20)}...`)
+      reasons.push(`场景匹配: ${matchedScenarios[0]}`)
       continue
     }
 
-    // 6. 模糊匹配（字符包含）
+    // 6. 模糊匹配（字符包含）- 针对中文场景优化
     const kwChars = kw.split('')
     const nameMatchCount = kwChars.filter((c) => nameLower.includes(c)).length
     if (nameMatchCount >= kw.length * 0.5) {
       score += 0.2
       reasons.push(`名称部分匹配"${kw}"`)
+    } else {
+      // 中文场景：描述字符匹配（解决"创建仓库"在"创建新的仓库"中不匹配的问题）
+      const hasChinese = /[\u4e00-\u9fff]/.test(kw)
+      if (hasChinese) {
+        const descMatchCount = kwChars.filter((c) => descLower.includes(c)).length
+        if (descMatchCount >= kw.length * 0.5) {
+          const ratio = descMatchCount / kw.length
+          score += 0.2 + ratio * 0.3 // 0.2~0.5，匹配比例越高分数越高
+          reasons.push(`描述字符匹配"${kw}"(${Math.round(ratio * 100)}%)`)
+        }
+      }
     }
   }
 
@@ -197,6 +208,8 @@ function getToolCategory(name: string): string {
   if (name.includes('article')) return '文章管理'
   if (name.includes('file')) return '文件管理'
   if (name.includes('web') || name.includes('fetch') || name.includes('url')) return '网络工具'
+  // github 必须在 code 之前判断，否则 github* 会被误判为代码工具
+  if (name.includes('github')) return '🐙 GitHub'
   if (name.includes('code') || name.includes('execute') || name.includes('analyze')) return '代码工具'
   if (name.includes('text') || name.includes('summarize') || name.includes('format') || name.includes('translate'))
     return '文本处理'
@@ -205,10 +218,9 @@ function getToolCategory(name: string): string {
   if (name.includes('time') || name.includes('weather') || name.includes('calculate')) return '系统工具'
   if (name.includes('arxiv') || name.includes('openreview')) return '学术平台'
   if (name.includes('huggingface')) return 'AI模型平台'
-  if (name.includes('github')) return '代码平台'
   if (name.includes('feishu')) return '飞书集成'
   if (name.includes('yuque')) return '语雀集成'
-  if (name.includes('skill') || name.includes('load_skill') || name.includes('capabilities')) return 'Skill系统'
+  if (name.includes('skill') || name.includes('loadSkill') || name.includes('capabilities')) return 'Skill系统'
   if (name.includes('all_')) return '元信息'
   return '其他'
 }
@@ -222,14 +234,14 @@ function searchTools(keyword: string): MatchItem[] {
 
   for (const def of defs) {
     const name = def.function.name
-    const description = def.function.description.split('\n')[0]
+    const description = def.function.description
     const { score, reason } = calculateMatchScore(keyword, { name, description })
 
     if (score > 0.1) {
       results.push({
         name,
         id: name,
-        description: description.slice(0, 80) + (description.length > 80 ? '...' : ''),
+        description,
         category: getToolCategory(name),
         type: 'tool',
         score,
@@ -290,7 +302,7 @@ function searchSkills(keyword: string): MatchItem[] {
 /* -------------------------------------------------------------------------- */
 
 /**
- * search_capabilities 主执行器
+ * searchCapabilities 主执行器
  *
  * 执行流程：
  * 1. 参数校验：keyword 必须是非空字符串
@@ -314,7 +326,7 @@ function searchSkills(keyword: string): MatchItem[] {
  * @returns ToolResult，包含搜索结果和 activateTools
  */
 export async function executeSearchCapabilities(args: Record<string, any>): Promise<ToolResult> {
-  const { keyword, type = 'all', limit = 10 } = args
+  const { keyword, type = 'all', limit = 0 } = args
 
   // 参数校验：keyword 为必填项
   if (!keyword || typeof keyword !== 'string') {
@@ -335,15 +347,18 @@ export async function executeSearchCapabilities(args: Record<string, any>): Prom
     }
 
     // 全局排序：Tools 和 Skills 混合按分数降序排列
-    // slice(0, limit) 截断，避免返回过多结果撑爆上下文
-    const sorted = allResults.sort((a, b) => b.score - a.score).slice(0, limit)
+    // limit > 0 时截断，limit = 0 返回全部
+    let sorted = allResults.sort((a, b) => b.score - a.score)
+    if (limit > 0) {
+      sorted = sorted.slice(0, limit)
+    }
 
     // 无结果时返回友好提示
     if (sorted.length === 0) {
       return createSuccessResult(
         { results: [], count: 0 },
         `未找到与 "${keyword}" 相关的工具或 Skills`,
-        'search_capabilities'
+        'searchCapabilities'
       )
     }
 
@@ -369,15 +384,15 @@ export async function executeSearchCapabilities(args: Record<string, any>): Prom
       skills.forEach((r, i) => {
         lines.push(`${i + 1}. **${r.name}** \`${r.id}\` [${r.category}] — ${r.description}`)
         lines.push(`   匹配理由: ${r.reason}`)
-        // 提示 Agent 可以调用 load_skill 加载该 Skill
-        lines.push(`   💡 需要时调用: load_skill(skill_id="${r.id}")`)
+        // 提示 Agent 可以调用 loadSkill 加载该 Skill
+        lines.push(`   💡 需要时调用: loadSkill(skill_id="${r.id}")`)
       })
     }
 
     // ─────────────────────────────────────────────────────────────
     // 【渐进式披露】提取匹配工具名称，触发 schema 动态激活
     // ─────────────────────────────────────────────────────────────
-    // search_capabilities 的核心价值：不仅返回搜索结果文本，
+    // searchCapabilities 的核心价值：不仅返回搜索结果文本，
     // 还通过 activateTools 告诉系统将匹配工具的 schema 暴露给模型。
     // 这样 Agent 在下一轮就可以调用这些工具，而不需要再次搜索。
     const activateTools = tools.map((r) => r.name)
@@ -392,7 +407,7 @@ export async function executeSearchCapabilities(args: Record<string, any>): Prom
         results: sorted
       },
       message: lines.join('\n'),
-      action: 'search_capabilities',
+      action: 'searchCapabilities',
       activateTools
     }
   } catch (error) {

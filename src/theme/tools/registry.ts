@@ -41,7 +41,7 @@ const toolCallRecords = new Map<string, ToolCallRecord>()
  * @example
  * ```typescript
  * registerTool(
- *   'get_weather',
+ *   'getWeather',
  *   getWeatherDef,
  *   getWeather
  * )
@@ -176,7 +176,7 @@ function generateRecordId(): string {
  *   id: 'call_123',
  *   type: 'function',
  *   function: {
- *     name: 'get_weather',
+ *     name: 'getWeather',
  *     arguments: '{"city": "北京"}'
  *   }
  * })
@@ -197,16 +197,31 @@ export async function executeTool(
     )
   }
   
-  // 2. 解析参数
+  // 2. 解析参数（支持自动修复 AI 生成的非法 JSON 转义）
   let args: Record<string, any>
+  let rawArgs = toolCall.function.arguments
   try {
-    args = JSON.parse(toolCall.function.arguments)
+    args = JSON.parse(rawArgs)
   } catch (e: any) {
-    return createErrorResult(
-      `参数解析失败: ${e?.message || String(e)}`,
-      '参数格式不正确',
-      '请检查输入参数是否为有效的 JSON 格式'
-    )
+    // 自动修复：AI 常在 JSON 字符串中写入 LaTeX 反斜杠（如 \pi, \theta, \frac）
+    // 但 JSON 只允许 \" \ \/ \b \f \n \r \t \uXXXX 这几种转义
+    // 修复策略：
+    //   1. 先将已正确转义的 \ 保护为占位符
+    //   2. 将剩余单个 \ 后面跟非法字符的，变成 \\
+    //   3. 恢复占位符
+    let fixed = rawArgs.replace(/\\\\/g, '\u0000ESC\u0000')
+    fixed = fixed.replace(/\\([^"\\/bfnrtu])/g, '\\\\$1')
+    fixed = fixed.replace(/\u0000ESC\u0000/g, '\\\\')
+    try {
+      args = JSON.parse(fixed)
+      console.warn(`[ToolRegistry] 工具 "${name}" 参数 JSON 已自动修复转义`)
+    } catch {
+      return createErrorResult(
+        `参数解析失败: ${e?.message || String(e)}`,
+        '参数格式不正确',
+        '请检查输入参数是否为有效的 JSON 格式。如果参数中包含 LaTeX 公式（如 \\pi、\\theta），请确保反斜杠已正确转义为 \\\\pi、\\\\theta'
+      )
+    }
   }
   
   // 3. 执行工具

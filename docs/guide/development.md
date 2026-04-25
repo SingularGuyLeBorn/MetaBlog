@@ -89,7 +89,7 @@ MetaBlog/
 | 函数/变量 | camelCase | `executeTool`, `toolResult` |
 | 常量 | SCREAMING_SNAKE_CASE | `RESULT_TRUNCATE_LENGTH` |
 | 类型/接口 | PascalCase | `ToolDefinition`, `AgentConfig` |
-| 工具名 | snake_case | `create_article`, `feishu_doc_create` |
+| 工具名 | snake_case | `createArticle`, `feishuDocCreate` |
 
 ### 代码风格
 

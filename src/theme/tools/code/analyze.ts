@@ -1,5 +1,5 @@
 /**
- * 代码工具定义 — analyze_code
+ * 代码工具定义 — analyzeCode
  */
 
 import type { ToolDefinition } from '@/theme/tools/types'
@@ -9,7 +9,7 @@ import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 export const analyzeCodeDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'analyze_code',
+    name: 'analyzeCode',
     description: '分析代码质量、潜在问题和改进建议。当用户需要代码审查、性能分析或安全检查时使用。',
     parameters: {
       type: 'object',
@@ -38,7 +38,7 @@ export const analyzeCode: ToolExecutor = async (args): Promise<ToolResult> => {
     return createErrorResult(
       'Missing required parameters',
       '请提供代码和语言',
-      '示例: analyze_code(code="function add(a,b) { return a+b }", language="javascript")'
+      '示例: analyzeCode(code="function add(a,b) { return a+b }", language="javascript")'
     )
   }
   
@@ -99,6 +99,6 @@ export const analyzeCode: ToolExecutor = async (args): Promise<ToolResult> => {
   return createSuccessResult(
     analysis,
     `代码分析完成 (${lines.length} 行)`,
-    'analyze_code'
+    'analyzeCode'
   )
 }

@@ -29,17 +29,31 @@ export async function callGitHubTool(toolName: string, params: Record<string, an
       body: JSON.stringify({ tool: toolName, params })
     })
 
-    const result = await response.json()
+    // 防御：后端可能返回空响应或非 JSON（如 502 网关错误）
+    const contentType = response.headers.get('content-type') || ''
+    let result: any
+    if (contentType.includes('application/json')) {
+      result = await response.json()
+    } else {
+      const text = await response.text().catch(() => '')
+      return createErrorResult(
+        `Non-JSON response (${response.status}): ${text.slice(0, 200)}`,
+        '后端返回格式异常',
+        '请检查网络或联系管理员',
+        response.status
+      )
+    }
 
     if (!result.success) {
       return createErrorResult(
         result.error || result.message || 'Unknown error',
         result.message || '请求失败',
-        result.suggestion || '请检查参数或稍后重试'
+        result.suggestion || '请检查参数或稍后重试',
+        result.code
       )
     }
 
-    return createSuccessResult(result.data, result.display, toolName)
+    return createSuccessResult(result.data, result.display, toolName, undefined, result.code)
   } catch (error: any) {
     return createErrorResult(
       error.message,

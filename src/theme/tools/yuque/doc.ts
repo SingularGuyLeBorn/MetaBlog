@@ -22,20 +22,20 @@ import { yuqueApi, translateYuqueError } from './repo'
  * 语雀内部 Web API 没有直接的文档列表端点，
  * 本工具通过获取 TOC 并过滤出 DOC 类型条目来实现。
  *
- * 【与 yuque_toc_get 的区别】
- *   - yuque_toc_get：返回完整目录（含 TITLE 和 DOC）
- *   - yuque_doc_list：只返回 DOC 类型的文档
+ * 【与 yuqueTocGet 的区别】
+ *   - yuqueTocGet：返回完整目录（含 TITLE 和 DOC）
+ *   - yuqueDocList：只返回 DOC 类型的文档
  */
 export const yuqueDocListDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'yuque_doc_list',
+    name: 'yuqueDocList',
     description: `列出语雀知识库中的文档列表（只包含文档，不包含目录项）。
 
 返回文档标题、slug、创建时间、更新时间等基本信息。
 
 使用示例:
-yuque_doc_list(repo_id="68025057")
+yuqueDocList(repo_id="68025057")
 
 返回示例:
 1. 文档标题1 (Slug: abc123)
@@ -72,17 +72,17 @@ yuque_doc_list(repo_id="68025057")
 export const yuqueDocReadDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'yuque_doc_read',
+    name: 'yuqueDocRead',
     description: `读取语雀文档的完整内容。
 
 返回文档的标题、正文（Lake HTML 格式）、创建时间、更新时间等。
 
-【重要】repo_id 和 doc_slug 可从 yuque_toc_get 或 yuque_doc_list 结果中获取。
+【重要】repo_id 和 doc_slug 可从 yuqueTocGet 或 yuqueDocList 结果中获取。
 
 返回结果中包含 doc_id（数字 ID），这是后续更新或删除文档的必需参数。
 
 使用示例:
-yuque_doc_read(repo_id="68025057", doc_slug="abc123")`,
+yuqueDocRead(repo_id="68025057", doc_slug="abc123")`,
     parameters: {
       type: 'object',
       properties: {
@@ -119,7 +119,7 @@ yuque_doc_read(repo_id="68025057", doc_slug="abc123")`,
 export const yuqueDocCreateDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'yuque_doc_create',
+    name: 'yuqueDocCreate',
     description: `在语雀知识库中创建新文档。
 
 【内容格式选择】
@@ -127,7 +127,7 @@ export const yuqueDocCreateDef: ToolDefinition = {
 - format="lake" (默认): 系统会自动将 content 转换为语雀 Lake HTML。
 
 【图片插入】
-1. 先调用 yuque_image_upload(image_base64="...") 上传图片，获取返回的 url
+1. 先调用 yuqueImageUpload(image_base64="...") 上传图片，获取返回的 url
 2. 在 content 中用 Markdown 图片语法引用: ![描述](https://cdn.nlark.com/yuque/0/...)
 
 【⚠️ 公式转义警告】
@@ -138,10 +138,10 @@ Python 字符串中 \f 会被当作 form feed 吃掉！LaTeX 公式中 \frac、\
 
 示例:
 # Markdown 格式（推荐，公式/表格/代码块/图片都能正确渲染）
-yuque_doc_create(repo_id="68025057", title="项目文档", content="# 标题\n\n正文", format="markdown")
+yuqueDocCreate(repo_id="68025057", title="项目文档", content="# 标题\n\n正文", format="markdown")
 
 # 带图片的文档
-yuque_doc_create(repo_id="68025057", title="带图片的文档", content="# 标题\n\n![图1](https://cdn.nlark.com/yuque/0/...)", format="markdown")
+yuqueDocCreate(repo_id="68025057", title="带图片的文档", content="# 标题\n\n![图1](https://cdn.nlark.com/yuque/0/...)", format="markdown")
 
 支持参数:
 - public: 0=私密, 1=互联网公开, 2=空间成员公开`,
@@ -187,21 +187,21 @@ yuque_doc_create(repo_id="68025057", title="带图片的文档", content="# 标�
  * 更新已有文档的标题或内容。
  *
  * 【重要】doc_id 是数字 ID，不是 slug！
- * 更新前必须先调用 yuque_doc_read 获取 doc_id。
+ * 更新前必须先调用 yuqueDocRead 获取 doc_id。
  *
  * 【示例工作流】
- *   1. yuque_doc_read(repo_id="68025057", doc_slug="abc123")
+ *   1. yuqueDocRead(repo_id="68025057", doc_slug="abc123")
  *      → 获取 doc_id（如 266422684）
- *   2. yuque_doc_update(repo_id="68025057", doc_id="266422684", title="新标题", content="<h1>新内容</h1>")
+ *   2. yuqueDocUpdate(repo_id="68025057", doc_id="266422684", title="新标题", content="<h1>新内容</h1>")
  */
 export const yuqueDocUpdateDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'yuque_doc_update',
+    name: 'yuqueDocUpdate',
     description: `更新语雀文档的标题或内容。
 
 【重要】doc_id 是数字 ID，不是 slug！
-更新前必须先调用 yuque_doc_read 获取 doc_id。
+更新前必须先调用 yuqueDocRead 获取 doc_id。
 
 【内容格式选择】
 - format="markdown" (推荐): 直接传标准 Markdown，语雀服务端自动渲染。
@@ -214,7 +214,7 @@ export const yuqueDocUpdateDef: ToolDefinition = {
 
 【局部替换（推荐）】
 使用 replace_text 参数实现"只改一句话"：
-yuque_doc_update(
+yuqueDocUpdate(
   repo_id="68025057",
   doc_id="266422684",
   replace_text={ "old": "原文本B", "new": "修改后的B'" }
@@ -223,13 +223,13 @@ yuque_doc_update(
 
 示例:
 # 只更新标题（保留内容）
-yuque_doc_update(repo_id="68025057", doc_id="266422684", title="新标题")
+yuqueDocUpdate(repo_id="68025057", doc_id="266422684", title="新标题")
 
 # 全量替换内容
-yuque_doc_update(repo_id="68025057", doc_id="266422684", title="新标题", content="# 新标题\n\n新内容", format="markdown")
+yuqueDocUpdate(repo_id="68025057", doc_id="266422684", title="新标题", content="# 新标题\n\n新内容", format="markdown")
 
 # 局部替换一句话
-yuque_doc_update(repo_id="68025057", doc_id="266422684", replace_text={"old": "错误句子", "new": "正确句子"})`,
+yuqueDocUpdate(repo_id="68025057", doc_id="266422684", replace_text={"old": "错误句子", "new": "正确句子"})`,
     parameters: {
       type: 'object',
       properties: {
@@ -239,7 +239,7 @@ yuque_doc_update(repo_id="68025057", doc_id="266422684", replace_text={"old": "�
         },
         doc_id: {
           type: 'string',
-          description: '文档数字 ID（从 yuque_doc_read 结果中获取，不是 slug！）',
+          description: '文档数字 ID（从 yuqueDocRead 结果中获取，不是 slug！）',
         },
         title: {
           type: 'string',
@@ -271,24 +271,24 @@ yuque_doc_update(repo_id="68025057", doc_id="266422684", replace_text={"old": "�
  * 删除知识库中的指定文档。
  *
  * 【重要】doc_id 是数字 ID，不是 slug！
- * 删除前必须先调用 yuque_doc_read 获取 doc_id。
+ * 删除前必须先调用 yuqueDocRead 获取 doc_id。
  *
  * 【⚠️ 警告】删除操作不可逆，请确认后再执行！
  */
 export const yuqueDocDeleteDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'yuque_doc_delete',
+    name: 'yuqueDocDelete',
     description: `删除语雀知识库中的指定文档。
 
 【重要】doc_id 是数字 ID，不是 slug！
-删除前必须先调用 yuque_doc_read 获取 doc_id。
+删除前必须先调用 yuqueDocRead 获取 doc_id。
 
 【⚠️ 警告】删除操作不可逆，请确认后再执行！
 
 示例:
-yuque_doc_read(repo_id="68025057", doc_slug="abc123")  → 获取 doc_id
-yuque_doc_delete(repo_id="68025057", doc_id="266422684")`,
+yuqueDocRead(repo_id="68025057", doc_slug="abc123")  → 获取 doc_id
+yuqueDocDelete(repo_id="68025057", doc_id="266422684")`,
     parameters: {
       type: 'object',
       properties: {
@@ -298,7 +298,7 @@ yuque_doc_delete(repo_id="68025057", doc_id="266422684")`,
         },
         doc_id: {
           type: 'string',
-          description: '文档数字 ID（从 yuque_doc_read 结果中获取，不是 slug！）',
+          description: '文档数字 ID（从 yuqueDocRead 结果中获取，不是 slug！）',
         },
       },
       required: ['repo_id', 'doc_id'],
@@ -318,7 +318,7 @@ export const yuqueDocList = async (args: Record<string, any>): Promise<ToolResul
     const result = await yuqueApi('GET', '/toc', undefined, { repo_id })
 
     if (!result.data) {
-      return createErrorResult(result.msg || result.message || '请求失败', '获取文档列表失败')
+      return createErrorResult(result.msg || result.message || '请求失败', '获取文档列表失败', undefined, result.status || result.code)
     }
 
     const toc = result.data?.toc || result.data || []
@@ -331,7 +331,7 @@ export const yuqueDocList = async (args: Record<string, any>): Promise<ToolResul
     return createSuccessResult(
       docs,
       docs.length > 0 ? formatted : '知识库中暂无文档',
-      'yuque_doc_list'
+      'yuqueDocList'
     )
   } catch (error: any) {
     const translated = translateYuqueError({ message: error.message })
@@ -350,7 +350,7 @@ export const yuqueDocRead = async (args: Record<string, any>): Promise<ToolResul
     const result = await yuqueApi('GET', '/doc/read', undefined, { repo_id, doc_slug })
 
     if (!result.data) {
-      return createErrorResult(result.msg || result.message || '请求失败', '读取文档失败')
+      return createErrorResult(result.msg || result.message || '请求失败', '读取文档失败', undefined, result.status || result.code)
     }
 
     const doc = result.data
@@ -360,8 +360,8 @@ export const yuqueDocRead = async (args: Record<string, any>): Promise<ToolResul
 
     return createSuccessResult(
       result.data,
-      `标题: ${doc.title}\n格式: ${doc.format || 'lake'}\n更新: ${doc.updated_at || 'N/A'}\n\n---\n\n${content.slice(0, 10000)}`,
-      'yuque_doc_read'
+      `标题: ${doc.title}\n格式: ${doc.format || 'lake'}\n更新: ${doc.updated_at || 'N/A'}\n\n---\n\n${content}`,
+      'yuqueDocRead'
     )
   } catch (error: any) {
     const translated = translateYuqueError({ message: error.message })
@@ -389,14 +389,14 @@ export const yuqueDocCreate = async (args: Record<string, any>): Promise<ToolRes
     const result = await yuqueApi('POST', '/doc/create', payload)
 
     if (!result.data) {
-      return createErrorResult(result.msg || result.message || '请求失败', '创建文档失败')
+      return createErrorResult(result.msg || result.message || '请求失败', '创建文档失败', undefined, result.status || result.code)
     }
 
     const doc = result.data
     return createSuccessResult(
       result.data,
       `文档创建成功！\n标题: ${doc.title}\nID: ${doc.id}\nSlug: ${doc.slug}\nURL: https://www.yuque.com/${repo_id}/${doc.slug}`,
-      'yuque_doc_create'
+      'yuqueDocCreate'
     )
   } catch (error: any) {
     const translated = translateYuqueError({ message: error.message })
@@ -422,14 +422,14 @@ export const yuqueDocUpdate = async (args: Record<string, any>): Promise<ToolRes
     const result = await yuqueApi('PUT', '/doc/update', payload)
 
     if (!result.data) {
-      return createErrorResult(result.msg || result.message || '请求失败', '更新文档失败')
+      return createErrorResult(result.msg || result.message || '请求失败', '更新文档失败', undefined, result.status || result.code)
     }
 
     const doc = result.data
     return createSuccessResult(
       result.data,
       `文档更新成功！\n标题: ${doc.title}\nID: ${doc.id}\n更新于: ${doc.updated_at || 'N/A'}`,
-      'yuque_doc_update'
+      'yuqueDocUpdate'
     )
   } catch (error: any) {
     const translated = translateYuqueError({ message: error.message })
@@ -448,13 +448,13 @@ export const yuqueDocDelete = async (args: Record<string, any>): Promise<ToolRes
     const result = await yuqueApi('DELETE', '/doc/delete', { repo_id, doc_id })
 
     if (result.data === undefined && (result.msg || result.message)) {
-      return createErrorResult(result.msg || result.message, '删除文档失败')
+      return createErrorResult(result.msg || result.message, '删除文档失败', undefined, result.status || result.code)
     }
 
     return createSuccessResult(
       result.data,
       `文档 ${doc_id} 删除成功`,
-      'yuque_doc_delete'
+      'yuqueDocDelete'
     )
   } catch (error: any) {
     const translated = translateYuqueError({ message: error.message })

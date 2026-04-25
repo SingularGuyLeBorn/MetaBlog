@@ -5,7 +5,7 @@
 ### Tool (工具) = 能力
 - **定义**: 可以执行的具体功能
 - **形式**: TypeScript 函数
-- **例子**: `create_article`, `search_arxiv`
+- **例子**: `createArticle`, `searchArxiv`
 - **粒度**: 细粒度，单一职责
 
 ### Skill (技能) = 使用指南
@@ -31,9 +31,9 @@ AI 判断：涉及 "文章管理" Skill
 加载 "文章管理" Skill 到对话
     ↓
 Skill 告诉 AI：
-  1. 先 search_articles 查重
-  2. 再 create_article 创建
-  3. 然后 update_article 完善
+  1. 先 searchArticles 查重
+  2. 再 createArticle 创建
+  3. 然后 updateArticle 完善
 ```
 
 ## Claude Code 模式
@@ -165,12 +165,12 @@ name: "文章管理专家"
 description: "管理博客文章的创建、编辑、删除和搜索"
 version: "2.0.0"
 tools:
-  - create_article
-  - get_article_content
-  - update_article
-  - delete_article
-  - list_articles
-  - search_articles
+  - createArticle
+  - getArticleContent
+  - updateArticle
+  - deleteArticle
+  - listArticles
+  - searchArticles
 usageScenarios:
   - "创建文章"
   - "编辑文章"
@@ -199,33 +199,33 @@ tags:
 
 ### 1. 查找已有文章
 如果用户提到一篇已存在的文章但没有提供路径：
-1. 使用 `search_articles(query="文章标题关键词")` 确认其准确路径
+1. 使用 `searchArticles(query="文章标题关键词")` 确认其准确路径
 2. 从搜索结果中获取 path
 
 ### 2. 创建新文章
 1. 确定文章的 section（knowledge/posts/resources）
-2. 使用 `create_article(title="标题", path="section/filename.md", content="内容")`
+2. 使用 `createArticle(title="标题", path="section/filename.md", content="内容")`
 3. 确保包含规范的 Markdown 语法和 H1 标题、Frontmatter
 
 ### 3. 修改文章
-1. 先使用 `get_article_content(path="...")` 读取当前内容
-2. 使用 `update_article(path="...", content="新内容")` 更新
+1. 先使用 `getArticleContent(path="...")` 读取当前内容
+2. 使用 `updateArticle(path="...", content="新内容")` 更新
 3. 保留原有 frontmatter
 
 ### 4. 删除文章
 1. **警告**：删除前必须确认，询问用户是否确定
-2. 使用 `delete_article(path="...", confirm=true)`
+2. 使用 `deleteArticle(path="...", confirm=true)`
 
 ## 示例对话
 
 用户："帮我写一篇 React 入门指南"
-→ 调用 `create_article(title="React 入门指南", path="posts/react-guide.md", ...)`
+→ 调用 `createArticle(title="React 入门指南", path="posts/react-guide.md", ...)`
 
 用户："修改刚才那篇文章，添加 Hooks 章节"
-→ 调用 `get_article_content` 读取 → `update_article` 添加内容
+→ 调用 `getArticleContent` 读取 → `updateArticle` 添加内容
 
 用户："删除旧的那篇 Vue2 文章"
-→ 调用 `search_articles(query="Vue2")` 查找 → 确认后 `delete_article`
+→ 调用 `searchArticles(query="Vue2")` 查找 → 确认后 `deleteArticle`
 ```
 
 ## Tool 与 Skill 的关系

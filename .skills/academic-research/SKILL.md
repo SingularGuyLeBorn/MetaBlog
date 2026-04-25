@@ -16,12 +16,12 @@ author: system
 builtin: true
 enabled: true
 tools:
-  - search_arxiv
-  - fetch_arxiv
-  - search_openreview
-  - fetch_openreview
-  - search_huggingface
-  - fetch_huggingface_model
+  - searchArxiv
+  - fetchArxiv
+  - searchOpenreview
+  - fetchOpenreview
+  - searchHuggingface
+  - fetchHuggingfaceModel
 scenarios:
   - 用户询问最新论文或研究
   - 用户需要查找特定论文
@@ -34,18 +34,18 @@ scenarios:
 ### 核心能力
 
 1. **ArXiv 论文库**
-   - 搜索最新研究论文：search_arxiv(query="关键词", category="cs.CL", max_results=10)
-   - 获取论文详情：fetch_arxiv(paper_id="2401.12345")
+   - 搜索最新研究论文：searchArxiv(query="关键词", category="cs.CL", max_results=10)
+   - 获取论文详情：fetchArxiv(paper_id="2401.12345")
    - 常用分类：cs.AI (AI), cs.CL (NLP), cs.CV (CV), cs.LG (ML)
 
 2. **OpenReview 会议论文**
-   - 搜索会议论文：search_openreview(query="关键词", venue="ICLR2024")
-   - 获取论文及评审：fetch_openreview(paper_id="xxx", include_reviews=true)
+   - 搜索会议论文：searchOpenreview(query="关键词", venue="ICLR2024")
+   - 获取论文及评审：fetchOpenreview(paper_id="xxx", include_reviews=true)
    - 支持会议：ICLR, NeurIPS, ICML, AAAI, CVPR 等
 
 3. **Hugging Face 模型库**
-   - 搜索模型/数据集：search_huggingface(query="关键词", type="model")
-   - 获取模型详情：fetch_huggingface_model(repo_id="bert-base-uncased")
+   - 搜索模型/数据集：searchHuggingface(query="关键词", type="model")
+   - 获取模型详情：fetchHuggingfaceModel(repo_id="bert-base-uncased")
    - 支持类型：model (模型), dataset (数据集), space (应用)
 
 ### 使用场景

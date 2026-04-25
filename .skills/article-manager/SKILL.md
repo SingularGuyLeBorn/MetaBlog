@@ -14,12 +14,12 @@ author: system
 builtin: true
 enabled: true
 tools:
-  - search_articles
-  - get_article_content
-  - create_article
-  - update_article
-  - delete_article
-  - list_articles
+  - searchArticles
+  - getArticleContent
+  - createArticle
+  - updateArticle
+  - deleteArticle
+  - listArticles
 scenarios:
   - 用户想要查找已有文章
   - 用户想要创建新文章
@@ -40,22 +40,22 @@ scenarios:
 
 #### 查找文章
 1. 先询问用户文章标题或关键词
-2. 调用 `search_articles(query="关键词")`
-3. 获取文章路径后调用 `get_article_content(path="...")`
+2. 调用 `searchArticles(query="关键词")`
+3. 获取文章路径后调用 `getArticleContent(path="...")`
 
 #### 创建文章
 1. 询问文章标题和存储位置（posts/knowledge/resources）
 2. 询问内容或使用默认模板
-3. 调用 `create_article(title="...", path="section/filename.md", content="...")`
+3. 调用 `createArticle(title="...", path="section/filename.md", content="...")`
 
 #### 修改文章
-1. 先 `search_articles` 或 `get_article_content` 获取当前内容
+1. 先 `searchArticles` 或 `getArticleContent` 获取当前内容
 2. 询问修改内容
-3. 调用 `update_article(path="...", content="新内容")`
+3. 调用 `updateArticle(path="...", content="新内容")`
 
 #### 删除文章
 1. 确认文章路径
-2. 调用 `delete_article(path="...", confirm=true)`
+2. 调用 `deleteArticle(path="...", confirm=true)`
 
 ### 路径规范
 - 格式: `section/filename.md`（如 `knowledge/react-hooks.md`）
@@ -63,6 +63,6 @@ scenarios:
 - 系统会自动创建缺失的文件夹
 
 ### 重要提示
-- **不知道路径时**: 先用 `search_articles` 搜索
+- **不知道路径时**: 先用 `searchArticles` 搜索
 - **删除操作**: 必须设置 `confirm=true`
 - **更新文章**: 建议先读取再修改，避免覆盖

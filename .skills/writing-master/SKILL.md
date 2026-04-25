@@ -14,11 +14,11 @@ author: system
 builtin: true
 enabled: true
 tools:
-  - summarize_text
-  - format_text
-  - translate_text
-  - create_article
-  - update_article
+  - summarizeText
+  - formatText
+  - translateText
+  - createArticle
+  - updateArticle
 scenarios:
   - 用户需要撰写文章
   - 用户需要编辑润色内容

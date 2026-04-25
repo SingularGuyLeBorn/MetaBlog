@@ -12,7 +12,7 @@ const API_BASE = '/api'
 export const parseZhihuDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'parse_zhihu',
+    name: 'parseZhihu',
     description: '解析知乎文章或回答的内容，提取标题、作者、正文等信息。',
     parameters: {
       type: 'object',
@@ -30,7 +30,7 @@ export const parseZhihuDef: ToolDefinition = {
 export const parseXiaohongshuDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'parse_xiaohongshu',
+    name: 'parseXiaohongshu',
     description: '解析小红书笔记内容，提取描述、图片等信息。',
     parameters: {
       type: 'object',
@@ -48,7 +48,7 @@ export const parseXiaohongshuDef: ToolDefinition = {
 export const parseWechatDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'parse_wechat',
+    name: 'parseWechat',
     description: '解析微信公众号文章内容，提取标题、公众号名称、正文等信息。',
     parameters: {
       type: 'object',
@@ -66,7 +66,7 @@ export const parseWechatDef: ToolDefinition = {
 export const parseDouyinDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'parse_douyin',
+    name: 'parseDouyin',
     description: '解析抖音视频链接，提取标题、描述、封面图等信息。',
     parameters: {
       type: 'object',
@@ -81,7 +81,7 @@ export const parseDouyinDef: ToolDefinition = {
 export const parseBilibiliDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'parse_bilibili',
+    name: 'parseBilibili',
     description: '解析 B站视频链接，提取标题、UP主、描述、封面图等信息。',
     parameters: {
       type: 'object',
@@ -96,7 +96,7 @@ export const parseBilibiliDef: ToolDefinition = {
 export const parseWeiboDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'parse_weibo',
+    name: 'parseWeibo',
     description: '解析微博链接，提取标题、作者、正文、图片等信息。',
     parameters: {
       type: 'object',
@@ -118,7 +118,7 @@ export const parseZhihu: ToolExecutor = async (args): Promise<ToolResult> => {
     return createErrorResult(
       'Missing url parameter',
       '请提供知乎链接',
-      '示例: parse_zhihu(url="https://zhuanlan.zhihu.com/p/xxxx")'
+      '示例: parseZhihu(url="https://zhuanlan.zhihu.com/p/xxxx")'
     )
   }
 
@@ -169,7 +169,6 @@ export const parseZhihu: ToolExecutor = async (args): Promise<ToolResult> => {
         .replace(/<[^>]+>/g, ' ')
         .replace(/\s+/g, ' ')
         .trim()
-        .slice(0, 3000)
     }
 
     // 提取作者
@@ -185,7 +184,7 @@ export const parseZhihu: ToolExecutor = async (args): Promise<ToolResult> => {
         platform: 'zhihu'
       },
       `成功解析知乎文章: ${title}`,
-      'parse_zhihu'
+      'parseZhihu'
     )
   } catch (error: any) {
     return createErrorResult(
@@ -206,7 +205,7 @@ export const parseXiaohongshu: ToolExecutor = async (args): Promise<ToolResult> 
     return createErrorResult(
       'Missing url parameter',
       '请提供小红书链接',
-      '示例: parse_xiaohongshu(url="https://www.xiaohongshu.com/xxx")'
+      '示例: parseXiaohongshu(url="https://www.xiaohongshu.com/xxx")'
     )
   }
 
@@ -251,7 +250,7 @@ export const parseXiaohongshu: ToolExecutor = async (args): Promise<ToolResult> 
         note: '小红书有反爬机制，完整内容可能需要手动查看'
       },
       '成功解析小红书内容',
-      'parse_xiaohongshu'
+      'parseXiaohongshu'
     )
   } catch (error: any) {
     return createErrorResult(
@@ -272,7 +271,7 @@ export const parseWechat: ToolExecutor = async (args): Promise<ToolResult> => {
     return createErrorResult(
       'Missing url parameter',
       '请提供公众号文章链接',
-      '示例: parse_wechat(url="https://mp.weixin.qq.com/s/xxx")'
+      '示例: parseWechat(url="https://mp.weixin.qq.com/s/xxx")'
     )
   }
 
@@ -324,7 +323,6 @@ export const parseWechat: ToolExecutor = async (args): Promise<ToolResult> => {
         .replace(/<[^>]+>/g, ' ')
         .replace(/\s+/g, ' ')
         .trim()
-        .slice(0, 5000)
     }
 
     return createSuccessResult(
@@ -336,7 +334,7 @@ export const parseWechat: ToolExecutor = async (args): Promise<ToolResult> => {
         platform: 'wechat'
       },
       `成功解析公众号文章: ${title}`,
-      'parse_wechat'
+      'parseWechat'
     )
   } catch (error: any) {
     return createErrorResult(

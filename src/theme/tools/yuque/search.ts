@@ -5,7 +5,7 @@
  *
  * 【⚠️ 当前不可用】
  * 语雀内部 Web API 没有提供搜索端点。
- * 如需查找文档，请使用 yuque_repo_list + yuque_toc_get 浏览目录。
+ * 如需查找文档，请使用 yuqueRepoList + yuqueTocGet 浏览目录。
  * =============================================================================
  */
 
@@ -21,17 +21,17 @@ import { createErrorResult } from '@/theme/tools/types'
  *
  * 【⚠️ 当前不可用】
  * 语雀内部 Web API 没有提供搜索端点。
- * 如需查找文档，请使用 yuque_repo_list + yuque_toc_get 浏览目录。
+ * 如需查找文档，请使用 yuqueRepoList + yuqueTocGet 浏览目录。
  */
 export const yuqueSearchDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'yuque_search',
+    name: 'yuqueSearch',
     description: `【⚠️ 当前不可用】在语雀中搜索文档或知识库。
 
 语雀内部 Web API 不支持搜索功能。
-如需查找文档，请使用 yuque_repo_list 获取知识库列表，
-然后用 yuque_toc_get 浏览目录。`,
+如需查找文档，请使用 yuqueRepoList 获取知识库列表，
+然后用 yuqueTocGet 浏览目录。`,
     parameters: {
       type: 'object',
       properties: {
@@ -67,6 +67,6 @@ export const yuqueSearch = async (args: Record<string, any>): Promise<ToolResult
   return createErrorResult(
     '语雀内部 Web API 不支持搜索功能',
     '搜索不可用',
-    '请使用 yuque_repo_list 获取知识库列表，然后用 yuque_toc_get 浏览目录'
+    '请使用 yuqueRepoList 获取知识库列表，然后用 yuqueTocGet 浏览目录'
   )
 }

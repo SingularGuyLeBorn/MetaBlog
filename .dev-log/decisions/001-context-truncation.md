@@ -12,7 +12,7 @@
 - `messages.slice(-10)` 硬编码只保留最近 10 条消息
 - `ModelConfig` 没有 `contextWindow` 字段
 - 截断标记只是 `... [内容已截断]`，AI 不知道自己被截断了
-- 工具层面无限制，`get_article_content` 一次返回全文
+- 工具层面无限制，`getArticleContent` 一次返回全文
 
 ## 决策
 
@@ -36,9 +36,9 @@ Level 3: 丢弃早期消息
 ### 2. 工具源头控制
 
 每个可能返回长内容的工具增加 `max_length` 参数：
-- `get_article_content`：默认 8000，支持 `start_line`/`end_line` 分段
-- `fetch_url`：默认 15000
-- `read_file`：默认 8000
+- `getArticleContent`：默认 8000，支持 `start_line`/`end_line` 分段
+- `fetchUrl`：默认 15000
+- `readFile`：默认 8000
 - `github_get_file_content`：默认 5000
 
 ### 3. 续读感知标记

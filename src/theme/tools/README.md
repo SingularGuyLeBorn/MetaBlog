@@ -203,19 +203,19 @@ AI 继续下一步或总结
 name: "文章管理专家"
 description: "管理博客文章的创建、编辑、删除"
 tools:
-  - create_article
-  - get_article_content
-  - update_article
-  - delete_article
-  - list_articles
-  - search_articles
+  - createArticle
+  - getArticleContent
+  - updateArticle
+  - deleteArticle
+  - listArticles
+  - searchArticles
 ---
 
 # 工作流说明
-1. 先使用 search_articles 或 list_articles 查找文章
-2. 使用 get_article_content 读取内容
-3. 使用 update_article 修改内容
-4. 或 create_article 创建新文章
+1. 先使用 searchArticles 或 listArticles 查找文章
+2. 使用 getArticleContent 读取内容
+3. 使用 updateArticle 修改内容
+4. 或 createArticle 创建新文章
 ```
 
 ## Claude Code 模式参考

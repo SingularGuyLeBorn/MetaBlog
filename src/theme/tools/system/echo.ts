@@ -1,5 +1,5 @@
 /**
- * 系统工具定义 — test_echo
+ * 系统工具定义 — testEcho
  */
 
 import type { ToolDefinition } from '@/theme/tools/types'
@@ -9,7 +9,7 @@ import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 export const testEchoDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'test_echo',
+    name: 'testEcho',
     description: '【测试专用】回声工具，验证工具调用是否正常工作。当用户说"测试工具"时使用。',
     parameters: {
       type: 'object',
@@ -39,7 +39,7 @@ export const testEcho: ToolExecutor = async (args): Promise<ToolResult> => {
     return createErrorResult(
       'Missing message parameter',
       '请提供消息内容',
-      '示例: test_echo(message="Hello", repeat_count=3)'
+      '示例: testEcho(message="Hello", repeat_count=3)'
     )
   }
   
@@ -48,6 +48,6 @@ export const testEcho: ToolExecutor = async (args): Promise<ToolResult> => {
   return createSuccessResult(
     result,
     `回声测试: ${message}`,
-    'test_echo'
+    'testEcho'
   )
 }

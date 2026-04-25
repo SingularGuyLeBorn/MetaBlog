@@ -73,36 +73,36 @@ export function useAgentConfig() {
   const allTools = computed((): Tool[] => {
     const defs = getToolDefinitions()
     const iconMap: Record<string, string> = {
-      get_current_time: '⏰',
-      get_article_content: '📄',
-      list_articles: '📚',
-      create_article: '✨',
-      update_article: '✏️',
-      delete_article: '🗑️',
-      search_articles: '🔍',
-      test_echo: '🔊',
-      summarize_text: '📝',
-      format_text: '📐',
-      read_file: '📂',
-      write_file: '💾',
-      list_files: '📁',
-      web_search: '🌐',
-      fetch_url: '🔗',
+      getCurrentTime: '⏰',
+      getArticleContent: '📄',
+      listArticles: '📚',
+      createArticle: '✨',
+      updateArticle: '✏️',
+      deleteArticle: '🗑️',
+      searchArticles: '🔍',
+      testEcho: '🔊',
+      summarizeText: '📝',
+      formatText: '📐',
+      readFile: '📂',
+      writeFile: '💾',
+      listFiles: '📁',
+      webSearch: '🌐',
+      fetchUrl: '🔗',
       calculate: '🧮',
-      translate_text: '🌏',
-      execute_code: '▶️',
-      analyze_code: '🔍',
-      query_knowledge: '🧠',
-      get_weather: '🌤️',
-      create_note: '📓',
-      list_notes: '📔',
+      translateText: '🌏',
+      executeCode: '▶️',
+      analyzeCode: '🔍',
+      queryKnowledge: '🧠',
+      getWeather: '🌤️',
+      createNote: '📓',
+      listNotes: '📔',
       // 学术平台工具
-      search_arxiv: '📚',
-      fetch_arxiv: '📄',
-      search_openreview: '🎓',
-      fetch_openreview: '📋',
-      search_huggingface: '🤗',
-      fetch_huggingface_model: '🔧'
+      searchArxiv: '📚',
+      fetchArxiv: '📄',
+      searchOpenreview: '🎓',
+      fetchOpenreview: '📋',
+      searchHuggingface: '🤗',
+      fetchHuggingfaceModel: '🔧'
     }
     return defs.map(d => ({
       name: d.function.name,
@@ -275,7 +275,7 @@ export function useAgentConfig() {
    * 
    * 核心设计：System Prompt 告诉 LLM "你有工具、你可以调用、怎么调用"
    * 工具详细定义通过 API 的 tools 参数传递（Function Calling schema）
-   * Skill 详细内容（工作流）通过 Agent 调用 load_skill 后按需注入
+   * Skill 详细内容（工作流）通过 Agent 调用 loadSkill 后按需注入
    */
   function buildSystemPrompt(agent: Agent): string {
     const capabilities = agent.capabilities
@@ -290,19 +290,19 @@ export function useAgentConfig() {
     const roleSection = capabilities.customSystemPrompt ||
       `你是 ${agent.name}，${agent.description}`
 
-    // 2. 只展示少量高频 Skill 作为示例（完整列表通过 get_all_skills 获取）
+    // 2. 只展示少量高频 Skill 作为示例（完整列表通过 getAllSkills 获取）
     const showcaseSkills = agentSkills.slice(0, 5)
     const skillsShowcase = showcaseSkills.map(skill => {
       const toolNames = (skill.tools || []).join(', ')
       return `- ${skill.icon} **${skill.name}** \`${skill.id}\`: ${skill.description} [工具: ${toolNames || '无'}]`
     }).join('\n')
 
-    // 3. 只展示少量高频工具作为示例（完整列表通过 get_all_tools 获取）
+    // 3. 只展示少量高频工具作为示例（完整列表通过 getAllTools 获取）
     const showcaseToolNames = new Set([
-      'search_articles', 'create_article', 'web_search', 'fetch_url',
-      'read_file', 'write_file', 'execute_code', 'get_current_time',
-      'get_weather', 'calculate', 'summarize_text', 'translate_text',
-      'load_skill', 'get_all_tools', 'get_all_skills'
+      'searchArticles', 'createArticle', 'webSearch', 'fetchUrl',
+      'readFile', 'writeFile', 'executeCode', 'getCurrentTime',
+      'getWeather', 'calculate', 'summarizeText', 'translateText',
+      'loadSkill', 'getAllTools', 'getAllSkills'
     ])
     const showcaseTools = allTools.value.filter(t => showcaseToolNames.has(t.name))
     const toolsShowcase = showcaseTools.map(t => `- **${t.name}**: ${t.description}`).join('\n')
@@ -324,7 +324,7 @@ export function useAgentConfig() {
     sections.push('')
     sections.push('### 关键规则')
     sections.push('- **不需要工具时**：直接回答，不要强行调用')
-    sections.push('- **load_skill 是第一入口**：当用户请求涉及某个 Skill 时，必须先调用 load_skill 加载该 Skill 的完整指导')
+    sections.push('- **loadSkill 是第一入口**：当用户请求涉及某个 Skill 时，必须先调用 loadSkill 加载该 Skill 的完整指导')
     sections.push('- **参数准确**：确保传入的参数符合工具的 schema 要求')
     sections.push('- **工具失败时**：告知用户并提供替代方案')
     sections.push('- **禁止编造**：不要编造工具调用结果，必须等待真实的 tool 结果消息')
@@ -333,20 +333,20 @@ export function useAgentConfig() {
     sections.push(`你有 ${agentSkills.length} 个已启用的 Skills。以下是部分示例：`)
     sections.push(skillsShowcase || '（暂无已启用 Skills）')
     if (agentSkills.length > 5) {
-      sections.push(`\n... 还有 ${agentSkills.length - 5} 个 Skills 未展示。如需完整列表，调用 **get_all_skills** 工具。`)
+      sections.push(`\n... 还有 ${agentSkills.length - 5} 个 Skills 未展示。如需完整列表，调用 **getAllSkills** 工具。`)
     }
     sections.push('')
     sections.push('## 常用工具示例')
     sections.push(toolsShowcase || '（暂无可用工具）')
     sections.push('')
-    sections.push('> **提示**：系统共有大量工具。如需查看完整工具列表（含分类和详细描述），调用 **get_all_tools** 工具。')
+    sections.push('> **提示**：系统共有大量工具。如需查看完整工具列表（含分类和详细描述），调用 **getAllTools** 工具。')
     sections.push('')
     sections.push('## 如何加载 Skill（重要！）')
     sections.push('')
-    sections.push('当你判断用户请求涉及某个 Skill 时，第一步是调用 load_skill 工具：')
+    sections.push('当你判断用户请求涉及某个 Skill 时，第一步是调用 loadSkill 工具：')
     sections.push('')
     sections.push('```')
-    sections.push('function load_skill:0 {"skill_id": "article-manager"}')
+    sections.push('function loadSkill:0 {"skill_id": "article-manager"}')
     sections.push('```')
     sections.push('')
     sections.push('加载后，该 Skill 的完整工作流程会作为一条新消息注入对话上下文，你在后续回复中必须遵循其指导。')
@@ -357,9 +357,9 @@ export function useAgentConfig() {
     sections.push('```')
     sections.push('用户: "找一下 React 的文章"')
     sections.push('-> 判断：涉及 article-manager Skill')
-    sections.push('-> 调用 load_skill({"skill_id": "article-manager"})')
+    sections.push('-> 调用 loadSkill({"skill_id": "article-manager"})')
     sections.push('-> 接收 Skill 完整指导（注入对话）')
-    sections.push('-> 按指导调用 search_articles({"keyword": "React"})')
+    sections.push('-> 按指导调用 searchArticles({"keyword": "React"})')
     sections.push('-> 基于搜索结果回复用户')
     sections.push('```')
     sections.push('')
@@ -367,15 +367,15 @@ export function useAgentConfig() {
     sections.push('```')
     sections.push('用户: "搜索一下 GPT-4 的论文"')
     sections.push('-> 判断：涉及 academic-research Skill')
-    sections.push('-> 调用 load_skill({"skill_id": "academic-research"})')
+    sections.push('-> 调用 loadSkill({"skill_id": "academic-research"})')
     sections.push('-> 接收 Skill 完整指导（注入对话）')
-    sections.push('-> 按指导调用 search_arxiv({"query": "GPT-4"})')
+    sections.push('-> 按指导调用 searchArxiv({"query": "GPT-4"})')
     sections.push('-> 基于搜索结果回复用户')
     sections.push('```')
     sections.push('')
     sections.push('### 注意事项')
     sections.push('- 不要在没有加载 Skill 的情况下直接调用 Skill 关联的工具')
-    sections.push('- load_skill 只需调用一次，加载后该 Skill 的内容会在后续对话中持续有效')
+    sections.push('- loadSkill 只需调用一次，加载后该 Skill 的内容会在后续对话中持续有效')
     sections.push('- 如果用户请求不涉及任何 Skill，你可以直接调用通用工具或直接用文本回复')
 
     return sections.join('\n')

@@ -59,10 +59,10 @@
 ## 近期计划（1-2 周）
 
 ### 工具增强
-- [ ] **web_search 多引擎支持** — 环境变量切换 DuckDuckGo / Tavily / Bing
-- [ ] **get_weather 真实天气** — 接入和风天气 / OpenWeatherMap API
-- [ ] **execute_code 后端沙箱** — 后端用 vm2 / docker 执行 Python/Node
-- [ ] **fetch_url JS 渲染** — 通过 Playwright MCP 获取 SPA 内容
+- [ ] **webSearch 多引擎支持** — 环境变量切换 DuckDuckGo / Tavily / Bing
+- [ ] **getWeather 真实天气** — 接入和风天气 / OpenWeatherMap API
+- [ ] **executeCode 后端沙箱** — 后端用 vm2 / docker 执行 Python/Node
+- [ ] **fetchUrl JS 渲染** — 通过 Playwright MCP 获取 SPA 内容
 
 ### 飞书生态
 - [ ] **lark_send_message** — 发送即时消息

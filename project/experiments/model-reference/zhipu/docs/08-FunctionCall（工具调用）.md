@@ -77,7 +77,7 @@ Function Call（工具调用）让模型能够调用外部工具/函数，扩展
 tools = [{
     "type": "function",
     "function": {
-        "name": "get_weather",
+        "name": "getWeather",
         "description": "获取指定城市的天气信息",
         "parameters": {
             "type": "object",
@@ -99,8 +99,8 @@ tools = [{
 
 ```python
 tools = [{
-    "type": "web_search",
-    "web_search": {
+    "type": "webSearch",
+    "webSearch": {
         "enable": True
     }
 }]
@@ -128,7 +128,7 @@ tools = [
     {
         "type": "function",
         "function": {
-            "name": "get_weather",
+            "name": "getWeather",
             "description": "获取指定城市的当前天气",
             "parameters": {
                 "type": "object",
@@ -169,8 +169,8 @@ if message.tool_calls:
 ### 步骤 4：执行工具函数
 ```python
 # 根据函数名调用对应的函数
-if function_name == "get_weather":
-    result = get_weather(**arguments)
+if function_name == "getWeather":
+    result = getWeather(**arguments)
 ```
 
 ### 步骤 5：回传结果给模型
@@ -246,7 +246,7 @@ response = client.chat.completions.create(
     model="glm-4-flash-250414",
     messages=messages,
     tools=tools,
-    tool_choice={"type": "function", "function": {"name": "get_weather"}}
+    tool_choice={"type": "function", "function": {"name": "getWeather"}}
 )
 ```
 
@@ -264,7 +264,7 @@ client = OpenAI(
 )
 
 # 定义工具函数
-def get_weather(city: str) -> str:
+def getWeather(city: str) -> str:
     """模拟天气查询"""
     weather_data = {
         "北京": "晴天，25°C",
@@ -290,7 +290,7 @@ tools = [
     {
         "type": "function",
         "function": {
-            "name": "get_weather",
+            "name": "getWeather",
             "description": "获取指定城市的天气信息",
             "parameters": {
                 "type": "object",
@@ -325,7 +325,7 @@ tools = [
 
 # 可用的函数映射
 available_functions = {
-    "get_weather": get_weather,
+    "getWeather": getWeather,
     "calculate": calculate
 }
 

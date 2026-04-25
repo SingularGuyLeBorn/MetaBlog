@@ -10,7 +10,7 @@ const API_BASE = '/api'
 export const listFilesDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'list_files',
+    name: 'listFiles',
     description: '列出指定目录中的文件和文件夹。当用户需要查看目录结构或浏览文件时使用。',
     parameters: {
       type: 'object',
@@ -73,15 +73,15 @@ export const listFiles: ToolExecutor = async (args): Promise<ToolResult> => {
       return createSuccessResult(
         [],
         '暂无文件',
-        'list_files',
-        '使用 write_file 创建新文件'
+        'listFiles',
+        '使用 writeFile 创建新文件'
       )
     }
     
     return createSuccessResult(
       sections,
       `获取到文件列表`,
-      'list_files'
+      'listFiles'
     )
   } catch (error: any) {
     return createErrorResult(

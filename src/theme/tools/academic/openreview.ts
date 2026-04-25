@@ -12,7 +12,7 @@ import { proxyFetch } from './other'
 export const searchOpenReviewDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'search_openreview',
+    name: 'searchOpenreview',
     description: '搜索 OpenReview 会议论文（ICLR, NeurIPS, ICML等）',
     parameters: {
       type: 'object',
@@ -29,7 +29,7 @@ export const searchOpenReviewDef: ToolDefinition = {
 export const fetchOpenReviewDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'fetch_openreview',
+    name: 'fetchOpenreview',
     description: '获取 OpenReview 论文详情',
     parameters: {
       type: 'object',
@@ -50,7 +50,7 @@ export const searchOpenReview: ToolExecutor = async (args): Promise<ToolResult> 
     return createErrorResult(
       'Missing query parameter',
       '请提供搜索关键词',
-      '示例: search_openreview(query="reinforcement learning")'
+      '示例: searchOpenreview(query="reinforcement learning")'
     )
   }
   
@@ -80,7 +80,7 @@ export const searchOpenReview: ToolExecutor = async (args): Promise<ToolResult> 
       return createSuccessResult(
         [],
         `未找到与 "${query}" 相关的 OpenReview 论文`,
-        'search_openreview',
+        'searchOpenreview',
         '尝试使用不同的关键词或移除会议过滤'
       )
     }
@@ -95,8 +95,8 @@ export const searchOpenReview: ToolExecutor = async (args): Promise<ToolResult> 
     return createSuccessResult(
       papers,
       `找到 ${notes.length} 篇论文`,
-      'search_openreview',
-      '使用 fetch_openreview(forum_id="xxx") 获取详情'
+      'searchOpenreview',
+      '使用 fetchOpenreview(forum_id="xxx") 获取详情'
     )
   } catch (error: any) {
     if (error.name === 'AbortError') {
@@ -121,7 +121,7 @@ export const fetchOpenReview: ToolExecutor = async (args): Promise<ToolResult> =
     return createErrorResult(
       'Missing forum_id parameter',
       '请提供 Forum ID',
-      '示例: fetch_openreview(forum_id="xxxxxxxx")'
+      '示例: fetchOpenreview(forum_id="xxxxxxxx")'
     )
   }
   
@@ -161,7 +161,7 @@ export const fetchOpenReview: ToolExecutor = async (args): Promise<ToolResult> =
     return createSuccessResult(
       paperData,
       `成功获取论文: ${paperData.title}`,
-      'fetch_openreview'
+      'fetchOpenreview'
     )
   } catch (error: any) {
     if (error.name === 'AbortError') {

@@ -215,7 +215,7 @@ class SkillsContextManager {
     const allTools = getToolDefinitions()
     
     // 不再传入 activeSkills，System Prompt 只包含 Catalog（LOD-0）
-    // Skill 完整内容通过 Agent 调用 load_skill 工具后注入
+    // Skill 完整内容通过 Agent 调用 loadSkill 工具后注入
     return buildFullPrompt(
       baseRole,
       userInput,
@@ -312,7 +312,7 @@ export const skillIntegratedService = {
     }
     
     // ═══════════════════════════════════════════════════════════════
-    // Step 2: 所有工具都可用（Agent 通过 load_skill 自主加载 Skill 后使用）
+    // Step 2: 所有工具都可用（Agent 通过 loadSkill 自主加载 Skill 后使用）
     // ═══════════════════════════════════════════════════════════════
     
     // 不再按 activeSkills 过滤工具，所有注册工具都可用

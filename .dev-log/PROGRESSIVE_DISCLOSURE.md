@@ -13,13 +13,13 @@
 ### Layer 0: 核心工具层（始终暴露 schema，~7个）
 
 ```
-search_capabilities   ← 能力发现器（搜索工具/Skill，自动激活匹配工具 schema）
-load_skill            ← 工作流加载器（加载 Skill 指导，自动激活关联工具 schema）
-get_all_tools         ← 工具目录浏览（文本形式，不暴露 schema）
-get_all_skills        ← Skill 目录浏览（文本形式，不暴露 schema）
-get_current_time      ← 通用基础工具
+searchCapabilities   ← 能力发现器（搜索工具/Skill，自动激活匹配工具 schema）
+loadSkill            ← 工作流加载器（加载 Skill 指导，自动激活关联工具 schema）
+getAllTools         ← 工具目录浏览（文本形式，不暴露 schema）
+getAllSkills        ← Skill 目录浏览（文本形式，不暴露 schema）
+getCurrentTime      ← 通用基础工具
 calculate             ← 通用基础工具
-web_search            ← 通用网络搜索
+webSearch            ← 通用网络搜索
 ```
 
 **设计理由**: 
@@ -31,26 +31,26 @@ web_search            ← 通用网络搜索
 
 ```
 GitHub 工具（25个）: github_get_repo, github_list_pulls, github_create_issue, ...
-飞书工具（12个）: feishu_doc_create, feishu_doc_read, feishu_im_send, ...
-语雀工具（9个）: yuque_doc_create, yuque_doc_read, yuque_search, ...
-学术工具（8个）: search_arxiv, fetch_arxiv, search_semantic_scholar, ...
-平台解析（9个）: parse_zhihu, parse_xiaohongshu, parse_wechat, ...
-文章管理（6个）: create_article, get_article_content, update_article, ...
-笔记工具（3个）: create_note, list_notes, query_knowledge
-文件工具（3个）: read_file, write_file, list_files
-文本处理（3个）: summarize_text, format_text, translate_text
-代码工具（2个）: execute_code, analyze_code
-网络工具（1个）: fetch_url
-系统工具（3个）: get_weather, test_echo
+飞书工具（12个）: feishuDocCreate, feishuDocRead, feishuImSend, ...
+语雀工具（9个）: yuqueDocCreate, yuqueDocRead, yuqueSearch, ...
+学术工具（8个）: searchArxiv, fetchArxiv, searchSemanticScholar, ...
+平台解析（9个）: parseZhihu, parseXiaohongshu, parseWechat, ...
+文章管理（6个）: createArticle, getArticleContent, updateArticle, ...
+笔记工具（3个）: createNote, listNotes, queryKnowledge
+文件工具（3个）: readFile, writeFile, listFiles
+文本处理（3个）: summarizeText, formatText, translateText
+代码工具（2个）: executeCode, analyzeCode
+网络工具（1个）: fetchUrl
+系统工具（3个）: getWeather, testEcho
 ```
 
 **激活机制**:
 
-#### 方式 A: search_capabilities 激活
+#### 方式 A: searchCapabilities 激活
 ```
 Round 1: 用户"帮我查 GitHub 仓库 stars"
-  → 暴露 schema: [search_capabilities, load_skill, web_search, ...] （7个核心）
-  → 模型调用: search_capabilities(keyword="github repo stars")
+  → 暴露 schema: [searchCapabilities, loadSkill, webSearch, ...] （7个核心）
+  → 模型调用: searchCapabilities(keyword="github repo stars")
   → 执行器返回: { ..., activateTools: ["github_get_repo", "github_list_repos"] }
   → 系统: sessionActiveTools.add("github_get_repo", "github_list_repos")
 
@@ -60,11 +60,11 @@ Round 2:
   → 执行，返回结果，模型回复用户
 ```
 
-#### 方式 B: load_skill 激活
+#### 方式 B: loadSkill 激活
 ```
 Round 1: 用户"帮我做一个完整的 PR 审查"
   → 暴露 schema: [核心7个]
-  → 模型调用: load_skill(skill_id="github-pr-review")
+  → 模型调用: loadSkill(skill_id="github-pr-review")
   → 执行器返回: { ..., activateTools: ["github_get_pull", "github_list_pulls", ...], injectMessages: [...] }
   → 系统: sessionActiveTools.add(所有 GitHub PR 工具)
   
@@ -75,7 +75,7 @@ Round 2:
 
 ### Layer 2: Skill 内容层（按需注入，LOD-2）
 
-- 通过 `load_skill` 工具执行后，通过 `injectMessages` 注入完整 Skill 内容
+- 通过 `loadSkill` 工具执行后，通过 `injectMessages` 注入完整 Skill 内容
 - 仅影响当前会话，不增加全局 token 开销
 
 ## 实现架构
@@ -100,10 +100,10 @@ Round 2:
                           ↓
                     [模型推理...]
                           ↓
-                    [调用 search_capabilities]
+                    [调用 searchCapabilities]
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  search_capabilities 执行器                                   │
+│  searchCapabilities 执行器                                   │
 │  return { ..., activateTools: ["github_get_repo", ...] }     │
 └─────────────────────────┬───────────────────────────────────┘
                           ↓
@@ -122,8 +122,8 @@ Round 2:
 |------|------|
 | `src/theme/tools/types.ts` | `ToolResult.activateTools?: string[]` |
 | `src/theme/tools/index.ts` | `CORE_TOOL_NAMES` 常量导出 |
-| `src/theme/tools/search_capabilities/executors.ts` | 返回 `activateTools: 匹配工具名列表` |
-| `src/theme/tools/load_skill/executors.ts` | 返回 `activateTools: skill.tools` |
+| `src/theme/tools/searchCapabilities/executors.ts` | 返回 `activateTools: 匹配工具名列表` |
+| `src/theme/tools/loadSkill/executors.ts` | 返回 `activateTools: skill.tools` |
 | `src/theme/tools/registry.ts` | `executeToolWithRecord` 传递 `activateTools` |
 | `src/theme/api/services/aiService.ts` | `sessionActiveTools` + `buildDynamicToolContext()` |
 | `src/theme/stores/chatStore.ts` | `availableTools: CORE_TOOL_NAMES` |

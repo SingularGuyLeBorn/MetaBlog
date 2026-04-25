@@ -43,7 +43,10 @@ async function githubApiRequest(
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    throw new Error(`GitHub API ${response.status}: ${text}`);
+    const err = new Error(`GitHub API ${response.status}: ${text}`) as any;
+    err.status = response.status;
+    err.responseText = text;
+    throw err;
   }
 
   if (response.status === 204 || response.headers.get("content-length") === "0") {
@@ -74,12 +77,12 @@ function decodeBase64(str: string): string {
   }
 }
 
-function ok(data: any, display: string, toolName: string) {
-  return { success: true as const, data, display, toolName };
+function ok(data: any, display: string, toolName: string, code?: number) {
+  return { success: true as const, data, display, toolName, code };
 }
 
-function err(raw: string, translation: { message: string; suggestion: string }, toolName: string) {
-  return { success: false as const, error: raw, message: translation.message, suggestion: translation.suggestion, toolName };
+function err(raw: string, translation: { message: string; suggestion: string }, toolName: string, code?: number) {
+  return { success: false as const, error: raw, message: translation.message, suggestion: translation.suggestion, toolName, code };
 }
 
 function validate(result: validators.ValidationResult): string | null {
@@ -116,7 +119,7 @@ async function githubGetRepo(params: any) {
     );
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubGetRepo");
+    return err(e.message, t, "githubGetRepo", e.status);
   }
 }
 
@@ -137,7 +140,7 @@ async function githubListRepoContents(params: any) {
     return ok(items, `${owner}/${repo}/${path || ""} (${items.length} 个)`, "githubListRepoContents");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubListRepoContents");
+    return err(e.message, t, "githubListRepoContents", e.status);
   }
 }
 
@@ -167,7 +170,7 @@ async function githubGetFileContent(params: any) {
     return ok({ name: data.name, path: data.path, size: data.size, content, truncated: isTruncated }, `${data.name} (${data.size} bytes${isTruncated ? "，已截断，" + max_length + " 字符" : ""})`, "githubGetFileContent");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubGetFileContent");
+    return err(e.message, t, "githubGetFileContent", e.status);
   }
 }
 
@@ -184,7 +187,7 @@ async function githubSearchCode(params: any) {
     return ok(items, `找到 ${data.total_count || 0} 个结果(显示 ${items.length} 个)`, "githubSearchCode");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubSearchCode");
+    return err(e.message, t, "githubSearchCode", e.status);
   }
 }
 
@@ -206,7 +209,7 @@ async function githubGetCommitHistory(params: any) {
     return ok(items, `${owner}/${repo} 的最新 ${items.length} 条提交`, "githubGetCommitHistory");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubGetCommitHistory");
+    return err(e.message, t, "githubGetCommitHistory", e.status);
   }
 }
 
@@ -223,7 +226,7 @@ async function githubGetReadme(params: any) {
     return ok({ name: data.name, path: data.path, content: rawContent, size: data.size }, `${data.name} (${data.size} bytes)`, "githubGetReadme");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubGetReadme");
+    return err(e.message, t, "githubGetReadme", e.status);
   }
 }
 
@@ -250,7 +253,7 @@ async function githubCompareCommits(params: any) {
     );
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubCompareCommits");
+    return err(e.message, t, "githubCompareCommits", e.status);
   }
 }
 
@@ -262,7 +265,7 @@ async function githubGetRateLimit(_params: any) {
     return ok({ core: { limit: core.limit, remaining: core.remaining, reset: core.reset }, search: { limit: search.limit, remaining: search.remaining, reset: search.reset } }, `API 配额：Core ${core.remaining}/${core.limit} | Search ${search.remaining}/${search.limit}`, "githubGetRateLimit");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubGetRateLimit");
+    return err(e.message, t, "githubGetRateLimit", e.status);
   }
 }
 
@@ -277,7 +280,7 @@ async function githubSearchRepos(params: any) {
     return ok({ total: data.total_count, items }, `找到 ${data.total_count} 个仓库（显示 ${items.length} 个）`, "githubSearchRepos");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubSearchRepos");
+    return err(e.message, t, "githubSearchRepos", e.status);
   }
 }
 
@@ -294,7 +297,14 @@ async function githubCreateRepo(params: any) {
     return ok({ name: data.name, full_name: data.full_name, url: data.html_url, private: data.private }, `仓库创建成功：?{data.full_name} (${data.private ? "私有" : "公开"})\n${data.html_url}`, "githubCreateRepo");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubCreateRepo");
+    // 对 create_repo 的 422 做进一步语义增强：如果是"已存在"，给出更具体的操作指引
+    if (t.message === "资源已存在") {
+      return err(e.message, {
+        message: `仓库 "${name}" 已存在，无法重复创建`,
+        suggestion: "如需操作该仓库，请使用 githubGetRepo 查询详情，或使用 githubUpdateRepo 更新配置",
+      }, "githubCreateRepo");
+    }
+    return err(e.message, t, "githubCreateRepo", e.status);
   }
 }
 
@@ -315,7 +325,7 @@ async function githubUpdateRepo(params: any) {
     return ok({ name: data.name, full_name: data.full_name, visibility: data.visibility, description: data.description }, `仓库 ${data.full_name} 更新成功`, "githubUpdateRepo");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubUpdateRepo");
+    return err(e.message, t, "githubUpdateRepo", e.status);
   }
 }
 
@@ -329,7 +339,7 @@ async function githubDeleteRepo(params: any) {
     return ok({}, `仓库 ${owner}/${repo} 已删除`, "githubDeleteRepo");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubDeleteRepo");
+    return err(e.message, t, "githubDeleteRepo", e.status);
   }
 }
 
@@ -347,7 +357,7 @@ async function githubCreateRelease(params: any) {
     return ok({ tag_name: data.tag_name, name: data.name, url: data.html_url }, `Release ${data.tag_name} 创建成功`, "githubCreateRelease");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubCreateRelease");
+    return err(e.message, t, "githubCreateRelease", e.status);
   }
 }
 
@@ -366,7 +376,7 @@ async function githubGetIssues(params: any) {
     return ok(items, `${owner}/${repo} 的 ${state} Issues (${items.length} 个)`, "githubGetIssues");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubGetIssues");
+    return err(e.message, t, "githubGetIssues", e.status);
   }
 }
 
@@ -384,7 +394,7 @@ async function githubCreateIssue(params: any) {
     return ok({ number: issue.number, title: issue.title, state: issue.state, url: issue.html_url, createdAt: issue.created_at }, `成功创建 Issue #${issue.number}: ${issue.title}`, "githubCreateIssue");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubCreateIssue");
+    return err(e.message, t, "githubCreateIssue", e.status);
   }
 }
 
@@ -401,7 +411,7 @@ async function githubCreateIssueComment(params: any) {
     return ok({ id: comment.id, url: comment.html_url }, `成功添加评论: ID=${comment.id}`, "githubCreateIssueComment");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubCreateIssueComment");
+    return err(e.message, t, "githubCreateIssueComment", e.status);
   }
 }
 
@@ -422,7 +432,7 @@ async function githubUpdateIssue(params: any) {
     return ok({ number: issue.number, state: issue.state, title: issue.title }, `成功更新 Issue #${issue.number}: [${issue.state}] ${issue.title}`, "githubUpdateIssue");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubUpdateIssue");
+    return err(e.message, t, "githubUpdateIssue", e.status);
   }
 }
 
@@ -439,7 +449,7 @@ async function githubListIssueComments(params: any) {
     return ok(items, `${owner}/${repo} #${number} 的评论(${items.length} 个)`, "githubListIssueComments");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubListIssueComments");
+    return err(e.message, t, "githubListIssueComments", e.status);
   }
 }
 
@@ -454,7 +464,7 @@ async function githubSearchIssues(params: any) {
     return ok({ total: data.total_count, items }, `找到 ${data.total_count} 个 Issues/PRs（显示${items.length} 个）`, "githubSearchIssues");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubSearchIssues");
+    return err(e.message, t, "githubSearchIssues", e.status);
   }
 }
 
@@ -471,7 +481,7 @@ async function githubListPulls(params: any) {
     return ok(items, `${owner}/${repo} 的 ${state} PRs (${items.length} 个)`, "githubListPulls");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubListPulls");
+    return err(e.message, t, "githubListPulls", e.status);
   }
 }
 
@@ -487,7 +497,7 @@ async function githubGetPull(params: any) {
     return ok({ number: pr.number, title: pr.title, state: pr.state, author: pr.user.login, body: pr.body, branch: `${pr.head.ref} → ${pr.base.ref}`, draft: pr.draft, commits: pr.commits, additions: pr.additions, deletions: pr.deletions, changedFiles: pr.changed_files, merged: pr.merged, mergeable: pr.mergeable, url: pr.html_url, createdAt: pr.created_at, updatedAt: pr.updated_at }, `PR #${pr.number}: ${pr.title} (${pr.state})`, "githubGetPull");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubGetPull");
+    return err(e.message, t, "githubGetPull", e.status);
   }
 }
 
@@ -504,7 +514,7 @@ async function githubCreatePullRequest(params: any) {
     return ok({ number: pr.number, url: pr.html_url, title: pr.title }, `成功创建 PR #${pr.number}: ${pr.title}`, "githubCreatePullRequest");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubCreatePullRequest");
+    return err(e.message, t, "githubCreatePullRequest", e.status);
   }
 }
 
@@ -523,7 +533,7 @@ async function githubMergePullRequest(params: any) {
     return ok({ sha: result.sha, message: result.message }, `成功合并 PR #${number} (commit: ${result.sha?.substring(0, 7)})`, "githubMergePullRequest");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubMergePullRequest");
+    return err(e.message, t, "githubMergePullRequest", e.status);
   }
 }
 
@@ -542,7 +552,7 @@ async function githubGetPullRequestFiles(params: any) {
     return ok({ files: items, totalAdditions, totalDeletions, fileCount: items.length }, `PR #${number} 变更文件 (${items.length} 个），${totalAdditions}/-${totalDeletions}`, "githubGetPullRequestFiles");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubGetPullRequestFiles");
+    return err(e.message, t, "githubGetPullRequestFiles", e.status);
   }
 }
 
@@ -564,7 +574,7 @@ async function githubCreatePullRequestReview(params: any) {
     return ok({ id: data.id, state: data.state, html_url: data.html_url }, `Review 提交成功：?{data.state}`, "githubCreatePullRequestReview");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubCreatePullRequestReview");
+    return err(e.message, t, "githubCreatePullRequestReview", e.status);
   }
 }
 
@@ -585,7 +595,7 @@ async function githubCreateOrUpdateFile(params: any) {
     return ok({ path: data.content?.path, sha: data.content?.sha, url: data.content?.html_url }, `成功提交文件: ${path} (commit: ${data.commit?.sha?.substring(0, 7)})`, "githubCreateOrUpdateFile");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubCreateOrUpdateFile");
+    return err(e.message, t, "githubCreateOrUpdateFile", e.status);
   }
 }
 
@@ -602,7 +612,7 @@ async function githubDeleteFile(params: any) {
     return ok({ commit: data.commit?.sha }, `成功删除文件: ${path}`, "githubDeleteFile");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubDeleteFile");
+    return err(e.message, t, "githubDeleteFile", e.status);
   }
 }
 
@@ -621,7 +631,7 @@ async function githubCreateBranch(params: any) {
     return ok({ ref: result.ref }, `成功创建分支: ${branch}`, "githubCreateBranch");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubCreateBranch");
+    return err(e.message, t, "githubCreateBranch", e.status);
   }
 }
 
@@ -636,7 +646,7 @@ async function githubDeleteBranch(params: any) {
     return ok({}, `成功删除分支: ${branch}`, "githubDeleteBranch");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubDeleteBranch");
+    return err(e.message, t, "githubDeleteBranch", e.status);
   }
 }
 
@@ -653,7 +663,7 @@ async function githubForkRepo(params: any) {
     return ok({ full_name: result.full_name, url: result.html_url }, `成功 Fork 仓库: ${result.full_name}`, "githubForkRepo");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubForkRepo");
+    return err(e.message, t, "githubForkRepo", e.status);
   }
 }
 
@@ -668,7 +678,7 @@ async function githubListBranches(params: any) {
     return ok(items, `${owner}/${repo} 的分支(${items.length} 个)`, "githubListBranches");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubListBranches");
+    return err(e.message, t, "githubListBranches", e.status);
   }
 }
 
@@ -685,7 +695,7 @@ async function githubListWorkflows(params: any) {
     return ok(items, `${owner}/${repo} 的工作流 (${items.length} 个)`, "githubListWorkflows");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubListWorkflows");
+    return err(e.message, t, "githubListWorkflows", e.status);
   }
 }
 
@@ -700,7 +710,7 @@ async function githubListWorkflowRuns(params: any) {
     return ok(items, `${owner}/${repo} 的运行记录(${items.length} 个)`, "githubListWorkflowRuns");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubListWorkflowRuns");
+    return err(e.message, t, "githubListWorkflowRuns", e.status);
   }
 }
 
@@ -717,7 +727,7 @@ async function githubTriggerWorkflow(params: any) {
     return ok({}, `成功触发工作流 ${workflow_id} (${ref})`, "githubTriggerWorkflow");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    return err(e.message, t, "githubTriggerWorkflow");
+    return err(e.message, t, "githubTriggerWorkflow", e.status);
   }
 }
 

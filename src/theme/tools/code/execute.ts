@@ -1,5 +1,5 @@
 /**
- * 代码工具定义 — execute_code
+ * 代码工具定义 — executeCode
  */
 
 import type { ToolDefinition } from '@/theme/tools/types'
@@ -9,7 +9,7 @@ import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 export const executeCodeDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'execute_code',
+    name: 'executeCode',
     description: '执行代码片段并返回结果。支持 JavaScript、Python、Bash 等语言。当用户需要运行代码、测试算法或执行脚本时使用。',
     parameters: {
       type: 'object',
@@ -44,7 +44,7 @@ export const executeCode: ToolExecutor = async (args): Promise<ToolResult> => {
     return createErrorResult(
       'Missing required parameters',
       '请提供代码和语言',
-      '示例: execute_code(code="console.log(1)", language="javascript")'
+      '示例: executeCode(code="console.log(1)", language="javascript")'
     )
   }
 
@@ -83,7 +83,7 @@ export const executeCode: ToolExecutor = async (args): Promise<ToolResult> => {
         executionTime: result.executionTime,
       },
       `执行成功 (${result.executionTime || '?'}ms)`,
-      'execute_code'
+      'executeCode'
     )
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)

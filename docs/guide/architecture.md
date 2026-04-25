@@ -177,7 +177,7 @@ MessageBubble.vue 渲染
 ### 文件操作数据流
 
 ```
-AI 调用 create_article / update_article
+AI 调用 createArticle / updateArticle
     ↓
 工具执行器（前端）
     ↓

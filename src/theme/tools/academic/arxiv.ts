@@ -90,7 +90,7 @@ function parseArxivXml(xml: string): ArxivPaper[] {
 export const searchArxivDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'search_arxiv',
+    name: 'searchArxiv',
     description: '搜索 ArXiv 学术论文。支持关键词、分类过滤。常用分类：cs.AI(AI), cs.CL(NLP), cs.CV(计算机视觉), cs.LG(机器学习)。注意：ArXiv 免费 API 有速率限制（约每 3 秒 1 次），请尽量把相关主题用 OR 合并到一次查询中，避免连续发起多次搜索。',
     parameters: {
       type: 'object',
@@ -108,7 +108,7 @@ export const searchArxivDef: ToolDefinition = {
 export const fetchArxivDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'fetch_arxiv',
+    name: 'fetchArxiv',
     description: '获取 ArXiv 论文详情，包括完整摘要、作者、PDF链接。支持一次获取多篇论文以减少 API 调用次数。',
     parameters: {
       type: 'object',
@@ -133,7 +133,7 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
     return createErrorResult(
       'Missing query parameter',
       '请提供搜索关键词',
-      '示例: search_arxiv(query="transformer")'
+      '示例: searchArxiv(query="transformer")'
     )
   }
   
@@ -162,7 +162,7 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
       return createSuccessResult(
         [],
         `未找到与 "${query}" 相关的论文`,
-        'search_arxiv',
+        'searchArxiv',
         '尝试使用不同的关键词或放宽搜索条件'
       )
     }
@@ -173,8 +173,8 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
       formattedResult += `${i + 1}. **${p.title}**\n`
       formattedResult += `   👤 ${p.authors.slice(0, 3).join(', ')}${p.authors.length > 3 ? ' 等' : ''}\n`
       formattedResult += `   📅 ${formatDate(p.published)} · 🏷️ ${p.primaryCategory || 'N/A'}\n`
-      formattedResult += `   📝 ${p.summary.slice(0, 150)}...\n`
-      formattedResult += `   🔗 fetch_arxiv(paper_id="${p.id}")\n\n`
+      formattedResult += `   📝 ${p.summary}\n`
+      formattedResult += `   🔗 fetchArxiv(paper_id="${p.id}")\n\n`
     })
     
     // 精简 data，去掉长摘要，避免 JSON.stringify 后体积过大导致 UI 卡顿
@@ -186,14 +186,14 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
       primaryCategory: p.primaryCategory,
       pdfUrl: p.pdfUrl,
       absUrl: p.absUrl,
-      summaryPreview: p.summary.slice(0, 120) + (p.summary.length > 120 ? '...' : '')
+      summaryPreview: p.summary
     }))
     
     return createSuccessResult(
       slimPapers,
       formattedResult,
-      'search_arxiv',
-      '使用 fetch_arxiv(paper_id="xxx") 获取论文详情'
+      'searchArxiv',
+      '使用 fetchArxiv(paper_id="xxx") 获取论文详情'
     )
   } catch (error: any) {
     if (error.name === 'AbortError') {
@@ -223,7 +223,7 @@ export const fetchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
     return createErrorResult(
       'Missing paper_id or paper_ids parameter',
       '请提供论文 ID',
-      '示例: fetch_arxiv(paper_id="2401.12345") 或 fetch_arxiv(paper_ids=["2401.12345","2402.67890"])'
+      '示例: fetchArxiv(paper_id="2401.12345") 或 fetchArxiv(paper_ids=["2401.12345","2402.67890"])'
     )
   }
 
@@ -288,7 +288,7 @@ ${p.summary}`
     return createSuccessResult(
       papers.length === 1 ? papers[0] : papers,
       formattedResult,
-      'fetch_arxiv'
+      'fetchArxiv'
     )
   } catch (error: any) {
     if (error.name === 'AbortError') {

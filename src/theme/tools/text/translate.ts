@@ -8,7 +8,7 @@ import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 export const translateTextDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'translate_text',
+    name: 'translateText',
     description: '翻译文本到指定语言。当用户需要翻译内容或理解外语文本时使用。',
     parameters: {
       type: 'object',
@@ -41,7 +41,7 @@ export const translateText: ToolExecutor = async (args): Promise<ToolResult> => 
     return createErrorResult(
       'Missing required parameters',
       '请提供文本和目标语言',
-      '示例: translate_text(text="Hello", target_language="zh")'
+      '示例: translateText(text="Hello", target_language="zh")'
     )
   }
   
@@ -62,7 +62,7 @@ export const translateText: ToolExecutor = async (args): Promise<ToolResult> => 
   // 当前依赖 AI 自身翻译能力
   return createSuccessResult(
     {
-      text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+      text,
       targetLanguage: langNames[target_language] || target_language,
       sourceLanguage: source_language 
         ? (langNames[source_language] || source_language) 
@@ -70,7 +70,7 @@ export const translateText: ToolExecutor = async (args): Promise<ToolResult> => 
       note: '当前使用 AI 自身翻译能力，如需更专业的翻译，请配置 DeepL/Google Translate API'
     },
     `翻译请求: ${langNames[target_language] || target_language}`,
-    'translate_text',
+    'translateText',
     '当前依赖 AI 自身翻译能力'
   )
 }

@@ -277,19 +277,19 @@ export function useAIChat() {
       message: '用户发送消息',
       sessionId,
       messageId: userMsg.id,
-      data: { content: content.slice(0, 100), skill: skillInfo?.name }
+      data: { content: content.slice(0, 500), skill: skillInfo?.name }
     })
     
     try {
       // 构建历史记录（不再前端预注入 Skill 内容）
-      // Skill 内容改为由 Agent 主动调用 load_skill 工具后注入
+      // Skill 内容改为由 Agent 主动调用 loadSkill 工具后注入
       const history = buildHistoryFromGroups(groups)
       
       // 用于存储工具调用记录
       let toolRecords: ToolCallRecord[] = []
       
       // 构建工具上下文：渐进式披露
-      // 默认只暴露核心工具（~7个），领域工具通过 search_capabilities / load_skill 动态激活
+      // 默认只暴露核心工具（~7个），领域工具通过 searchCapabilities / loadSkill 动态激活
       const agent = activeAgent.value
       const skillIds = agent?.capabilities?.skillIds || []
       const toolContext = agent ? {
@@ -505,7 +505,7 @@ export function useAIChat() {
         toolContext
       )
       
-      // ========== 保存 load_skill 注入的消息到对话历史 ==========
+      // ========== 保存 loadSkill 注入的消息到对话历史 ==========
       const currentProxyGroups = messageGroups.value[sessionId]
       if (currentProxyGroups) {
         const lastGroup = currentProxyGroups[currentProxyGroups.length - 1]
@@ -881,7 +881,7 @@ export function useAIChat() {
         history.push(activeVersion)
       }
       
-      // 添加系统注入的消息（如 load_skill 加载的 skill 内容）
+      // 添加系统注入的消息（如 loadSkill 加载的 skill 内容）
       if (group.injectedMessages && group.injectedMessages.length > 0) {
         history.push(...group.injectedMessages)
       }

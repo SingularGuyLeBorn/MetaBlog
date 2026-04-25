@@ -60,7 +60,7 @@ MetaBlog 通过 `.env` 文件管理所有配置。以下是目前支持的全部
 | `LARK_APP_ID` |  Lark 应用 ID（兼容） | 同上 |
 | `LARK_APP_SECRET` | Lark 应用密钥（兼容） | 同上 |
 
-> 配置后 AI 可调用 `feishu_doc_create`、`feishu_doc_append`、`feishu_im_send` 等工具。
+> 配置后 AI 可调用 `feishuDocCreate`、`feishuDocAppend`、`feishuImSend` 等工具。
 
 ---
 
@@ -71,7 +71,7 @@ MetaBlog 通过 `.env` 文件管理所有配置。以下是目前支持的全部
 | `YUQUE_SESSION` | 语雀 Session Cookie | 浏览器开发者工具 → Application → Cookies → `_yuque_session` |
 | `YUQUE_CTOKEN` | 语雀 CToken | 浏览器开发者工具 → Application → Cookies → `_ctoken` |
 
-> 配置后 AI 可调用 `yuque_doc_create`、`yuque_doc_update`、`yuque_image_upload` 等工具。
+> 配置后 AI 可调用 `yuqueDocCreate`、`yuqueDocUpdate`、`yuqueImageUpload` 等工具。
 
 ---
 

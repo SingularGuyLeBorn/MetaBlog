@@ -33,20 +33,20 @@
 
 1. 打开 `http://localhost:5173/chat`
 2. 告诉 AI 想写的主题
-3. AI 会自动调用 `create_article` 工具生成文章
+3. AI 会自动调用 `createArticle` 工具生成文章
 4. 文章保存到 `docs/sections/posts/`，自动触发 Git 提交
 
 ### 场景 2：代码验证与演示
 
 1. 在聊天中让 AI 写一段代码
-2. AI 调用 `execute_code` 工具在沙箱中执行
+2. AI 调用 `executeCode` 工具在沙箱中执行
 3. 查看执行结果，确认代码正确性
 
 ### 场景 3：飞书文档同步
 
 1. 配置 `FEISHU_APP_ID` 和 `FEISHU_APP_SECRET`
 2. 让 AI 将博客文章同步到飞书
-3. AI 自动调用 `feishu_doc_create` 创建文档
+3. AI 自动调用 `feishuDocCreate` 创建文档
 
 ---
 

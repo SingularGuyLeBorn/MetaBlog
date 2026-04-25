@@ -44,14 +44,14 @@ import { searchPapersWithCodeDef, searchSemanticScholarDef } from './other'
 import { searchOpenReviewDef, fetchOpenReviewDef } from './openreview'
 
 export const academicToolDefinitions = {
-  search_arxiv: searchArxivDef,
-  fetch_arxiv: fetchArxivDef,
-  search_huggingface: searchHuggingFaceDef,
-  fetch_huggingface_model: fetchHuggingFaceModelDef,
-  search_paperswithcode: searchPapersWithCodeDef,
-  search_semantic_scholar: searchSemanticScholarDef,
-  search_openreview: searchOpenReviewDef,
-  fetch_openreview: fetchOpenReviewDef
+  searchArxiv: searchArxivDef,
+  fetchArxiv: fetchArxivDef,
+  searchHuggingface: searchHuggingFaceDef,
+  fetchHuggingfaceModel: fetchHuggingFaceModelDef,
+  searchPaperswithcode: searchPapersWithCodeDef,
+  searchSemanticScholar: searchSemanticScholarDef,
+  searchOpenreview: searchOpenReviewDef,
+  fetchOpenreview: fetchOpenReviewDef
 }
 
 export const academicToolNames = Object.keys(academicToolDefinitions)

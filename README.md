@@ -131,19 +131,19 @@ pnpm docs:preview
 
 | 类别 | 代表工具 | 数量 |
 |------|---------|------|
-| 文章管理 | `create_article`, `update_article`, `search_articles` | 6 |
+| 文章管理 | `createArticle`, `updateArticle`, `searchArticles` | 6 |
 | GitHub | `github_get_repo`, `github_create_pr`, `github_merge_pr` | 34 |
-| 飞书文档 | `feishu_doc_create`, `feishu_doc_append`, `feishu_doc_insert_image` | 13 |
-| 飞书 Wiki | `feishu_wiki_space_create`, `feishu_wiki_node_create` | 13 |
-| 语雀文档 | `yuque_doc_create`, `yuque_doc_update`, `yuque_image_upload` | 9 |
-| 语雀知识库 | `yuque_repo_create`, `yuque_repo_setting_update` | 6 |
-| 学术研究 | `search_arxiv`, `fetch_arxiv`, `search_huggingface` | 8 |
-| 平台解析 | `parse_zhihu`, `parse_xiaohongshu`, `ocr_image` | 9 |
-| 文件 | `read_file`, `write_file`, `list_files` | 3 |
-| 文本处理 | `summarize_text`, `translate_text`, `format_text` | 3 |
-| 代码 | `execute_code`, `analyze_code` | 2 |
-| 网络 | `web_search`, `fetch_url` | 2 |
-| 系统 | `get_current_time`, `get_weather`, `calculate` | 4 |
+| 飞书文档 | `feishuDocCreate`, `feishuDocAppend`, `feishuDocInsertImage` | 13 |
+| 飞书 Wiki | `feishuWikiSpaceCreate`, `feishuWikiNodeCreate` | 13 |
+| 语雀文档 | `yuqueDocCreate`, `yuqueDocUpdate`, `yuqueImageUpload` | 9 |
+| 语雀知识库 | `yuqueRepoCreate`, `yuqueRepoSettingUpdate` | 6 |
+| 学术研究 | `searchArxiv`, `fetchArxiv`, `searchHuggingface` | 8 |
+| 平台解析 | `parseZhihu`, `parseXiaohongshu`, `ocrImage` | 9 |
+| 文件 | `readFile`, `writeFile`, `listFiles` | 3 |
+| 文本处理 | `summarizeText`, `translateText`, `formatText` | 3 |
+| 代码 | `executeCode`, `analyzeCode` | 2 |
+| 网络 | `webSearch`, `fetchUrl` | 2 |
+| 系统 | `getCurrentTime`, `getWeather`, `calculate` | 4 |
 
 **MCP 扩展**：通过 MCP (Model Context Protocol) 接入外部工具，支持 GitHub、Slack、Notion、数据库等 20+ 预设配置。
 

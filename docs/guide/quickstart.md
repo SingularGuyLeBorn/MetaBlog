@@ -99,7 +99,7 @@ AI 会自动调用 `searchArxiv` 工具并展示结果。
 请计算 2 的 100 次方是多少
 ```
 
-AI 会调用 `execute_code` 工具在沙箱中执行 Python 代码。
+AI 会调用 `executeCode` 工具在沙箱中执行 Python 代码。
 
 ---
 
@@ -157,7 +157,7 @@ MetaBlog/
 2. 确认使用了 `LLM_` 前缀（如 `LLM_DEEPSEEK_API_KEY`）
 3. 重启开发服务器（修改 `.env` 后需要重启）
 
-### Q: 工具调用失败（如 `feishu_doc_create`）
+### Q: 工具调用失败（如 `feishuDocCreate`）
 
 **A**: 
 1. 检查对应的环境变量是否配置（如 `FEISHU_APP_ID`）

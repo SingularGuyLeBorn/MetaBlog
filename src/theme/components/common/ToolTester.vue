@@ -306,7 +306,7 @@ const toolCategories = [
     icon: '📚',
     tools: [
       {
-        name: 'list_articles',
+        name: 'listArticles',
         description: '列出知识库中的文章目录，支持分类筛选和层级浏览',
         status: 'available',
         parameters: {
@@ -340,7 +340,7 @@ const toolCategories = [
         }
       },
       {
-        name: 'get_article_content',
+        name: 'getArticleContent',
         description: '获取指定文章的完整内容，支持行号范围和元数据',
         status: 'available',
         parameters: {
@@ -371,7 +371,7 @@ const toolCategories = [
         }
       },
       {
-        name: 'search_articles',
+        name: 'searchArticles',
         description: '根据关键词搜索文章，支持全文检索',
         status: 'available',
         parameters: {
@@ -398,7 +398,7 @@ const toolCategories = [
         }
       },
       {
-        name: 'create_article',
+        name: 'createArticle',
         description: '创建新文章，自动创建父文件夹，支持 frontmatter',
         status: 'available',
         parameters: {
@@ -433,7 +433,7 @@ const toolCategories = [
         }
       },
       {
-        name: 'update_article',
+        name: 'updateArticle',
         description: '更新文章内容，支持多种更新模式',
         status: 'available',
         parameters: {
@@ -469,7 +469,7 @@ const toolCategories = [
         }
       },
       {
-        name: 'delete_article',
+        name: 'deleteArticle',
         description: '删除文章或文件夹，支持备份选项',
         status: 'available',
         parameters: {
@@ -499,7 +499,7 @@ const toolCategories = [
     icon: '🌐',
     tools: [
       {
-        name: 'fetch_url',
+        name: 'fetchUrl',
         description: '通用网页内容提取，支持多种内容类型识别',
         status: 'available',
         parameters: {
@@ -531,7 +531,7 @@ const toolCategories = [
         }
       },
       {
-        name: 'fetch_arxiv',
+        name: 'fetchArxiv',
         description: '抓取 ArXiv 论文信息，支持摘要、作者、PDF链接',
         status: 'available',
         parameters: {
@@ -672,7 +672,7 @@ const toolCategories = [
     icon: '🛠️',
     tools: [
       {
-        name: 'get_current_time',
+        name: 'getCurrentTime',
         description: '获取当前系统时间',
         status: 'available',
         parameters: {
@@ -682,7 +682,7 @@ const toolCategories = [
         }
       },
       {
-        name: 'test_echo',
+        name: 'testEcho',
         description: '回声测试工具',
         status: 'available',
         parameters: {
@@ -702,7 +702,7 @@ const toolCategories = [
     icon: '📝',
     tools: [
       {
-        name: 'summarize_text',
+        name: 'summarizeText',
         description: '对给定文本生成简短摘要',
         status: 'available',
         parameters: {
@@ -715,7 +715,7 @@ const toolCategories = [
         }
       },
       {
-        name: 'format_text',
+        name: 'formatText',
         description: '将文本格式化为指定格式',
         status: 'available',
         parameters: {
@@ -930,7 +930,7 @@ async function executeTool() {
 
 function generateMockResult(toolName, params) {
   switch (toolName) {
-    case 'list_articles':
+    case 'listArticles':
       return {
         articles: [
           { title: 'Transformer 详解', path: 'knowledge/transformer.md', category: 'AI' },
@@ -938,13 +938,13 @@ function generateMockResult(toolName, params) {
         ],
         total: 2
       }
-    case 'get_article_content':
+    case 'getArticleContent':
       return {
         title: '示例文章',
         content: '# 示例文章\n\n这是一篇测试文章的内容...',
         metadata: { date: '2024-01-01', tags: ['test'] }
       }
-    case 'search_articles':
+    case 'searchArticles':
       return {
         results: [
           { title: '搜索结果 1', path: 'knowledge/result1.md', relevance: 0.95 },
@@ -952,13 +952,13 @@ function generateMockResult(toolName, params) {
         ],
         query: params.query
       }
-    case 'get_current_time':
+    case 'getCurrentTime':
       return {
         timestamp: Date.now(),
         iso: new Date().toISOString(),
         formatted: new Date().toLocaleString('zh-CN')
       }
-    case 'test_echo':
+    case 'testEcho':
       return {
         message: params.message,
         repeat_count: params.repeat_count || 1,

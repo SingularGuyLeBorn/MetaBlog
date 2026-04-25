@@ -35,12 +35,12 @@ Function Calling (OpenAI 格式)
 
 | 工具名 | 功能 | 示例调用 |
 |--------|------|---------|
-| `get_article_content` | 读取文章内容 | `get_article_content(path="/sections/posts/hello")` |
-| `search_articles` | 全文搜索 | `search_articles(query="Docker")` |
-| `list_articles` | 列出目录文章 | `list_articles(folder_path="/sections/knowledge/ml/")` |
-| `create_article` | 创建文章 | `create_article(title="新文章", path="posts/article.md")` |
-| `update_article` | 更新文章 | `update_article(path="...", content="...", mode="append")` |
-| `delete_article` | 删除文章 | `delete_article(path="...", confirm=true)` |
+| `getArticleContent` | 读取文章内容 | `getArticleContent(path="/sections/posts/hello")` |
+| `searchArticles` | 全文搜索 | `searchArticles(query="Docker")` |
+| `listArticles` | 列出目录文章 | `listArticles(folder_path="/sections/knowledge/ml/")` |
+| `createArticle` | 创建文章 | `createArticle(title="新文章", path="posts/article.md")` |
+| `updateArticle` | 更新文章 | `updateArticle(path="...", content="...", mode="append")` |
+| `deleteArticle` | 删除文章 | `deleteArticle(path="...", confirm=true)` |
 
 ### GitHub 仓库查询与管理（13个）
 
@@ -110,136 +110,136 @@ Function Calling (OpenAI 格式)
 
 | 工具名 | 功能 |
 |--------|------|
-| `feishu_doc_create` | 创建飞书文档（支持自动分配权限） |
-| `feishu_doc_read` | 读取文档内容 |
-| `feishu_doc_meta` | 获取文档元信息 |
-| `feishu_doc_search` | 搜索文档 |
-| `feishu_doc_blocks` | 获取文档块列表 |
-| `feishu_doc_append` | 追加内容（支持表格、代码块、公式） |
-| `feishu_doc_update_block` | 更新文档块 |
-| `feishu_doc_delete_block` | 删除文档块 |
-| `feishu_doc_insert_image` | 插入图片到文档 |
-| `feishu_doc_share` | 分享文档权限 |
-| `feishu_doc_unshare` | 取消文档权限 |
-| `feishu_im_send` | 发送 IM 消息 |
-| `feishu_user_search` | 搜索用户 |
+| `feishuDocCreate` | 创建飞书文档（支持自动分配权限） |
+| `feishuDocRead` | 读取文档内容 |
+| `feishuDocMeta` | 获取文档元信息 |
+| `feishuDocSearch` | 搜索文档 |
+| `feishuDocBlocks` | 获取文档块列表 |
+| `feishuDocAppend` | 追加内容（支持表格、代码块、公式） |
+| `feishuDocUpdateBlock` | 更新文档块 |
+| `feishuDocDeleteBlock` | 删除文档块 |
+| `feishuDocInsertImage` | 插入图片到文档 |
+| `feishuDocShare` | 分享文档权限 |
+| `feishuDocUnshare` | 取消文档权限 |
+| `feishuImSend` | 发送 IM 消息 |
+| `feishuUserSearch` | 搜索用户 |
 
 ### 飞书 Wiki 知识库（13个）
 
 | 工具名 | 功能 |
 |--------|------|
-| `feishu_wiki_space_create` | 创建知识库空间 |
-| `feishu_wiki_space_list` | 列出知识库空间 |
-| `feishu_wiki_space_get` | 获取空间详情 |
-| `feishu_wiki_space_update` | 更新空间信息 |
-| `feishu_wiki_space_delete` | 删除空间 |
-| `feishu_wiki_node_create` | 创建 Wiki 节点 |
-| `feishu_wiki_node_list` | 列出节点 |
-| `feishu_wiki_node_delete` | 删除节点 |
-| `feishu_wiki_node_move` | 移动节点 |
-| `feishu_wiki_move_doc` | 将外部文档迁入 Wiki |
-| `feishu_wiki_member_list` | 获取成员列表 |
-| `feishu_wiki_member_add` | 添加成员 |
-| `feishu_wiki_member_remove` | 移除成员 |
+| `feishuWikiSpaceCreate` | 创建知识库空间 |
+| `feishuWikiSpaceList` | 列出知识库空间 |
+| `feishuWikiSpaceGet` | 获取空间详情 |
+| `feishuWikiSpaceUpdate` | 更新空间信息 |
+| `feishuWikiSpaceDelete` | 删除空间 |
+| `feishuWikiNodeCreate` | 创建 Wiki 节点 |
+| `feishuWikiNodeList` | 列出节点 |
+| `feishuWikiNodeDelete` | 删除节点 |
+| `feishuWikiNodeMove` | 移动节点 |
+| `feishuWikiMoveDoc` | 将外部文档迁入 Wiki |
+| `feishuWikiMemberList` | 获取成员列表 |
+| `feishuWikiMemberAdd` | 添加成员 |
+| `feishuWikiMemberRemove` | 移除成员 |
 
 ### 语雀文档（9个）
 
 | 工具名 | 功能 |
 |--------|------|
-| `yuque_repo_list` | 列出知识库 |
-| `yuque_toc_get` | 获取目录结构 |
-| `yuque_doc_list` | 列出文档 |
-| `yuque_doc_read` | 读取文档 |
-| `yuque_doc_create` | 创建文档 |
-| `yuque_doc_update` | 更新文档 |
-| `yuque_doc_delete` | 删除文档 |
-| `yuque_image_upload` | 上传图片 |
-| `yuque_search` | 搜索文档 |
+| `yuqueRepoList` | 列出知识库 |
+| `yuqueTocGet` | 获取目录结构 |
+| `yuqueDocList` | 列出文档 |
+| `yuqueDocRead` | 读取文档 |
+| `yuqueDocCreate` | 创建文档 |
+| `yuqueDocUpdate` | 更新文档 |
+| `yuqueDocDelete` | 删除文档 |
+| `yuqueImageUpload` | 上传图片 |
+| `yuqueSearch` | 搜索文档 |
 
 ### 语雀知识库管理（6个）
 
 | 工具名 | 功能 |
 |--------|------|
-| `yuque_repo_create` | 创建知识库 |
-| `yuque_repo_update` | 更新知识库 |
-| `yuque_repo_delete` | 删除知识库 |
-| `yuque_repo_get` | 获取知识库详情 |
-| `yuque_repo_setting_get` | 获取知识库设置 |
-| `yuque_repo_setting_update` | 更新知识库设置 |
+| `yuqueRepoCreate` | 创建知识库 |
+| `yuqueRepoUpdate` | 更新知识库 |
+| `yuqueRepoDelete` | 删除知识库 |
+| `yuqueRepoGet` | 获取知识库详情 |
+| `yuqueRepoSettingGet` | 获取知识库设置 |
+| `yuqueRepoSettingUpdate` | 更新知识库设置 |
 
 ### 网络（2个）
 
 | 工具名 | 功能 |
 |--------|------|
-| `fetch_url` | HTTP 请求（GET/POST/PUT/DELETE），支持 HTML 提取 |
-| `web_search` | DuckDuckGo 搜索（零成本） |
+| `fetchUrl` | HTTP 请求（GET/POST/PUT/DELETE），支持 HTML 提取 |
+| `webSearch` | DuckDuckGo 搜索（零成本） |
 
 ### 代码（2个）
 
 | 工具名 | 功能 |
 |--------|------|
-| `execute_code` | 在沙箱中执行 Python/JS/Bash |
-| `analyze_code` | 代码分析 |
+| `executeCode` | 在沙箱中执行 Python/JS/Bash |
+| `analyzeCode` | 代码分析 |
 
 ### 学术研究（8个）
 
 | 工具名 | 功能 |
 |--------|------|
-| `search_arxiv` | 搜索 arXiv 论文 |
-| `fetch_arxiv` | 获取 arXiv 论文详情 |
-| `search_openreview` | 搜索 OpenReview |
-| `fetch_openreview` | 获取 OpenReview 论文详情 |
-| `search_huggingface` | 搜索 HuggingFace 模型 |
-| `fetch_huggingface_model` | 获取 HuggingFace 模型详情 |
-| `search_paperswithcode` | 搜索 Papers with Code |
-| `search_semantic_scholar` | 搜索 Semantic Scholar |
+| `searchArxiv` | 搜索 arXiv 论文 |
+| `fetchArxiv` | 获取 arXiv 论文详情 |
+| `searchOpenreview` | 搜索 OpenReview |
+| `fetchOpenreview` | 获取 OpenReview 论文详情 |
+| `searchHuggingface` | 搜索 HuggingFace 模型 |
+| `fetchHuggingfaceModel` | 获取 HuggingFace 模型详情 |
+| `searchPaperswithcode` | 搜索 Papers with Code |
+| `searchSemanticScholar` | 搜索 Semantic Scholar |
 
 ### 文件操作（3个）
 
 | 工具名 | 功能 |
 |--------|------|
-| `read_file` | 读取文件 |
-| `write_file` | 写入文件 |
-| `list_files` | 列出目录 |
+| `readFile` | 读取文件 |
+| `writeFile` | 写入文件 |
+| `listFiles` | 列出目录 |
 
 ### 平台解析（9个）
 
 | 工具名 | 功能 |
 |--------|------|
-| `parse_zhihu` | 解析知乎文章 |
-| `parse_xiaohongshu` | 解析小红书笔记 |
-| `parse_wechat` | 解析微信公众号文章 |
-| `parse_douyin` | 解析抖音 |
-| `parse_bilibili` | 解析 B 站 |
-| `parse_weibo` | 解析微博 |
-| `parse_platform_link` | 通用平台链接解析 |
-| `ocr_image` | OCR 图片识别 |
-| `process_image` | 图片处理 |
+| `parseZhihu` | 解析知乎文章 |
+| `parseXiaohongshu` | 解析小红书笔记 |
+| `parseWechat` | 解析微信公众号文章 |
+| `parseDouyin` | 解析抖音 |
+| `parseBilibili` | 解析 B 站 |
+| `parseWeibo` | 解析微博 |
+| `parsePlatformLink` | 通用平台链接解析 |
+| `ocrImage` | OCR 图片识别 |
+| `processImage` | 图片处理 |
 
 ### 文本处理（3个）
 
 | 工具名 | 功能 |
 |--------|------|
-| `summarize_text` | 文本摘要 |
-| `format_text` | 文本格式化 |
-| `translate_text` | 文本翻译 |
+| `summarizeText` | 文本摘要 |
+| `formatText` | 文本格式化 |
+| `translateText` | 文本翻译 |
 
 ### 系统（4个）
 
 | 工具名 | 功能 |
 |--------|------|
-| `get_current_time` | 获取当前时间 |
-| `get_weather` | 获取天气 |
+| `getCurrentTime` | 获取当前时间 |
+| `getWeather` | 获取天气 |
 | `calculate` | 数学计算 |
-| `test_echo` | 回声测试 |
+| `testEcho` | 回声测试 |
 
 ### 笔记（3个）
 
 | 工具名 | 功能 |
 |--------|------|
-| `create_note` | 创建笔记 |
-| `list_notes` | 列出笔记 |
-| `query_knowledge` | 查询知识库 |
+| `createNote` | 创建笔记 |
+| `listNotes` | 列出笔记 |
+| `queryKnowledge` | 查询知识库 |
 
 ---
 
@@ -366,7 +366,7 @@ interface ToolResult {
 createSuccessResult(
   { articleId: '123', title: '新文章' },
   '文章创建成功',
-  'create_article'
+  'createArticle'
 )
 ```
 

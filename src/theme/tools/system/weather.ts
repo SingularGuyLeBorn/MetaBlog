@@ -1,5 +1,5 @@
 /**
- * 系统工具定义 — get_weather
+ * 系统工具定义 — getWeather
  */
 
 import type { ToolDefinition } from '@/theme/tools/types'
@@ -9,7 +9,7 @@ import { createErrorResult } from '@/theme/tools/types'
 export const getWeatherDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'get_weather',
+    name: 'getWeather',
     description: '获取指定城市的天气信息。当用户询问天气、出行建议或需要了解气候条件时使用。',
     parameters: {
       type: 'object',
@@ -39,7 +39,7 @@ export const getWeather: ToolExecutor = async (args): Promise<ToolResult> => {
     return createErrorResult(
       'Missing city parameter',
       '请提供城市名称',
-      '示例: get_weather(city="北京", days=3)'
+      '示例: getWeather(city="北京", days=3)'
     )
   }
   

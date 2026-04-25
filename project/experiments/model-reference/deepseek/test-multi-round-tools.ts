@@ -73,7 +73,7 @@ const TOOLS: ToolDef[] = [
   {
     type: 'function',
     function: {
-      name: 'get_weather',
+      name: 'getWeather',
       description: '获取城市天气',
       parameters: {
         type: 'object',
@@ -235,7 +235,7 @@ async function executeTool(toolCall: any) {
   if (name === 'search_web') {
     return `搜索结果：关于 "${args.query}" 的最新信息（模拟数据）`
   }
-  if (name === 'get_weather') {
+  if (name === 'getWeather') {
     return `${args.city} 今天晴，25°C（模拟数据）`
   }
   return '未知工具结果'

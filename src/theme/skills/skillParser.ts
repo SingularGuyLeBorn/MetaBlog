@@ -12,7 +12,7 @@
  * icon: 📝
  * category: content
  * tags: [文章, 博客, 知识库]
- * tools: [search_articles, create_article, ...]
+ * tools: [searchArticles, createArticle, ...]
  * ---
  * 
  * ## 使用场景

@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * load_skill 工具定义 + 执行器
+ * loadSkill 工具定义 + 执行器
  * ============================================================================
  *
  * 【渐进式披露架构的 LOD-2 加载器】
@@ -17,9 +17,9 @@
  * 2. activateTools：自动暴露该 Skill 关联的所有工具 schema
  *
  * 典型使用场景：
- * - "帮我做一个完整的 GitHub PR 审查" → load_skill("github-pr-review")
- * - "怎么排版飞书文档？" → load_skill("feishu-doc-format")
- * - "写一篇学术论文" → load_skill("academic-writing")
+ * - "帮我做一个完整的 GitHub PR 审查" → loadSkill("github-pr-review")
+ * - "怎么排版飞书文档？" → loadSkill("feishu-doc-format")
+ * - "写一篇学术论文" → loadSkill("academic-writing")
  *
  * ============================================================================
  */
@@ -30,7 +30,7 @@ import type { ToolResult } from '../types'
 export const loadSkillDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'load_skill',
+    name: 'loadSkill',
     description: `加载指定 Skill 的完整内容到当前对话上下文。
 
 当你判断需要使用某个 Skill 来完成用户任务时，调用此工具。
@@ -165,7 +165,7 @@ export async function executeLoadSkill(args: Record<string, any>): Promise<ToolR
       // ─────────────────────────────────────────────────────────────
       // 加载 Skill 后，自动将该 Skill 声明的工具加入可用列表。
       // 例如加载 "github-pr-review" Skill 后，
-      // github_get_pull、github_list_pulls 等工具自动变为可调用。
+      // githubGetPull、githubListPulls 等工具自动变为可调用。
       activateTools: skill.tools || []
     }
   } catch (error) {

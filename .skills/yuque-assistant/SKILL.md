@@ -10,21 +10,21 @@ tags:
   - 知识库
   - Yuque
 tools:
-  - yuque_repo_list
-  - yuque_repo_create
-  - yuque_repo_update
-  - yuque_repo_delete
-  - yuque_repo_get
-  - yuque_repo_setting_get
-  - yuque_repo_setting_update
-  - yuque_toc_get
-  - yuque_doc_list
-  - yuque_doc_read
-  - yuque_doc_create
-  - yuque_doc_update
-  - yuque_doc_delete
-  - yuque_image_upload
-  - yuque_search
+  - yuqueRepoList
+  - yuqueRepoCreate
+  - yuqueRepoUpdate
+  - yuqueRepoDelete
+  - yuqueRepoGet
+  - yuqueRepoSettingGet
+  - yuqueRepoSettingUpdate
+  - yuqueTocGet
+  - yuqueDocList
+  - yuqueDocRead
+  - yuqueDocCreate
+  - yuqueDocUpdate
+  - yuqueDocDelete
+  - yuqueImageUpload
+  - yuqueSearch
 usageScenarios:
   - 列出语雀知识库
   - 创建、更新、删除语雀知识库
@@ -55,14 +55,14 @@ usageScenarios:
 
 语雀知识库的唯一标识，是一个**数字 ID**。
 
-- 调用 `yuque_repo_list()` 获取所有知识库的 `id`
+- 调用 `yuqueRepoList()` 获取所有知识库的 `id`
 - 示例：`68025057`
 
 ### doc_slug（文档 Slug）
 
 文档的 URL 友好标识，是一串字母数字组合。
 
-- 从 `yuque_toc_get()` 或 `yuque_doc_list()` 结果中获取 `url` 字段
+- 从 `yuqueTocGet()` 或 `yuqueDocList()` 结果中获取 `url` 字段
 - 示例：`buslgogeucwcim33`
 - **注意**：Slug 用于读取文档，但不能用于更新或删除
 
@@ -70,7 +70,7 @@ usageScenarios:
 
 文档的数字 ID，用于**更新和删除**操作。
 
-- 从 `yuque_doc_read()` 结果中获取 `id` 字段
+- 从 `yuqueDocRead()` 结果中获取 `id` 字段
 - 示例：`266422684`
 - **⚠️ 重要**：更新和删除必须用 doc_id，不能用 doc_slug！
 
@@ -81,7 +81,7 @@ usageScenarios:
 ### 1. 列出知识库
 
 ```
-yuque_repo_list()
+yuqueRepoList()
   → 返回知识库列表，包含 id、name、slug
 ```
 
@@ -96,7 +96,7 @@ yuque_repo_list()
 ### 2. 获取知识库目录
 
 ```
-yuque_toc_get(repo_id="68025057")
+yuqueTocGet(repo_id="68025057")
   → 返回目录结构（TITLE 目录项 + DOC 文档项）
 ```
 
@@ -112,7 +112,7 @@ yuque_toc_get(repo_id="68025057")
 ### 3. 读取文档内容
 
 ```
-yuque_doc_read(repo_id="68025057", doc_slug="abc123")
+yuqueDocRead(repo_id="68025057", doc_slug="abc123")
   → 返回文档标题和内容（Lake HTML 格式）
 ```
 
@@ -123,7 +123,7 @@ yuque_doc_read(repo_id="68025057", doc_slug="abc123")
 ### 4. 上传图片到语雀 CDN
 
 ```
-yuque_image_upload(
+yuqueImageUpload(
   image_base64="data:image/png;base64,iVBORw0KGgo...",
   file_name="chart.png"
 )
@@ -132,7 +132,7 @@ yuque_image_upload(
 
 **使用图片**：获取 URL 后，在文档内容中用 Markdown 图片语法引用：
 ```
-yuque_doc_create(
+yuqueDocCreate(
   repo_id="68025057",
   title="带图片的文档",
   content="# 标题\n\n![图表描述](https://cdn.nlark.com/yuque/0/...)",
@@ -145,7 +145,7 @@ yuque_doc_create(
 **最佳实践**：传 `format="markdown"`，直接上传标准 Markdown，语雀服务端自动渲染。
 
 ```
-yuque_doc_create(
+yuqueDocCreate(
   repo_id="68025057",
   title="新文档标题",
   content="# 标题\n\n$E=mc^2$\n\n| a | b |\n|---|---|\n| 1 | 2 |",
@@ -159,12 +159,12 @@ yuque_doc_create(
 - **数学公式支持**：支持 `$formula$` (行内) 和 `$$formula$$` (行间) LaTeX 语法
 - **表格支持**：支持标准的 Markdown 表格语法
 - **代码高亮**：支持 ```python 等 fenced code block
-- **图片支持**：`![Alt text](URL)` 语法，配合 yuque_image_upload 使用
+- **图片支持**：`![Alt text](URL)` 语法，配合 yuqueImageUpload 使用
 - **注意**：创建后文档**不会自动出现在知识库目录中**
 
 **旧方式（Lake 格式，不推荐）**：
 ```
-yuque_doc_create(
+yuqueDocCreate(
   repo_id="68025057",
   title="新文档标题",
   content="<h1>标题</h1><p>正文</p>"
@@ -177,7 +177,7 @@ yuque_doc_create(
 **必须先读取文档获取 doc_id：**
 
 ```
-yuque_doc_read(repo_id="68025057", doc_slug="abc123")
+yuqueDocRead(repo_id="68025057", doc_slug="abc123")
   → 获取 doc_id（如 266422684）
 ```
 
@@ -191,12 +191,12 @@ yuque_doc_read(repo_id="68025057", doc_slug="abc123")
 
 **方式1：只更新标题（最安全）**
 ```
-yuque_doc_update(repo_id="68025057", doc_id="266422684", title="新标题")
+yuqueDocUpdate(repo_id="68025057", doc_id="266422684", title="新标题")
 ```
 
 **方式2：局部替换一句话（推荐）**
 ```
-yuque_doc_update(
+yuqueDocUpdate(
   repo_id="68025057",
   doc_id="266422684",
   replace_text={ "old": "错误句子B", "new": "正确句子B'" }
@@ -206,7 +206,7 @@ yuque_doc_update(
 
 **方式3：全量替换内容**
 ```
-yuque_doc_update(
+yuqueDocUpdate(
   repo_id="68025057",
   doc_id="266422684",
   title="新标题",
@@ -218,9 +218,9 @@ yuque_doc_update(
 ### 7. 删除文档
 
 ```
-yuque_doc_read(repo_id="68025057", doc_slug="abc123")
+yuqueDocRead(repo_id="68025057", doc_slug="abc123")
   → 获取 doc_id
-  → yuque_doc_delete(repo_id="68025057", doc_id="266422684")
+  → yuqueDocDelete(repo_id="68025057", doc_id="266422684")
 ```
 
 **⚠️ 警告**：删除操作不可逆，请确认后再执行！
@@ -284,14 +284,14 @@ content="$$x = (-b + (b^2-4ac)^(1/2)) / (2a)$$"
 
 ### 搜索不可用
 
-- `yuque_search` 当前不可用（内部 Web API 不支持搜索）
-- 如需查找文档，请使用 `yuque_repo_list` → `yuque_toc_get` 浏览目录
+- `yuqueSearch` 当前不可用（内部 Web API 不支持搜索）
+- 如需查找文档，请使用 `yuqueRepoList` → `yuqueTocGet` 浏览目录
 
 ### 更新/删除需要 doc_id
 
 - **读取用 slug，更新/删除用 id**
 - doc_id 是数字（如 266422684），doc_slug 是字符串（如 abc123）
-- 必须先调用 `yuque_doc_read` 获取 doc_id
+- 必须先调用 `yuqueDocRead` 获取 doc_id
 
 ### 权限
 
@@ -308,7 +308,7 @@ content="$$x = (-b + (b^2-4ac)^(1/2)) / (2a)$$"
 
 **Agent**：
 ```
-yuque_repo_list()
+yuqueRepoList()
 ```
 
 **返回**：
@@ -323,9 +323,9 @@ yuque_repo_list()
 
 **Agent**：
 ```
-yuque_toc_get(repo_id="68025057")
+yuqueTocGet(repo_id="68025057")
   → 获取第一个 DOC 的 slug
-yuque_doc_read(repo_id="68025057", doc_slug="abc123")
+yuqueDocRead(repo_id="68025057", doc_slug="abc123")
 ```
 
 ### 示例 3：创建带公式的文档
@@ -334,7 +334,7 @@ yuque_doc_read(repo_id="68025057", doc_slug="abc123")
 
 **Agent**：
 ```
-yuque_doc_create(
+yuqueDocCreate(
   repo_id="68025057",
   title="数学公式速查",
   content="# 数学公式速查\n\n## 1. 二次方程求根公式\n\n$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$\n\n## 2. 质能方程\n\n质能方程是 $E = mc^2$。\n\n## 3. 常用公式表\n\n| 公式 | 说明 |\n|------|------|\n| $E=mc^2$ | 质能方程 |\n| $a^2+b^2=c^2$ | 勾股定理 |",
@@ -348,9 +348,9 @@ yuque_doc_create(
 
 **Agent**：
 ```
-yuque_doc_read(repo_id="68025057", doc_slug="刚才创建的slug")
+yuqueDocRead(repo_id="68025057", doc_slug="刚才创建的slug")
   → 获取 doc_id
-yuque_doc_update(
+yuqueDocUpdate(
   repo_id="68025057",
   doc_id="266422684",
   title="项目总结"
@@ -363,9 +363,9 @@ yuque_doc_update(
 
 **Agent**：
 ```
-yuque_doc_read(repo_id="68025057", doc_slug="刚才创建的slug")
+yuqueDocRead(repo_id="68025057", doc_slug="刚才创建的slug")
   → 获取 doc_id
-yuque_doc_delete(repo_id="68025057", doc_id="266422684")
+yuqueDocDelete(repo_id="68025057", doc_id="266422684")
 ```
 
 ### 示例 6：创建带图片的文档
@@ -375,11 +375,11 @@ yuque_doc_delete(repo_id="68025057", doc_id="266422684")
 **Agent**：
 ```
 # 1. 上传图片
-yuque_image_upload(image_base64="data:image/png;base64,iVBORw0KGgo...", file_name="chart.png")
+yuqueImageUpload(image_base64="data:image/png;base64,iVBORw0KGgo...", file_name="chart.png")
   → 返回 url: https://cdn.nlark.com/yuque/0/...
 
 # 2. 创建带图片的文档
-yuque_doc_create(
+yuqueDocCreate(
   repo_id="68025057",
   title="项目报告",
   content="# 项目报告\n\n## 数据图表\n\n![项目数据图表](https://cdn.nlark.com/yuque/0/...)\n\n> 图1: 2024年Q1数据概览\n\n## 说明\n\n- 数据来源：内部统计\n- 更新时间：2024年3月",

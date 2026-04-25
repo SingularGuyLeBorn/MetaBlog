@@ -15,17 +15,17 @@
 
 **ArXiv**（最全面）
 ```
-search_arxiv(
+searchArxiv(
   query="transformer attention",
   category="cs.CL",  // 可选: cs.AI, cs.CV, cs.LG
   max_results=10
 )
 ```
-获取详情：`fetch_arxiv(paper_id="2401.12345")`
+获取详情：`fetchArxiv(paper_id="2401.12345")`
 
 **Semantic Scholar**（有引用数）
 ```
-search_semantic_scholar(
+searchSemanticScholar(
   query="deep learning",
   limit=10
 )
@@ -33,7 +33,7 @@ search_semantic_scholar(
 
 **Papers With Code**（带代码实现）
 ```
-search_paperswithcode(
+searchPaperswithcode(
   query="image classification",
   limit=10
 )
@@ -41,7 +41,7 @@ search_paperswithcode(
 
 **OpenReview**（顶级会议）
 ```
-search_openreview(
+searchOpenreview(
   query="reinforcement learning",
   venue="ICLR",  // 可选: NeurIPS, ICML
   limit=10
@@ -52,13 +52,13 @@ search_openreview(
 
 **HuggingFace**
 ```
-search_huggingface(
+searchHuggingface(
   query="bert",
   task="text-classification",  // 可选
   limit=10
 )
 ```
-获取详情：`fetch_huggingface_model(model_id="bert-base-chinese")`
+获取详情：`fetchHuggingfaceModel(model_id="bert-base-chinese")`
 
 ## 最佳实践
 1. 优先使用 ArXiv 搜索最新论文
@@ -72,7 +72,7 @@ search_huggingface(
 **用户**: 找一下最近关于大语言模型的论文
 **助手**:
 ```
-[调用 search_arxiv]
+[调用 searchArxiv]
 ```
 找到以下相关论文：
 1. ...
@@ -80,6 +80,6 @@ search_huggingface(
 **用户**: 这个模型的详细信息
 **助手**:
 ```
-[调用 fetch_arxiv]
+[调用 fetchArxiv]
 ```
 论文详情：...

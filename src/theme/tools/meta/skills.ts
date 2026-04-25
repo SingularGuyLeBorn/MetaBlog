@@ -1,5 +1,5 @@
 /**
- * Meta 工具定义 — get_all_skills
+ * Meta 工具定义 — getAllSkills
  *
  * 用于查询系统级别的元信息：获取所有可用 Skills 的完整列表
  */
@@ -10,12 +10,11 @@ import type { ToolResult } from '../types'
 export const getAllSkillsDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'get_all_skills',
+    name: 'getAllSkills',
     description: `获取当前系统中所有可用 Skills 的列表。
 
 当你不确定有哪些 Skills 可用，或用户要求查看系统能力领域时，调用此工具。
-默认返回摘要模式（仅名称+ID+简述），避免输出过长被截断。
-如需查看每个 Skill 的完整描述、关联工具和适用场景，请设置 detail=true。`,
+返回所有 Skills 的完整列表和描述，方便 AI 全面理解系统能力。`,
     parameters: {
       type: 'object',
       properties: {
@@ -33,8 +32,7 @@ export const getAllSkillsDef: ToolDefinition = {
 /**
  * 获取所有 Skills 的列表（支持摘要/详细模式）
  *
- * 默认返回精简摘要，避免思考过程截断。
- * 如需查看每个 Skill 的完整信息，使用 detail=true 参数。
+ * 返回所有 Skills 的完整列表和描述。
  */
 export async function executeGetAllSkills(args?: { detail?: boolean }): Promise<ToolResult> {
   try {
@@ -72,17 +70,12 @@ export async function executeGetAllSkills(args?: { detail?: boolean }): Promise<
         lines.push(`  关联工具(${toolCount}): ${toolNames}`)
         lines.push(`  适用场景: ${scenarios}`)
       } else {
-        // 摘要模式：一行一个 Skill
-        const shortDesc = skill.description.length > 60
-          ? skill.description.slice(0, 60) + '...'
-          : skill.description
-        lines.push(`- ${skill.icon || ''} ${skill.name} [${skill.id}]: ${shortDesc}`)
+        // 摘要模式：一行一个 Skill，描述不截断
+        lines.push(`- ${skill.icon || ''} ${skill.name} [${skill.id}]: ${skill.description}`)
       }
     })
 
-    const hint = detail
-      ? '\n\n💡 提示：列表较长可能截断。如需查找特定 Skill，请使用 search_capabilities 关键词搜索。'
-      : '\n\n💡 提示：如需查看每个 Skill 的完整描述、关联工具和适用场景，请再次调用 get_all_skills 并设置 detail=true。'
+    const hint = '\n\n💡 提示：如需查找特定 Skill，请使用 searchCapabilities 关键词搜索。'
 
     return {
       success: true,

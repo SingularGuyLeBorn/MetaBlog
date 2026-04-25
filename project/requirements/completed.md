@@ -56,7 +56,7 @@ $$` 块级公式
 - **完成日期**: 2026-04-22
 - **领域**: Frontend
 - **关联层级**: L3
-- **描述**: `get_all_tools`/`get_all_skills` 默认返回精简摘要，新增 `detail` 参数控制完整输出
+- **描述**: `getAllTools`/`getAllSkills` 默认返回精简摘要，新增 `detail` 参数控制完整输出
 - **实现要点**: 避免工具结果过大导致请求体超过 AI API 限制
 - **相关文件**: `src/theme/tools/index.ts`
 
@@ -65,7 +65,7 @@ $$` 块级公式
 - **领域**: Platform
 - **关联层级**: L3
 - **描述**: 完整的飞书文档操作工具链
-- **工具列表**: `feishu_doc_create`, `feishu_doc_read`, `feishu_doc_search`, `feishu_doc_blocks`, `feishu_doc_append`, `feishu_doc_update_block`, `feishu_doc_delete_block`, `feishu_im_send`, `feishu_user_search`, `feishu_image_upload`
+- **工具列表**: `feishuDocCreate`, `feishuDocRead`, `feishuDocSearch`, `feishuDocBlocks`, `feishuDocAppend`, `feishuDocUpdateBlock`, `feishuDocDeleteBlock`, `feishuImSend`, `feishuUserSearch`, `feishu_image_upload`
 - **相关文件**: `server/routes/lark.ts`, `src/theme/tools/lark/`
 
 ### [DONE-017] 语雀工具链（9个）
@@ -73,7 +73,7 @@ $$` 块级公式
 - **领域**: Platform
 - **关联层级**: L3
 - **描述**: 完整的语雀文档操作工具链
-- **工具列表**: `yuque_repo_list`, `yuque_toc_get`, `yuque_doc_list`, `yuque_doc_read`, `yuque_doc_create`, `yuque_doc_update`, `yuque_doc_delete`, `yuque_image_upload`, `yuque_search`
+- **工具列表**: `yuqueRepoList`, `yuqueTocGet`, `yuqueDocList`, `yuqueDocRead`, `yuqueDocCreate`, `yuqueDocUpdate`, `yuqueDocDelete`, `yuqueImageUpload`, `yuqueSearch`
 - **相关文件**: `server/routes/yuque.ts`, `src/theme/tools/yuque/`
 
 ### [DONE-016] 网络搜索（DuckDuckGo）
@@ -180,7 +180,7 @@ $$` 块级公式
 - **领域**: Content
 - **关联层级**: L3
 - **描述**: 文章的 CRUD + 搜索 + 列表
-- **工具列表**: `get_article_content`, `search_articles`, `list_articles`, `create_article`, `update_article`, `delete_article`
+- **工具列表**: `getArticleContent`, `searchArticles`, `listArticles`, `createArticle`, `updateArticle`, `deleteArticle`
 - **相关文件**: `src/theme/tools/article/`
 
 ---
@@ -193,14 +193,14 @@ $$` 块级公式
 - **关联层级**: L3
 - **描述**: 内存知识库的 CRUD 管理
 - **工具列表**: `kb_list`, `kb_create`, `kb_delete`, `kb_query`, `kb_list_documents`, `kb_document_add`, `kb_document_delete`
-- **相关文件**: `src/theme/tools/load_skill/`
+- **相关文件**: `src/theme/tools/loadSkill/`
 
 ### [DONE-003] 文本处理工具（4个）
 - **完成日期**: 2025-12
 - **领域**: Content
 - **关联层级**: L3
 - **描述**: 摘要、格式化、翻译
-- **工具列表**: `summarize_text`, `format_text`, `translate_text`
+- **工具列表**: `summarizeText`, `formatText`, `translateText`
 - **相关文件**: `src/theme/tools/text/`
 
 ### [DONE-002] 文件操作工具（3个）
@@ -208,7 +208,7 @@ $$` 块级公式
 - **领域**: Execution
 - **关联层级**: L3
 - **描述**: 文件的读/写/列表
-- **工具列表**: `read_file`, `write_file`, `list_files`
+- **工具列表**: `readFile`, `writeFile`, `listFiles`
 - **相关文件**: `src/theme/tools/file/`
 
 ### [DONE-001] 系统工具（4个）
@@ -216,7 +216,7 @@ $$` 块级公式
 - **领域**: Execution
 - **关联层级**: L3
 - **描述**: 时间、天气、计算、回声测试
-- **工具列表**: `get_current_time`, `get_weather`, `calculate`, `test_echo`
+- **工具列表**: `getCurrentTime`, `getWeather`, `calculate`, `testEcho`
 - **相关文件**: `src/theme/tools/system/`
 
 ---

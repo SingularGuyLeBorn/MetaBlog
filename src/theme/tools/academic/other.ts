@@ -104,7 +104,7 @@ export async function proxyFetch(url: string, headers?: Record<string, string>, 
 export const searchPapersWithCodeDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'search_paperswithcode',
+    name: 'searchPaperswithcode',
     description: '搜索 Papers With Code，获取带开源代码实现的论文',
     parameters: {
       type: 'object',
@@ -124,7 +124,7 @@ export const searchPapersWithCode: ToolExecutor = async (args): Promise<ToolResu
     return createErrorResult(
       'Missing query parameter',
       '请提供搜索关键词',
-      '示例: search_paperswithcode(query="image classification")'
+      '示例: searchPaperswithcode(query="image classification")'
     )
   }
 
@@ -148,7 +148,7 @@ export const searchPapersWithCode: ToolExecutor = async (args): Promise<ToolResu
       return createSuccessResult(
         [],
         `未找到与 "${query}" 相关的论文`,
-        'search_paperswithcode',
+        'searchPaperswithcode',
         '尝试使用不同的关键词'
       )
     }
@@ -165,7 +165,7 @@ export const searchPapersWithCode: ToolExecutor = async (args): Promise<ToolResu
     return createSuccessResult(
       papers,
       `找到 ${results.length} 篇带代码实现的论文`,
-      'search_paperswithcode'
+      'searchPaperswithcode'
     )
   } catch (error: any) {
     if (error.name === 'AbortError') {
@@ -188,7 +188,7 @@ export const searchPapersWithCode: ToolExecutor = async (args): Promise<ToolResu
 export const searchSemanticScholarDef: ToolDefinition = {
   type: 'function',
   function: {
-    name: 'search_semantic_scholar',
+    name: 'searchSemanticScholar',
     description: '搜索 Semantic Scholar 学术数据库，获取引用数等信息',
     parameters: {
       type: 'object',
@@ -208,7 +208,7 @@ export const searchSemanticScholar: ToolExecutor = async (args): Promise<ToolRes
     return createErrorResult(
       'Missing query parameter',
       '请提供搜索关键词',
-      '示例: search_semantic_scholar(query="deep learning")'
+      '示例: searchSemanticScholar(query="deep learning")'
     )
   }
 
@@ -233,7 +233,7 @@ export const searchSemanticScholar: ToolExecutor = async (args): Promise<ToolRes
       return createSuccessResult(
         [],
         `未找到与 "${query}" 相关的论文`,
-        'search_semantic_scholar',
+        'searchSemanticScholar',
         '尝试使用不同的关键词'
       )
     }
@@ -249,7 +249,7 @@ export const searchSemanticScholar: ToolExecutor = async (args): Promise<ToolRes
     return createSuccessResult(
       formattedPapers,
       `找到 ${papers.length} 篇论文`,
-      'search_semantic_scholar'
+      'searchSemanticScholar'
     )
   } catch (error: any) {
     if (error.name === 'AbortError') {

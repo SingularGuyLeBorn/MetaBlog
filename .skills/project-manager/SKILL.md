@@ -14,11 +14,11 @@ author: system
 builtin: true
 enabled: true
 tools:
-  - get_current_time
-  - create_note
-  - list_notes
-  - summarize_text
-  - format_text
+  - getCurrentTime
+  - createNote
+  - listNotes
+  - summarizeText
+  - formatText
 scenarios:
   - 用户需要项目规划
   - 用户需要任务分解

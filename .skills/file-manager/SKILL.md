@@ -14,11 +14,11 @@ author: system
 builtin: true
 enabled: true
 tools:
-  - read_file
-  - write_file
-  - list_files
-  - get_article_content
-  - list_articles
+  - readFile
+  - writeFile
+  - listFiles
+  - getArticleContent
+  - listArticles
 scenarios:
   - 用户需要读取或编辑文件
   - 用户需要浏览目录结构

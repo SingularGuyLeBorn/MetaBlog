@@ -20,16 +20,16 @@ const URL_REGEX = /https?:\/\/[^\s<>"'{}|\\^`[\]]+/gi
 /** 已知工具类型的 URL 字段映射（支持嵌套路径，如 document.document_id） */
 const TOOL_URL_FIELDS: Record<string, string[]> = {
   // 飞书
-  feishu_doc_create: ['url', 'docUrl', 'link', 'web_url', 'document.document_id'],
-  feishu_share_doc: ['url', 'docUrl'],
-  feishu_doc_append: ['url', 'docUrl'],
+  feishuDocCreate: ['url', 'docUrl', 'link', 'web_url', 'document.document_id'],
+  feishuDocShare: ['url', 'docUrl'],
+  feishuDocAppend: ['url', 'docUrl'],
   // GitHub
-  github_create_repo: ['html_url', 'url'],
-  github_create_issue: ['html_url', 'url'],
-  github_create_pull_request: ['html_url', 'url'],
-  github_get_repo: ['html_url', 'url'],
+  githubCreateRepo: ['html_url', 'url'],
+  githubCreateIssue: ['html_url', 'url'],
+  githubCreatePullRequest: ['html_url', 'url'],
+  githubGetRepo: ['html_url', 'url'],
   // 语雀
-  yuque_create_doc: ['url', 'webUrl', 'slug_url'],
+  yuqueDocCreate: ['url', 'webUrl', 'slug_url'],
 }
 
 /**
@@ -65,8 +65,9 @@ export function extractEntityLinks(toolName: string, toolResult: any): EntityLin
     }
   }
 
-  // 2. 从 message 文本中提取 URL（很多工具把链接放在 message 里）
-  if (typeof message === 'string') {
+  // 2. 从 message 文本中提取 URL（仅限已知工具类型，避免查询类工具误渲染）
+  // webSearch / fetchUrl 等工具的 message 中包含搜索结果 URL，不应渲染为实体卡片
+  if (knownFields && typeof message === 'string') {
     const msgLinks = extractUrlsFromText(message)
     for (const url of msgLinks) {
       links.push(createEntityLink(url, toolName, data))
@@ -113,7 +114,28 @@ function isValidUrl(str: string): boolean {
 
 function extractUrlsFromText(text: string): string[] {
   const matches = text.match(URL_REGEX)
-  return matches ? matches.filter(isValidUrl) : []
+  return matches ? matches.filter(isValidUrl).filter((u) => !isPlaceholderUrl(u)) : []
+}
+
+/**
+ * 判断 URL 是否为示例/占位符，避免将工具 description 中的示例链接
+ * 误渲染为实体卡片。
+ *
+ * 常见占位符模式：
+ * - 示例域名：xxx.feishu.cn、example.com、localhost
+ * - 路径占位符：/p/xxxx、/s/xxx、BVxxx、/users/octocat
+ * - 截断示例：以 ... 结尾或包含 /...
+ */
+function isPlaceholderUrl(url: string): boolean {
+  const lower = url.toLowerCase()
+  if (lower.includes('xxx.') || lower.includes('example.') || lower.includes('localhost')) return true
+  if (/\/(p|id)\/xxxx\b/.test(url)) return true
+  if (/\/s\/xxx\b/.test(url)) return true
+  if (/\/BVxxx\b/.test(url)) return true
+  if (/\/users\/octocat\b/.test(url)) return true
+  if (url.endsWith('...')) return true
+  if (url.includes('/...')) return true
+  return false
 }
 
 function deduplicateLinks(links: EntityLink[]): EntityLink[] {
@@ -194,7 +216,7 @@ function scanUrlsRecursive(value: any, links: EntityLink[], toolName: string, de
     const matches = value.match(URL_REGEX)
     if (matches) {
       for (const url of matches) {
-        if (isValidUrl(url)) {
+        if (isValidUrl(url) && !isPlaceholderUrl(url)) {
           links.push(createEntityLink(url, toolName, {}))
         }
       }

@@ -14,12 +14,12 @@ author: system
 builtin: true
 enabled: true
 tools:
-  - web_search
-  - fetch_url
-  - query_knowledge
-  - create_note
-  - list_notes
-  - summarize_text
+  - webSearch
+  - fetchUrl
+  - queryKnowledge
+  - createNote
+  - listNotes
+  - summarizeText
 scenarios:
   - 用户需要信息检索
   - 用户需要文献整理
