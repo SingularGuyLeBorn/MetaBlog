@@ -35,22 +35,25 @@ import { getTaskManager } from "./mcp-tools/task-manager";
 import { getAgentRuntimeManager } from "./mcp-tools/agent-runtime-manager";
 import { getMetaAgentManager } from "./mcp-tools/meta-agent-manager";
 import { getReportAgentManager } from "./mcp-tools/report-agent-manager";
-import { registerInitRoutes } from "./routes/init";
-import { registerFilesRoutes } from "./routes/files";
-import { registerAgentNativeRoutes } from "./routes/agent-native";
-import { registerContentRoutes } from "./routes/content";
-import { registerLogsRoutes } from "./routes/logs";
-import { registerProxyRoutes } from "./routes/proxy";
-import { registerLarkRoutes } from "./routes/lark";
-import { registerYuqueRoutes } from "./routes/yuque";
-import { registerPlatformParserRoutes } from "./routes/platform-parser";
-import { registerAgentSystemRoutes } from "./routes/agent-system";
-import { registerSkillsRoutes } from "./routes/skills";
-import { registerMemoriesRoutes } from "./routes/memories";
-import { registerMcpRoutes } from "./routes/mcp";
-import { registerSessionsRoutes } from "./routes/sessions";
-import { registerChatRoutes } from "./routes/chat";
-import { registerSandboxRoutes } from "./routes/sandbox";
+import {
+  registerInitRoutes,
+  registerFilesRoutes,
+  registerAgentNativeRoutes,
+  registerContentRoutes,
+  registerLogsRoutes,
+  registerProxyRoutes,
+  registerLarkRoutes,
+  registerYuqueRoutes,
+  registerGitHubRoutes,
+  registerPlatformParserRoutes,
+  registerAgentSystemRoutes,
+  registerSkillsRoutes,
+  registerMemoriesRoutes,
+  registerMcpRoutes,
+  registerSessionsRoutes,
+  registerChatRoutes,
+  registerSandboxRoutes,
+} from "./routes";
 
 
 // 简化的日志系统
@@ -388,6 +391,7 @@ export const metaBlogBffPlugin = (): Plugin => ({
     registerSandboxRoutes(server);
     registerLarkRoutes(server, ctx);
     registerYuqueRoutes(server, ctx);
+    registerGitHubRoutes(server);
     registerPlatformParserRoutes(server, ctx);
   },
   handleHotUpdate({ file }) {

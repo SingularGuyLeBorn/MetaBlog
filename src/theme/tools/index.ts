@@ -1,18 +1,19 @@
 /**
  * 工具系统统一入口
  * 
- * 按功能分类的工具集合：
- * - article: 文章管理
+ * 按功能分类的工具集合�? * - article: 文章管理
  * - academic: 学术研究
- * - file: 文件操作
- * - platform: 平台解析
- * - github: GitHub 操作
- * - kb: 知识库
- * - note: 笔记
- * - text: 文本处理
  * - code: 代码工具
- * - network: 网络工具
+ * - file: 文件操作
+ * - github: GitHub 操作
+ * - lark: 飞书平台
+ * - load_skill: 技能加�? * - meta: 元信息查�? * - network: 网络工具
+ * - note: 笔记管理
+ * - platform: 平台解析
+ * - search_capabilities: 工具搜索
  * - system: 系统工具
+ * - text: 文本处理
+ * - yuque: 语雀平台
  */
 
 // ==================== 类型导出 ====================
@@ -28,7 +29,7 @@ export type {
 
 export { createSuccessResult, createErrorResult } from './types'
 
-// ==================== 注册表导出 ====================
+// ==================== 注册表导�?====================
 export {
   registerTool,
   registerTools,
@@ -281,7 +282,7 @@ export {
   executeSearchCapabilities
 } from './search_capabilities'
 
-// ==================== 导入用于初始化 ====================
+// ==================== 导入用于初始�?====================
 import { registerTools, getRegisteredToolNames } from './registry'
 
 // 文章工具
@@ -383,34 +384,30 @@ import { searchCapabilitiesDef, executeSearchCapabilities } from './search_capab
  * 
  * 渐进式披露设计：
  * - 核心工具（~7个）始终暴露
- * - 领域工具（~69个）默认隐藏，通过 search_capabilities / load_skill 动态激活
- * 
- * 参考：OpenAI 建议每轮对话不超过 10-15 个工具，
- * MCP 专家建议不超过 10-15 个，graph-tool-call 项目 248→5 减少 79% token
+ * - 领域工具（~69个）默认隐藏，通过 search_capabilities / load_skill 动态激�? * 
+ * 参考：OpenAI 建议每轮对话不超�?10-15 个工具，
+ * MCP 专家建议不超�?10-15 个，graph-tool-call 项目 248�? 减少 79% token
  */
 export const CORE_TOOL_NAMES = [
-  'search_capabilities',   // 能力发现器 - 搜索所有工具和 Skills
-  'load_skill',            // 工作流加载器 - 加载 Skill 工作流指导
-  'get_all_tools',         // 工具目录 - 获取完整工具列表（文本形式）
+  'search_capabilities',   // 能力发现�?- 搜索所有工具和 Skills
+  'load_skill',            // 工作流加载器 - 加载 Skill 工作流指�?  'get_all_tools',         // 工具目录 - 获取完整工具列表（文本形式）
   'get_all_skills',        // Skill 目录 - 获取完整 Skill 列表（文本形式）
   'get_current_time',      // 通用基础工具
   'calculate',             // 通用基础工具
   'web_search'             // 通用网络搜索
 ]
 
-// ==================== 初始化函数 ====================
+// ==================== 初始化函�?====================
 
 let defaultToolsInitialized = false
 
 /**
- * 初始化所有默认工具
- * 在应用启动时调用，注册所有内置工具
- */
+ * 初始化所有默认工�? * 在应用启动时调用，注册所有内置工�? */
 export function initializeDefaultTools(): void {
   if (defaultToolsInitialized) return
   defaultToolsInitialized = true
 
-  // 文章管理工具（6个）
+  // 文章管理工具�?个）
   registerTools([
     { name: 'create_article', definition: createArticleDef, executor: createArticle },
     { name: 'get_article_content', definition: getArticleContentDef, executor: getArticleContent },
@@ -420,7 +417,7 @@ export function initializeDefaultTools(): void {
     { name: 'search_articles', definition: searchArticlesDef, executor: searchArticles }
   ])
   
-  // 学术研究工具（8个）
+  // 学术研究工具�?个）
   registerTools([
     { name: 'search_arxiv', definition: searchArxivDef, executor: searchArxiv },
     { name: 'fetch_arxiv', definition: fetchArxivDef, executor: fetchArxiv },
@@ -432,14 +429,14 @@ export function initializeDefaultTools(): void {
     { name: 'search_semantic_scholar', definition: searchSemanticScholarDef, executor: searchSemanticScholar }
   ])
   
-  // 文件管理工具（3个）
+  // 文件管理工具�?个）
   registerTools([
     { name: 'read_file', definition: readFileDef, executor: readFile },
     { name: 'write_file', definition: writeFileDef, executor: writeFile },
     { name: 'list_files', definition: listFilesDef, executor: listFiles }
   ])
   
-  // 平台解析工具（9个）
+  // 平台解析工具�?个）
   registerTools([
     { name: 'parse_zhihu', definition: parseZhihuDef, executor: parseZhihu },
     { name: 'parse_xiaohongshu', definition: parseXiaohongshuDef, executor: parseXiaohongshu },
@@ -452,71 +449,71 @@ export function initializeDefaultTools(): void {
     { name: 'process_image', definition: processImageDef, executor: processImage }
   ])
   
-  // GitHub 工具（34个）
+  // GitHub 工具�?4个）
   registerTools([
-    { name: 'github_get_repo', definition: githubGetRepoDef, executor: githubGetRepo },
-    { name: 'github_list_repo_contents', definition: githubListRepoContentsDef, executor: githubListRepoContents },
-    { name: 'github_get_file_content', definition: githubGetFileContentDef, executor: githubGetFileContent },
-    { name: 'github_search_code', definition: githubSearchCodeDef, executor: githubSearchCode },
-    { name: 'github_search_repos', definition: githubSearchReposDef, executor: githubSearchRepos },
-    { name: 'github_search_issues', definition: githubSearchIssuesDef, executor: githubSearchIssues },
-    { name: 'github_get_commit_history', definition: githubGetCommitHistoryDef, executor: githubGetCommitHistory },
-    { name: 'github_get_issues', definition: githubGetIssuesDef, executor: githubGetIssues },
-    { name: 'github_list_pulls', definition: githubListPullsDef, executor: githubListPulls },
-    { name: 'github_get_pull', definition: githubGetPullDef, executor: githubGetPull },
-    { name: 'github_get_pull_request_files', definition: githubGetPullRequestFilesDef, executor: githubGetPullRequestFiles },
-    { name: 'github_create_pull_request_review', definition: githubCreatePullRequestReviewDef, executor: githubCreatePullRequestReview },
-    { name: 'github_create_issue', definition: githubCreateIssueDef, executor: githubCreateIssue },
-    { name: 'github_list_issue_comments', definition: githubListIssueCommentsDef, executor: githubListIssueComments },
-    { name: 'github_create_issue_comment', definition: githubCreateIssueCommentDef, executor: githubCreateIssueComment },
-    { name: 'github_update_issue', definition: githubUpdateIssueDef, executor: githubUpdateIssue },
-    { name: 'github_list_workflows', definition: githubListWorkflowsDef, executor: githubListWorkflows },
-    { name: 'github_list_workflow_runs', definition: githubListWorkflowRunsDef, executor: githubListWorkflowRuns },
-    { name: 'github_create_or_update_file', definition: githubCreateOrUpdateFileDef, executor: githubCreateOrUpdateFile },
-    { name: 'github_delete_file', definition: githubDeleteFileDef, executor: githubDeleteFile },
-    { name: 'github_create_pull_request', definition: githubCreatePullRequestDef, executor: githubCreatePullRequest },
-    { name: 'github_merge_pull_request', definition: githubMergePullRequestDef, executor: githubMergePullRequest },
-    { name: 'github_create_branch', definition: githubCreateBranchDef, executor: githubCreateBranch },
-    { name: 'github_delete_branch', definition: githubDeleteBranchDef, executor: githubDeleteBranch },
-    { name: 'github_fork_repo', definition: githubForkRepoDef, executor: githubForkRepo },
-    { name: 'github_create_repo', definition: githubCreateRepoDef, executor: githubCreateRepo },
-    { name: 'github_update_repo', definition: githubUpdateRepoDef, executor: githubUpdateRepo },
-    { name: 'github_delete_repo', definition: githubDeleteRepoDef, executor: githubDeleteRepo },
-    { name: 'github_create_release', definition: githubCreateReleaseDef, executor: githubCreateRelease },
-    { name: 'github_list_branches', definition: githubListBranchesDef, executor: githubListBranches },
-    { name: 'github_compare_commits', definition: githubCompareCommitsDef, executor: githubCompareCommits },
-    { name: 'github_trigger_workflow', definition: githubTriggerWorkflowDef, executor: githubTriggerWorkflow },
-    { name: 'github_get_readme', definition: githubGetReadmeDef, executor: githubGetReadme },
-    { name: 'github_get_rate_limit', definition: githubGetRateLimitDef, executor: githubGetRateLimit }
+    { name: 'githubGetRepo', definition: githubGetRepoDef, executor: githubGetRepo },
+    { name: 'githubListRepoContents', definition: githubListRepoContentsDef, executor: githubListRepoContents },
+    { name: 'githubGetFileContent', definition: githubGetFileContentDef, executor: githubGetFileContent },
+    { name: 'githubSearchCode', definition: githubSearchCodeDef, executor: githubSearchCode },
+    { name: 'githubSearchRepos', definition: githubSearchReposDef, executor: githubSearchRepos },
+    { name: 'githubSearchIssues', definition: githubSearchIssuesDef, executor: githubSearchIssues },
+    { name: 'githubGetCommitHistory', definition: githubGetCommitHistoryDef, executor: githubGetCommitHistory },
+    { name: 'githubGetIssues', definition: githubGetIssuesDef, executor: githubGetIssues },
+    { name: 'githubListPulls', definition: githubListPullsDef, executor: githubListPulls },
+    { name: 'githubGetPull', definition: githubGetPullDef, executor: githubGetPull },
+    { name: 'githubGetPullRequestFiles', definition: githubGetPullRequestFilesDef, executor: githubGetPullRequestFiles },
+    { name: 'githubCreatePullRequestReview', definition: githubCreatePullRequestReviewDef, executor: githubCreatePullRequestReview },
+    { name: 'githubCreateIssue', definition: githubCreateIssueDef, executor: githubCreateIssue },
+    { name: 'githubListIssueComments', definition: githubListIssueCommentsDef, executor: githubListIssueComments },
+    { name: 'githubCreateIssueComment', definition: githubCreateIssueCommentDef, executor: githubCreateIssueComment },
+    { name: 'githubUpdateIssue', definition: githubUpdateIssueDef, executor: githubUpdateIssue },
+    { name: 'githubListWorkflows', definition: githubListWorkflowsDef, executor: githubListWorkflows },
+    { name: 'githubListWorkflowRuns', definition: githubListWorkflowRunsDef, executor: githubListWorkflowRuns },
+    { name: 'githubCreateOrUpdateFile', definition: githubCreateOrUpdateFileDef, executor: githubCreateOrUpdateFile },
+    { name: 'githubDeleteFile', definition: githubDeleteFileDef, executor: githubDeleteFile },
+    { name: 'githubCreatePullRequest', definition: githubCreatePullRequestDef, executor: githubCreatePullRequest },
+    { name: 'githubMergePullRequest', definition: githubMergePullRequestDef, executor: githubMergePullRequest },
+    { name: 'githubCreateBranch', definition: githubCreateBranchDef, executor: githubCreateBranch },
+    { name: 'githubDeleteBranch', definition: githubDeleteBranchDef, executor: githubDeleteBranch },
+    { name: 'githubForkRepo', definition: githubForkRepoDef, executor: githubForkRepo },
+    { name: 'githubCreateRepo', definition: githubCreateRepoDef, executor: githubCreateRepo },
+    { name: 'githubUpdateRepo', definition: githubUpdateRepoDef, executor: githubUpdateRepo },
+    { name: 'githubDeleteRepo', definition: githubDeleteRepoDef, executor: githubDeleteRepo },
+    { name: 'githubCreateRelease', definition: githubCreateReleaseDef, executor: githubCreateRelease },
+    { name: 'githubListBranches', definition: githubListBranchesDef, executor: githubListBranches },
+    { name: 'githubCompareCommits', definition: githubCompareCommitsDef, executor: githubCompareCommits },
+    { name: 'githubTriggerWorkflow', definition: githubTriggerWorkflowDef, executor: githubTriggerWorkflow },
+    { name: 'githubGetReadme', definition: githubGetReadmeDef, executor: githubGetReadme },
+    { name: 'githubGetRateLimit', definition: githubGetRateLimitDef, executor: githubGetRateLimit }
   ])
   
-  // 笔记工具（3个）
+  // 笔记工具�?个）
   registerTools([
     { name: 'create_note', definition: createNoteDef, executor: createNote },
     { name: 'list_notes', definition: listNotesDef, executor: listNotes },
     { name: 'query_knowledge', definition: queryKnowledgeDef, executor: queryKnowledge }
   ])
   
-  // 文本处理工具（3个）
+  // 文本处理工具�?个）
   registerTools([
     { name: 'summarize_text', definition: summarizeTextDef, executor: summarizeText },
     { name: 'format_text', definition: formatTextDef, executor: formatText },
     { name: 'translate_text', definition: translateTextDef, executor: translateText }
   ])
   
-  // 代码工具（2个）
+  // 代码工具�?个）
   registerTools([
     { name: 'execute_code', definition: executeCodeDef, executor: executeCode },
     { name: 'analyze_code', definition: analyzeCodeDef, executor: analyzeCode }
   ])
   
-  // 网络工具（2个）
+  // 网络工具�?个）
   registerTools([
     { name: 'web_search', definition: webSearchDef, executor: webSearch },
     { name: 'fetch_url', definition: fetchUrlDef, executor: fetchUrl }
   ])
   
-  // 系统工具（4个）
+  // 系统工具�?个）
   registerTools([
     { name: 'get_current_time', definition: getCurrentTimeDef, executor: getCurrentTime },
     { name: 'get_weather', definition: getWeatherDef, executor: getWeather },
@@ -524,7 +521,7 @@ export function initializeDefaultTools(): void {
     { name: 'test_echo', definition: testEchoDef, executor: testEcho }
   ])
 
-  // 飞书文档工具（13个）
+  // 飞书文档工具�?3个）
   registerTools([
     { name: 'feishu_doc_create', definition: feishuDocCreateDef, executor: feishuDocCreate },
     { name: 'feishu_doc_read', definition: feishuDocReadDef, executor: feishuDocRead },
@@ -558,7 +555,7 @@ export function initializeDefaultTools(): void {
     { name: 'feishu_wiki_member_remove', definition: feishuWikiMemberRemoveDef, executor: feishuWikiMemberRemove },
   ])
 
-  // 语雀文档工具（9个）
+  // 语雀文档工具�?个）
   registerTools([
     { name: 'yuque_repo_list', definition: yuqueRepoListDef, executor: yuqueRepoList },
     { name: 'yuque_toc_get', definition: yuqueTocGetDef, executor: yuqueTocGet },
@@ -581,18 +578,18 @@ export function initializeDefaultTools(): void {
     { name: 'yuque_repo_setting_update', definition: yuqueRepoSettingUpdateDef, executor: yuqueRepoSettingUpdate },
   ])
 
-  // Skill 加载工具（1个）- 让 Agent 主动加载 Skill 内容
+  // Skill 加载工具�?个）- �?Agent 主动加载 Skill 内容
   registerTools([
     { name: 'load_skill', definition: loadSkillDef, executor: executeLoadSkill }
   ])
 
-  // Meta 查询工具（2个）- 让 Agent 查询系统能力全貌
+  // Meta 查询工具�?个）- �?Agent 查询系统能力全貌
   registerTools([
     { name: 'get_all_tools', definition: getAllToolsDef, executor: executeGetAllTools },
     { name: 'get_all_skills', definition: getAllSkillsDef, executor: executeGetAllSkills }
   ])
 
-  // 能力搜索工具（1个）- 让 Agent 通过关键词搜索工具和 Skills
+  // 能力搜索工具�?个）- �?Agent 通过关键词搜索工具和 Skills
   registerTools([
     { name: 'search_capabilities', definition: searchCapabilitiesDef, executor: executeSearchCapabilities }
   ])
@@ -600,7 +597,6 @@ export function initializeDefaultTools(): void {
   console.log(`[ToolSystem] ${getRegisteredToolNames().length} 个工具已初始化`)
 }
 
-// 自动初始化（如果在浏览器环境）
-if (typeof window !== 'undefined') {
+// 自动初始化（如果在浏览器环境�?if (typeof window !== 'undefined') {
   initializeDefaultTools()
 }

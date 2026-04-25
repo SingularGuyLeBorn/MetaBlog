@@ -7,22 +7,22 @@ export {
   parseZhihu,
   parseXiaohongshu,
   parseWechat,
-  parsePlatformLink,
   parseDouyin,
   parseBilibili,
   parseWeibo,
-  ocrImage,
-  processImage
-} from './executors'
-
-export {
   parseZhihuDef,
   parseXiaohongshuDef,
   parseWechatDef,
-  parsePlatformLinkDef,
   parseDouyinDef,
   parseBilibiliDef,
-  parseWeiboDef,
+  parseWeiboDef
+} from './social'
+
+export {
+  parsePlatformLink,
+  ocrImage,
+  processImage,
+  parsePlatformLinkDef,
   ocrImageDef,
   processImageDef
-} from './definitions'
+} from './generic'

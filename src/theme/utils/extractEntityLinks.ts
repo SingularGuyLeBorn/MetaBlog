@@ -48,16 +48,20 @@ export function extractEntityLinks(toolName: string, toolResult: any): EntityLin
   const message = toolResult.message
 
   // 1. 按工具类型从 data 中提取已知字段
-  const knownFields = TOOL_URL_FIELDS[toolName] || []
-  for (const fieldPath of knownFields) {
-    const val = getNestedValue(data, fieldPath)
-    if (typeof val !== 'string') continue
+  // 只有 TOOL_URL_FIELDS 中明确配置的工具才会提取，避免查询类工具返回的
+  // 描述文本中碰巧包含示例 URL 被误渲染为卡片
+  const knownFields = TOOL_URL_FIELDS[toolName]
+  if (knownFields) {
+    for (const fieldPath of knownFields) {
+      const val = getNestedValue(data, fieldPath)
+      if (typeof val !== 'string') continue
 
-    // 飞书特殊处理：document.document_id 拼接成 URL
-    if (fieldPath === 'document.document_id' && toolName.includes('feishu')) {
-      links.push(createEntityLink(`https://feishu.cn/docx/${val}`, toolName, data))
-    } else if (isValidUrl(val)) {
-      links.push(createEntityLink(val, toolName, data))
+      // 飞书特殊处理：document.document_id 拼接成 URL
+      if (fieldPath === 'document.document_id' && toolName.includes('feishu')) {
+        links.push(createEntityLink(`https://feishu.cn/docx/${val}`, toolName, data))
+      } else if (isValidUrl(val)) {
+        links.push(createEntityLink(val, toolName, data))
+      }
     }
   }
 
@@ -67,11 +71,6 @@ export function extractEntityLinks(toolName: string, toolResult: any): EntityLin
     for (const url of msgLinks) {
       links.push(createEntityLink(url, toolName, data))
     }
-  }
-
-  // 3. 从 data 全量递归扫描 URL（兜底）
-  if (links.length === 0 && data) {
-    scanUrlsRecursive(data, links, toolName)
   }
 
   // 去重

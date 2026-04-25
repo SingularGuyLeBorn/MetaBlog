@@ -181,16 +181,18 @@ Function Calling (OpenAI 格式)
 | `execute_code` | 在沙箱中执行 Python/JS/Bash |
 | `analyze_code` | 代码分析 |
 
-### 学术研究（6个）
+### 学术研究（8个）
 
 | 工具名 | 功能 |
 |--------|------|
-| `searchArxiv` | 搜索 arXiv 论文 |
-| `fetchArxiv` | 获取 arXiv 论文详情 |
-| `searchOpenReview` | 搜索 OpenReview |
-| `searchHuggingFace` | 搜索 HuggingFace 模型 |
-| `searchPapersWithCode` | 搜索 Papers with Code |
-| `searchSemanticScholar` | 搜索 Semantic Scholar |
+| `search_arxiv` | 搜索 arXiv 论文 |
+| `fetch_arxiv` | 获取 arXiv 论文详情 |
+| `search_openreview` | 搜索 OpenReview |
+| `fetch_openreview` | 获取 OpenReview 论文详情 |
+| `search_huggingface` | 搜索 HuggingFace 模型 |
+| `fetch_huggingface_model` | 获取 HuggingFace 模型详情 |
+| `search_paperswithcode` | 搜索 Papers with Code |
+| `search_semantic_scholar` | 搜索 Semantic Scholar |
 
 ### 文件操作（3个）
 
@@ -200,24 +202,27 @@ Function Calling (OpenAI 格式)
 | `write_file` | 写入文件 |
 | `list_files` | 列出目录 |
 
-### 平台解析（5个）
+### 平台解析（9个）
 
 | 工具名 | 功能 |
 |--------|------|
 | `parse_zhihu` | 解析知乎文章 |
 | `parse_xiaohongshu` | 解析小红书笔记 |
 | `parse_wechat` | 解析微信公众号文章 |
+| `parse_douyin` | 解析抖音 |
+| `parse_bilibili` | 解析 B 站 |
+| `parse_weibo` | 解析微博 |
+| `parse_platform_link` | 通用平台链接解析 |
 | `ocr_image` | OCR 图片识别 |
 | `process_image` | 图片处理 |
 
-### 文本处理（4个）
+### 文本处理（3个）
 
 | 工具名 | 功能 |
 |--------|------|
 | `summarize_text` | 文本摘要 |
 | `format_text` | 文本格式化 |
 | `translate_text` | 文本翻译 |
-| ... | ... |
 
 ### 系统（4个）
 
@@ -227,6 +232,14 @@ Function Calling (OpenAI 格式)
 | `get_weather` | 获取天气 |
 | `calculate` | 数学计算 |
 | `test_echo` | 回声测试 |
+
+### 笔记（3个）
+
+| 工具名 | 功能 |
+|--------|------|
+| `create_note` | 创建笔记 |
+| `list_notes` | 列出笔记 |
+| `query_knowledge` | 查询知识库 |
 
 ---
 

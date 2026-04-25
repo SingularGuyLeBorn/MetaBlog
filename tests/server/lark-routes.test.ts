@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
-import { registerLarkRoutes } from '../../server/routes/lark'
+import { registerLarkRoutes } from '../../server/routes/external/lark'
 import { createMockServer, createMockCtx, mockFetch } from './test-utils'
 
 describe('Lark Routes', () => {

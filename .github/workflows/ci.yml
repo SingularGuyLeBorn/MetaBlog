@@ -7,7 +7,7 @@ on:
     branches: [main, master]
 
 jobs:
-  test:
+  test-ts:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,13 +29,10 @@ jobs:
       - name: TypeScript type check
         run: npx tsc --noEmit
 
-      - name: Run frontend tests
+      - name: Run Vitest tests
         run: pnpm test:run
 
-      - name: Run backend route tests
-        run: npx vitest run tests/server/ --reporter=verbose
-
-  python-test:
+  test-python:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

@@ -24,7 +24,7 @@ MetaBlog 是一个将**静态博客**、**AI 对话**和**自主 Agent**融为�
 |------|------|
 | 📝 **智能博客** | VitePress 驱动的 Markdown 博客，支持数学公式、代码高亮、Wiki 链接 |
 | 🤖 **AI 对话** | 多模型支持（DeepSeek/Kimi/Zhipu/OpenAI 等），流式响应，思考过程展示 |
-| 🛠️ **工具调用** | 100+ 内置工具 + MCP 外部扩展，AI 可直接操作文件、GitHub、飞书、语雀等 |
+| 🛠️ **工具调用** | 119+ 内置工具 + MCP 外部扩展，AI 可直接操作文件、GitHub、飞书、语雀等 |
 | 🧪 **代码沙箱** | 后端安全执行 Python/JavaScript/Bash，支持数学计算和代码验证 |
 | 👤 **Agent 系统** | 多 Agent 管理、Skill 技能组合、独立会话、工具权限控制 |
 

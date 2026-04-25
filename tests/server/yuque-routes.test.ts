@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
-import { registerYuqueRoutes } from '../../server/routes/yuque'
+import { registerYuqueRoutes } from '../../server/routes/external/yuque'
 import { createMockServer, createMockCtx, mockFetch } from './test-utils'
 
 describe('Yuque Routes', () => {

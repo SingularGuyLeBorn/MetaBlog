@@ -60,7 +60,7 @@ class GitHubClient:
     GRAPHQL_URL = "https://api.github.com/graphql"
 
     def __init__(self, token: Optional[str] = None):
-        self.token = token or os.getenv("VITE_GITHUB_TOKEN")
+        self.token = token or os.getenv("GITHUB_TOKEN") or os.getenv("VITE_GITHUB_TOKEN")
         if not self.token:
             warnings.warn("GitHub token 未提供，部分 API（尤其是搜索）将不可用", stacklevel=2)
         self.session = requests.Session()
