@@ -2,6 +2,8 @@ import type { ViteDevServer } from "vite";
 import type { RouteContext } from "../types";
 import { markdownToLake } from "../../utils/lake-builder";
 import { yuque as yuqueEnv } from "../../config/env";
+import { rateLimitExternal } from "../../middleware/rate-limit";
+import { translateYuqueError } from "../../utils/yuque-error-translator";
 
 // =============================================================================
 // 语雀 (Yuque) 内部 Web API 路由
@@ -236,7 +238,8 @@ function registerRoute(
   server.middlewares.use(path, async (req: any, res: any, next: any) => {
     if (!methods.includes(req.method)) { next(); return; }
     try { await handler(req, res); }
-    catch (e: any) { sendJson(res, 500, { code: -1, msg: e.message }); }
+    catch (e: any) { const translated = translateYuqueError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion }); }
   });
 }
 
@@ -279,6 +282,7 @@ async function yuqueApiMultipart(
 // =============================================================================
 
 export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
+  server.middlewares.use("/api/yuque", rateLimitExternal);
   const { structuredLog } = ctx;
 
   // ==========================================================================
@@ -445,7 +449,8 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       );
       sendJson(res, result.data ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateYuqueError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -564,7 +569,8 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       );
       sendJson(res, result.data ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateYuqueError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -652,7 +658,8 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
         sendJson(res, 400, result);
       }
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateYuqueError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 

@@ -1,5 +1,8 @@
 import type { ViteDevServer } from "vite";
 import type { RouteContext } from "./proxy";
+import { lark as larkEnv } from "../../config/env";
+import { rateLimitExternal } from "../../middleware/rate-limit";
+import { translateLarkError } from "../../utils/lark-error-translator";
 
 /**
  * 飞书 Open API 直连路由
@@ -18,8 +21,8 @@ async function getTenantAccessToken(): Promise<string> {
     return tokenCache.token;
   }
 
-  const appId = process.env.FEISHU_APP_ID || process.env.LARK_APP_ID;
-  const appSecret = process.env.FEISHU_APP_SECRET || process.env.LARK_APP_SECRET;
+  const appId = larkEnv.appId;
+  const appSecret = larkEnv.appSecret;
 
   if (!appId || !appSecret) {
     throw new Error(
@@ -48,7 +51,7 @@ async function getTenantAccessToken(): Promise<string> {
 
 /** 获取 user_access_token（从环境变量读取） */
 function getUserAccessToken(): string {
-  const token = process.env.FEISHU_USER_ACCESS_TOKEN;
+  const token = larkEnv.userAccessToken;
   if (!token) {
     throw new Error(
       "FEISHU_USER_ACCESS_TOKEN 未配置。\n" +
@@ -74,7 +77,7 @@ async function feishuApi(
   useUserToken: boolean = false
 ): Promise<any> {
   // 自动判断：Wiki 路径优先使用 user token（避免 131006 permission denied）
-  const shouldUseUserToken = useUserToken || (path.startsWith('/wiki/') && !!process.env.FEISHU_USER_ACCESS_TOKEN);
+  const shouldUseUserToken = useUserToken || (path.startsWith('/wiki/') && !!larkEnv.userAccessToken);
   const token = shouldUseUserToken ? getUserAccessToken() : await getTenantAccessToken();
 
   let url = `${FEISHU_BASE}${path}`;
@@ -158,7 +161,7 @@ async function feishuApiMultipart(
   formData: FormData,
   useUserToken: boolean = false
 ): Promise<any> {
-  const shouldUseUserToken = useUserToken || (path.startsWith('/wiki/') && !!process.env.FEISHU_USER_ACCESS_TOKEN);
+  const shouldUseUserToken = useUserToken || (path.startsWith('/wiki/') && !!larkEnv.userAccessToken);
   const token = shouldUseUserToken ? getUserAccessToken() : await getTenantAccessToken();
 
   const res = await fetch(`${FEISHU_BASE}${path}`, {
@@ -174,6 +177,7 @@ async function feishuApiMultipart(
 }
 
 export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
+  server.middlewares.use("/api/lark", rateLimitExternal);
   const { structuredLog } = ctx;
 
   // ============================================
@@ -243,7 +247,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
           }
           
           // 方式2: tenant token 创建且未显式指定 owner → 自动分享给当前 user token 用户
-          if (!shared && !useUserToken && process.env.FEISHU_USER_ACCESS_TOKEN) {
+          if (!shared && !useUserToken && larkEnv.userAccessToken) {
             try {
               const meRes = await feishuApi("GET", "/contact/v3/users/me", undefined, undefined, true);
               const myOpenId = meRes.data?.user?.user_id;
@@ -269,7 +273,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
 
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -295,7 +300,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("GET", `/docx/v1/documents/${documentId}/raw_content`, undefined, undefined, useUserToken);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -320,7 +326,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("GET", `/docx/v1/documents/${documentId}`, undefined, undefined, useUserToken);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -349,7 +356,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("POST", "/suite/docs-api/search/object", payload);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -379,7 +387,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       );
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -466,7 +475,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         data: { results },
       });
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -643,7 +653,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       );
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -701,7 +712,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       );
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -820,7 +832,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         },
       });
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -902,7 +915,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       );
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -976,7 +990,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       );
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1022,7 +1037,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       );
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1082,7 +1098,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       }
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1100,7 +1117,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("POST", "/wiki/v2/spaces", payload, undefined, true);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1138,7 +1156,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         data: { items: allItems },
       });
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1159,7 +1178,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("GET", `/wiki/v2/spaces/${space_id}`);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1183,7 +1203,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("PATCH", `/wiki/v2/spaces/${space_id}`, payload);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1204,7 +1225,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("DELETE", `/wiki/v2/spaces/${space_id}`);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1231,7 +1253,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/nodes`, payload);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1276,7 +1299,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         data: { items: allItems },
       });
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1298,7 +1322,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("DELETE", `/wiki/v2/spaces/${space_id}/nodes/${node_token}`);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1324,7 +1349,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/nodes/move_docs_to_wiki`, payload, undefined, true);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1345,7 +1371,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("GET", `/docx/v1/documents/${documentId}`, undefined, undefined, useUserToken);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1366,7 +1393,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/nodes/${node_token}/move`, payload, undefined, true);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1388,7 +1416,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("GET", `/wiki/v2/spaces/${space_id}/members`, undefined, { page_size });
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1412,7 +1441,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/members`, payload);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
@@ -1431,7 +1461,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const result = await feishuApi("DELETE", `/wiki/v2/spaces/${space_id}/members/${member_id}`);
       sendJson(res, result.code === 0 ? 200 : 400, result);
     } catch (e: any) {
-      sendJson(res, 500, { code: -1, msg: e.message });
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
 
