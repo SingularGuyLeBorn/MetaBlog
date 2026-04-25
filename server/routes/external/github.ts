@@ -98,7 +98,7 @@ export function registerGitHubRoutes(server: ViteDevServer): void {
   // 模式 1：显式工具执行端点（后端重逻辑）
   // ═══════════════════════════════════════════════════════════════════════════
   server.middlewares.use("/api/github/tools/execute", async (req, res, next) => {
-    if (req.url !== "/api/github/tools/execute" || req.method !== "POST") {
+    if (req.method !== "POST") {
       next();
       return;
     }
@@ -128,7 +128,7 @@ export function registerGitHubRoutes(server: ViteDevServer): void {
 
   // 工具列表端点（供前端发现可用工具）
   server.middlewares.use("/api/github/tools", async (req, res, next) => {
-    if (req.url !== "/api/github/tools" || req.method !== "GET") {
+    if (req.method !== "GET") {
       next();
       return;
     }
