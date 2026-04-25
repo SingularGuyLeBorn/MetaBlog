@@ -23,7 +23,7 @@ export const githubGetIssuesDef: ToolDefinition = {
       properties: {
         owner: {
           type: 'string',
-          description: '仓库所有者
+          description: '仓库所有者'
         },
         repo: {
           type: 'string',
@@ -31,7 +31,7 @@ export const githubGetIssuesDef: ToolDefinition = {
         },
         state: {
           type: 'string',
-          description: 'Issue 状态：open（开放）、closed（已关闭）、all（全部），默认open',
+          description: 'Issue 状态：open(开放)、closed(已关闭)、all(全部)，默认open',
           enum: ['open', 'closed', 'all'],
           default: 'open'
         },
@@ -58,7 +58,7 @@ export const githubCreateIssueDef: ToolDefinition = {
       properties: {
         owner: {
           type: 'string',
-          description: '仓库所有者
+          description: '仓库所有者'
         },
         repo: {
           type: 'string',
@@ -70,7 +70,7 @@ export const githubCreateIssueDef: ToolDefinition = {
         },
         body: {
           type: 'string',
-          description: 'Issue 正文内容（支Markdown
+          description: 'Issue 正文内容(支持Markdown)'
         },
         labels: {
           type: 'array',
@@ -91,10 +91,10 @@ export const githubCreateIssueCommentDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
         number: { type: 'number', description: 'Issue PR 编号' },
-        body: { type: 'string', description: '评论内容（支Markdown }
+        body: { type: 'string', description: '评论内容(支持Markdown' }
       },
       required: ['owner', 'repo', 'number', 'body']
     }
@@ -109,13 +109,13 @@ export const githubUpdateIssueDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
         number: { type: 'number', description: 'Issue 编号' },
-        title: { type: 'string', description: '新标题（可选）' },
-        body: { type: 'string', description: '新正文（可选）' },
-        state: { type: 'string', enum: ['open', 'closed'], description: '状 },
-        labels: { type: 'array', items: { type: 'string' }, description: '标签列表（可选）' }
+        title: { type: 'string', description: '新标题(可选)' },
+        body: { type: 'string', description: '新正文(可选)' },
+        state: { type: 'string', enum: ['open', 'closed'], description: '状态' },
+        labels: { type: 'array', items: { type: 'string' }, description: '标签列表(可选)' }
       },
       required: ['owner', 'repo', 'number']
     }
@@ -135,7 +135,7 @@ export const githubListIssueCommentsDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
         number: { type: 'number', description: 'Issue PR 编号' },
         per_page: { type: 'number', description: '每页数量，默认30', default: 30 }

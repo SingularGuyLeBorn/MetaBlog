@@ -27,7 +27,7 @@ export const githubGetRepoDef: ToolDefinition = {
       properties: {
         owner: {
           type: 'string',
-          description: '仓库所有者（用户名或组织名），例如"facebook"microsoft"vercel"'
+          description: '仓库所有者'
         },
         repo: {
           type: 'string',
@@ -59,7 +59,7 @@ export const githubListRepoContentsDef: ToolDefinition = {
       properties: {
         owner: {
           type: 'string',
-          description: '仓库所有者
+          description: '仓库所有者'
         },
         repo: {
           type: 'string',
@@ -72,7 +72,7 @@ export const githubListRepoContentsDef: ToolDefinition = {
         },
         ref: {
           type: 'string',
-          description: '分支、标签或 commit SHA，默认主分支（main/master
+          description: '分支、标签或 commit SHA，默认主分支（main/master)'
         }
       },
       required: ['owner', 'repo']
@@ -102,7 +102,7 @@ export const githubGetFileContentDef: ToolDefinition = {
       properties: {
         owner: {
           type: 'string',
-          description: '仓库所有者
+          description: '仓库所有者'
         },
         repo: {
           type: 'string',
@@ -118,7 +118,7 @@ export const githubGetFileContentDef: ToolDefinition = {
         },
         max_length: {
           type: 'number',
-          description: '最大读取字符数，默认5000。大文件建议调大或分多次读取,
+          description: '最大读取字符数，默认5000。大文件建议调大或分多次读取',
           default: 5000
         }
       },
@@ -182,7 +182,7 @@ export const githubGetCommitHistoryDef: ToolDefinition = {
       properties: {
         owner: {
           type: 'string',
-          description: '仓库所有者
+          description: '仓库所有者'
         },
         repo: {
           type: 'string',
@@ -211,9 +211,9 @@ export const githubGetReadmeDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
-        ref: { type: 'string', description: '分支或标签 }
+        ref: { type: 'string', description: '分支或标签' }
       },
       required: ['owner', 'repo']
     }
@@ -228,7 +228,7 @@ export const githubCompareCommitsDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
         base: { type: 'string', description: '基准分支或commit' },
         head: { type: 'string', description: '对比分支或commit' }
@@ -320,7 +320,7 @@ export const githubCreateRepoDef: ToolDefinition = {
         },
         private: {
           type: 'boolean',
-          description: '是否私有仓库，默认false（公开,
+          description: '是否私有仓库，默认false（公开)',
           default: false
         },
         auto_init: {
@@ -352,7 +352,7 @@ export const githubUpdateRepoDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
         description: { type: 'string', description: '新的仓库描述（可选）' },
         visibility: { type: 'string', description: '可见性：public 或 private（可选）' },
@@ -383,7 +383,7 @@ export const githubDeleteRepoDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' }
       },
       required: ['owner', 'repo']
@@ -399,7 +399,7 @@ export const githubCreateReleaseDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
         tag_name: { type: 'string', description: '标签名，例如 "v1.0.0"' },
         name: { type: 'string', description: 'Release 标题' },

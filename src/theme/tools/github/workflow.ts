@@ -17,7 +17,7 @@ export const githubListWorkflowsDef: ToolDefinition = {
       properties: {
         owner: {
           type: 'string',
-          description: '仓库所有者
+          description: '仓库所有者'
         },
         repo: {
           type: 'string',
@@ -39,7 +39,7 @@ export const githubListWorkflowRunsDef: ToolDefinition = {
       properties: {
         owner: {
           type: 'string',
-          description: '仓库所有者
+          description: '仓库所有者'
         },
         repo: {
           type: 'string',
@@ -64,7 +64,7 @@ export const githubTriggerWorkflowDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
         workflow_id: { type: 'string', description: '工作ID 或文件名' },
         ref: { type: 'string', description: '触发分支，默认main', default: 'main' },

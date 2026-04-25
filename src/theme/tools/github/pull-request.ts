@@ -23,7 +23,7 @@ export const githubListPullsDef: ToolDefinition = {
       properties: {
         owner: {
           type: 'string',
-          description: '仓库所有者
+          description: '仓库所有者'
         },
         repo: {
           type: 'string',
@@ -56,7 +56,7 @@ export const githubGetPullDef: ToolDefinition = {
       properties: {
         owner: {
           type: 'string',
-          description: '仓库所有者
+          description: '仓库所有者'
         },
         repo: {
           type: 'string',
@@ -80,12 +80,12 @@ export const githubCreatePullRequestDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
         title: { type: 'string', description: 'PR 标题' },
         head: { type: 'string', description: '源分支，例如 "feature-branch"' },
         base: { type: 'string', description: '目标分支，默认main', default: 'main' },
-        body: { type: 'string', description: 'PR 正文（支Markdown },
+        body: { type: 'string', description: 'PR 正文（支持Markdown' },
         draft: { type: 'boolean', description: '是否为 Draft', default: false }
       },
       required: ['owner', 'repo', 'title', 'head']
@@ -101,7 +101,7 @@ export const githubMergePullRequestDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
         number: { type: 'number', description: 'PR 编号' },
         merge_method: { type: 'string', enum: ['merge', 'squash', 'rebase'], description: '合并方式，默认squash', default: 'squash' },
@@ -127,7 +127,7 @@ export const githubGetPullRequestFilesDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
         number: { type: 'number', description: 'PR 编号' },
         per_page: { type: 'number', description: '每页数量，默认100', default: 100 }
@@ -154,15 +154,15 @@ export const githubCreatePullRequestReviewDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
         number: { type: 'number', description: 'PR 编号' },
         event: {
           type: 'string',
-          description: 'Review 类型：APPROVE（通过）、REQUEST_CHANGES（请求修改）、COMMENT（仅评论,
+          description: 'Review 类型：APPROVE（通过）、REQUEST_CHANGES（请求修改）、COMMENT（仅评论)',
           enum: ['APPROVE', 'REQUEST_CHANGES', 'COMMENT']
         },
-        body: { type: 'string', description: 'Review 评论内容（REQUEST_CHANGES COMMENT 必填 }
+        body: { type: 'string', description: 'Review 评论内容（REQUEST_CHANGES COMMENT 必填)' }
       },
       required: ['owner', 'repo', 'number', 'event']
     }

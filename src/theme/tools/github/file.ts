@@ -14,13 +14,13 @@ export const githubCreateOrUpdateFileDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
         path: { type: 'string', description: '文件路径，例如"src/index.ts"' },
-        content: { type: 'string', description: '文件纯文本内 },
+        content: { type: 'string', description: '文件纯文本内' },
         message: { type: 'string', description: 'commit 消息' },
         branch: { type: 'string', description: '目标分支，默认main', default: 'main' },
-        sha: { type: 'string', description: '现有文件 sha（更新时必填 }
+        sha: { type: 'string', description: '现有文件 sha(更新时必填)' }
       },
       required: ['owner', 'repo', 'path', 'content', 'message']
     }
@@ -35,7 +35,7 @@ export const githubDeleteFileDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        owner: { type: 'string', description: '仓库所有者 },
+        owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
         path: { type: 'string', description: '文件路径' },
         message: { type: 'string', description: 'commit 消息' },
