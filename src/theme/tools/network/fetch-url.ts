@@ -100,7 +100,31 @@ export const fetchUrl: ToolExecutor = async (args): Promise<ToolResult> => {
     )
   }
 
-  try {
+  // 检测是否是需要 Jina Reader 的反爬虫平台
+  const isAntiCrawlPlatform = /zhihu\.com|zhuanlan\.zhihu\.com|mp\.weixin\.qq\.com|juejin\.cn|csdn\.net/.test(url)
+
+  let rawContent = ''
+  let contentType = ''
+  let usedJinaReader = false
+
+  // 【反爬虫平台】优先使用 Jina Reader API（免费，知乎/微信等支持良好）
+  if (isAntiCrawlPlatform) {
+    try {
+      const jinaRes = await fetch(`https://r.jina.ai/${encodeURIComponent(url)}`, {
+        signal: AbortSignal.timeout(timeout)
+      })
+      if (jinaRes.ok) {
+        rawContent = await jinaRes.text()
+        contentType = 'text/markdown'
+        usedJinaReader = true
+      }
+    } catch {
+      // Jina Reader 失败则继续走 proxy/fetch
+    }
+  }
+
+  // 非反爬虫平台，或 Jina Reader 失败时，走 proxy/fetch
+  if (!usedJinaReader) {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeout)
 
@@ -119,85 +143,109 @@ export const fetchUrl: ToolExecutor = async (args): Promise<ToolResult> => {
     clearTimeout(timeoutId)
 
     if (!response.ok) {
-      if (response.status === 404) {
-        return createErrorResult(
-          'Resource not found (404)',
-          '资源未找到',
-          '请检查 URL 是否正确'
-        )
-      }
-      if (response.status === 401 || response.status === 403) {
-        return createErrorResult(
-          `Access denied (${response.status})`,
-          '访问被拒绝',
-          '可能需要身份验证或权限不足'
-        )
-      }
-      return createErrorResult(
-        `HTTP ${response.status}`,
-        '请求失败',
-        '请检查请求参数或稍后重试'
-      )
-    }
-
-    const contentType = response.headers.get('content-type') || ''
-    const rawContent = await response.text()
-
-    // 根据内容类型处理
-    let processedContent = rawContent
-    let parsedByPlatform = false
-    let parsedTitle = ''
-    let parsedAuthor = ''
-
-    if (contentType.includes('application/json')) {
-      try {
-        const jsonData = JSON.parse(rawContent)
-        processedContent = JSON.stringify(jsonData, null, 2)
-      } catch {
-        // 保持原样
-      }
-    } else if (contentType.includes('text/html')) {
-      // 【优化】HTML 内容优先走 platform-parser 进行精炼解析
-      // platform-parser 针对各平台（微信公众号、知乎、B站等）有专门解析逻辑，
-      // 能提取正文、去除广告导航页脚等噪声，比简单去标签节省大量 token
-      try {
-        const platformRes = await fetch(`${API_BASE}/platform/parse`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
-        })
-        if (platformRes.ok) {
-          const platformData = await platformRes.json()
-          if (platformData.success && platformData.data?.content) {
-            parsedByPlatform = true
-            parsedTitle = platformData.data.title || ''
-            parsedAuthor = platformData.data.author || ''
-            // 组合成 Markdown 格式，更省 token 且结构清晰
-            const parts: string[] = []
-            if (parsedTitle) parts.push(`# ${parsedTitle}`)
-            if (parsedAuthor) parts.push(`> 作者: ${parsedAuthor}`)
-            parts.push(platformData.data.content)
-            processedContent = parts.join('\n\n')
+      // proxy/fetch 返回 403 时，尝试 Jina Reader 作为兜底
+      if (response.status === 403) {
+        try {
+          const jinaRes = await fetch(`https://r.jina.ai/${encodeURIComponent(url)}`, {
+            signal: AbortSignal.timeout(timeout)
+          })
+          if (jinaRes.ok) {
+            rawContent = await jinaRes.text()
+            contentType = 'text/markdown'
+            usedJinaReader = true
           }
+        } catch {
+          // Jina Reader 也失败
         }
-      } catch {
-        // platform-parser 失败则 fallback 到简单处理
       }
 
-      // Fallback: 简单去标签（platform-parser 失败或未命中平台时）
-      if (!parsedByPlatform) {
-        processedContent = rawContent
-          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-          .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
-          .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
-          .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
-          .replace(/<aside[^>]*>[\s\S]*?<\/aside>/gi, '')
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim()
+      if (!usedJinaReader) {
+        if (response.status === 404) {
+          return createErrorResult(
+            'Resource not found (404)',
+            '资源未找到',
+            '请检查 URL 是否正确'
+          )
+        }
+        if (response.status === 401 || response.status === 403) {
+          return createErrorResult(
+            `Access denied (${response.status})`,
+            '访问被拒绝',
+            '可能需要身份验证或权限不足'
+          )
+        }
+        return createErrorResult(
+          `HTTP ${response.status}`,
+          '请求失败',
+          '请检查请求参数或稍后重试'
+        )
       }
+    } else {
+      contentType = response.headers.get('content-type') || ''
+      rawContent = await response.text()
     }
+  }
+
+  // 根据内容类型处理
+  let processedContent = rawContent
+  let parsedByPlatform = false
+  let parsedTitle = ''
+  let parsedAuthor = ''
+
+  if (usedJinaReader) {
+    // Jina Reader 返回的就是 Markdown 格式，直接解析
+    const lines = rawContent.split('\n')
+    parsedTitle = lines[0]?.replace(/^Title:\s*/, '') || ''
+    processedContent = lines.slice(1).join('\n').trim()
+  } else if (contentType.includes('application/json')) {
+    try {
+      const jsonData = JSON.parse(rawContent)
+      processedContent = JSON.stringify(jsonData, null, 2)
+    } catch {
+      // 保持原样
+    }
+  } else if (contentType.includes('text/html')) {
+    // 【优化】HTML 内容优先走 platform-parser 进行精炼解析
+    // platform-parser 针对各平台（微信公众号、知乎、B站等）有专门解析逻辑，
+    // 能提取正文、去除广告导航页脚等噪声，比简单去标签节省大量 token
+    try {
+      const platformRes = await fetch(`${API_BASE}/platform/parse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      })
+      if (platformRes.ok) {
+        const platformData = await platformRes.json()
+        if (platformData.success && platformData.data?.content) {
+          parsedByPlatform = true
+          parsedTitle = platformData.data.title || ''
+          parsedAuthor = platformData.data.author || ''
+          // 组合成 Markdown 格式，更省 token 且结构清晰
+          const parts: string[] = []
+          if (parsedTitle) parts.push(`# ${parsedTitle}`)
+          if (parsedAuthor) parts.push(`> 作者: ${parsedAuthor}`)
+          parts.push(platformData.data.content)
+          processedContent = parts.join('\n\n')
+        }
+      }
+    } catch {
+      // platform-parser 失败则 fallback 到简单处理
+    }
+
+    // Fallback: 简单去标签（platform-parser 失败或未命中平台时）
+    if (!parsedByPlatform) {
+      processedContent = rawContent
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+        .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
+        .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
+        .replace(/<aside[^>]*>[\s\S]*?<\/aside>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+    }
+  }
 
     // 截断内容 — 截断时提示 AI 可以调大 max_length 重新获取
     const isTruncated = processedContent.length > max_length
@@ -217,10 +265,11 @@ export const fetchUrl: ToolExecutor = async (args): Promise<ToolResult> => {
         content: displayContent,
         truncated: isTruncated,
         parsedByPlatform,
+        usedJinaReader,
         title: parsedTitle || undefined,
         author: parsedAuthor || undefined
       },
-      `请求成功 (${rawContent.length} 字符${parsedByPlatform ? '，已由 platform-parser 精炼' : ''}${isTruncated ? '，已截断至 ' + max_length : ''})`,
+      `请求成功 (${rawContent.length} 字符${usedJinaReader ? '，由 Jina Reader 解析为 Markdown' : parsedByPlatform ? '，已由 platform-parser 精炼' : ''}${isTruncated ? '，已截断至 ' + max_length : ''})`,
       'fetchUrl'
     )
   } catch (error: any) {
