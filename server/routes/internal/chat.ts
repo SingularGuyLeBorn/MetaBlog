@@ -11,6 +11,84 @@ export interface RouteContext {
   triggerReload: () => void;
 }
 
+// ==================== LLM API 错误翻译器 ====================
+
+function translateLLMError(status: number, errorText: string, provider: string): { message: string; suggestion: string } {
+  const lower = errorText.toLowerCase();
+
+  if (status === 401) {
+    return {
+      message: `${provider} API Key 无效或已过期`,
+      suggestion: "请检查 LLM API Key 配置是否正确（DEEPSEEK_API_KEY 或 KIMI_API_KEY），或密钥是否已过期/被撤销",
+    };
+  }
+  if (status === 402 || lower.includes("insufficient_quota") || lower.includes("quota") || lower.includes("billing") || lower.includes("balance")) {
+    return {
+      message: `${provider} 账户额度不足`,
+      suggestion: "API 账户余额已用完或超出配额限制，请充值或检查账单设置",
+    };
+  }
+  if (status === 429 || lower.includes("rate limit") || lower.includes("too many requests")) {
+    return {
+      message: `${provider} 请求过于频繁（速率限制）`,
+      suggestion: "触发了 API 速率限制，请降低请求频率，稍后重试。如频繁出现，考虑升级账户或增加并发配额",
+    };
+  }
+  if (status === 400) {
+    if (lower.includes("context length") || lower.includes("too long") || lower.includes("maximum context")) {
+      return {
+        message: `${provider} 上下文长度超出限制`,
+        suggestion: "当前对话历史+输入内容超出了模型的最大上下文长度，请删除部分历史消息或缩短输入",
+      };
+    }
+    if (lower.includes("invalid") || lower.includes("bad request")) {
+      return {
+        message: `${provider} 请求参数无效`,
+        suggestion: "请检查请求体格式、模型名称、temperature 等参数是否符合 API 规范",
+      };
+    }
+    return {
+      message: `${provider} 请求格式错误`,
+      suggestion: "请检查请求参数是否正确，常见原因：上下文过长、JSON 格式错误、参数值不合法",
+    };
+  }
+  if (status === 403) {
+    return {
+      message: `${provider} 访问被拒绝`,
+      suggestion: "API Key 无权访问该模型或功能，请确认密钥权限范围",
+    };
+  }
+  if (status === 404) {
+    return {
+      message: `${provider} 模型不存在`,
+      suggestion: "请求的模型名称可能不正确或该模型已下线，请检查模型 ID",
+    };
+  }
+  if (status === 500) {
+    return {
+      message: `${provider} 服务器内部错误`,
+      suggestion: "LLM 服务端异常，请稍后重试。如持续出现，可能是模型临时不可用",
+    };
+  }
+  if (status === 502 || status === 503) {
+    return {
+      message: `${provider} 服务暂时不可用`,
+      suggestion: "LLM 服务可能正在维护或过载，请稍后重试",
+    };
+  }
+  if (status === 504) {
+    return {
+      message: `${provider} 请求超时`,
+      suggestion: "LLM 服务端处理超时，请稍后重试或简化请求",
+    };
+  }
+
+  return {
+    message: `${provider} API 错误 (HTTP ${status})`,
+    suggestion: `请求失败，原始错误：${errorText.slice(0, 200)}。建议检查 API Key、模型名称、网络连接`,
+  };
+}
+
 // ==================== 模型配置 ====================
 
 type ModelProvider = "deepseek" | "kimi";
@@ -442,14 +520,22 @@ export function registerChatRoutes(server: ViteDevServer, _ctx: RouteContext) {
 
         if (!response.ok) {
           const errorText = await response.text();
+          const translated = translateLLMError(response.status, errorText, modelConfig.provider);
           res.statusCode = response.status;
           res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ success: false, error: `HTTP ${response.status}: ${errorText}` }));
+          res.end(JSON.stringify({
+            success: false,
+            error: `HTTP ${response.status}: ${errorText.slice(0, 500)}`,
+            message: translated.message,
+            suggestion: translated.suggestion,
+            code: response.status,
+          }));
 
           logChatEvent("chat_error", {
             sessionId,
             model: config.model,
             error: `HTTP ${response.status}: ${errorText}`,
+            translated: translated.message,
           });
           return;
         }
@@ -496,7 +582,13 @@ export function registerChatRoutes(server: ViteDevServer, _ctx: RouteContext) {
 
       if (!llmResponse.ok) {
         const errorText = await llmResponse.text();
-        res.write(`data: ${JSON.stringify({ error: `HTTP ${llmResponse.status}: ${errorText}` })}\n\n`);
+        const translated = translateLLMError(llmResponse.status, errorText, modelConfig.provider);
+        res.write(`data: ${JSON.stringify({
+          error: `HTTP ${llmResponse.status}: ${errorText.slice(0, 500)}`,
+          message: translated.message,
+          suggestion: translated.suggestion,
+          code: llmResponse.status,
+        })}\n\n`);
         res.write("data: [DONE]\n\n");
         res.end();
 
@@ -504,6 +596,7 @@ export function registerChatRoutes(server: ViteDevServer, _ctx: RouteContext) {
           sessionId,
           model: config.model,
           error: `HTTP ${llmResponse.status}: ${errorText}`,
+          translated: translated.message,
         });
         return;
       }

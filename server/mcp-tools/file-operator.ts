@@ -81,7 +81,14 @@ export class FileOperatorTool {
       // 下载图片
       const response = await fetch(imageUrl)
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
+        const msg = response.status === 404
+          ? "图片不存在"
+          : response.status === 403
+            ? "图片访问被拒绝"
+            : response.status === 429
+              ? "图片服务器速率限制"
+              : `下载失败 (HTTP ${response.status})`;
+        throw new Error(`图片下载 ${response.status}: ${msg}。建议: 检查图片 URL 是否正确，或尝试其他图片来源`)
       }
       
       const buffer = await response.arrayBuffer()

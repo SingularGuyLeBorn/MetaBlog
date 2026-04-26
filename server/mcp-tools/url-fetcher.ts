@@ -69,7 +69,14 @@ export class URLFetcherTool {
       const response = await fetch(jinaUrl)
       
       if (!response.ok) {
-        throw new Error(`Jina Reader failed: ${response.status}`)
+        const msg = response.status === 429
+          ? "Jina Reader 请求过于频繁，请稍后重试"
+          : response.status === 403
+            ? "Jina Reader 拒绝访问，可能是目标网站被屏蔽"
+            : response.status === 404
+              ? "Jina Reader 无法获取该页面，请检查 URL 是否正确"
+              : `Jina Reader 请求失败 (HTTP ${response.status})`;
+        throw new Error(`Jina Reader ${response.status}: ${msg}。建议: 可尝试直接访问原 URL 或使用 /api/proxy/fetch 获取内容`)
       }
 
       const text = await response.text()

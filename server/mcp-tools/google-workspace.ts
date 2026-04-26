@@ -48,6 +48,29 @@ export interface SheetCreateOptions {
   sheets?: string[]  // 工作表名称列表
 }
 
+function translateGoogleError(status: number): { message: string; suggestion: string } {
+  switch (status) {
+    case 400:
+      return { message: "Google API 请求格式错误", suggestion: "请检查请求参数（如文档标题、表格范围）是否符合 Google API 要求" };
+    case 401:
+      return { message: "Google OAuth Token 无效或已过期", suggestion: "请重新完成 Google OAuth 授权流程，获取新的 access_token" };
+    case 403:
+      return { message: "Google API 权限不足", suggestion: "请确认应用已在 Google Cloud Console 启用了 Docs API / Sheets API，且用户已授权对应权限范围" };
+    case 404:
+      return { message: "Google 文档或表格不存在", suggestion: "请检查 document_id 或 spreadsheet_id 是否正确" };
+    case 409:
+      return { message: "资源冲突", suggestion: "可能存在并发修改或命名冲突，请稍后重试" };
+    case 429:
+      return { message: "Google API 速率限制", suggestion: "请求过于频繁，请降低频率稍后重试" };
+    case 500:
+      return { message: "Google 服务器内部错误", suggestion: "Google 服务端异常，请稍后重试" };
+    case 503:
+      return { message: "Google 服务暂时不可用", suggestion: "Google API 可能正在维护，请稍后重试" };
+    default:
+      return { message: `Google API HTTP ${status} 错误`, suggestion: "请检查网络连接、OAuth 状态及请求参数" };
+  }
+}
+
 export interface SheetAppendOptions {
   spreadsheetId: string
   sheetName: string
@@ -256,7 +279,8 @@ export class GoogleWorkspaceTool {
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
+        const t = translateGoogleError(response.status)
+        throw new Error(`Google API ${response.status}: ${t.message}。建议: ${t.suggestion}`)
       }
 
       const data = await response.json()
@@ -296,7 +320,8 @@ export class GoogleWorkspaceTool {
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
+        const t = translateGoogleError(response.status)
+        throw new Error(`Google API ${response.status}: ${t.message}。建议: ${t.suggestion}`)
       }
 
       const data = await response.json()
@@ -345,7 +370,8 @@ export class GoogleWorkspaceTool {
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
+        const t = translateGoogleError(response.status)
+        throw new Error(`Google API ${response.status}: ${t.message}。建议: ${t.suggestion}`)
       }
 
       return {
@@ -384,7 +410,8 @@ export class GoogleWorkspaceTool {
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
+        const t = translateGoogleError(response.status)
+        throw new Error(`Google API ${response.status}: ${t.message}。建议: ${t.suggestion}`)
       }
 
       const data = await response.json()
@@ -434,7 +461,8 @@ export class GoogleWorkspaceTool {
       )
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
+        const t = translateGoogleError(response.status)
+        throw new Error(`Google API ${response.status}: ${t.message}。建议: ${t.suggestion}`)
       }
 
       const data = await response.json()

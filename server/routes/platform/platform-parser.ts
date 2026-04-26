@@ -58,7 +58,18 @@ async function fetchHtml(url: string, headers?: Record<string, string>, timeoutM
       ...headers,
     },
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    const msg = res.status === 404
+      ? "页面不存在"
+      : res.status === 403
+        ? "页面访问被拒绝（可能是反爬虫）"
+        : res.status === 429
+          ? "请求过于频繁"
+          : res.status === 500
+            ? "目标服务器内部错误"
+            : `HTTP ${res.status} 错误`;
+    throw new Error(`网页抓取失败 (${res.status}): ${msg}。建议: 检查 URL 是否正确，或尝试使用 /api/proxy/fetch 获取内容`)
+  }
   return res.text();
 }
 

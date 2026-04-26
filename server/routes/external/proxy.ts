@@ -1,6 +1,7 @@
 import type { ViteDevServer } from "vite";
 import path from "path";
 import fs from "fs";
+import { translateGitHubError } from "../../utils/github-error-translator";
 
 export interface RouteContext {
   system: any;
@@ -338,11 +339,19 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
           );
 
           if (!response.ok) {
+            const errorText = await response.text();
+            const translated = translateGitHubError(`HTTP ${response.status}: ${errorText.slice(0, 500)}`);
+            let original: any;
+            try { original = JSON.parse(errorText); } catch { original = errorText; }
             res.statusCode = response.status;
             res.end(
               JSON.stringify({
                 success: false,
-                error: `GitHub API error: ${response.status}`,
+                error: `GitHub API ${response.status}: ${response.statusText}`,
+                message: translated.message,
+                suggestion: translated.suggestion,
+                code: translated.code,
+                original,
               }),
             );
             return;
@@ -352,11 +361,15 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify(data));
         } catch (e) {
+          const translated = translateGitHubError(e instanceof Error ? e.message : String(e));
           res.statusCode = 500;
           res.end(
             JSON.stringify({
               success: false,
               error: e instanceof Error ? e.message : String(e),
+              message: translated.message,
+              suggestion: translated.suggestion,
+              code: -1,
             }),
           );
         }
@@ -364,7 +377,7 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
     },
   );
 
-  // 获取文件内容 - /api/github/file/{owner}/{repo}/{ref}/{path}
+  // 获取文件内容 - /api/github/file/{owner}/{repo}/{ref}/{path}`
   // URL 格式: /api/github/file/octocat/Hello-World/main/README
   server.middlewares.use(
     "/api/github/file/",
@@ -406,11 +419,19 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
           );
 
           if (!response.ok) {
+            const errorText = await response.text();
+            const translated = translateGitHubError(`HTTP ${response.status}: ${errorText.slice(0, 500)}`);
+            let original: any;
+            try { original = JSON.parse(errorText); } catch { original = errorText; }
             res.statusCode = response.status;
             res.end(
               JSON.stringify({
                 success: false,
-                error: `GitHub API error: ${response.status}`,
+                error: `GitHub API ${response.status}: ${response.statusText}`,
+                message: translated.message,
+                suggestion: translated.suggestion,
+                code: translated.code,
+                original,
               }),
             );
             return;
@@ -420,11 +441,15 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify(data));
         } catch (e) {
+          const translated = translateGitHubError(e instanceof Error ? e.message : String(e));
           res.statusCode = 500;
           res.end(
             JSON.stringify({
               success: false,
               error: e instanceof Error ? e.message : String(e),
+              message: translated.message,
+              suggestion: translated.suggestion,
+              code: -1,
             }),
           );
         }
@@ -432,7 +457,7 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
     },
   );
 
-  // 获取提交历史 - /api/github/commits/{owner}/{repo}/{ref}
+  // 获取提交历史 - /api/github/commits/{owner}/{repo}/{ref}`
   // URL 格式: /api/github/commits/octocat/Hello-World/main
   server.middlewares.use(
     "/api/github/commits/",
@@ -478,11 +503,19 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
           );
 
           if (!response.ok) {
+            const errorText = await response.text();
+            const translated = translateGitHubError(`HTTP ${response.status}: ${errorText.slice(0, 500)}`);
+            let original: any;
+            try { original = JSON.parse(errorText); } catch { original = errorText; }
             res.statusCode = response.status;
             res.end(
               JSON.stringify({
                 success: false,
-                error: `GitHub API error: ${response.status}`,
+                error: `GitHub API ${response.status}: ${response.statusText}`,
+                message: translated.message,
+                suggestion: translated.suggestion,
+                code: translated.code,
+                original,
               }),
             );
             return;
@@ -492,11 +525,15 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify(data));
         } catch (e) {
+          const translated = translateGitHubError(e instanceof Error ? e.message : String(e));
           res.statusCode = 500;
           res.end(
             JSON.stringify({
               success: false,
               error: e instanceof Error ? e.message : String(e),
+              message: translated.message,
+              suggestion: translated.suggestion,
+              code: -1,
             }),
           );
         }
