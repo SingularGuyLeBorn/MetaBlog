@@ -9,6 +9,44 @@ export interface RouteContext {
   triggerReload: () => void;
 }
 
+/**
+ * 通用 HTTP 错误翻译器
+ * 为任意外部网站的 HTTP 错误提供中文解释
+ */
+function translateHttpError(status: number, statusText: string, url: string): { message: string; suggestion: string } {
+  const hostname = new URL(url).hostname;
+  switch (status) {
+    case 400:
+      return { message: `请求格式错误 (${hostname})`, suggestion: "请检查 URL 参数、请求头或请求体格式是否正确" };
+    case 401:
+      return { message: `未授权 (${hostname})`, suggestion: "该资源需要认证，请检查是否需要登录或提供 API Key/Token" };
+    case 403:
+      return { message: `访问被拒绝 (${hostname})`, suggestion: "服务器拒绝了访问请求，可能是 IP 被封禁、缺少权限或触发了反爬虫机制。请检查是否需要添加 User-Agent 或其他请求头" };
+    case 404:
+      return { message: `页面或资源不存在 (${hostname})`, suggestion: "请检查 URL 是否正确，或该页面是否已被删除/移动" };
+    case 405:
+      return { message: `HTTP 方法不被允许 (${hostname})`, suggestion: "请确认使用的请求方法（GET/POST 等）被该 URL 支持" };
+    case 408:
+      return { message: `请求超时 (${hostname})`, suggestion: "服务器在预定时间内未收到完整请求，请稍后重试" };
+    case 409:
+      return { message: `资源冲突 (${hostname})`, suggestion: "请求与服务器当前状态冲突，请稍后重试" };
+    case 410:
+      return { message: `资源已永久删除 (${hostname})`, suggestion: "该资源已被永久删除，无法访问" };
+    case 429:
+      return { message: `请求过于频繁 (${hostname})`, suggestion: "触发了速率限制，请降低请求频率，稍后重试。建议增加请求间隔或使用缓存" };
+    case 500:
+      return { message: `服务器内部错误 (${hostname})`, suggestion: "目标服务器异常，请稍后重试" };
+    case 502:
+      return { message: `网关错误 (${hostname})`, suggestion: "目标服务器上游异常或暂时不可用，请稍后重试" };
+    case 503:
+      return { message: `服务不可用 (${hostname})`, suggestion: "目标服务器可能正在维护或过载，请稍后重试" };
+    case 504:
+      return { message: `网关超时 (${hostname})`, suggestion: "目标服务器响应超时，请稍后重试或尝试缩短请求内容" };
+    default:
+      return { message: `HTTP ${status} ${statusText} (${hostname})`, suggestion: `目标服务器返回了 ${status} 状态码，请检查 URL 和请求参数是否正确` };
+  }
+}
+
 export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
   // ============================================
@@ -119,11 +157,16 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
                   `Failed to fetch ${url}`,
                   { status: fetchResponse.status },
                 );
+                const translated = translateHttpError(fetchResponse.status, fetchResponse.statusText, url);
                 res.statusCode = fetchResponse.status;
                 res.end(
                   JSON.stringify({
                     success: false,
                     error: `HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`,
+                    message: translated.message,
+                    suggestion: translated.suggestion,
+                    code: fetchResponse.status,
+                    url,
                   }),
                 );
                 return;
@@ -170,11 +213,17 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
                 },
               );
 
+              const translated = isTimeout
+                ? { message: `请求超时 (${targetUrl.hostname})`, suggestion: `目标服务器在 ${timeout}ms 内未响应，请稍后重试或增加超时时间` }
+                : { message: `网络请求失败 (${targetUrl.hostname})`, suggestion: `请求无法完成，可能是 DNS 解析失败、网络断开或目标服务器拒绝连接。错误信息：${fetchError.message}` };
               res.statusCode = isTimeout ? 504 : 502;
               res.end(
                 JSON.stringify({
                   success: false,
                   error: errorMsg,
+                  message: translated.message,
+                  suggestion: translated.suggestion,
+                  code: isTimeout ? 504 : 502,
                   details: {
                     url,
                     hostname: targetUrl.hostname,

@@ -19,6 +19,7 @@ import { github } from "../../config/env";
 import { rateLimitExternal } from "../../middleware/rate-limit";
 import { createBffCache } from "../../middleware/bff-cache";
 import { executeGitHubTool, listGitHubTools } from "../../utils/github-tool-executor";
+import { translateGitHubError } from "../../utils/github-error-translator";
 
 /** GitHub REST API 根地址 */
 const GITHUB_API_BASE = "https://api.github.com";
@@ -199,21 +200,43 @@ export function registerGitHubRoutes(server: ViteDevServer): void {
         }
       });
 
-      // 透传响应状态码
-      res.statusCode = response.status;
-
-      // 透传响应体
+      // 读取响应体
       const responseBody = await response.text();
 
       // 写入缓存（仅 GET 2xx）
       cache.write(req, response.status, responseHeaders, responseBody);
 
+      // 错误响应：添加翻译信息
+      if (response.status >= 400) {
+        const translated = translateGitHubError(
+          `HTTP ${response.status}: ${responseBody.slice(0, 500)}`
+        );
+        let original: any;
+        try { original = JSON.parse(responseBody); } catch { original = responseBody; }
+        sendJson(res, response.status, {
+          success: false,
+          error: `GitHub API ${response.status}: ${response.statusText}`,
+          message: translated.message,
+          suggestion: translated.suggestion,
+          code: translated.code,
+          original,
+        });
+        return;
+      }
+
+      // 正常响应：透传
+      res.statusCode = response.status;
       res.end(responseBody);
     } catch (error: any) {
       console.error("[GitHub BFF] Proxy error:", error);
+      const translated = translateGitHubError(error.message);
       sendJson(res, 500, {
-        code: -1,
+        success: false,
+        error: `GitHub BFF 代理错误: ${error.message}`,
+        message: translated.message,
         msg: `GitHub BFF 代理错误: ${error.message}`,
+        suggestion: translated.suggestion,
+        code: -1,
       });
     }
   });
