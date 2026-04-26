@@ -11,6 +11,9 @@ export interface RouteContext {
 // 平台万能解析器
 // ============================================
 
+/** 正文内容最大长度（字符），超过则截断 */
+const MAX_CONTENT_CHARS = 200000;
+
 interface ParseResult {
   title: string;
   author: string;
@@ -133,7 +136,7 @@ async function parseZhihu(url: string, html: string): Promise<ParseResult> {
   return {
     title: title || "知乎内容",
     author: author || "未知作者",
-    content: content.slice(0, 8000),
+    content: content.slice(0, MAX_CONTENT_CHARS),
     images: images.slice(0, 10),
     videos: [],
     comments: [],
@@ -168,7 +171,7 @@ async function parseWechat(url: string, html: string): Promise<ParseResult> {
   return {
     title,
     author,
-    content: content.slice(0, 8000),
+    content: content.slice(0, MAX_CONTENT_CHARS),
     images,
     videos: [],
     comments: [],
@@ -209,7 +212,7 @@ async function parseBilibili(url: string, html: string): Promise<ParseResult> {
   return {
     title: title || "B站视频",
     author: author || "未知UP主",
-    content: content.slice(0, 5000),
+    content: content.slice(0, MAX_CONTENT_CHARS),
     images: images.slice(0, 10),
     videos: [],
     comments: [],
@@ -232,7 +235,7 @@ async function parseWeibo(url: string, html: string): Promise<ParseResult> {
   return {
     title,
     author,
-    content: desc.slice(0, 5000),
+    content: desc.slice(0, MAX_CONTENT_CHARS),
     images,
     videos: [],
     comments: [],
@@ -311,7 +314,7 @@ async function parseXiaohongshu(url: string, html: string, renderedByPlaywright 
   return {
     title,
     author,
-    content: content.slice(0, 8000),
+    content: content.slice(0, MAX_CONTENT_CHARS),
     images: images.slice(0, 20),
     videos: [],
     comments: [],
@@ -390,7 +393,7 @@ async function parseDouyin(url: string, html: string, renderedByPlaywright = fal
   return {
     title,
     author,
-    content: content.slice(0, 5000),
+    content: content.slice(0, MAX_CONTENT_CHARS),
     images: images.slice(0, 10),
     videos: videos.slice(0, 5),
     comments: [],
@@ -476,7 +479,7 @@ async function parseGeneric(url: string, html: string): Promise<ParseResult> {
   return {
     title,
     author: "",
-    content: finalContent.slice(0, 8000),
+    content: finalContent.slice(0, MAX_CONTENT_CHARS),
     images: images.slice(0, 10),
     videos: [],
     comments: [],

@@ -145,6 +145,9 @@ export const fetchUrl: ToolExecutor = async (args): Promise<ToolResult> => {
 
     // 根据内容类型处理
     let processedContent = rawContent
+    let parsedByPlatform = false
+    let parsedTitle = ''
+    let parsedAuthor = ''
 
     if (contentType.includes('application/json')) {
       try {
@@ -154,13 +157,46 @@ export const fetchUrl: ToolExecutor = async (args): Promise<ToolResult> => {
         // 保持原样
       }
     } else if (contentType.includes('text/html')) {
-      // 提取文本内容（去除 HTML 标签）
-      processedContent = rawContent
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
+      // 【优化】HTML 内容优先走 platform-parser 进行精炼解析
+      // platform-parser 针对各平台（微信公众号、知乎、B站等）有专门解析逻辑，
+      // 能提取正文、去除广告导航页脚等噪声，比简单去标签节省大量 token
+      try {
+        const platformRes = await fetch(`${API_BASE}/platform/parse`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        })
+        if (platformRes.ok) {
+          const platformData = await platformRes.json()
+          if (platformData.success && platformData.data?.content) {
+            parsedByPlatform = true
+            parsedTitle = platformData.data.title || ''
+            parsedAuthor = platformData.data.author || ''
+            // 组合成 Markdown 格式，更省 token 且结构清晰
+            const parts: string[] = []
+            if (parsedTitle) parts.push(`# ${parsedTitle}`)
+            if (parsedAuthor) parts.push(`> 作者: ${parsedAuthor}`)
+            parts.push(platformData.data.content)
+            processedContent = parts.join('\n\n')
+          }
+        }
+      } catch {
+        // platform-parser 失败则 fallback 到简单处理
+      }
+
+      // Fallback: 简单去标签（platform-parser 失败或未命中平台时）
+      if (!parsedByPlatform) {
+        processedContent = rawContent
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+          .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
+          .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
+          .replace(/<aside[^>]*>[\s\S]*?<\/aside>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+      }
     }
 
     // 截断内容 — 截断时提示 AI 可以调大 max_length 重新获取
@@ -179,9 +215,12 @@ export const fetchUrl: ToolExecutor = async (args): Promise<ToolResult> => {
         contentType,
         size: rawContent.length,
         content: displayContent,
-        truncated: isTruncated
+        truncated: isTruncated,
+        parsedByPlatform,
+        title: parsedTitle || undefined,
+        author: parsedAuthor || undefined
       },
-      `请求成功 (${rawContent.length} 字符${isTruncated ? '，已截断至 ' + max_length : ''})`,
+      `请求成功 (${rawContent.length} 字符${parsedByPlatform ? '，已由 platform-parser 精炼' : ''}${isTruncated ? '，已截断至 ' + max_length : ''})`,
       'fetchUrl'
     )
   } catch (error: any) {

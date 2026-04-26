@@ -1391,7 +1391,18 @@ export const aiService = {
             resultContent = result
           } else if (result && typeof result === 'object') {
             if (result.success) {
-              resultContent = result.message || JSON.stringify(result.data)
+              // 【关键修复】优先将 data 序列化传给 AI，message 只作为状态提示
+              // 之前只传 message 导致 AI 看不到 fetchUrl 的 content、readFile 的内容等真实数据
+              if (result.data !== undefined) {
+                const dataStr = typeof result.data === 'string'
+                  ? result.data
+                  : JSON.stringify(result.data, null, 2)
+                resultContent = result.message
+                  ? `[${result.message}]\n\n${dataStr}`
+                  : dataStr
+              } else {
+                resultContent = result.message || '操作成功'
+              }
             } else {
               resultContent = result.message || result.error || '操作失败'
             }
