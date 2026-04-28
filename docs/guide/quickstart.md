@@ -6,9 +6,9 @@
 
 ## 📋 前置要求
 
-- **Node.js** 18+（推荐 20 LTS）
-- **pnpm** 8+（推荐）或 npm 9+
-- 一个 AI 服务的 API Key（DeepSeek / Kimi / OpenAI 等）
+- **Node.js** 18+(推荐 20 LTS)
+- **pnpm** 8+(推荐)或 npm 9+
+- 一个 AI 服务的 API Key(DeepSeek / Kimi / OpenAI 等)
 
 ### 检查环境
 
@@ -38,16 +38,16 @@ pnpm install
 
 ```bash
 # 如果项目已有 .env 文件，直接编辑
-# 如果没有，从示例复制（如果存在 .env.example）
+# 如果没有，从示例复制(如果存在 .env.example)
 cp .env.example .env  # 可选
 ```
 
 编辑 `.env`，至少添加一个 AI Provider：
 
 ```env
-# DeepSeek（推荐，国内可用）
+# DeepSeek(推荐，国内可用)
 LLM_DEEPSEEK_API_KEY=sk-your-key-here
-LLM_DEEPSEEK_MODEL=deepseek-chat
+LLM_DEEPSEEK_MODEL=deepseek-v4-pro
 LLM_DEFAULT_PROVIDER=deepseek
 ```
 
@@ -107,7 +107,7 @@ AI 会调用 `executeCode` 工具在沙箱中执行 Python 代码。
 
 ```
 MetaBlog/
-├── docs/                   # VitePress 内容目录（博客文章）
+├── docs/                   # VitePress 内容目录(博客文章)
 │   ├── sections/           # 文章分类目录
 │   │   ├── posts/          # 博客文章
 │   │   ├── knowledge/      # 知识库
@@ -115,7 +115,7 @@ MetaBlog/
 │   └── public/             # 静态资源
 ├── src/
 │   └── theme/
-│       ├── components/     # Vue 组件（聊天 UI、Agent 面板等）
+│       ├── components/     # Vue 组件(聊天 UI、Agent 面板等)
 │       ├── tools/          # 工具系统定义与执行器
 │       ├── composables/    # Vue 组合式函数
 │       └── utils/          # 工具函数
@@ -123,8 +123,8 @@ MetaBlog/
 │   ├── routes/             # BFF API 路由
 │   ├── sandbox/            # 代码沙箱执行器
 │   └── middleware/         # 中间件
-├── .data/                  # 运行时数据（Agent 状态、会话记录）
-├── .env                    # 环境变量（不要提交到 Git）
+├── .data/                  # 运行时数据(Agent 状态、会话记录)
+├── .env                    # 环境变量(不要提交到 Git)
 └── package.json
 ```
 
@@ -137,7 +137,7 @@ MetaBlog/
 | `pnpm docs:dev` | 启动开发服务器 |
 | `pnpm docs:build` | 构建生产版本 |
 | `pnpm docs:preview` | 预览生产构建 |
-| `pnpm test` | 运行测试（Vitest） |
+| `pnpm test` | 运行测试(Vitest) |
 | `pnpm test:coverage` | 运行测试并生成覆盖率报告 |
 | `pnpm meta-agent` | 运行 Meta-Agent CLI |
 | `pnpm check:structure` | 检查文档结构完整性 |
@@ -154,21 +154,21 @@ MetaBlog/
 
 **A**: 
 1. 确认 `.env` 中的 Key 正确且未过期
-2. 确认使用了 `LLM_` 前缀（如 `LLM_DEEPSEEK_API_KEY`）
-3. 重启开发服务器（修改 `.env` 后需要重启）
+2. 确认使用了 `LLM_` 前缀(如 `LLM_DEEPSEEK_API_KEY`)
+3. 重启开发服务器(修改 `.env` 后需要重启)
 
-### Q: 工具调用失败（如 `feishuDocCreate`）
+### Q: 工具调用失败(如 `feishuDocCreate`)
 
 **A**: 
-1. 检查对应的环境变量是否配置（如 `FEISHU_APP_ID`）
+1. 检查对应的环境变量是否配置(如 `FEISHU_APP_ID`)
 2. 查看浏览器控制台 Network 面板，查看 `/api/*` 端点的响应
 3. 检查后端控制台是否有错误日志
 
 ### Q: 代码沙箱执行失败
 
 **A**: 
-1. 确认本地已安装 Python（`python --version`）
-2. 确认已安装 `pydantic_monty`（`pip install pydantic-monty`）
+1. 确认本地已安装 Python(`python --version`)
+2. 确认已安装 `pydantic_monty`(`pip install pydantic-monty`)
 3. 查看 `/api/sandbox/exec` 的响应了解具体错误
 
 ### Q: 如何添加新的 AI Provider？
@@ -177,7 +177,7 @@ MetaBlog/
 
 ### Q: 修改文章后没有自动刷新
 
-**A**: 文章保存后会自动触发 Git 提交，但热更新已禁用（避免聊天页面被刷新）。手动刷新博客页面即可看到更新。
+**A**: 文章保存后会自动触发 Git 提交，但热更新已禁用(避免聊天页面被刷新)。手动刷新博客页面即可看到更新。
 
 ---
 

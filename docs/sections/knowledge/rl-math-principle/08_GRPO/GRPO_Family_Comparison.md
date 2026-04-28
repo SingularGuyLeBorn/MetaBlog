@@ -35,7 +35,7 @@ $$r^{GSPO} = \exp\left(\textcolor{blue}{\sum_{t=1}^T} \log\frac{\pi_\theta(y_t)}
 **差异说明**：
 - GRPO使用 $\textcolor{red}{\prod}$ **Token级乘积**，可能导致数值爆炸
 - GSPO使用 $\textcolor{blue}{\sum}$ **在log空间求和**，更稳定
-- 数学上等价，但**裁剪级别不同**（见1.3）
+- 数学上等价，但**裁剪级别不同**(见1.3)
 
 ---
 
@@ -89,7 +89,7 @@ $$r^{GMPO} = \left(\prod_t r_t\right)^{\textcolor{blue}{1/T}}$$
 
 **差异说明**：
 - GRPO直接使用乘积
-- GMPO取 $\textcolor{blue}{1/T}$ **次幂（几何均值）**，对异常值更鲁棒
+- GMPO取 $\textcolor{blue}{1/T}$ **次幂(几何均值)**，对异常值更鲁棒
 
 ---
 

@@ -2,7 +2,7 @@
  * Agent Runtime Manager - Agent 运行时管理系统
  * 
  * 功能：
- * 1. Agent 生命周期管理（启动、暂停、恢复、停止）
+ * 1. Agent 生命周期管理(启动、暂停、恢复、停止)
  * 2. 心跳检测
  * 3. 任务调度
  * 4. 状态持久化
@@ -10,22 +10,20 @@
  */
 
 import type {
-  AgentRuntime,
-  AgentRuntimeConfig,
-  AgentRuntimeStatus,
-  AgentRuntimeStats,
-  AgentRuntimeQueryOptions,
-  AgentMessage,
   AgentControlCommand,
   AgentHeartbeat,
+  AgentIntervention,
+  AgentMessage,
+  AgentRuntime,
+  AgentRuntimeQueryOptions,
+  AgentRuntimeStats,
   CreateAgentRuntimeParams,
-  UpdateAgentRuntimeParams,
-  AgentIntervention
+  UpdateAgentRuntimeParams
 } from '../../src/theme/types/agent-runtime'
 
-import type { Task } from '../../src/theme/types/task'
 import * as fs from 'fs'
 import * as path from 'path'
+import type { Task } from '../../src/theme/types/task'
 
 // 数据目录
 const DATA_DIR = path.join(process.cwd(), '.data')
@@ -166,7 +164,7 @@ class AgentRuntimeManager {
 
     this.runtimes.set(runtime.id, runtime)
     this.saveRuntimes()
-    
+
     this.log(runtime.id, 'runtime_created', `Runtime created for agent ${params.agentId}`, {
       mode: runtime.config.mode
     })
@@ -249,7 +247,7 @@ class AgentRuntimeManager {
 
     this.runtimes.delete(id)
     this.saveRuntimes()
-    
+
     this.log(id, 'runtime_deleted', `Runtime deleted`)
 
     return true
@@ -314,12 +312,12 @@ class AgentRuntimeManager {
 
     runtime.status = 'paused'
     runtime.stats.pausedAt = Date.now()
-    
+
     // 计算运行时间
     if (runtime.stats.startedAt) {
       runtime.stats.totalUptime += Date.now() - runtime.stats.startedAt
     }
-    
+
     runtime.metadata.updatedAt = Date.now()
     this.saveRuntimes()
 
@@ -402,12 +400,12 @@ class AgentRuntimeManager {
 
     runtime.status = 'stopped'
     runtime.stats.stoppedAt = Date.now()
-    
+
     // 计算运行时间
     if (runtime.stats.startedAt) {
       runtime.stats.totalUptime += Date.now() - runtime.stats.startedAt
     }
-    
+
     runtime.metadata.updatedAt = Date.now()
     this.saveRuntimes()
 
@@ -428,7 +426,7 @@ class AgentRuntimeManager {
     }
 
     runtime.messages.push(fullMessage)
-    
+
     // 只保留最近100条消息
     if (runtime.messages.length > 100) {
       runtime.messages = runtime.messages.slice(-100)
@@ -498,7 +496,7 @@ class AgentRuntimeManager {
   // 获取统计
   getStats(): AgentRuntimeStats {
     const runtimes = Array.from(this.runtimes.values())
-    
+
     const byStatus = {
       created: 0,
       starting: 0,
@@ -509,7 +507,7 @@ class AgentRuntimeManager {
       error: 0,
       recovering: 0
     }
-    
+
     const byMode = {
       manual: 0,
       auto: 0,
@@ -528,8 +526,8 @@ class AgentRuntimeManager {
       global: {
         totalTasksExecuted: runtimes.reduce((sum, r) => sum + r.completedTasks.length, 0),
         totalTasksFailed: runtimes.reduce((sum, r) => sum + r.stats.errorCount, 0),
-        averageUptime: runtimes.length > 0 
-          ? runtimes.reduce((sum, r) => sum + r.stats.totalUptime, 0) / runtimes.length 
+        averageUptime: runtimes.length > 0
+          ? runtimes.reduce((sum, r) => sum + r.stats.totalUptime, 0) / runtimes.length
           : 0,
         totalErrors: runtimes.reduce((sum, r) => sum + r.stats.errorCount, 0)
       }
@@ -542,7 +540,7 @@ class AgentRuntimeManager {
     if (!runtime) return
 
     const interval = runtime.config.heartbeat.interval
-    
+
     const timer = setInterval(() => {
       this.checkHeartbeat(runtimeId)
     }, interval)
@@ -569,7 +567,7 @@ class AgentRuntimeManager {
 
     if (lastHeartbeat) {
       const timeSinceLastHeartbeat = Date.now() - lastHeartbeat.timestamp
-      
+
       if (timeSinceLastHeartbeat > timeout) {
         // 心跳超时
         this.log(runtimeId, 'heartbeat_timeout', `Heartbeat timeout`, {
@@ -631,11 +629,11 @@ class AgentRuntimeManager {
 
     // 检查是否有空闲槽位
     const availableSlots = runtime.config.scheduler.maxConcurrentTasks - runtime.activeTasks.length
-    
+
     if (availableSlots > 0 && runtime.queuedTasks.length > 0) {
       // 从队列取出任务
       const tasksToStart = runtime.queuedTasks.splice(0, availableSlots)
-      
+
       for (const task of tasksToStart) {
         runtime.activeTasks.push(task)
         this.log(runtimeId, 'task_started', `Task started: ${task.id}`, { taskId: task.id })
@@ -706,3 +704,4 @@ export function getAgentRuntimeManager(): AgentRuntimeManager {
 }
 
 export { AgentRuntimeManager }
+

@@ -1,6 +1,6 @@
-import type { ViteDevServer } from "vite";
-import path from "path";
 import fs from "fs";
+import path from "path";
+import type { ViteDevServer } from "vite";
 
 import { execSync } from "child_process";
 export interface RouteContext {
@@ -16,7 +16,7 @@ export function registerAgentNativeRoutes(server: ViteDevServer, ctx: RouteConte
   // Agent API Routes - AI-Native Operations
   // ============================================
 
-  // Agent 任务提交（区分人工操作）
+  // Agent 任务提交(区分人工操作)
   server.middlewares.use("/api/agent/task", (req, res, next) => {
     if (req.method === "POST") {
       const chunks: Buffer[] = [];
@@ -172,7 +172,7 @@ export function registerAgentNativeRoutes(server: ViteDevServer, ctx: RouteConte
     } else next();
   });
 
-  // Git 提交 API（用于 Agent 等场景真实提交日志）
+  // Git 提交 API(用于 Agent 等场景真实提交日志)
   server.middlewares.use("/api/git/commit", (req, res, next) => {
     if (req.method === "POST") {
       const chunks: Buffer[] = [];
@@ -192,7 +192,7 @@ export function registerAgentNativeRoutes(server: ViteDevServer, ctx: RouteConte
     } else next();
   });
 
-  // Slugify API（支持中文转换）
+  // Slugify API(支持中文转换)
   server.middlewares.use("/api/utils/slugify", (req, res, next) => {
     if (req.method === "POST") {
       const chunks: Buffer[] = [];
@@ -234,7 +234,7 @@ export function registerAgentNativeRoutes(server: ViteDevServer, ctx: RouteConte
     } else next();
   });
 
-  // Git 日志 API（区分人工和 Agent）
+  // Git 日志 API(区分人工和 Agent)
   server.middlewares.use("/api/git/log", (req, res, next) => {
     if (req.method === "GET") {
       try {

@@ -45,10 +45,10 @@ conditioned_prompt = format_input(prompt, target_attributes)
 ## 3. 工程实现的细节
 
 *   **Attribute Quantization**: 连续的 Reward 分数 (0.852) 通常被量化为离散等级 (0-9)，以便 Tokenizer 处理。
-*   **Data Augmentation**: 训练数据中需要包含各种质量的数据（不仅是好的，也要有坏的），这样模型才能学会区分 "Helpfulness: 0" 和 "Helpfulness: 9"。
+*   **Data Augmentation**: 训练数据中需要包含各种质量的数据(不仅是好的，也要有坏的)，这样模型才能学会区分 "Helpfulness: 0" 和 "Helpfulness: 9"。
 
 ---
 
 ## 4. 总结
 
-GDPO/SteerLM 证明了：有时候你不需要极其复杂的 PPO 算法，只需要**更好地组织数据**（把 Reward 变成 Input），Standard Transformer 就能自动学会 Alignment。
+GDPO/SteerLM 证明了：有时候你不需要极其复杂的 PPO 算法，只需要**更好地组织数据**(把 Reward 变成 Input)，Standard Transformer 就能自动学会 Alignment。

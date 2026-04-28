@@ -13,8 +13,8 @@
 $$J(\theta) = \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta(\cdot|x)} \left[ r(x, y) \right] - \beta D_{KL}(\pi_\theta(\cdot|x) || \pi_{ref}(\cdot|x))$$
 
 其中:
-- $r(x, y)$: 奖励函数（通常从偏好数据学习）
-- $\pi_{ref}$: 参考策略（通常是SFT模型）
+- $r(x, y)$: 奖励函数(通常从偏好数据学习)
+- $\pi_{ref}$: 参考策略(通常是SFT模型)
 - $\beta$: KL惩罚系数
 
 ### 1.2 Bradley-Terry偏好模型
@@ -102,7 +102,7 @@ $$r(x, y) = \beta \log \frac{\pi^*(y|x)}{\pi_{ref}(y|x)} + \beta \log Z(x)$$
 
 ### 3.2 奖励的重参数化
 
-**核心发现**: 奖励可以用策略的对数比率表示（加上一个只依赖于 $x$ 的项）。
+**核心发现**: 奖励可以用策略的对数比率表示(加上一个只依赖于 $x$ 的项)。
 
 $$r(x, y) = \beta \log \frac{\pi(y|x)}{\pi_{ref}(y|x)} + \beta \log Z(x)$$
 
@@ -136,7 +136,7 @@ $$P(y_1 \succ y_2 | x) = \sigma\left( \beta \log \frac{\pi(y_1|x)}{\pi_{ref}(y_1
 
 ### 5.1 最大似然估计
 
-给定偏好数据集 $\mathcal{D} = \{(x, y_w, y_l)\}$（$y_w$是偏好的response），最大化似然:
+给定偏好数据集 $\mathcal{D} = \{(x, y_w, y_l)\}$($y_w$是偏好的response)，最大化似然:
 
 $$\max_\theta \mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log P_\theta(y_w \succ y_l | x) \right]$$
 
@@ -175,7 +175,7 @@ $$\nabla_\theta \mathcal{L}_{DPO} \propto -\underbrace{w(\theta)}_{\text{自适�
 其中 $w(\theta) = \sigma(\hat{r}_\theta(y_l) - \hat{r}_\theta(y_w))$。
 
 **权重的含义**:
-- 当 $\hat{r}_\theta(y_l) > \hat{r}_\theta(y_w)$（模型认为 $y_l$ 更好）时，$w$ 较大
+- 当 $\hat{r}_\theta(y_l) > \hat{r}_\theta(y_w)$(模型认为 $y_l$ 更好)时，$w$ 较大
 - 此时梯度更强，更积极地纠正错误判断
 - 这是一种**隐式的困难样本挖掘**
 
@@ -197,13 +197,13 @@ DPO梯度可以看作一种**对比策略梯度**:
 | 1. SFT | ✓ | ✓ |
 | 2. 奖励模型 | 训练单独的RM | ❌ |
 | 3. 采样 | 需要在线采样 | ❌ |
-| 4. 优化 | PPO（复杂） | 监督学习（简单） |
+| 4. 优化 | PPO(复杂) | 监督学习(简单) |
 
 ### 7.2 理论等价性
 
 在以下假设下，DPO与RLHF等价:
 1. Bradley-Terry偏好模型成立
-2. 策略类足够灵活（非参数假设）
+2. 策略类足够灵活(非参数假设)
 3. 配分函数可以被吸收
 
 ### 7.3 实际差异
@@ -212,7 +212,7 @@ DPO梯度可以看作一种**对比策略梯度**:
 |------|------|-----|
 | 实现复杂度 | 高 | 低 |
 | 在线采样 | 需要 | 不需要 |
-| 内存需求 | 高（多模型） | 低 |
+| 内存需求 | 高(多模型) | 低 |
 | 探索能力 | 有 | 无 |
 | 稳定性 | 需要调参 | 较稳定 |
 

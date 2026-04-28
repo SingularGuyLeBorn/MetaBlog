@@ -2,9 +2,8 @@
  * OpenReview 学术工具
  */
 
-import type { ToolDefinition } from '@/theme/tools/types'
-import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import type { ToolDefinition, ToolExecutor, ToolResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 import { proxyFetch } from './other'
 
 // ==================== 工具定义 ====================
@@ -13,7 +12,7 @@ export const searchOpenReviewDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'searchOpenreview',
-    description: '搜索 OpenReview 会议论文（ICLR, NeurIPS, ICML等）',
+    description: '搜索 OpenReview 会议论文(ICLR, NeurIPS, ICML等)',
     parameters: {
       type: 'object',
       properties: {
@@ -45,7 +44,7 @@ export const fetchOpenReviewDef: ToolDefinition = {
 
 export const searchOpenReview: ToolExecutor = async (args): Promise<ToolResult> => {
   const { query, venue = '', limit = 10 } = args
-  
+
   if (!query) {
     return createErrorResult(
       'Missing query parameter',
@@ -53,12 +52,12 @@ export const searchOpenReview: ToolExecutor = async (args): Promise<ToolResult> 
       '示例: searchOpenreview(query="reinforcement learning")'
     )
   }
-  
+
   try {
     const url = `https://api.openreview.net/notes/search?term=${encodeURIComponent(query)}&limit=${Math.min(limit, 50)}`
-    
+
     const response = await proxyFetch(url)
-    
+
     if (!response.ok) {
       return createErrorResult(
         `HTTP ${response.status}`,
@@ -66,16 +65,16 @@ export const searchOpenReview: ToolExecutor = async (args): Promise<ToolResult> 
         '请稍后重试'
       )
     }
-    
+
     const data = await response.json()
     let notes = data.notes || []
-    
+
     if (venue) {
-      notes = notes.filter((n: any) => 
+      notes = notes.filter((n: any) =>
         (n.content?.venue?.value || '').toLowerCase().includes(venue.toLowerCase())
       )
     }
-    
+
     if (!notes.length) {
       return createSuccessResult(
         [],
@@ -84,14 +83,14 @@ export const searchOpenReview: ToolExecutor = async (args): Promise<ToolResult> 
         '尝试使用不同的关键词或移除会议过滤'
       )
     }
-    
+
     const papers = notes.slice(0, limit).map((n: any) => ({
       title: n.content?.title?.value || n.content?.title || 'Untitled',
       authors: n.content?.authors?.value || n.content?.authors || [],
       venue: n.content?.venue?.value || 'Unknown',
       forum: n.forum || n.id
     }))
-    
+
     return createSuccessResult(
       papers,
       `找到 ${notes.length} 篇论文`,
@@ -116,7 +115,7 @@ export const searchOpenReview: ToolExecutor = async (args): Promise<ToolResult> 
 
 export const fetchOpenReview: ToolExecutor = async (args): Promise<ToolResult> => {
   const { forum_id } = args
-  
+
   if (!forum_id) {
     return createErrorResult(
       'Missing forum_id parameter',
@@ -124,12 +123,12 @@ export const fetchOpenReview: ToolExecutor = async (args): Promise<ToolResult> =
       '示例: fetchOpenreview(forum_id="xxxxxxxx")'
     )
   }
-  
+
   try {
     const url = `https://api.openreview.net/notes?id=${forum_id}`
-    
+
     const response = await proxyFetch(url)
-    
+
     if (!response.ok) {
       return createErrorResult(
         `HTTP ${response.status}`,
@@ -137,10 +136,10 @@ export const fetchOpenReview: ToolExecutor = async (args): Promise<ToolResult> =
         '请稍后重试'
       )
     }
-    
+
     const data = await response.json()
     const note = data.notes?.[0]
-    
+
     if (!note) {
       return createErrorResult(
         'Paper not found',
@@ -148,7 +147,7 @@ export const fetchOpenReview: ToolExecutor = async (args): Promise<ToolResult> =
         '请检查 Forum ID 是否正确'
       )
     }
-    
+
     const paperData = {
       title: note.content?.title?.value || note.content?.title || 'Untitled',
       authors: note.content?.authors?.value || note.content?.authors || [],
@@ -157,7 +156,7 @@ export const fetchOpenReview: ToolExecutor = async (args): Promise<ToolResult> =
       forum: note.forum || note.id,
       url: `https://openreview.net/forum?id=${note.forum || note.id}`
     }
-    
+
     return createSuccessResult(
       paperData,
       `成功获取论文: ${paperData.title}`,

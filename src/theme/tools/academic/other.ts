@@ -1,9 +1,9 @@
 /**
- * 共享网络工具及其他学术工具（Papers With Code、Semantic Scholar）
+ * 共享网络工具及其他学术工具(Papers With Code、Semantic Scholar)
  */
 
 import type { ToolDefinition, ToolExecutor, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 // ==================== 速率限制与缓存 ====================
 // ArXiv 官方 ToU: 每 3 秒最多 1 个请求，且单连接

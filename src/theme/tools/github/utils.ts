@@ -1,14 +1,14 @@
 /**
  * ============================================================================
- * GitHub 工具共享辅助函数（瘦身版）
+ * GitHub 工具共享辅助函数(瘦身版)
  * ============================================================================
  *
  * 业务逻辑已下沉到后端 `server/utils/github-tool-executor.ts`。
  * 前端只保留最薄的调用层。
  */
 
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 import type { ToolResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 /**
  * GitHub BFF 代理地址
@@ -29,7 +29,7 @@ export async function callGitHubTool(toolName: string, params: Record<string, an
       body: JSON.stringify({ tool: toolName, params })
     })
 
-    // 防御：后端可能返回空响应或非 JSON（如 502 网关错误）
+    // 防御：后端可能返回空响应或非 JSON(如 502 网关错误)
     const contentType = response.headers.get('content-type') || ''
     let result: any
     if (contentType.includes('application/json')) {
@@ -100,7 +100,7 @@ export function encodeRefPath(ref: string): string {
   return ref.split('/').map(encodeURIComponent).join('/')
 }
 
-/** Base64 编码辅助函数（前端极少使用，保留供特殊场景） */
+/** Base64 编码辅助函数(前端极少使用，保留供特殊场景) */
 export function encodeBase64(str: string): string {
   try {
     return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode(parseInt(p1, 16))))
@@ -112,7 +112,7 @@ export function encodeBase64(str: string): string {
   }
 }
 
-/** Base64 解码辅助函数（前端极少使用，保留供特殊场景） */
+/** Base64 解码辅助函数(前端极少使用，保留供特殊场景) */
 export function decodeBase64(str: string): string {
   try {
     return decodeURIComponent(atob(str).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''))

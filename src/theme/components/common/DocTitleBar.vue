@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useData, useRoute } from 'vitepress'
 import BatchExportModal from '@/theme/components/editor/BatchExportModal.vue'
+import { useData, useRoute } from 'vitepress'
+import { computed, ref } from 'vue'
 
 const { frontmatter, page } = useData()
 const route = useRoute()
@@ -124,7 +124,7 @@ const addTitleToContent = (content: string, title: string): string => {
 
 // 辅助函数：处理并导出内容
 const processAndExportContent = async (content: string, format: 'md' | 'pdf' | 'docx') => {
-  // 添加标题（如果需要）
+  // 添加标题(如果需要)
   let processedContent = content
   if (exportWithTitle.value) {
     processedContent = addTitleToContent(content, displayTitle.value)
@@ -186,7 +186,7 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
       targetPath = targetPath.slice(1)
     }
     
-    // 如果以 / 结尾（folder-note 目录），尝试两种可能的文件路径
+    // 如果以 / 结尾(folder-note 目录)，尝试两种可能的文件路径
     if (targetPath.endsWith('/')) {
       const folderName = targetPath.slice(0, -1).split('/').pop() || 'index'
       // 尝试 folder-name/folder-name.md 模式

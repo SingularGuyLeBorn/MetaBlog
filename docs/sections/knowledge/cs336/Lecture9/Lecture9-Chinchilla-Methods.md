@@ -11,10 +11,10 @@ DeepMind 的 Chinchilla 论文 (*Hoffmann et al., 2022*) 彻底改变了我们�
 
 ### Method 1: 固定模型大小的包络线法 (Envelope Method)
 这是最直观的工程方法。
-1.  **实验设计**：选取一组固定的模型大小 $\{N_1, N_2, \dots, N_k\}$（例如 70M 到 10B）。
+1.  **实验设计**：选取一组固定的模型大小 $\{N_1, N_2, \dots, N_k\}$(例如 70M 到 10B)。
 2.  **训练**：对每个模型进行长时间训练，记录完整的 Loss 曲线 $L(N_i, C)$。注意这里 $C$ 随训练步数增加而增加。
 3.  **包络线提取**：
-    *   将所有 Loss 曲线绘制在同一张图上（x轴为 FLOPs，y轴为 Loss）。
+    *   将所有 Loss 曲线绘制在同一张图上(x轴为 FLOPs，y轴为 Loss)。
     *   提取**下包络线 (Lower Envelope)**：即在任意给定的 FLOPs $C$ 下，所有模型能达到的最低 Loss。
 4.  **拟合**：从包络线上提取一系列切点 $(C, N_{opt})$，拟合幂律关系 $N_{opt} \propto C^a$。
 *   **结果**：得出 $a \approx 0.5$。
@@ -45,8 +45,8 @@ DeepMind 的 Chinchilla 论文 (*Hoffmann et al., 2022*) 彻底改变了我们�
     *   理论上，扩展系数 $a = \frac{\beta}{\alpha+\beta}$， $b = \frac{\alpha}{\alpha+\beta}$。
 
 ### Epoch AI 的复现与修正
-*   **问题**：DeepMind 原论文中，Method 3 得出的系数与其他两种方法有较大偏差（原论文约为 0.45/0.55 甚至更偏）。
-*   **发现**：Epoch AI 团队通过提取图表数据复现发现，原作者的拟合存在系统性偏差（Residuals 非零均值，且在某些区域有明显模式）。
+*   **问题**：DeepMind 原论文中，Method 3 得出的系数与其他两种方法有较大偏差(原论文约为 0.45/0.55 甚至更偏)。
+*   **发现**：Epoch AI 团队通过提取图表数据复现发现，原作者的拟合存在系统性偏差(Residuals 非零均值，且在某些区域有明显模式)。
 *   **修正**：通过改进加权方式和拟合过程，修正后的 Method 3 得出的 $\alpha$ 和 $\beta$ 非常接近，再次验证了 $0.5/0.5$ 的扩展比例。
 
 ## 4. 结论：20 Tokens/Parameter 的由来

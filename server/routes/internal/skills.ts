@@ -1,6 +1,6 @@
-import type { ViteDevServer } from "vite";
-import path from "path";
 import fs from "fs";
+import path from "path";
+import type { ViteDevServer } from "vite";
 
 export interface RouteContext {
   system: any;
@@ -32,7 +32,7 @@ export function registerSkillsRoutes(server: ViteDevServer, ctx: RouteContext) {
     }
   }
 
-  // 简单 YAML 解析器（仅支持单层键值和列表）
+  // 简单 YAML 解析器(仅支持单层键值和列表)
   function parseSimpleYAML(yaml: string): Record<string, any> {
     const result: Record<string, any> = {}
     const lines = yaml.split('\n')
@@ -84,7 +84,7 @@ export function registerSkillsRoutes(server: ViteDevServer, ctx: RouteContext) {
     return value.split(',').map(s => s.trim()).filter(Boolean)
   }
 
-  // 解析 SKILL.md 文件（YAML frontmatter 格式）
+  // 解析 SKILL.md 文件(YAML frontmatter 格式)
   function parseSkillMd(
     content: string,
     skillId: string,

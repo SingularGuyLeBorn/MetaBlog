@@ -2,9 +2,8 @@
  * 代码工具定义 — executeCode
  */
 
-import type { ToolDefinition } from '@/theme/tools/types'
-import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import type { ToolDefinition, ToolExecutor, ToolResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 export const executeCodeDef: ToolDefinition = {
   type: 'function',
@@ -30,10 +29,10 @@ export const executeCodeDef: ToolDefinition = {
 }
 
 /**
- * 执行代码（通过后端沙箱）
+ * 执行代码(通过后端沙箱)
  *
  * 支持的沙箱模式：
- * - Python: Monty 解释器（Rust 编写，完全隔离宿主机）
+ * - Python: Monty 解释器(Rust 编写，完全隔离宿主机)
  * - JavaScript: 独立子进程 + vm.runInNewContext
  * - Bash: 受限命令白名单
  */

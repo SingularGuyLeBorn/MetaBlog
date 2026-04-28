@@ -111,7 +111,7 @@ class FeishuClient:
         """发送飞书 API 请求
 
         参数:
-            use_user_token: 是否使用 user_access_token（而非 tenant_access_token）。
+            use_user_token: 是否使用 user_access_token(而非 tenant_access_token)。
                             创建 Wiki 知识库等 API 必须使用 user_access_token。
         """
         if use_user_token:
@@ -143,7 +143,7 @@ class FeishuClient:
         headers = {"Authorization": f"Bearer {token}"}
 
         if files:
-            # multipart/form-data 上传文件（可同时传 data form fields）
+            # multipart/form-data 上传文件(可同时传 data form fields)
             resp = requests.request(method, url, headers=headers, files=files, data=data, timeout=timeout)
         elif json_data is not None:
             headers["Content-Type"] = "application/json"
@@ -163,7 +163,7 @@ class FeishuClient:
     def api(self, method: str, path: str, retries: int = 2, **kwargs) -> Any:
         """发送 API 请求并自动检查错误码，返回 data 字段
         
-        对可重试错误（429/502/503/504）自动重试，指数退避。
+        对可重试错误(429/502/503/504)自动重试，指数退避。
         """
         import time
         import random
@@ -186,7 +186,7 @@ class FeishuClient:
                     delay = (2 ** attempt) + random.uniform(0, 1)
                     time.sleep(delay)
                     continue
-                raise RuntimeError(f"请求失败（已重试 {retries} 次）: {e} | path={path}")
+                raise RuntimeError(f"请求失败(已重试 {retries} 次): {e} | path={path}")
         raise RuntimeError(f"请求失败: {last_error} | path={path}")
 
     # ============ 便捷方法 ============
@@ -196,7 +196,7 @@ class FeishuClient:
         上传图片到飞书文档素材库
 
         参数:
-            document_id: 飞书文档 ID（docx 的 document_id）
+            document_id: 飞书文档 ID(docx 的 document_id)
             image_path: 本地图片文件路径
 
         返回:
@@ -248,7 +248,7 @@ class FeishuClient:
 
     def create_wiki_space(self, name: str, description: Optional[str] = None) -> Dict[str, Any]:
         """
-        创建知识库空间（Wiki Space）
+        创建知识库空间(Wiki Space)
 
         【重要】此 API 必须使用 user_access_token，不支持 tenant_access_token。
         请在初始化时传入 user_access_token 或在 .env 中设置 FEISHU_USER_ACCESS_TOKEN。
@@ -267,7 +267,7 @@ class FeishuClient:
 
     def list_wiki_spaces(self, page_size: int = 10) -> List[Dict[str, Any]]:
         """
-        获取知识库空间列表（自动翻页获取全部）
+        获取知识库空间列表(自动翻页获取全部)
 
         参数:
             page_size: 每页数量 (1-50)
@@ -330,7 +330,7 @@ class FeishuClient:
     def list_wiki_nodes(self, space_id: str, parent_node_token: Optional[str] = None,
                         page_size: int = 10) -> List[Dict[str, Any]]:
         """
-        获取知识库节点列表（自动翻页获取全部）
+        获取知识库节点列表(自动翻页获取全部)
 
         参数:
             space_id: 知识库空间 ID
@@ -365,11 +365,11 @@ class FeishuClient:
 
         参数:
             space_id: 知识库空间 ID
-            node_type: 节点类型，默认 "origin"（普通节点）
+            node_type: 节点类型，默认 "origin"(普通节点)
             obj_type: 对象类型，默认 "docx"
             parent_node_token: 父节点 token，不传则挂载到根节点
-            title: 节点标题（创建 docx 时需要）
-            node_token: 指定节点 token（可选）
+            title: 节点标题(创建 docx 时需要)
+            node_token: 指定节点 token(可选)
 
         返回:
             { node: { node_token, obj_token, ... } }
@@ -405,7 +405,7 @@ class FeishuClient:
 
         参数:
             space_id: 知识库空间 ID
-            doc_token: 文档 token（如 docx 的 document_id）
+            doc_token: 文档 token(如 docx 的 document_id)
             parent_node_token: 目标父节点 token，不传则挂载到根节点
         """
         payload: Dict[str, Any] = {"obj_token": doc_token, "obj_type": "docx"}
@@ -446,7 +446,7 @@ class FeishuClient:
             space_id: 知识库空间 ID
             member_type: 成员类型，"user" 或 "chat"
             member_id: 成员 open_id 或 chat_id
-            perm: 权限，"view"（可阅读）或 "edit"（可编辑）
+            perm: 权限，"view"(可阅读)或 "edit"(可编辑)
         """
         payload = {
             "member_type": member_type,
@@ -474,7 +474,7 @@ class FeishuClient:
 
         参数:
             document_id: 飞书文档 ID
-            member_id: 用户标识（open_id / 邮箱 / 手机号）
+            member_id: 用户标识(open_id / 邮箱 / 手机号)
             member_type: 用户标识类型，默认 openid
             perm: 权限级别，默认 full_access
         """
@@ -523,7 +523,7 @@ class FeishuClient:
 
     def search_user_keyword(self, query: str, page_size: int = 20) -> Dict[str, Any]:
         """
-        按关键词搜索飞书用户（姓名、部门等）
+        按关键词搜索飞书用户(姓名、部门等)
 
         参数:
             query: 搜索关键词
@@ -586,20 +586,20 @@ class FeishuClient:
         return self.api("DELETE", f"/docx/v1/documents/{document_id}/blocks/{document_id}/children/batch_delete",
                         json_data={"start_index": index, "end_index": index + 1})
 
-    # ============ 图片插入（三步法封装） ============
+    # ============ 图片插入(三步法封装) ============
 
     def insert_image_to_doc(self, document_id: str, image_url: Optional[str] = None,
                             image_base64: Optional[str] = None, file_name: str = "image.png",
                             caption: Optional[str] = None) -> Dict[str, Any]:
         """
-        插入图片到飞书文档（完整三步法封装）
+        插入图片到飞书文档(完整三步法封装)
 
         参数:
             document_id: 飞书文档 ID
-            image_url: 网络图片 URL（与 image_base64 二选一）
-            image_base64: Base64 编码的图片数据（与 image_url 二选一）
+            image_url: 网络图片 URL(与 image_base64 二选一)
+            image_base64: Base64 编码的图片数据(与 image_url 二选一)
             file_name: 图片文件名
-            caption: 图注文字（可选）
+            caption: 图注文字(可选)
         """
         import time
         # Step 1: 创建空图片块
@@ -672,7 +672,7 @@ _CODE_FENCE_RE = _re.compile(r'^```(.*)$')
 
 def md_to_blocks(markdown: str) -> List[Dict[str, Any]]:
     """
-    将 Markdown 文本转换为飞书 docx v1 块格式（鲁棒版）
+    将 Markdown 文本转换为飞书 docx v1 块格式(鲁棒版)
 
     支持的语法:
     - 块级: 标题(1-9)、无序/有序列表、任务列表、代码块、引用、分割线、表格、公式块

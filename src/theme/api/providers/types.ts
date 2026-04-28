@@ -19,11 +19,11 @@ export interface ModelCapabilities {
   reasoning: boolean
 }
 
-/** 模型定价信息（每1K tokens） */
+/** 模型定价信息(每1K tokens) */
 export interface ModelPricing {
-  /** 输入价格（元/1K tokens） */
+  /** 输入价格(元/1K tokens) */
   input: number
-  /** 输出价格（元/1K tokens） */
+  /** 输出价格(元/1K tokens) */
   output: number
 }
 
@@ -81,7 +81,7 @@ export interface ProviderInfo {
 export interface StreamCallbacks {
   /** 收到内容片段 */
   onContent: (text: string) => void
-  /** 收到思考内容（如 DeepSeek Reasoner） */
+  /** 收到思考内容(如 DeepSeek Reasoner) */
   onReasoning?: (text: string) => void
   /** 收到工具调用 */
   onToolCall?: (toolCall: ToolCall) => void
@@ -117,7 +117,7 @@ export interface ChatOptions {
   config: SessionConfig
   /** 可用工具 */
   tools?: ToolDefinition[]
-  /** 信号（用于取消） */
+  /** 信号(用于取消) */
   signal?: AbortSignal
 }
 
@@ -133,25 +133,25 @@ export interface ToolResult {
 export interface IProvider {
   /** 厂商信息 */
   readonly info: ProviderInfo
-  
+
   /** 获取该厂商支持的所有模型 */
   getModels(): ModelInfo[]
-  
+
   /** 获取指定模型信息 */
   getModel(modelId: string): ModelInfo | undefined
-  
+
   /** 检查模型是否支持 */
   supportsModel(modelId: string): boolean
-  
+
   /** 
    * 流式对话
    * 统一的聊天接口，内部处理厂商差异
    */
   chatStream(options: ChatOptions, callbacks: StreamCallbacks): Promise<void>
-  
+
   /**
    * 非流式对话
-   * 用于需要完整响应的场景（如工具调用）
+   * 用于需要完整响应的场景(如工具调用)
    */
   chat(options: ChatOptions): Promise<{
     content: string
@@ -160,20 +160,20 @@ export interface IProvider {
   }>
 }
 
-/** 标准化消息格式（内部使用） */
+/** 标准化消息格式(内部使用) */
 export interface StandardMessage {
   role: 'system' | 'user' | 'assistant' | 'tool'
   content: string | ContentPart[]
   /** 工具调用 */
   toolCalls?: ToolCall[]
-  /** 工具调用ID（用于 tool 角色） */
+  /** 工具调用ID(用于 tool 角色) */
   toolCallId?: string
   /** 思考内容 */
   reasoning?: string
 }
 
 /** 多模态内容片段 */
-export type ContentPart = 
+export type ContentPart =
   | { type: 'text'; text: string }
   | { type: 'image_url'; image_url: { url: string } }
   | { type: 'video_url'; video_url: { url: string } }

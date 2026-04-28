@@ -11,7 +11,7 @@ export const githubListPullsDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubListPulls',
-    description: `获取 GitHub 仓库的 Pull Requests（PR）。查看待合并的代码变更。
+    description: `获取 GitHub 仓库的 Pull Requests(PR)。查看待合并的代码变更。
 
 使用场景：
 1. 了解项目正在进行的开发
@@ -31,7 +31,7 @@ export const githubListPullsDef: ToolDefinition = {
         },
         state: {
           type: 'string',
-          description: 'PR 状态：open（开放）、closed（已关闭）、all（全部），默认open',
+          description: 'PR 状态：open(开放)、closed(已关闭)、all(全部)，默认open',
           enum: ['open', 'closed', 'all'],
           default: 'open'
         },
@@ -85,7 +85,7 @@ export const githubCreatePullRequestDef: ToolDefinition = {
         title: { type: 'string', description: 'PR 标题' },
         head: { type: 'string', description: '源分支，例如 "feature-branch"' },
         base: { type: 'string', description: '目标分支，默认main', default: 'main' },
-        body: { type: 'string', description: 'PR 正文（支持Markdown' },
+        body: { type: 'string', description: 'PR 正文(支持Markdown' },
         draft: { type: 'boolean', description: '是否为 Draft', default: false }
       },
       required: ['owner', 'repo', 'title', 'head']
@@ -105,8 +105,8 @@ export const githubMergePullRequestDef: ToolDefinition = {
         repo: { type: 'string', description: '仓库名称' },
         number: { type: 'number', description: 'PR 编号' },
         merge_method: { type: 'string', enum: ['merge', 'squash', 'rebase'], description: '合并方式，默认squash', default: 'squash' },
-        commit_title: { type: 'string', description: '合并提交标题（可选）' },
-        commit_message: { type: 'string', description: '合并提交消息（可选）' }
+        commit_title: { type: 'string', description: '合并提交标题(可选)' },
+        commit_message: { type: 'string', description: '合并提交消息(可选)' }
       },
       required: ['owner', 'repo', 'number']
     }
@@ -141,7 +141,7 @@ export const githubCreatePullRequestReviewDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubCreatePullRequestReview',
-    description: `对 Pull Request 提交 Review（审查意见）。支持 APPROVE（通过）、REQUEST_CHANGES（请求修改）、COMMENT（仅评论）。
+    description: `对 Pull Request 提交 Review(审查意见)。支持 APPROVE(通过)、REQUEST_CHANGES(请求修改)、COMMENT(仅评论)。
 
 使用场景：
 1. 代码审查后给出通过/不通过意见
@@ -149,8 +149,8 @@ export const githubCreatePullRequestReviewDef: ToolDefinition = {
 3. 对 PR 进行整体评价
 
 注意事项：
-- 不能 Review 自己创建的 PR（GitHub 会返回 422）
-- APPROVE 后 PR 可以被合并（如果设置了审查要求）`,
+- 不能 Review 自己创建的 PR(GitHub 会返回 422)
+- APPROVE 后 PR 可以被合并(如果设置了审查要求)`,
     parameters: {
       type: 'object',
       properties: {
@@ -159,10 +159,10 @@ export const githubCreatePullRequestReviewDef: ToolDefinition = {
         number: { type: 'number', description: 'PR 编号' },
         event: {
           type: 'string',
-          description: 'Review 类型：APPROVE（通过）、REQUEST_CHANGES（请求修改）、COMMENT（仅评论)',
+          description: 'Review 类型：APPROVE(通过)、REQUEST_CHANGES(请求修改)、COMMENT(仅评论)',
           enum: ['APPROVE', 'REQUEST_CHANGES', 'COMMENT']
         },
-        body: { type: 'string', description: 'Review 评论内容（REQUEST_CHANGES COMMENT 必填)' }
+        body: { type: 'string', description: 'Review 评论内容(REQUEST_CHANGES COMMENT 必填)' }
       },
       required: ['owner', 'repo', 'number', 'event']
     }

@@ -50,7 +50,7 @@ jupyter lab
 3. `03_search_msg_user.ipynb` — 测试搜索、消息、用户
 4. `04_advanced_blocks.ipynb` — 测试各种块类型
 
-## 关键发现（待验证）
+## 关键发现(待验证)
 
 | 能力 | API 端点 | 状态 |
 |------|----------|------|

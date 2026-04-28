@@ -22,8 +22,8 @@ export function detectMediaType(file: File): MediaType {
  * 检查文件是否受支持
  */
 export function isSupportedFile(file: File): { supported: boolean; reason?: string } {
-  // 图片格式
-  const SUPPORTED_IMAGE_FORMATS = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+  // 图片格式（OCR 支持的位图格式，SVG 矢量图不支持）
+  const SUPPORTED_IMAGE_FORMATS = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp']
   // 视频格式
   const SUPPORTED_VIDEO_FORMATS = ['video/mp4', 'video/quicktime', 'video/webm']
   // 最大文件大小 (10MB)
@@ -39,11 +39,19 @@ export function isSupportedFile(file: File): { supported: boolean; reason?: stri
     }
   }
   
+  // 明确拦截 SVG（矢量图 OCR 无法处理）
+  if (file.type === 'image/svg+xml') {
+    return {
+      supported: false,
+      reason: '不支持 SVG 格式。OCR 引擎和视觉模型均无法处理矢量图，请转换为 PNG/JPEG/BMP'
+    }
+  }
+
   // 检查格式
   if (mediaType === 'image' && !SUPPORTED_IMAGE_FORMATS.includes(file.type)) {
     return {
       supported: false,
-      reason: `不支持的图片格式: ${file.type}。支持: PNG, JPEG, WebP, GIF`
+      reason: `不支持的图片格式: ${file.type}。支持: PNG, JPEG, WebP, GIF, BMP`
     }
   }
   

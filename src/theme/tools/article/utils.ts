@@ -7,7 +7,7 @@
  */
 
 import type { ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 /** 后端 API 基础路径 */
 export const API_BASE = '/api'
@@ -48,7 +48,7 @@ export function validateSectionPath(filePath: string): { valid: boolean; error?:
 }
 
 /**
- * 校验路径是否包含目录遍历（..）
+ * 校验路径是否包含目录遍历(..)
  */
 export function validateNoTraversal(filePath: string): { valid: boolean; error?: string } {
   if (filePath.includes('..')) {
@@ -65,7 +65,7 @@ export async function handleApiResponse(response: Response, action: string): Pro
     const errorText = await response.text()
     return createErrorResult(
       `HTTP ${response.status}: ${errorText}`,
-      `${action}失败（${response.status}）`,
+      `${action}失败(${response.status})`,
       response.status === 404 ? '文件不存在，请检查路径' : '请稍后重试'
     )
   }
@@ -81,7 +81,7 @@ export async function handleApiResponse(response: Response, action: string): Pro
     }
     return createSuccessResult(data.data || data, `${action}成功`, action)
   } catch {
-    // 非 JSON 响应（如 read 返回纯文本）
+    // 非 JSON 响应(如 read 返回纯文本)
     const text = await response.text()
     return createSuccessResult(text, `${action}成功`, action)
   }
@@ -109,7 +109,7 @@ export function normalizeFilePath(inputPath: string): string {
     path = path + 'index.md'
   } else if (!path.endsWith('.md')) {
     // 新文件使用 index 模式：folder/index.md
-    // 如果 AI 明确传了 .md 后缀，保持原样（兼容旧 folder-note 文件）
+    // 如果 AI 明确传了 .md 后缀，保持原样(兼容旧 folder-note 文件)
     path = path + '/index.md'
   }
 

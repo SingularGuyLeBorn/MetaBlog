@@ -1,4 +1,4 @@
-# 07-FIM 补全（Beta）
+# 07-FIM 补全(Beta)
 
 来源：https://api-docs.deepseek.com/zh-cn/guides/fim_completion
 
@@ -8,11 +8,11 @@
 
 ## 概述
 
-FIM（Fill In the Middle）补全允许模型根据前缀和后缀，补全中间的内容。适合代码补全场景。
+FIM(Fill In the Middle)补全允许模型根据前缀和后缀，补全中间的内容。适合代码补全场景。
 
 ## 使用方法
 
-使用 `/completions` 端点（非 `/chat/completions`）：
+使用 `/completions` 端点(非 `/chat/completions`)：
 
 ```python
 from openai import OpenAI

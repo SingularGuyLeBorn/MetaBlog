@@ -3,7 +3,7 @@
  */
 
 import type { ToolDefinition, ToolExecutor, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 export const parsePlatformLinkDef: ToolDefinition = {
   type: 'function',
@@ -42,7 +42,7 @@ export const parsePlatformLinkDef: ToolDefinition = {
         },
         extract_comments: {
           type: 'boolean',
-          description: '是否提取评论（当前版本可能为空）',
+          description: '是否提取评论(当前版本可能为空)',
           default: false
         }
       },
@@ -110,7 +110,7 @@ export const processImageDef: ToolDefinition = {
 const API_BASE = '/api'
 
 /**
- * 通用平台链接解析（优先调用后端 /api/platform/parse）
+ * 通用平台链接解析(优先调用后端 /api/platform/parse)
  */
 export const parsePlatformLink: ToolExecutor = async (args) => {
   const { url, extract_content = true, max_content_length = 5000, extract_images = false, extract_comments = false } = args
@@ -175,11 +175,11 @@ export const parsePlatformLink: ToolExecutor = async (args) => {
 }
 
 /**
- * OCR 识别图片中的文字
+ * OCR 识别图片中的文字（调用本地后端 /api/ocr）
  */
 export const ocrImage: ToolExecutor = async (args): Promise<ToolResult> => {
   const { imageUrl, imageData } = args
-  
+
   if (!imageUrl && !imageData) {
     return createErrorResult(
       'Missing image parameter',
@@ -188,12 +188,85 @@ export const ocrImage: ToolExecutor = async (args): Promise<ToolResult> => {
     )
   }
 
-  // OCR 功能需要配置 OCR 服务
-  return createErrorResult(
-    'OCR service not configured',
-    'OCR 功能尚未配置',
-    '请配置 Tesseract.js 或接入百度/腾讯/阿里 OCR API'
-  )
+  try {
+    let blob: Blob
+    let filename = 'image.png'
+
+    if (imageData) {
+      // Base64 → Blob
+      const base64 = imageData.replace(/^data:image\/(\w+);base64,/, '')
+      const ext = RegExp.$1 || 'png'
+      filename = `image.${ext}`
+      const byteChars = atob(base64)
+      const byteArray = new Uint8Array(byteChars.length)
+      for (let i = 0; i < byteChars.length; i++) {
+        byteArray[i] = byteChars.charCodeAt(i)
+      }
+      blob = new Blob([byteArray], { type: `image/${ext}` })
+    } else {
+      // 从 URL 下载
+      const resp = await fetch(imageUrl)
+      if (!resp.ok) {
+        return createErrorResult(
+          `HTTP ${resp.status}`,
+          '下载图片失败',
+          '请检查图片 URL 是否有效'
+        )
+      }
+      blob = await resp.blob()
+      // 从 URL 或 Content-Type 推断扩展名
+      const urlExt = imageUrl.split('?')[0].split('.').pop()
+      if (urlExt && ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'].includes(urlExt.toLowerCase())) {
+        filename = `image.${urlExt}`
+      } else {
+        const ct = blob.type || 'image/png'
+        const ext = ct.split('/')[1] || 'png'
+        filename = `image.${ext}`
+      }
+    }
+
+    const formData = new FormData()
+    formData.append('file', blob, filename)
+    formData.append('language', 'auto')
+
+    const response = await fetch(`${API_BASE}/ocr`, {
+      method: 'POST',
+      body: formData
+    })
+
+    if (!response.ok) {
+      return createErrorResult(
+        `HTTP ${response.status}`,
+        'OCR 服务请求失败',
+        '请稍后重试或检查后端服务状态'
+      )
+    }
+
+    const result = await response.json()
+    if (!result.success) {
+      return createErrorResult(result.error, 'OCR 识别失败')
+    }
+
+    const text = result.data?.text || ''
+    const engine = result.data?.engine || 'PaddleOCR'
+
+    return createSuccessResult(
+      {
+        text,
+        engine,
+        lines: result.data?.lines?.length || 0
+      },
+      text ? `OCR 识别完成 (${engine})，共 ${result.data?.lines?.length || 0} 行` : '未识别到文字',
+      'ocrImage',
+      text || undefined
+    )
+  } catch (error: any) {
+    return createErrorResult(
+      error.message,
+      'OCR 请求失败',
+      '请检查网络连接或后端服务是否正常运行'
+    )
+  }
 }
 
 /**
@@ -201,7 +274,7 @@ export const ocrImage: ToolExecutor = async (args): Promise<ToolResult> => {
  */
 export const processImage: ToolExecutor = async (args) => {
   const { image_url, operation = 'describe', prompt } = args
-  
+
   if (!image_url) {
     return createErrorResult(
       'Missing image_url parameter',
@@ -220,7 +293,7 @@ export const processImage: ToolExecutor = async (args) => {
     switch (operation) {
       case 'ocr':
         return await ocrImage({ imageUrl: image_url })
-        
+
       case 'describe':
       case 'analyze':
       default:
@@ -229,10 +302,10 @@ export const processImage: ToolExecutor = async (args) => {
             format: contentType,
             size,
             url: image_url,
-            note: '深度图像分析需要接入 Vision API（如 GPT-4V、Claude 3 Vision）',
+            note: '深度图像分析需要接入 Vision API(如 GPT-4V、Claude 3 Vision)',
             capabilities: [
-              '获取图片元数据（格式、尺寸、大小）',
-              'OCR 文字识别（使用 ocr 操作）',
+              '获取图片元数据(格式、尺寸、大小)',
+              'OCR 文字识别(使用 ocr 操作)',
               '图片 URL 可以直接在对话中显示'
             ]
           },

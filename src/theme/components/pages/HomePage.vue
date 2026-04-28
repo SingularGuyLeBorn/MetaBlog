@@ -345,7 +345,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 
 // Loading state
 const isLoaded = ref(false)
@@ -518,7 +518,7 @@ const projects = [
 const extendedArticles = [
   {
     title: 'DeepSeek-V3 核心技术解析：MoE 与 MLA 机制',
-    excerpt: '深入解析 DeepSeek-V3 中的混合专家模型（MoE）和多头潜在注意力机制（MLA），理解其高效训练与推理的技术原理...',
+    excerpt: '深入解析 DeepSeek-V3 中的混合专家模型(MoE)和多头潜在注意力机制(MLA)，理解其高效训练与推理的技术原理...',
     link: '/sections/posts/DeepSeek-V3中的MoE与MLA：混合专家与多头潜在注意力机制详解.html',
     type: 'paper',
     typeLabel: '论文解读',

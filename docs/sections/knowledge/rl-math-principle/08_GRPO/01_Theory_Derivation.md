@@ -7,7 +7,7 @@
 - **arXiv**：2402.03300
 - **PDF**：见 `papers/` 目录
 
-**前置知识**：PPO（第5章）、DPO（第7章）
+**前置知识**：PPO(第5章)、DPO(第7章)
 
 ---
 
@@ -21,8 +21,8 @@ GRPO是**DeepSeek的核心创新**，也是DeepSeek-R1成功的关键因素之�
 
 1. 解释为什么GRPO比PPO更适合LLM
 2. 详细推导GRPO的优势估计公式
-3. 讨论标准差归一化的争议（Dr. GRPO）
-4. 介绍GRPO的变体（GSPO、GMPO、DAPO）
+3. 讨论标准差归一化的争议(Dr. GRPO)
+4. 介绍GRPO的变体(GSPO、GMPO、DAPO)
 5. 展示完整的代码实现
 
 ---
@@ -71,7 +71,7 @@ $$A_i = R_i - \underbrace{\bar{R}}_{\text{组均值基线}}$$
 **优势**：
 - 无需价值网络 → 节省显存
 - 无需训练价值函数 → 更稳定
-- 更符合LLM的评估方式（比较多个response）
+- 更符合LLM的评估方式(比较多个response)
 
 ---
 
@@ -90,7 +90,7 @@ $$\{y_1, y_2, \ldots, y_G\} \sim \pi_\theta(\cdot | x)$$
 | $x$ | **输入prompt**，用户的问题或指令 | 字符串/token序列 | 例如 "Solve: 2+2=" |
 | $y_i$ | 第 $i$ 个**采样的response**，模型的完整回复 | 字符串/token序列 | 例如 "The answer is 4." |
 | $G$ | **组大小**，每个prompt采样的response数量 | 正整数 | 典型值：8 |
-| $\pi_\theta$ | **当前策略**（参数为$\theta$的语言模型） | 概率分布 | $\pi_\theta(y|x)$ 表示给定$x$生成$y$的概率 |
+| $\pi_\theta$ | **当前策略**(参数为$\theta$的语言模型) | 概率分布 | $\pi_\theta(y|x)$ 表示给定$x$生成$y$的概率 |
 | $\theta$ | 语言模型的**可训练参数** | 向量 | 模型权重 |
 | $\sim$ | **采样符号**，表示从分布中采样 | 操作 | - |
 
@@ -124,8 +124,8 @@ $$\boxed{A_i = \frac{R_i - \bar{R}}{\sigma_R + \epsilon}}$$
 | $G$ | **组大小** | 正整数 | 分母中使用 $G-1$ 计算无偏标准差 |
 
 **为什么除以标准差？**
-- 当奖励差异大时（$\sigma_R$ 大），缩小优势幅度，防止过大更新
-- 当奖励差异小时（$\sigma_R$ 小），放大优势幅度，加速学习
+- 当奖励差异大时($\sigma_R$ 大)，缩小优势幅度，防止过大更新
+- 当奖励差异小时($\sigma_R$ 小)，放大优势幅度，加速学习
 
 ---
 
@@ -137,36 +137,36 @@ $$\boxed{A_i = \frac{R_i - \bar{R}}{\sigma_R + \epsilon}}$$
 
 此图展示了GRPO算法的核心机制——组采样(Group Sampling)与优势估计(Advantage Estimation)。
 
-**图片结构**（从上到下）：
+**图片结构**(从上到下)：
 
-1. **顶部：SINGLE PROMPT**（单个输入提示）
+1. **顶部：SINGLE PROMPT**(单个输入提示)
    - 表示用户输入的问题或指令
    - 例如："请计算 $\sqrt{144}$ 的值"
 
-2. **中部：RESPONSE SAMPLE 1-8**（8个响应样本）
+2. **中部：RESPONSE SAMPLE 1-8**(8个响应样本)
    - 每个方框代表从策略 $\pi_\theta$ 采样的一个独立response
    - $G = 8$ 表示组大小为8
    - 每个response都是完整的文本生成结果
 
-3. **每个response下方：R1=8.5, R2=6.2, ...**（奖励值）
+3. **每个response下方：R1=8.5, R2=6.2, ...**(奖励值)
    - $R_i$ 是第 $i$ 个response获得的奖励分数
    - 来自奖励模型 $r(x, y_i)$ 或规则验证器
    - 范围通常是 $[0, 10]$ 或 $[0, 1]$
 
-4. **下部左侧：BASELINE CALCULATION**（基线计算）
-   - **Mean Reward（均值奖励）**：$\mu = \frac{\sum R_i}{G} \approx 6.875$
+4. **下部左侧：BASELINE CALCULATION**(基线计算)
+   - **Mean Reward(均值奖励)**：$\mu = \frac{\sum R_i}{G} \approx 6.875$
      - 这是所有response奖励的算术平均
      - 作为"平均水平"的基线
-   - **Standard Deviation（标准差）**：$\sigma = \sqrt{\frac{\sum(R_i - \mu)^2}{G-1}} \approx 1.48$
+   - **Standard Deviation(标准差)**：$\sigma = \sqrt{\frac{\sum(R_i - \mu)^2}{G-1}} \approx 1.48$
      - 衡量奖励的离散程度
      - 用于归一化优势值
 
-5. **下部右侧：ADVANTAGE FORMULA**（优势公式）
+5. **下部右侧：ADVANTAGE FORMULA**(优势公式)
    - 公式：$A_i = \frac{R_i - \mu}{\sigma}$
-   - **A5的计算示例**：$A_5 = \frac{9.1 - 6.875}{1.48} \approx +1.50$（**正优势**，蓝色高亮）
+   - **A5的计算示例**：$A_5 = \frac{9.1 - 6.875}{1.48} \approx +1.50$(**正优势**，蓝色高亮)
      - 含义：Response 5的奖励9.1高于均值6.875，是"好的"response
      - 正优势会增加该response的生成概率
-   - **A6的计算示例**：$A_6 = \frac{4.9 - 6.875}{1.48} \approx -1.33$（**负优势**，橙色高亮）
+   - **A6的计算示例**：$A_6 = \frac{4.9 - 6.875}{1.48} \approx -1.33$(**负优势**，橙色高亮)
      - 含义：Response 6的奖励4.9低于均值6.875，是"差的"response
      - 负优势会降低该response的生成概率
 
@@ -210,7 +210,7 @@ $$r_i(\theta) = \frac{\pi_\theta(y_i | x)}{\pi_{\theta_{old}}(y_i | x)}$$
 
 **裁剪机制的作用**：
 
-| 情况 | $A_i > 0$（好response） | $A_i < 0$（差response） |
+| 情况 | $A_i > 0$(好response) | $A_i < 0$(差response) |
 |------|-------------------------|-------------------------|
 | $r_i > 1+\epsilon$ | 裁剪生效，限制增加 | 不裁剪，鼓励降低 |
 | $r_i < 1-\epsilon$ | 不裁剪，鼓励增加 | 裁剪生效，限制降低 |
@@ -303,7 +303,7 @@ $$r^{GSPO}(\theta) = \exp\left(\sum_t \log \pi_\theta(y_t|y_{<t}) - \sum_t \log 
 | $\pi_{old}$ | 旧策略 | 采样时的策略 |
 | $\exp(\cdot)$ | 指数函数 | 将log空间转回原空间 |
 
-**与GRPO的区别**：GRPO在token级计算比率后相乘（可能溢出），GSPO在log空间求和后取exp（更稳定）。
+**与GRPO的区别**：GRPO在token级计算比率后相乘(可能溢出)，GSPO在log空间求和后取exp(更稳定)。
 
 ---
 

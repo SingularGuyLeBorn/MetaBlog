@@ -6,17 +6,17 @@
 - **年份**：2024
 - **状态**：Advanced Baseline
 
-**前置知识**：PPO（第5章）、SFT、KL散度
+**前置知识**：PPO(第5章)、SFT、KL散度
 
 ---
 
 ## 0. 本章摘要
 
 在 LLM 对齐中，我们经常面临一个两难困境：
-- **SFT (Supervised Fine-Tuning)**：极其稳定，但受限于人类演示的质量（Teacher Forcing）。模型很难超越提供数据的人类。
+- **SFT (Supervised Fine-Tuning)**：极其稳定，但受限于人类演示的质量(Teacher Forcing)。模型很难超越提供数据的人类。
 - **RL (PPO/DPO)**：可以探索出超越人类的策略，但极其不稳定，容易出现 Reward Hacking 或模式崩坏。
 
-**GHPO (Guided Hybrid Policy Optimization)** 是一种将两者结合的策略。核心思想是在强化学习的过程中，持续地混入一定比例的高质量 SFT 数据（或由 Teacher Model 生成的 Guide 数据），不仅作为一个 KL 约束，而是直接作为一个 **辅助 Loss**。
+**GHPO (Guided Hybrid Policy Optimization)** 是一种将两者结合的策略。核心思想是在强化学习的过程中，持续地混入一定比例的高质量 SFT 数据(或由 Teacher Model 生成的 Guide 数据)，不仅作为一个 KL 约束，而是直接作为一个 **辅助 Loss**。
 
 这种混合不仅能稳定训练，还能缓解 RL 中的**遗忘问题 (Catastrophic Forgetting)**：模型在为了高分狂奔时，往往会忘记基本的语法和常识，GHPO 把这些基本功"拉回来"。
 
@@ -33,13 +33,13 @@
 ### 1.1 KL 约束是不够的
 
 PPO 使用 $\text{KL}(\pi \| \pi_{ref})$ 来限制模型不偏离初始模型太远。
-但是，$\pi_{ref}$（即 SFT 模型）本身并不是完美的。随着 $\pi$ 的更新，如果你只用 KL 约束，模型可能会在 $\pi_{ref}$ 概率较高的区域内找到一些"捷径"。
+但是，$\pi_{ref}$(即 SFT 模型)本身并不是完美的。随着 $\pi$ 的更新，如果你只用 KL 约束，模型可能会在 $\pi_{ref}$ 概率较高的区域内找到一些"捷径"。
 
-更严重的是，RL 更新通常只发生在 Reward 高的特定领域样本上。对于那些通用的、基础的语言能力（如逻辑推理、事实知识），如果它们没有在 RL 的 Prompt 分布中频繁出现，模型对它们的掌握就会退化。
+更严重的是，RL 更新通常只发生在 Reward 高的特定领域样本上。对于那些通用的、基础的语言能力(如逻辑推理、事实知识)，如果它们没有在 RL 的 Prompt 分布中频繁出现，模型对它们的掌握就会退化。
 
 ### 1.2 对齐税 (Alignment Tax)
 
-这就是著名的**对齐税**：经过 RLHF 后的模型，在标准 NLP 任务（如阅读理解、翻译）上的分数往往会下降。
+这就是著名的**对齐税**：经过 RLHF 后的模型，在标准 NLP 任务(如阅读理解、翻译)上的分数往往会下降。
 GHPO 旨在通过混合训练来最小化这种税。
 
 ---
@@ -66,7 +66,7 @@ $$ \mathcal{L}_{GHPO}(\theta) = \mathcal{L}_{RL}(\theta) + \lambda \cdot \mathca
 
 2.  **SFT Data (SFT-Mix)**：混入原始 SFT 数据。
     - *优点*：保持指令遵循能力，防止遗忘。
-    - *推荐*：目前业界的标准做法（如 LLaMA-2, InstructGPT 都有提及）。
+    - *推荐*：目前业界的标准做法(如 LLaMA-2, InstructGPT 都有提及)。
 
 3.  **Self-Generated Top Data (Best-of-N Mix)**：
     - 在 RL 训练过程中，如果模型生成了一个获得极高 Reward 的回答，我们将它存入 Replay Buffer。
@@ -90,7 +90,7 @@ $\lambda(t) = \text{Initial} \to 0$。
 在 PPO 采样阶段：
 $$ a \sim \alpha \cdot \pi_\theta(\cdot|s) + (1-\alpha) \cdot \pi_{guide}(\cdot|s) $$
 
-其中 $\pi_{guide}$ 可以是一个更强的模型（如 GPT-4 蒸馏），或者是一个专门的 Exploration Policy。
+其中 $\pi_{guide}$ 可以是一个更强的模型(如 GPT-4 蒸馏)，或者是一个专门的 Exploration Policy。
 这种方法在稀疏奖励场景下特别有用。
 
 ---
@@ -116,19 +116,19 @@ def train_step(batch):
 ```
 
 但这带来了一个工程挑战：**数据加载**。
-RL 数据通常是 On-policy 的（现采现用），而 SFT 数据是 Off-policy 的（存在硬盘上的）。
+RL 数据通常是 On-policy 的(现采现用)，而 SFT 数据是 Off-policy 的(存在硬盘上的)。
 需要两个 DataLoader，或者通过采样比率在一个 DataLoader 中混合。
 
 **最佳实践**：
 - 保持两个独立的 Iterator。
-- 每个 Step 从 SFT Iterator 取一个小 Batch（例如 RL Batch=128, SFT Batch=32）。
-- 梯度累积（Gradient Accumulation）之后再 Step。
+- 每个 Step 从 SFT Iterator 取一个小 Batch(例如 RL Batch=128, SFT Batch=32)。
+- 梯度累积(Gradient Accumulation)之后再 Step。
 
 ---
 
 ## 5. GHPO vs PPO-ptx
 
-InstructGPT 论文中提到的 PPO-ptx 其实就是 GHPO 的一种（混入 Pre-training data）。
+InstructGPT 论文中提到的 PPO-ptx 其实就是 GHPO 的一种(混入 Pre-training data)。
 GHPO 强调的是**更广泛的混合策略**，特别是混入 **Top-k Replay** 数据。
 
 | 算法 | SFT Loss 来源 | 目的 |

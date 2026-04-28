@@ -25,7 +25,7 @@ current = read_result.get("body") or read_result.get("body_asl") or read_result.
 print(f"Current content length: {len(current)}")
 print(f"Current content first 200 chars: {current[:200]}...")
 
-# 尝试更新（追加）
+# 尝试更新(追加)
 new_body = current + "\n\n<!-- API test append marker -->"
 update_result = client.api("PUT", f"/api/docs/{doc_id}", data={
     "title": doc["title"],

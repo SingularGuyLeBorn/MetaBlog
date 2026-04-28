@@ -9,12 +9,12 @@
 供 Jupyter Notebook 测试和实验使用。
 
 【与飞书客户端的区别】
-- 飞书：使用 Token 认证（tenant_access_token）
-- 语雀：使用 Cookie 认证（_yuque_session + _ctoken）
+- 飞书：使用 Token 认证(tenant_access_token)
+- 语雀：使用 Cookie 认证(_yuque_session + _ctoken)
 
 【核心发现】
 语雀内部 Web API 创建/更新文档时，必须使用 body_asl 字段保存内容。
-使用 body 字段会导致 API 返回成功，但文档内容为空（content 长度为 0）。
+使用 body 字段会导致 API 返回成功，但文档内容为空(content 长度为 0)。
 
 【典型用法】
     from yuque_client import YuqueClient
@@ -23,7 +23,7 @@
     # 列出知识库
     books = client.list_books()
 
-    # 创建文档（content 会自动包装为 Lake HTML）
+    # 创建文档(content 会自动包装为 Lake HTML)
     doc = client.create_doc(book_id, "标题", "<h1>内容</h1>")
 
     # 读取文档
@@ -97,7 +97,7 @@ class YuqueClient:
         if value:
             return value
 
-        # 2. 再尝试 .env 文件（处理编码问题）
+        # 2. 再尝试 .env 文件(处理编码问题)
         env_path = Path("../../.env")
         if not env_path.exists():
             env_path = Path(".env")
@@ -126,10 +126,10 @@ class YuqueClient:
 
         参数:
             method:  HTTP 方法，'GET' | 'POST' | 'PUT' | 'DELETE'
-            path:    API 路径（不含域名前缀，如 '/api/books'）
-            data:    请求体（POST/PUT 时使用）
+            path:    API 路径(不含域名前缀，如 '/api/books')
+            data:    请求体(POST/PUT 时使用)
             query:   URL 查询参数
-            referer: Referer 头（写操作必需，否则返回 403）
+            referer: Referer 头(写操作必需，否则返回 403)
 
         返回:
             API 返回的 JSON 数据
@@ -179,7 +179,7 @@ class YuqueClient:
         列出当前登录用户的所有知识库
 
         参数:
-            use_cache: 是否使用缓存（避免重复请求）
+            use_cache: 是否使用缓存(避免重复请求)
 
         返回:
             知识库列表，每个元素包含 id, slug, name, description 等字段
@@ -201,13 +201,13 @@ class YuqueClient:
 
     def get_toc(self, book_id: int) -> List[Dict[str, Any]]:
         """
-        获取知识库的目录结构（TOC）
+        获取知识库的目录结构(TOC)
 
         返回:
             目录项列表，每个元素包含：
-                - type: 'TITLE'（目录项）或 'DOC'（文档项）
+                - type: 'TITLE'(目录项)或 'DOC'(文档项)
                 - title: 标题
-                - url: 文档 slug（DOC 类型才有）
+                - url: 文档 slug(DOC 类型才有)
                 - depth: 层级深度
         """
         result = self.api("GET", f"/api/books/{book_id}/toc")
@@ -226,10 +226,10 @@ class YuqueClient:
 
         参数:
             name:        知识库名称
-            slug:        知识库路径（URL 标识，如 "api-test"）
+            slug:        知识库路径(URL 标识，如 "api-test")
             description: 知识库描述
-            type:        类型，"Book"（普通知识库）或 "Design"（设计知识库）
-            public:      可见性（0=私密, 1=互联网公开, 2=空间成员公开）
+            type:        类型，"Book"(普通知识库)或 "Design"(设计知识库)
+            public:      可见性(0=私密, 1=互联网公开, 2=空间成员公开)
 
         返回:
             创建的知识库信息，包含 id, slug, name 等
@@ -266,9 +266,9 @@ class YuqueClient:
 
         参数:
             book_id:     知识库数字 ID
-            name:        新名称（可选）
-            slug:        新路径（可选）
-            description: 新描述（可选）
+            name:        新名称(可选)
+            slug:        新路径(可选)
+            description: 新描述(可选)
 
         返回:
             更新后的知识库信息
@@ -332,7 +332,7 @@ class YuqueClient:
             book_id: 知识库数字 ID
 
         返回:
-            知识库设置信息，包含 public（可见性）、comment_status（评论设置）等
+            知识库设置信息，包含 public(可见性)、comment_status(评论设置)等
         """
         result = self.api("GET", f"/api/books/{book_id}/setting")
         return result.get("data", {})
@@ -348,8 +348,8 @@ class YuqueClient:
 
         参数:
             book_id:        知识库数字 ID
-            public:         可见性（0=私密, 1=互联网公开, 2=空间成员公开）
-            comment_status: 评论设置（0=关闭, 1=开启）
+            public:         可见性(0=私密, 1=互联网公开, 2=空间成员公开)
+            comment_status: 评论设置(0=关闭, 1=开启)
 
         返回:
             更新后的设置信息
@@ -378,10 +378,10 @@ class YuqueClient:
 
         参数:
             book_id:  知识库数字 ID
-            doc_slug: 文档 slug（从 TOC 中获取，字段名为 url）
+            doc_slug: 文档 slug(从 TOC 中获取，字段名为 url)
 
         返回:
-            文档详情，包含 id, title, slug, content（Lake HTML）等字段
+            文档详情，包含 id, title, slug, content(Lake HTML)等字段
 
         注意:
             读取返回的内容字段是 content，不是 body 或 body_asl。
@@ -411,8 +411,8 @@ class YuqueClient:
             book_id: 知识库数字 ID
             title:   文档标题
             content: 文档正文内容
-            public:  可见性（0=私密, 1=互联网公开, 2=空间成员公开）
-            format:  内容格式（"lake"=自动转Lake HTML, "markdown"=直接传Markdown, "html"=直接传HTML）
+            public:  可见性(0=私密, 1=互联网公开, 2=空间成员公开)
+            format:  内容格式("lake"=自动转Lake HTML, "markdown"=直接传Markdown, "html"=直接传HTML)
 
         返回:
             新创建的文档信息，包含 id 和 slug
@@ -459,11 +459,11 @@ class YuqueClient:
         更新已有文档的标题或内容
 
         参数:
-            doc_id:       文档数字 ID（不是 slug！从 read_doc 结果中获取）
-            title:        新标题（可选）
-            content:      新正文（可选，传入则全量替换）
-            format:       内容格式（"lake"=自动转Lake HTML, "markdown"=直接传Markdown, "html"=直接传HTML）
-            replace_text: 局部替换（可选），传入 {"old": "原文本", "new": "新文本"}
+            doc_id:       文档数字 ID(不是 slug！从 read_doc 结果中获取)
+            title:        新标题(可选)
+            content:      新正文(可选，传入则全量替换)
+            format:       内容格式("lake"=自动转Lake HTML, "markdown"=直接传Markdown, "html"=直接传HTML)
+            replace_text: 局部替换(可选)，传入 {"old": "原文本", "new": "新文本"}
                           后端自动读取当前内容 → 替换 → 提交
 
         返回:
@@ -473,7 +473,7 @@ class YuqueClient:
             - doc_id 是数字 ID，不是 slug！
             - 不传 content 只传 title → 只改标题，保留内容
             - 传了 content → 全量替换
-            - 传了 replace_text → 局部替换一句话（不需要自己读取拼接）
+            - 传了 replace_text → 局部替换一句话(不需要自己读取拼接)
         """
         payload: Dict[str, Any] = {"format": format}
 
@@ -517,7 +517,7 @@ class YuqueClient:
                 search_text = re.sub(r"\s+", " ", old_text).strip()
 
                 if search_text in text_version:
-                    # 在原始内容中定位并替换（简化处理：直接替换第一次出现的纯文本）
+                    # 在原始内容中定位并替换(简化处理：直接替换第一次出现的纯文本)
                     # 注意：这可能在 HTML 属性中误匹配，但对于普通文本通常安全
                     replaced_content = current_content.replace(old_text, new_text, 1)
                 else:
@@ -525,12 +525,12 @@ class YuqueClient:
                     raise ValueError(
                         f'替换失败：文档中未找到 "{old_text[:50]}"\n'
                         f'文档内容前 200 字符：{preview}...\n'
-                        f'提示：请确保 old 文本与文档中的文本完全一致（包括空格）。'
+                        f'提示：请确保 old 文本与文档中的文本完全一致(包括空格)。'
                     )
 
             # 放入 payload：根据内容类型智能选择字段
             # 如果原始内容来自 body/body_asl，优先保持原字段
-            # 如果原始内容来自 content（渲染后的 HTML），传 body 让服务端解析
+            # 如果原始内容来自 content(渲染后的 HTML)，传 body 让服务端解析
             if doc_data.get("body"):
                 payload["body"] = replaced_content
             elif doc_data.get("body_asl"):
@@ -567,7 +567,7 @@ class YuqueClient:
 
         参数:
             doc_id:  文档数字 ID
-            book_id: 知识库数字 ID（用于 query 参数）
+            book_id: 知识库数字 ID(用于 query 参数)
 
         返回:
             True 表示删除成功
@@ -627,11 +627,11 @@ class YuqueClient:
         raise RuntimeError(f"上传失败: {result}")
 
     def get_referer(self, book_id: int) -> str:
-        """获取指定知识库的 Referer URL（写操作必需）"""
+        """获取指定知识库的 Referer URL(写操作必需)"""
         return f"{self.BASE_URL}/{book_id}"
 
     def format_toc(self, book_id: int) -> str:
-        """格式化输出知识库目录结构（供打印查看）"""
+        """格式化输出知识库目录结构(供打印查看)"""
         toc = self.get_toc(book_id)
         lines = []
         for item in toc:
@@ -667,7 +667,7 @@ def lake_table(headers: List[str], rows: List[List[str]], col_widths: Optional[L
     参数:
         headers:    表头列表
         rows:       数据行列表
-        col_widths: 列宽列表（可选，默认每列 150px）
+        col_widths: 列宽列表(可选，默认每列 150px)
 
     示例:
         table = lake_table(
@@ -710,7 +710,7 @@ def _encode_card_value(data: Dict[str, Any]) -> str:
 
 def lake_code_block(language: str, code: str) -> str:
     """
-    创建语雀 Lake HTML 代码块（使用标准 <card> 格式）
+    创建语雀 Lake HTML 代码块(使用标准 <card> 格式)
 
     语雀 Lake 的代码块不是 <pre><code>，而是嵌入的卡片：
     <card name="codeblock" value="data:%7B%22code%22%3A%22...%22%7D"></card>
@@ -728,7 +728,7 @@ def lake_formula(latex: str, display: bool = False) -> str:
 
     参数:
         latex:   LaTeX 公式内容
-        display: 是否为行间公式（默认行内）
+        display: 是否为行间公式(默认行内)
 
     示例:
         f = lake_formula("E = mc^2")

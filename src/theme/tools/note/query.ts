@@ -2,9 +2,8 @@
  * 笔记工具定义 — queryKnowledge
  */
 
-import type { ToolDefinition } from '@/theme/tools/types'
-import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import type { ToolDefinition, ToolExecutor, ToolResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 export const queryKnowledgeDef: ToolDefinition = {
   type: 'function',
@@ -25,11 +24,11 @@ export const queryKnowledgeDef: ToolDefinition = {
 }
 
 /**
- * 查询知识（搜索本地文章）
+ * 查询知识(搜索本地文章)
  */
 export const queryKnowledge: ToolExecutor = async (args): Promise<ToolResult> => {
   const { query } = args
-  
+
   if (!query) {
     return createErrorResult(
       'Missing query parameter',
@@ -37,7 +36,7 @@ export const queryKnowledge: ToolExecutor = async (args): Promise<ToolResult> =>
       '示例: queryKnowledge(query="Docker 使用方法")'
     )
   }
-  
+
   // 搜索本地文章作为知识库
   return createSuccessResult(
     { query },

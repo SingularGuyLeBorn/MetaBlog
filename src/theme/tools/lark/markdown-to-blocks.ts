@@ -1,5 +1,5 @@
 /**
- * Markdown → 飞书 Docx Blocks 转换器（鲁棒版）
+ * Markdown → 飞书 Docx Blocks 转换器(鲁棒版)
  *
  * 支持：
  *   块级：标题(1-9)、无序/有序列表、任务列表、代码块、引用(嵌套)、分割线、图片、表格(降级为文本)、公式块
@@ -124,7 +124,7 @@ function parseBlocks(markdown: string): any[] {
 function parseBlock(lines: string[], i: number): { block: any; nextIndex: number } {
   const line = lines[i]
 
-  // --- 块级公式 $$...$$（支持多行和单行） ---
+  // --- 块级公式 $$...$$(支持多行和单行) ---
   if (line === '$$') {
     // 多行: $$\n...\n$$
     const formulaLines: string[] = []
@@ -230,11 +230,11 @@ function parseBlock(lines: string[], i: number): { block: any; nextIndex: number
     }
   }
 
-  // --- 引用块（支持嵌套）---
+  // --- 引用块(支持嵌套)---
   if (line.startsWith('>')) {
     const quoteLines: string[] = []
     while (i < lines.length && lines[i].startsWith('>')) {
-      // 去除引用标记，保留嵌套层级用于缩进感知（简单实现：只去一层）
+      // 去除引用标记，保留嵌套层级用于缩进感知(简单实现：只去一层)
       const stripped = lines[i].replace(/^>\s?/, '')
       quoteLines.push(stripped)
       i++
@@ -318,7 +318,7 @@ function isTableDivider(line: string): boolean {
 }
 
 /** 解析 Markdown 表格为飞书 table block
- *  返回结构包含 _cell_contents（TextElement[][]，行优先），
+ *  返回结构包含 _cell_contents(TextElement[][]，行优先)，
  *  由后端拆分为：创建 table + POST text children 到每个 cell
  */
 function parseMarkdownTable(lines: string[]): any | null {
@@ -370,7 +370,7 @@ function splitTableCells(line: string): string[] {
 }
 
 // ============================================================
-// 行内解析（递归下降，支持嵌套）
+// 行内解析(递归下降，支持嵌套)
 // ============================================================
 
 function parseInlineElements(text: string): TextElement[] {
@@ -394,7 +394,7 @@ function parseInline(text: string, start: number): TextElement[] {
       continue
     }
 
-    // 优先级 2: Code `text`（内部不解析）
+    // 优先级 2: Code `text`(内部不解析)
     const code = tryParseCode(text, i)
     if (code) {
       elements.push({
@@ -416,7 +416,7 @@ function parseInline(text: string, start: number): TextElement[] {
       continue
     }
 
-    // 优先级 4: Italic *text*（避免匹配 ** 内部的单个 *）
+    // 优先级 4: Italic *text*(避免匹配 ** 内部的单个 *)
     const italic = tryParseItalic(text, i)
     if (italic) {
       const inner = parseInline(italic.innerText, 0)
@@ -434,7 +434,7 @@ function parseInline(text: string, start: number): TextElement[] {
       continue
     }
 
-    // 优先级 6: 行内公式 $...$（避免匹配 $$ 开头的块级公式）
+    // 优先级 6: 行内公式 $...$(避免匹配 $$ 开头的块级公式)
     const eq = tryParseEquation(text, i)
     if (eq) {
       elements.push({ equation: { content: eq.content } })
@@ -545,7 +545,7 @@ function tryParseStrikethrough(text: string, i: number): { innerText: string; en
 function tryParseEquation(text: string, i: number): { content: string; endPos: number } | null {
   if (text[i] !== '$') return null
 
-  // 优先匹配 $$...$$（常见于列表项/段落中的块级公式写法）
+  // 优先匹配 $$...$$(常见于列表项/段落中的块级公式写法)
   if (text.slice(i, i + 2) === '$$') {
     const end = text.indexOf('$$', i + 2)
     if (end !== -1 && end > i + 2) {

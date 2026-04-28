@@ -26,7 +26,7 @@ JustRL 证明，在数学和代码任务上，这个简单的 "REINFORCE + Group
 ## 1. JustRL 的哲学：奥卡姆剃刀
 
 ### 1.1 复杂度的诅咒
-传统的 PPO 引入了 Critic 来减少方差。但 Critic 本身极难训练（见第21章 Scaling Laws）。
+传统的 PPO 引入了 Critic 来减少方差。但 Critic 本身极难训练(见第21章 Scaling Laws)。
 如果 Critic 训练不好，它提供的 Advantage 信号就是噪声。
 **JustRL 的观点**：既然 Critic 可能是瓶颈，不如直接扔掉。
 
@@ -40,7 +40,7 @@ $$ \theta_{t+1} \leftarrow \theta_t + \alpha \cdot \frac{1}{G} \sum_{i=1}^G \nab
 
 $$ \mathbb{A}(o_i) = \frac{R(o_i) - \mu_R}{\sigma_R + \epsilon} $$
 
-这本质上就是 **GRPO** 的简化版，去掉了一切花哨的修饰（如 KL 惩罚项，JustRL 认为 Early Stopping 足够控制 KL）。
+这本质上就是 **GRPO** 的简化版，去掉了一切花哨的修饰(如 KL 惩罚项，JustRL 认为 Early Stopping 足够控制 KL)。
 
 ---
 

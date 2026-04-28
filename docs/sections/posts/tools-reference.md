@@ -32,7 +32,7 @@ tags: [tools, reference, api]
 |------|------|------|------|
 | path | string | �?| 文章路径，支�?URL 格式或文件路�?|
 | max_length | number | �?| 最大返回字符数，默�?8000 |
-| start_line | number | �?| 起始行号（从 1 开始）|
+| start_line | number | �?| 起始行号(从 1 开始)|
 | end_line | number | �?| 结束行号 |
 | include_metadata | boolean | �?| 是否包含 frontmatter 元数�?|
 
@@ -108,7 +108,7 @@ searchArticles({
 ---
 
 ### updateArticle
-更新文章内容，支持多种更新模式（replace/append/prepend/insert）�?
+更新文章内容，支持多种更新模式(replace/append/prepend/insert)�?
 
 **参数�?*
 | 参数 | 类型 | 必填 | 说明 |
@@ -116,7 +116,7 @@ searchArticles({
 | path | string | �?| 文章路径 |
 | content | string | �?| 新内�?|
 | mode | string | �?| 更新模式：replace/append/prepend/insert |
-| search_text | string | �?| 搜索定位文本（insert 模式需要）|
+| search_text | string | �?| 搜索定位文本(insert 模式需要)|
 
 **状�?*: �?完整实现
 
@@ -145,7 +145,7 @@ searchArticles({
 
 **返回�?* 知识库列表，包含名称、描述、文档数�?
 
-**状�?*: �?完整实现（内存存储）
+**状�?*: �?完整实现(内存存储)
 
 ---
 
@@ -155,7 +155,7 @@ searchArticles({
 **参数�?*
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| name | string | �?| 知识库名称（仅字母数字下划线连字符）|
+| name | string | �?| 知识库名称(仅字母数字下划线连字符)|
 | description | string | �?| 知识库描�?|
 
 **状�?*: �?完整实现
@@ -186,7 +186,7 @@ searchArticles({
 | query | string | �?| 搜索关键�?|
 | limit | number | �?| 返回数量限制，默�?5 |
 
-**状�?*: �?完整实现（关键词匹配，非向量搜索�?
+**状�?*: �?完整实现(关键词匹配，非向量搜索�?
 
 ---
 
@@ -334,8 +334,8 @@ searchArticles({
 | url | string | �?| 目标 URL |
 | method | string | �?| HTTP 方法：GET/POST/PUT/DELETE，默�?GET |
 | headers | object | �?| HTTP 请求�?|
-| body | string | �?| 请求体（POST/PUT 时使用）|
-| timeout | number | �?| 超时时间（毫秒），默�?10000 |
+| body | string | �?| 请求体(POST/PUT 时使用)|
+| timeout | number | �?| 超时时间(毫秒)，默�?10000 |
 | max_length | number | �?| 返回内容最大长度，默认 15000 |
 
 **示例�?*
@@ -362,7 +362,7 @@ fetchUrl({
 | query | string | �?| 搜索关键�?|
 | num_results | number | �?| 返回结果数量，默�?5 |
 
-**状�?*: �?Mock 数据（需接入真实搜索引擎 API�?
+**状�?*: �?Mock 数据(需接入真实搜索引擎 API�?
 
 **建议**: 接入 SerpAPI、Google Custom Search �?Bing Search API
 
@@ -374,7 +374,7 @@ fetchUrl({
 **参数�?*
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| paper_id | string | �?| ArXiv 论文 ID（如 2401.12345）|
+| paper_id | string | �?| ArXiv 论文 ID(如 2401.12345)|
 | include_abstract | boolean | �?| 是否包含摘要，默�?true |
 | include_pdf | boolean | �?| 是否返回 PDF 链接，默�?true |
 
@@ -457,10 +457,10 @@ fetchUrl({
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | text | string | �?| 要翻译的文本 |
-| target_language | string | �?| 目标语言代码（zh/en/ja/ko/fr/de）|
-| source_language | string | �?| 源语言代码（可选，自动检测）|
+| target_language | string | �?| 目标语言代码(zh/en/ja/ko/fr/de)|
+| source_language | string | �?| 源语言代码(可选，自动检测)|
 
-**状�?*: ⚠️ 依赖 AI 自身翻译能力（建议接入翻�?API�?
+**状�?*: ⚠️ 依赖 AI 自身翻译能力(建议接入翻�?API�?
 
 ---
 
@@ -473,9 +473,9 @@ fetchUrl({
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | code | string | �?| 要执行的代码 |
-| language | string | �?| 编程语言（python/javascript/bash）|
+| language | string | �?| 编程语言(python/javascript/bash)|
 
-**状�?*: ⚠️ 仅在浏览器环境执行（建议后端沙箱执行�?
+**状�?*: ⚠️ 仅在浏览器环境执行(建议后端沙箱执行�?
 
 **⚠️ 安全警告**: 当前实现有安全风险，不应执行不受信任的代�?
 
@@ -490,7 +490,7 @@ fetchUrl({
 | code | string | �?| 要分析的源代�?|
 | language | string | �?| 编程语言 |
 
-**状�?*: ⚠️ 简单规则分析（建议接入 ESLint/Prettier�?
+**状�?*: ⚠️ 简单规则分析(建议接入 ESLint/Prettier�?
 
 ---
 
@@ -516,7 +516,7 @@ fetchUrl({
 | location | string | �?| 城市名称 |
 | days | number | �?| 预报天数，默�?3 |
 
-**状�?*: �?Mock 数据（需接入真实天气 API�?
+**状�?*: �?Mock 数据(需接入真实天气 API�?
 
 **建议**: 接入和风天气、心知天气或 OpenWeatherMap API
 
@@ -596,7 +596,7 @@ OCR 识别图片中的文字�?
 | base64 | string | �?| Base64 编码的图片数�?|
 | language | string | �?| 识别语言，默�?auto |
 
-**状�?*: �?Mock 数据（需接入 OCR 服务�?
+**状�?*: �?Mock 数据(需接入 OCR 服务�?
 
 **建议**: 接入百度 OCR、腾�?OCR �?PaddleOCR
 
@@ -632,7 +632,7 @@ OCR 识别图片中的文字�?
 
 ## 📋 工具开发计�?
 
-### 高优先级（近期实现）
+### 高优先级(近期实现)
 
 | 工具 | 描述 | 预计工时 |
 |------|------|----------|
@@ -642,7 +642,7 @@ OCR 识别图片中的文字�?
 | `compress_image` | 图片压缩 | 1 �?|
 | `read_pdf` | PDF 内容提取 | 1 �?|
 
-### 中优先级（中期实现）
+### 中优先级(中期实现)
 
 | 工具 | 描述 | 预计工时 |
 |------|------|----------|
@@ -652,7 +652,7 @@ OCR 识别图片中的文字�?
 | `fetch_rss` | RSS 订阅获取 | 0.5 �?|
 | `generate_chart` | 生成数据图表 | 1 �?|
 
-### 低优先级（远期实现）
+### 低优先级(远期实现)
 
 | 工具 | 描述 | 预计工时 |
 |------|------|----------|

@@ -7,7 +7,7 @@
 - **arXiv**：1502.05477
 - **PDF**：见 `papers/` 目录
 
-**前置知识**：策略梯度（第2章）、REINFORCE（第3章）、KL散度
+**前置知识**：策略梯度(第2章)、REINFORCE(第3章)、KL散度
 
 ---
 
@@ -78,7 +78,7 @@ $$L(\theta) \approx g^T (\theta - \theta_{old})$$
 
 **KL约束 (二阶展开)**：
 $$D_{KL}(\theta_{old} \| \theta) \approx \frac{1}{2} (\theta - \theta_{old})^T H (\theta - \theta_{old})$$
-其中 $H$ 是KL散度的Hessian矩阵（也称为**Fisher信息矩阵, FIM**）。这里因为KL在 $\theta=\theta_{old}$ 处最小值为0，所以一阶项为0。
+其中 $H$ 是KL散度的Hessian矩阵(也称为**Fisher信息矩阵, FIM**)。这里因为KL在 $\theta=\theta_{old}$ 处最小值为0，所以一阶项为0。
 
 ### 2.2 解析解
 
@@ -98,15 +98,15 @@ $$\Delta\theta = \sqrt{\frac{2\delta}{g^T H^{-1} g}} H^{-1} g$$
 ![TRPO Visualization](images/trust_region_visualization.png)
 
 **图片详细说明**：
-- **普通梯度 ($g$)**：指向目标函数上升最快的方向（垂直于等高线）。
-- **信任区域**：图中的蓝色椭圆（由Hessian矩阵 $H$ 决定形状）。KL散度定义了一个非欧几里得的距离。
+- **普通梯度 ($g$)**：指向目标函数上升最快的方向(垂直于等高线)。
+- **信任区域**：图中的蓝色椭圆(由Hessian矩阵 $H$ 决定形状)。KL散度定义了一个非欧几里得的距离。
 - **自然梯度 ($H^{-1}g$)**：指向在信任区域内能最大化目标的方向。它考虑了参数空间的曲率。
 
 ---
 
 ### 2.3 共轭梯度法 (Conjugate Gradient)
 
-直接计算 $H^{-1}$ 是不可行的，因为神经网络参数量巨大（$H$ 是 $N \times N$ 矩阵）。
+直接计算 $H^{-1}$ 是不可行的，因为神经网络参数量巨大($H$ 是 $N \times N$ 矩阵)。
 
 TRPO使用**共轭梯度法 (CG)** 来直接计算 $x = H^{-1} g$，也就是求解线性方程 $Hx = g$。
 

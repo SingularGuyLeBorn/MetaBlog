@@ -3,7 +3,7 @@
  * 
  * 让 Agent 拥有操作 Google 文档的能力：
  * - 创建/读取/编辑 Google Docs
- * - 操作 Google Sheets（表格）
+ * - 操作 Google Sheets(表格)
  * - 结合 BrowserAutomation 实现自动登录和操作
  * 
  * 参考: Google Workspace CLI for Agents
@@ -51,7 +51,7 @@ export interface SheetCreateOptions {
 function translateGoogleError(status: number): { message: string; suggestion: string } {
   switch (status) {
     case 400:
-      return { message: "Google API 请求格式错误", suggestion: "请检查请求参数（如文档标题、表格范围）是否符合 Google API 要求" };
+      return { message: "Google API 请求格式错误", suggestion: "请检查请求参数(如文档标题、表格范围)是否符合 Google API 要求" };
     case 401:
       return { message: "Google OAuth Token 无效或已过期", suggestion: "请重新完成 Google OAuth 授权流程，获取新的 access_token" };
     case 403:
@@ -89,13 +89,13 @@ export interface WorkspaceOperationResult {
  * Google Workspace Tool
  * 
  * 提供两种模式：
- * 1. API 模式：使用 Google API（需要 OAuth2 授权）
+ * 1. API 模式：使用 Google API(需要 OAuth2 授权)
  * 2. Browser 模式：使用 BrowserAutomation 模拟人工操作
  */
 export class GoogleWorkspaceTool {
   name = 'google-workspace'
   description = '操作 Google Docs/Sheets'
-  
+
   private auth?: GoogleAuth
   private API_BASE = 'https://docs.googleapis.com/v1'
   private SHEETS_API_BASE = 'https://sheets.googleapis.com/v4'
@@ -176,13 +176,13 @@ export class GoogleWorkspaceTool {
   }
 
   // ═════════════════════════════════════════════════════════════════
-  // Browser 模式（使用 AgentReach 自动化浏览器）
+  // Browser 模式(使用 AgentReach 自动化浏览器)
   // ═════════════════════════════════════════════════════════════════
 
   private async createDocumentViaBrowser(options: DocCreateOptions): Promise<WorkspaceOperationResult> {
     // 这里会调用 BrowserAutomation 打开 docs.google.com
     // 模拟：点击"新建" -> "文档" -> 输入标题 -> 输入内容
-    
+
     return {
       success: true,
       operation: 'createDocumentViaBrowser',
@@ -201,14 +201,14 @@ export class GoogleWorkspaceTool {
   private async readDocumentViaBrowser(docId: string): Promise<WorkspaceOperationResult> {
     // BrowserAutomation 打开文档 URL
     // 提取正文内容
-    
+
     return {
       success: true,
       operation: 'readDocumentViaBrowser',
       data: {
         id: docId,
         title: '文档标题',
-        content: '文档内容（通过浏览器提取）...',
+        content: '文档内容(通过浏览器提取)...',
         url: `https://docs.google.com/document/d/${docId}/edit`,
       },
       timestamp: new Date().toISOString(),
@@ -218,7 +218,7 @@ export class GoogleWorkspaceTool {
   private async updateDocumentViaBrowser(docId: string, content: string): Promise<WorkspaceOperationResult> {
     // BrowserAutomation 打开文档
     // 全选 -> 删除 -> 输入新内容 -> 保存
-    
+
     return {
       success: true,
       operation: 'updateDocumentViaBrowser',
@@ -264,7 +264,7 @@ export class GoogleWorkspaceTool {
   }
 
   // ═════════════════════════════════════════════════════════════════
-  // API 模式（需要 OAuth2 Token）
+  // API 模式(需要 OAuth2 Token)
   // ═════════════════════════════════════════════════════════════════
 
   private async createDocumentViaAPI(options: DocCreateOptions): Promise<WorkspaceOperationResult> {
@@ -445,7 +445,7 @@ export class GoogleWorkspaceTool {
   private async appendToSheetViaAPI(options: SheetAppendOptions): Promise<WorkspaceOperationResult> {
     try {
       const range = `${options.sheetName}!A1`
-      
+
       const response = await fetch(
         `${this.SHEETS_API_BASE}/spreadsheets/${options.spreadsheetId}/values/${range}:append?valueInputOption=RAW`,
         {
@@ -534,7 +534,7 @@ export class GoogleWorkspaceTool {
     const collectedAt = new Date().toISOString()
     const title = docTitle || `${platform} 内容采集 ${collectedAt.slice(0, 10)}`
 
-    // 模拟采集的内容（实际应调用 browserAutomation）
+    // 模拟采集的内容(实际应调用 browserAutomation)
     const mockContent = {
       platform,
       url: socialUrl,
@@ -579,7 +579,7 @@ export class GoogleWorkspaceTool {
     // 从 Google Docs API 响应中提取纯文本
     let text = ''
     const content = doc.body?.content || []
-    
+
     for (const element of content) {
       if (element.paragraph) {
         for (const run of element.paragraph.elements || []) {
@@ -589,7 +589,7 @@ export class GoogleWorkspaceTool {
         }
       }
     }
-    
+
     return text
   }
 

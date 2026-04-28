@@ -10,7 +10,7 @@
 
 ### Skill (技能) = 使用指南
 - **定义**: 何时以及如何使用一组工具
-- **形式**: Markdown 文档（Prompt Template）
+- **形式**: Markdown 文档(Prompt Template)
 - **例子**: "文章管理专家", "学术研究助手"
 - **粒度**: 粗粒度，工作流指导
 
@@ -42,15 +42,15 @@ Skill 告诉 AI：
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  LOD-0: System Prompt（系统提示词）                          │
+│  LOD-0: System Prompt(系统提示词)                          │
 │  - Agent 身份定义                                           │
-│  - Skills 列表（name + description）                         │
-│  - 工具列表（Function Calling）                              │
+│  - Skills 列表(name + description)                         │
+│  - 工具列表(Function Calling)                              │
 ├─────────────────────────────────────────────────────────────┤
-│  LOD-1: Tool Definition（工具定义）                          │
+│  LOD-1: Tool Definition(工具定义)                          │
 │  - 仅在 AI 决定调用时传递                                    │
 ├─────────────────────────────────────────────────────────────┤
-│  LOD-2: Skill Content（技能内容）                            │
+│  LOD-2: Skill Content(技能内容)                            │
 │  - 仅在匹配到 Skill 时注入对话                               │
 │  - 包含详细工作流和示例                                      │
 └─────────────────────────────────────────────────────────────┘
@@ -113,7 +113,7 @@ interface Skill {
   id: string
   name: string
   description: string  // 用于匹配用户意图
-  content: string      // 详细工作流说明（Markdown）
+  content: string      // 详细工作流说明(Markdown)
   tools: string[]      // 关联的工具列表
   usageScenarios: string[]  // 使用场景关键词
 }
@@ -139,13 +139,13 @@ function buildSystemPrompt(agent: Agent, userInput: string): string {
   // 2. 构建基础提示词
   let prompt = `你是 ${agent.name}，${agent.description}`
   
-  // 3. 添加 Skills 列表（LOD-0）
+  // 3. 添加 Skills 列表(LOD-0)
   prompt += '\n\n## 你的 Skills\n'
   for (const skill of agent.skills) {
     prompt += `- ${skill.name}: ${skill.description}\n`
   }
   
-  // 4. 如果有匹配的 Skill，注入详细内容（LOD-2）
+  // 4. 如果有匹配的 Skill，注入详细内容(LOD-2)
   if (matchedSkills.length > 0) {
     prompt += '\n## 当前激活的 Skills\n'
     for (const skillId of matchedSkills) {
@@ -203,7 +203,7 @@ tags:
 2. 从搜索结果中获取 path
 
 ### 2. 创建新文章
-1. 确定文章的 section（knowledge/posts/resources）
+1. 确定文章的 section(knowledge/posts/resources)
 2. 使用 `createArticle(title="标题", path="section/filename.md", content="内容")`
 3. 确保包含规范的 Markdown 语法和 H1 标题、Frontmatter
 
@@ -236,7 +236,7 @@ tags:
 | 类比 | "锤子" | "如何打造一张桌子" |
 | 定义位置 | TypeScript 代码 | Markdown 文件 |
 | 更新方式 | 改代码重新部署 | 修改 Markdown 即时生效 |
-| 数量 | 少（50个左右） | 多（可动态创建） |
+| 数量 | 少(50个左右) | 多(可动态创建) |
 
 ## 最佳实践
 
@@ -263,14 +263,14 @@ tags:
 ## 实现建议
 
 ### 1. Skill 热更新
-Skills 应该存储在文件系统中（如 `.skills/` 目录），支持：
+Skills 应该存储在文件系统中(如 `.skills/` 目录)，支持：
 - 运行时重新加载
 - 用户自定义创建
 - 导入/导出分享
 
 ### 2. Skill 匹配优化
 简单的关键词匹配可能不够准确，可以考虑：
-- 向量相似度匹配（语义理解）
+- 向量相似度匹配(语义理解)
 - 历史对话学习
 - 用户反馈优化
 

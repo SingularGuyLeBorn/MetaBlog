@@ -8,29 +8,29 @@
 
 ```
 model-reference/
-├── README.md                                    # 本文件（总览）
+├── README.md                                    # 本文件(总览)
 └── zhipu/                                       # 智谱 AI (已完成)
     ├── README.md                               # 智谱 AI 总览
     ├── docs/                                   # 功能文档
-    │   ├── 01-基础对话（多轮）.md
+    │   ├── 01-基础对话(多轮).md
     │   ├── 02-流式输出.md
-    │   ├── 03-深度思考（思维链）.md
+    │   ├── 03-深度思考(思维链).md
     │   ├── 04-图片理解.md
     │   ├── 05-视频理解.md
     │   ├── 06-文件理解.md
     │   ├── 07-音频对话.md
-    │   ├── 08-FunctionCall（工具调用）.md
+    │   ├── 08-FunctionCall(工具调用).md
     │   ├── 09-图像生成.md
     │   └── 10-视频生成.md
     └── notebook/                               # Jupyter Notebook 测试
-        ├── 01-基础对话（多轮）.ipynb
+        ├── 01-基础对话(多轮).ipynb
         ├── 02-流式输出.ipynb
-        ├── 03-深度思考（思维链）.ipynb
+        ├── 03-深度思考(思维链).ipynb
         ├── 04-图片理解.ipynb
         ├── 05-视频理解.ipynb
         ├── 06-文件理解.ipynb
         ├── 07-音频对话.ipynb
-        ├── 08-FunctionCall（工具调用）.ipynb
+        ├── 08-FunctionCall(工具调用).ipynb
         ├── 09-图像生成.ipynb
         └── 10-视频生成.ipynb
 ```
@@ -59,11 +59,11 @@ model-reference/
 
 | 序号 | 功能 | 思考模型 | 思维链 | 包含模型 | 快速链接 |
 |:---:|:---|:---:|:---:|:---|:---|
-| 01 | **基础对话（多轮）** | ❌ | ❌ | GLM-4.7-Flash<br>GLM-4-Flash-250414 | [文档](./zhipu/docs/01-基础对话（多轮）.md) / [测试](./zhipu/notebook/01-基础对话（多轮）.ipynb) |
+| 01 | **基础对话(多轮)** | ❌ | ❌ | GLM-4.7-Flash<br>GLM-4-Flash-250414 | [文档](./zhipu/docs/01-基础对话(多轮).md) / [测试](./zhipu/notebook/01-基础对话(多轮).ipynb) |
 | 02 | **流式输出** | 部分 | 部分 | GLM-4.7-Flash<br>GLM-4-Flash-250414<br>GLM-4.6V-Flash<br>GLM-4.1V-Thinking-Flash<br>GLM-4V-Flash | [文档](./zhipu/docs/02-流式输出.md) / [测试](./zhipu/notebook/02-流式输出.ipynb) |
-| 03 | **深度思考（思维链）** | ✅ | ✅ | GLM-4.6V-Flash<br>GLM-4.1V-Thinking-Flash | [文档](./zhipu/docs/03-深度思考（思维链）.md) / [测试](./zhipu/notebook/03-深度思考（思维链）.ipynb) |
+| 03 | **深度思考(思维链)** | ✅ | ✅ | GLM-4.6V-Flash<br>GLM-4.1V-Thinking-Flash | [文档](./zhipu/docs/03-深度思考(思维链).md) / [测试](./zhipu/notebook/03-深度思考(思维链).ipynb) |
 | 07 | **音频对话** | ❌ | ❌ | GLM-4-Voice | [文档](./zhipu/docs/07-音频对话.md) / [测试](./zhipu/notebook/07-音频对话.ipynb) |
-| 08 | **Function Call（工具调用）** | 部分 | ❌ | GLM-4.7-Flash<br>GLM-4-Flash-250414<br>GLM-4.6V-Flash | [文档](./zhipu/docs/08-FunctionCall（工具调用）.md) / [测试](./zhipu/notebook/08-FunctionCall（工具调用）.ipynb) |
+| 08 | **Function Call(工具调用)** | 部分 | ❌ | GLM-4.7-Flash<br>GLM-4-Flash-250414<br>GLM-4.6V-Flash | [文档](./zhipu/docs/08-FunctionCall(工具调用).md) / [测试](./zhipu/notebook/08-FunctionCall(工具调用).ipynb) |
 
 ### 视觉类功能
 
@@ -164,15 +164,15 @@ jupyter notebook
 
 ### 文件命名规范
 
-- **功能文档**：`序号-功能名称.md`（如：`01-基础对话（多轮）.md`）
-- **测试文件**：`序号-功能名称.ipynb`（如：`01-基础对话（多轮）.ipynb`）
+- **功能文档**：`序号-功能名称.md`(如：`01-基础对话(多轮).md`)
+- **测试文件**：`序号-功能名称.ipynb`(如：`01-基础对话(多轮).ipynb`)
 - **序号规则**：从 01 开始，按功能逻辑顺序排列
 
 ### 功能文档内容规范
 
 每个功能文档必须包含：
 1. **功能介绍**
-2. **包含模型表格**（必须标注：是否思考模型、思维链支持）
+2. **包含模型表格**(必须标注：是否思考模型、思维链支持)
 3. **适用场景**
 4. **API 调用方式**
 5. **代码示例**

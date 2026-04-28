@@ -6,9 +6,9 @@ Monty Python 执行器包装脚本
 安全执行 LLM 生成的 Python 代码。
 
 安全特性：
-- Monty 解释器完全隔离宿主机（无文件系统、网络、环境变量访问）
-- 仅支持 Python 子集（无 import、无类定义、无第三方库）
-- 资源限制由 Node.js 层控制（超时、内存）
+- Monty 解释器完全隔离宿主机(无文件系统、网络、环境变量访问)
+- 仅支持 Python 子集(无 import、无类定义、无第三方库)
+- 资源限制由 Node.js 层控制(超时、内存)
 """
 
 import sys

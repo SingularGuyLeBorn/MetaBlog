@@ -19,12 +19,12 @@ RLHF Pipeline 不是一个单一算法，而是一个系统工程。
 
 ### 2.1 显存优化：模型卸载 (Offloading)
 
-在标准实现中（如 DeepSpeed-Chat），我们不能同时把 4 个模型的大权重都放在 GPU 上。
+在标准实现中(如 DeepSpeed-Chat)，我们不能同时把 4 个模型的大权重都放在 GPU 上。
 
 *   **Training Phase**: Actor & Critic 在 GPU (需要 Gradients)。Ref & RM 在 CPU 或 NVMe (只读)。
 *   **Generation Phase**: Actor 在 GPU。Ref & RM 暂时加载到 GPU 进行打分，然后卸载。
 
-虽然我们的 `02_Implementation.py` 是简化版（全部在内存），但真实系统必须包含 `offload` 逻辑。
+虽然我们的 `02_Implementation.py` 是简化版(全部在内存)，但真实系统必须包含 `offload` 逻辑。
 
 ### 2.2 经验生成循环 (The Experience Loop)
 

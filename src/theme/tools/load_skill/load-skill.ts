@@ -8,9 +8,9 @@
  * 职责：将指定 Skill 的完整工作流指导加载到当前对话上下文中。
  *
  * 渐进式披露的三层模型：
- * - LOD-0（始终）：System Prompt 中的 Skill 元数据目录（名称+描述）
- * - LOD-1（始终）：System Prompt 中的工具分类摘要
- * - LOD-2（按需）：通过本工具加载的 Skill 完整内容（工作流指导、最佳实践）
+ * - LOD-0(始终)：System Prompt 中的 Skill 元数据目录(名称+描述)
+ * - LOD-1(始终)：System Prompt 中的工具分类摘要
+ * - LOD-2(按需)：通过本工具加载的 Skill 完整内容(工作流指导、最佳实践)
  *
  * 执行后产生两个关键副作用：
  * 1. injectMessages：将 Skill 完整内容作为新消息注入对话，Agent 在下一轮可见
@@ -24,8 +24,7 @@
  * ============================================================================
  */
 
-import type { ToolDefinition } from '../types'
-import type { ToolResult } from '../types'
+import type { ToolDefinition, ToolResult } from '../types'
 
 export const loadSkillDef: ToolDefinition = {
   type: 'function',
@@ -34,7 +33,7 @@ export const loadSkillDef: ToolDefinition = {
     description: `加载指定 Skill 的完整内容到当前对话上下文。
 
 当你判断需要使用某个 Skill 来完成用户任务时，调用此工具。
-System Prompt 中已列出所有可用 Skills（仅名称和描述），
+System Prompt 中已列出所有可用 Skills(仅名称和描述)，
 你需要根据用户请求主动选择并加载合适的 Skill。
 
 加载后，Skill 的完整工作流程和指导会作为新消息注入对话，
@@ -66,12 +65,12 @@ System Prompt 中已列出所有可用 Skills（仅名称和描述），
  * 3. 构建注入内容：Skill 正文 + 关联工具列表 + 适用场景
  * 4. 返回 ToolResult，携带 injectMessages 和 activateTools
  *
- * @param args.skill_id - 要加载的 Skill ID（如 "github-pr-review"、"feishu-doc-format"）
+ * @param args.skill_id - 要加载的 Skill ID(如 "github-pr-review"、"feishu-doc-format")
  * @returns ToolResult，包含：
  *   - message: 加载成功/失败的提示
  *   - data: { skillId, skillName, loadedAt }
- *   - injectMessages: Skill 内容注入消息（Agent 下一轮可见）
- *   - activateTools: 该 Skill 关联的工具名称数组（触发 schema 暴露）
+ *   - injectMessages: Skill 内容注入消息(Agent 下一轮可见)
+ *   - activateTools: 该 Skill 关联的工具名称数组(触发 schema 暴露)
  */
 export async function executeLoadSkill(args: Record<string, any>): Promise<ToolResult> {
   const { skill_id } = args
@@ -112,11 +111,11 @@ export async function executeLoadSkill(args: Record<string, any>): Promise<ToolR
     const skill = result.data
 
     // ─────────────────────────────────────────────────────────────
-    // 构建 Skill 注入内容（LOD-2 级别完整工作流指导）
+    // 构建 Skill 注入内容(LOD-2 级别完整工作流指导)
     // ─────────────────────────────────────────────────────────────
     // 注入内容结构：
     //   [Skill 已加载: <名称>]
-    //   <Skill 正文（工作流指导、最佳实践、注意事项）>
+    //   <Skill 正文(工作流指导、最佳实践、注意事项)>
     //   ## 关联工具
     //   - <tool1>
     //   - <tool2>

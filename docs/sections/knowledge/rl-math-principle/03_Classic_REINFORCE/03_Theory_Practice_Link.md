@@ -1,6 +1,6 @@
 # REINFORCE：从公式到代码的实现指南
 
-本文档解释如何将第1节（理论推导）中的数学公式转化为第2节的Python代码，以及在工程实现中需要注意的优化技巧。
+本文档解释如何将第1节(理论推导)中的数学公式转化为第2节的Python代码，以及在工程实现中需要注意的优化技巧。
 
 ---
 
@@ -13,9 +13,9 @@
 对于离散动作空间，常用Softmax策略：
 $$\pi_\theta(a|s) = \frac{\exp(h_\theta(s, a))}{\sum_{a'} \exp(h_\theta(s, a'))}$$
 
-其中 $h_\theta(s, a)$ 是对状态-动作对的偏好分数（logits）。
+其中 $h_\theta(s, a)$ 是对状态-动作对的偏好分数(logits)。
 
-**代码实现**（见 `02_Implementation.py` 第65-100行）：
+**代码实现**(见 `02_Implementation.py` 第65-100行)：
 
 ```python
 class PolicyNetwork(nn.Module):
@@ -74,7 +74,7 @@ def select_action(self, state):
 **理论公式**：
 $$G_t = \sum_{k=0}^{T-t-1} \gamma^k r_{t+k+1} = r_{t+1} + \gamma G_{t+1}$$
 
-**代码实现**（见第140-165行）：
+**代码实现**(见第140-165行)：
 
 ```python
 def compute_returns(rewards, gamma):
@@ -98,10 +98,10 @@ def compute_returns(rewards, gamma):
 
 ### 1.4 策略梯度损失
 
-**理论公式**（最大化目标）：
+**理论公式**(最大化目标)：
 $$J(\theta) = \sum_t \log \pi_\theta(a_t|s_t) \cdot G_t$$
 
-**PyTorch损失**（最小化）：
+**PyTorch损失**(最小化)：
 $$\text{Loss} = -J(\theta) = -\sum_t \log \pi_\theta(a_t|s_t) \cdot G_t$$
 
 **代码实现**：
@@ -111,7 +111,7 @@ def compute_policy_loss(log_probs, returns):
     log_probs_tensor = torch.stack(log_probs)
     
     # 负号是关键！
-    # PyTorch做梯度下降（最小化loss）
+    # PyTorch做梯度下降(最小化loss)
     # 我们要最大化 J，所以 loss = -J
     policy_loss = -(log_probs_tensor * returns).sum()
     
@@ -128,7 +128,7 @@ def compute_policy_loss(log_probs, returns):
 
 ### 2.1 回报标准化
 
-**问题**：如果所有回报都是正数（如 CartPole 的奖励），那么所有动作的概率都会增大，只是程度不同。
+**问题**：如果所有回报都是正数(如 CartPole 的奖励)，那么所有动作的概率都会增大，只是程度不同。
 
 **解决方案**：标准化回报
 
@@ -170,7 +170,7 @@ scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
 scheduler.step()
 ```
 
-### 2.4 并行采样（高级）
+### 2.4 并行采样(高级)
 
 **问题**：单条轨迹的梯度估计方差很高
 
@@ -200,7 +200,7 @@ loss = compute_policy_loss(all_log_probs, normalize(all_returns))
 # 应该监控的关键指标
 metrics = {
     "episode_reward": episode_reward,  # 应该上升
-    "loss": loss.item(),               # 不一定下降（这不是监督学习！）
+    "loss": loss.item(),               # 不一定下降(这不是监督学习！)
     "policy_entropy": dist.entropy().mean().item(),  # 应该逐渐下降
     "grad_norm": compute_grad_norm(policy),  # 不应该太大或太小
 }
@@ -212,7 +212,7 @@ metrics = {
 |------|----------|----------|
 | 奖励不增长 | 学习率太小 | 增大学习率 |
 | 奖励剧烈震荡 | 学习率太大 / 方差太高 | 减小学习率 / 标准化回报 |
-| 策略崩溃（奖励骤降） | 梯度爆炸 | 梯度裁剪 |
+| 策略崩溃(奖励骤降) | 梯度爆炸 | 梯度裁剪 |
 | 收敛到次优策略 | 探索不足 | 添加熵正则化 |
 
 ### 3.3 熵正则化
@@ -230,7 +230,7 @@ loss = policy_loss - entropy_coef * entropy
 
 ## 4. 从REINFORCE到Actor-Critic的过渡
 
-REINFORCE的主要问题：**高方差**（因为使用完整轨迹的蒙特卡洛回报）
+REINFORCE的主要问题：**高方差**(因为使用完整轨迹的蒙特卡洛回报)
 
 **解决思路**：用一个learned的价值函数 $V(s)$ 来减少方差
 
@@ -242,7 +242,7 @@ advantage = G_t  # 蒙特卡洛回报，高方差
 advantage = r + gamma * V(s') - V(s)  # TD误差，低方差但有偏
 ```
 
-这就是下一章（Actor-Critic）的核心内容。
+这就是下一章(Actor-Critic)的核心内容。
 
 ---
 

@@ -45,7 +45,7 @@ print(f"[系统 2]: {res2}")
 
 ## RL 中的应用案例
 
-在传统的 RLHF 中，我们优化单一的标量奖励（质量）。
+在传统的 RLHF 中，我们优化单一的标量奖励(质量)。
 在 SteerLM 中，我们可以一边最大化 `Helpfulness`，一边保持低 `Verbosity` (啰嗦度)；或者在最大化 `Creativity` 的同时保持高 `Safety`。
 
 这种多目标控制仅仅通过在推理时改变 Prompt 格式字符串即可实现。

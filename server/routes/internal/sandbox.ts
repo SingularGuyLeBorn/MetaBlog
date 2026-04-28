@@ -2,21 +2,21 @@
  * 代码沙箱执行路由
  *
  * 提供安全的代码执行能力，支持：
- * - Python（通过 Monty 解释器，硬件级隔离）
- * - JavaScript（通过独立子进程 + vm.runInNewContext）
+ * - Python(通过 Monty 解释器，硬件级隔离)
+ * - JavaScript(通过独立子进程 + vm.runInNewContext)
  *
  * 安全原则：
  * 1. 所有代码在独立进程中执行，崩溃不影响主服务
  * 2. Python 通过 Monty 解释器运行，无文件系统/网络/环境变量访问
  * 3. JS 通过白名单全局上下文运行，无 Node 模块访问
- * 4. 强制超时（默认 30s）
- * 5. 输出大小限制（默认 1MB）
+ * 4. 强制超时(默认 30s)
+ * 5. 输出大小限制(默认 1MB)
  */
 
-import type { ViteDevServer } from "vite";
-import type { Request, Response } from "express";
 import { spawn } from "child_process";
+import type { Request, Response } from "express";
 import * as path from "path";
+import type { ViteDevServer } from "vite";
 
 const EXEC_TIMEOUT = 30000;        // 30 秒执行超时
 const MAX_OUTPUT_SIZE = 1024 * 1024; // 1MB 输出上限
@@ -114,7 +114,7 @@ function handleStatus(_req: Request, res: Response) {
     nodejs: true, // 自身就是 Node.js
   };
 
-  // Python 可用性检查（异步但同步返回，简化处理）
+  // Python 可用性检查(异步但同步返回，简化处理)
   const pythonCheck = spawn("python", ["-c", "import pydantic_monty; print('ok')"], {
     timeout: 5000,
   });
@@ -151,7 +151,7 @@ function handleStatus(_req: Request, res: Response) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Python 执行（Monty）
+// Python 执行(Monty)
 // ═══════════════════════════════════════════════════════════════
 
 function execPythonMonty(code: string, inputs: Record<string, any>): Promise<SandboxResult> {
@@ -234,7 +234,7 @@ function execPythonMonty(code: string, inputs: Record<string, any>): Promise<San
 }
 
 // ═══════════════════════════════════════════════════════════════
-// JavaScript 执行（独立子进程）
+// JavaScript 执行(独立子进程)
 // ═══════════════════════════════════════════════════════════════
 
 function execJavaScript(code: string, inputs: Record<string, any>): Promise<SandboxResult> {
@@ -285,7 +285,7 @@ function execJavaScript(code: string, inputs: Record<string, any>): Promise<Sand
       }
 
       try {
-        // 取最后一行 JSON（前面可能有 console 输出）
+        // 取最后一行 JSON(前面可能有 console 输出)
         const lines = stdout.trim().split("\n").filter(l => l.trim());
         const jsonLine = lines.find(l => l.trim().startsWith("{")) || lines[lines.length - 1];
         const parsed = JSON.parse(jsonLine);
@@ -316,7 +316,7 @@ function execJavaScript(code: string, inputs: Record<string, any>): Promise<Sand
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Bash 执行（受限模式 —— 仅允许白名单命令）
+// Bash 执行(受限模式 —— 仅允许白名单命令)
 // ═══════════════════════════════════════════════════════════════
 
 const BASH_ALLOWED_COMMANDS = [

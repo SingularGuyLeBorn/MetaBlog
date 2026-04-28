@@ -6,7 +6,7 @@
 - **年份**：2022
 - **arXiv**：2203.02155
 
-**前置知识**：PPO（第5章）、SFT、RM
+**前置知识**：PPO(第5章)、SFT、RM
 
 ---
 
@@ -14,9 +14,9 @@
 
 RLHF (Reinforcement Learning from Human Feedback) 并非一个单一的算法，而是一个**分阶段的系统工程**。它是 ChatGPT 成功的基石。
 
-尽管最近涌现了 DPO、KTO 等 Simplified 方法，但标准的 **PPO-based RLHF** 依然是目前上限最高、最灵活（支持 Token 级奖励和过程监督）的方法。
+尽管最近涌现了 DPO、KTO 等 Simplified 方法，但标准的 **PPO-based RLHF** 依然是目前上限最高、最灵活(支持 Token 级奖励和过程监督)的方法。
 
-本章将详细拆解 RLHF 的三个标准阶段，并探讨工程实现中的关键细节（如 Tokenization 对齐、分布式训练挑战）。
+本章将详细拆解 RLHF 的三个标准阶段，并探讨工程实现中的关键细节(如 Tokenization 对齐、分布式训练挑战)。
 
 ---
 
@@ -28,12 +28,12 @@ RLHF (Reinforcement Learning from Human Feedback) 并非一个单一的算法，
 - **目标**：让模型学会"通过图灵测试"，掌握基本的问答格式和指令遵循能力。
 - **损失函数**：Next Token Prediction (Cross Entropy)。
 - **产出**：SFT 模型 $\pi_{SFT}$。
-  - *注*：这个模型通常也是后续 RL 阶段的参考模型 $\pi_{ref}$（为了防止遗忘）。
+  - *注*：这个模型通常也是后续 RL 阶段的参考模型 $\pi_{ref}$(为了防止遗忘)。
 
 ### 1.2 Step 2: 奖励模型训练 (Reward Modeling, RM)
 
 - **数据**：成对的比较数据 (Prompt, Win, Loss)。
-  - 为什么用比较数据而不用打分？因为不同标注者对分数的理解差异很大（校准难），但比较好坏的一致性很高。
+  - 为什么用比较数据而不用打分？因为不同标注者对分数的理解差异很大(校准难)，但比较好坏的一致性很高。
 - **目标**：训练一个模型 $R_\phi(x, y)$，使得 $R(x, y_w) > R(x, y_l)$。
 - **架构**：通常是把 SFT 模型最后一层去掉，换成一个输出标量的 Linear Head。
 - **损失函数**：Pairwise Ranking Loss。
@@ -58,13 +58,13 @@ RLHF (Reinforcement Learning from Human Feedback) 并非一个单一的算法，
 
 随着 PPO 训练的进行，Reward 分数会不断上升。但也可能出现**模型利用 RM 的漏洞**刷分。
 例如：
-- 疯狂重复无意义的词（如果 RM 对长度敏感）。
+- 疯狂重复无意义的词(如果 RM 对长度敏感)。
 - 输出极端的立场。
 
 **解决方案**：
 1. **KL 约束**：这是最重要的防线。
-2. **Reward Clipping**：限制单次奖励的范围（如 -5 到 +5）。
-3. **Reward Scaling**：通常对 Reward 进行归一化（减均值除标准差），使其保持稳定分布。
+2. **Reward Clipping**：限制单次奖励的范围(如 -5 到 +5)。
+3. **Reward Scaling**：通常对 Reward 进行归一化(减均值除标准差)，使其保持稳定分布。
 
 ### 2.2 Tokenizer 对齐问题
 

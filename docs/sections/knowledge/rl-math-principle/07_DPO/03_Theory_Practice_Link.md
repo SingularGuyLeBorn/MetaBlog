@@ -133,7 +133,7 @@ model.train()
 policy_logps = model(...)  # 有梯度
 ```
 
-**解决方案2**：SimPO（无参考模型）
+**解决方案2**：SimPO(无参考模型)
 
 ```python
 # SimPO：不需要参考模型

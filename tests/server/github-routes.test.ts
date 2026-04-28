@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { createMockServer } from './test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { registerGitHubRoutes } from '../../server/routes/external/github'
+import { createMockServer } from './test-utils'
 
 describe('GitHub BFF Routes', () => {
   let restoreFetch: (() => void) | null = null
@@ -15,7 +15,7 @@ describe('GitHub BFF Routes', () => {
 
       // 验证 URL 是否正确构造
       if (urlStr.includes('api.github.com')) {
-        // 模拟成功响应（包含 GitHub 工具执行层所需的全部字段）
+        // 模拟成功响应(包含 GitHub 工具执行层所需的全部字段)
         const mockBody = JSON.stringify({
           id: 123,
           full_name: 'test/repo',

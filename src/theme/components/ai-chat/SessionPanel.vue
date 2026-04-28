@@ -1,5 +1,5 @@
 <!--
-  SessionPanel - 会话列表面板（3D 液态玻璃风格）
+  SessionPanel - 会话列表面板(3D 液态玻璃风格)
 -->
 <template>
   <aside class="session-panel-3d" :class="{ collapsed }">
@@ -99,11 +99,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
 import { Icon } from '@/theme/components/common'
-import type { ChatSession } from '@/theme/types'
 import { useAIChat } from '@/theme/stores'
+import type { ChatSession } from '@/theme/types'
 import { formatTokenCount } from '@/theme/utils/tokenEstimator'
+import { computed, nextTick, ref } from 'vue'
 
 interface Props {
   sessions: ChatSession[]

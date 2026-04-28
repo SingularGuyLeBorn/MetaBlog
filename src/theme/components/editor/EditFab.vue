@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useData, useRoute } from 'vitepress'
 import InlineMarkdownEditor from '@/theme/components/features/InlineMarkdownEditor.vue'
 import { useAppStore } from '@/theme/stores/app'
+import { useData, useRoute } from 'vitepress'
+import { computed, ref } from 'vue'
 
 const { page } = useData()
 const route = useRoute()
@@ -36,7 +36,7 @@ const isEditable = computed<boolean>(() => {
   return !!page.value.relativePath
 })
 
-// 是否显示编辑按钮（可编辑且不在编辑模式）
+// 是否显示编辑按钮(可编辑且不在编辑模式)
 const showFab = computed(() => {
   return isEditable.value && !store.isEditing
 })

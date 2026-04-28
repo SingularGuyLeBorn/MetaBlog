@@ -1,5 +1,5 @@
 <!--
-  ChatPage - AI Chat 页面（集成到主布局版本）
+  ChatPage - AI Chat 页面(集成到主布局版本)
 -->
 <template>
   <div class="chat-page-integrated">
@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { ChatLayout } from '@/theme/components/ai-chat'
+import { ChatLayout } from '@/theme/components/ai-chat';
 </script>
 
 <style scoped>

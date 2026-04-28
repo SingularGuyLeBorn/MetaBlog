@@ -1,6 +1,6 @@
-import type { ViteDevServer } from "vite";
-import path from "path";
 import fs from "fs";
+import path from "path";
+import type { ViteDevServer } from "vite";
 
 export interface RouteContext {
   system: any;
@@ -369,7 +369,7 @@ export function registerMcpRoutes(server: ViteDevServer, ctx: RouteContext) {
             return;
           }
 
-          // 模拟工具执行（实际项目中这里应该调用 MCP 客户端）
+          // 模拟工具执行(实际项目中这里应该调用 MCP 客户端)
           console.log(
             `[API] Executing MCP tool: ${server.name}/${toolName}`,
             args,

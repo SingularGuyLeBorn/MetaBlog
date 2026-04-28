@@ -1,6 +1,6 @@
 <template>
   <div class="message-versions">
-    <!-- 版本切换器（始终显示，方便知道当前是第几个版本） -->
+    <!-- 版本切换器(始终显示，方便知道当前是第几个版本) -->
     <div class="version-switcher">
       <button 
         class="version-btn prev"
@@ -29,7 +29,7 @@
       </button>
     </div>
     
-    <!-- 重新生成按钮（在版本切换右侧） -->
+    <!-- 重新生成按钮(在版本切换右侧) -->
     <button 
       v-if="!isStreaming"
       class="regenerate-btn"
@@ -56,7 +56,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { ChatMessage } from '@/theme/types'
 
 interface Props {

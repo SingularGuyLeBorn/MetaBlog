@@ -306,12 +306,12 @@ class REINFORCEAgent:
         return loss_value
 
 # ============================================
-# 第六部分: 简单环境（用于测试）
+# 第六部分: 简单环境(用于测试)
 # ============================================
 
 class SimpleCartPoleEnv:
     """
-    简化版CartPole环境（不依赖Gym）
+    简化版CartPole环境(不依赖Gym)
     
     状态: [位置, 速度, 角度, 角速度]
     动作: 0 (向左推), 1 (向右推)
@@ -350,7 +350,7 @@ class SimpleCartPoleEnv:
         
         force = self.force_magnitude if action == 1 else -self.force_magnitude
         
-        # 物理模拟（简化版）
+        # 物理模拟(简化版)
         cos_theta = np.cos(theta)
         sin_theta = np.sin(theta)
         

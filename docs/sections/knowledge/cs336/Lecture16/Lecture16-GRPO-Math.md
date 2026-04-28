@@ -89,15 +89,15 @@ $$L = -\frac{1}{|y|} \sum_{t=1}^{|y|} \log \pi(y_t | y_{<t}, x) \cdot A$$
 
 **场景1**: 答错时 ($A < 0$)
 - 更长的response → 每token负梯度更小
-- 最优策略: 生成**尽可能长**的错误回答（稀释惩罚）
+- 最优策略: 生成**尽可能长**的错误回答(稀释惩罚)
 
 **场景2**: 答对时 ($A > 0$)
 - 更长的response → 每token正梯度更小
-- 最优策略: 生成**尽可能短**的正确回答（集中奖励）
+- 最优策略: 生成**尽可能短**的正确回答(集中奖励)
 
 **结果**:
-- 模型学会长篇废话（错误时）
-- 模型学会简短回答（正确时）
+- 模型学会长篇废话(错误时)
+- 模型学会简短回答(正确时)
 - 与期望行为相反
 
 ### 3.3 实验证据
@@ -139,7 +139,7 @@ $$L = -\sum_{t=1}^{|y|} \log \pi(y_t | y_{<t}, x) \cdot A_t$$
 def compute_reward(response, ground_truth):
     accuracy = 1.0 if is_correct(response, ground_truth) else 0.0
     
-    # 显式长度惩罚（可调）
+    # 显式长度惩罚(可调)
     length_penalty = -0.001 * len(response)
     
     return accuracy + length_penalty
@@ -228,7 +228,7 @@ class GRPOConfig:
 
 ```python
 def grpo_loss_original(log_probs, rewards, group_size):
-    """原始GRPO实现（带std归一化）"""
+    """原始GRPO实现(带std归一化)"""
     batch_size = rewards.shape[0]
     num_groups = batch_size // group_size
     
@@ -253,7 +253,7 @@ def grpo_loss_original(log_probs, rewards, group_size):
 
 ```python
 def grpo_loss_dr(log_probs, rewards, group_size):
-    """Dr. GRPO实现（移除归一化）"""
+    """Dr. GRPO实现(移除归一化)"""
     batch_size = rewards.shape[0]
     num_groups = batch_size // group_size
     
@@ -292,17 +292,17 @@ def grpo_loss_with_length_penalty(log_probs, rewards, lengths,
 ### 关键结论
 
 1. **标准差归一化不是理论保证的**，在某些情况下可能有害
-2. **长度归一化会导致反向激励**（长错误、短正确）
+2. **长度归一化会导致反向激励**(长错误、短正确)
 3. **简单的centered rewards往往效果更好**
 4. **如需长度控制，使用显式奖励**
 
 ### 实践checklist
 
-- [ ] 移除std归一化（或至少做消融实验）
+- [ ] 移除std归一化(或至少做消融实验)
 - [ ] 移除长度归一化
 - [ ] 监控response长度变化
 - [ ] 检查梯度在不同prompt上的分布
-- [ ] 考虑显式长度奖励（如果需要）
+- [ ] 考虑显式长度奖励(如果需要)
 
 ---
 

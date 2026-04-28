@@ -7,7 +7,7 @@
 - **arXiv**：2402.14740
 - **PDF**：见 `papers/` 目录
 
-**前置知识**：REINFORCE（第3章）、GRPO（第8章）
+**前置知识**：REINFORCE(第3章)、GRPO(第8章)
 
 ---
 
@@ -33,7 +33,7 @@ RLOO (REINFORCE Leave-One-Out) 是**Cohere团队**提出的算法，旨在**回�
 标准REINFORCE的梯度估计：
 $$\nabla J(\theta) = \mathbb{E}\left[ (R(y) - b) \nabla \log \pi(y|x) \right]$$
 
-如果基线 $b$ 是常数（如0），方差极大。你需要一个这就依赖状态的基线 $b(x)$。
+如果基线 $b$ 是常数(如0)，方差极大。你需要一个这就依赖状态的基线 $b(x)$。
 PPO训练了一个价值网络 $V(x)$ 作为基线，但这增加了显存和计算开销。
 
 ### 1.2 GRPO的思路
@@ -41,7 +41,7 @@ PPO训练了一个价值网络 $V(x)$ 作为基线，但这增加了显存和计
 GRPO使用**组内均值**作为基线：
 $$b_i = \bar{R} = \frac{1}{G} (R_1 + R_2 + \dots + R_G)$$
 
-这很简单且有效，但有一个理论缺陷：**基线 $b_i$ 包含了 $R_i$ 自身的信息**。这意味着基线与当前的动作 $y_i$ **不独立**，导致梯度估计在数学上是有偏的（虽然实践中通常没问题）。
+这很简单且有效，但有一个理论缺陷：**基线 $b_i$ 包含了 $R_i$ 自身的信息**。这意味着基线与当前的动作 $y_i$ **不独立**，导致梯度估计在数学上是有偏的(虽然实践中通常没问题)。
 
 ### 1.3 RLOO的解决方案
 
@@ -69,7 +69,7 @@ $$\{R_1, R_2, \dots, R_G\}$$
 
 $$b_i = \frac{1}{G-1} \sum_{j=1, j \neq i}^G R_j$$
 
-**展开公式**（以 $G=4$ 为例）：
+**展开公式**(以 $G=4$ 为例)：
 
 对于样本 $1$ ($i=1$)，基线是 $2, 3, 4$ 的均值：
 $$b_1 = \frac{1}{3} (R_2 + R_3 + R_4)$$
@@ -110,7 +110,7 @@ $$A_i^{RLOO} = R_i - b_i = R_i - \frac{1}{G-1} \sum_{j \neq i} R_j$$
 
 ### 2.3 目标函数
 
-RLOO直接优化REINFORCE目标（通常带有KL惩罚）：
+RLOO直接优化REINFORCE目标(通常带有KL惩罚)：
 
 $$J(\theta) = \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta} \left[ (R(x,y) - b(x)) \nabla \log \pi_\theta(y|x) - \beta D_{KL}(\pi_\theta || \pi_{ref}) \right]$$
 
@@ -118,7 +118,7 @@ $$J(\theta) = \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta} \left[ (R(x,y) 
 
 $$\mathcal{L}^{RLOO} = -\frac{1}{G} \sum_{i=1}^G A_i^{RLOO} \cdot \log \pi_\theta(y_i|x)$$
 
-注意：这里通常不需要PPO的clip操作，因为RLOO是On-Policy的REINFORCE变体，且通常结合多样本平均来稳定训练。不过，**实际上很多RLOO实现（包括DeepMind和Cohere的实验）也会加上PPO-clip来进一步增加稳定性**。如果加了Clip，它就变成了**PPO-LOO**。但这一章我们关注纯粹的RLOO。
+注意：这里通常不需要PPO的clip操作，因为RLOO是On-Policy的REINFORCE变体，且通常结合多样本平均来稳定训练。不过，**实际上很多RLOO实现(包括DeepMind和Cohere的实验)也会加上PPO-clip来进一步增加稳定性**。如果加了Clip，它就变成了**PPO-LOO**。但这一章我们关注纯粹的RLOO。
 
 ---
 
@@ -153,9 +153,9 @@ Baseline = $(5+8+2)/3 = 5.0$
 $A_1 = 10 - 5.0 = \mathbf{5.0}$
 
 **差异**：
-- RLOO的优势通常绝对值更大（因为没有被自己"平均"掉一部分）
+- RLOO的优势通常绝对值更大(因为没有被自己"平均"掉一部分)
 - 当 $G \to \infty$ 时，两者趋于一致
-- 当 $G$ 较小（如4或8）时，RLOO在理论上更优（无偏）
+- 当 $G$ 较小(如4或8)时，RLOO在理论上更优(无偏)
 
 ---
 
@@ -169,7 +169,7 @@ $A_1 = 10 - 5.0 = \mathbf{5.0}$
 | **PPO-Clip** | 通常使用 | 可用可不用 (纯REINFORCE) |
 | **归一化** | 通常除以std | 通常不需要除以std |
 
-**结论**：对于小Batch Size（小Group Size），RLOO是比GRPO更严谨的选择。DeepSeek选择GRPO可能是因为在大规模训练下（大G）偏差可忽略，且除以标准差有助于训练稳定性。
+**结论**：对于小Batch Size(小Group Size)，RLOO是比GRPO更严谨的选择。DeepSeek选择GRPO可能是因为在大规模训练下(大G)偏差可忽略，且除以标准差有助于训练稳定性。
 
 ---
 
@@ -191,7 +191,7 @@ advantages = rewards - loo_means
 
 ### 5.2 归一化
 
-虽然RLOO理论上不需要归一化，但在深度学习实践中，对优势进行标准化（减均值除方差）往往能加速收敛。
+虽然RLOO理论上不需要归一化，但在深度学习实践中，对优势进行标准化(减均值除方差)往往能加速收敛。
 即：
 $$A_{normalized} = \frac{A - \text{mean}(A)}{\text{std}(A) + \epsilon}$$
 

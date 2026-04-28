@@ -4,7 +4,7 @@
  * 特性：
  * 1. 开发模式下输出详细日志
  * 2. 生产模式下仅保留错误日志
- * 3. 统一的日志格式（时间戳、模块名、级别）
+ * 3. 统一的日志格式(时间戳、模块名、级别)
  * 4. 支持结构化数据输出
  */
 
@@ -21,7 +21,7 @@ export interface LogEntry {
 }
 
 // 是否是开发模式
-const isDev = typeof process !== 'undefined' 
+const isDev = typeof process !== 'undefined'
   ? process.env.NODE_ENV !== 'production'
   : (import.meta.env?.DEV as boolean | undefined) ?? true
 
@@ -33,7 +33,7 @@ const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
   error: 3
 }
 
-// 当前日志级别（生产环境只显示 warn 及以上）
+// 当前日志级别(生产环境只显示 warn 及以上)
 const CURRENT_LEVEL: LogLevel = isDev ? 'debug' : 'warn'
 
 /**

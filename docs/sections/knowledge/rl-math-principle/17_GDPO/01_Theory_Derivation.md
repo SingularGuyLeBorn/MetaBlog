@@ -7,7 +7,7 @@
 - **arXiv**：2310.10696
 - **PDF**：见 `papers/` 目录
 
-**注**：在本知识库中，GDPO (Guided Distribution Policy Optimization) 指代 NVIDIA 提出的这种基于多维属性引导的优化方法（也称为 SteerLM），因为它通过操控多维度奖励分布来引导策略生成。
+**注**：在本知识库中，GDPO (Guided Distribution Policy Optimization) 指代 NVIDIA 提出的这种基于多维属性引导的优化方法(也称为 SteerLM)，因为它通过操控多维度奖励分布来引导策略生成。
 
 **前置知识**：SFT、条件生成 (Conditional Generation)
 
@@ -15,14 +15,14 @@
 
 ## 0. 本章摘要
 
-传统的 RLHF（PPO）或 DPO 都是将人类偏好压缩为一个标量奖励（Single Scalar Reward）："好" 或 "坏"。
+传统的 RLHF(PPO)或 DPO 都是将人类偏好压缩为一个标量奖励(Single Scalar Reward)："好" 或 "坏"。
 然而，人类对文本的评价是多维度的：
 - "这个回答很有用 (Helpfulness: 9)，但不幽默 (Humor: 1)"
 - "这个回答很幽默 (Humor: 9)，但是在胡说八道 (Correctness: 0)"
 
-如果我们只用单纯的优/劣去训练，模型可能会学会一种折中的、平庸的风格，或者为了讨好人类而牺牲真实性（Sycophancy）。
+如果我们只用单纯的优/劣去训练，模型可能会学会一种折中的、平庸的风格，或者为了讨好人类而牺牲真实性(Sycophancy)。
 
-NVIDIA 提出的 **SteerLM (GDPO)** 核心思想是：**与其训练模型去猜测人类想要什么，不如让模型根据显式的属性标签（Attribute Tags）来生成。**
+NVIDIA 提出的 **SteerLM (GDPO)** 核心思想是：**与其训练模型去猜测人类想要什么，不如让模型根据显式的属性标签(Attribute Tags)来生成。**
 
 在推理时，我们只需要告诉模型："请给我一个 Helpfulness=10, Humor=10, Toxicity=0 的回答"，模型就会朝着这个方向生成。这使得对齐过程变得**可控**且**无需复杂的 PPO 训练**。
 
@@ -39,7 +39,7 @@ NVIDIA 提出的 **SteerLM (GDPO)** 核心思想是：**与其训练模型去猜
 ### 1.1 奖励压缩带来的信息丢失
 
 在 PPO 中，Reward Model  $R(x, y) \to \mathbb{R}$ 输出一个实数。
-训练过程中，模型为了最大化这个实数，可能会探索出一些 Reward Hacking 的捷径（例如：增加回复长度通常能骗得高分）。
+训练过程中，模型为了最大化这个实数，可能会探索出一些 Reward Hacking 的捷径(例如：增加回复长度通常能骗得高分)。
 而且，标量奖励无法区分"风格偏好"和"事实错误"。
 
 ### 1.2 用户需求的多样性
@@ -60,7 +60,7 @@ SteerLM 分为四步：
     可以使用 Llama-2-13B 等基座进行 SFT 训练。
 
 2.  **Step 2: 标注数据集 (Dataset Annotation)**
-    利用 Step 1 的模型，给大规模 SFT 数据集（如 OpenAssistant, ShareGPT）中的每个样本打分。
+    利用 Step 1 的模型，给大规模 SFT 数据集(如 OpenAssistant, ShareGPT)中的每个样本打分。
     得到数据格式：$(x, y) \to (x, y, \mathbf{a})$，其中 $\mathbf{a}$ 是属性向量。
 
 3.  **Step 3: 属性条件微调 (Attribute Conditioned SFT)**
@@ -83,8 +83,8 @@ SteerLM 实际上是在学习一个条件分布 $P(y | x, R)$。
 根据贝叶斯公式：
 $$ P(y | x, R=High) \propto P(R=High | x, y) \cdot P(y|x) $$
 
-- $P(y|x)$：基座模型的能力（先验）。
-- $P(R=High | x, y)$：判别器（Attribute Model）认为这个回答得分高的概率。
+- $P(y|x)$：基座模型的能力(先验)。
+- $P(R=High | x, y)$：判别器(Attribute Model)认为这个回答得分高的概率。
 
 SteerLM 通过 SFT 直接拟合了 $P(y | x, \mathbf{a})$。当我们把 $\mathbf{a}$ 设为高分时，我们就相当于在从高奖励区域采样。
 
@@ -106,13 +106,13 @@ NVIDIA 的 HelpSteer 数据集定义了以下维度：
 - 如果用户问 "Explain Quantum Physics to a 5-year old"，我们可以设置 `Complexity:0, Verbosity:2`。
 - 如果用户问 "Derive Schrodinger Equation"，我们可以设置 `Complexity:10, Verbosity:8`。
 
-这种灵活性是 PPO 很难做到的（PPO 需要针对每种偏好重新训练一个 Reward Model）。
+这种灵活性是 PPO 很难做到的(PPO 需要针对每种偏好重新训练一个 Reward Model)。
 
 ---
 
 ## 5. 代码实现逻辑
 
-SteerLM 的核心不在于复杂的 Loss 函数（因为 Loss 就是标准的 Cross Entropy），而在于**数据构造**。
+SteerLM 的核心不在于复杂的 Loss 函数(因为 Loss 就是标准的 Cross Entropy)，而在于**数据构造**。
 
 ```python
 def format_steerlm_input(prompt, response, attributes):
@@ -146,7 +146,7 @@ def format_steerlm_input(prompt, response, attributes):
 | **训练稳定性** | 中 (需调节 Beta) | **高 (纯 SFT)** |
 | **上限** | 理论上更高 (RL探索) | 受限于数据分布覆盖 |
 
-**GDPO 的局限**：如果训练数据中从来没有出现过 Helpfulness=10 的样本，单纯在推理时输入 "Helpfulness:10" 是泛化不到该区域的（Out-of-Distribution）。这时候 RL (PPO/DPO) 的探索能力就很重要了。
+**GDPO 的局限**：如果训练数据中从来没有出现过 Helpfulness=10 的样本，单纯在推理时输入 "Helpfulness:10" 是泛化不到该区域的(Out-of-Distribution)。这时候 RL (PPO/DPO) 的探索能力就很重要了。
 
 ---
 

@@ -12,12 +12,12 @@
  */
 
 import type {
-  ToolRegistration,
+  ToolCall,
+  ToolCallRecord,
   ToolDefinition,
   ToolExecutor,
-  ToolResult,
-  ToolCall,
-  ToolCallRecord
+  ToolRegistration,
+  ToolResult
 } from './types'
 import { createErrorResult } from './types'
 
@@ -34,9 +34,9 @@ const toolCallRecords = new Map<string, ToolCallRecord>()
 /**
  * 注册单个工具
  * 
- * @param name - 工具名称（必须唯一）
- * @param definition - 工具定义（给 AI 看的）
- * @param executor - 执行器（实际实现）
+ * @param name - 工具名称(必须唯一)
+ * @param definition - 工具定义(给 AI 看的)
+ * @param executor - 执行器(实际实现)
  * 
  * @example
  * ```typescript
@@ -55,7 +55,7 @@ export function registerTool(
   if (toolRegistry.has(name)) {
     console.warn(`[ToolRegistry] 工具 "${name}" 已存在，将被覆盖`)
   }
-  
+
   toolRegistry.set(name, { name, definition, executor })
   console.log(`[ToolRegistry] 注册工具: ${name}`)
 }
@@ -102,7 +102,7 @@ export function hasTool(name: string): boolean {
 }
 
 /**
- * 获取所有工具定义（用于 Function Calling）
+ * 获取所有工具定义(用于 Function Calling)
  * 
  * @returns 所有工具的定义数组
  */
@@ -187,12 +187,12 @@ export async function executeTool(
 ): Promise<ToolResult> {
   const { name } = toolCall.function
   const tool = getTool(name)
-  
+
   // 1. 检查工具是否存在
   if (!tool) {
     return createErrorResult(
       `工具 "${name}" 不存在`,
-      `抱歉，我暂时无法执行这个操作（${name}）`,
+      `抱歉，我暂时无法执行这个操作(${name})`,
       `可用的工具包括: ${getRegisteredToolNames().slice(0, 5).join(', ')}...`
     )
   }
@@ -204,14 +204,14 @@ export async function executeTool(
     return createErrorResult(
       `参数解析失败: ${e?.message || String(e)}`,
       '参数格式不正确',
-      '请检查输入参数是否为有效的 JSON 格式。如果参数中包含 LaTeX 公式（如 \\pi、\\theta），请确保反斜杠已正确转义为 \\\\pi、\\\\theta'
+      '请检查输入参数是否为有效的 JSON 格式。如果参数中包含 LaTeX 公式(如 \\pi、\\theta)，请确保反斜杠已正确转义为 \\\\pi、\\\\theta'
     )
   }
 
   // 3. 执行工具
   try {
     const result = await tool.executor(args)
-    
+
     // 4. 统一返回格式
     if (typeof result === 'string') {
       // 字符串结果转换为标准格式
@@ -222,7 +222,7 @@ export async function executeTool(
         action: name
       }
     }
-    
+
     // 已经是 ToolResult 格式
     return result
   } catch (error: any) {
@@ -236,14 +236,14 @@ export async function executeTool(
 }
 
 /**
- * 执行工具并记录（带可视化支持）
+ * 执行工具并记录(带可视化支持)
  * 
  * 本函数是工具执行的核心编排层，职责包括：
- * 1. 解析 AI 返回的工具调用参数（JSON 反序列化）
- * 2. 创建 ToolCallRecord 记录（running 状态，用于 UI 实时展示）
- * 3. 调用实际工具执行器（executeTool）
- * 4. 更新记录状态（success/error）并补全执行时间
- * 5. 传递 injectMessages（Skill 内容注入）和 activateTools（动态工具激活）
+ * 1. 解析 AI 返回的工具调用参数(JSON 反序列化)
+ * 2. 创建 ToolCallRecord 记录(running 状态，用于 UI 实时展示)
+ * 3. 调用实际工具执行器(executeTool)
+ * 4. 更新记录状态(success/error)并补全执行时间
+ * 5. 传递 injectMessages(Skill 内容注入)和 activateTools(动态工具激活)
  * 
  * 错误处理：
  * - 参数解析失败：返回参数解析错误，记录 error 状态
@@ -252,17 +252,17 @@ export async function executeTool(
  * 
  * @param toolCall - AI 返回的工具调用对象，包含工具名和参数 JSON
  * @returns 包含以下字段的对象：
- *   - result: ToolResult，工具执行结果（成功/失败、数据、消息等）
- *   - record: ToolCallRecord，调用记录（含状态、时间戳，用于 UI 展示）
- *   - injectMessages: 可选，需要注入对话上下文的额外消息（如 Skill 内容）
- *   - activateTools: 可选，执行后应激活的工具名称列表（渐进式披露）
+ *   - result: ToolResult，工具执行结果(成功/失败、数据、消息等)
+ *   - record: ToolCallRecord，调用记录(含状态、时间戳，用于 UI 展示)
+ *   - injectMessages: 可选，需要注入对话上下文的额外消息(如 Skill 内容)
+ *   - activateTools: 可选，执行后应激活的工具名称列表(渐进式披露)
  */
 export async function executeToolWithRecord(
   toolCall: ToolCall
 ): Promise<{ result: ToolResult; record: ToolCallRecord; injectMessages?: Array<{ role: string; content: string }>; activateTools?: string[] }> {
   const recordId = generateRecordId()
   const { name } = toolCall.function
-  
+
   // 解析参数
   let args: Record<string, any>
   try {
@@ -270,7 +270,7 @@ export async function executeToolWithRecord(
   } catch (e: any) {
     args = { parseError: e?.message || String(e) }
   }
-  
+
   // 创建记录
   const record: ToolCallRecord = {
     id: recordId,
@@ -279,25 +279,25 @@ export async function executeToolWithRecord(
     status: 'running',
     startTime: Date.now()
   }
-  
+
   toolCallRecords.set(recordId, record)
-  
+
   try {
     // 执行工具
     const result = await executeTool(toolCall)
-    
+
     // 更新记录
     record.status = result.success ? 'success' : 'error'
     record.result = result
     record.endTime = Date.now()
-    
+
     return { result, record, injectMessages: result.injectMessages, activateTools: result.activateTools }
   } catch (error: any) {
     // 更新记录为错误状态
     record.status = 'error'
     record.error = error?.message || String(error)
     record.endTime = Date.now()
-    
+
     return {
       result: createErrorResult(record.error || 'Unknown error'),
       record,

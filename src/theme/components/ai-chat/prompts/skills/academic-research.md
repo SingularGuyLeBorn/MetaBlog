@@ -13,7 +13,7 @@
 
 ### 搜索论文
 
-**ArXiv**（最全面）
+**ArXiv**(最全面)
 ```
 searchArxiv(
   query="transformer attention",
@@ -23,7 +23,7 @@ searchArxiv(
 ```
 获取详情：`fetchArxiv(paper_id="2401.12345")`
 
-**Semantic Scholar**（有引用数）
+**Semantic Scholar**(有引用数)
 ```
 searchSemanticScholar(
   query="deep learning",
@@ -31,7 +31,7 @@ searchSemanticScholar(
 )
 ```
 
-**Papers With Code**（带代码实现）
+**Papers With Code**(带代码实现)
 ```
 searchPaperswithcode(
   query="image classification",
@@ -39,7 +39,7 @@ searchPaperswithcode(
 )
 ```
 
-**OpenReview**（顶级会议）
+**OpenReview**(顶级会议)
 ```
 searchOpenreview(
   query="reinforcement learning",

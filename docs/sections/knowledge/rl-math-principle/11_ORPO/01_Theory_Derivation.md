@@ -7,7 +7,7 @@
 - **arXiv**：2403.07691
 - **PDF**：见 `papers/` 目录
 
-**前置知识**：DPO（第7章）、交叉熵损失
+**前置知识**：DPO(第7章)、交叉熵损失
 
 ---
 
@@ -15,7 +15,7 @@
 
 在2024年，ORPO作为一种**极其简洁**的对齐算法横空出世。
 
-> **核心痛点**：RLHF和DPO都需要一个**参考模型 (Reference Model)** 来防止策略跑偏（KL惩罚）。这需要加载两个LLM（Policy + Ref），显存开销翻倍。
+> **核心痛点**：RLHF和DPO都需要一个**参考模型 (Reference Model)** 来防止策略跑偏(KL惩罚)。这需要加载两个LLM(Policy + Ref)，显存开销翻倍。
 
 ORPO通过重新思考偏好优化的数学本质，提出：
 **我们不需要参考模型，只需要在微调的同时，惩罚对"坏回复"的生成概率。**
@@ -66,7 +66,7 @@ $$OR = \frac{\text{odds}_\theta(y_w|x)}{\text{odds}_\theta(y_l|x)}$$
 
 ### 2.1 整体目标
 
-ORPO将SFT（监督微调）和偏好对齐合并到一个损失函数中：
+ORPO将SFT(监督微调)和偏好对齐合并到一个损失函数中：
 
 $$\mathcal{L}_{ORPO} = \mathcal{L}_{SFT} + \lambda \cdot \mathcal{L}_{OR}$$
 
@@ -84,7 +84,7 @@ $$\mathcal{L}_{ORPO} = \mathcal{L}_{SFT} + \lambda \cdot \mathcal{L}_{OR}$$
 
 $$\mathcal{L}_{SFT} = -\sum_{t} \log P_\theta(y_{w,t} | y_{w,<t}, x)$$
 
-这一项保证模型**学会说话**，保持生成的流畅性。只在 $y_w$（好回复）上计算。
+这一项保证模型**学会说话**，保持生成的流畅性。只在 $y_w$(好回复)上计算。
 
 ### 2.3 Odds Ratio Loss (对齐)
 
@@ -180,7 +180,7 @@ $$\mathcal{L}_{ORPO} = \underbrace{\mathcal{L}_{SFT}}_{\text{学会说话}} + \l
 
 ### 5.2 ORPO的贡献
 
-1. **Monolithic（单体式）**：无需SFT预训练，直接在偏好数据上从头训练。
+1. **Monolithic(单体式)**：无需SFT预训练，直接在偏好数据上从头训练。
 2. **Reference-Free**：彻底移除了KL惩罚项和参考模型，用Odds Ratio隐式控制生成多样性。
 3. **高效**：是目前显存最友好的对齐算法之一。
 

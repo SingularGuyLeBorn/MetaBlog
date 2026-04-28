@@ -1,18 +1,36 @@
 <!--
-  MessageBubble - 消息气泡组件（Star River 风格）
+  MessageBubble - 消息气泡组件(Star River 风格)
   紧凑单行 timeline indicator + 玻璃拟态卡片
 -->
 <template>
   <div class="message-wrapper" :class="[message.role, { last: isLast }]">
     <!-- 用户消息 -->
     <div v-if="message.role === 'user'" class="user-message">
-      <div class="user-bubble">
-        <div v-if="parsedMessage.skill" class="skill-capsule">
-          <span class="skill-icon">{{ parsedMessage.skill.icon }}</span>
-          <span class="skill-name">{{ parsedMessage.skill.name }}</span>
+      <div class="user-bubble-wrapper">
+        <div class="user-bubble">
+          <div v-if="parsedMessage.skill" class="skill-capsule">
+            <span class="skill-icon">{{ parsedMessage.skill.icon }}</span>
+            <span class="skill-name">{{ parsedMessage.skill.name }}</span>
+          </div>
+          <div class="message-text" v-html="parsedMessage.displayHtml"></div>
+          <div v-if="!isStreaming" class="message-token-count">{{ formatTokenCount(tokenCount) }} tokens</div>
         </div>
-        <div class="message-text" v-html="parsedMessage.displayHtml"></div>
-        <div v-if="!isStreaming" class="message-token-count">{{ formatTokenCount(tokenCount) }} tokens</div>
+        <!-- 附件缩略图 -->
+        <div v-if="message.attachments && message.attachments.length > 0" class="user-attachments">
+          <div
+            v-for="att in message.attachments"
+            :key="att.id || att.url"
+            class="user-attachment-thumb"
+            :class="att.type"
+          >
+            <img v-if="att.type === 'image'" :src="att.url" :alt="att.name" />
+            <video v-else-if="att.type === 'video'" :src="att.url" />
+            <div v-else class="file-thumb">
+              <Icon name="file" :size="20" />
+              <span class="file-thumb-name">{{ att.name }}</span>
+            </div>
+          </div>
+        </div>
       </div>
       <Avatar type="user" />
     </div>
@@ -72,7 +90,7 @@
                     {{ getToolArgsSummary(item.toolRecord.arguments) }}
                   </span>
                   <span class="spacer"></span>
-                  <!-- 工具执行成功后的实体链接卡片（无需展开直接可见） -->
+                  <!-- 工具执行成功后的实体链接卡片(无需展开直接可见) -->
                   <template v-if="item.toolRecord.status === 'success'">
                     <EntityLinkCard
                       v-for="link in getToolLinks(item.toolRecord).slice(0, 1)"
@@ -124,7 +142,7 @@
           </div>
         </template>
 
-        <!-- 传统思考框（兼容旧数据） -->
+        <!-- 传统思考框(兼容旧数据) -->
         <div v-else-if="displayReasoning" class="legacy-reasoning">
           <div class="legacy-header" @click="isExpanded = !isExpanded">
             <span class="dot-thinking"></span>
@@ -158,7 +176,7 @@
           <div class="response-body" v-html="renderedHtml"></div>
         </div>
 
-        <!-- 实体链接卡片（工具执行产生的可点击链接） -->
+        <!-- 实体链接卡片(工具执行产生的可点击链接) -->
         <div v-if="entityLinks.length > 0" class="entity-links-section">
           <div class="entity-links-label">生成的链接</div>
           <div class="entity-links-list">
@@ -210,15 +228,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
-import { Avatar, AIAvatar, Icon, TypewriterText } from '@/theme/components/common'
-import MessageVersions from './MessageVersions.vue'
-import EntityLinkCard from './EntityLinkCard.vue'
-import { extractAllEntityLinks, extractLinksFromRecord, type EntityLink } from '@/theme/utils/extractEntityLinks'
+import { AIAvatar, Avatar, Icon, TypewriterText } from '@/theme/components/common'
 import type { ChatMessage, ChatMessage as ChatMessageType, ThinkingStep } from '@/theme/types'
+import { extractAllEntityLinks, extractLinksFromRecord, type EntityLink } from '@/theme/utils/extractEntityLinks'
 import { estimateTextTokens, formatTokenCount } from '@/theme/utils/tokenEstimator'
+import DOMPurify from 'dompurify'
+import { marked } from 'marked'
+import { computed, onMounted, ref, watch } from 'vue'
+
+// 启用 GFM（表格、任务列表、删除线等）
+marked.use({ gfm: true })
+import EntityLinkCard from './EntityLinkCard.vue'
+import MessageVersions from './MessageVersions.vue'
 
 interface VersionInfo {
   versions: ChatMessageType[]
@@ -269,11 +290,11 @@ function formatToolResult(result: any, itemId: string): string {
   return str.slice(0, RESULT_TRUNCATE_LENGTH) + '\n\n... [内容已截断，点击展开查看全部]'
 }
 
-// 从单个工具记录中提取链接（用于 timeline 中每个 tool_call 项）
+// 从单个工具记录中提取链接(用于 timeline 中每个 tool_call 项)
 function getToolLinks(toolRecord: any): EntityLink[] {
   const links = extractLinksFromRecord(toolRecord)
   if (links.length > 0) {
-    // 提取链接（调试用日志已移除）
+    // 提取链接(调试用日志已移除)
   }
   return links
 }
@@ -313,7 +334,7 @@ const timelineItems = computed((): ThinkingStep[] => {
 
 const hasTimelineItems = computed(() => timelineItems.value.length > 0)
 
-// 从工具记录中提取实体链接（飞书/GitHub/语雀等）
+// 从工具记录中提取实体链接(飞书/GitHub/语雀等)
 const entityLinks = computed((): EntityLink[] => {
   if (!props.message.metadata?.toolRecords?.length) return []
   return extractAllEntityLinks(props.message.metadata.toolRecords)
@@ -576,8 +597,15 @@ async function copyContent() {
   gap: 12px;
 }
 
-.user-bubble {
+.user-bubble-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
   max-width: 70%;
+}
+
+.user-bubble {
   padding: 16px 20px;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(200, 195, 188, 0.5);
@@ -587,6 +615,57 @@ async function copyContent() {
     0 4px 20px rgba(0, 0, 0, 0.04),
     0 1px 2px rgba(0, 0, 0, 0.02),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* 用户消息附件缩略图 */
+.user-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.user-attachment-thumb {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f1f5f9;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.user-attachment-thumb:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.user-attachment-thumb img,
+.user-attachment-thumb video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-attachment-thumb .file-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 8px;
+  color: #64748b;
+}
+
+.user-attachment-thumb .file-thumb-name {
+  font-size: 10px;
+  margin-top: 4px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70px;
 }
 
 .message-text {
@@ -1067,13 +1146,50 @@ async function copyContent() {
   font-size: 12px;
 }
 
+/* ========== Markdown 表格 ========== */
+.message-text :deep(table),
+.response-body :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 14px;
+}
+.message-text :deep(thead),
+.response-body :deep(thead) {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+.message-text :deep(th),
+.response-body :deep(th) {
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+.message-text :deep(td),
+.response-body :deep(td) {
+  padding: 8px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  vertical-align: top;
+}
+.message-text :deep(tr:nth-child(even)),
+.response-body :deep(tr:nth-child(even)) {
+  background-color: rgba(0, 0, 0, 0.015);
+}
+.message-text :deep(tr:hover),
+.response-body :deep(tr:hover) {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
 /* ========== 响应式 ========== */
 @media (max-width: 640px) {
   .ai-body {
     max-width: calc(100% - 50px);
   }
-  .user-bubble {
+  .user-bubble-wrapper {
     max-width: 82%;
+  }
+  .user-bubble {
     padding: 12px 16px;
   }
   .response-body {

@@ -4,13 +4,13 @@
 #
 # 【重大发现】
 # 语雀内部 Web API 创建/更新文档时，必须使用 body_asl 字段保存内容！
-# 使用 body 字段会导致内容为空（API 返回成功但 content 长度为 0）。
+# 使用 body 字段会导致内容为空(API 返回成功但 content 长度为 0)。
 #
 # 正确用法：
 #   POST /api/docs  ->  body: { book_id, title, body_asl: lake_html, format: 'lake' }
 #   PUT  /api/docs/{id} -> body: { title, body_asl: lake_html, format: 'lake' }
 #
-# 读取时返回的字段是 content（不是 body 或 body_asl）。
+# 读取时返回的字段是 content(不是 body 或 body_asl)。
 #
 # 【作用】
 # 将 Markdown / HTML 转换为语雀专用的 Lake HTML 格式。
@@ -18,7 +18,7 @@
 #
 # 【Lake HTML 结构特点】
 # 1. 文档头：<!doctype lake> + meta 标签
-# 2. 每个块级元素有 data-lake-id 和 id 属性（创建时可省略，语雀自动添加）
+# 2. 每个块级元素有 data-lake-id 和 id 属性(创建时可省略，语雀自动添加)
 # 3. 文本内容包裹在 <span> 内
 # 4. 表格使用 class="lake-table" 和 <colgroup>
 # 5. 代码块使用 <pre><code class="language-xxx">...</code></pre>
@@ -58,7 +58,7 @@ def _escape(text: str) -> str:
 
 
 def _uid() -> str:
-    """生成 Lake ID（简化版，语雀实际使用更复杂的 ID）"""
+    """生成 Lake ID(简化版，语雀实际使用更复杂的 ID)"""
     import random
     import string
     return ''.join(random.choices(string.ascii_letters + string.digits, k=8))
@@ -235,8 +235,8 @@ def table(rows: list[list[str]], header: list[str] = None, col_widths: list[int]
     
     参数:
         rows: 数据行，每个元素是一个列表
-        header: 表头（可选）
-        col_widths: 列宽列表（可选，默认每列150px）
+        header: 表头(可选)
+        col_widths: 列宽列表(可选，默认每列150px)
     
     注意：语雀 Lake HTML 表格需要 class="lake-table" 和 <colgroup>
     """
@@ -291,7 +291,7 @@ def formula(latex: str, display=False) -> str:
     
     参数:
         latex: LaTeX 公式内容
-        display: 是否为行间公式（默认行内）
+        display: 是否为行间公式(默认行内)
     
     注意：语雀使用 data-latex 属性存储公式源码
     """
@@ -391,7 +391,7 @@ def markdown_to_lake(md: str) -> str:
             return all(re.match(r'^\s*:?-+:?\s*$', p) for p in parts)
         
         if line.startswith('|') and i + 1 < len(lines) and _is_table_separator(lines[i + 1]):
-            # 解析表头（过滤掉首尾空字符串）
+            # 解析表头(过滤掉首尾空字符串)
             header = [c.strip() for c in line.split('|') if c.strip() != '']
             i += 2  # skip header + separator
             # 解析数据行
@@ -450,7 +450,7 @@ def markdown_to_lake(md: str) -> str:
             i += 1
             continue
         
-        # 行间公式 $$...$$（支持多行）
+        # 行间公式 $$...$$(支持多行)
         if line.startswith('$$'):
             if line.endswith('$$') and len(line) > 4:
                 latex = line[2:-2].strip()

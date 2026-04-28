@@ -1,5 +1,5 @@
 <!--
-  AgentDetail - Agent 详细配置页面（3D 液态玻璃风格）
+  AgentDetail - Agent 详细配置页面(3D 液态玻璃风格)
 -->
 <template>
   <div class="agent-detail-3d">
@@ -286,9 +286,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
-import type { Agent, AgentPermission } from '@/theme/stores/useAgents'
-import { LEVEL_CONFIG, PERMISSION_TEMPLATES } from '@/theme/stores/useAgents'
+import type { Agent, AgentPermission } from '@/theme/stores/useAgents';
+import { LEVEL_CONFIG, PERMISSION_TEMPLATES } from '@/theme/stores/useAgents';
+import { computed, reactive, ref, watch } from 'vue';
 
 const props = defineProps<{
   agent: Agent

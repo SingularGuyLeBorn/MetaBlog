@@ -93,7 +93,7 @@ Meta AI 的这篇论文正式将 RL 定义为 LLM 的 **"第二阶段预训练" 
 
 本文不讨论具体的算法 trick (如 PPO vs DPO)，而是关注更宏观的 **Scaling Dynamics**。作者们在 1B 到 405B 的参数规模上，进行了超过 10,000 次消融实验，消耗了数万个 H100 GPU 小时，总结出了支配 LLM RL 的五个物理定律。
 
-这五个定律构成了 Scaling RL 的 "Unified Theory"，不仅解释了过去两年的实证发现（如 Value Loss 容易过拟合），也为未来的 AGI 算力分配指明了方向。
+这五个定律构成了 Scaling RL 的 "Unified Theory"，不仅解释了过去两年的实证发现(如 Value Loss 容易过拟合)，也为未来的 AGI 算力分配指明了方向。
 
 ---
 
@@ -101,7 +101,7 @@ Meta AI 的这篇论文正式将 RL 定义为 LLM 的 **"第二阶段预训练" 
 
 ### 2.1 现象：价值崩塌 (Value Collapse) 的实证研究
 
-在标准 PPO 实现中（如 HuggingFace TRL），Actor 和 Critic 通常共享同一个 Transformer Backbone，仅在最后分叉出两个 Head（Policy Head 和 Value Head）。这种设计在 7B 以下的模型中运行良好。
+在标准 PPO 实现中(如 HuggingFace TRL)，Actor 和 Critic 通常共享同一个 Transformer Backbone，仅在最后分叉出两个 Head(Policy Head 和 Value Head)。这种设计在 7B 以下的模型中运行良好。
 
 然而，Meta 的研究者发现，当模型扩增到 70B 时，这种共享架构会导致灾难性的 **Value Collapse**。
 
@@ -125,7 +125,7 @@ Policy 网络 $\pi_\theta$ 的任务是拟合一个概率分布映射。它往�
 Critic 网络 $V_\phi$ 的任务是预测期望回报。为了准确计算 Advantage，Critic 必须准确评估 Policy 生成的 **所有** 轨迹，包括那些 Policy 以前探索过的、现在正在探索的、以及未来可能偏向的轨迹。这是一种 **"全称性" (Universal)** 任务。
 
 设 $\mathcal{S}_{eff}$ 为 Policy 在训练过程中访问过的有效状态空间。
-随着 Policy 能力的提升（参数量 $N_\pi$ 增加），它能生成的语义合理的轨迹数量呈指数级增长。
+随着 Policy 能力的提升(参数量 $N_\pi$ 增加)，它能生成的语义合理的轨迹数量呈指数级增长。
 $$ |\mathcal{S}_{eff}| \propto \exp(N_\pi^\beta) $$
 
 根据 **PAC-Learning (Probably Approximately Correct)** 理论，为了在 $\mathcal{S}_{eff}$ 上以概率 $1-\delta$ 达到误差 $\epsilon$，Critic 的 VC 维 (VC Dimension) 必须满足：
@@ -176,7 +176,7 @@ Meta 论文指出，在 Scaling Limit 下，$G=64$ 的 GRPO 大约等效于一�
 
 ### 3.1 信用分配问题 (Credit Assignment) 的信息论极限
 
-这是 RL 用于推理任务（Math, Code）时面临的最大物理障碍。
+这是 RL 用于推理任务(Math, Code)时面临的最大物理障碍。
 输入 $x$，输出 $y = (t_1, t_2, ..., t_L)$。
 环境只在最后给出一个标量奖励 $r \in \{0, 1\}$。
 推理链长度 $L$ 可能达到 1000 tokens。
@@ -197,7 +197,7 @@ $$ \text{SNR}(k) \propto \frac{1}{\sqrt{k}} \cdot \exp(-\lambda \cdot I(s_t; s_{
 
 其中 $I(s_t; s_{t+1})$ 是状态转移的互信息，代表环境的混沌程度。
 对于 Logical Reasoning 任务，一步走错全盘皆输，混沌程度极高。
-这意味着，对于 Token $t_1$（推理的起始步），其接收到的来自 $t_L$ 的奖励信号的 SNR 几乎为 0。
+这意味着，对于 Token $t_1$(推理的起始步)，其接收到的来自 $t_L$ 的奖励信号的 SNR 几乎为 0。
 
 **实验数据**：
 当 $L > 500$ 时，Outcome Reward 对前 100 个 token 的梯度更新几乎完全是**随机噪声**。
@@ -212,7 +212,7 @@ Meta 提出了 PRM 的 Scaling Law：
 
 $$ \text{Error}_{reasoning} \approx \frac{A}{(N_{PRM})^\alpha} + \frac{B}{(D_{step}^\beta)} $$
 
-这就好比：与其在黑暗中摸索 1000 米（ORM），不如每走 10 米就开一次灯（PRM）。
+这就好比：与其在黑暗中摸索 1000 米(ORM)，不如每走 10 米就开一次灯(PRM)。
 **Scaling 系数对比**：
 - ORM 数据效率：$\beta_{ORM} \approx 0.15$ (极低)
 - PRM 数据效率：$\beta_{PRM} \approx 0.5$ (高效)
@@ -222,14 +222,14 @@ $$ \text{Error}_{reasoning} \approx \frac{A}{(N_{PRM})^\alpha} + \frac{B}{(D_{st
 ### 3.4 为什么 Outcome Reward 会导致幻觉 (Hallucination)
 
 这是论文中一个非常深刻的洞察。
-当 SNR 过低时，梯度更新的主要驱动力不再是 "Correct Logical Reasoning"（因为这部分信号衰减没了），而是 **"Spurious Correlations" (伪相关)**。
+当 SNR 过低时，梯度更新的主要驱动力不再是 "Correct Logical Reasoning"(因为这部分信号衰减没了)，而是 **"Spurious Correlations" (伪相关)**。
 
 例如：
 - 只要输出包含 "Therefore, the answer is"，奖励似乎变高了？
 - 只要把公式写得更长，奖励似乎变高了？
 - 只要引用某些从预训练中学到的"看起来很专业"的术语，奖励变高了？
 
-由于这些特征通常出现在 $L$ 的末端（靠近 Reward），它们的 SNR 很高。
+由于这些特征通常出现在 $L$ 的末端(靠近 Reward)，它们的 SNR 很高。
 模型会迅速学会这些**"表面功夫"**，而忽略了真正的因果推理。
 这就是为什么强行 Scale ORM 会导致模型一本正经地胡说八道。
 
@@ -254,19 +254,19 @@ Effective Sample Size (ESS) 并不随着 Compute 线性增长，而是对数增�
 ### 4.2 Mode Collapse 的动力学分析
 
 论文使用 **Fokker-Planck 方程** 模拟了 Policy 分布的演化。
-发现当 Reward Signal 较强，而 Entropy Regularization 较弱时，分布 $p(x,t)$ 会迅速坍缩成 Dirac Delta 函数（单点分布）。
+发现当 Reward Signal 较强，而 Entropy Regularization 较弱时，分布 $p(x,t)$ 会迅速坍缩成 Dirac Delta 函数(单点分布)。
 
 $$ \frac{\partial p}{\partial t} = -\nabla \cdot (p \nabla V) + \beta^{-1} \Delta p $$
-其中 $\nabla V$ 是 Reward Gradient，$\beta^{-1}$ 是温度（Entropy）。
+其中 $\nabla V$ 是 Reward Gradient，$\beta^{-1}$ 是温度(Entropy)。
 
-LLM RL 的特点是：Reward Gradient 极其陡峭（对了 1 分，错了 0 分），而 Temperature 通常设得很低。这导致 Mode Collapse 速度极快。
+LLM RL 的特点是：Reward Gradient 极其陡峭(对了 1 分，错了 0 分)，而 Temperature 通常设得很低。这导致 Mode Collapse 速度极快。
 一旦 Collapse，梯度 $g \approx 0$，学习停止。这就是所谓的 **"Early Plateau"**。
 
 ### 4.3 熵正则化 (Entropy Regularization) 的失效与修正
 
 为了对抗 Collapse，PPO 引入了 $L_{ent} = \lambda H(\pi)$。
 但在 LLM 中，这个项几乎没用。
-原因：LLM 的词表 $V=100,000$。即便分布非常 Sharp，其 Entropy $\sum -p \log p$ 依然可能很大（因为长尾分布）。但这所谓的 Entropy 来源于无意义的同义词替换（如 "happy" vs "glad"），而不是语义层面的多样性。
+原因：LLM 的词表 $V=100,000$。即便分布非常 Sharp，其 Entropy $\sum -p \log p$ 依然可能很大(因为长尾分布)。但这所谓的 Entropy 来源于无意义的同义词替换(如 "happy" vs "glad")，而不是语义层面的多样性。
 
 **Auto-Regressive Entropy vs Semantic Entropy**:
 我们真正需要最大化的是 **语义熵 (Semantic Entropy)**，即不同推理思路的多样性，而不是 Token 的多样性。
@@ -284,7 +284,7 @@ Scaling Law 显示：
 $$ \text{Optimal ERR} \propto \text{Compute}^{0.3} $$
 这意味着，计算量越大，你越应该**重用**旧数据，而不是疯狂采新数据。
 旧数据虽然 Policy Lag 很大，但它们提供了宝贵的 **"Negative Constraints" (负约束)**。告诉模型："你以前那样做是错的，别走回头路"。
-如果是纯 On-policy，模型很容易发生 **Cyclic Forgetting**（循环遗忘）：改了一个 Bug，引入了旧 Bug，周而复始。
+如果是纯 On-policy，模型很容易发生 **Cyclic Forgetting**(循环遗忘)：改了一个 Bug，引入了旧 Bug，周而复始。
 
 ---
 
@@ -299,8 +299,8 @@ $$ \text{Optimal ERR} \propto \text{Compute}^{0.3} $$
 
 $$ \Delta F = \Delta U - T \Delta S $$
 
-通过训练 (Training)，我们降低内能 $\Delta U$（让 Policy 更准）。
-通过搜索 (Search)，我们利用熵 $S$（多样性）来做功。
+通过训练 (Training)，我们降低内能 $\Delta U$(让 Policy 更准)。
+通过搜索 (Search)，我们利用熵 $S$(多样性)来做功。
 
 ### 5.2 推理计算与训练计算的等价交换原理
 
@@ -310,7 +310,7 @@ $$ \frac{\partial \text{Perf}}{\partial \log C_{train}} \approx \alpha $$
 $$ \frac{\partial \text{Perf}}{\partial \log C_{infer}} \approx \beta $$
 
 在 LLM 初期 ($\text{Perf} \ll \text{Optimal}$)，$\alpha \gg \beta$。此时应该疯狂训练。
-在 LLM 后期 ($\text{Perf} \to \text{Optimal}$)，$\alpha$ 衰减极快（Diminishing Returns）。而 $\beta$ 衰减较慢（搜索总是有用的）。
+在 LLM 后期 ($\text{Perf} \to \text{Optimal}$)，$\alpha$ 衰减极快(Diminishing Returns)。而 $\beta$ 衰减较慢(搜索总是有用的)。
 
 **结论**：存在一个 **Critical Scale**。超过这个规模后，每多花 1 美元，投入到 Inference (System 2) 的回报 > 投入到 Training (System 1)。
 这解释了 OpenAI o1 "Strawberry" 项目的逻辑：与其训练 GPT-5 (100x GPT-4 cost)，不如让 GPT-4 思考 100 秒。
@@ -321,7 +321,7 @@ $$ T_{think}^* \propto \exp(K \cdot \text{Difficulty}) $$
 
 对于越难的问题，最优思考时间 $T_{think}^*$ 呈指数增长。
 而预训练只能线性地提升 $P(Answer)$。
-当 Difficulty 达到一定阈值（如 Math Olympiad），纯 System 1 模型的成功率 $P \to 0$。此时 $\log C_{train}$ 带来的提升微乎其微。
+当 Difficulty 达到一定阈值(如 Math Olympiad)，纯 System 1 模型的成功率 $P \to 0$。此时 $\log C_{train}$ 带来的提升微乎其微。
 唯有 System 2 (Search) 能通过指数级的计算 $C_{infer}$ 来 "暴力破解" 复杂的推理空间。
 
 ### 5.4 搜索算法的 Scaling 效率
@@ -351,13 +351,13 @@ Meta 通过实验得到了一个极其重要的经验公式：
 
 $$ \tau^*(C) = \tau_0 \cdot \left( \frac{C}{C_0} \right)^{-\delta}, \quad \delta \approx 0.25 $$
 
-这意味着，随着模型越来越强（训练算力 $C$ 增加），我们在推理时应该使用越来越低的温度。
+这意味着，随着模型越来越强(训练算力 $C$ 增加)，我们在推理时应该使用越来越低的温度。
 
 **反直觉解析**：
-通常认为，越强的模型越"自信"，所以其 Logits 分布越尖锐（Peaked）。为了防止它太单一，我们似乎应该**调高**温度来平滑分布？
+通常认为，越强的模型越"自信"，所以其 Logits 分布越尖锐(Peaked)。为了防止它太单一，我们似乎应该**调高**温度来平滑分布？
 **错**。
 事实是：强模型的 Logits 确实尖锐，但它对 **"Right vs Wrong"** 的区分度也极高。
-弱模型：$P(\text{Right}) = 0.4, P(\text{Wrong}) = 0.3$。我们需要 High $\tau$ 来给 Wrong 机会（因为它不仅是 Wrong，可能是 Creative）。
+弱模型：$P(\text{Right}) = 0.4, P(\text{Wrong}) = 0.3$。我们需要 High $\tau$ 来给 Wrong 机会(因为它不仅是 Wrong，可能是 Creative)。
 强模型：$P(\text{Right}) = 0.9, P(\text{Wrong}) = 0.01$。此时 High $\tau$ 会强行提升 $P(\text{Wrong})$，引入完全不必要的噪声。
 
 强模型的 "Long Tail" 通常是**极低概率的灾难性错误** (Catastrophic Errors)。

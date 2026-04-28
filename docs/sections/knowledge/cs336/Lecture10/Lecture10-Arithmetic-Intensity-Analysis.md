@@ -1,11 +1,11 @@
 # 精英笔记: Transformer推理的算术强度与性能建模
 **(Arithmetic Intensity Analysis for Transformer Inference)**
 
-本笔记深入解析了 Lecture 10 配套代码 `lecture_10.py` 中的数学模型，详细推导了为何 Transformer 推理（特别是生成阶段）本质上是内存受限（Memory-bound）的，并量化了不同架构选择对性能的影响。
+本笔记深入解析了 Lecture 10 配套代码 `lecture_10.py` 中的数学模型，详细推导了为何 Transformer 推理(特别是生成阶段)本质上是内存受限(Memory-bound)的，并量化了不同架构选择对性能的影响。
 
 ## 1. 算术强度 (Arithmetic Intensity) 的定义
 
-算术强度 $I$ 定义为每传输一个字节的内存数据所进行的浮点运算次数（FLOPs）：
+算术强度 $I$ 定义为每传输一个字节的内存数据所进行的浮点运算次数(FLOPs)：
 
 $$ I = \frac{\text{FLOPs}}{\text{Bytes Transferred}} $$
 
@@ -32,20 +32,20 @@ $$ I = \frac{\text{FLOPs}}{\text{Bytes Transferred}} $$
 算术强度为：
 $$ I = \frac{2BDF}{2(BD + DF + BF)} = \frac{BDF}{BD + DF + BF} $$
 
-当 $D, F \gg B$ 时（通常 $D, F$ 为数千，而 $B$ 为 Batch Size）：
+当 $D, F \gg B$ 时(通常 $D, F$ 为数千，而 $B$ 为 Batch Size)：
 $$ I \approx \frac{BDF}{DF} = B $$
 
 **结论**: 矩阵乘法的效率直接取决于 Batch Size $B$。对于 H100，需要 $B > 295$ 才能饱和计算能力。
 
 ## 3. Transformer 推理的详细审计
 
-代码 `arithmetic_intensity_of_inference` 函数中，将推理分为两个阶段：Prefill（预填充）和 Generation（生成）。
+代码 `arithmetic_intensity_of_inference` 函数中，将推理分为两个阶段：Prefill(预填充)和 Generation(生成)。
 
 ### 3.1 MLP 层分析 (Projection Layers)
 
-对于 MLP 层（Up, Gate, Down projections），输入为 $X(B \times T \times D)$。
+对于 MLP 层(Up, Gate, Down projections)，输入为 $X(B \times T \times D)$。
 *   $B$: Batch Size
-*   $T$: Token数（Prefill时为 $S$, Generation时为 1）
+*   $T$: Token数(Prefill时为 $S$, Generation时为 1)
 
 **FLOPs**: $6 \cdot B \cdot T \cdot D \cdot F$ (三个矩阵乘法)
 **Bytes**:
@@ -57,7 +57,7 @@ $$ I_{MLP} \approx \frac{6BTDF}{6DF} = B \cdot T $$
 
 *   **Prefill ($T=S$)**: $I \approx B \cdot S$。通常 $S$ 很长，轻松达到计算受限。
 *   **Generation ($T=1$)**: $I \approx B$。
-    *   **关键点**: 在生成阶段，MLP 的效率完全依赖于 Batch Size。如果你没有足够的并发请求（$B$ 小），MLP 层就是内存受限的。
+    *   **关键点**: 在生成阶段，MLP 的效率完全依赖于 Batch Size。如果你没有足够的并发请求($B$ 小)，MLP 层就是内存受限的。
 
 ### 3.2 Attention 层分析 (The Bottleneck)
 
@@ -107,5 +107,5 @@ $$ \text{Latency} \approx \frac{\text{Total Memory Read}}{\text{Memory Bandwidth
 $$ \text{Throughput} = \frac{B}{\text{Latency}} $$
 
 **权衡 (Trade-off)**:
-*   增加 $B$: 延迟增加（因为要读更多 KV Cache），但吞吐量增加（分母增加较慢，直到内存溢出）。
-*   **GQA 的作用**: 减少了 $K$（KV heads 数量），直接减少了 $M_{KV}$。这不仅降低了延迟，还允许更大的 $B$ 放入显存，从而大幅提升吞吐量。
+*   增加 $B$: 延迟增加(因为要读更多 KV Cache)，但吞吐量增加(分母增加较慢，直到内存溢出)。
+*   **GQA 的作用**: 减少了 $K$(KV heads 数量)，直接减少了 $M_{KV}$。这不仅降低了延迟，还允许更大的 $B$ 放入显存，从而大幅提升吞吐量。

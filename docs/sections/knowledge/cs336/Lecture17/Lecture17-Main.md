@@ -5,12 +5,12 @@
 > **核心主题**: 本讲座是CS336课程RL系列的收官之作，提供了**GRPO算法的完整代码实现**。从策略梯度的数学推导，到基线的直观理解，再到完整的训练循环，配合一个简单的排序任务进行演示。
 > 
 > **知识结构**: 
-> - 第一部分：RL在语言模型中的设定（状态、动作、奖励）
+> - 第一部分：RL在语言模型中的设定(状态、动作、奖励)
 > - 第二部分：策略梯度数学推导
 > - 第三部分：基线与优势函数
 > - 第四部分：完整GRPO实现与实验
 > 
-> **精英补充笔记**: 无（本讲座本身就是实现级别的深度讲解）
+> **精英补充笔记**: 无(本讲座本身就是实现级别的深度讲解)
 
 ---
 
@@ -30,7 +30,7 @@
 
 我们关注**结果奖励 (Outcome Rewards)**：
 - 奖励是整个response的函数
-- 奖励是**可验证的**（不是学习的）
+- 奖励是**可验证的**(不是学习的)
 
 **示例**: 数学问题
 ```
@@ -47,9 +47,9 @@ Reward Function: Extract "14", compare to ground truth → R = 1
 **转移动态确定性**: $T(s'|s,a) = \delta(s' = s + a)$
 
 这意味着：
-- 可以进行**规划/测试时计算**（机器人做不到）
-- 状态是"虚构的"（token序列，而非物理状态）
-- 任何状态都可达（只要写出tokens）
+- 可以进行**规划/测试时计算**(机器人做不到)
+- 状态是"虚构的"(token序列，而非物理状态)
+- 任何状态都可达(只要写出tokens)
 - 挑战不是"到达"状态，而是"正确"状态
 
 ### 1.4 目标
@@ -64,7 +64,7 @@ $$J(\theta) = \mathbb{E}_{s \sim p(s), a \sim \pi_\theta(a|s)}[R(s, a)]$$
 
 ### 2.1 符号简化
 
-为了简化，令 $a$ 表示**整个response**（而非单个token）。
+为了简化，令 $a$ 表示**整个response**(而非单个token)。
 
 在结果奖励设定下，这是合理的——可以认为一次性生成整个回复。
 
@@ -196,7 +196,7 @@ $$b(s) \approx \mathbb{E}[R|s] = V(s)$$
 
 定义：
 - **价值函数**: $V(s) = \mathbb{E}[R|s]$
-- **Q函数**: $Q(s,a) = \mathbb{E}[R|s,a]$（在结果奖励下 = R）
+- **Q函数**: $Q(s,a) = \mathbb{E}[R|s,a]$(在结果奖励下 = R)
 - **优势函数**: $A(s,a) = Q(s,a) - V(s)$
 
 **直觉**: 优势衡量"动作 $a$ 比平均水平好多少"
@@ -228,7 +228,7 @@ $$A_i = \frac{R_i - \text{mean}(R_1, ..., R_G)}{\text{std}(R_1, ..., R_G) + \eps
 ```python
 def compute_deltas(rewards: torch.Tensor, mode: str) -> torch.Tensor:
     """
-    计算GRPO的delta（优势估计）
+    计算GRPO的delta(优势估计)
     
     Args:
         rewards: [batch, num_responses] 每个response的奖励
@@ -318,7 +318,7 @@ class Model(nn.Module):
         decoded = einsum(encoded, self.decode_weights,
                         "batch dim2, pos dim2 dim1 -> batch pos dim1")
         
-        # 转换为logits（输入输出共享embedding）
+        # 转换为logits(输入输出共享embedding)
         logits = einsum(decoded, self.embedding.weight,
                        "batch pos dim1, vocab dim1 -> batch pos vocab")
         
@@ -392,7 +392,7 @@ def compute_loss(log_probs: torch.Tensor, deltas: torch.Tensor,
         log_probs: [batch, trial, pos] 当前策略的log概率
         deltas: [batch, trial] 优势/奖励
         mode: "naive" | "clipped"
-        old_log_probs: [batch, trial, pos] 旧策略的log概率（用于裁剪）
+        old_log_probs: [batch, trial, pos] 旧策略的log概率(用于裁剪)
     """
     if mode == "naive":
         # 朴素策略梯度: -E[δ · log π]
@@ -455,7 +455,7 @@ def run_policy_gradient(num_epochs: int = 100,
                   prompt_length=3, response_length=3)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     
-    # 参考模型（用于KL惩罚）
+    # 参考模型(用于KL惩罚)
     ref_model = None
     
     for epoch in range(num_epochs):
@@ -471,14 +471,14 @@ def run_policy_gradient(num_epochs: int = 100,
         # 计算奖励
         rewards = compute_reward(prompts, responses, sort_inclusion_ordering_reward)
         
-        # 计算delta（优势）
+        # 计算delta(优势)
         deltas = compute_deltas(rewards, mode=deltas_mode)
         
-        # 保存旧的log概率（用于裁剪）
+        # 保存旧的log概率(用于裁剪)
         with torch.no_grad():
             old_log_probs = compute_log_probs(prompts, responses, model)
         
-        # 参考模型log概率（用于KL）
+        # 参考模型log概率(用于KL)
         if ref_model is not None:
             with torch.no_grad():
                 ref_log_probs = compute_log_probs(prompts, responses, ref_model)
@@ -514,8 +514,8 @@ def run_policy_gradient(num_epochs: int = 100,
 ### 5.1 朴素奖励 vs 中心化奖励
 
 **朴素奖励问题**:
-- 如果所有response获得相同奖励（如都是3）
-- 仍然会做更新（不应该！）
+- 如果所有response获得相同奖励(如都是3)
+- 仍然会做更新(不应该！)
 
 **中心化奖励解决方案**:
 - 减去均值后，相同奖励 → delta = 0 → 不更新
@@ -553,7 +553,7 @@ deltas_centered = rewards - rewards.mean()  # [0, 0, 0, 0] → 不更新
 ⟹ 损失不是在同一分布上计算的，不能直接比较
 ```
 
-**应该看**: 平均奖励（而非损失）
+**应该看**: 平均奖励(而非损失)
 
 ### 5.4 实验结论
 
@@ -605,8 +605,8 @@ GRPO需要管理多个模型状态：
 ### 6.3 系统复杂性
 
 真实GRPO系统需要：
-- **推理工作节点**: 专门做生成（GPU密集）
-- **训练工作节点**: 专门做梯度更新（GPU密集）
+- **推理工作节点**: 专门做生成(GPU密集)
+- **训练工作节点**: 专门做梯度更新(GPU密集)
 - **奖励计算**: 可能需要执行代码、查数据库等
 - **模型权重同步**: 训练后同步到推理节点
 - **长CoT处理**: 不均匀batch的负载均衡
@@ -639,9 +639,9 @@ $$\nabla J = \mathbb{E}\left[\nabla \log \pi_\theta(a|s) \cdot \underbrace{(R - 
 > 如果你能衡量它，你就能优化它。
 
 但关键是：
-1. 衡量标准是否可靠？（RLHF的挑战）
-2. 优化过程是否稳定？（方差的挑战）
-3. 奖励是否可泛化？（过拟合的挑战）
+1. 衡量标准是否可靠？(RLHF的挑战)
+2. 优化过程是否稳定？(方差的挑战)
+3. 奖励是否可泛化？(过拟合的挑战)
 
 ---
 

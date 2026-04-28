@@ -95,8 +95,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
 import type { Agent } from '@/theme/types'
+import { computed, nextTick, ref, watch } from 'vue'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -156,7 +156,7 @@ async function handleSend() {
   inputMessage.value = ''
   isLoading.value = true
   
-  // 添加助手消息（流式）
+  // 添加助手消息(流式)
   const assistantMsg: Message = {
     role: 'assistant',
     content: '',
@@ -167,7 +167,7 @@ async function handleSend() {
   await nextTick()
   scrollToBottom()
   
-  // 模拟 AI 回复（实际项目中应该调用 API）
+  // 模拟 AI 回复(实际项目中应该调用 API)
   setTimeout(() => {
     assistantMsg.content = `我是 ${props.agent?.name}，收到你的消息："${content}"`
     assistantMsg.isStreaming = false

@@ -3,7 +3,7 @@
  */
 
 import type { ToolDefinition, ToolExecutor, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 export const translateTextDef: ToolDefinition = {
   type: 'function',
@@ -19,11 +19,11 @@ export const translateTextDef: ToolDefinition = {
         },
         target_language: {
           type: 'string',
-          description: '目标语言代码，如 "zh"（中文）、"en"（英文）、"ja"（日文）、"ko"（韩文）、"fr"（法文）、"de"（德文）等'
+          description: '目标语言代码，如 "zh"(中文)、"en"(英文)、"ja"(日文)、"ko"(韩文)、"fr"(法文)、"de"(德文)等'
         },
         source_language: {
           type: 'string',
-          description: '源语言代码（可选，自动检测）'
+          description: '源语言代码(可选，自动检测)'
         }
       },
       required: ['text', 'target_language']
@@ -36,7 +36,7 @@ export const translateTextDef: ToolDefinition = {
  */
 export const translateText: ToolExecutor = async (args): Promise<ToolResult> => {
   const { text, target_language, source_language } = args
-  
+
   if (!text || !target_language) {
     return createErrorResult(
       'Missing required parameters',
@@ -44,7 +44,7 @@ export const translateText: ToolExecutor = async (args): Promise<ToolResult> => 
       '示例: translateText(text="Hello", target_language="zh")'
     )
   }
-  
+
   const langNames: Record<string, string> = {
     'zh': '中文',
     'en': '英文',
@@ -58,14 +58,14 @@ export const translateText: ToolExecutor = async (args): Promise<ToolResult> => 
     'pt': '葡萄牙文',
     'it': '意大利文'
   }
-  
+
   // 当前依赖 AI 自身翻译能力
   return createSuccessResult(
     {
       text,
       targetLanguage: langNames[target_language] || target_language,
-      sourceLanguage: source_language 
-        ? (langNames[source_language] || source_language) 
+      sourceLanguage: source_language
+        ? (langNames[source_language] || source_language)
         : 'auto',
       note: '当前使用 AI 自身翻译能力，如需更专业的翻译，请配置 DeepL/Google Translate API'
     },

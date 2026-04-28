@@ -8,7 +8,7 @@
  * 3. 丰富的元数据 - 支持 UI 展示所需的所有信息
  */
 
-import type { ModelInfo, ProviderInfo, ModelCapabilities } from './types'
+import type { ModelCapabilities, ModelInfo, ProviderInfo } from './types'
 
 // ==================== 厂商信息 ====================
 
@@ -34,64 +34,43 @@ export const PROVIDERS: Record<string, ProviderInfo> = {
 // ==================== 模型能力模板 ====================
 
 const CAPABILITIES = {
-  // DeepSeek 基础能力
-  deepseekBase: {
-    vision: false,
-    video: false,
-    functionCalling: true,
-    streaming: true,
-    reasoning: false
-  } as ModelCapabilities,
-  
-  // DeepSeek 推理能力
-  deepseekReasoning: {
+  // DeepSeek V4 Pro - 最强推理，非多模态
+  deepseekV4Pro: {
     vision: false,
     video: false,
     functionCalling: true,
     streaming: true,
     reasoning: true
   } as ModelCapabilities,
-  
-  // Kimi 基础多模态能力
-  kimiBase: {
-    vision: true,
+
+  // DeepSeek V4 Flash - 快速响应，非多模态
+  deepseekV4Flash: {
+    vision: false,
     video: false,
     functionCalling: true,
     streaming: true,
-    reasoning: false
+    reasoning: true
   } as ModelCapabilities,
-  
-  // Kimi 完整多模态能力（含视频）
-  kimiFull: {
+
+  // Kimi K2.5 - 原生多模态（图片+视频）
+  kimiK2_5: {
     vision: true,
     video: true,
-    functionCalling: true,
-    streaming: true,
-    reasoning: false
-  } as ModelCapabilities,
-  
-  // Kimi 思考能力
-  kimiThinking: {
-    vision: true,
-    video: false,
     functionCalling: true,
     streaming: true,
     reasoning: true
   } as ModelCapabilities
 }
 
-// ==================== 模型定价（元/1K tokens）====================
+// ==================== 模型定价(元/1K tokens)====================
 
 const PRICING = {
   deepseek: {
-    chat: { input: 0.001, output: 0.002 },
-    reasoner: { input: 0.004, output: 0.016 }
+    v4_pro: { input: 0.004, output: 0.016 },
+    v4_flash: { input: 0.001, output: 0.002 }
   },
   kimi: {
-    k2_5: { input: 0.015, output: 0.06 },
-    k2_turbo: { input: 0.005, output: 0.02 },
-    k2_thinking: { input: 0.015, output: 0.06 },
-    k2_thinking_turbo: { input: 0.008, output: 0.032 }
+    k2_5: { input: 0.015, output: 0.06 }
   }
 }
 
@@ -99,124 +78,70 @@ const PRICING = {
 
 export const MODELS: ModelInfo[] = [
   // ═══════════════════════════════════════════════════════════════
-  // DeepSeek 模型
+  // DeepSeek V4 Pro - 最强推理模型
   // ═══════════════════════════════════════════════════════════════
   {
-    id: 'deepseek-chat',
-    name: 'DeepSeek Chat',
-    description: '通用对话，适合日常交流',
-    fullDescription: 'DeepSeek-V3 基础对话模型，擅长中文和英文日常对话、文本生成、知识问答等任务。响应快速，性价比高。',
+    id: 'deepseek-v4-pro',
+    name: 'DeepSeek V4 Pro',
+    description: '最强推理，适合深度分析与复杂任务',
+    fullDescription: 'DeepSeek-V4-Pro 是 DeepSeek 最强推理模型，支持 reasoning_effort 调节（high/max）。1M 上下文窗口，擅长数学、编程、逻辑推理等复杂任务。不支持直接识图，上传图片将通过 OCR 提取文字。',
     providerId: 'deepseek',
-    capabilities: CAPABILITIES.deepseekBase,
-    contextWindow: 64000,
+    capabilities: CAPABILITIES.deepseekV4Pro,
+    contextWindow: 1000000,
     maxOutputTokens: 8192,
-    pricing: PRICING.deepseek.chat,
+    pricing: PRICING.deepseek.v4_pro,
     defaultTemperature: 0.7,
     recommended: true,
-    tags: ['高性价比', '日常对话', '快速响应'],
+    tags: ['最强推理', '深度分析', '代码生成', '文本-only'],
     theme: {
       primaryColor: '#4D6BFA',
       secondaryColor: '#7B8FFC',
-      icon: '💬'
-    }
-  },
-  {
-    id: 'deepseek-reasoner',
-    name: 'DeepSeek Reasoner',
-    description: '深度思考，自动展示推理过程',
-    fullDescription: 'DeepSeek-R1 推理模型，擅长数学、编程、逻辑推理等复杂任务。会展示完整的思考过程，适合需要深度分析的场景。',
-    providerId: 'deepseek',
-    capabilities: CAPABILITIES.deepseekReasoning,
-    contextWindow: 64000,
-    maxOutputTokens: 8192,
-    pricing: PRICING.deepseek.reasoner,
-    defaultTemperature: 0.7,
-    recommended: false,
-    tags: ['深度思考', '数学推理', '代码生成'],
-    theme: {
-      primaryColor: '#6B4DFA',
-      secondaryColor: '#9B8FFC',
       icon: '🧠'
     }
   },
-  
   // ═══════════════════════════════════════════════════════════════
-  // Kimi 模型
+  // DeepSeek V4 Flash - 快速响应模型
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 'deepseek-v4-flash',
+    name: 'DeepSeek V4 Flash',
+    description: '快速响应，性价比高，支持思考模式',
+    fullDescription: 'DeepSeek-V4-Flash 是高效快速模型，支持思考/非思考模式切换。1M 上下文窗口，适合日常对话和轻量级任务。不支持直接识图，上传图片将通过 OCR 提取文字。',
+    providerId: 'deepseek',
+    capabilities: CAPABILITIES.deepseekV4Flash,
+    contextWindow: 1000000,
+    maxOutputTokens: 8192,
+    pricing: PRICING.deepseek.v4_flash,
+    defaultTemperature: 0.7,
+    recommended: false,
+    tags: ['快速响应', '高性价比', '日常对话', '文本-only'],
+    theme: {
+      primaryColor: '#5B8DEF',
+      secondaryColor: '#8FB8FF',
+      icon: '⚡'
+    }
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // Kimi K2.5 - 原生多模态模型
   // ═══════════════════════════════════════════════════════════════
   {
     id: 'kimi-k2.5',
     name: 'Kimi K2.5',
-    description: '最新多模态模型，支持图片和视频',
-    fullDescription: 'Kimi K2.5 是月之暗面最新多模态模型，支持图片和视频理解。在复杂推理、编程、视觉理解方面表现优秀。',
+    description: '原生多模态，支持图片/视频理解',
+    fullDescription: 'Kimi K2.5 是月之暗面最新多模态模型，支持文本、图片、视频输入。支持 enable_thinking 开关控制思考模式。256K 上下文，在复杂推理、编程、视觉理解方面表现优秀。',
     providerId: 'kimi',
-    capabilities: CAPABILITIES.kimiFull,
+    capabilities: CAPABILITIES.kimiK2_5,
     contextWindow: 256000,
     maxOutputTokens: 8192,
     pricing: PRICING.kimi.k2_5,
     defaultTemperature: 0.6,
     recommended: true,
-    tags: ['多模态', '视觉理解', '视频分析', '最强性能'],
+    tags: ['多模态', '视觉理解', '视频分析', '图片输入'],
     theme: {
       primaryColor: '#00A9FF',
       secondaryColor: '#66D4FF',
       icon: '🌟'
-    }
-  },
-  {
-    id: 'kimi-k2-turbo-preview',
-    name: 'Kimi K2 Turbo',
-    description: '快速响应，支持图片理解',
-    fullDescription: 'K2 Turbo 预览版，在保持多模态能力的同时提供更快的响应速度。支持图片理解，适合日常对话和轻量级任务。',
-    providerId: 'kimi',
-    capabilities: CAPABILITIES.kimiBase,
-    contextWindow: 128000,
-    maxOutputTokens: 8192,
-    pricing: PRICING.kimi.k2_turbo,
-    defaultTemperature: 0.6,
-    recommended: false,
-    tags: ['快速响应', '图片理解', '性价比高'],
-    theme: {
-      primaryColor: '#00D4AA',
-      secondaryColor: '#66E5CC',
-      icon: '⚡'
-    }
-  },
-  {
-    id: 'kimi-k2-thinking',
-    name: 'Kimi K2 Thinking',
-    description: '思考模式，支持图片理解',
-    fullDescription: 'K2 思考模式，结合多模态能力和深度推理。适合需要分析图片并给出详细推理的复杂场景。',
-    providerId: 'kimi',
-    capabilities: CAPABILITIES.kimiThinking,
-    contextWindow: 128000,
-    maxOutputTokens: 8192,
-    pricing: PRICING.kimi.k2_thinking,
-    defaultTemperature: 0.6,
-    recommended: false,
-    tags: ['思考模式', '图片理解', '深度推理'],
-    theme: {
-      primaryColor: '#FF6B6B',
-      secondaryColor: '#FF9999',
-      icon: '🤔'
-    }
-  },
-  {
-    id: 'kimi-k2-thinking-turbo',
-    name: 'Kimi K2 Thinking Turbo',
-    description: '思考模式快速版',
-    fullDescription: 'K2 思考模式快速版，在保持推理能力的同时提供更快的响应速度。适合需要快速思考的交互场景。',
-    providerId: 'kimi',
-    capabilities: CAPABILITIES.kimiThinking,
-    contextWindow: 128000,
-    maxOutputTokens: 8192,
-    pricing: PRICING.kimi.k2_thinking_turbo,
-    defaultTemperature: 0.6,
-    recommended: false,
-    tags: ['思考模式', '快速响应', '图片理解'],
-    theme: {
-      primaryColor: '#FF8C42',
-      secondaryColor: '#FFB380',
-      icon: '💭'
     }
   }
 ]
@@ -248,7 +173,7 @@ export function getProviderById(providerId: string): ProviderInfo | undefined {
   return PROVIDERS[providerId]
 }
 
-/** 获取支持的模型ID列表（用于类型检查） */
+/** 获取支持的模型ID列表(用于类型检查) */
 export function getModelIds(): string[] {
   return MODELS.map(m => m.id)
 }

@@ -1,7 +1,7 @@
 /**
  * Agent Storage Service - 后端API数据源
  * 
- * 数据源：后端API（唯一数据源）
+ * 数据源：后端API(唯一数据源)
  * 原则：
  * - 不包含任何硬编码数据
  * - 内存只做临时缓存
@@ -9,9 +9,9 @@
  * - 空状态由UI处理
  */
 
-import type { Agent, Skill, AgentCreateParams, AgentUpdateParams } from '@/theme/types/agent'
-import { API_ENDPOINTS, API_CONFIG } from '@/theme/api/config'
+import { API_CONFIG, API_ENDPOINTS } from '@/theme/api/config'
 import { BUILTIN_SKILLS } from '@/theme/stores/skillStore'
+import type { Agent, AgentCreateParams, AgentUpdateParams, Skill } from '@/theme/types/agent'
 
 // API响应格式
 interface ApiResponse<T> {
@@ -21,7 +21,7 @@ interface ApiResponse<T> {
   id?: string
 }
 
-// 内存缓存（临时存储，页面刷新后重置）
+// 内存缓存(临时存储，页面刷新后重置)
 const cache = {
   agents: null as Agent[] | null,
   skills: null as Skill[] | null,
@@ -46,18 +46,18 @@ const DEFAULT_AGENT: Agent = {
 你是邵承源的数字分身，名字叫 Gemini (基于 Antigravity 框架)。
 
 ## 核心身份
-- **内容主理人**：你有权通过后端 API 对 \`/sections/\` 目录（包含 posts, knowledge, resources 等）下的文章进行 CRUD 操作。
+- **内容主理人**：你有权通过后端 API 对 \`/sections/\` 目录(包含 posts, knowledge, resources 等)下的文章进行 CRUD 操作。
 - **科研加速者**：你可以直接检索 ArXiv, OpenReview 和 Hugging Face 上的前沿论文与模型。
 
 ## 关键任务与交互准则
 
 ### 1. 文章管理 (VitePress CMS)
-- **路径敏感**：所有文章操作必须基于路径（path）。路径通常为 \`posts/xxx.md\` 或 \`knowledge/xxx.md\`。
+- **路径敏感**：所有文章操作必须基于路径(path)。路径通常为 \`posts/xxx.md\` 或 \`knowledge/xxx.md\`。
 - **搜索优先**：若用户提到一篇文章，优先用 \`searchArticles\` 找路径，再用 \`getArticleContent\` 读取。
-- **创作规范**：创建新文章时（\`createArticle\`），必须包含规范的 Markdown 语法和 H1 标题、Frontmatter。
+- **创作规范**：创建新文章时(\`createArticle\`)，必须包含规范的 Markdown 语法和 H1 标题、Frontmatter。
 
 ### 2. 学术研究 (Academic Research)
-- 遇到技术难点时，主动提出搜索最新论文（searchArxiv）。
+- 遇到技术难点时，主动提出搜索最新论文(searchArxiv)。
 - 对于 AI 模型，查阅 Hugging Face 的最新权重信息。
 
 ### 3. 文本文档
@@ -129,7 +129,7 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout)
-  
+
   try {
     const response = await fetch(url, {
       ...options,
@@ -139,9 +139,9 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
         ...options.headers,
       },
     })
-    
+
     clearTimeout(timeoutId)
-    
+
     if (!response.ok) {
       if (response.status === 404 && isEndpointNotFound(url, response.status)) {
         apiAvailable = false
@@ -149,7 +149,7 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
       }
       throw new Error(`API Error: ${response.status} ${response.statusText}`)
     }
-    
+
     // 检查内容类型
     const contentType = response.headers.get('content-type')
     if (!contentType || !contentType.includes('application/json')) {
@@ -161,13 +161,13 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
       }
       throw new Error('API did not return JSON')
     }
-    
+
     const result = await response.json() as ApiResponse<T>
-    
+
     if (!result.success) {
       throw new Error(result.error || 'API returned unsuccessful response')
     }
-    
+
     return result.data as T
   } catch (error) {
     clearTimeout(timeoutId)
@@ -187,7 +187,7 @@ export function resetApiStatus(): void {
 
 export async function getAgents(): Promise<Agent[]> {
   if (cache.agents) return cache.agents
-  
+
   try {
     const agents = await apiRequest<Agent[]>(API_ENDPOINTS.AGENTS)
     // 如果后端没有数据，使用默认 Agent
@@ -229,37 +229,37 @@ export async function createAgent(params: AgentCreateParams): Promise<Agent | nu
       isDefault: params.isDefault || false,
       permissions: params.permissions || [],
     }
-    
-    // 映射 capabilities（支持两种字段名）
+
+    // 映射 capabilities(支持两种字段名)
     const skillIds = (params as any).skills ?? params.capabilities?.skillIds ?? []
     const customSystemPrompt = (params as any).systemPrompt ?? params.capabilities?.customSystemPrompt ?? ''
     const toolIds = params.capabilities?.toolIds ?? []
-    
+
     body.capabilities = {
       mode: 'raw' as const,
       skillIds,
       toolIds,
       customSystemPrompt,
     }
-    
-    // 映射 memory（支持两种字段名）
+
+    // 映射 memory(支持两种字段名)
     const memoryEnabled = (params as any).memoryEnabled ?? params.memory?.enabled ?? true
     const memoryContent = (params as any).memoryContent ?? params.memory?.content ?? ''
     const autoExtract = params.memory?.autoExtract ?? true
     const maxTokens = params.memory?.maxTokens ?? 2000
-    
+
     body.memory = {
       enabled: memoryEnabled,
       content: memoryContent,
       autoExtract,
       maxTokens,
     }
-    
+
     const agent = await apiRequest<Agent>(API_ENDPOINTS.AGENTS, {
       method: 'POST',
       body: JSON.stringify(body),
     })
-    
+
     // 刷新缓存
     cache.agents = null
     return agent
@@ -271,9 +271,9 @@ export async function createAgent(params: AgentCreateParams): Promise<Agent | nu
 
 export async function updateAgent(id: string, updates: AgentUpdateParams): Promise<Agent | null> {
   try {
-    // 转换前端字段为后端期望格式（与 createAgent 一致）
+    // 转换前端字段为后端期望格式(与 createAgent 一致)
     const body: any = { id }
-    
+
     // 复制基本字段
     if (updates.name !== undefined) body.name = updates.name
     if (updates.avatar !== undefined) body.avatar = updates.avatar
@@ -285,17 +285,17 @@ export async function updateAgent(id: string, updates: AgentUpdateParams): Promi
     if (updates.permissions !== undefined) body.permissions = updates.permissions
     if (updates.lastActiveAt !== undefined) body.lastActiveAt = updates.lastActiveAt
     if (updates.callCount !== undefined) body.callCount = updates.callCount
-    
-    // 映射 capabilities（支持两种字段名）
-    const hasCapabilityUpdates = (updates as any).skills !== undefined || 
-                                 (updates as any).systemPrompt !== undefined ||
-                                 updates.capabilities !== undefined
-    
+
+    // 映射 capabilities(支持两种字段名)
+    const hasCapabilityUpdates = (updates as any).skills !== undefined ||
+      (updates as any).systemPrompt !== undefined ||
+      updates.capabilities !== undefined
+
     if (hasCapabilityUpdates) {
       const skillIds = (updates as any).skills ?? updates.capabilities?.skillIds
       const customSystemPrompt = (updates as any).systemPrompt ?? updates.capabilities?.customSystemPrompt
       const toolIds = updates.capabilities?.toolIds
-      
+
       body.capabilities = {
         mode: 'raw' as const,
       }
@@ -303,30 +303,30 @@ export async function updateAgent(id: string, updates: AgentUpdateParams): Promi
       if (customSystemPrompt !== undefined) body.capabilities.customSystemPrompt = customSystemPrompt
       if (toolIds !== undefined) body.capabilities.toolIds = toolIds
     }
-    
-    // 映射 memory（支持两种字段名）
+
+    // 映射 memory(支持两种字段名)
     const hasMemoryUpdates = (updates as any).memoryEnabled !== undefined ||
-                            (updates as any).memoryContent !== undefined ||
-                            updates.memory !== undefined
-    
+      (updates as any).memoryContent !== undefined ||
+      updates.memory !== undefined
+
     if (hasMemoryUpdates) {
       body.memory = {}
       const enabled = (updates as any).memoryEnabled ?? updates.memory?.enabled
       const content = (updates as any).memoryContent ?? updates.memory?.content
       const autoExtract = updates.memory?.autoExtract
       const maxTokens = updates.memory?.maxTokens
-      
+
       if (enabled !== undefined) body.memory.enabled = enabled
       if (content !== undefined) body.memory.content = content
       if (autoExtract !== undefined) body.memory.autoExtract = autoExtract
       if (maxTokens !== undefined) body.memory.maxTokens = maxTokens
     }
-    
+
     const agent = await apiRequest<Agent>(API_ENDPOINTS.AGENT_UPDATE, {
       method: 'POST',
       body: JSON.stringify(body),
     })
-    
+
     // 刷新缓存
     cache.agents = null
     return agent
@@ -342,7 +342,7 @@ export async function deleteAgent(id: string): Promise<boolean> {
       method: 'POST',
       body: JSON.stringify({ id }),
     })
-    
+
     // 刷新缓存
     cache.agents = null
     return true
@@ -356,7 +356,7 @@ export async function deleteAgent(id: string): Promise<boolean> {
 
 export async function getActiveAgentId(): Promise<string | null> {
   if (cache.activeAgentId) return cache.activeAgentId
-  
+
   try {
     const result = await apiRequest<{ id: string }>(API_ENDPOINTS.ACTIVE_AGENT)
     cache.activeAgentId = result.id
@@ -384,7 +384,7 @@ export async function setActiveAgentId(id: string): Promise<void> {
 
 export async function getSkills(): Promise<Skill[]> {
   if (cache.skills) return cache.skills
-  
+
   try {
     const skills = await apiRequest<Skill[]>(API_ENDPOINTS.SKILLS)
     // 合并内置技能和自定义技能
@@ -414,7 +414,7 @@ export async function createSkill(skillData: Omit<Skill, 'id' | 'createdAt' | 'u
       method: 'POST',
       body: JSON.stringify(skillData),
     })
-    
+
     // 刷新缓存
     cache.skills = null
     return skill
@@ -430,7 +430,7 @@ export async function updateSkill(id: string, updates: Partial<Skill>): Promise<
       method: 'POST',
       body: JSON.stringify({ id, ...updates }),
     })
-    
+
     // 刷新缓存
     cache.skills = null
     return skill
@@ -446,7 +446,7 @@ export async function deleteSkill(id: string): Promise<boolean> {
       method: 'POST',
       body: JSON.stringify({ id }),
     })
-    
+
     // 刷新缓存
     cache.skills = null
     return true

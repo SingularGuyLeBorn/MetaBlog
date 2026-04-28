@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick, watch, computed } from 'vue'
-import { useData, useRoute } from 'vitepress'
+import { useAppStore } from '@/theme/stores/app'
 import Vditor from 'vditor'
 import 'vditor/dist/index.css'
-import { useAppStore } from '@/theme/stores/app'
+import { useData, useRoute } from 'vitepress'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const store = useAppStore()
 const { page } = useData()
@@ -78,7 +78,7 @@ async function loadContent(): Promise<string> {
     // 尝试原始路径
     let res = await fetch(`/api/files/read?path=${encodeURIComponent(filePath)}`)
     
-    // FIX: 如果是 folder-note 模式（如 article/index.md），尝试 article/article.md
+    // FIX: 如果是 folder-note 模式(如 article/index.md)，尝试 article/article.md
     if (!res.ok && filePath.endsWith('/index.md')) {
       const folderPath = filePath.replace(/\/index\.md$/, '').replace(/\\/g, '/')
       const folderName = folderPath.split('/').pop() || ''

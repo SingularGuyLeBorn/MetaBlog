@@ -44,7 +44,7 @@ baseline = torch.exp(torch.log(rewards + epsilon).mean())
 
 ## 3. 工程实现的细节
 
-*   **Epsilon Trick**: 几何平均对 0 非常敏感（任何一个 0 都会导致结果为 0）。所以在代码中必须加 `eps`。
+*   **Epsilon Trick**: 几何平均对 0 非常敏感(任何一个 0 都会导致结果为 0)。所以在代码中必须加 `eps`。
 *   **Log-Sum-Exp**: 为了数值稳定性，所有乘法计算都应转为 Log 空间的加法计算。
 
 ---

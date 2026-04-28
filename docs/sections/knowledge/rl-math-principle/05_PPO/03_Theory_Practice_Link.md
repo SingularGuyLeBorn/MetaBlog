@@ -14,14 +14,14 @@ $$r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)}$$
 **代码实现** (`02_Implementation.py` 第305-310行):
 
 ```python
-# 使用对数概率计算（数值更稳定）
+# 使用对数概率计算(数值更稳定)
 # log(a/b) = log(a) - log(b)
 # r = exp(log(r)) = exp(log_new - log_old)
 ratio = torch.exp(new_log_probs - old_log_probs)
 ```
 
 **为什么用对数？**
-- 直接计算 π/π_old 可能导致数值不稳定（很大或很小的数）
+- 直接计算 π/π_old 可能导致数值不稳定(很大或很小的数)
 - 对数空间：减法 → 原空间：除法，更稳定
 - exp() 把结果转回原空间
 
@@ -43,7 +43,7 @@ def compute_ppo_loss(old_log_probs, new_log_probs, advantages, clip_epsilon):
     # 步骤3: 裁剪目标 clip(r, 1-ε, 1+ε) * A
     surr2 = torch.clamp(ratio, 1.0 - clip_epsilon, 1.0 + clip_epsilon) * advantages
     
-    # 步骤4: 取min并取负（因为要最小化loss来最大化目标）
+    # 步骤4: 取min并取负(因为要最小化loss来最大化目标)
     policy_loss = -torch.min(surr1, surr2).mean()
     
     return policy_loss
@@ -54,7 +54,7 @@ def compute_ppo_loss(old_log_probs, new_log_probs, advantages, clip_epsilon):
 | 公式部分 | 代码 | 说明 |
 |----------|------|------|
 | $r_t(\theta)$ | `ratio` | 概率比 |
-| $A_t$ | `advantages` | 优势函数（已提前计算） |
+| $A_t$ | `advantages` | 优势函数(已提前计算) |
 | $\text{clip}(r, 1-\epsilon, 1+\epsilon)$ | `torch.clamp(ratio, 1-ε, 1+ε)` | 裁剪函数 |
 | $\min(\cdot, \cdot)$ | `torch.min(surr1, surr2)` | 取较小值 |
 | $-\mathbb{E}[\cdot]$ | `-.mean()` | 负号+求平均 |
@@ -122,14 +122,14 @@ class ActorCritic(nn.Module):
 **原因**：
 1. **参数效率**：状态特征可以复用
 2. **更快收敛**：策略和价值同时学习有用特征
-3. **LLM实践**：RLHF中也这样做（在LLM上加Value Head）
+3. **LLM实践**：RLHF中也这样做(在LLM上加Value Head)
 
 ### 2.2 采样与更新的区别
 
 ```python
 def get_action_and_value(self, state, action=None):
     # 采样时: action=None, 返回新采样的动作
-    # 更新时: action=给定, 返回该动作的log_prob（用于计算r(θ)）
+    # 更新时: action=给定, 返回该动作的log_prob(用于计算r(θ))
     
     if action is None:
         action = dist.sample()  # 采样新动作
@@ -207,12 +207,12 @@ loss = policy_loss + value_coef * value_loss - entropy_coef * entropy
 
 PPO论文中实际提出了两种变体：
 
-**PPO-Clip（更常用）**:
+**PPO-Clip(更常用)**:
 ```python
 surr = torch.min(r * A, clip(r, 1±ε) * A)
 ```
 
-**PPO-KL（自适应KL惩罚）**:
+**PPO-KL(自适应KL惩罚)**:
 ```python
 surr = r * A - β * KL(π_old || π_new)
 # β 根据KL散度动态调整
@@ -226,11 +226,11 @@ PPO-Clip更简单且效果相当，所以更常用。
 
 ### 5.1 Token-level vs Response-level
 
-**Response-level**（常见）：
+**Response-level**(常见)：
 - 奖励只在生成完成后给
 - 整个response的优势相同
 
-**Token-level**（更精细）：
+**Token-level**(更精细)：
 - 每个token有自己的优势
 - 需要更复杂的credit assignment
 

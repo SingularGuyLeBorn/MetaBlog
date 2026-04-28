@@ -6,9 +6,9 @@
  * 所有 GitHub 工具的业务逻辑集中在这里。
  * 前端工具只需调用本层的 executeGitHubTool(toolName, params)
  *
- * 职责：? * - 参数校验（第一道防线）
+ * 职责：? * - 参数校验(第一道防线)
  * - GitHub API 调用
- * - 结果格式化（精简字段，避免 context bloat。 * - 错误翻译（中文友好提示）
+ * - 结果格式化(精简字段，避免 context bloat。 * - 错误翻译(中文友好提示)
  * - base64 编解码。? */
 
 import { github } from "../config/env";
@@ -149,7 +149,7 @@ async function githubGetFileContent(params: any) {
   let v = validate(validators.validateOwnerRepo(owner, repo));
   if (v) return err("Validation", { message: v, suggestion: "" }, "githubGetFileContent");
   if (!path || typeof path !== "string") {
-    return err("Validation", { message: "请提供文件路径（path）", suggestion: "" }, "githubGetFileContent");
+    return err("Validation", { message: "请提供文件路径(path)", suggestion: "" }, "githubGetFileContent");
   }
   v = validate(validators.validatePath(path));
   if (v) return err("Validation", { message: v, suggestion: "" }, "githubGetFileContent");
@@ -165,7 +165,7 @@ async function githubGetFileContent(params: any) {
     const isTruncated = rawContent.length > max_length;
     const content = isTruncated
       ? rawContent.substring(0, max_length) +
-        `\n\n---\n[内容已截断] 文件共 ${rawContent.length} 字符，当前限制 ${max_length} 字符。`
+      `\n\n---\n[内容已截断] 文件共 ${rawContent.length} 字符，当前限制 ${max_length} 字符。`
       : rawContent;
     return ok({ name: data.name, path: data.path, size: data.size, content, truncated: isTruncated }, `${data.name} (${data.size} bytes${isTruncated ? "，已截断，" + max_length + " 字符" : ""})`, "githubGetFileContent");
   } catch (e: any) {
@@ -277,7 +277,7 @@ async function githubSearchRepos(params: any) {
   try {
     const data = await githubApiRequest(`/search/repositories?q=${encodeURIComponent(query)}&per_page=${per_page}`);
     const items = (data.items || []).map((r: any) => ({ full_name: r.full_name, description: r.description, stars: r.stargazers_count, forks: r.forks_count, language: r.language, url: r.html_url }));
-    return ok({ total: data.total_count, items }, `找到 ${data.total_count} 个仓库（显示 ${items.length} 个）`, "githubSearchRepos");
+    return ok({ total: data.total_count, items }, `找到 ${data.total_count} 个仓库(显示 ${items.length} 个)`, "githubSearchRepos");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
     return err(e.message, t, "githubSearchRepos", e.status);
@@ -287,7 +287,7 @@ async function githubSearchRepos(params: any) {
 async function githubCreateRepo(params: any) {
   const { name, description, private: isPrivate = false, auto_init = false } = params;
   if (!name || typeof name !== "string") {
-    return err("Validation", { message: "请提供仓库名称（name）", suggestion: "" }, "githubCreateRepo");
+    return err("Validation", { message: "请提供仓库名称(name)", suggestion: "" }, "githubCreateRepo");
   }
 
   try {
@@ -347,7 +347,7 @@ async function githubCreateRelease(params: any) {
   const { owner, repo, tag_name, name, body, draft = false, prerelease = false } = params;
   const v = validate(validators.validateOwnerRepo(owner, repo));
   if (v) return err("Validation", { message: v, suggestion: "" }, "githubCreateRelease");
-  if (!tag_name) return err("Validation", { message: "请提供标签名（tag_name）", suggestion: "" }, "githubCreateRelease");
+  if (!tag_name) return err("Validation", { message: "请提供标签名(tag_name)", suggestion: "" }, "githubCreateRelease");
 
   try {
     const payload: any = { tag_name, draft, prerelease };
@@ -384,7 +384,7 @@ async function githubCreateIssue(params: any) {
   const { owner, repo, title, body, labels } = params;
   const v = validate(validators.validateOwnerRepo(owner, repo));
   if (v) return err("Validation", { message: v, suggestion: "" }, "githubCreateIssue");
-  if (!title) return err("Validation", { message: "请提供 Issue 标题（title）", suggestion: "" }, "githubCreateIssue");
+  if (!title) return err("Validation", { message: "请提供 Issue 标题(title)", suggestion: "" }, "githubCreateIssue");
 
   try {
     const payload: any = { title };
@@ -404,7 +404,7 @@ async function githubCreateIssueComment(params: any) {
   if (v) return err("Validation", { message: v, suggestion: "" }, "githubCreateIssueComment");
   const n = validate(validators.validateNumber(number));
   if (n) return err("Validation", { message: n, suggestion: "" }, "githubCreateIssueComment");
-  if (!body) return err("Validation", { message: "请提供评论内容（body）", suggestion: "" }, "githubCreateIssueComment");
+  if (!body) return err("Validation", { message: "请提供评论内容(body)", suggestion: "" }, "githubCreateIssueComment");
 
   try {
     const comment = await githubApiRequest(`/repos/${owner}/${repo}/issues/${number}/comments`, { method: "POST", body: JSON.stringify({ body }) });
@@ -461,7 +461,7 @@ async function githubSearchIssues(params: any) {
   try {
     const data = await githubApiRequest(`/search/issues?q=${encodeURIComponent(query)}&per_page=${per_page}`);
     const items = (data.items || []).map((i: any) => ({ number: i.number, title: i.title, state: i.state, type: i.pull_request ? "pull_request" : "issue", url: i.html_url, repo: i.repository_url?.replace("https://api.github.com/repos/", "") }));
-    return ok({ total: data.total_count, items }, `找到 ${data.total_count} 个 Issues/PRs（显示${items.length} 个）`, "githubSearchIssues");
+    return ok({ total: data.total_count, items }, `找到 ${data.total_count} 个 Issues/PRs(显示${items.length} 个)`, "githubSearchIssues");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
     return err(e.message, t, "githubSearchIssues", e.status);
@@ -549,7 +549,7 @@ async function githubGetPullRequestFiles(params: any) {
     const items = data.map((f: any) => ({ filename: f.filename, status: f.status, additions: f.additions, deletions: f.deletions, changes: f.changes, patch: f.patch }));
     const totalAdditions = items.reduce((sum: number, f: any) => sum + f.additions, 0);
     const totalDeletions = items.reduce((sum: number, f: any) => sum + f.deletions, 0);
-    return ok({ files: items, totalAdditions, totalDeletions, fileCount: items.length }, `PR #${number} 变更文件 (${items.length} 个），${totalAdditions}/-${totalDeletions}`, "githubGetPullRequestFiles");
+    return ok({ files: items, totalAdditions, totalDeletions, fileCount: items.length }, `PR #${number} 变更文件 (${items.length} 个)，${totalAdditions}/-${totalDeletions}`, "githubGetPullRequestFiles");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
     return err(e.message, t, "githubGetPullRequestFiles", e.status);
@@ -622,7 +622,7 @@ async function githubCreateBranch(params: any) {
   const { owner, repo, branch, from_branch = "main" } = params;
   const v = validate(validators.validateOwnerRepo(owner, repo));
   if (v) return err("Validation", { message: v, suggestion: "" }, "githubCreateBranch");
-  if (!branch) return err("Validation", { message: "请提供分支名（branch）", suggestion: "" }, "githubCreateBranch");
+  if (!branch) return err("Validation", { message: "请提供分支名(branch)", suggestion: "" }, "githubCreateBranch");
 
   try {
     const baseBranch = await githubApiRequest(`/repos/${owner}/${repo}/git/refs/heads/${encodeRefPath(from_branch)}`);
@@ -639,7 +639,7 @@ async function githubDeleteBranch(params: any) {
   const { owner, repo, branch } = params;
   const v = validate(validators.validateOwnerRepo(owner, repo));
   if (v) return err("Validation", { message: v, suggestion: "" }, "githubDeleteBranch");
-  if (!branch) return err("Validation", { message: "请提供分支名（branch）", suggestion: "" }, "githubDeleteBranch");
+  if (!branch) return err("Validation", { message: "请提供分支名(branch)", suggestion: "" }, "githubDeleteBranch");
 
   try {
     await githubApiRequest(`/repos/${owner}/${repo}/git/refs/heads/${encodeRefPath(branch)}`, { method: "DELETE" });

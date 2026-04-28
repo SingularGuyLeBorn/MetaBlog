@@ -1,6 +1,6 @@
-import type { ViteDevServer } from "vite";
-import path from "path";
 import fs from "fs";
+import path from "path";
+import type { ViteDevServer } from "vite";
 
 export interface RouteContext {
   system: any;
@@ -103,11 +103,12 @@ export function registerSessionsRoutes(server: ViteDevServer, ctx: RouteContext)
               `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
             title: body.title || "新对话",
             config: {
-              model: "deepseek-chat",
+              model: "deepseek-v4-pro",
               temperature: 0.7,
-              maxTokens: 2048,
+              maxTokens: 8192,
               systemPrompt: "",
-              enableReasoning: false,
+              enableReasoning: true,
+              reasoningEffort: "high",
               streaming: true,
               ...body.config,
             },
@@ -135,7 +136,7 @@ export function registerSessionsRoutes(server: ViteDevServer, ctx: RouteContext)
   });
 
   // ============================================
-  // Sessions Message API - 按特定性排序（最具体的优先）
+  // Sessions Message API - 按特定性排序(最具体的优先)
   // ============================================
 
   // POST /api/sessions/:id/messages/batch - 批量保存消息组 (3 parts - 最具体)

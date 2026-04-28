@@ -4,14 +4,14 @@
  * 此文件导出：
  * - LEVEL_CONFIG: Agent 等级配置
  * - PERMISSION_TEMPLATES: 权限模板
- * - useAgentConfig: 从 agentStore 重新导出（完整功能）
+ * - useAgentConfig: 从 agentStore 重新导出(完整功能)
  * 
  * 注意：useAgentConfig 是主要导出，包含完整的 Agent 管理功能
  */
 
-import { ref, computed } from 'vue'
-import type { Agent, AgentLevel, AgentPermission, AgentCapabilities } from '@/theme/types/agent'
-export type { Agent, AgentLevel, AgentPermission, AgentCapabilities }
+import type { Agent, AgentCapabilities, AgentLevel, AgentPermission } from '@/theme/types/agent';
+import { computed, ref } from 'vue';
+export type { Agent, AgentCapabilities, AgentLevel, AgentPermission };
 
 export const LEVEL_CONFIG: Record<AgentLevel, { label: string; color: string; icon: string; maxSeat: number }> = {
   meta: { label: 'Meta', color: '#8b5cf6', icon: '👑', maxSeat: 1 },
@@ -28,8 +28,8 @@ export const PERMISSION_TEMPLATES: Record<string, AgentPermission[]> = {
   ]
 }
 
-// 重新导出完整的 useAgentConfig（从 agentStore）
-export { useAgentConfig } from '@/theme/stores/agentStore'
+// 重新导出完整的 useAgentConfig(从 agentStore)
+export { useAgentConfig } from '@/theme/stores/agentStore';
 
 const DEFAULT_CAPABILITIES: AgentCapabilities = {
   mode: 'raw',
@@ -43,11 +43,11 @@ const agents = ref<Agent[]>([])
 const activeAgentId = ref<string>('')
 
 export function useAgents() {
-  const activeAgent = computed(() => 
+  const activeAgent = computed(() =>
     agents.value.find(a => a.id === activeAgentId.value)
   )
 
-  const sortedAgents = computed(() => 
+  const sortedAgents = computed(() =>
     [...agents.value].sort((a, b) => (b.callCount || 0) - (a.callCount || 0))
   )
 

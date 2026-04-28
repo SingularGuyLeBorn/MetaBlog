@@ -7,8 +7,8 @@ interface EventBus {
   emit: (event: string, ...args: any[]) => void
 }
 const eventBus: EventBus = {
-  on: () => () => {},
-  emit: () => {}
+  on: () => () => { },
+  emit: () => { }
 }
 
 interface ToastOptions {
@@ -71,7 +71,7 @@ export function useToast() {
   }
 }
 
-// 全局便捷函数（用于非组件环境）
+// 全局便捷函数(用于非组件环境)
 export const toast = {
   show: (options: ToastOptions) => eventBus.emit('toast:show', { ...options, type: options.type || 'info' } as any),
   success: (title: string, message?: string) => eventBus.emit('toast:show', { type: 'success', title, message } as any),

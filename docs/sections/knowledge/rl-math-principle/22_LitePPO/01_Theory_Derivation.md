@@ -10,8 +10,8 @@
 
 ## 1. 理论根基：为什么 PPO 变重了？
 
-在传统强化学习中（如游戏或机器人控制），Critic 网络的作用是捕捉 **状态演化 (State Evolution)** 的连续性。
-然而，在 LLM 生成中，状态转移是离散的（Token 到 Token）。论文研究发现，在大模型推理任务中，训练一个参数化的 Critic 存在以下致命伤：
+在传统强化学习中(如游戏或机器人控制)，Critic 网络的作用是捕捉 **状态演化 (State Evolution)** 的连续性。
+然而，在 LLM 生成中，状态转移是离散的(Token 到 Token)。论文研究发现，在大模型推理任务中，训练一个参数化的 Critic 存在以下致命伤：
 
 1.  **信号滞后 (Signal Lag)**: Critic 的学习率通常需要比特有的 Policy 低，导致优势函数的估计永远跟不上策略的演变。
 2.  **泛化崩塌 (Generalization Collapse)**: 在海量可能的推理路径中，Critic 很容易对某些路径产生过拟合，导致 Advantage 剧烈抖动，进而导致 Policy 的 Trust Region (TR) 失效。
@@ -26,18 +26,18 @@ LitePPO 提出了一种结合 **Group-level Mean** 和 **Batch-level Std** 的�
 
 ### 2.1 优势函数的重定义
 
-假设我们在一个 Batch 中对采样了 $B$ 个 Prompts，每个 Prompt 采取了 $G$ 次采样（即 Group Size）。
+假设我们在一个 Batch 中对采样了 $B$ 个 Prompts，每个 Prompt 采取了 $G$ 次采样(即 Group Size)。
 对于第 $i$ 个 Prompt 的第 $j$ 个采样，其实际回报为 $R_{i,j}$。
 
 LitePPO 计算优势函数分为三步：
 
 1.  **组内去均值 (Group De-meaning)**:
-    每一个回答的基线（Baseline）是该 Prompt 下所有回答的平均表现：
+    每一个回答的基线(Baseline)是该 Prompt 下所有回答的平均表现：
     $$ \Delta_{i,j} = R_{i,j} - \text{mean}(R_{i,1 \dots G}) $$
     *这消除了 Prompt 本身难度带来的偏差。*
 
 2.  **全局缩放 (Batch Scaling)**:
-    使用整个 Batch（横跨所有 Prompts）的标准差进行缩放：
+    使用整个 Batch(横跨所有 Prompts)的标准差进行缩放：
     $$ \hat{A}_{i,j} = \frac{\Delta_{i,j}}{\text{std}(R_{all}) + \epsilon} $$
     *这确保了不同梯度步之间的幅度一致性。*
 
@@ -54,7 +54,7 @@ $$ \nabla_\theta \mathcal{L} \approx \mathbb{E}_t \left[ \min\left( \nabla_\thet
 
 ## 3. 实现细节与超参数陷阱 (Tricks or Traps)
 
-论文通过大规模实验（A100/H100 集群，7B 到 70B 模型）总结了以下实战经验：
+论文通过大规模实验(A100/H100 集群，7B 到 70B 模型)总结了以下实战经验：
 
 ### 3.1 学习率的非对称性
 在 LitePPO 中，由于没有 Critic 需要妥协，可以大胆提高 Policy 的学习率。但作者建议配合同步的 **KL Penalty**：
@@ -106,7 +106,7 @@ for prompt_batch in loader:
 ## 6. 总结 (Final Thought)
 
 LitePPO 告诉我们在大模型对齐中，**"少即是多"**。
-移除不稳定的参数化 Critic，转而利用 Batch 内部的博弈（Group Contrast）和全局的稳定步长（Global Scale），是 2025 年 LLM-RL 的主流进化路径。
+移除不稳定的参数化 Critic，转而利用 Batch 内部的博弈(Group Contrast)和全局的稳定步长(Global Scale)，是 2025 年 LLM-RL 的主流进化路径。
 
 ---
 *本章相关实验数据基于 2025 年 8 月阿里巴巴开源的 OpenRLHF 框架最新测试结果。*

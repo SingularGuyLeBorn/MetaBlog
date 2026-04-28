@@ -7,7 +7,7 @@
  */
 
 /**
- * 工具定义（Function Calling 格式）
+ * 工具定义(Function Calling 格式)
  * 
  * 这是 OpenAI / DeepSeek 等 LLM 使用的函数调用格式。
  * 当 AI 决定调用工具时，会根据这个定义生成参数。
@@ -40,7 +40,7 @@ export interface ToolDefinition {
      * 描述越清晰，AI 调用越准确
      */
     description: string
-    /** 参数定义（支持 anyOf、oneOf 等 JSON Schema 扩展） */
+    /** 参数定义(支持 anyOf、oneOf 等 JSON Schema 扩展) */
     parameters: {
       type: 'object'
       /** 每个参数的定义 */
@@ -88,7 +88,7 @@ export interface ToolResult<T = any> {
   success: boolean
   /** 返回数据，成功时必填 */
   data?: T
-  /** 错误信息（技术细节），失败时必填 */
+  /** 错误信息(技术细节)，失败时必填 */
   error?: string
   /** 用户友好的提示消息 */
   message?: string
@@ -97,7 +97,7 @@ export interface ToolResult<T = any> {
   /** 建议的下一步操作 */
   suggestion?: string
   /** 
-   * 错误码（HTTP 状态码或业务错误码），供 AI 根据码做不同决策
+   * 错误码(HTTP 状态码或业务错误码)，供 AI 根据码做不同决策
    * 例如 422→"仓库已存在，改用查询"，401→"Token 无效，告知用户配置"，429→"速率限制，等待重试"
    */
   code?: string | number
@@ -136,8 +136,8 @@ export type ToolExecutor = (
  * 
  * 注册工具时需要提供：
  * - name: 工具唯一标识
- * - definition: 工具定义（给 AI 看）
- * - executor: 执行器（实际执行代码）
+ * - definition: 工具定义(给 AI 看)
+ * - executor: 执行器(实际执行代码)
  */
 export interface ToolRegistration {
   name: string
@@ -146,7 +146,7 @@ export interface ToolRegistration {
 }
 
 /**
- * 工具调用记录（用于 UI 展示）
+ * 工具调用记录(用于 UI 展示)
  * 
  * 每次工具调用都会生成一条记录，用于：
  * 1. 在 UI 中展示工具调用过程
@@ -194,7 +194,7 @@ export interface ToolCall {
 }
 
 /**
- * 思考步骤（用于展示推理过程）
+ * 思考步骤(用于展示推理过程)
  * 
  * 在多轮工具调用中，展示 AI 的思考过程。
  */
@@ -254,7 +254,7 @@ export function createSuccessResult<T>(
 /**
  * 创建错误结果
  * 
- * @param error - 错误信息（技术细节）
+ * @param error - 错误信息(技术细节)
  * @param message - 用户友好的错误消息
  * @param suggestion - 如何解决或重试的建议
  * @returns ToolResult

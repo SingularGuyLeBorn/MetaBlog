@@ -1,11 +1,11 @@
-import type { ViteDevServer } from "vite";
-import path from "path";
 import fs from "fs";
+import path from "path";
+import type { ViteDevServer } from "vite";
 
-import { getTaskManager } from "../../mcp-tools/task-manager";
 import { getAgentRuntimeManager } from "../../mcp-tools/agent-runtime-manager";
 import { getMetaAgentManager } from "../../mcp-tools/meta-agent-manager";
 import { getReportAgentManager } from "../../mcp-tools/report-agent-manager";
+import { getTaskManager } from "../../mcp-tools/task-manager";
 export interface RouteContext {
   system: any;
   structuredLog: any;
@@ -98,7 +98,7 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
           try {
             const body = JSON.parse(Buffer.concat(chunks).toString());
             const tasks = taskManager.createBatchTasks(body.tasks || []);
-            
+
             // 异步执行所有任务
             tasks.forEach(task => {
               taskManager.executeTask(task.id).catch(console.error);
@@ -131,13 +131,13 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
     if (req.method === "GET") {
       const url = new URL(req.url || "", `http://${req.headers.host}`);
       const status = url.searchParams.get("status")?.split(",") as any;
-      
+
       const { tasks, total } = taskManager.queryTasks({
         status: status,
         limit: parseInt(url.searchParams.get("limit") || "50"),
         offset: parseInt(url.searchParams.get("offset") || "0"),
       });
-      
+
       const stats = taskManager.getStats();
 
       res.setHeader("Content-Type", "application/json");
@@ -159,7 +159,7 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
       if (req.method === "GET") {
         const url = new URL(req.url || "", `http://${req.headers.host}`);
         const id = url.searchParams.get("id");
-        
+
         if (!id) {
           res.statusCode = 400;
           res.end(JSON.stringify({ success: false, message: "Task ID required" }));
@@ -300,13 +300,13 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
     if (req.method === "GET") {
       const url = new URL(req.url || "", `http://${req.headers.host}`);
       const status = url.searchParams.get("status")?.split(",") as any;
-      
+
       const { runtimes, total } = runtimeManager.queryRuntimes({
         status: status,
         limit: parseInt(url.searchParams.get("limit") || "50"),
         offset: parseInt(url.searchParams.get("offset") || "0"),
       });
-      
+
       const stats = runtimeManager.getStats();
 
       res.setHeader("Content-Type", "application/json");
@@ -528,9 +528,9 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
       const workers = metaManager.getAllWorkers();
       const statuses = metaManager.getAllWorkerStatuses();
       res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({ 
-        success: true, 
-        data: { workers, statuses } 
+      res.end(JSON.stringify({
+        success: true,
+        data: { workers, statuses }
       }));
     } else if (req.method === "POST") {
       // 注册 Worker
@@ -558,7 +558,7 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
       req.on("end", () => {
         try {
           const body = JSON.parse(Buffer.concat(chunks).toString());
-          
+
           if (body.tasks) {
             // 批量分配
             const result = metaManager.assignBatchTasks({
@@ -741,7 +741,7 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
     }
   }
 
-  // 初始化默认 Agent（如果没有数据）
+  // 初始化默认 Agent(如果没有数据)
   function initializeDefaultAgent() {
     const agents = readAgents();
     if (agents.length === 0) {
@@ -783,10 +783,10 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
   initializeDefaultAgent();
 
   // GET /api/agents - 获取所有 Agents
-  // POST /api/agents - 创建 Agent（只处理精确路径，不包括子路径）
+  // POST /api/agents - 创建 Agent(只处理精确路径，不包括子路径)
   server.middlewares.use("/api/agents", (req, res, next) => {
     const url = req.url || "";
-    // 只处理精确路径 /api/agents 或 /api/agents/（不包括 /api/agents/update 等子路径）
+    // 只处理精确路径 /api/agents 或 /api/agents/(不包括 /api/agents/update 等子路径)
     if (url !== "/" && url !== "" && !url.startsWith("?")) {
       return next();
     }

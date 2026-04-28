@@ -25,14 +25,14 @@ export interface TaskConfig {
 export class SchedulerTool {
   name = 'scheduler'
   description = '定时任务调度器'
-  
+
   private tasks: Map<string, ScheduledTask> = new Map()
   private intervals: Map<string, any> = new Map()
 
   // 创建定时任务
   schedule(config: TaskConfig): string {
     const id = config.id || `task_${Date.now()}_${Math.random().toString(36).slice(2)}`
-    
+
     const task: ScheduledTask = {
       id,
       name: config.name,
@@ -41,13 +41,13 @@ export class SchedulerTool {
       enabled: config.enabled ?? true,
       runCount: 0,
     }
-    
+
     this.tasks.set(id, task)
-    
+
     if (task.enabled) {
       this.startTask(task)
     }
-    
+
     return id
   }
 
@@ -57,7 +57,7 @@ export class SchedulerTool {
     if (!task) {
       throw new Error(`Task not found: ${taskId}`)
     }
-    
+
     await this.executeTask(task)
   }
 
@@ -68,7 +68,7 @@ export class SchedulerTool {
       clearInterval(interval)
       this.intervals.delete(taskId)
     }
-    
+
     const task = this.tasks.get(taskId)
     if (task) {
       task.enabled = false
@@ -103,35 +103,35 @@ export class SchedulerTool {
     return this.tasks.get(taskId)
   }
 
-  // 解析 Cron 表达式（简化版，只支持特定格式）
+  // 解析 Cron 表达式(简化版，只支持特定格式)
   private parseCron(cron: string): number {
     // 支持的格式:
     // "*/5 * * * *" - 每5分钟
     // "0 * * * *" - 每小时
     // "0 9 * * *" - 每天9点
     // "0 9 * * 1" - 每周一9点
-    
+
     const parts = cron.split(' ')
     if (parts.length !== 5) {
       throw new Error('Invalid cron format. Use: minute hour day month weekday')
     }
-    
+
     const [minute, hour] = parts
-    
+
     // 简化处理：返回毫秒间隔
     if (minute.startsWith('*/')) {
       const interval = parseInt(minute.replace('*/', ''))
       return interval * 60 * 1000
     }
-    
+
     if (minute === '0' && hour === '*') {
       return 60 * 60 * 1000 // 每小时
     }
-    
+
     if (minute === '0' && hour !== '*') {
       return 24 * 60 * 60 * 1000 // 每天
     }
-    
+
     // 默认5分钟
     return 5 * 60 * 1000
   }
@@ -140,21 +140,21 @@ export class SchedulerTool {
   private startTask(task: ScheduledTask): void {
     // 停止现有调度
     this.stop(task.id)
-    
+
     try {
       const interval = this.parseCron(task.cron)
-      
+
       // 计算下次执行时间
       task.nextRun = new Date(Date.now() + interval)
-      
+
       // 创建定时器
       const timer = setInterval(async () => {
         await this.executeTask(task)
         task.nextRun = new Date(Date.now() + interval)
       }, interval)
-      
+
       this.intervals.set(task.id, timer)
-      
+
     } catch (error) {
       console.error(`Failed to start task ${task.id}:`, error)
     }
@@ -163,7 +163,7 @@ export class SchedulerTool {
   // 执行任务
   private async executeTask(task: ScheduledTask): Promise<void> {
     console.log(`[Scheduler] Executing task: ${task.name} (${task.id})`)
-    
+
     try {
       await task.handler()
       task.lastRun = new Date()

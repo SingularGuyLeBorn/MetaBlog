@@ -8,8 +8,8 @@
  * 4. 混合模式: {folder}/{folder}.md + {folder}/child.md → 可展开父节点
  */
 
-import { readdirSync, statSync, existsSync } from 'fs'
-import { join, basename, extname } from 'path'
+import { existsSync, readdirSync } from 'fs'
+import { basename, join } from 'path'
 
 export interface DocNode {
   id: string
@@ -32,10 +32,10 @@ export function scanDocStructure(
   sectionName?: string
 ): DocNode[] {
   const nodes: DocNode[] = []
-  
+
   // 如果没有提供 sectionName，从路径提取
   const secName = sectionName || basename(sectionPath)
-  
+
   const entries = readdirSync(sectionPath, { withFileTypes: true })
     .filter(e => !e.name.startsWith('.') && e.name !== 'manifest.json')
     .sort((a, b) => {
@@ -44,12 +44,12 @@ export function scanDocStructure(
       if (!a.isDirectory() && b.isDirectory()) return 1
       return a.name.localeCompare(b.name)
     })
-  
+
   for (const entry of entries) {
     const fullPath = join(sectionPath, entry.name)
     // 路径包含 section 名称前缀
     const relativePath = `${secName}/${entry.name}`
-    
+
     if (entry.isDirectory()) {
       // 尝试读取 manifest.json
       let manifest: any = {}
@@ -58,19 +58,19 @@ export function scanDocStructure(
         if (existsSync(manifestPath)) {
           manifest = JSON.parse(require('fs').readFileSync(manifestPath, 'utf-8'))
         }
-      } catch (e) {}
+      } catch (e) { }
 
       const folderNode = scanFolder(fullPath, entry.name, relativePath, secName, manifest)
       if (folderNode) nodes.push(folderNode)
     } else if (entry.isFile() && entry.name.endsWith('.md')) {
       // 跳过 section 首页文件 (如 posts.md)
       if (entry.name === `${secName}.md`) continue
-      
+
       const fileNode = createFileNode(fullPath, entry.name, relativePath, secName)
       if (fileNode) nodes.push(fileNode)
     }
   }
-  
+
   return nodes
 }
 
@@ -86,12 +86,12 @@ function scanFolder(
 ): DocNode | null {
   const folderNotePath = join(dirPath, `${folderName}.md`)
   const indexPath = join(dirPath, 'index.md')
-  
+
   let title = folderName
   let desc = manifest[folderName]?.description || ''
   let link: string | undefined
   let folderNotePathUsed: string | undefined
-  
+
   // 优先使用 Folder Note 模式 (folder/folder.md)
   if (existsSync(folderNotePath)) {
     title = extractTitle(folderNotePath) || manifest[folderName]?.title || formatDisplayName(folderName)
@@ -106,18 +106,18 @@ function scanFolder(
     link = `/sections/${relativePath}/`
     folderNotePathUsed = indexPath
   }
-  
+
   // 扫描子项
   const children: DocNode[] = []
   const entries = readdirSync(dirPath, { withFileTypes: true })
     .filter(e => !e.name.startsWith('.') && e.name !== 'manifest.json')
-  
+
   for (const entry of entries) {
     // 跳过 Folder Note 或 index.md 本身
     if (join(dirPath, entry.name) === folderNotePathUsed) continue
-    
+
     const childRelativePath = `${relativePath}/${entry.name}`
-    
+
     if (entry.isDirectory()) {
       const childNode = scanFolder(
         join(dirPath, entry.name),
@@ -136,10 +136,10 @@ function scanFolder(
       if (childNode) children.push(childNode)
     }
   }
-  
+
   // 如果没有 Folder Note/Index 且没有子项，忽略此文件夹
   if (!link && children.length === 0) return null
-  
+
   return {
     id: `/sections/${relativePath}/`,
     type: 'folder',
@@ -167,7 +167,7 @@ function createFileNode(
   const title = extractTitle(filePath) || formatDisplayName(baseName)
   const desc = extractDesc(filePath) || ''
   const link = `/sections/${relativePath.replace(/\.md$/i, '')}`
-  
+
   return {
     id: link,
     type: 'file',
@@ -186,15 +186,15 @@ function createFileNode(
 function extractTitle(filePath: string): string | null {
   try {
     const content = require('fs').readFileSync(filePath, 'utf-8')
-    
+
     // 1. 从 frontmatter 提取
     const fmMatch = content.match(/^---\n[\s\S]*?\ntitle:\s*(.+?)\n/)
     if (fmMatch) return fmMatch[1].trim().replace(/^["']|["']$/g, '')
-    
+
     // 2. 从 H1 提取
     const h1Match = content.match(/^#\s+(.+)$/m)
     if (h1Match) return h1Match[1].trim()
-    
+
     return null
   } catch {
     return null
@@ -226,7 +226,7 @@ function formatDisplayName(name: string): string {
 }
 
 /**
- * 转换为 Sidebar 格式（兼容 VitePress）
+ * 转换为 Sidebar 格式(兼容 VitePress)
  */
 export function toSidebarFormat(nodes: DocNode[]): any[] {
   return nodes.map(node => {
@@ -237,15 +237,15 @@ export function toSidebarFormat(nodes: DocNode[]): any[] {
       isLeaf: node.isLeaf,
       description: node.desc
     }
-    
+
     // 确保链接格式一致性：文件夹以 / 结尾，文件不以 / 结尾
     if (node.link) {
-      result.link = node.type === 'folder' 
+      result.link = node.type === 'folder'
         ? (node.link.endsWith('/') ? node.link : `${node.link}/`)
         : node.link.replace(/\/$/, '')
     }
     if (node.children) result.items = toSidebarFormat(node.children)
-    
+
     return result
   })
 }

@@ -1,6 +1,4 @@
 import type { ViteDevServer } from "vite";
-import path from "path";
-import fs from "fs";
 import { translateGitHubError } from "../../utils/github-error-translator";
 
 export interface RouteContext {
@@ -26,7 +24,7 @@ function translateHttpError(status: number, statusText: string, url: string): { 
     case 404:
       return { message: `页面或资源不存在 (${hostname})`, suggestion: "请检查 URL 是否正确，或该页面是否已被删除/移动" };
     case 405:
-      return { message: `HTTP 方法不被允许 (${hostname})`, suggestion: "请确认使用的请求方法（GET/POST 等）被该 URL 支持" };
+      return { message: `HTTP 方法不被允许 (${hostname})`, suggestion: "请确认使用的请求方法(GET/POST 等)被该 URL 支持" };
     case 408:
       return { message: `请求超时 (${hostname})`, suggestion: "服务器在预定时间内未收到完整请求，请稍后重试" };
     case 409:
@@ -183,7 +181,7 @@ export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
               res.setHeader(
                 "Content-Type",
                 fetchResponse.headers.get("content-type") ||
-                  "text/plain; charset=utf-8",
+                "text/plain; charset=utf-8",
               );
               res.end(data);
               return;

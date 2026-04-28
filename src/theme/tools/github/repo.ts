@@ -49,7 +49,7 @@ export const githubListRepoContentsDef: ToolDefinition = {
 1. 浏览仓库的目录结构
 2. 查找特定的源代码文件
 3. 了解项目组织结构
-4. 定位配置文件（package.json、tsconfig.json 等）
+4. 定位配置文件(package.json、tsconfig.json 等)
 
 示例：
 - 查看根目录：owner="facebook", repo="react", path=""
@@ -67,12 +67,12 @@ export const githubListRepoContentsDef: ToolDefinition = {
         },
         path: {
           type: 'string',
-          description: '目录或文件路径，默认空字符串（根目录）。例如"src"docs"package.json"',
+          description: '目录或文件路径，默认空字符串(根目录)。例如"src"docs"package.json"',
           default: ''
         },
         ref: {
           type: 'string',
-          description: '分支、标签或 commit SHA，默认主分支（main/master)'
+          description: '分支、标签或 commit SHA，默认主分支(main/master)'
         }
       },
       required: ['owner', 'repo']
@@ -88,13 +88,13 @@ export const githubGetFileContentDef: ToolDefinition = {
 
 使用场景：
 1. 查看源代码实现
-2. 读取配置文件（package.json、.gitignore 等）
+2. 读取配置文件(package.json、.gitignore 等)
 3. 学习优秀的代码示例
 4. 查看文档文件
 
 注意：
 - 文件路径需要包含完整的相对路径
-- 支持获取文件的原始内容（自动解码 base64）
+- 支持获取文件的原始内容(自动解码 base64)
 - 可以指定特定分支或 commit
 - 大文件可通过 max_length 调整读取长度`,
     parameters: {
@@ -207,7 +207,7 @@ export const githubGetReadmeDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubGetReadme',
-    description: `获取 GitHub 仓库 README 内容（自动解码）。`,
+    description: `获取 GitHub 仓库 README 内容(自动解码)。`,
     parameters: {
       type: 'object',
       properties: {
@@ -316,11 +316,11 @@ export const githubCreateRepoDef: ToolDefinition = {
         },
         description: {
           type: 'string',
-          description: '仓库描述（可选）'
+          description: '仓库描述(可选)'
         },
         private: {
           type: 'boolean',
-          description: '是否私有仓库，默认false（公开)',
+          description: '是否私有仓库，默认false(公开)',
           default: false
         },
         auto_init: {
@@ -354,12 +354,12 @@ export const githubUpdateRepoDef: ToolDefinition = {
       properties: {
         owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
-        description: { type: 'string', description: '新的仓库描述（可选）' },
-        visibility: { type: 'string', description: '可见性：public 或 private（可选）' },
-        topics: { type: 'array', items: { type: 'string' }, description: 'Topics 标签数组（可选）' },
-        has_issues: { type: 'boolean', description: '是否启用 Issues（可选）' },
-        has_wiki: { type: 'boolean', description: '是否启用 Wiki（可选）' },
-        has_projects: { type: 'boolean', description: '是否启用 Projects（可选）' }
+        description: { type: 'string', description: '新的仓库描述(可选)' },
+        visibility: { type: 'string', description: '可见性：public 或 private(可选)' },
+        topics: { type: 'array', items: { type: 'string' }, description: 'Topics 标签数组(可选)' },
+        has_issues: { type: 'boolean', description: '是否启用 Issues(可选)' },
+        has_wiki: { type: 'boolean', description: '是否启用 Wiki(可选)' },
+        has_projects: { type: 'boolean', description: '是否启用 Projects(可选)' }
       },
       required: ['owner', 'repo']
     }
@@ -379,7 +379,7 @@ export const githubDeleteRepoDef: ToolDefinition = {
 注意事项：
 - 删除操作不可逆
 - 需要仓库的 admin 权限
-- 如果开启了删除保护（Dependabot 等），可能无法删除`,
+- 如果开启了删除保护(Dependabot 等)，可能无法删除`,
     parameters: {
       type: 'object',
       properties: {

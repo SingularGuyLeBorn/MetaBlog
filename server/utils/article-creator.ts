@@ -31,7 +31,7 @@ function generateSlug(title: string): string {
 }
 
 /**
- * 将叶子文档提升为 Folder-Note 结构（与 doc-structure.ts 的 preferred 模式一致）
+ * 将叶子文档提升为 Folder-Note 结构(与 doc-structure.ts 的 preferred 模式一致)
  * e.g. sections/posts/attention.md -> sections/posts/attention/attention.md
  */
 async function promoteLeafToFolderNote(leafPath: string): Promise<void> {
@@ -64,11 +64,11 @@ function writeArticleFile(
   // 兼容 \n、\r\n 以及前后可能有空白的情况
   const frontmatterPattern = /^---\r?\n[\s\S]*?\r?\n---\r?\n?/;
   if (frontmatterPattern.test(content)) {
-    // 已有 frontmatter，直接使用原始内容（避免双 frontmatter）
+    // 已有 frontmatter，直接使用原始内容(避免双 frontmatter)
     return fs.promises.writeFile(filePath, content, "utf-8");
   }
 
-  // 生成安全的 frontmatter（title 加引号防止冒号等特殊字符破坏 YAML）
+  // 生成安全的 frontmatter(title 加引号防止冒号等特殊字符破坏 YAML)
   const safeTitle = escapeYamlValue(req.title);
   const tagLines = (req.tags || [])
     .map((t) => `  - ${escapeYamlValue(t)}`)
@@ -141,7 +141,7 @@ export async function createArticleInHarness(
   // 规范化
   relativePath = relativePath.replace(/\\/g, "/").replace(/\/$/, "");
 
-  // 去掉 .md 后缀（如果有）
+  // 去掉 .md 后缀(如果有)
   relativePath = relativePath.replace(/\.md$/, "");
 
   // 确保路径以 section 开头
@@ -153,7 +153,7 @@ export async function createArticleInHarness(
   // 创建 folder/index.md，VitePress 天然支持，不需要启动时 rewrite：
   // section/my-article       -> section/my-article/index.md
   // section/sub/my-article   -> section/sub/my-article/index.md
-  // section/folder/index     -> section/folder/index.md（AI 明确传 index 时保持）
+  // section/folder/index     -> section/folder/index.md(AI 明确传 index 时保持)
   const lastSeg = relativePath.split("/").pop() || "";
   if (lastSeg !== "index") {
     relativePath = `${relativePath}/index.md`;

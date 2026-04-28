@@ -7,8 +7,8 @@
  * =============================================================================
  */
 
-import type { ToolDefinition, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import type { ToolDefinition, ToolResult } from '@/theme/tools/types';
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types';
 
 /** 后端 API 基础路径 */
 const API_BASE = '/api/yuque'
@@ -36,7 +36,7 @@ export function translateYuqueError(result: any): { message: string; suggestion:
     return { message: '资源不存在', suggestion: '请检查 repo_id / doc_slug / doc_id 是否正确' }
   }
   if (code === 429 || status === 429) {
-    return { message: '请求过于频繁，触发限流', suggestion: '请稍后再试（建议间隔 1-2 秒）' }
+    return { message: '请求过于频繁，触发限流', suggestion: '请稍后再试(建议间隔 1-2 秒)' }
   }
   if (code === 500 || status === 500) {
     return { message: '语雀服务器内部错误', suggestion: '请稍后重试，如持续报错请联系语雀支持' }
@@ -58,8 +58,8 @@ export function translateYuqueError(result: any): { message: string; suggestion:
  * 调用语雀后端路由的通用函数
  *
  * @param method  HTTP 方法
- * @param path    API 路径（不含 /api/yuque 前缀）
- * @param body    请求体对象（POST/PUT 时使用）
+ * @param path    API 路径(不含 /api/yuque 前缀)
+ * @param body    请求体对象(POST/PUT 时使用)
  * @param query   URL 查询参数对象
  * @returns       后端返回的 JSON 数据
  */
@@ -100,7 +100,7 @@ export async function yuqueApi(method: string, path: string, body?: any, query?:
 /**
  * 工具：列出语雀知识库
  *
- * 返回当前登录用户拥有的所有知识库（Book/Repo）列表。
+ * 返回当前登录用户拥有的所有知识库(Book/Repo)列表。
  * 每个知识库包含 id、name、slug、description 等信息。
  *
  * 【使用示例】
@@ -116,7 +116,7 @@ export const yuqueRepoListDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'yuqueRepoList',
-    description: `列出语雀用户或团队的知识库（Repo/Book）列表。
+    description: `列出语雀用户或团队的知识库(Repo/Book)列表。
 
 返回知识库名称、ID、Slug、描述等信息。
 
@@ -140,7 +140,7 @@ export const yuqueRepoCreateDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'yuqueRepoCreate',
-    description: `创建语雀知识库（Book/Repo）。
+    description: `创建语雀知识库(Book/Repo)。
 
 使用示例：
 - 创建普通知识库: yuqueRepoCreate(name="产品文档", slug="product-docs")
@@ -156,11 +156,11 @@ export const yuqueRepoCreateDef: ToolDefinition = {
         },
         slug: {
           type: 'string',
-          description: '知识库路径（URL 标识，如 "api-test"）',
+          description: '知识库路径(URL 标识，如 "api-test")',
         },
         description: {
           type: 'string',
-          description: '知识库描述（可选）',
+          description: '知识库描述(可选)',
         },
         type: {
           type: 'string',
@@ -194,15 +194,15 @@ export const yuqueRepoUpdateDef: ToolDefinition = {
         },
         name: {
           type: 'string',
-          description: '新名称（可选）',
+          description: '新名称(可选)',
         },
         slug: {
           type: 'string',
-          description: '新路径（可选）',
+          description: '新路径(可选)',
         },
         description: {
           type: 'string',
-          description: '新描述（可选）',
+          description: '新描述(可选)',
         },
       },
       required: ['repo_id'],
@@ -252,7 +252,7 @@ export const yuqueRepoSettingGetDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'yuqueRepoSettingGet',
-    description: '获取语雀知识库的设置信息（可见性、评论设置等）。',
+    description: '获取语雀知识库的设置信息(可见性、评论设置等)。',
     parameters: {
       type: 'object',
       properties: {
@@ -270,7 +270,7 @@ export const yuqueRepoSettingUpdateDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'yuqueRepoSettingUpdate',
-    description: '更新语雀知识库的设置（可见性、评论设置等）。',
+    description: '更新语雀知识库的设置(可见性、评论设置等)。',
     parameters: {
       type: 'object',
       properties: {
@@ -298,7 +298,7 @@ export const yuqueRepoList = async (args: Record<string, any>): Promise<ToolResu
   try {
     const result = await yuqueApi('GET', '/repos')
 
-    // 检查是否有 data 字段（语雀 API 的响应结构）
+    // 检查是否有 data 字段(语雀 API 的响应结构)
     if (!result.data) {
       return createErrorResult(result.msg || result.message || '请求失败', '获取知识库失败', undefined, result.status || result.code)
     }

@@ -1,6 +1,6 @@
-import type { ViteDevServer } from "vite";
-import path from "path";
 import fs from "fs";
+import path from "path";
+import type { ViteDevServer } from "vite";
 
 export interface RouteContext {
   system: any;
@@ -12,7 +12,7 @@ export interface RouteContext {
 export function registerLogsRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
   // ============================================
-  // Logs API - 日志系统（使用LogSystem）
+  // Logs API - 日志系统(使用LogSystem)
   // ============================================
 
   // 添加日志

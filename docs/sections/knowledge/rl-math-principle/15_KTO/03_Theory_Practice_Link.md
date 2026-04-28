@@ -42,7 +42,7 @@ losses.append(1 - F.sigmoid(self.beta * (z_rejected - rejected_logratios)))
 ```
 
 **理论解释**:
-人类对"失去"（Rejected被误选）的痛苦大于"获得"（Chosen被选中）的快乐。
+人类对"失去"(Rejected被误选)的痛苦大于"获得"(Chosen被选中)的快乐。
 因此，KTO 通常设置 $\lambda_{rejected} > \lambda_{chosen}$ (e.g., 1.33 vs 1.0)。这使得模型在训练时更加“保守”，极力避免生成坏样本。
 
 ---

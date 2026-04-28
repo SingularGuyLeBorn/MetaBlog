@@ -43,7 +43,7 @@ GPT-3 虽然能力强大，但存在根本性问题：
 **Helpful 原则**:
 - 使用清晰、简洁的语言
 - 直接回答问题
-- 考虑国际化（如"football"可能指不同运动）
+- 考虑国际化(如"football"可能指不同运动)
 - 必要时请求澄清
 
 **Honest 原则**:
@@ -72,7 +72,7 @@ for epoch in range(num_epochs):
 ```
 
 **超参数**:
-- 学习率: 9.65e-6（余弦衰减）
+- 学习率: 9.65e-6(余弦衰减)
 - Batch size: 32
 - Epochs: 16
 - 使用Dropout避免过拟合
@@ -81,8 +81,8 @@ for epoch in range(num_epochs):
 
 SFT能让模型"像样"地回答问题，但:
 - 数据收集成本高
-- 标注员能力有限（不如模型的最佳表现）
-- 可能教会模型编造（如果训练数据超出模型能力）
+- 标注员能力有限(不如模型的最佳表现)
+- 可能教会模型编造(如果训练数据超出模型能力)
 
 ---
 
@@ -94,7 +94,7 @@ SFT能让模型"像样"地回答问题，但:
 
 **数据收集流程**:
 1. 给定prompt，让SFT模型生成多个回复
-2. 标注员对回复进行排序（不只是成对比较）
+2. 标注员对回复进行排序(不只是成对比较)
 3. 从排序生成所有成对偏好
 
 ### 3.2 数据规模
@@ -171,7 +171,7 @@ $$\max_\theta \mathbb{E}_{x \sim D, y \sim \pi_\theta} \left[ r_\phi(x, y) - \be
 
 **解释**:
 - $r_\phi$: 奖励模型打分
-- $\beta D_{KL}$: 惩罚偏离SFT模型太远（防止reward hacking）
+- $\beta D_{KL}$: 惩罚偏离SFT模型太远(防止reward hacking)
 
 ### 4.2 KL惩罚的重要性
 
@@ -203,7 +203,7 @@ def ppo_step(prompts, policy, value, reward_model, ref_policy):
     # 1. 生成回复
     responses = policy.generate(prompts)
     
-    # 2. 计算奖励（奖励模型 - KL惩罚）
+    # 2. 计算奖励(奖励模型 - KL惩罚)
     rm_scores = reward_model(prompts, responses)
     log_probs = policy.log_prob(responses | prompts)
     ref_log_probs = ref_policy.log_prob(responses | prompts)
@@ -285,8 +285,8 @@ $$\mathcal{L} = \mathcal{L}_{PPO} + \gamma \mathcal{L}_{pretrain}$$
 
 ### 6.3 人类反馈的局限
 
-- 标注员会犯错（事实核查时间不足）
-- 标注员有偏见（文化、语言背景）
+- 标注员会犯错(事实核查时间不足)
+- 标注员有偏见(文化、语言背景)
 - 复杂任务难以评估
 
 ### 6.4 迭代改进

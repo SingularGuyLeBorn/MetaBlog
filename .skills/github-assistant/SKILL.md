@@ -14,14 +14,14 @@ author: system
 builtin: true
 enabled: true
 tools:
-  # 仓库管理（6个）
+  # 仓库管理(6个)
   - githubCreateRepo
   - githubGetRepo
   - githubUpdateRepo
   - githubDeleteRepo
   - githubSearchRepos
   - githubForkRepo
-  # 代码与文件（7个）
+  # 代码与文件(7个)
   - githubGetFileContent
   - githubListRepoContents
   - githubSearchCode
@@ -29,33 +29,33 @@ tools:
   - githubDeleteFile
   - githubGetReadme
   - githubCompareCommits
-  # 提交历史（1个）
+  # 提交历史(1个)
   - githubGetCommitHistory
-  # Issue（5个）
+  # Issue(5个)
   - githubGetIssues
   - githubCreateIssue
   - githubCreateIssueComment
   - githubUpdateIssue
   - githubListIssueComments
   - githubSearchIssues
-  # Pull Request（6个）
+  # Pull Request(6个)
   - githubListPulls
   - githubGetPull
   - githubCreatePullRequest
   - githubMergePullRequest
   - githubGetPullRequestFiles
   - githubCreatePullRequestReview
-  # 分支（4个）
+  # 分支(4个)
   - githubCreateBranch
   - githubDeleteBranch
   - githubListBranches
-  # Release（1个）
+  # Release(1个)
   - githubCreateRelease
-  # 工作流（3个）
+  # 工作流(3个)
   - githubListWorkflows
   - githubListWorkflowRuns
   - githubTriggerWorkflow
-  # 速率限制（1个）
+  # 速率限制(1个)
   - githubGetRateLimit
 scenarios:
   - 用户想要创建新的代码仓库
@@ -82,15 +82,15 @@ scenarios:
 #### 1. Token 配置
 - 所有 GitHub 工具均依赖 `GITHUB_TOKEN` 环境变量。
 - 未配置 Token 时，未认证请求速率限制为每小时 60 次，且无法访问私有资源。
-- 建议 Token 至少包含以下 scope：`repo`（仓库读写）、`workflow`（工作流管理）、`delete_repo`（删除仓库）。
+- 建议 Token 至少包含以下 scope：`repo`(仓库读写)、`workflow`(工作流管理)、`delete_repo`(删除仓库)。
 
-#### 2. 创建仓库时的 422 陷阱（重要）
+#### 2. 创建仓库时的 422 陷阱(重要)
 GitHub 的 `create_repo` 返回 **422 Unprocessable Entity** 有多种语义，不能简单视为"参数错误"：
 
 | 422 子原因 | 错误消息关键词 | 处理建议 |
 |-----------|-------------|---------|
 | **仓库已存在** | `name already exists on this account` / `already exists` | 不要重试创建。改用 `githubGetRepo` 查询现有仓库，或使用 `githubUpdateRepo` 修改配置。 |
-| **参数值无效** | `is invalid` / `contains invalid` | 检查仓库名是否含非法字符（只允许字母、数字、`-`、`_`、`.`），且不能以 `-` 开头或结尾。 |
+| **参数值无效** | `is invalid` / `contains invalid` | 检查仓库名是否含非法字符(只允许字母、数字、`-`、`_`、`.`)，且不能以 `-` 开头或结尾。 |
 | **缺少必填字段** | `missing` / `required` | 对照 GitHub API 文档检查必填参数。 |
 | **超出配额** | `exceeded` / `over quota` / `limit` | 免费账户有私有仓库数量上限，请检查 Billing 设置或删除旧仓库。 |
 | **归档仓库** | `archived` | 归档仓库不支持写入操作，如需修改请先取消归档。 |
@@ -102,16 +102,16 @@ GitHub 的 `create_repo` 返回 **422 Unprocessable Entity** 有多种语义，�
 - 遇到 403 + `secondary rate limit` / `abuse detection`：立即降低并发频率，等待数分钟后再试。连续触发可能导致 IP 被封禁。
 
 #### 4. 权限与组织
-- 访问组织仓库时，若 Token 未授权组织，可能遇到 404（而非 403），这是 GitHub 的安全设计（避免泄露存在性）。
+- 访问组织仓库时，若 Token 未授权组织，可能遇到 404(而非 403)，这是 GitHub 的安全设计(避免泄露存在性)。
 - 组织启用了 SSO/SAML 时，Token 需要在 GitHub 网页端完成组织授权后才能访问组织资源。
 - 分支保护规则会导致直接推送失败，应通过 Pull Request 流程进行代码变更。
 
 #### 5. 空仓库与初始提交
 - `auto_init=true` 可在创建仓库时自动生成 README.md 和初始提交。
-- 空仓库（无提交）无法创建基于默认分支的新分支（ref 不存在），请先推送初始提交。
+- 空仓库(无提交)无法创建基于默认分支的新分支(ref 不存在)，请先推送初始提交。
 
 #### 6. 文件操作注意事项
-- `githubCreateOrUpdateFile` 需要传入文件的 `sha`（用于更新），可通过 `githubGetFileContent` 先获取。
+- `githubCreateOrUpdateFile` 需要传入文件的 `sha`(用于更新)，可通过 `githubGetFileContent` 先获取。
 - 文件内容需要 Base64 编码，工具内部会自动处理，但 Agent 传入的 content 应为原始文本。
 
 ### 常见错误速查

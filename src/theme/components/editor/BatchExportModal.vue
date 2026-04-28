@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import TreeNodeSelect from '@/theme/components/common/TreeNodeSelect.vue'
+import TreeNodeSelect from '@/theme/components/common/TreeNodeSelect.vue';
+import { computed, ref, watch } from 'vue';
 
 const props = defineProps<{
   visible: boolean
@@ -99,7 +99,7 @@ const expandAll = () => {
   expandedPaths.value = new Set(collectPaths(treeData.value))
 }
 
-// 折叠所有节点（只保留 section 根节点）
+// 折叠所有节点(只保留 section 根节点)
 const collapseAll = () => {
   expandedPaths.value.clear()
   for (const section of treeData.value) {

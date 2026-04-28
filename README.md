@@ -23,10 +23,14 @@ MetaBlog 是一个将**静态博客**、**AI 对话**和**自主 Agent**融为�
 | 能力 | 说明 |
 |------|------|
 | 📝 **智能博客** | VitePress 驱动的 Markdown 博客，支持数学公式、代码高亮、Wiki 链接 |
-| 🤖 **AI 对话** | 多模型支持（DeepSeek/Kimi/Zhipu/OpenAI 等），流式响应，思考过程展示 |
+| 🤖 **AI 对话** | 多模型支持(DeepSeek/Kimi/Zhipu/OpenAI 等)，流式响应，思考过程展示 |
 | 🛠️ **工具调用** | 119+ 内置工具 + MCP 外部扩展，AI 可直接操作文件、GitHub、飞书、语雀等 |
+| 🔍 **智能采集** | 多层内容获取(HTTP → Jina Reader → Playwright 渲染)，支持知乎/小红书/微信等反爬平台 |
+| 🖼️ **OCR 识别** | 三引擎自动降级(PaddleOCR → Tesseract → OCR.space)，图片转文字供非多模态模型使用 |
 | 🧪 **代码沙箱** | 后端安全执行 Python/JavaScript/Bash，支持数学计算和代码验证 |
 | 👤 **Agent 系统** | 多 Agent 管理、Skill 技能组合、独立会话、工具权限控制 |
+| 🎯 **渐进披露** | 动态工具上下文，从 119 个工具智能降噪到 7~15 个，提升调用准确率 |
+| 🛡️ **错误翻译** | 飞书/语雀/GitHub API 错误码自动转中文，降低 AI 和用户理解成本 |
 
 ---
 
@@ -35,7 +39,7 @@ MetaBlog 是一个将**静态博客**、**AI 对话**和**自主 Agent**融为�
 ### 环境要求
 
 - Node.js 18+
-- pnpm（推荐）或 npm
+- pnpm(推荐)或 npm
 
 ### 安装
 
@@ -58,18 +62,25 @@ cp .env.example .env
 编辑 `.env`，至少配置以下项：
 
 ```env
-# AI 模型（必填一项）
+# AI 模型(必填一项)
 LLM_DEEPSEEK_API_KEY=sk-your-key-here
 # 或 LLM_KIMI_API_KEY=...
 # 或 LLM_OPENAI_API_KEY=...
 
-# 飞书集成（可选）
+# 飞书集成(可选)
 FEISHU_APP_ID=cli_xxx
 FEISHU_APP_SECRET=xxx
+FEISHU_USER_ACCESS_TOKEN=u-xxx
 
-# 语雀集成（可选）
+# 语雀集成(可选)
 YUQUE_SESSION=xxx
 YUQUE_CTOKEN=xxx
+
+# GitHub 集成(可选)
+GITHUB_TOKEN=ghp_xxx
+
+# OCR 集成(可选)
+OCR_SPACE_API_KEY=xxx
 ```
 
 > 📖 完整环境变量说明见 [docs/guide/environment.md](./docs/guide/environment.md)
@@ -138,7 +149,7 @@ pnpm docs:preview
 | 语雀文档 | `yuqueDocCreate`, `yuqueDocUpdate`, `yuqueImageUpload` | 9 |
 | 语雀知识库 | `yuqueRepoCreate`, `yuqueRepoSettingUpdate` | 6 |
 | 学术研究 | `searchArxiv`, `fetchArxiv`, `searchHuggingface` | 8 |
-| 平台解析 | `parseZhihu`, `parseXiaohongshu`, `ocrImage` | 9 |
+| 平台解析 | `parseZhihu`, `parseXiaohongshu`, `ocrImage`, `parseWechat` | 9 |
 | 文件 | `readFile`, `writeFile`, `listFiles` | 3 |
 | 文本处理 | `summarizeText`, `translateText`, `formatText` | 3 |
 | 代码 | `executeCode`, `analyzeCode` | 2 |
@@ -155,7 +166,7 @@ pnpm docs:preview
 
 - **多 Agent 管理**：创建、编辑、删除多个 AI Agent
 - **四种配置模式**：纯提示词 / 纯技能 / 纯工具 / 混合模式
-- **Skill 技能组合**：预设能力包（写作专家、编程助手、数据分析师等）
+- **Skill 技能组合**：预设能力包(写作专家、编程助手、数据分析师等)
 - **独立会话**：每个 Agent 拥有独立的对话历史
 - **工具权限**：精细控制每个 Agent 可用的工具集合
 
@@ -184,7 +195,7 @@ pnpm docs:preview
 | 前端框架 | Vue 3 + VitePress 1.x |
 | 样式 | Tailwind CSS 3.x + 自定义 CSS |
 | 状态管理 | Pinia + Vue Composition API |
-| 后端 BFF | Express 5.x（VitePress 插件集成） |
+| 后端 BFF | Express 5.x(VitePress 插件集成) |
 | AI 服务 | DeepSeek / Kimi / Zhipu / OpenAI / Gemini / Anthropic / Qwen / ... |
 | 包管理 | pnpm |
 | 构建工具 | Vite 5.x |

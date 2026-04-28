@@ -14,7 +14,7 @@
 1.  **极度昂贵**: 需要数千张 GPU 进行实时采样。
 2.  **数据浪费**: 在采样过程中，90% 的生成都是失败的，这些数据通常被丢弃。
 
-**OREO (Offline REasoning Optimization)** 提出了一种新的范式：**我们能不能只利用已有的（可能包含大量错误的）离线数据，就训练出一个强大的推理模型？**
+**OREO (Offline REasoning Optimization)** 提出了一种新的范式：**我们能不能只利用已有的(可能包含大量错误的)离线数据，就训练出一个强大的推理模型？**
 
 ---
 
@@ -47,7 +47,7 @@ $$ \mathcal{L}(\theta) = - \mathbb{E}_{(s,a) \sim \mathcal{D}} \left[ \exp \left
 OREO 训练了一个 **Token-level Critic** $V_\phi(s)$ 来回答这个问题。
 
 ### 3.1 价值截断 (Value Clipping / CQL)
-为了防止 Critic 对未见过的动作给出过高的估计（OOD 问题），OREO 借鉴了 CQL (Conservative Q-Learning) 的思想：
+为了防止 Critic 对未见过的动作给出过高的估计(OOD 问题)，OREO 借鉴了 CQL (Conservative Q-Learning) 的思想：
 $$ \mathcal{L}_{Critic} = \text{MSE}(V, G) + \lambda \cdot \max(0, V(s) - V_{data}) $$
 这迫使 Critic 保持保守：除非有确凿的证据表明这一步是好的，否则默认它不怎么好。
 

@@ -18,7 +18,7 @@ $$
 L^{GSPO} = -\\mathbb{E}\\left[\\min(r \\cdot A, \\text{clip}(r, 1-\\epsilon, 1+\\epsilon) \\cdot A)\\right]
 $$
 
-验证: Qwen3全系列（Instruct、Coder、Thinking）
+验证: Qwen3全系列(Instruct、Coder、Thinking)
 
 参考实现:
 - verl: https://github.com/volcengine/verl

@@ -3,8 +3,8 @@
  * 支持多搜索引擎，可扩展
  */
 
-import type { SearchResult, SearchOptions } from './types'
 import { duckDuckGoEngine } from './duckduckgo'
+import type { SearchOptions, SearchResult } from './types'
 import { formatSearchResults } from './utils'
 
 // 注册所有搜索引擎
@@ -37,7 +37,7 @@ export async function searchWeb(options: SearchOptions): Promise<{
     throw new Error('No search results found')
   }
 
-  // 这里 total 是返回的结果数（DuckDuckGo HTML 版不返回总数）
+  // 这里 total 是返回的结果数(DuckDuckGo HTML 版不返回总数)
   const total = results.length
   const formatted = formatSearchResults(results, query, results.length, total)
 
@@ -51,4 +51,5 @@ export function getAvailableEngines(): string[] {
   return Array.from(engines.keys())
 }
 
-export type { SearchResult, SearchOptions }
+export type { SearchOptions, SearchResult }
+

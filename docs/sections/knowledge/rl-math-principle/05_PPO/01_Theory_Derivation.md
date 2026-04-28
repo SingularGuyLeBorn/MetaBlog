@@ -7,7 +7,7 @@
 - **arXiv**：1707.06347
 - **PDF**：见 `papers/` 目录
 
-**前置知识**：策略梯度定理（第2章）、REINFORCE（第3章）
+**前置知识**：策略梯度定理(第2章)、REINFORCE(第3章)
 
 ---
 
@@ -41,11 +41,11 @@ $$\theta \leftarrow \theta + \alpha \nabla_\theta \log \pi_\theta(a|s) \cdot G_t
 
 | 符号 | 含义 | 类型 | 说明 |
 |------|------|------|------|
-| $\theta$ | 策略网络的**可训练参数**（权重和偏置） | 向量 | 维度可达数十亿（LLM） |
+| $\theta$ | 策略网络的**可训练参数**(权重和偏置) | 向量 | 维度可达数十亿(LLM) |
 | $\leftarrow$ | **赋值符号**，表示用右边的值更新左边 | 操作 | - |
 | $\alpha$ | **学习率**(Learning Rate)，控制每步更新的大小 | 标量 | 通常 $10^{-3}$ 到 $10^{-6}$ |
 | $\nabla_\theta$ | 关于 $\theta$ 的**梯度算子** | 算子 | 计算损失对每个参数的偏导数 |
-| $\log$ | **自然对数**（以 $e$ 为底） | 函数 | - |
+| $\log$ | **自然对数**(以 $e$ 为底) | 函数 | - |
 | $\pi_\theta(a\|s)$ | 参数为 $\theta$ 的策略在状态 $s$ 下选择动作 $a$ 的**概率** | 标量 | $\in (0, 1)$ |
 | $a$ | **动作**(Action)，在LLM中是下一个token | 离散/连续 | - |
 | $s$ | **状态**(State)，在LLM中是prompt + 已生成tokens | 向量/序列 | - |
@@ -80,12 +80,12 @@ $$\text{s.t.} \quad D_{KL}\left(\pi_{\theta_{\text{old}}}(\cdot|s) \| \pi_\theta
 |------|------|------|
 | $\max_\theta$ | 关于参数 $\theta$ **最大化** | 目标是找到最优的 $\theta$ |
 | $\mathbb{E}_{s \sim \rho^{\pi_{\text{old}}}}$ | 在**状态分布** $\rho^{\pi_{\text{old}}}$ 下的期望 | $\rho$ 是状态的稳态分布 |
-| $\frac{\pi_\theta(a\|s)}{\pi_{\theta_{\text{old}}}(a\|s)}$ | **概率比率**（重要性权重） | 衡量新旧策略的差异 |
+| $\frac{\pi_\theta(a\|s)}{\pi_{\theta_{\text{old}}}(a\|s)}$ | **概率比率**(重要性权重) | 衡量新旧策略的差异 |
 | $\pi_\theta(a\|s)$ | **新策略**在状态 $s$ 选择动作 $a$ 的概率 | 我们要优化的策略 |
 | $\pi_{\theta_{\text{old}}}(a\|s)$ | **旧策略**在状态 $s$ 选择动作 $a$ 的概率 | 采样数据时使用的策略 |
 | $A^{\pi_{\text{old}}}(s, a)$ | 旧策略下的**优势函数** | $A = Q(s,a) - V(s)$ |
 | $\text{s.t.}$ | "subject to"，**约束条件** | 以下是必须满足的限制 |
-| $D_{KL}(\cdot \| \cdot)$ | **KL散度**（Kullback-Leibler Divergence） | 衡量两个概率分布的差异 |
+| $D_{KL}(\cdot \| \cdot)$ | **KL散度**(Kullback-Leibler Divergence) | 衡量两个概率分布的差异 |
 | $\pi_{\theta_{\text{old}}}(\cdot\|s)$ | 旧策略在状态 $s$ 的**动作分布** | 以状态 $s$ 为条件的动作概率分布 |
 | $\pi_\theta(\cdot\|s)$ | 新策略在状态 $s$ 的**动作分布** | - |
 | $\leq$ | **小于等于**约束 | 限制KL散度不超过 $\delta$ |
@@ -93,8 +93,8 @@ $$\text{s.t.} \quad D_{KL}\left(\pi_{\theta_{\text{old}}}(\cdot|s) \| \pi_\theta
 
 **TRPO的问题**：
 
-- 求解带约束的优化问题需要二阶导数（Hessian矩阵）
-- 实现复杂（共轭梯度、线搜索等）
+- 求解带约束的优化问题需要二阶导数(Hessian矩阵)
+- 实现复杂(共轭梯度、线搜索等)
 - 计算代价高
 
 ### 1.3 PPO的动机
@@ -194,7 +194,7 @@ $$L^{CLIP}(\theta) = \mathbb{E}_t\left[\min\left(r_t(\theta) A_t, \text{clip}(r_
 
 | 符号 | 含义 | 类型 | 说明 |
 |------|------|------|------|
-| $L^{CLIP}(\theta)$ | **PPO裁剪目标函数** | 标量 | 需要**最大化**（损失函数取负） |
+| $L^{CLIP}(\theta)$ | **PPO裁剪目标函数** | 标量 | 需要**最大化**(损失函数取负) |
 | $\mathbb{E}_t$ | 对所有**时间步 $t$** 的期望 | 期望 | 遍历采样的所有状态-动作对 |
 | $\min(\cdot, \cdot)$ | 取两个值的**最小值** | 函数 | "悲观"估计，防止过度乐观 |
 | $r_t(\theta)$ | 时刻 $t$ 的**概率比率** | 标量 | $r_t = \frac{\pi_\theta(a_t\|s_t)}{\pi_{\theta_{\text{old}}}(a_t\|s_t)}$ |
@@ -228,25 +228,25 @@ $$\text{clip}(r, 1-\epsilon, 1+\epsilon) = \begin{cases} 1-\epsilon & \text{if }
 
 **图片结构**：
 
-1. **横轴：Policy Ratio $r$（概率比）**
+1. **横轴：Policy Ratio $r$(概率比)**
    - 表示 $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)}$
    - $r = 1$ 表示新旧策略相同
    - $r > 1$ 表示新策略更偏好该动作
    - $r < 1$ 表示新策略更不偏好该动作
 
-2. **纵轴：Objective Value（目标值）**
+2. **纵轴：Objective Value(目标值)**
    - 表示 $L^{CLIP}$ 的值
    - 正值表示"应该增加该动作的概率"
    - 负值表示"应该减少该动作的概率"
 
 3. **蓝色实线：原始目标 $r \cdot A$**
    - 未裁剪的目标函数
-   - 线性关系：$r$ 越大，目标值越高（当 $A > 0$ 时）
+   - 线性关系：$r$ 越大，目标值越高(当 $A > 0$ 时)
    - **问题**：$r$ 可以无限大，导致不稳定
 
-4. **红色线段（平坦区域）：裁剪后的区域**
-   - 当 $r > 1 + \epsilon$ 时（图中约1.2），目标值**不再增加**
-   - 当 $r < 1 - \epsilon$ 时（图中约0.8），目标值**不再减少**
+4. **红色线段(平坦区域)：裁剪后的区域**
+   - 当 $r > 1 + \epsilon$ 时(图中约1.2)，目标值**不再增加**
+   - 当 $r < 1 - \epsilon$ 时(图中约0.8)，目标值**不再减少**
    - **效果**：梯度变为0，阻止进一步更新
 
 5. **灰色阴影区域 $[1-\epsilon, 1+\epsilon]$**
@@ -255,8 +255,8 @@ $$\text{clip}(r, 1-\epsilon, 1+\epsilon) = \begin{cases} 1-\epsilon & \text{if }
    - 超出此范围，梯度被"切断"
 
 6. **两种情况的对比**：
-   - **$A > 0$（好动作）**：我们想增大 $r$，但 $r > 1+\epsilon$ 时停止
-   - **$A < 0$（坏动作）**：我们想减小 $r$，但 $r < 1-\epsilon$ 时停止
+   - **$A > 0$(好动作)**：我们想增大 $r$，但 $r > 1+\epsilon$ 时停止
+   - **$A < 0$(坏动作)**：我们想减小 $r$，但 $r < 1-\epsilon$ 时停止
 
 **关键理解**：
 - PPO通过裁剪限制了策略更新的幅度
@@ -269,7 +269,7 @@ $$\text{clip}(r, 1-\epsilon, 1+\epsilon) = \begin{cases} 1-\epsilon & \text{if }
 
 **关键洞察**：$\min$ 的作用取决于 $A_t$ 的符号。
 
-**情况1：$A_t > 0$（好动作）**
+**情况1：$A_t > 0$(好动作)**
 
 目标是**增大**动作的概率。
 
@@ -278,13 +278,13 @@ $$\text{clip}(r, 1-\epsilon, 1+\epsilon) = \begin{cases} 1-\epsilon & \text{if }
 - $\min$ 取两者较小值 = 裁剪后的值
 - **效果**：$r > 1+\epsilon$ 时梯度消失，防止过度增大概率
 
-**情况2：$A_t < 0$（坏动作）**
+**情况2：$A_t < 0$(坏动作)**
 
 目标是**减小**动作的概率。
 
-- 原始目标 $r \cdot A_t$ 希望 $r$ 越小越好（因为 $A_t < 0$）
+- 原始目标 $r \cdot A_t$ 希望 $r$ 越小越好(因为 $A_t < 0$)
 - $\text{clip}$ 限制了 $r$ 最小只能是 $1-\epsilon$
-- $\min$ 在 $A_t < 0$ 时取到的是较大（负得更少）的那个 = 裁剪后的值
+- $\min$ 在 $A_t < 0$ 时取到的是较大(负得更少)的那个 = 裁剪后的值
 - **效果**：$r < 1-\epsilon$ 时梯度消失，防止过度减小概率
 
 **总结**：无论 $A_t$ 正负，$\min$ 都起到"保守更新"的作用。
@@ -358,7 +358,7 @@ $$\text{clip}(r, 1-\epsilon, 1+\epsilon) = \begin{cases} 1-\epsilon & \text{if }
        # 价值损失
        L_V = mean((V_φ(s_t) - V_target)²)
        
-       # 熵正则化（鼓励探索）
+       # 熵正则化(鼓励探索)
        L_entropy = mean(Entropy(π_θ(·|s_t)))
        
        # 总损失

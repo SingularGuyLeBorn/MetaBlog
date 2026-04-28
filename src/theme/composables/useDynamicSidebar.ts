@@ -1,5 +1,5 @@
-import { ref, computed } from 'vue'
 import { useData } from 'vitepress'
+import { computed, ref } from 'vue'
 
 interface SidebarNode {
   text: string
@@ -28,11 +28,11 @@ export function useDynamicSidebar() {
   async function refreshSidebar(section: string = 'posts'): Promise<SidebarNode[]> {
     isLoading.value = true
     error.value = null
-    
+
     try {
       const response = await fetch(`/api/sidebar?section=${section}&_t=${Date.now()}`)
       const result = await response.json()
-      
+
       if (result.success) {
         dynamicSidebarCache.value[section] = result.data
         lastUpdate.value = Date.now()
@@ -80,18 +80,18 @@ export function useDynamicSidebar() {
         Object.keys(dynamicSidebarCache.value).forEach(sec => refreshSidebar(sec))
       }
     }
-    
+
     // 监听自定义事件
     window.addEventListener('file-system-change', fileChangeHandler)
 
-    // 定时刷新（开发模式下每 30 秒）
+    // 定时刷新(开发模式下每 30 秒)
     let refreshTimer: ReturnType<typeof setInterval> | null = null
     if (import.meta.env.DEV) {
       refreshTimer = setInterval(() => {
         Object.keys(dynamicSidebarCache.value).forEach(sec => refreshSidebar(sec))
       }, 30000)
     }
-    
+
     // 返回清理函数
     return () => {
       window.removeEventListener('file-system-change', fileChangeHandler)
@@ -117,7 +117,7 @@ export function useDynamicSidebar() {
  * 触发文件系统变动事件
  */
 export function notifyFileSystemChange(section?: string) {
-  window.dispatchEvent(new CustomEvent('file-system-change', { 
+  window.dispatchEvent(new CustomEvent('file-system-change', {
     detail: { section, timestamp: Date.now() }
   }))
 }

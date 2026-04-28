@@ -5,9 +5,9 @@
 > **核心主题**: 本讲座是CS336课程中最具实践性的一讲，深入讲解了大规模语言模型预训练数据处理流水线的两大核心：**数据过滤 (Filtering)** 和 **数据去重 (Deduplication)**。从算法原理到工程实现，从语言识别到毒性过滤，全面覆盖。
 > 
 > **知识结构**: 
-> - 第一部分：过滤算法基础（N-gram语言模型、KenLM、fastText分类器、重要性重采样DSIR）
-> - 第二部分：过滤应用场景（语言识别、质量过滤、毒性过滤）
-> - 第三部分：去重技术（精确去重、布隆过滤器、近似去重、MinHash、LSH）
+> - 第一部分：过滤算法基础(N-gram语言模型、KenLM、fastText分类器、重要性重采样DSIR)
+> - 第二部分：过滤应用场景(语言识别、质量过滤、毒性过滤)
+> - 第三部分：去重技术(精确去重、布隆过滤器、近似去重、MinHash、LSH)
 > 
 > **精英补充笔记**:
 > - **[深入探讨: KenLM与N-gram语言模型](./Lecture14-KenLM.md)** - N-gram回退机制、Kneser-Ney平滑
@@ -19,7 +19,7 @@
 
 ### 1.1 为什么需要过滤？
 
-预训练数据的质量直接决定模型性能。互联网数据（如Common Crawl）包含大量：
+预训练数据的质量直接决定模型性能。互联网数据(如Common Crawl)包含大量：
 - **低质量内容**: 垃圾邮件、广告文本、重复模板
 - **非目标语言**: 多语言混杂
 - **有害内容**: 毒性文本、违法信息
@@ -102,7 +102,7 @@ import kenlm
 # 加载预训练的KenLM模型
 model = kenlm.Model("wiki_en_5gram.arpa")
 
-# 计算句子的对数概率（以10为底）
+# 计算句子的对数概率(以10为底)
 text = "The quick brown fox jumps over the lazy dog"
 log_prob = model.score(text)
 perplexity = model.perplexity(text)
@@ -160,8 +160,8 @@ print(f"Language: {label.replace('__label__', '')}, Confidence: {confidence:.2f}
 #### 数学原理
 
 设:
-- $P_{raw}(x)$: 原始数据（如Common Crawl）的分布
-- $P_{target}(x)$: 目标数据（如Wikipedia高质量文本）的分布
+- $P_{raw}(x)$: 原始数据(如Common Crawl)的分布
+- $P_{target}(x)$: 目标数据(如Wikipedia高质量文本)的分布
 
 重要性权重:
 $$w(x) = \frac{P_{target}(x)}{P_{raw}(x)}$$
@@ -188,7 +188,7 @@ class DSIRFilter:
         log_p_target = self.target_model.score(text)
         log_p_raw = self.raw_model.score(text)
         
-        # 转换为对数权重（防止数值溢出）
+        # 转换为对数权重(防止数值溢出)
         log_weight = (log_p_target - log_p_raw) * math.log(10)
         return math.exp(log_weight)
     
@@ -267,7 +267,7 @@ def is_high_quality_rule_based(text: str) -> bool:
     if len(unique_lines) / len(lines) < 0.5:
         return False
     
-    # 检查"the"/"be"/"and"等常见词比例（英文质量信号）
+    # 检查"the"/"be"/"and"等常见词比例(英文质量信号)
     words = text.lower().split()
     common_words = set(["the", "be", "to", "of", "and", "a", "in"])
     common_ratio = sum(1 for w in words if w in common_words) / len(words)
@@ -277,9 +277,9 @@ def is_high_quality_rule_based(text: str) -> bool:
     return True
 ```
 
-#### 2.2.2 基于模型的过滤（如DCLM方法）
+#### 2.2.2 基于模型的过滤(如DCLM方法)
 
-DCLM使用fastText分类器区分高质量（如OpenAI的WebText筛选结果）和低质量文本：
+DCLM使用fastText分类器区分高质量(如OpenAI的WebText筛选结果)和低质量文本：
 
 ```python
 class QualityClassifier:
@@ -445,7 +445,7 @@ class BloomFilter:
         return all(self.bit_array[pos] for pos in self._get_hash_positions(item))
     
     def add_and_check(self, item: str) -> bool:
-        """添加元素并返回是否已存在（用于去重）"""
+        """添加元素并返回是否已存在(用于去重)"""
         positions = self._get_hash_positions(item)
         was_present = all(self.bit_array[pos] for pos in positions)
         for pos in positions:
@@ -683,7 +683,7 @@ class DataProcessingPipeline:
 
 ### 最佳实践
 
-1. **流水线顺序**: 先便宜的过滤（规则、语言）→ 再昂贵的（模型质量）→ 最后去重
+1. **流水线顺序**: 先便宜的过滤(规则、语言)→ 再昂贵的(模型质量)→ 最后去重
 2. **阈值调优**: 根据下游任务表现调整各过滤阈值
 3. **分布式处理**: 对于TB级数据，需要MapReduce/Spark分布式实现
 4. **多次迭代**: 可能需要多轮去重达到最佳效果

@@ -3,13 +3,13 @@
  * 语雀 (Yuque) 目录操作
  * =============================================================================
  *
- * 包含获取知识库目录结构（TOC）。
+ * 包含获取知识库目录结构(TOC)。
  * =============================================================================
  */
 
 import type { ToolDefinition, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
-import { yuqueApi, translateYuqueError } from './repo'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
+import { translateYuqueError, yuqueApi } from './repo'
 
 // =============================================================================
 // 工具定义与执行器
@@ -18,9 +18,9 @@ import { yuqueApi, translateYuqueError } from './repo'
 /**
  * 工具：获取知识库目录结构
  *
- * 返回知识库的 TOC（Table of Contents），包含两类条目：
- *   - TITLE：目录项（文件夹）
- *   - DOC：文档项（实际文档）
+ * 返回知识库的 TOC(Table of Contents)，包含两类条目：
+ *   - TITLE：目录项(文件夹)
+ *   - DOC：文档项(实际文档)
  *
  * 目录是层级结构，通过 depth 字段表示层级深度。
  *
@@ -31,13 +31,13 @@ export const yuqueTocGetDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'yuqueTocGet',
-    description: `获取语雀知识库的目录结构（TOC）。
+    description: `获取语雀知识库的目录结构(TOC)。
 
 返回知识库中所有文档的层级关系，包括：
 - TITLE: 目录/分组项
 - DOC: 实际文档项
 
-每个条目包含 title、slug（字段名为 url）、depth 层级等。
+每个条目包含 title、slug(字段名为 url)、depth 层级等。
 
 使用示例:
 yuqueTocGet(repo_id="68025057")
@@ -53,7 +53,7 @@ yuqueTocGet(repo_id="68025057")
       properties: {
         repo_id: {
           type: 'string',
-          description: '知识库 ID（从 yuqueRepoList 结果中获取）',
+          description: '知识库 ID(从 yuqueRepoList 结果中获取)',
         },
       },
       required: ['repo_id'],

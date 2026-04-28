@@ -1,5 +1,5 @@
 import type { ToolDefinition, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 const API_BASE = '/api/lark'
 
@@ -34,14 +34,14 @@ export const feishuDocInsertImageDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'feishuDocInsertImage',
-    description: '插入图片到飞书文档（自动完成三步法：创建空图片块 → 上传素材 → 绑定）。支持网络图片 URL 或 Base64 编码。',
+    description: '插入图片到飞书文档(自动完成三步法：创建空图片块 → 上传素材 → 绑定)。支持网络图片 URL 或 Base64 编码。',
     parameters: {
       type: 'object',
       properties: {
         document_id: { type: 'string', description: '飞书文档 ID' },
         image_url: { type: 'string', description: '网络图片 URL，支持 http/https' },
         image_base64: { type: 'string', description: '图片的 base64 编码字符串，可包含 data:image/png;base64, 前缀' },
-        file_name: { type: 'string', description: '图片文件名（含扩展名），如 demo.png' },
+        file_name: { type: 'string', description: '图片文件名(含扩展名)，如 demo.png' },
         caption: { type: 'string', description: '图片下方图注文字' },
       },
       required: ['document_id'],

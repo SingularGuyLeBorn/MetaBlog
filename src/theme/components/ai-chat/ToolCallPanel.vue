@@ -36,7 +36,7 @@
               <div v-if="record.result.message" class="result-message">
                 {{ record.result.message }}
               </div>
-              <!-- 实体链接卡片（从结果中提取） -->
+              <!-- 实体链接卡片(从结果中提取) -->
               <div v-if="getResultLinks(record).length > 0" class="result-links">
                 <EntityLinkCard
                   v-for="link in getResultLinks(record)"
@@ -71,10 +71,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import type { ToolCallRecord, ToolResult } from '@/theme/tools/types'
-import EntityLinkCard from './EntityLinkCard.vue'
 import { extractEntityLinks } from '@/theme/utils/extractEntityLinks'
+import { ref } from 'vue'
+import EntityLinkCard from './EntityLinkCard.vue'
 
 interface Props {
   records: ToolCallRecord[]
@@ -161,7 +161,7 @@ function getResultLinks(record: ToolCallRecord) {
   return extractEntityLinks(record.toolName || '', result.data || result)
 }
 
-// 将文本中的 URL 转换为可点击链接（简单版，仅用于展示）
+// 将文本中的 URL 转换为可点击链接(简单版，仅用于展示)
 function linkifyText(text: string): string {
   const urlRegex = /(https?:\/\/[^\s<>"'{}|\\^`[\]]+)/g
   return text.replace(urlRegex, (url) => {

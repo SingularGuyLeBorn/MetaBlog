@@ -13,9 +13,9 @@
  * } = useChat()
  * ```
  */
-import { computed, watch, nextTick, ref } from 'vue'
 import { useAIChat } from '@/theme/stores/chatStore'
-import type { ChatSession, ChatMessage, MessageGroup } from '@/theme/types'
+import type { ChatMessage, ChatSession } from '@/theme/types'
+import { computed, nextTick, ref, watch } from 'vue'
 
 export interface UseChatOptions {
   /** 自动滚动到底部 */
@@ -28,7 +28,7 @@ export interface UseChatOptions {
 
 export function useChat(options: UseChatOptions = {}) {
   const aiChat = useAIChat()
-  const { 
+  const {
     currentSession,
     currentSessionId,
     sessions,
@@ -41,19 +41,19 @@ export function useChat(options: UseChatOptions = {}) {
     sendMessage: aiSendMessage,
     regenerateResponse
   } = aiChat
-  
-  const interrupt = (aiChat as any).interrupt || (() => {})
-  
-  const { 
+
+  const interrupt = (aiChat as any).interrupt || (() => { })
+
+  const {
     autoScroll = true,
     onMessageUpdate,
-    onStateChange 
+    onStateChange
   } = options
-  
+
   // ═══════════════════════════════════════════════════════════════
   // 状态
   // ═══════════════════════════════════════════════════════════════
-  
+
   const messages = computed(() => {
     if (!currentSessionId.value) return []
     const groups = (messageGroups.value as Record<string, any>)[currentSessionId.value] || []
@@ -68,23 +68,23 @@ export function useChat(options: UseChatOptions = {}) {
     })
     return result
   })
-  
+
   const isLoading = computed(() => isStreaming.value)
   const canSend = computed(() => !isStreaming.value)
   const canInterrupt = computed(() => isStreaming.value)
   const currentState = computed(() => isStreaming.value ? 'streaming' : 'idle')
-  
+
   // ═══════════════════════════════════════════════════════════════
   // 监听
   // ═══════════════════════════════════════════════════════════════
-  
+
   // 监听状态变化
   if (onStateChange) {
     watch(currentState, (newState) => {
       onStateChange(newState)
     })
   }
-  
+
   // 监听消息变化，自动滚动
   if (autoScroll) {
     watch(() => messages.value.length, () => {
@@ -93,11 +93,11 @@ export function useChat(options: UseChatOptions = {}) {
       })
     })
   }
-  
+
   // ═══════════════════════════════════════════════════════════════
   // 方法
   // ═══════════════════════════════════════════════════════════════
-  
+
   /**
    * 发送消息
    */
@@ -107,14 +107,14 @@ export function useChat(options: UseChatOptions = {}) {
     }
     return aiSendMessage(content)
   }
-  
+
   /**
    * 中断生成
    */
   function doInterrupt() {
     return interrupt()
   }
-  
+
   /**
    * 重新生成最后一条消息
    */
@@ -126,7 +126,7 @@ export function useChat(options: UseChatOptions = {}) {
       await regenerateResponse(lastGroup.userMessage.id)
     }
   }
-  
+
   /**
    * 清空当前会话
    */
@@ -138,7 +138,7 @@ export function useChat(options: UseChatOptions = {}) {
       })
     }
   }
-  
+
   /**
    * 导出会话
    */
@@ -154,34 +154,34 @@ export function useChat(options: UseChatOptions = {}) {
       return `### ${role}\n\n${m.content}\n`
     }).join('\n---\n\n')
   }
-  
+
   /**
-   * 滚动到底部（需要传入容器引用）
+   * 滚动到底部(需要传入容器引用)
    */
   function scrollToBottom(container?: HTMLElement) {
     if (container) {
       container.scrollTop = container.scrollHeight
     }
   }
-  
+
   /**
    * 创建新会话
    */
   async function newChat(title?: string) {
     return createSession(title || '新对话')
   }
-  
+
   /**
    * 切换会话
    */
   async function switchChat(sessionId: string) {
     return switchSession(sessionId)
   }
-  
+
   // ═══════════════════════════════════════════════════════════════
   // 返回
   // ═══════════════════════════════════════════════════════════════
-  
+
   return {
     // 状态
     messages,
@@ -192,7 +192,7 @@ export function useChat(options: UseChatOptions = {}) {
     currentState,
     currentSession,
     sessions,
-    
+
     // 方法
     sendMessage,
     interrupt: doInterrupt,
@@ -215,7 +215,7 @@ export function useChat(options: UseChatOptions = {}) {
  */
 export function useChatInput() {
   const inputContent = ref('')
-  
+
   /**
    * 处理键盘事件
    */
@@ -227,27 +227,27 @@ export function useChatInput() {
         onSend()
       }
     }
-    
+
     // Escape 取消输入
     if (e.key === 'Escape' && inputContent.value) {
       inputContent.value = ''
     }
   }
-  
+
   /**
    * 插入文本到输入框
    */
   function insertText(text: string) {
     inputContent.value += text
   }
-  
+
   /**
    * 清空输入
    */
   function clearInput() {
     inputContent.value = ''
   }
-  
+
   return {
     inputContent,
     canSend: computed(() => inputContent.value.trim().length > 0),
@@ -264,14 +264,14 @@ export function useChatInput() {
 export function useChatHistory() {
   const aiChat = useAIChat()
   const { sessions, currentSessionId, switchSession, createSession, deleteSession } = aiChat
-  
+
   // 分组的历史记录
   const today = computed(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return sessions.value.filter(s => new Date(s.updatedAt).getTime() >= today.getTime())
   })
-  
+
   const yesterday = computed(() => {
     const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
@@ -283,7 +283,7 @@ export function useChatHistory() {
       return updated >= yesterday.getTime() && updated < today.getTime()
     })
   })
-  
+
   const thisWeek = computed(() => {
     const weekAgo = new Date()
     weekAgo.setDate(weekAgo.getDate() - 7)
@@ -296,32 +296,32 @@ export function useChatHistory() {
       return updated >= weekAgo.getTime() && updated < yesterday.getTime()
     })
   })
-  
+
   const older = computed(() => {
     const weekAgo = new Date()
     weekAgo.setDate(weekAgo.getDate() - 7)
     weekAgo.setHours(0, 0, 0, 0)
     return sessions.value.filter(s => new Date(s.updatedAt).getTime() < weekAgo.getTime())
   })
-  
+
   function searchSessions(query: string): ChatSession[] {
     const lowerQuery = query.toLowerCase()
-    return sessions.value.filter(s => 
+    return sessions.value.filter(s =>
       s.title.toLowerCase().includes(lowerQuery)
     )
   }
-  
+
   return {
     // 分组的历史记录
     today,
     yesterday,
     thisWeek,
     older,
-    
+
     // 当前
     currentId: currentSessionId,
     current: computed(() => sessions.value.find(s => s.id === currentSessionId.value)),
-    
+
     // 操作
     switch: switchSession,
     create: createSession,

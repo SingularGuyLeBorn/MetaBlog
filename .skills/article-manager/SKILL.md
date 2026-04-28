@@ -44,7 +44,7 @@ scenarios:
 3. 获取文章路径后调用 `getArticleContent(path="...")`
 
 #### 创建文章
-1. 询问文章标题和存储位置（posts/knowledge/resources）
+1. 询问文章标题和存储位置(posts/knowledge/resources)
 2. 询问内容或使用默认模板
 3. 调用 `createArticle(title="...", path="section/filename.md", content="...")`
 
@@ -58,7 +58,7 @@ scenarios:
 2. 调用 `deleteArticle(path="...", confirm=true)`
 
 ### 路径规范
-- 格式: `section/filename.md`（如 `knowledge/react-hooks.md`）
+- 格式: `section/filename.md`(如 `knowledge/react-hooks.md`)
 - 文件名: 英文小写，连字符分隔
 - 系统会自动创建缺失的文件夹
 

@@ -6,13 +6,13 @@
  * 提供基础隔离。相比主进程 eval 更安全，但不如完整 VM/容器隔离。
  *
  * 安全限制：
- * - 无 require/import（模块系统未暴露）
+ * - 无 require/import(模块系统未暴露)
  * - 无 process、fs、os、path 等 Node 内置模块
- * - 无网络访问（fetch/XMLHttpRequest 未暴露）
+ * - 无网络访问(fetch/XMLHttpRequest 未暴露)
  * - 执行超时由 vm 控制
  *
  * 适用场景：简单计算、数据转换、JSON 处理
- * 不适用：执行不可信/恶意代码（需 Monty 或容器级沙箱）
+ * 不适用：执行不可信/恶意代码(需 Monty 或容器级沙箱)
  */
 
 const vm = require('vm');
@@ -45,9 +45,9 @@ const context = {
   parseInt, parseFloat, isNaN, isFinite, encodeURIComponent, decodeURIComponent,
   Infinity, NaN, undefined,
   setTimeout: () => { throw new Error('setTimeout is not allowed in sandbox'); },
-  clearTimeout: () => {},
+  clearTimeout: () => { },
   setInterval: () => { throw new Error('setInterval is not allowed in sandbox'); },
-  clearInterval: () => {},
+  clearInterval: () => { },
 };
 
 const EXEC_TIMEOUT = 10000;

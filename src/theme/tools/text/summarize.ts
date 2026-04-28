@@ -3,7 +3,7 @@
  */
 
 import type { ToolDefinition, ToolExecutor, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 export const summarizeTextDef: ToolDefinition = {
   type: 'function',
@@ -19,7 +19,7 @@ export const summarizeTextDef: ToolDefinition = {
         },
         max_length: {
           type: 'number',
-          description: '摘要最大长度（字符数），默认200',
+          description: '摘要最大长度(字符数)，默认200',
           default: 200
         }
       },
@@ -33,7 +33,7 @@ export const summarizeTextDef: ToolDefinition = {
  */
 export const summarizeText: ToolExecutor = async (args): Promise<ToolResult> => {
   const { text, max_length = 200 } = args
-  
+
   if (!text) {
     return createErrorResult(
       'Missing text parameter',
@@ -41,12 +41,12 @@ export const summarizeText: ToolExecutor = async (args): Promise<ToolResult> => 
       '示例: summarizeText(text="长文本内容...", max_length=200)'
     )
   }
-  
-  // 简单的文本摘要（取前 max_length 个字符）
-  const summary = text.length <= max_length 
-    ? text 
+
+  // 简单的文本摘要(取前 max_length 个字符)
+  const summary = text.length <= max_length
+    ? text
     : text.substring(0, max_length) + '...'
-  
+
   return createSuccessResult(
     {
       originalLength: text.length,

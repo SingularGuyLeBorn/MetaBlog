@@ -7,17 +7,17 @@
 ```
 model-reference/zhipu/
 ├── docs/              # Markdown 文档
-│   ├── 01-基础对话（多轮）.md
+│   ├── 01-基础对话(多轮).md
 │   ├── 02-视觉理解.md
-│   ├── 03-深度思考（思维链）.md
+│   ├── 03-深度思考(思维链).md
 │   ├── 04-工具调用与结构化输出.md
 │   ├── 05-轻量视觉理解.md
 │   ├── 06-图像生成.md
 │   └── 07-视频生成.md
 ├── notebook/          # Jupyter Notebook 交互式教程
-│   ├── 01-基础对话（多轮）.ipynb
+│   ├── 01-基础对话(多轮).ipynb
 │   ├── 02-视觉理解.ipynb
-│   ├── 03-深度思考（思维链）.ipynb
+│   ├── 03-深度思考(思维链).ipynb
 │   ├── 04-工具调用与结构化输出.ipynb
 │   ├── 05-轻量视觉理解.ipynb
 │   ├── 06-图像生成.ipynb
@@ -39,7 +39,7 @@ model-reference/zhipu/
 
 ## 📖 详细文档
 
-### 01-基础对话（多轮） - [文档](docs/01-基础对话（多轮）.md) | [Notebook](notebook/01-基础对话（多轮）.ipynb)
+### 01-基础对话(多轮) - [文档](docs/01-基础对话(多轮).md) | [Notebook](notebook/01-基础对话(多轮).ipynb)
 
 **GLM-4.7-Flash** - 旗舰级文本模型，支持深度思考模式
 
@@ -58,7 +58,7 @@ model-reference/zhipu/
 - ✅ **可选思考模式** - 深度分析图像内容
 - ✅ **原生工具调用** - Function Call 原生支持
 
-### 03-深度思考（思维链） - [文档](docs/03-深度思考（思维链）.md) | [Notebook](notebook/03-深度思考（思维链）.ipynb)
+### 03-深度思考(思维链) - [文档](docs/03-深度思考(思维链).md) | [Notebook](notebook/03-深度思考(思维链).ipynb)
 
 **GLM-4.1V-Thinking-Flash** - 视觉深度推理专家
 

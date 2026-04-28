@@ -2,7 +2,7 @@
   EntityLinkCard - 实体链接卡片组件
 
   在消息气泡下方展示工具执行产生的可点击实体链接
-  （飞书文档、GitHub Repo、语雀文档等）
+  (飞书文档、GitHub Repo、语雀文档等)
 -->
 <template>
   <a
@@ -23,8 +23,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { EntityLink } from '@/theme/utils/extractEntityLinks'
+import type { EntityLink } from '@/theme/utils/extractEntityLinks';
+import { computed } from 'vue';
 
 interface Props {
   link: EntityLink

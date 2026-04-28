@@ -14,7 +14,7 @@
 | `logo_sheet_modern_v1.png` | **Modern Mix** | 包含 6 款现代简约图标。 |
 | `logo_sheet_agent_v1.png` | **Agentic Icons** | 4 款侧重于 AI Scribe 和门户架构的设计。 |
 | `logo_sheet_abstract_v1.png` | **Abstract Concepts** | 4 款侧重于递归与连接的概念图。 |
-| `logo_circuit_v1.png` | **Precision Circuitry** | 最初的电路风格（仅作参考）。 |
+| `logo_circuit_v1.png` | **Precision Circuitry** | 最初的电路风格(仅作参考)。 |
 
 ## 🎨 设计理念
 

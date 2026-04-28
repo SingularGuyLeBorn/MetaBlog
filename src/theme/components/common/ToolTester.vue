@@ -294,8 +294,8 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, watch, onMounted } from 'vue'
-import { executeTool as executeRealTool, hasTool, initializeDefaultTools } from '@/theme/tools'
+import { executeTool as executeRealTool, hasTool } from '@/theme/tools'
+import { computed, reactive, ref, watch } from 'vue'
 
 // ============ 工具定义 ============
 
@@ -352,7 +352,7 @@ const toolCategories = [
             },
             start_line: {
               type: 'integer',
-              description: '起始行号（从1开始）'
+              description: '起始行号(从1开始)'
             },
             end_line: {
               type: 'integer',
@@ -414,7 +414,7 @@ const toolCategories = [
             },
             content: { 
               type: 'string', 
-              description: '文章内容（Markdown）'
+              description: '文章内容(Markdown)'
             },
             tags: {
               type: 'array',
@@ -454,7 +454,7 @@ const toolCategories = [
             },
             position: {
               type: 'integer',
-              description: '插入位置（仅在 mode=insert 时有效）'
+              description: '插入位置(仅在 mode=insert 时有效)'
             },
             after_section: {
               type: 'string',
@@ -520,7 +520,7 @@ const toolCategories = [
             },
             timeout: {
               type: 'integer',
-              description: '超时时间（秒），默认30'
+              description: '超时时间(秒)，默认30'
             },
             headers: {
               type: 'object',
@@ -578,7 +578,7 @@ const toolCategories = [
             },
             include_stats: {
               type: 'boolean',
-              description: '是否包含统计信息（stars、forks 等）'
+              description: '是否包含统计信息(stars、forks 等)'
             }
           },
           required: ['owner', 'repo']
@@ -918,7 +918,7 @@ async function executeTool() {
         error: errorMessage,
         code: 'EXECUTION_ERROR',
         stack: errorStack,
-        suggestion: '请检查：\n1. 工具名称是否正确\n2. 参数是否符合要求\n3. 网络连接是否正常（网络工具）\n4. 查看浏览器控制台获取详细错误信息'
+        suggestion: '请检查：\n1. 工具名称是否正确\n2. 参数是否符合要求\n3. 网络连接是否正常(网络工具)\n4. 查看浏览器控制台获取详细错误信息'
       }
     }
     errorCount.value++

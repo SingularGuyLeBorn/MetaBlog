@@ -58,9 +58,9 @@ usageScenarios:
 - `document_id = AbCdEfGh`
 
 ### block_id
-文档内块（Block）的唯一标识。文档由多个块组成（标题、文本、列表、代码块等）。
+文档内块(Block)的唯一标识。文档由多个块组成(标题、文本、列表、代码块等)。
 - 要获取 block_id，先调用 `feishuDocBlocks(document_id)`
-- 每个块有 `block_type`（2=文本, 3=heading1, 4=heading2, ... 14=代码块, 15=引用）
+- 每个块有 `block_type`(2=文本, 3=heading1, 4=heading2, ... 14=代码块, 15=引用)
 
 ## 工作流
 
@@ -75,22 +75,22 @@ feishuDocCreate(
 
 ### 2. 插入复杂排版 (公式与代码)
 
-#### 数学公式（⚠️ 必须严格遵守）
+#### 数学公式(⚠️ 必须严格遵守)
 飞书文档支持 LaTeX 公式渲染，但**只有被 `$` 包裹的公式才能被正确识别和渲染**。
 
 **绝对禁止**：将公式写成纯文本，如 `J(θ) = E[...]`、`log π(a|s)` 等。
 
-**必须写成**（标准 LaTeX 语法，无需额外转义）：
-- 行内公式（短公式，嵌入段落中）：`$J(\theta) = \mathbb{E}_{\pi_\theta}[\log \pi_\theta(a|s) \cdot A(s,a)]$`
-- 块级公式（重要公式，独立一行）：`$$\mathcal{L}_{PPO}(\theta) = \mathbb{E}_{t}[\min(r_t(\theta)\hat{A}_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\hat{A}_t)]$$`
+**必须写成**(标准 LaTeX 语法，无需额外转义)：
+- 行内公式(短公式，嵌入段落中)：`$J(\theta) = \mathbb{E}_{\pi_\theta}[\log \pi_\theta(a|s) \cdot A(s,a)]$`
+- 块级公式(重要公式，独立一行)：`$$\mathcal{L}_{PPO}(\theta) = \mathbb{E}_{t}[\min(r_t(\theta)\hat{A}_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\hat{A}_t)]$$`
 
-**重要提醒**：你只需写标准 LaTeX 语法（如 `\pi`、`\theta`、`\frac`），JSON 序列化由框架自动处理。不要在 content 中写双重反斜杠（如 `\\pi`），否则飞书会渲染为 `\pi` 纯文本。
+**重要提醒**：你只需写标准 LaTeX 语法(如 `\pi`、`\theta`、`\frac`)，JSON 序列化由框架自动处理。不要在 content 中写双重反斜杠(如 `\\pi`)，否则飞书会渲染为 `\pi` 纯文本。
 
 **常见错误自查**：
 - ❌ `KL divergence: D_KL(π_θ || π_ref)` → ✅ `$D_{KL}(\pi_\theta \| \pi_{ref})$`
 - ❌ `reward = r + γV(s')` → ✅ `$r + \gamma V(s')$`
 - ❌ `PPO loss = E[min(...)]` → ✅ `$\mathcal{L}_{PPO} = \mathbb{E}[\min(\cdots)]$`
-- ❌ `\\pi`（双重反斜杠） → ✅ `\pi`（标准 LaTeX）
+- ❌ `\\pi`(双重反斜杠) → ✅ `\pi`(标准 LaTeX)
 
 后端会自动将 `$...$` 和 `$$...$$` 转换为飞书原生公式节点。**如果公式没有用 `$` 包裹，飞书会显示为纯文本，完全无法渲染。**
 
@@ -144,7 +144,7 @@ feishuUserSearch(email="zhangsan@company.com")
 
 ## 注意事项
 - **更新/删除前必须先获取块结构**：飞书 API 要求知道块在文档中的位置
-- **追加内容**：使用 `feishuDocAppend`，可以传 `content`（纯文本字符串，自动分段）或 `blocks`（飞书块格式数组）
+- **追加内容**：使用 `feishuDocAppend`，可以传 `content`(纯文本字符串，自动分段)或 `blocks`(飞书块格式数组)
 - **搜索文档**：`feishuDocSearch` 在云空间中搜索，不是搜索单个文档内容
 - **文档权限**：应用创建的文档默认归应用所有，如需共享给用户，需额外授予权限
 

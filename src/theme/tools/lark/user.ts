@@ -1,5 +1,5 @@
 import type { ToolDefinition, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 const API_BASE = '/api/lark'
 
@@ -33,8 +33,8 @@ export const feishuUserSearchDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        query: { type: 'string', description: '查询内容（手机号、邮箱、姓名等）' },
-        type: { type: 'string', enum: ['phone', 'email', 'keyword'], description: '查询类型：phone=手机号, email=邮箱, keyword=姓名/部门关键词（默认 keyword）', default: 'keyword' },
+        query: { type: 'string', description: '查询内容(手机号、邮箱、姓名等)' },
+        type: { type: 'string', enum: ['phone', 'email', 'keyword'], description: '查询类型：phone=手机号, email=邮箱, keyword=姓名/部门关键词(默认 keyword)', default: 'keyword' },
       },
       required: ['query'],
     },
@@ -50,9 +50,9 @@ export const feishuUserSearch = async (args: Record<string, any>): Promise<ToolR
     const users = result.data?.user_list || result.data?.user_ids || []
     const formatted = Array.isArray(users) && users.length > 0
       ? users.map((u: any, i: number) => {
-          const info = u.user_id ? u : u.user
-          return `${i + 1}. ${info?.name || '未知'} (${info?.email || info?.mobile || ''})\n   open_id: ${info?.open_id || info?.user_id || ''}`
-        }).join('\n\n')
+        const info = u.user_id ? u : u.user
+        return `${i + 1}. ${info?.name || '未知'} (${info?.email || info?.mobile || ''})\n   open_id: ${info?.open_id || info?.user_id || ''}`
+      }).join('\n\n')
       : '未找到用户'
     return createSuccessResult(result.data, formatted, 'feishuUserSearch')
   } catch (error: any) {

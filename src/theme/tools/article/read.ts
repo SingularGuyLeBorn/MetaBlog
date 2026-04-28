@@ -5,14 +5,13 @@
  */
 
 import type { ToolDefinition, ToolExecutor } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 import {
   API_BASE,
-  extractSection,
-  validateNoTraversal,
-  validateSectionPath,
-  normalizeFilePath,
   handleApiResponse,
+  normalizeFilePath,
+  validateNoTraversal,
+  validateSectionPath
 } from './utils'
 
 /** 获取文章内容 */
@@ -20,13 +19,13 @@ export const getArticleContentDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'getArticleContent',
-    description: '获取指定文章的内容。支持分段读取长文章。路径建议先通过 listArticles 或 searchArticles 获得。只能读取允许板块内的文章（posts、knowledge、resources）。',
+    description: '获取指定文章的内容。支持分段读取长文章。路径建议先通过 listArticles 或 searchArticles 获得。只能读取允许板块内的文章(posts、knowledge、resources)。',
     parameters: {
       type: 'object',
       properties: {
         path: { type: 'string', description: '文章的相对路径，例如 "posts/my-article.md" 或 "knowledge/folder/index.md"' },
         max_length: { type: 'number', description: '最大返回字符数，默认 100000。文章很长时建议分段读取。', default: 100000 },
-        start_line: { type: 'number', description: '起始行号（从1开始），用于分段读取长文章。配合 max_length 使用。' },
+        start_line: { type: 'number', description: '起始行号(从1开始)，用于分段读取长文章。配合 max_length 使用。' },
         end_line: { type: 'number', description: '结束行号，用于分段读取长文章。' }
       },
       required: ['path']
@@ -103,13 +102,13 @@ export const getArticleContent: ToolExecutor = async (args) => {
       const truncatedLines = truncatedContent.split('\n').length
       content = truncatedContent +
         `\n\n---` +
-        `\n[内容已截断] 本文共 ${totalLines} 行，当前显示前 ${truncatedLines} 行（约 ${max_length} 字符）。` +
+        `\n[内容已截断] 本文共 ${totalLines} 行，当前显示前 ${truncatedLines} 行(约 ${max_length} 字符)。` +
         `\n如需继续阅读，请调用 getArticleContent(path="${path}", start_line=${truncatedLines + 1}, max_length=${max_length})`
     }
 
     return createSuccessResult(
       content,
-      `成功读取文章（${isTruncated ? '已截断，' : ''}${content.length} 字符）`,
+      `成功读取文章(${isTruncated ? '已截断，' : ''}${content.length} 字符)`,
       'getArticleContent'
     )
   } catch (error) {

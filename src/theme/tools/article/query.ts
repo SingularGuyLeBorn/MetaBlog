@@ -1,14 +1,14 @@
 /**
  * ============================================================================
- * 文章管理工具 — 查询操作（搜索 / 列表）
+ * 文章管理工具 — 查询操作(搜索 / 列表)
  * ============================================================================
  */
 
 import type { ToolDefinition, ToolExecutor } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 import {
-  API_BASE,
   ALLOWED_SECTIONS,
+  API_BASE,
   extractSection,
   handleApiResponse,
 } from './utils'
@@ -18,7 +18,7 @@ export const searchArticlesDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'searchArticles',
-    description: '在博客中搜索文章。只搜索允许板块内的文章（posts、knowledge、resources）。',
+    description: '在博客中搜索文章。只搜索允许板块内的文章(posts、knowledge、resources)。',
     parameters: {
       type: 'object',
       properties: {
@@ -34,12 +34,12 @@ export const listArticlesDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'listArticles',
-    description: '列出博客中的文章及其路径信息。只列出允许板块内的文章（posts、knowledge、resources）。',
+    description: '列出博客中的文章及其路径信息。只列出允许板块内的文章(posts、knowledge、resources)。',
     parameters: {
       type: 'object',
       properties: {
         section: { type: 'string', description: '指定板块，必须是 "posts"、"knowledge" 或 "resources" 之一' },
-        folder_path: { type: 'string', description: '指定子文件夹路径（相对 sections/）' },
+        folder_path: { type: 'string', description: '指定子文件夹路径(相对 sections/)' },
         limit: { type: 'number', description: '最大返回数量，默认 50' }
       }
     }
@@ -92,7 +92,7 @@ export const searchArticles: ToolExecutor = async (args) => {
   }
 }
 
-/** 列出文章 — 只列出 sections/ 目录下的内容（文章相关） */
+/** 列出文章 — 只列出 sections/ 目录下的内容(文章相关) */
 export const listArticles: ToolExecutor = async (args) => {
   const { section, folder_path, limit = 50 } = args
 
@@ -123,7 +123,7 @@ export const listArticles: ToolExecutor = async (args) => {
 
     if (!result.success) return result
 
-    // 过滤掉非文章相关的文件（如 node_modules）
+    // 过滤掉非文章相关的文件(如 node_modules)
     let filteredItems = (result.data || []).filter((item: any) => {
       // 排除常见的非内容目录和文件
       const excludePatterns = [

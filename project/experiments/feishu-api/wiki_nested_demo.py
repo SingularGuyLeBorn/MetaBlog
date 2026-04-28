@@ -6,7 +6,7 @@
 # 复制到 notebook cell 中运行
 
 cells = '''
-# 15.5b 创建多层嵌套子文档（3层，6个）并写入内容
+# 15.5b 创建多层嵌套子文档(3层，6个)并写入内容
 
 # 第2层：文档1下的3个子文档
 child_1 = client.create_wiki_node(

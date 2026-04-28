@@ -11,10 +11,10 @@ export interface ValidationResult {
   error?: { code: string; message: string };
 }
 
-/** GitHub username/organization 正则（最多 39 字符，允许字母、数字、连字符、下划线、点号） */
+/** GitHub username/organization 正则(最多 39 字符，允许字母、数字、连字符、下划线、点号) */
 const OWNER_REGEX = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/;
 
-/** GitHub 仓库名正则（最多 100 字符） */
+/** GitHub 仓库名正则(最多 100 字符) */
 const REPO_REGEX = /^[a-zA-Z0-9._-]{1,100}$/;
 
 function fail(code: string, message: string): ValidationResult {
@@ -28,7 +28,7 @@ function ok(): ValidationResult {
 /** 校验 owner */
 export function validateOwner(owner: unknown): ValidationResult {
   if (!owner || typeof owner !== "string") {
-    return fail("MISSING_OWNER", "请提供仓库所有者（owner）");
+    return fail("MISSING_OWNER", "请提供仓库所有者(owner)");
   }
   if (owner.length > 39) {
     return fail("OWNER_TOO_LONG", "仓库所有者名称不能超过 39 个字符");
@@ -42,7 +42,7 @@ export function validateOwner(owner: unknown): ValidationResult {
 /** 校验 repo */
 export function validateRepo(repo: unknown): ValidationResult {
   if (!repo || typeof repo !== "string") {
-    return fail("MISSING_REPO", "请提供仓库名称（repo）");
+    return fail("MISSING_REPO", "请提供仓库名称(repo)");
   }
   if (repo.length > 100) {
     return fail("REPO_TOO_LONG", "仓库名称不能超过 100 个字符");
@@ -63,7 +63,7 @@ export function validateOwnerRepo(
   return validateRepo(repo);
 }
 
-/** 校验文件/目录路径（禁止目录遍历） */
+/** 校验文件/目录路径(禁止目录遍历) */
 export function validatePath(path: unknown): ValidationResult {
   if (typeof path !== "string") {
     return fail("INVALID_PATH", "路径必须是字符串");

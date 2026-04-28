@@ -4,7 +4,7 @@
  * ============================================================================
  *
  * 将飞书 REST API 的错误响应翻译为中文友好提示。
- * 覆盖 HTTP 状态码 + 飞书业务错误码（code 字段）。
+ * 覆盖 HTTP 状态码 + 飞书业务错误码(code 字段)。
  */
 
 export interface LarkErrorTranslation {
@@ -55,7 +55,7 @@ function extractCode(errorMsg: string): number | undefined {
  * - 99991669: API 调用配额已用完
  * - 99991670: 应用未启用
  * - 99991671: 权限不足
- * - 99991672: 缺少必要的权限范围（scope）
+ * - 99991672: 缺少必要的权限范围(scope)
  * - 99991673: 应用未获得授权
  * - 99991674: 租户未开通该功能
  * - 99991675: 该 API 已废弃
@@ -69,7 +69,7 @@ function extractCode(errorMsg: string): number | undefined {
  * - 99992103: 数据冲突
  * - 99992104: 数据已过期
  * - 99993005: 用户未授权应用
- * - 100004: 请求过于频繁（业务限流）
+ * - 100004: 请求过于频繁(业务限流)
  * - 112000: 应用无权限
  * - 112001: 租户无权限
  * - 112002: 用户无权限
@@ -94,7 +94,7 @@ function extractCode(errorMsg: string): number | undefined {
  * - 1770003: 无权限访问该文档
  * - 1770004: 文档块不存在
  * - 1770005: 文档块已被删除
- * - 1770006: 文档版本冲突（并发编辑）
+ * - 1770006: 文档版本冲突(并发编辑)
  * - 1770007: 请求体过大
  * - 177004: 文档已被删除
  * - 177005: 文档无权限访问
@@ -106,7 +106,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   const lower = errorMsg.toLowerCase();
   const bizCode = code ?? extractCode(errorMsg);
 
-  // ── 1. 精确业务错误码匹配（优先级最高）──
+  // ── 1. 精确业务错误码匹配(优先级最高)──
 
   // 99991xxx — Token/认证
   if (bizCode === 99991400 || bizCode === 99991401 || lower.includes("tenant_access_token") || lower.includes("app_access_token")) {
@@ -118,7 +118,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 99991403) {
     return {
       message: "应用无权限调用此 API",
-      suggestion: "当前应用未获得该 API 的调用权限，请在飞书开发者后台检查并申请对应的权限范围（scope）",
+      suggestion: "当前应用未获得该 API 的调用权限，请在飞书开发者后台检查并申请对应的权限范围(scope)",
     };
   }
   if (bizCode === 99991405) {
@@ -188,13 +188,13 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 99991671) {
     return {
       message: "权限不足",
-      suggestion: "当前身份（应用/用户）没有执行该操作的权限，请检查应用权限范围（scope）或用户角色",
+      suggestion: "当前身份(应用/用户)没有执行该操作的权限，请检查应用权限范围(scope)或用户角色",
     };
   }
   if (bizCode === 99991672) {
     return {
-      message: "缺少必要的权限范围（scope）",
-      suggestion: "当前应用缺少执行此操作所需的权限范围（scope），请在飞书开发者后台申请并发布对应权限",
+      message: "缺少必要的权限范围(scope)",
+      suggestion: "当前应用缺少执行此操作所需的权限范围(scope)，请在飞书开发者后台申请并发布对应权限",
     };
   }
   if (bizCode === 99991673) {
@@ -246,7 +246,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 99992002) {
     return {
       message: "业务逻辑错误",
-      suggestion: "当前操作不符合业务逻辑（如状态不允许、前置条件未满足），请确认业务规则后重试",
+      suggestion: "当前操作不符合业务逻辑(如状态不允许、前置条件未满足)，请确认业务规则后重试",
     };
   }
   if (bizCode === 99992101) {
@@ -264,7 +264,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 99992103) {
     return {
       message: "数据冲突",
-      suggestion: "当前操作与已有数据发生冲突（如并发修改），请刷新后重试",
+      suggestion: "当前操作与已有数据发生冲突(如并发修改)，请刷新后重试",
     };
   }
   if (bizCode === 99992104) {
@@ -285,7 +285,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   // 100xxx — 限流
   if (bizCode === 100004 || lower.includes("100004")) {
     return {
-      message: "请求过于频繁（业务限流）",
+      message: "请求过于频繁(业务限流)",
       suggestion: "飞书 API 触发了业务层频率限制，请降低请求频率，稍后重试",
     };
   }
@@ -294,7 +294,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 112000 || lower.includes("112000")) {
     return {
       message: "应用无权限",
-      suggestion: "当前应用未获得该 API 的调用权限，请在飞书开发者后台检查并申请对应的权限范围（scope）",
+      suggestion: "当前应用未获得该 API 的调用权限，请在飞书开发者后台检查并申请对应的权限范围(scope)",
     };
   }
   if (bizCode === 112001 || lower.includes("112001")) {
@@ -326,13 +326,13 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 113000 || lower.includes("113000")) {
     return {
       message: "资源不存在",
-      suggestion: "请检查资源 ID（如文档、表格、日历、群聊 ID）是否正确",
+      suggestion: "请检查资源 ID(如文档、表格、日历、群聊 ID)是否正确",
     };
   }
   if (bizCode === 113001 || lower.includes("113001")) {
     return {
       message: "资源已存在",
-      suggestion: "尝试创建的资源（如群聊名称、日历名称）已存在，请更换名称或使用查询/更新接口",
+      suggestion: "尝试创建的资源(如群聊名称、日历名称)已存在，请更换名称或使用查询/更新接口",
     };
   }
   if (bizCode === 113002 || lower.includes("113002")) {
@@ -344,7 +344,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 113003 || lower.includes("113003")) {
     return {
       message: "资源已过期",
-      suggestion: "该资源（如分享链接、临时凭证）已过期，请重新获取",
+      suggestion: "该资源(如分享链接、临时凭证)已过期，请重新获取",
     };
   }
 
@@ -366,7 +366,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 131001) {
     return {
       message: "文档创建失败",
-      suggestion: "文档创建失败，请检查参数（如标题、父目录、文档类型）是否正确，或稍后重试",
+      suggestion: "文档创建失败，请检查参数(如标题、父目录、文档类型)是否正确，或稍后重试",
     };
   }
   if (bizCode === 131002 || lower.includes("131002")) {
@@ -416,7 +416,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 1770001 || lower.includes("1770001")) {
     return {
       message: "飞书文档 API 参数不合法",
-      suggestion: "传入的参数不符合飞书文档 API 要求。常见原因：1) block_type 与内容不匹配（如用 text block 传了公式内容）；2) content 字段格式错误；3) 缺少必填参数（如 document_id、block_id）。请检查参数类型和格式，参考飞书文档 API 规范",
+      suggestion: "传入的参数不符合飞书文档 API 要求。常见原因：1) block_type 与内容不匹配(如用 text block 传了公式内容)；2) content 字段格式错误；3) 缺少必填参数(如 document_id、block_id)。请检查参数类型和格式，参考飞书文档 API 规范",
     };
   }
   if (bizCode === 1770002 || lower.includes("1770002")) {
@@ -445,7 +445,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   }
   if (bizCode === 1770006 || lower.includes("1770006")) {
     return {
-      message: "文档版本冲突（并发编辑）",
+      message: "文档版本冲突(并发编辑)",
       suggestion: "该文档正在被其他用户或应用编辑，请稍后重试",
     };
   }
@@ -472,7 +472,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 230301 || lower.includes("230301")) {
     return {
       message: "表格范围无效",
-      suggestion: "请检查表格范围参数（如 A1:B2）格式是否正确，或是否超出了表格实际大小",
+      suggestion: "请检查表格范围参数(如 A1:B2)格式是否正确，或是否超出了表格实际大小",
     };
   }
   if (bizCode === 230302) {
@@ -488,7 +488,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
     };
   }
 
-  // ── 2. 前缀范围匹配（确保任何未精确覆盖的码都有方向）──
+  // ── 2. 前缀范围匹配(确保任何未精确覆盖的码都有方向)──
   if (bizCode) {
     const codeStr = bizCode.toString();
 
@@ -537,7 +537,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
     if (codeStr.startsWith("112")) {
       return {
         message: `权限或授权范围错误 (错误码: ${bizCode})`,
-        suggestion: "应用、用户或 IP 权限不足，请在飞书开发者后台检查权限范围（scope）和安全设置",
+        suggestion: "应用、用户或 IP 权限不足，请在飞书开发者后台检查权限范围(scope)和安全设置",
       };
     }
     if (codeStr.startsWith("113")) {
@@ -588,19 +588,19 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (lower.includes("403") || lower.includes("forbidden")) {
     return {
       message: "没有权限访问该资源",
-      suggestion: "请检查应用是否有对应 API 的权限范围（scope），或用户是否有该资源的访问权限",
+      suggestion: "请检查应用是否有对应 API 的权限范围(scope)，或用户是否有该资源的访问权限",
     };
   }
   if (lower.includes("404") || lower.includes("not found")) {
     return {
       message: "资源不存在",
-      suggestion: "请检查参数是否正确（如 document_id、space_id、user_id、chat_id 等）",
+      suggestion: "请检查参数是否正确(如 document_id、space_id、user_id、chat_id 等)",
     };
   }
   if (lower.includes("405") || lower.includes("method not allowed")) {
     return {
       message: "HTTP 方法不被允许",
-      suggestion: "请确认使用的 HTTP 方法（GET/POST/PUT/DELETE）与该 API 要求一致",
+      suggestion: "请确认使用的 HTTP 方法(GET/POST/PUT/DELETE)与该 API 要求一致",
     };
   }
   if (lower.includes("406") || lower.includes("not acceptable")) {

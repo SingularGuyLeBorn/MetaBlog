@@ -1,15 +1,15 @@
 /**
  * Chat Storage Service - 后端API数据源
  * 
- * 数据源：后端API（唯一数据源）
+ * 数据源：后端API(唯一数据源)
  * 原则：
  * - 所有会话和消息通过API持久化到后端
  * - 内存只做临时缓存
  * - 空状态由UI处理
  */
 
-import type { ChatSession, ChatMessage, MessageGroup, SessionConfig } from '@/theme/types'
-import { API_ENDPOINTS, API_CONFIG } from '@/theme/api/config'
+import { API_CONFIG, API_ENDPOINTS } from '@/theme/api/config'
+import type { ChatSession, MessageGroup, SessionConfig } from '@/theme/types'
 
 // API响应格式
 interface ApiResponse<T> {
@@ -28,11 +28,11 @@ const cache = {
 
 let apiAvailable = true
 
-// 端点级别的404（如特定session不存在）不应该禁用整个API
+// 端点级别的404(如特定session不存在)不应该禁用整个API
 // 只有基础API端点不存在时才禁用
 function isEndpointNotFound(url: string, status: number): boolean {
   if (status !== 404) return false
-  // 检查是否是基础端点（如 /api/sessions）而不是特定资源（如 /api/sessions/xxx）
+  // 检查是否是基础端点(如 /api/sessions)而不是特定资源(如 /api/sessions/xxx)
   const baseEndpoints = ['/api/sessions', '/api/agents', '/api/skills']
   const isBaseEndpoint = baseEndpoints.some(endpoint => url === endpoint || url.startsWith(`${endpoint}?`))
   return isBaseEndpoint
@@ -45,7 +45,7 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout)
-  
+
   try {
     const response = await fetch(url, {
       ...options,
@@ -55,19 +55,19 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
         ...options.headers,
       },
     })
-    
+
     clearTimeout(timeoutId)
-    
+
     if (!response.ok) {
       // 只有基础API端点返回404时才禁用API
-      // 特定资源不存在（如某个session ID不存在）是正常的业务逻辑，不应禁用API
+      // 特定资源不存在(如某个session ID不存在)是正常的业务逻辑，不应禁用API
       if (response.status === 404 && isEndpointNotFound(url, response.status)) {
         apiAvailable = false
         console.warn('[ChatStorage] API endpoint not available (404):', url)
       }
       throw new Error(`API Error: ${response.status} ${response.statusText}`)
     }
-    
+
     const contentType = response.headers.get('content-type')
     if (!contentType || !contentType.includes('application/json')) {
       const text = await response.text()
@@ -77,13 +77,13 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
       }
       throw new Error('API did not return JSON')
     }
-    
+
     const result = await response.json() as ApiResponse<T>
-    
+
     if (!result.success) {
       throw new Error(result.error || 'API returned unsuccessful response')
     }
-    
+
     return result.data as T
   } catch (error: any) {
     clearTimeout(timeoutId)
@@ -107,7 +107,7 @@ export function resetApiStatus(): void {
 
 export async function getSessions(): Promise<ChatSession[]> {
   if (cache.sessions) return cache.sessions
-  
+
   try {
     const sessions = await apiRequest<ChatSession[]>(API_ENDPOINTS.SESSIONS)
     cache.sessions = sessions
@@ -137,7 +137,7 @@ export async function createSession(params?: { id?: string; title?: string; conf
       method: 'POST',
       body: JSON.stringify(params || {}),
     })
-    
+
     cache.sessions = null
     return session
   } catch (e) {
@@ -152,7 +152,7 @@ export async function updateSession(id: string, updates: Partial<ChatSession>): 
       method: 'PUT',
       body: JSON.stringify(updates),
     })
-    
+
     cache.sessions = null
     return session
   } catch (e: any) {
@@ -170,7 +170,7 @@ export async function deleteSession(id: string): Promise<boolean> {
     await apiRequest(API_ENDPOINTS.SESSION_DETAIL(id), {
       method: 'DELETE',
     })
-    
+
     cache.sessions = null
     delete cache.messageGroups[id]
     return true
@@ -184,7 +184,7 @@ export async function deleteSession(id: string): Promise<boolean> {
 
 export async function getMessageGroups(sessionId: string): Promise<MessageGroup[]> {
   if (cache.messageGroups[sessionId]) return cache.messageGroups[sessionId]
-  
+
   try {
     const groups = await apiRequest<MessageGroup[]>(API_ENDPOINTS.MESSAGES(sessionId))
     cache.messageGroups[sessionId] = groups
@@ -201,7 +201,7 @@ export async function saveMessageGroup(sessionId: string, group: MessageGroup): 
       method: 'POST',
       body: JSON.stringify({ group }),
     })
-    
+
     cache.messageGroups[sessionId] = null as any
     return true
   } catch (e: any) {
@@ -220,14 +220,14 @@ export async function saveMessageGroup(sessionId: string, group: MessageGroup): 
 export async function updateMessageGroup(sessionId: string, groupId: string, updates: Partial<MessageGroup>): Promise<boolean> {
   // 先获取当前所有消息组
   const groups = await getMessageGroups(sessionId)
-  
+
   // 找到并更新指定的消息组
   const index = groups.findIndex(g => g.userMessage.id === groupId || g.aiVersions.some(v => v.id === groupId))
   if (index === -1) return false
-  
+
   // 应用更新
   groups[index] = { ...groups[index], ...updates } as MessageGroup
-  
+
   // 批量保存所有消息组
   return saveAllMessageGroups(sessionId, groups)
 }
@@ -235,13 +235,13 @@ export async function updateMessageGroup(sessionId: string, groupId: string, upd
 export async function deleteMessageGroup(sessionId: string, groupId: string): Promise<boolean> {
   // 先获取当前所有消息组
   const groups = await getMessageGroups(sessionId)
-  
+
   // 过滤掉要删除的消息组
   const filteredGroups = groups.filter(g => g.userMessage.id !== groupId && !g.aiVersions.some(v => v.id === groupId))
-  
+
   // 如果数量没变，说明没找到
   if (filteredGroups.length === groups.length) return false
-  
+
   // 批量保存剩余的消息组
   return saveAllMessageGroups(sessionId, filteredGroups)
 }
@@ -254,7 +254,7 @@ export async function saveAllMessageGroups(sessionId: string, groups: MessageGro
       method: 'POST',
       body: JSON.stringify({ groups }),
     })
-    
+
     cache.messageGroups[sessionId] = groups
     return true
   } catch (e: any) {

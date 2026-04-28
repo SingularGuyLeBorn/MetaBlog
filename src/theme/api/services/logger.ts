@@ -1,15 +1,15 @@
 /**
- * 结构化日志系统（服务端存储版）
+ * 结构化日志系统(服务端存储版)
  * 
  * 功能：
- * 1. 组件生命周期日志（挂载、更新、卸载）
+ * 1. 组件生命周期日志(挂载、更新、卸载)
  * 2. 对话完整链路追踪
  * 3. 工具调用记录
  * 4. 支持搜索和筛选
  * 5. 日志存储到服务端文件系统
  */
 
-import { ref, computed, type Ref } from 'vue'
+import { computed, ref, type Ref } from 'vue'
 
 // ==================== 类型定义 ====================
 
@@ -17,7 +17,7 @@ import { ref, computed, type Ref } from 'vue'
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 /** 日志类别 */
-export type LogCategory = 
+export type LogCategory =
   | 'lifecycle'    // 组件生命周期
   | 'chat'         // 对话相关
   | 'tool'         // 工具调用
@@ -27,7 +27,7 @@ export type LogCategory =
   | 'media'        // 多媒体/文件上传
 
 /** 组件生命周期事件 */
-export type LifecycleEvent = 
+export type LifecycleEvent =
   | 'created'
   | 'mounted'
   | 'updated'
@@ -114,17 +114,17 @@ function generateId(): string {
 /** 批量写入日志到服务端 */
 async function flushLogs() {
   if (logBuffer.length === 0) return
-  
+
   const entries = [...logBuffer]
   logBuffer = []
-  
+
   try {
     const response = await fetch('/api/logs/batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ logs: entries })
     })
-    
+
     if (!response.ok) {
       // 检查是否是 HTML 错误页面
       const contentType = response.headers.get('content-type')
@@ -144,7 +144,7 @@ async function flushLogs() {
 function scheduleFlush() {
   if (flushTimer) return
   if (typeof window === 'undefined') return
-  
+
   flushTimer = window.setTimeout(() => {
     flushLogs()
     flushTimer = null
@@ -155,27 +155,27 @@ function scheduleFlush() {
 export function addLog(entry: Omit<LogEntry, 'id' | 'timestamp'>): LogEntry | null {
   // SSR 环境下直接返回 null
   if (typeof window === 'undefined') return null
-  
+
   if (!isRecording.value) return null
-  
+
   const fullEntry: LogEntry = {
     id: generateId(),
     timestamp: Date.now(),
     ...entry
   }
-  
-  // 添加到本地缓存（用于实时显示）
+
+  // 添加到本地缓存(用于实时显示)
   logs.value.push(fullEntry)
-  
+
   // 限制本地缓存数量
   if (logs.value.length > 1000) {
     logs.value = logs.value.slice(-1000)
   }
-  
+
   // 添加到批量写入缓冲区
   logBuffer.push(fullEntry)
   scheduleFlush()
-  
+
   return fullEntry
 }
 
@@ -191,18 +191,18 @@ export async function loadLogs(filter: LogFilter = {}): Promise<LogEntry[]> {
     if (filter.endTime) params.append('endTime', filter.endTime.toString())
     if (filter.limit) params.append('limit', filter.limit.toString())
     if (filter.offset) params.append('offset', filter.offset.toString())
-    
+
     const response = await fetch(`/api/logs/query?${params}`)
-    
+
     // 检查 Content-Type，避免解析 HTML 错误页面
     const contentType = response.headers.get('content-type')
     if (!contentType || !contentType.includes('application/json')) {
       console.warn('[Logger] Server returned non-JSON response, skipping log load')
       return []
     }
-    
+
     const result = await response.json()
-    
+
     if (result.success) {
       logs.value = result.data
       return result.data
@@ -218,16 +218,16 @@ export async function loadLogs(filter: LogFilter = {}): Promise<LogEntry[]> {
 export async function loadStats(): Promise<LogStats | null> {
   try {
     const response = await fetch('/api/logs/stats')
-    
+
     // 检查 Content-Type，避免解析 HTML 错误页面
     const contentType = response.headers.get('content-type')
     if (!contentType || !contentType.includes('application/json')) {
       console.warn('[Logger] Server returned non-JSON response, skipping stats load')
       return null
     }
-    
+
     const result = await response.json()
-    
+
     if (result.success) {
       stats.value = result.data
       return result.data
@@ -242,19 +242,19 @@ export async function loadStats(): Promise<LogStats | null> {
 /** 清空日志 */
 export async function clearLogs(days?: number): Promise<boolean> {
   try {
-    const response = await fetch('/api/logs/cleanup', { 
+    const response = await fetch('/api/logs/cleanup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ days: days ?? 0 })  // days=0 表示清空所有
     })
-    
+
     if (!response.ok) {
       console.error('[Logger] Clear failed:', response.status, response.statusText)
       return false
     }
-    
+
     const result = await response.json()
-    
+
     if (result.success) {
       logs.value = []
       await loadStats()
@@ -272,7 +272,7 @@ export function exportLogs(startDate?: string, endDate?: string) {
   const params = new URLSearchParams()
   if (startDate) params.append('startDate', startDate)
   if (endDate) params.append('endDate', endDate)
-  
+
   const url = `/api/logs/export?${params}`
   const a = document.createElement('a')
   a.href = url
@@ -306,7 +306,7 @@ export function useComponentLogger(componentName: string) {
       data
     })
   }
-  
+
   return {
     logCreated: (data?: any) => log('created', `${componentName} created`, data),
     logMounted: (data?: any) => log('mounted', `${componentName} mounted`, data),
@@ -331,20 +331,20 @@ export const logger = {
   logs: computed(() => logs.value),
   stats: computed(() => stats.value),
   isRecording: computed(() => isRecording.value),
-  
+
   addLog,
   loadLogs,
   loadStats,
   clearLogs,
   exportLogs,
   searchLogs,
-  
+
   // 快捷方法
   debug: (message: string, data?: any) => addLog({ level: 'debug', category: 'chat', message, data }),
   info: (message: string, data?: any) => addLog({ level: 'info', category: 'chat', message, data }),
   warn: (message: string, data?: any) => addLog({ level: 'warn', category: 'chat', message, data }),
   error: (message: string, data?: any) => addLog({ level: 'error', category: 'error', message, data }),
-  
+
   // 控制
   startRecording: () => { isRecording.value = true },
   stopRecording: () => { isRecording.value = false }

@@ -3,13 +3,13 @@
  */
 
 import type { ToolDefinition, ToolExecutor, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 export const formatTextDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'formatText',
-    description: '将文本格式化为指定格式（Markdown、JSON、YAML、表格等）。当用户需要格式化输出或转换格式时使用。',
+    description: '将文本格式化为指定格式(Markdown、JSON、YAML、表格等)。当用户需要格式化输出或转换格式时使用。',
     parameters: {
       type: 'object',
       properties: {
@@ -34,7 +34,7 @@ export const formatTextDef: ToolDefinition = {
  */
 export const formatText: ToolExecutor = async (args): Promise<ToolResult> => {
   const { text, format = 'markdown' } = args
-  
+
   if (!text) {
     return createErrorResult(
       'Missing text parameter',
@@ -42,7 +42,7 @@ export const formatText: ToolExecutor = async (args): Promise<ToolResult> => {
       '示例: formatText(text="内容", format="json")'
     )
   }
-  
+
   const validFormats = ['markdown', 'json', 'yaml', 'table']
   if (!validFormats.includes(format)) {
     return createErrorResult(
@@ -51,10 +51,10 @@ export const formatText: ToolExecutor = async (args): Promise<ToolResult> => {
       `支持的格式: ${validFormats.join(', ')}`
     )
   }
-  
+
   try {
     let result = text
-    
+
     switch (format) {
       case 'json':
         try {
@@ -89,7 +89,7 @@ export const formatText: ToolExecutor = async (args): Promise<ToolResult> => {
       default:
         result = text
     }
-    
+
     return createSuccessResult(
       {
         format,

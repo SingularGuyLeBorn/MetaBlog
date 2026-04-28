@@ -1,5 +1,5 @@
 <!--
-  MessageList - 消息列表组件（3D 液态玻璃风格）
+  MessageList - 消息列表组件(3D 液态玻璃风格)
 -->
 <template>
   <div ref="containerRef" class="message-list-3d" @scroll="handleScroll">
@@ -65,10 +65,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
-import MessageBubble from './MessageBubble.vue'
 import { Icon } from '@/theme/components/common'
 import type { ChatMessage, MessageGroup } from '@/theme/types'
+import { nextTick, ref, watch } from 'vue'
+import MessageBubble from './MessageBubble.vue'
 
 interface Props {
   messages: ChatMessage[]

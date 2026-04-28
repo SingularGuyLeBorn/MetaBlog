@@ -14,8 +14,8 @@
 | `02_doc_crud.ipynb` | **文档 CRUD 完整验证**：创建→读取验证→更新→再读取验证→删除 |
 | `03_rich_formats.ipynb` | **富格式元素测试**：标题、列表、加粗斜体、表格、代码块、公式、引用 |
 | `04_update_delete.ipynb` | **更新删除细粒度测试**：只更新标题、只更新内容、同时更新、边界测试 |
-| `yuque_client.py` | 语雀 API 通用客户端（封装认证、请求、便捷方法） |
-| `lake_builder.py` | Lake HTML 构建工具（`markdown_to_lake()` 及各种元素函数） |
+| `yuque_client.py` | 语雀 API 通用客户端(封装认证、请求、便捷方法) |
+| `lake_builder.py` | Lake HTML 构建工具(`markdown_to_lake()` 及各种元素函数) |
 | `requirements.txt` | Python 依赖 |
 | `README.md` | 本文件 |
 
@@ -27,7 +27,7 @@
 # 1. 安装依赖
 pip install -r requirements.txt
 
-# 2. 配置 Cookie（项目根目录的 .env 文件）
+# 2. 配置 Cookie(项目根目录的 .env 文件)
 # YUQUE_SESSION=从浏览器复制的值
 # YUQUE_CTOKEN=从浏览器复制的值
 
@@ -39,13 +39,13 @@ pip install -r requirements.txt
 
 ## 核心发现
 
-### body_asl 字段（重要！）
+### body_asl 字段(重要！)
 
 语雀内部 Web API 创建/更新文档时，**必须使用 `body_asl` 字段**保存内容。
 
 | 字段 | 用途 | 结果 |
 |------|------|------|
-| `body` | 创建/更新 | ❌ API 返回成功，但内容为空（0 chars） |
+| `body` | 创建/更新 | ❌ API 返回成功，但内容为空(0 chars) |
 | `body_asl` | 创建/更新 | ✅ **内容正确保存** |
 | `content` | 读取返回 | ✅ 已渲染的 Lake HTML |
 
@@ -53,10 +53,10 @@ pip install -r requirements.txt
 
 ### 认证方式
 
-| 对比项 | Open API v2 | 内部 Web API（本实验室使用） |
+| 对比项 | Open API v2 | 内部 Web API(本实验室使用) |
 |--------|------------|---------------------------|
 | 认证方式 | `X-Auth-Token` | `Cookie: _yuque_session + _ctoken` |
-| 需要会员 | ✅ 超级会员（299元/年） | ❌ **完全免费** |
+| 需要会员 | ✅ 超级会员(299元/年) | ❌ **完全免费** |
 | 端点前缀 | `/api/v2/...` | `/api/...` |
 | 写操作 CSRF | 不需要 | 需要 `X-CSRF-Token` + `Referer` |
 | 搜索功能 | ✅ 支持 | ❌ 不支持 |
@@ -65,7 +65,7 @@ pip install -r requirements.txt
 
 1. 登录语雀网页版：https://www.yuque.com
 2. 按 **F12** 打开浏览器开发者工具
-3. 切换到 **Application**（应用）标签
+3. 切换到 **Application**(应用)标签
 4. 左侧点击 **Cookies** → `https://www.yuque.com`
 5. 复制以下两个值：
    - `_yuque_session` 的 **Value**
@@ -78,7 +78,7 @@ pip install -r requirements.txt
 
 ## API 端点总览
 
-### 读取操作（无需 CSRF）
+### 读取操作(无需 CSRF)
 
 | 方法 | 端点 | 说明 |
 |------|------|------|
@@ -86,13 +86,13 @@ pip install -r requirements.txt
 | GET | `/api/books/{id}/toc` | 获取目录 |
 | GET | `/api/docs/{slug}?book_id={id}` | 读取文档 |
 
-### 写操作（需要 `X-CSRF-Token` + `Referer`）
+### 写操作(需要 `X-CSRF-Token` + `Referer`)
 
 | 方法 | 端点 | Body | 说明 |
 |------|------|------|------|
 | POST | `/api/docs` | `{book_id, title, body_asl, format, public}` | 创建文档 |
-| PUT | `/api/docs/{id}` | `{title, body_asl, format}` | 更新文档（id 是数字 ID）|
-| DELETE | `/api/docs/{id}?book_id={id}` | - | 删除文档（id 是数字 ID）|
+| PUT | `/api/docs/{id}` | `{title, body_asl, format}` | 更新文档(id 是数字 ID)|
+| DELETE | `/api/docs/{id}?book_id={id}` | - | 删除文档(id 是数字 ID)|
 
 ---
 
@@ -111,9 +111,9 @@ pip install -r requirements.txt
 
 - **后端路由**：`server/routes/yuque.ts`
 - **前端工具定义与执行器**：`src/theme/tools/yuque/` 下按功能分类的文件
-  - `repo.ts`（知识库管理）
-  - `doc.ts`（文档操作）
-  - `image.ts`（图片上传）
-  - `search.ts`（搜索）
-  - `toc.ts`（目录获取）
+  - `repo.ts`(知识库管理)
+  - `doc.ts`(文档操作)
+  - `image.ts`(图片上传)
+  - `search.ts`(搜索)
+  - `toc.ts`(目录获取)
 - **Agent Skill**：`.skills/yuque-assistant/SKILL.md`

@@ -16,23 +16,23 @@
 | **BoxLite** | 可嵌入 MicroVM | KVM/HVF 硬件隔离 | ~100ms | Apache 2.0 | 较成熟 |
 | **Monty** | 语言级解释器 | Rust 沙箱解释器 | **<1μs** | 未知 | 实验性 |
 
-> **注**："SandboxesForEveryAgent" 是 BoxLite 的 slogan（"Sandboxes for every agent"），并非独立项目，本报告将其归入 BoxLite 统一评估。
+> **注**："SandboxesForEveryAgent" 是 BoxLite 的 slogan("Sandboxes for every agent")，并非独立项目，本报告将其归入 BoxLite 统一评估。
 
 ---
 
 ## 二、各项目详细分析
 
-### 2.1 OpenSandbox（阿里巴巴）
+### 2.1 OpenSandbox(阿里巴巴)
 
 **GitHub**: `alibaba/OpenSandbox`  
 **定位**：通用沙箱平台，面向 Coding Agent / GUI Agent / RL Training
 
 **核心特性**：
-- 多语言 SDK（Python、Java/Kotlin、JS/TS、C#/.NET、Go Roadmap）
+- 多语言 SDK(Python、Java/Kotlin、JS/TS、C#/.NET、Go Roadmap)
 - 统一沙箱协议，支持自定义运行时扩展
 - 内置 Docker + Kubernetes 运行时，支持大规模分布式调度
 - 支持 gVisor、Kata Containers、Firecracker 等安全容器运行时
-- 内置浏览器自动化（Chrome、Playwright）、VNC 桌面、VS Code Server
+- 内置浏览器自动化(Chrome、Playwright)、VNC 桌面、VS Code Server
 - CNCF Landscape 成员
 
 **部署方式**：
@@ -62,7 +62,7 @@ opensandbox-server  # 启动服务端
 **核心特性**：
 - 基于 Firecracker snapshot + `mmap(MAP_PRIVATE)` 写时复制
 - **p50 启动延迟 0.79ms，p99 仅 1.74ms**
-- 每个沙箱是独立的 KVM VM（非容器），硬件级内存隔离
+- 每个沙箱是独立的 KVM VM(非容器)，硬件级内存隔离
 - 内存占用仅 ~265KB / sandbox
 - 1,000 并发 fork 仅需 815ms
 
@@ -87,7 +87,7 @@ opensandbox-server  # 启动服务端
 
 ---
 
-### 2.3 AIOSandbox（ByteDance / agent-infra）
+### 2.3 AIOSandbox(ByteDance / agent-infra)
 
 **GitHub**: `agent-infra/sandbox`  
 **定位**：All-in-One Agent 沙箱，单容器集成浏览器 + Shell + 文件 + MCP
@@ -96,7 +96,7 @@ opensandbox-server  # 启动服务端
 - 单 Docker 容器内集成：Browser、Shell、File、MCP、VS Code Server、Jupyter
 - 共享文件系统，支持 Agent 的 Read → Execute → Validate → Fix → Re-run 完整工作流
 - SDK 支持 Python、TypeScript、Go
-- 内置 `markitdown` MCP 服务（文档转换）
+- 内置 `markitdown` MCP 服务(文档转换)
 
 **API 示例**：
 ```typescript
@@ -107,12 +107,12 @@ await sandbox.jupyter.execute({ code: "print('hello')" });
 ```
 
 **适用场景**：
-- 需要浏览器 + 代码执行一体化的 Agent（如数据采集 + 处理）
+- 需要浏览器 + 代码执行一体化的 Agent(如数据采集 + 处理)
 - 需要 Jupyter Notebook 交互式执行
 - 快速原型验证
 
 **局限性**：
-- 依赖 Docker，隔离级别为容器级（共享宿主机内核）
+- 依赖 Docker，隔离级别为容器级(共享宿主机内核)
 - 启动延迟秒级
 - 对 Windows 原生支持有限
 - 开源许可未明确标注
@@ -121,17 +121,17 @@ await sandbox.jupyter.execute({ code: "print('hello')" });
 
 ### 2.4 BoxLite
 
-**GitHub**: `boxlite-ai/boxlite`（~1.8k ⭐）  
+**GitHub**: `boxlite-ai/boxlite`(~1.8k ⭐)  
 **定位**："SQLite of VMs" —— 可嵌入的轻量级 MicroVM 运行时
 
 **核心特性**：
-- **硬件级隔离**：KVM（Linux）/ Hypervisor.framework（macOS），每个 Box 独立内核
+- **硬件级隔离**：KVM(Linux)/ Hypervisor.framework(macOS)，每个 Box 独立内核
 - **无 Daemon**：纯库嵌入，无需 root，无需后台服务
-- **OCI 兼容**：直接使用 Docker 镜像（`python:slim`、`node:alpine` 等）
+- **OCI 兼容**：直接使用 Docker 镜像(`python:slim`、`node:alpine` 等)
 - **有状态持久**：Box 保留包、文件、环境状态，可 stop/restart 恢复
-- **跨平台**：macOS（Apple Silicon）、Linux（x86_64/ARM64）、Windows（WSL2）
+- **跨平台**：macOS(Apple Silicon)、Linux(x86_64/ARM64)、Windows(WSL2)
 - **多语言 SDK**：Rust、Python、Node.js、Go、C
-- 支持网络策略（`allow_net`）、密钥占位符注入
+- 支持网络策略(`allow_net`)、密钥占位符注入
 
 **架构**：
 ```
@@ -142,43 +142,43 @@ Your Application
 ```
 
 **性能**：
-- 启动 ~100ms（VM 级）
+- 启动 ~100ms(VM 级)
 - 支持 async-first API，高并发友好
 
 **适用场景**：
 - 需要嵌入到现有应用中的沙箱能力
-- 本地开发环境（替代 Docker Desktop）
-- 多租户 Agent 托管（每个用户一个 Box）
+- 本地开发环境(替代 Docker Desktop)
+- 多租户 Agent 托管(每个用户一个 Box)
 - 需要安装任意 pip 包的代码执行
 
 **局限性**：
-- VM 启动仍比解释器/容器慢（~100ms vs Monty 的 <1μs）
+- VM 启动仍比解释器/容器慢(~100ms vs Monty 的 <1μs)
 - 相比 Docker 生态，工具链成熟度稍低
 
 ---
 
-### 2.5 Monty（Pydantic）
+### 2.5 Monty(Pydantic)
 
 **GitHub**: `pydantic/monty`  
 **定位**：Rust 编写的极简安全 Python 解释器，专为 AI Agent 代码执行设计
 
 **核心特性**：
-- **启动 <1μs**（微秒级），无需容器/VM 开销
+- **启动 <1μs**(微秒级)，无需容器/VM 开销
 - **零依赖**：单 ~4.5MB 二进制，无 Docker、无云账户、无 API Key
 - 完全阻断宿主机访问：文件系统、环境变量、网络均通过外部函数回调控制
 - 支持 **执行状态快照**：序列化到字节，可暂停/恢复/跨进程迁移
 - 内置资源限制：内存、执行时间、递归深度、分配次数
-- 支持类型检查（内置 `ty`）
+- 支持类型检查(内置 `ty`)
 - 可从 Rust、Python、JavaScript 调用
 
 **能力边界**：
 
 | 支持 | 暂不支持 |
 |------|----------|
-| 函数（sync/async）、闭包、推导式 | 类定义（soon） |
-| f-string、type hints | match 语句（soon） |
+| 函数(sync/async)、闭包、推导式 | 类定义(soon) |
+| f-string、type hints | match 语句(soon) |
 | `sys`, `typing`, `asyncio`, `pathlib` | 完整标准库 |
-| `re`, `datetime`, `json`, `dataclasses`（soon） | 第三方库（非目标） |
+| `re`, `datetime`, `json`, `dataclasses`(soon) | 第三方库(非目标) |
 | 外部函数回调 | `import` 语句 |
 
 **使用示例**：
@@ -196,8 +196,8 @@ result = m.run(
 ```
 
 **适用场景**：
-- 高频、短小的代码计算（数据转换、条件判断、简单算法）
-- 对延迟极度敏感（微秒级启动）
+- 高频、短小的代码计算(数据转换、条件判断、简单算法)
+- 对延迟极度敏感(微秒级启动)
 - 不需要第三方库的场景
 - 嵌入到边缘设备或资源受限环境
 
@@ -205,7 +205,7 @@ result = m.run(
 - **Experimental**，Pydantic 官方标注 "not ready for prime time"
 - 不支持 `import`、第三方库、大多数标准库模块
 - 不支持类定义、上下文管理器、生成器
-- 2026-04 刚发生安全漏洞（环境变量 secret 被读取，$5,000 bounty 计划中）
+- 2026-04 刚发生安全漏洞(环境变量 secret 被读取，$5,000 bounty 计划中)
 
 ---
 
@@ -231,8 +231,8 @@ result = m.run(
 | 需求项 | 重要性 | 说明 |
 |--------|--------|------|
 | 本地内置 | 高 | 不依赖外部云服务，无 API Key 和计费 |
-| 轻量级 | 高 | 当前运行在 Windows（WSL2 可用），资源有限 |
-| Agent 代码执行 | 高 | 执行 LLM 生成的 Python 代码（数据分析、计算、文件处理） |
+| 轻量级 | 高 | 当前运行在 Windows(WSL2 可用)，资源有限 |
+| Agent 代码执行 | 高 | 执行 LLM 生成的 Python 代码(数据分析、计算、文件处理) |
 | 集成复杂度低 | 高 | 与现有 TypeScript/Node.js 后端无缝集成 |
 | 安全隔离 | 高 | 防止 LLM 生成的恶意代码破坏宿主机 |
 | pip 包安装 | 中 | 允许 Agent 动态安装依赖 |
@@ -243,7 +243,7 @@ result = m.run(
 
 基于以上分析，推荐 **双轨架构**：
 
-#### 轨道 A：Monty（默认/轻量模式）
+#### 轨道 A：Monty(默认/轻量模式)
 
 用于 80% 的日常代码执行任务：
 - 数据计算、条件判断、格式转换
@@ -267,7 +267,7 @@ export function executeMonty(code: string, inputs: Record<string, any>) {
 }
 ```
 
-#### 轨道 B：BoxLite（增强/隔离模式）
+#### 轨道 B：BoxLite(增强/隔离模式)
 
 用于 20% 的复杂任务：
 - 需要 `pip install` 第三方库
@@ -298,9 +298,9 @@ export async function executeInBox(code: string, image = 'python:3.11-slim') {
 | 方案 | 排除原因 |
 |------|----------|
 | **OpenSandbox** | 需要 K8s/Docker 基础设施，过于重型，不适合个人/小团队本地部署 |
-| **ZeroBoot** | 过于早期（47⭐），未 production-ready，许可不明，风险过高 |
-| **AIOSandbox** | Docker 容器隔离级别不够（共享内核），且 All-in-One 功能过剩 |
-| **纯 Monty** | 无法安装第三方库，Agent 能力受限（如无法使用 pandas、requests） |
+| **ZeroBoot** | 过于早期(47⭐)，未 production-ready，许可不明，风险过高 |
+| **AIOSandbox** | Docker 容器隔离级别不够(共享内核)，且 All-in-One 功能过剩 |
+| **纯 Monty** | 无法安装第三方库，Agent 能力受限(如无法使用 pandas、requests) |
 | **纯 BoxLite** | 100ms 启动对简单计算任务而言仍显沉重，Monty 更适合高频小任务 |
 
 ---
@@ -310,20 +310,20 @@ export async function executeInBox(code: string, image = 'python:3.11-slim') {
 ```
 Phase 1 (立即): Monty 轻量集成
   └─ 安装 pydantic-monty
-  └─ 封装 execute_python 工具（替代当前的 eval/exec）
+  └─ 封装 execute_python 工具(替代当前的 eval/exec)
   └─ 支持基础数据类型和简单算法
   └─ 预期工作量: 1-2 天
 
 Phase 2 (近期): BoxLite 增强集成
   └─ 安装 boxlite 运行时
-  └─ 封装 sandbox_execute 工具（支持 pip install）
-  └─ 实现沙箱生命周期管理（创建→执行→销毁）
+  └─ 封装 sandbox_execute 工具(支持 pip install)
+  └─ 实现沙箱生命周期管理(创建→执行→销毁)
   └─ 预期工作量: 3-5 天
 
 Phase 3 (远期): 智能路由
   └─ Agent 自动判断任务复杂度
-  └─ 简单任务 → Monty（<1μs）
-  └─ 复杂任务 → BoxLite（~100ms + 完整环境）
+  └─ 简单任务 → Monty(<1μs)
+  └─ 复杂任务 → BoxLite(~100ms + 完整环境)
   └─ 预期工作量: 2-3 天
 ```
 
@@ -341,9 +341,9 @@ Phase 3 (远期): 智能路由
    - 或在 WSL2 中运行后端服务
 
 3. **资源管理**：无论选择哪种方案，都需要实现：
-   - 执行超时（默认 30s，可配置）
-   - 内存限制（默认 256MB）
-   - CPU 限制（默认 1 核）
+   - 执行超时(默认 30s，可配置)
+   - 内存限制(默认 256MB)
+   - CPU 限制(默认 1 核)
    - 并发沙箱数量上限
 
 ---

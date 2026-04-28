@@ -2,7 +2,7 @@
 
 ## 1. 核心映射 (Core Mapping)
 
-GHPO 试图解决 RLHF 过程中的 **Alignment Tax**（能力退化）问题。
+GHPO 试图解决 RLHF 过程中的 **Alignment Tax**(能力退化)问题。
 核心方案是：混合使用 **SFT Gradients** (保持原始能力) 和 **RL Gradients** (提升且对齐)。
 
 | 理论组件 (Theory) | 代码实现 (Code Implementation) | 所在行 (Implementation.py) |

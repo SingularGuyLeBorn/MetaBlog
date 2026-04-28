@@ -25,7 +25,7 @@
 
 ```javascript
 createArticle(
-  title="文章标题（系统将据此帮你生成对应的文件路径）",
+  title="文章标题(系统将据此帮你生成对应的文件路径)",
   content="# 你的内容...",
   section="knowledge", // 默认 "posts"，可选 "posts", "knowledge", "resources" 等
   tags=["标签1", "标签2"],
@@ -65,5 +65,5 @@ updateArticle(
 
 1. 当不知道某篇文章在哪时，一定先用 `searchArticles` 去找出其准确的 `path`，再调用 `getArticleContent`。
 2. 创建文章时利用好 `section` 参数以便做好分类整理。
-3. 协助用户按照 Markdown 最佳格式（必须包含规范的一级标题 # 等）编写内容。
+3. 协助用户按照 Markdown 最佳格式(必须包含规范的一级标题 # 等)编写内容。
 4. 明确告知用户文章建在哪个具体路径下了，以便他们确认。

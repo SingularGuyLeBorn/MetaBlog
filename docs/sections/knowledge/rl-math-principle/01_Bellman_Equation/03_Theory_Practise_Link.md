@@ -41,9 +41,9 @@ best_value = max(q_values)
 ```python
 ns, r = env.get_transition(s, a)
 ```
-这是一个**确定性环境**（概率 $P=1$）。所以在贝尔曼更新中，$\sum_{s'} P(s'|s,a) V(s')$ 退化为单项 $1.0 \times V(ns)$。
+这是一个**确定性环境**(概率 $P=1$)。所以在贝尔曼更新中，$\sum_{s'} P(s'|s,a) V(s')$ 退化为单项 $1.0 \times V(ns)$。
 
-如果环境是随机的（比如 10% 概率滑向反方向），我们就需要：
+如果环境是随机的(比如 10% 概率滑向反方向)，我们就需要：
 ```python
 expected_value = 0
 for next_state, prob in transitions:
@@ -54,4 +54,4 @@ for next_state, prob in transitions:
 ## 4. 总结
 
 - **Value Iteration** 算法就是将数学上的 **Fixed Point Iteration** 翻译成了计算机的 **While Loop**。
-- **Discount Factor $\gamma$** 保证了数值稳定性（避免无穷大）。
+- **Discount Factor $\gamma$** 保证了数值稳定性(避免无穷大)。

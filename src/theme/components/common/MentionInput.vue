@@ -1,5 +1,5 @@
 <!--
-  MentionInput - 智能输入框（支持 @ 引用文章和 / 选择技能）
+  MentionInput - 智能输入框(支持 @ 引用文章和 / 选择技能)
 -->
 <template>
   <div class="mention-input" ref="containerRef">
@@ -105,8 +105,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import type { Skill } from '@/theme/types/agent'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 export interface Mention {
   title: string
@@ -180,7 +180,7 @@ const filteredSkills = computed(() => {
 const filteredArticles = computed(() => {
   let list = articles.value
   
-  // 先按 mentionQuery 过滤（@ 后面的内容）
+  // 先按 mentionQuery 过滤(@ 后面的内容)
   if (mentionQuery.value) {
     const query = mentionQuery.value.toLowerCase()
     list = list.filter(a =>

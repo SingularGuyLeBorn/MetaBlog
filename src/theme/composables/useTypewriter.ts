@@ -2,16 +2,16 @@
  * 打字机效果 composable
  * 用于模拟流式输出的视觉效果
  */
-import { ref, computed, watch, nextTick } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 export interface TypewriterOptions {
-  /** 打字速度（毫秒/字符） */
+  /** 打字速度(毫秒/字符) */
   speed?: number
   /** 是否启用打字效果 */
   enabled?: boolean
-  /** 最小延迟（毫秒） */
+  /** 最小延迟(毫秒) */
   minDelay?: number
-  /** 最大延迟（毫秒） */
+  /** 最大延迟(毫秒) */
   maxDelay?: number
   /** 遇到标点符号时的额外延迟 */
   punctuationDelay?: number
@@ -34,9 +34,9 @@ export function useTypewriter(options: TypewriterOptions = {}) {
   let lastTypeTime = 0
 
   const isComplete = computed(() => currentIndex.value >= fullText.value.length)
-  const progress = computed(() => 
-    fullText.value.length > 0 
-      ? (currentIndex.value / fullText.value.length) * 100 
+  const progress = computed(() =>
+    fullText.value.length > 0
+      ? (currentIndex.value / fullText.value.length) * 100
       : 0
   )
 
@@ -84,9 +84,9 @@ export function useTypewriter(options: TypewriterOptions = {}) {
   function start(text: string) {
     // 清理之前的状态
     stop()
-    
+
     fullText.value = text
-    
+
     if (!enabled || text.length === 0) {
       displayedText.value = text
       currentIndex.value = text.length

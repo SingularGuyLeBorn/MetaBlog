@@ -3,7 +3,7 @@
  * 零成本，无需 API Key
  */
 
-import type { SearchResult, SearchEngine } from './types'
+import type { SearchEngine, SearchResult } from './types'
 import { proxyFetchText, stripHtml } from './utils'
 
 /**
@@ -13,7 +13,7 @@ import { proxyFetchText, stripHtml } from './utils'
 function parseResults(html: string): SearchResult[] {
   const results: SearchResult[] = []
 
-  // 尝试用 DOMParser 解析（浏览器环境）
+  // 尝试用 DOMParser 解析(浏览器环境)
   try {
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')

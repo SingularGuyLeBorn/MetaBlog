@@ -7,16 +7,16 @@
 | 维度 | GitHub CLI (`gh`) | GitHub REST API |
 |---|---|---|
 | **定位** | 面向用户的命令行工具 | 底层 HTTP 接口 |
-| **认证** | `gh auth login`（OAuth / PAT） | `Authorization: Bearer TOKEN` |
-| **交互性** | 高（交互式创建 PR、Issue 等） | 低（纯 HTTP） |
+| **认证** | `gh auth login`(OAuth / PAT) | `Authorization: Bearer TOKEN` |
+| **交互性** | 高(交互式创建 PR、Issue 等) | 低(纯 HTTP) |
 | **脚本友好** | 支持 `--json` 输出 | 原生 JSON |
 | **本地 git 集成** | ✅ `gh pr checkout` 等 | ❌ 无 |
 | **Agent 适用性** | 需 backend 调用 `child_process` | 前端/后端均可直接 fetch |
 
 **本 Lab 的测试策略**：
-- 用 Python `requests` 直接调用 GitHub REST API（最可靠、最可控）
+- 用 Python `requests` 直接调用 GitHub REST API(最可靠、最可控)
 - 在代码注释中标注等效的 `gh` CLI 命令作为参考
-- Agent 工具最终采用 **REST API** 方式（前端可直接调用，无需 backend 安装 `gh`）
+- Agent 工具最终采用 **REST API** 方式(前端可直接调用，无需 backend 安装 `gh`)
 
 ## 文件结构
 
@@ -46,9 +46,9 @@ GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
 ```
 
 > **获取 Token**：https://github.com/settings/tokens  
-> 推荐权限：`repo`（私有仓库）、`read:org`（组织信息）、`workflow`（Actions）
+> 推荐权限：`repo`(私有仓库)、`read:org`(组织信息)、`workflow`(Actions)
 
-### 3. 安装 GitHub CLI（可选，仅用于本地 CLI 测试）
+### 3. 安装 GitHub CLI(可选，仅用于本地 CLI 测试)
 
 ```bash
 # Windows (winget)
@@ -69,7 +69,7 @@ jupyter lab
 
 运行 `99_github_cli_showcase.ipynb` 验证全部能力。
 
-## 关键发现（待验证）
+## 关键发现(待验证)
 
 | 能力 | API 端点 | gh CLI 等效命令 | 状态 |
 |---|---|---|---|

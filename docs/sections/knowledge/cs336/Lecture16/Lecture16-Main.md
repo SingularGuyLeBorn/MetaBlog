@@ -40,10 +40,10 @@ $$\mathcal{L}_{SimPO} = -\log \sigma\left(\frac{\beta}{|y_w|}\log \pi_\theta(y_w
 
 #### 实验发现的矛盾结论
 
-**Tulu 2研究**: PPO优于DPO（因为在线特性）
+**Tulu 2研究**: PPO优于DPO(因为在线特性)
 **Tulu 3研究**: 如果SFT做得好，DPO和PPO差距消失，长度归一化DPO最佳
 
-> **重要启示**: RL的实验结论高度依赖具体设置（模型、数据、评估方法），不应盲目泛化单篇论文的结论。
+> **重要启示**: RL的实验结论高度依赖具体设置(模型、数据、评估方法)，不应盲目泛化单篇论文的结论。
 
 ### 1.3 过度优化 (Over-optimization)
 
@@ -97,7 +97,7 @@ RLHF后的模型**不再是校准的概率模型**:
 
 ### 2.2 可验证奖励的优势
 
-**核心思想**: 如果我们有**确定性的奖励函数**（不是学习的），就可以充分发挥RL的威力。
+**核心思想**: 如果我们有**确定性的奖励函数**(不是学习的)，就可以充分发挥RL的威力。
 
 | 领域 | 可验证奖励 |
 |------|-----------|
@@ -132,7 +132,7 @@ $$\nabla J(\theta) = \mathbb{E}_{a \sim \pi_\theta}\left[\nabla \log \pi_\theta(
 
 $$\nabla J(\theta) = \mathbb{E}_{a \sim \pi_{\theta_{old}}}\left[\frac{\pi_\theta(a|s)}{\pi_{\theta_{old}}(a|s)} \nabla \log \pi_\theta(a|s) \cdot A \right]$$
 
-其中 $A$ 是优势函数（Advantage），是$R$的低方差版本。
+其中 $A$ 是优势函数(Advantage)，是$R$的低方差版本。
 
 TRPO添加KL约束: $D_{KL}(\pi_\theta || \pi_{\theta_{old}}) \leq \delta$
 
@@ -143,7 +143,7 @@ $$L^{CLIP}(\theta) = \mathbb{E}\left[\min\left( r_t(\theta) A_t, \text{clip}(r_t
 其中 $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{old}}(a_t|s_t)}$，$\epsilon$通常取0.2。
 
 **直观解释**:
-- 如果新策略偏离太远（$r_t$ 超出 $[1-\epsilon, 1+\epsilon]$），梯度被裁剪
+- 如果新策略偏离太远($r_t$ 超出 $[1-\epsilon, 1+\epsilon]$)，梯度被裁剪
 - 这自然地限制了策略更新幅度
 
 ### 3.4 PPO的复杂性
@@ -190,7 +190,7 @@ $$A_i = \frac{r_i - \text{mean}(r_1, ..., r_G)}{\text{std}(r_1, ..., r_G)}$$
 **解释**:
 - 不需要训练价值函数
 - 使用同组responses的奖励均值作为基线
-- 标准差归一化（可选）
+- 标准差归一化(可选)
 
 #### GRPO损失
 
@@ -222,8 +222,8 @@ $$L^{GRPO}(\theta) = \mathbb{E}\left[\min\left( r_t(\theta) A_i, \text{clip}(r_t
 GRPO原始公式对奖励进行长度归一化:
 
 **问题**:
-- 答错时: 最优策略是生成最长回复（稀释负奖励）
-- 答对时: 最优策略是生成最短回复（集中正奖励）
+- 答错时: 最优策略是生成最长回复(稀释负奖励)
+- 答对时: 最优策略是生成最短回复(集中正奖励)
 - 导致: 乱七八糟的长回复
 
 **Dr. GRPO论文**建议移除这两个归一化。
@@ -239,17 +239,17 @@ GRPO原始公式对奖励进行长度归一化:
 #### R1-Zero: 纯RL实验
 
 **设置**:
-- 基础模型: DeepSeek V3（预训练+mid-training，无RLHF）
-- 奖励: 准确性（正误）+ 格式（thinking标签）
+- 基础模型: DeepSeek V3(预训练+mid-training，无RLHF)
+- 奖励: 准确性(正误)+ 格式(thinking标签)
 - 算法: GRPO
 
 **结果**:
 - 性能接近OpenAI o1
 - 思维链长度自然增长
-- 出现"aha moment"（顿悟时刻）
+- 出现"aha moment"(顿悟时刻)
 
 **争议**:
-- 长度增长可能是因为GRPO的长度偏差（Dr. GRPO论文）
+- 长度增长可能是因为GRPO的长度偏差(Dr. GRPO论文)
 - "aha moment"可能在预训练时就存在
 
 #### R1完整流程
@@ -323,7 +323,7 @@ $$r_{length} = \begin{cases}
 
 Kimi使用了不同于GRPO的目标:
 
-1. 非参数假设 → 奖励可写成策略比率形式（类似DPO推导）
+1. 非参数假设 → 奖励可写成策略比率形式(类似DPO推导)
 2. 使用平方损失驱动等式成立
 3. 梯度形式类似GRPO，但有不同的正则化
 

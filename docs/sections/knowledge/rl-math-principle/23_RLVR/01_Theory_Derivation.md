@@ -24,8 +24,8 @@
 
 ### Phase 1: 冷启动 (Cold Start)
 *   **目的**: 打破 Base Model 的“哑巴难题”。
-*   **方法**: 收集数千个高质量的 Long CoT 数据（由人类专家或高阶模型生成）。
-*   **关键点**: 数据必须包含 `<think>` 标签，且思考过程必须详尽（Self-Verification, Reflection）。
+*   **方法**: 收集数千个高质量的 Long CoT 数据(由人类专家或高阶模型生成)。
+*   **关键点**: 数据必须包含 `<think>` 标签，且思考过程必须详尽(Self-Verification, Reflection)。
 *   **产物**: DeepSeek-R1-Cold。它虽然会思考，但往往不够深。
 
 ### Phase 2: 推理导向强化学习 (Reasoning-Oriented RL)
@@ -37,11 +37,11 @@
     *   **Format Reward**: 如果 `<think>` 和 `<answer>` 标签完整，给予 +0.1 的微小奖励。
 *   **涌现现象**:
     *   **Aha Moment**: 模型在第 1500 step 左右突然学会了检查自己的错误。
-    *   **Language Mixing**: 由于多语言语料混杂，模型在思考时会自动切换到最简洁的语言（通常是英语或代码）进行逻辑推演。
+    *   **Language Mixing**: 由于多语言语料混杂，模型在思考时会自动切换到最简洁的语言(通常是英语或代码)进行逻辑推演。
 
 ### Phase 3: 拒绝采样 (Rejection Sampling)
 *   **目的**: 消除 Phase 2 中产生的“语言混乱”和“不可读性”。
-*   **方法**: 用 Phase 2 的模型对 600k 个 Prompt 进行生成（每个生成 64 次），只保留完全正确的样本。
+*   **方法**: 用 Phase 2 的模型对 600k 个 Prompt 进行生成(每个生成 64 次)，只保留完全正确的样本。
 *   **清洗**: 去除中英夹杂严重的样本，去除语气粗鲁的样本。
 *   **SFT**: 用这些清洗后的“黄金数据”重新训练 Base Model。
 
@@ -58,7 +58,7 @@
 标准的 PPO 更新公式为：
 $$ \mathcal{L}_{PPO} = \mathbb{E} \left[ \min(\rho_t A_t, \text{clip}(\rho_t, 1-\epsilon, 1+\epsilon)A_t) \right] $$
 其中 $A_t = R_t + \gamma V(s_{t+1}) - V(s_t)$。
-训练这个 $V(s)$ 需要一个与 Policy 等大的模型。对于 67B 的 DeepSeek 来说，这意味着训练成本翻倍（显存需求从 4 卡变为 8 卡）。
+训练这个 $V(s)$ 需要一个与 Policy 等大的模型。对于 67B 的 DeepSeek 来说，这意味着训练成本翻倍(显存需求从 4 卡变为 8 卡)。
 
 ### 3.2 GRPO 的组内博弈
 GRPO (Group Relative Policy Optimization) 巧妙地利用了 **"同行衬托"** 原理。

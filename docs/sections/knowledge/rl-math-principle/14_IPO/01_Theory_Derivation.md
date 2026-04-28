@@ -7,20 +7,20 @@
 - **arXiv**：2310.12036
 - **PDF**：见 `papers/` 目录
 
-**前置知识**：DPO（第7章）、凸优化、KKT条件
+**前置知识**：DPO(第7章)、凸优化、KKT条件
 
 ---
 
 ## 0. 本章摘要
 
-虽然DPO（Direct Preference Optimization）在实践中非常成功，但DeepMind的研究者们从理论角度指出DPO存在潜在的**过拟合风险**。
+虽然DPO(Direct Preference Optimization)在实践中非常成功，但DeepMind的研究者们从理论角度指出DPO存在潜在的**过拟合风险**。
 
-他们提出了一个统一的理论框架 **$\Psi$-PO**，用于理解所有基于人类偏好的学习算法。在此框架下，他们证明了DPO实际上是在解决一个特定的约束优化问题，但在某些情况下，DPO的最优解可能会导致策略的概率退化（即概率趋向于0或1），从而失去泛化能力。
+他们提出了一个统一的理论框架 **$\Psi$-PO**，用于理解所有基于人类偏好的学习算法。在此框架下，他们证明了DPO实际上是在解决一个特定的约束优化问题，但在某些情况下，DPO的最优解可能会导致策略的概率退化(即概率趋向于0或1)，从而失去泛化能力。
 
-为了解决这个问题，他们提出了 **IPO (Identity Preference Optimization)**。IPO不仅有更强的理论保证，而且在实践中通常比DPO更加稳定，无需复杂的早停（Early Stopping）技巧。
+为了解决这个问题，他们提出了 **IPO (Identity Preference Optimization)**。IPO不仅有更强的理论保证，而且在实践中通常比DPO更加稳定，无需复杂的早停(Early Stopping)技巧。
 
 本章将：
-1. 深入剖析DPO的理论缺陷（过拟合风险）。
+1. 深入剖析DPO的理论缺陷(过拟合风险)。
 2. 介绍通用的 $\Psi$-Preference Optimization 框架。
 3. 推导IPO的损失函数：一个令人惊讶的简单**均方误差 (MSE)** 形式。
 4. 对比DPO和IPO的梯度行为。
@@ -31,7 +31,7 @@
 
 ### 1.1 回顾DPO
 
-DPO的目标是最大化布拉德利-特里（Bradley-Terry）模型下的似然，同时保持KL约束。
+DPO的目标是最大化布拉德利-特里(Bradley-Terry)模型下的似然，同时保持KL约束。
 其损失函数为 Sigmoid 形式：
 $$ \mathcal{L}_{DPO} = -\log \sigma \left( \beta \log \frac{\pi(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta \log \frac{\pi(y_l|x)}{\pi_{\text{ref}}(y_l|x)} \right) $$
 
@@ -40,7 +40,7 @@ $$ \mathcal{L}_{DPO} = -\log \sigma \left( \beta \log \frac{\pi(y_w|x)}{\pi_{\te
 DeepMind团队指出，DPO的最优解 $\pi^*$ 满足：
 $$ \pi^*(y|x) \propto \pi_{\text{ref}}(y|x) \exp\left( \frac{1}{\beta} r^*(x,y) \right) $$
 
-这里的问题在于，如果偏好数据集是确定性的（即 $P(y_w > y_l) = 1$），并且我们使用了无界的奖励模型（RLHF通常不限制奖励范围），那么在没有任何正则化的情况下，为了最大化似然，最优策略倾向于**完全排除**所有非偏好样本。
+这里的问题在于，如果偏好数据集是确定性的(即 $P(y_w > y_l) = 1$)，并且我们使用了无界的奖励模型(RLHF通常不限制奖励范围)，那么在没有任何正则化的情况下，为了最大化似然，最优策略倾向于**完全排除**所有非偏好样本。
 
 换句话说，DPO可能会试图将 $y_w$ 的概率推向1，将 $y_l$ 的概率推向0。导致 KL 散度爆炸，策略失去多样性。这就是为什么DPO训练时通常需要 carefully tuned $\beta$ 和 early stopping。
 
@@ -52,7 +52,7 @@ $$ \pi^*(y|x) \propto \pi_{\text{ref}}(y|x) \exp\left( \frac{1}{\beta} r^*(x,y) 
 
 $$ \max_\pi \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi(\cdot|x)} \left[ r^*(x,y) \right] - \frac{1}{\beta} \mathbb{D}_{\Psi}(\pi(\cdot|x) \| \pi_{\text{ref}}(\cdot|x)) $$
 
-其中 $\mathbb{D}_{\Psi}$ 是一个广义的散度（不仅仅是KL散度）。
+其中 $\mathbb{D}_{\Psi}$ 是一个广义的散度(不仅仅是KL散度)。
 
 通过改变 $\Psi$ 函数的选择，我们可以导出不同的算法：
 - $\Psi(x) = x \log x$ $\rightarrow$ **KL Regularized RL (RLHF/DPO)**
@@ -77,7 +77,7 @@ $$ h_\pi(x, y_w, y_l) = \log \frac{\pi(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \log \
 
 ### 3.2 均方误差目标
 
-DeepMind提出，与其像DPO那样最大化似然（相当于分类任务），不如直接**回归**到某个目标间隔。
+DeepMind提出，与其像DPO那样最大化似然(相当于分类任务)，不如直接**回归**到某个目标间隔。
 
 这就是 **IPO Loss** 的来源：直接最小化 gap 函数与目标值的平方误差。
 
@@ -99,7 +99,7 @@ $$ \mathcal{L}_{IPO}(\pi) = \mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \
 
 - **DPO**: $\beta$ 越大，越接近Ref，改变越小。
 - **IPO Loss** $= (h - \text{margin})^2$。如果 $\text{margin} = 1/(2\tau)$。
-  - 假如我们想要很强的正则化（不偏离Ref），我们希望 $h$ 接近 0。即 Margin 接近 0。那么 $\tau$ 应该很大。
+  - 假如我们想要很强的正则化(不偏离Ref)，我们希望 $h$ 接近 0。即 Margin 接近 0。那么 $\tau$ 应该很大。
   - 假如我们允许偏离，Margin 可以很大，$\tau$ 应该很小。
 
 **注意**：不同论文和库对 $\beta$ 的定义可能互为倒数，使用时务必检查代码文档！
@@ -116,7 +116,7 @@ $h - 1/(2\beta) = 0 \implies h = 1/(2\beta)$.
 这就鼓励模型大幅偏离 Reference。
 如果 $\beta=1.0$, Target Gap $= 0.5$. 温和的差距。
 
-**结论**：在IPO中，$\beta$ 越**小**，要求模型拉开的差距越**大**，正则化越**弱**（允许偏利Reference更多）。这与DPO是一致的。
+**结论**：在IPO中，$\beta$ 越**小**，要求模型拉开的差距越**大**，正则化越**弱**(允许偏利Reference更多)。这与DPO是一致的。
 
 ---
 
@@ -127,11 +127,11 @@ $h - 1/(2\beta) = 0 \implies h = 1/(2\beta)$.
 $$ \nabla_\theta \mathcal{L}_{DPO} = -\beta \sigma(-h) \nabla_\theta h $$
 
 DPO的梯度系数是 $\sigma(-h)$。
-- 当 $h$ 很小（分不清好坏），系数 $\approx 0.5$，也还行。
-- 当 $h$ 很大（模型已经很确信），系数 $\to 0$，梯度消失。
-- 当 $h$ 极负（模型判错了），系数 $\to 1$。
+- 当 $h$ 很小(分不清好坏)，系数 $\approx 0.5$，也还行。
+- 当 $h$ 很大(模型已经很确信)，系数 $\to 0$，梯度消失。
+- 当 $h$ 极负(模型判错了)，系数 $\to 1$。
 
-问题在于，只要判定正确，梯度就会快速消失。这看起来是好事（收敛），但如果数据中有噪声（标注错误），DPO会试图强行拟合，直到 Log Odds 极其大，最终过拟合。
+问题在于，只要判定正确，梯度就会快速消失。这看起来是好事(收敛)，但如果数据中有噪声(标注错误)，DPO会试图强行拟合，直到 Log Odds 极其大，最终过拟合。
 
 ### 5.2 IPO梯度
 
@@ -172,7 +172,7 @@ DeepMind的实验表明，IPO在多个任务上比DPO更鲁棒，特别是当：
 2. **需要强泛化**：IPO产生的策略通常保留了更多Ref的特性，生成更多样化。
 
 **使用建议**：
-如果你发现 DPO 训练后模型的输出变得极其单一（Mode Collapse），或者在验证集上 Loss 快速上升（过拟合），请尝试切换到 IPO。通常不需要大幅调整 $\beta$，可以直接复用 DPO 的 $\beta$ 设置（如0.01 - 0.1）。
+如果你发现 DPO 训练后模型的输出变得极其单一(Mode Collapse)，或者在验证集上 Loss 快速上升(过拟合)，请尝试切换到 IPO。通常不需要大幅调整 $\beta$，可以直接复用 DPO 的 $\beta$ 设置(如0.01 - 0.1)。
 
 ---
 
@@ -184,7 +184,7 @@ $$ \mathcal{L}_{IPO} = \left( \log \frac{\pi(y_w)}{\pi_{ref}(y_w)} - \log \frac{
 
 ### 8.2 IPO的贡献
 
-1. **理论修正**：指出了 DPO 在数学上的过拟合风险（KL消失问题）。
+1. **理论修正**：指出了 DPO 在数学上的过拟合风险(KL消失问题)。
 2. **形式统一**：将 RLHF 纳入 $\Psi$-PO 框架。
 3. **工程简化**：用简单的 MSE 替代复杂的 Log-Sigmoid，提升稳定性。
 

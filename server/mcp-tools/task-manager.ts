@@ -9,19 +9,16 @@
  * 5. 任务统计
  */
 
-import type { 
-  Task, 
-  TaskStatus, 
-  TaskType, 
-  TaskPriority,
-  TaskCreateParams, 
-  TaskUpdateParams,
+import type {
+  Task,
+  TaskCreateParams,
+  TaskLog,
   TaskQueryOptions,
   TaskStats,
-  TaskTemplate,
-  TaskResult,
   TaskStep,
-  TaskLog
+  TaskTemplate,
+  TaskType,
+  TaskUpdateParams
 } from '../../src/theme/types/task'
 
 import * as fs from 'fs'
@@ -214,7 +211,7 @@ class TaskManager {
       id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
     }
     this.logs.push(entry)
-    
+
     // 保存到文件
     try {
       const date = new Date().toISOString().split('T')[0]
@@ -228,7 +225,7 @@ class TaskManager {
   // 创建任务
   createTask(params: TaskCreateParams): Task {
     const template = BUILTIN_TEMPLATES.find(t => t.id === params.type)
-    
+
     const now = Date.now()
     const task: Task = {
       id: this.generateId(),
@@ -264,7 +261,7 @@ class TaskManager {
 
     this.tasks.set(task.id, task)
     this.saveTasks()
-    
+
     this.addLog({
       taskId: task.id,
       timestamp: now,
@@ -352,7 +349,7 @@ class TaskManager {
     if (updates.metadata !== undefined) task.metadata = { ...task.metadata, ...updates.metadata }
 
     this.saveTasks()
-    
+
     this.addLog({
       taskId: task.id,
       timestamp: Date.now(),
@@ -375,7 +372,7 @@ class TaskManager {
 
     this.tasks.delete(id)
     this.saveTasks()
-    
+
     this.addLog({
       taskId: id,
       timestamp: Date.now(),
@@ -406,7 +403,7 @@ class TaskManager {
         task.stats.duration = Date.now() - task.stats.startedAt
       }
       this.saveTasks()
-      
+
       this.addLog({
         taskId: id,
         timestamp: Date.now(),
@@ -437,7 +434,7 @@ class TaskManager {
     task.result = undefined
 
     this.saveTasks()
-    
+
     this.addLog({
       taskId: id,
       timestamp: Date.now(),
@@ -474,7 +471,7 @@ class TaskManager {
       .slice(-limit)
   }
 
-  // 执行任务（简化版，实际应调用相应的处理器）
+  // 执行任务(简化版，实际应调用相应的处理器)
   async executeTask(id: string): Promise<Task | null> {
     const task = this.tasks.get(id)
     if (!task || task.status !== 'pending') return null
@@ -502,11 +499,11 @@ class TaskManager {
       // 这里应该调用具体的任务处理器
       // 简化实现：根据任务类型模拟执行
       const result = await this.executeTaskHandler(task, controller.signal)
-      
+
       task.status = 'completed'
       task.result = { success: true, data: result }
       task.progress = { current: 100, total: 100, percentage: 100 }
-      
+
       this.addLog({
         taskId: id,
         timestamp: Date.now(),
@@ -517,7 +514,7 @@ class TaskManager {
       if (error.name === 'AbortError') {
         task.status = 'cancelled'
         task.result = { success: false, error: 'Task timeout or cancelled' }
-        
+
         this.addLog({
           taskId: id,
           timestamp: Date.now(),
@@ -527,7 +524,7 @@ class TaskManager {
       } else {
         task.status = 'failed'
         task.result = { success: false, error: error.message }
-        
+
         this.addLog({
           taskId: id,
           timestamp: Date.now(),
@@ -554,12 +551,12 @@ class TaskManager {
     return task
   }
 
-  // 任务执行处理器（简化版）
+  // 任务执行处理器(简化版)
   private async executeTaskHandler(task: Task, signal: AbortSignal): Promise<any> {
     // 模拟任务执行步骤
     const steps = this.getTaskSteps(task.type)
     task.steps = steps
-    
+
     for (let i = 0; i < steps.length; i++) {
       if (signal.aborted) {
         throw new Error('Task aborted')
@@ -568,7 +565,7 @@ class TaskManager {
       const step = steps[i]
       step.status = 'running'
       step.startTime = Date.now()
-      
+
       // 更新进度
       task.progress.current = Math.floor((i / steps.length) * 100)
       task.progress.percentage = task.progress.current
@@ -576,10 +573,10 @@ class TaskManager {
 
       // 模拟执行时间
       await new Promise(resolve => setTimeout(resolve, 500))
-      
+
       step.status = 'completed'
       step.endTime = Date.now()
-      
+
       this.addLog({
         taskId: task.id,
         timestamp: Date.now(),
@@ -645,3 +642,4 @@ export function getTaskManager(): TaskManager {
 }
 
 export { TaskManager }
+

@@ -1,6 +1,6 @@
-import type { ViteDevServer } from "vite";
-import path from "path";
 import fs from "fs";
+import path from "path";
+import type { ViteDevServer } from "vite";
 
 export interface RouteContext {
   system: any;
@@ -65,7 +65,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
   const llmManager = null;
   try {
     // 旧版 agent 模块已移除，使用 ai-chat 模块的简化实现
-    console.log("[INFO] LLM Manager 初始化跳过（使用 ai-chat 模块）");
+    console.log("[INFO] LLM Manager 初始化跳过(使用 ai-chat 模块)");
     const defaultProvider =
       process.env.LLM_DEFAULT_PROVIDER || "deepseek";
     const dailyBudget = parseFloat(
@@ -76,7 +76,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
     const clean = (v: string | undefined) =>
       v?.trim().replace(/^["']|["']$/g, "");
 
-    // 辅助函数：按优先级读取环境变量（LLM_ 优先，兼容 VITE_ 回退）
+    // 辅助函数：按优先级读取环境变量(LLM_ 优先，兼容 VITE_ 回退)
     const env = (key: string): string | undefined => {
       const llmKey = `LLM_${key}`;
       const viteKey = `VITE_${key}`;
@@ -91,7 +91,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
     if (deepseekKey && !deepseekKey.includes("your-api-key")) {
       providers.deepseek = {
         apiKey: deepseekKey,
-        model: env("DEEPSEEK_MODEL") || "deepseek-chat",
+        model: env("DEEPSEEK_MODEL") || "deepseek-v4-pro",
         baseURL: env("DEEPSEEK_BASE_URL"),
       };
     }
@@ -176,10 +176,10 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
     system.error("server.llm", "LLM Manager 初始化失败: " + String(e));
   }
 
-  // 后台任务调度器已移除（随 agent 模块一起移除）
+  // 后台任务调度器已移除(随 agent 模块一起移除)
 
 
-  // API请求日志中间件 - 使用 system 日志（版本2 - 绕过缓存问题）
+  // API请求日志中间件 - 使用 system 日志(版本2 - 绕过缓存问题)
   server.middlewares.use("/api/", (req, res, next) => {
     const startTime = Date.now();
     const url = req.url || "";
@@ -238,7 +238,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
             return;
           }
 
-          // P0-CK: 支持 .vitepress/agent/ 路径（checkpoint 存储）
+          // P0-CK: 支持 .vitepress/agent/ 路径(checkpoint 存储)
           const isAgentPath =
             filePath.startsWith(".vitepress/") ||
             filePath.startsWith(".vitepress\\");
@@ -309,7 +309,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
             return;
           }
 
-          // P0-CK: 支持 .vitepress/agent/ 路径（checkpoint 存储）
+          // P0-CK: 支持 .vitepress/agent/ 路径(checkpoint 存储)
           const isAgentPath =
             filePath.startsWith(".vitepress/") ||
             filePath.startsWith(".vitepress\\");
@@ -337,7 +337,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
 
           const duration = Date.now() - startTime;
 
-          // 记录文件系统事件（暂时使用 system 日志）
+          // 记录文件系统事件(暂时使用 system 日志)
           system.debug("file.saved", `File saved: ${filePath}`, {
             metadata: {
               path: filePath,
@@ -371,7 +371,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
     } else next();
   });
 
-  // Rename file - 真正的文件重命名（修改文件名本身）
+  // Rename file - 真正的文件重命名(修改文件名本身)
   server.middlewares.use("/api/files/rename", (req, res, next) => {
     if (req.method === "POST") {
       const chunks: Buffer[] = [];
@@ -544,7 +544,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
           let decodedPath = filePath;
           try {
             decodedPath = decodeURIComponent(filePath);
-          } catch (e) {}
+          } catch (e) { }
 
           // 安全校验：禁止目录遍历
           const safety = isPathSafe(decodedPath);
@@ -673,7 +673,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
           if (fs.existsSync(metaPath)) {
             try {
               meta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
-            } catch (e) {}
+            } catch (e) { }
           }
 
           trashItems.push({
@@ -732,7 +732,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
                 fs.readFileSync(metaPath, "utf-8"),
               );
               originalPath = meta.originalPath;
-            } catch (e) {}
+            } catch (e) { }
           }
 
           // 如果没有元数据，尝试从文件名解析

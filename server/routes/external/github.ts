@@ -4,10 +4,10 @@
  * ============================================================================
  *
  * 双模式架构：
- * 1. 显式路由（推荐）：POST /api/github/tools/execute
- *    - 后端执行业务逻辑（参数校验、错误翻译、结果格式化）
+ * 1. 显式路由(推荐)：POST /api/github/tools/execute
+ *    - 后端执行业务逻辑(参数校验、错误翻译、结果格式化)
  *    - 前端工具只需调用统一端点
- * 2. 透明代理（fallback）：/api/github/*
+ * 2. 透明代理(fallback)：/api/github/*
  *    - 直接透传到 https://api.github.com/*
  *    - 用于未被显式路由覆盖的端点
  *
@@ -16,10 +16,10 @@
 
 import type { ViteDevServer } from "vite";
 import { github } from "../../config/env";
-import { rateLimitExternal } from "../../middleware/rate-limit";
 import { createBffCache } from "../../middleware/bff-cache";
-import { executeGitHubTool, listGitHubTools } from "../../utils/github-tool-executor";
+import { rateLimitExternal } from "../../middleware/rate-limit";
 import { translateGitHubError } from "../../utils/github-error-translator";
+import { executeGitHubTool, listGitHubTools } from "../../utils/github-tool-executor";
 
 /** GitHub REST API 根地址 */
 const GITHUB_API_BASE = "https://api.github.com";
@@ -80,14 +80,14 @@ export function registerGitHubRoutes(server: ViteDevServer): void {
 
   if (!token) {
     console.warn(
-      "[GitHub BFF] GITHUB_TOKEN（或 VITE_GITHUB_TOKEN）环境变量未配置，GitHub API 请求将以匿名身份发送（受严格速率限制）"
+      "[GitHub BFF] GITHUB_TOKEN(或 VITE_GITHUB_TOKEN)环境变量未配置，GitHub API 请求将以匿名身份发送(受严格速率限制)"
     );
   } else {
-    // 异步验证 Token（延迟到下一个事件循环，避免干扰单元测试）
+    // 异步验证 Token(延迟到下一个事件循环，避免干扰单元测试)
     setTimeout(() => validateGitHubToken(token), 0);
   }
 
-  // 创建 BFF 缓存实例（GET 响应缓存 30 秒）
+  // 创建 BFF 缓存实例(GET 响应缓存 30 秒)
   const cache = createBffCache(30000, (req) =>
     req.method === "GET" ? `GET:${req.url}` : null
   );
@@ -96,7 +96,7 @@ export function registerGitHubRoutes(server: ViteDevServer): void {
   server.middlewares.use("/api/github", rateLimitExternal);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 模式 1：显式工具执行端点（后端重逻辑）
+  // 模式 1：显式工具执行端点(后端重逻辑)
   // ═══════════════════════════════════════════════════════════════════════════
   server.middlewares.use("/api/github/tools/execute", async (req, res, next) => {
     if (req.method !== "POST") {
@@ -127,7 +127,7 @@ export function registerGitHubRoutes(server: ViteDevServer): void {
     }
   });
 
-  // 工具列表端点（供前端发现可用工具）
+  // 工具列表端点(供前端发现可用工具)
   server.middlewares.use("/api/github/tools", async (req, res, next) => {
     if (req.method !== "GET") {
       next();
@@ -137,7 +137,7 @@ export function registerGitHubRoutes(server: ViteDevServer): void {
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 模式 2：透明代理（fallback）
+  // 模式 2：透明代理(fallback)
   // ═══════════════════════════════════════════════════════════════════════════
   server.middlewares.use("/api/github", async (req, res, next) => {
     // 只处理以 /api/github 开头的请求
@@ -146,7 +146,7 @@ export function registerGitHubRoutes(server: ViteDevServer): void {
       return;
     }
 
-    // 尝试从缓存读取（GET 命中则直接返回）
+    // 尝试从缓存读取(GET 命中则直接返回)
     if (cache.tryRead(req, res)) {
       return;
     }
@@ -167,7 +167,7 @@ export function registerGitHubRoutes(server: ViteDevServer): void {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      // 透传 Content-Type（POST/PUT/PATCH 需要）
+      // 透传 Content-Type(POST/PUT/PATCH 需要)
       const contentType = req.headers["content-type"];
       if (contentType) {
         headers["Content-Type"] = contentType as string;
@@ -186,7 +186,7 @@ export function registerGitHubRoutes(server: ViteDevServer): void {
         body: body && body.length > 0 ? new Uint8Array(body) : undefined,
       });
 
-      // 收集响应 headers（排除 hop-by-hop headers）
+      // 收集响应 headers(排除 hop-by-hop headers)
       const responseHeaders: Record<string, string> = {};
       response.headers.forEach((value, key) => {
         const lowerKey = key.toLowerCase();
@@ -203,7 +203,7 @@ export function registerGitHubRoutes(server: ViteDevServer): void {
       // 读取响应体
       const responseBody = await response.text();
 
-      // 写入缓存（仅 GET 2xx）
+      // 写入缓存(仅 GET 2xx)
       cache.write(req, response.status, responseHeaders, responseBody);
 
       // 错误响应：添加翻译信息

@@ -2,7 +2,7 @@
  * Token Estimator - 基于 js-tiktoken 的 Token 估算工具
  *
  * 注意：DeepSeek 和 Kimi 使用各自的 tokenizer，没有开源 JS 实现。
- * 这里统一使用 cl100k_base（GPT-4）进行估算，对英文非常准确，
+ * 这里统一使用 cl100k_base(GPT-4)进行估算，对英文非常准确，
  * 对中文可能有 10-20% 偏差，但量级正确，完全满足用量条和截断决策的需求。
  */
 
@@ -31,17 +31,17 @@ export function estimateTextTokens(text: string): number {
     const encoder = getEncoder()
     return encoder.encode(text).length
   } catch {
-    // 回退：字符数/3（保守估算）
+    // 回退：字符数/3(保守估算)
     return Math.ceil(text.length / 3)
   }
 }
 
 /**
- * 估算消息数组的 token 数（含 OpenAI 风格的消息开销）
+ * 估算消息数组的 token 数(含 OpenAI 风格的消息开销)
  *
- * 消息格式开销（OpenAI 风格）：
- * - 每条消息：4 tokens（<|im_start|>{role}\n{content}<|im_end|>\n）
- * - 最后回复前缀：3 tokens（<|im_start|>assistant\n）
+ * 消息格式开销(OpenAI 风格)：
+ * - 每条消息：4 tokens(<|im_start|>{role}\n{content}<|im_end|>\n)
+ * - 最后回复前缀：3 tokens(<|im_start|>assistant\n)
  * - 系统提示：按普通消息计算
  */
 export function estimateChatTokens(
@@ -62,7 +62,7 @@ export function estimateChatTokens(
         if (part.type === 'text' && part.text) {
           total += estimateTextTokens(part.text)
         } else if (part.type === 'image_url' || part.type === 'image') {
-          total += 500 // 图片占位 token（实际取决于分辨率，这里用保守值）
+          total += 500 // 图片占位 token(实际取决于分辨率，这里用保守值)
         }
       }
     }
@@ -72,7 +72,7 @@ export function estimateChatTokens(
 }
 
 /**
- * 估算工具定义的 token 数（用于计算系统提示词中的工具定义占用）
+ * 估算工具定义的 token 数(用于计算系统提示词中的工具定义占用)
  */
 export function estimateToolDefinitionsTokens(toolDefs: any[]): number {
   if (!toolDefs || toolDefs.length === 0) return 0
@@ -111,7 +111,7 @@ export function truncateTextByTokens(
       originalTokens: tokens.length
     }
   } catch {
-    // 回退：按字符截断（近似）
+    // 回退：按字符截断(近似)
     const approxChars = maxTokens * 3
     if (text.length <= approxChars) {
       return { text, wasTruncated: false, originalTokens: Math.ceil(text.length / 3) }

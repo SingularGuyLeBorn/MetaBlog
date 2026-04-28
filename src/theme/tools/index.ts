@@ -21,381 +21,358 @@
 
 // ==================== 类型导出 ====================
 export type {
-    ToolDefinition,
-    ToolCall,
-    ToolExecutor,
-    ToolRegistration,
-    ToolCallRecord,
-    ThinkingStep,
-    ToolResult
+    ThinkingStep, ToolCall, ToolCallRecord, ToolDefinition, ToolExecutor,
+    ToolRegistration, ToolResult
 } from './types'
 
-export { createSuccessResult, createErrorResult } from './types'
+export { createErrorResult, createSuccessResult } from './types'
 
 // ==================== 注册表导出====================
 export {
-    registerTool,
-    registerTools,
-    getTool,
-    hasTool,
-    executeTool,
-    executeToolWithRecord,
-    getToolDefinitions,
-    getRegisteredToolNames,
-    getToolCount,
-    unregisterTool,
-    clearTools,
-    getToolCallRecord,
-    getAllToolCallRecords,
-    clearToolCallRecords
+    clearToolCallRecords, clearTools, executeTool,
+    executeToolWithRecord, getAllToolCallRecords, getRegisteredToolNames, getTool, getToolCallRecord, getToolCount, getToolDefinitions, hasTool, registerTool,
+    registerTools, unregisterTool
 } from './registry'
 
 // ==================== 文章工具 ====================
 export {
-    createArticle,
-    getArticleContent,
-    updateArticle,
-    deleteArticle,
-    listArticles,
-    searchArticles,
-    createArticleDef,
-    getArticleContentDef,
-    updateArticleDef,
-    deleteArticleDef,
-    listArticlesDef,
-    searchArticlesDef
+    createArticle, createArticleDef, deleteArticle, deleteArticleDef, getArticleContent, getArticleContentDef, listArticles, listArticlesDef, searchArticles, searchArticlesDef, updateArticle, updateArticleDef
 } from './article'
 
 // ==================== 学术工具 ====================
 export {
-    searchArxiv,
-    fetchArxiv,
-    searchOpenReview,
-    fetchOpenReview,
-    searchHuggingFace,
-    fetchHuggingFaceModel,
-    searchPapersWithCode,
-    searchSemanticScholar,
-    searchArxivDef,
-    fetchArxivDef,
-    searchOpenReviewDef,
-    fetchOpenReviewDef,
-    searchHuggingFaceDef,
-    fetchHuggingFaceModelDef,
-    searchPapersWithCodeDef,
-    searchSemanticScholarDef
+    fetchArxiv, fetchArxivDef, fetchHuggingFaceModel, fetchHuggingFaceModelDef, fetchOpenReview, fetchOpenReviewDef, searchArxiv, searchArxivDef, searchHuggingFace, searchHuggingFaceDef, searchOpenReview, searchOpenReviewDef, searchPapersWithCode, searchPapersWithCodeDef, searchSemanticScholar, searchSemanticScholarDef
 } from './academic'
 
 // ==================== 文件工具 ====================
 export {
-    readFile,
-    writeFile,
-    listFiles,
-    readFileDef,
-    writeFileDef,
-    listFilesDef
+    listFiles, listFilesDef, readFile, readFileDef, writeFile, writeFileDef
 } from './file'
 
 // ==================== 平台解析工具 ====================
 export {
-    parseZhihu,
-    parseXiaohongshu,
-    parseWechat,
-    parsePlatformLink,
-    parseDouyin,
-    parseBilibili,
-    parseWeibo,
-    ocrImage,
-    processImage,
-    parseZhihuDef,
-    parseXiaohongshuDef,
-    parseWechatDef,
-    parsePlatformLinkDef,
-    parseDouyinDef,
-    parseBilibiliDef,
-    parseWeiboDef,
-    ocrImageDef,
-    processImageDef
+    ocrImage, ocrImageDef, parseBilibili, parseBilibiliDef, parseDouyin, parseDouyinDef, parsePlatformLink, parsePlatformLinkDef, parseWechat, parseWechatDef, parseWeibo, parseWeiboDef, parseXiaohongshu, parseXiaohongshuDef, parseZhihu, parseZhihuDef, processImage, processImageDef
 } from './platform'
 
 // ==================== GitHub 工具 ====================
 export {
-    githubGetRepo,
-    githubListRepoContents,
-    githubGetFileContent,
-    githubSearchCode,
-    githubGetCommitHistory,
-    githubGetIssues,
-    githubListPulls,
-    githubGetPull,
-    githubCreateIssue,
-    githubListWorkflows,
-    githubListWorkflowRuns,
-    githubCreateOrUpdateFile,
-    githubDeleteFile,
-    githubCreatePullRequest,
-    githubMergePullRequest,
-    githubCreateIssueComment,
-    githubUpdateIssue,
-    githubCreateBranch,
-    githubDeleteBranch,
-    githubForkRepo,
-    githubCreateRelease,
-    githubListBranches,
-    githubCompareCommits,
-    githubTriggerWorkflow,
-    githubGetReadme,
-    githubSearchRepos,
-    githubSearchIssues,
-    githubCreateRepo,
-    githubUpdateRepo,
-    githubDeleteRepo,
-    githubListIssueComments,
-    githubGetPullRequestFiles,
-    githubCreatePullRequestReview,
-    githubGetRateLimit,
-    githubGetRepoDef,
-    githubListRepoContentsDef,
-    githubGetFileContentDef,
-    githubSearchCodeDef,
-    githubGetCommitHistoryDef,
-    githubGetIssuesDef,
-    githubListPullsDef,
-    githubGetPullDef,
-    githubCreateIssueDef,
-    githubListWorkflowsDef,
-    githubListWorkflowRunsDef,
-    githubCreateOrUpdateFileDef,
-    githubDeleteFileDef,
-    githubCreatePullRequestDef,
-    githubMergePullRequestDef,
-    githubCreateIssueCommentDef,
-    githubUpdateIssueDef,
-    githubCreateBranchDef,
-    githubDeleteBranchDef,
-    githubForkRepoDef,
-    githubCreateReleaseDef,
-    githubListBranchesDef,
-    githubCompareCommitsDef,
-    githubTriggerWorkflowDef,
-    githubGetReadmeDef,
-    githubSearchReposDef,
-    githubSearchIssuesDef,
-    githubCreateRepoDef,
-    githubUpdateRepoDef,
-    githubDeleteRepoDef,
-    githubListIssueCommentsDef,
-    githubGetPullRequestFilesDef,
-    githubCreatePullRequestReviewDef,
-    githubGetRateLimitDef
+    githubCompareCommits, githubCompareCommitsDef, githubCreateBranch, githubCreateBranchDef, githubCreateIssue, githubCreateIssueComment, githubCreateIssueCommentDef, githubCreateIssueDef, githubCreateOrUpdateFile, githubCreateOrUpdateFileDef, githubCreatePullRequest, githubCreatePullRequestDef, githubCreatePullRequestReview, githubCreatePullRequestReviewDef, githubCreateRelease, githubCreateReleaseDef, githubCreateRepo, githubCreateRepoDef, githubDeleteBranch, githubDeleteBranchDef, githubDeleteFile, githubDeleteFileDef, githubDeleteRepo, githubDeleteRepoDef, githubForkRepo, githubForkRepoDef, githubGetCommitHistory, githubGetCommitHistoryDef, githubGetFileContent, githubGetFileContentDef, githubGetIssues, githubGetIssuesDef, githubGetPull, githubGetPullDef, githubGetPullRequestFiles, githubGetPullRequestFilesDef, githubGetRateLimit, githubGetRateLimitDef, githubGetReadme, githubGetReadmeDef, githubGetRepo, githubGetRepoDef, githubListBranches, githubListBranchesDef, githubListIssueComments, githubListIssueCommentsDef, githubListPulls, githubListPullsDef, githubListRepoContents, githubListRepoContentsDef, githubListWorkflowRuns, githubListWorkflowRunsDef, githubListWorkflows, githubListWorkflowsDef, githubMergePullRequest, githubMergePullRequestDef, githubSearchCode, githubSearchCodeDef, githubSearchIssues, githubSearchIssuesDef, githubSearchRepos, githubSearchReposDef, githubTriggerWorkflow, githubTriggerWorkflowDef, githubUpdateIssue, githubUpdateIssueDef, githubUpdateRepo, githubUpdateRepoDef
 } from './github'
 
 
 // ==================== 笔记工具 ====================
 export {
-    createNote,
-    listNotes,
-    queryKnowledge,
-    createNoteDef,
-    listNotesDef,
-    queryKnowledgeDef
+    createNote, createNoteDef, listNotes, listNotesDef, queryKnowledge, queryKnowledgeDef
 } from './note'
 
 // ==================== 文本工具 ====================
 export {
-    summarizeText,
-    formatText,
-    translateText,
-    summarizeTextDef,
-    formatTextDef,
-    translateTextDef
+    formatText, formatTextDef, summarizeText, summarizeTextDef, translateText, translateTextDef
 } from './text'
 
 // ==================== 代码工具 ====================
 export {
-    executeCode,
-    analyzeCode,
-    executeCodeDef,
-    analyzeCodeDef
+    analyzeCode, analyzeCodeDef, executeCode, executeCodeDef
 } from './code'
 
 // ==================== 网络工具 ====================
 export {
-    webSearch,
-    fetchUrl,
-    webSearchDef,
-    fetchUrlDef
+    fetchUrl, fetchUrlDef, webSearch, webSearchDef
 } from './network'
 
 // ==================== 系统工具 ====================
 export {
-    getCurrentTime,
-    testEcho,
-    calculate,
-    getWeather,
-    getCurrentTimeDef,
-    testEchoDef,
-    calculateDef,
-    getWeatherDef
+    calculate, calculateDef, getCurrentTime, getCurrentTimeDef, getWeather, getWeatherDef, testEcho, testEchoDef
 } from './system'
 
 // ==================== 飞书工具 ====================
-export {
-    feishuDocCreate, feishuDocRead, feishuDocMeta, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
-    feishuDocUpdateBlock, feishuDocDeleteBlock, feishuDocInsertImage, feishuDocShare, feishuDocUnshare,
-    feishuImSend, feishuUserSearch,
-    feishuWikiSpaceCreate, feishuWikiSpaceList, feishuWikiSpaceGet, feishuWikiSpaceUpdate, feishuWikiSpaceDelete,
-    feishuWikiNodeCreate, feishuWikiNodeList, feishuWikiNodeDelete, feishuWikiNodeMove, feishuWikiMoveDoc,
-    feishuWikiMemberList, feishuWikiMemberAdd, feishuWikiMemberRemove,
-    feishuDocCreateDef, feishuDocReadDef, feishuDocMetaDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
-    feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuDocInsertImageDef, feishuDocShareDef,
-    feishuDocUnshareDef, feishuImSendDef, feishuUserSearchDef,
-    feishuWikiSpaceCreateDef, feishuWikiSpaceListDef, feishuWikiSpaceGetDef, feishuWikiSpaceUpdateDef, feishuWikiSpaceDeleteDef,
-    feishuWikiNodeCreateDef, feishuWikiNodeListDef, feishuWikiNodeDeleteDef, feishuWikiNodeMoveDef, feishuWikiMoveDocDef,
-    feishuWikiMemberListDef, feishuWikiMemberAddDef, feishuWikiMemberRemoveDef,
-} from './lark'
+export { feishuDocAppend, feishuDocAppendDef, feishuDocBlocks, feishuDocBlocksDef, feishuDocCreate, feishuDocCreateDef, feishuDocDeleteBlock, feishuDocDeleteBlockDef, feishuDocInsertImage, feishuDocInsertImageDef, feishuDocMeta, feishuDocMetaDef, feishuDocRead, feishuDocReadDef, feishuDocSearch, feishuDocSearchDef, feishuDocShare, feishuDocShareDef, feishuDocUnshare, feishuDocUnshareDef, feishuDocUpdateBlock, feishuDocUpdateBlockDef, feishuImSend, feishuImSendDef, feishuUserSearch, feishuUserSearchDef, feishuWikiMemberAdd, feishuWikiMemberAddDef, feishuWikiMemberList, feishuWikiMemberListDef, feishuWikiMemberRemove, feishuWikiMemberRemoveDef, feishuWikiMoveDoc, feishuWikiMoveDocDef, feishuWikiNodeCreate, feishuWikiNodeCreateDef, feishuWikiNodeDelete, feishuWikiNodeDeleteDef, feishuWikiNodeList, feishuWikiNodeListDef, feishuWikiNodeMove, feishuWikiNodeMoveDef, feishuWikiSpaceCreate, feishuWikiSpaceCreateDef, feishuWikiSpaceDelete, feishuWikiSpaceDeleteDef, feishuWikiSpaceGet, feishuWikiSpaceGetDef, feishuWikiSpaceList, feishuWikiSpaceListDef, feishuWikiSpaceUpdate, feishuWikiSpaceUpdateDef } from './lark'
 
 // ==================== 语雀工具 ====================
-export {
-    yuqueRepoList, yuqueTocGet, yuqueDocList, yuqueDocRead, yuqueDocCreate,
-    yuqueDocUpdate, yuqueDocDelete, yuqueImageUpload, yuqueSearch,
-    yuqueRepoCreate, yuqueRepoUpdate, yuqueRepoDelete, yuqueRepoGet, yuqueRepoSettingGet, yuqueRepoSettingUpdate,
-    yuqueRepoListDef, yuqueTocGetDef, yuqueDocListDef, yuqueDocReadDef, yuqueDocCreateDef,
-    yuqueDocUpdateDef, yuqueDocDeleteDef, yuqueImageUploadDef, yuqueSearchDef,
-    yuqueRepoCreateDef, yuqueRepoUpdateDef, yuqueRepoDeleteDef, yuqueRepoGetDef, yuqueRepoSettingGetDef, yuqueRepoSettingUpdateDef,
-} from './yuque'
+export { yuqueDocCreate, yuqueDocCreateDef, yuqueDocDelete, yuqueDocDeleteDef, yuqueDocList, yuqueDocListDef, yuqueDocRead, yuqueDocReadDef, yuqueDocUpdate, yuqueDocUpdateDef, yuqueImageUpload, yuqueImageUploadDef, yuqueRepoCreate, yuqueRepoCreateDef, yuqueRepoDelete, yuqueRepoDeleteDef, yuqueRepoGet, yuqueRepoGetDef, yuqueRepoList, yuqueRepoListDef, yuqueRepoSettingGet, yuqueRepoSettingGetDef, yuqueRepoSettingUpdate, yuqueRepoSettingUpdateDef, yuqueRepoUpdate, yuqueRepoUpdateDef, yuqueSearch, yuqueSearchDef, yuqueTocGet, yuqueTocGetDef } from './yuque'
 
 // ==================== Skill 加载工具 ====================
 export {
-    loadSkillDef,
-    executeLoadSkill
+    executeLoadSkill, loadSkillDef
 } from './load_skill'
 
 // ==================== Meta 工具 ====================
 export {
-    getAllToolsDef,
-    getAllSkillsDef,
-    executeGetAllTools,
-    executeGetAllSkills
+    executeGetAllSkills, executeGetAllTools, getAllSkillsDef, getAllToolsDef
 } from './meta'
 
 // ==================== 能力搜索工具 ====================
 export {
-    searchCapabilitiesDef,
-    executeSearchCapabilities
+    executeSearchCapabilities, searchCapabilitiesDef
 } from './search_capabilities'
 
 // ==================== 导入用于初始化====================
-import { registerTools, getRegisteredToolNames } from './registry'
+import { getRegisteredToolNames, registerTools } from './registry'
 
 // 文章工具
 import {
-    createArticle, getArticleContent, updateArticle, deleteArticle, listArticles, searchArticles,
-    createArticleDef, getArticleContentDef, updateArticleDef, deleteArticleDef, listArticlesDef, searchArticlesDef
+    createArticle,
+    createArticleDef,
+    deleteArticle,
+    deleteArticleDef,
+    getArticleContent,
+    getArticleContentDef,
+    listArticles,
+    listArticlesDef,
+    searchArticles,
+    searchArticlesDef,
+    updateArticle,
+    updateArticleDef
 } from './article'
 
 // 学术工具
 import {
-    searchArxiv, fetchArxiv, searchOpenReview, fetchOpenReview, searchHuggingFace, fetchHuggingFaceModel, searchPapersWithCode, searchSemanticScholar,
-    searchArxivDef, fetchArxivDef, searchOpenReviewDef, fetchOpenReviewDef, searchHuggingFaceDef, fetchHuggingFaceModelDef, searchPapersWithCodeDef, searchSemanticScholarDef
+    fetchArxiv,
+    fetchArxivDef,
+    fetchHuggingFaceModel,
+    fetchHuggingFaceModelDef,
+    fetchOpenReview,
+    fetchOpenReviewDef,
+    searchArxiv,
+    searchArxivDef,
+    searchHuggingFace,
+    searchHuggingFaceDef,
+    searchOpenReview,
+    searchOpenReviewDef,
+    searchPapersWithCode,
+    searchPapersWithCodeDef,
+    searchSemanticScholar,
+    searchSemanticScholarDef
 } from './academic'
 
 // 文件工具
-import { readFile, writeFile, listFiles, readFileDef, writeFileDef, listFilesDef } from './file'
+import { listFiles, listFilesDef, readFile, readFileDef, writeFile, writeFileDef } from './file'
 
 // 平台解析工具
 import {
-    parseZhihu, parseXiaohongshu, parseWechat, parsePlatformLink, parseDouyin, parseBilibili, parseWeibo, ocrImage, processImage,
-    parseZhihuDef, parseXiaohongshuDef, parseWechatDef, parsePlatformLinkDef, parseDouyinDef, parseBilibiliDef, parseWeiboDef, ocrImageDef, processImageDef
+    ocrImage,
+    ocrImageDef,
+    parseBilibili,
+    parseBilibiliDef,
+    parseDouyin,
+    parseDouyinDef,
+    parsePlatformLink,
+    parsePlatformLinkDef,
+    parseWechat,
+    parseWechatDef,
+    parseWeibo,
+    parseWeiboDef,
+    parseXiaohongshu,
+    parseXiaohongshuDef,
+    parseZhihu,
+    parseZhihuDef,
+    processImage,
+    processImageDef
 } from './platform'
 
 // GitHub 工具
 import {
-    githubGetRepo, githubListRepoContents, githubGetFileContent, githubSearchCode, githubGetCommitHistory, githubGetIssues,
-    githubListPulls, githubGetPull, githubCreateIssue, githubListWorkflows, githubListWorkflowRuns,
-    githubCreateOrUpdateFile, githubDeleteFile, githubCreatePullRequest, githubMergePullRequest,
-    githubCreateIssueComment, githubUpdateIssue, githubCreateBranch, githubDeleteBranch,
-    githubForkRepo, githubCreateRelease, githubListBranches, githubCompareCommits,
-    githubTriggerWorkflow, githubGetReadme,
-    githubSearchRepos, githubSearchIssues, githubCreateRepo, githubUpdateRepo, githubDeleteRepo,
-    githubListIssueComments, githubGetPullRequestFiles, githubCreatePullRequestReview, githubGetRateLimit,
-    githubGetRepoDef, githubListRepoContentsDef, githubGetFileContentDef, githubSearchCodeDef, githubGetCommitHistoryDef, githubGetIssuesDef,
-    githubListPullsDef, githubGetPullDef, githubCreateIssueDef, githubListWorkflowsDef, githubListWorkflowRunsDef,
-    githubCreateOrUpdateFileDef, githubDeleteFileDef, githubCreatePullRequestDef, githubMergePullRequestDef,
-    githubCreateIssueCommentDef, githubUpdateIssueDef, githubCreateBranchDef, githubDeleteBranchDef,
-    githubForkRepoDef, githubCreateReleaseDef, githubListBranchesDef, githubCompareCommitsDef,
-    githubTriggerWorkflowDef, githubGetReadmeDef,
-    githubSearchReposDef, githubSearchIssuesDef, githubCreateRepoDef, githubUpdateRepoDef, githubDeleteRepoDef,
-    githubListIssueCommentsDef, githubGetPullRequestFilesDef, githubCreatePullRequestReviewDef, githubGetRateLimitDef
+    githubCompareCommits,
+    githubCompareCommitsDef,
+    githubCreateBranch,
+    githubCreateBranchDef,
+    githubCreateIssue,
+    githubCreateIssueComment,
+    githubCreateIssueCommentDef,
+    githubCreateIssueDef,
+    githubCreateOrUpdateFile,
+    githubCreateOrUpdateFileDef,
+    githubCreatePullRequest,
+    githubCreatePullRequestDef,
+    githubCreatePullRequestReview,
+    githubCreatePullRequestReviewDef,
+    githubCreateRelease,
+    githubCreateReleaseDef,
+    githubCreateRepo,
+    githubCreateRepoDef,
+    githubDeleteBranch,
+    githubDeleteBranchDef,
+    githubDeleteFile,
+    githubDeleteFileDef,
+    githubDeleteRepo,
+    githubDeleteRepoDef,
+    githubForkRepo,
+    githubForkRepoDef,
+    githubGetCommitHistory,
+    githubGetCommitHistoryDef,
+    githubGetFileContent,
+    githubGetFileContentDef,
+    githubGetIssues,
+    githubGetIssuesDef,
+    githubGetPull,
+    githubGetPullDef,
+    githubGetPullRequestFiles,
+    githubGetPullRequestFilesDef,
+    githubGetRateLimit,
+    githubGetRateLimitDef,
+    githubGetReadme,
+    githubGetReadmeDef,
+    githubGetRepo,
+    githubGetRepoDef,
+    githubListBranches,
+    githubListBranchesDef,
+    githubListIssueComments,
+    githubListIssueCommentsDef,
+    githubListPulls,
+    githubListPullsDef,
+    githubListRepoContents,
+    githubListRepoContentsDef,
+    githubListWorkflowRuns,
+    githubListWorkflowRunsDef,
+    githubListWorkflows,
+    githubListWorkflowsDef,
+    githubMergePullRequest,
+    githubMergePullRequestDef,
+    githubSearchCode,
+    githubSearchCodeDef,
+    githubSearchIssues,
+    githubSearchIssuesDef,
+    githubSearchRepos,
+    githubSearchReposDef,
+    githubTriggerWorkflow,
+    githubTriggerWorkflowDef,
+    githubUpdateIssue,
+    githubUpdateIssueDef,
+    githubUpdateRepo,
+    githubUpdateRepoDef
 } from './github'
 
 
 // 笔记工具
-import { createNote, listNotes, queryKnowledge, createNoteDef, listNotesDef, queryKnowledgeDef } from './note'
+import { createNote, createNoteDef, listNotes, listNotesDef, queryKnowledge, queryKnowledgeDef } from './note'
 
 // 文本工具
-import { summarizeText, formatText, translateText, summarizeTextDef, formatTextDef, translateTextDef } from './text'
+import { formatText, formatTextDef, summarizeText, summarizeTextDef, translateText, translateTextDef } from './text'
 
 // 代码工具
-import { executeCode, analyzeCode, executeCodeDef, analyzeCodeDef } from './code'
+import { analyzeCode, analyzeCodeDef, executeCode, executeCodeDef } from './code'
 
 // 网络工具
-import { webSearch, fetchUrl, webSearchDef, fetchUrlDef } from './network'
+import { fetchUrl, fetchUrlDef, webSearch, webSearchDef } from './network'
 
 // 系统工具
-import { getCurrentTime, testEcho, calculate, getWeather, getCurrentTimeDef, testEchoDef, calculateDef, getWeatherDef } from './system'
+import { calculate, calculateDef, getCurrentTime, getCurrentTimeDef, getWeather, getWeatherDef, testEcho, testEchoDef } from './system'
 
 // 飞书工具
 import {
-    feishuDocCreate, feishuDocRead, feishuDocMeta, feishuDocSearch, feishuDocBlocks, feishuDocAppend,
-    feishuDocUpdateBlock, feishuDocDeleteBlock, feishuDocInsertImage, feishuDocShare, feishuDocUnshare,
-    feishuImSend, feishuUserSearch,
-    feishuWikiSpaceCreate, feishuWikiSpaceList, feishuWikiSpaceGet, feishuWikiSpaceUpdate, feishuWikiSpaceDelete,
-    feishuWikiNodeCreate, feishuWikiNodeList, feishuWikiNodeDelete, feishuWikiNodeMove, feishuWikiMoveDoc,
-    feishuWikiMemberList, feishuWikiMemberAdd, feishuWikiMemberRemove,
-    feishuDocCreateDef, feishuDocReadDef, feishuDocMetaDef, feishuDocSearchDef, feishuDocBlocksDef, feishuDocAppendDef,
-    feishuDocUpdateBlockDef, feishuDocDeleteBlockDef, feishuDocInsertImageDef, feishuDocShareDef,
-    feishuDocUnshareDef, feishuImSendDef, feishuUserSearchDef,
-    feishuWikiSpaceCreateDef, feishuWikiSpaceListDef, feishuWikiSpaceGetDef, feishuWikiSpaceUpdateDef, feishuWikiSpaceDeleteDef,
-    feishuWikiNodeCreateDef, feishuWikiNodeListDef, feishuWikiNodeDeleteDef, feishuWikiNodeMoveDef, feishuWikiMoveDocDef,
-    feishuWikiMemberListDef, feishuWikiMemberAddDef, feishuWikiMemberRemoveDef,
+    feishuDocAppend,
+    feishuDocAppendDef,
+    feishuDocBlocks,
+    feishuDocBlocksDef,
+    feishuDocCreate,
+    feishuDocCreateDef,
+    feishuDocDeleteBlock,
+    feishuDocDeleteBlockDef,
+    feishuDocInsertImage,
+    feishuDocInsertImageDef,
+    feishuDocMeta,
+    feishuDocMetaDef,
+    feishuDocRead,
+    feishuDocReadDef,
+    feishuDocSearch,
+    feishuDocSearchDef,
+    feishuDocShare,
+    feishuDocShareDef,
+    feishuDocUnshare,
+    feishuDocUnshareDef,
+    feishuDocUpdateBlock,
+    feishuDocUpdateBlockDef,
+    feishuImSend,
+    feishuImSendDef,
+    feishuUserSearch,
+    feishuUserSearchDef,
+    feishuWikiMemberAdd,
+    feishuWikiMemberAddDef,
+    feishuWikiMemberList,
+    feishuWikiMemberListDef,
+    feishuWikiMemberRemove,
+    feishuWikiMemberRemoveDef,
+    feishuWikiMoveDoc,
+    feishuWikiMoveDocDef,
+    feishuWikiNodeCreate,
+    feishuWikiNodeCreateDef,
+    feishuWikiNodeDelete,
+    feishuWikiNodeDeleteDef,
+    feishuWikiNodeList,
+    feishuWikiNodeListDef,
+    feishuWikiNodeMove,
+    feishuWikiNodeMoveDef,
+    feishuWikiSpaceCreate,
+    feishuWikiSpaceCreateDef,
+    feishuWikiSpaceDelete,
+    feishuWikiSpaceDeleteDef,
+    feishuWikiSpaceGet,
+    feishuWikiSpaceGetDef,
+    feishuWikiSpaceList,
+    feishuWikiSpaceListDef,
+    feishuWikiSpaceUpdate,
+    feishuWikiSpaceUpdateDef,
 } from './lark'
 
 // 语雀工具
 import {
-    yuqueRepoList, yuqueTocGet, yuqueDocList, yuqueDocRead, yuqueDocCreate,
-    yuqueDocUpdate, yuqueDocDelete, yuqueImageUpload, yuqueSearch,
-    yuqueRepoCreate, yuqueRepoUpdate, yuqueRepoDelete, yuqueRepoGet, yuqueRepoSettingGet, yuqueRepoSettingUpdate,
-    yuqueRepoListDef, yuqueTocGetDef, yuqueDocListDef, yuqueDocReadDef, yuqueDocCreateDef,
-    yuqueDocUpdateDef, yuqueDocDeleteDef, yuqueImageUploadDef, yuqueSearchDef,
-    yuqueRepoCreateDef, yuqueRepoUpdateDef, yuqueRepoDeleteDef, yuqueRepoGetDef, yuqueRepoSettingGetDef, yuqueRepoSettingUpdateDef,
+    yuqueDocCreate,
+    yuqueDocCreateDef,
+    yuqueDocDelete,
+    yuqueDocDeleteDef,
+    yuqueDocList,
+    yuqueDocListDef,
+    yuqueDocRead,
+    yuqueDocReadDef,
+    yuqueDocUpdate,
+    yuqueDocUpdateDef,
+    yuqueImageUpload,
+    yuqueImageUploadDef,
+    yuqueRepoCreate,
+    yuqueRepoCreateDef,
+    yuqueRepoDelete,
+    yuqueRepoDeleteDef,
+    yuqueRepoGet,
+    yuqueRepoGetDef,
+    yuqueRepoList,
+    yuqueRepoListDef,
+    yuqueRepoSettingGet,
+    yuqueRepoSettingGetDef,
+    yuqueRepoSettingUpdate,
+    yuqueRepoSettingUpdateDef,
+    yuqueRepoUpdate,
+    yuqueRepoUpdateDef,
+    yuqueSearch,
+    yuqueSearchDef,
+    yuqueTocGet,
+    yuqueTocGetDef,
 } from './yuque'
 
 // Skill 加载工具
-import { loadSkillDef, executeLoadSkill } from './load_skill'
+import { executeLoadSkill, loadSkillDef } from './load_skill'
 
 // Meta 工具
-import { getAllToolsDef, getAllSkillsDef, executeGetAllTools, executeGetAllSkills } from './meta'
+import { executeGetAllSkills, executeGetAllTools, getAllSkillsDef, getAllToolsDef } from './meta'
 
 // 能力搜索工具
-import { searchCapabilitiesDef, executeSearchCapabilities } from './search_capabilities'
+import { executeSearchCapabilities, searchCapabilitiesDef } from './search_capabilities'
 
-// ==================== 核心工具列表（始终暴露） ====================
+// ==================== 核心工具列表(始终暴露) ====================
 
 /**
  * 核心工具名称列表 - 始终通过 Function Calling schema 暴露
  *
  * 渐进式披露设计：
- * - 核心工具（~7个）始终暴露
- * - 领域工具（~69个）默认隐藏，通过 searchCapabilities / loadSkill 动态激活 *
+ * - 核心工具(~7个)始终暴露
+ * - 领域工具(~69个)默认隐藏，通过 searchCapabilities / loadSkill 动态激活 *
  * 参考：OpenAI 建议每轮对话不超过10-15 个工具，
  * MCP 专家建议不超过10-15 个，graph-tool-call 项目 248个 减少 79% token
  */
 export const CORE_TOOL_NAMES = [
     'searchCapabilities',   // 能力发现器- 搜索所有工具和 Skills
     'loadSkill',            // 工作流加载器 - 加载 Skill 工作流指南
-    'getAllTools',         // 工具目录 - 获取完整工具列表（文本形式）
-    'getAllSkills',        // Skill 目录 - 获取完整 Skill 列表（文本形式）
+    'getAllTools',         // 工具目录 - 获取完整工具列表(文本形式)
+    'getAllSkills',        // Skill 目录 - 获取完整 Skill 列表(文本形式)
     'getCurrentTime',      // 通用基础工具
     'calculate',             // 通用基础工具
     'webSearch'             // 通用网络搜索
@@ -413,7 +390,7 @@ export function initializeDefaultTools(): void {
     if (defaultToolsInitialized) return
     defaultToolsInitialized = true
 
-    // 文章管理工具（个）
+    // 文章管理工具(个)
     registerTools([
         { name: 'createArticle', definition: createArticleDef, executor: createArticle },
         { name: 'getArticleContent', definition: getArticleContentDef, executor: getArticleContent },
@@ -423,7 +400,7 @@ export function initializeDefaultTools(): void {
         { name: 'searchArticles', definition: searchArticlesDef, executor: searchArticles }
     ])
 
-    // 学术研究工具（个）
+    // 学术研究工具(个)
     registerTools([
         { name: 'searchArxiv', definition: searchArxivDef, executor: searchArxiv },
         { name: 'fetchArxiv', definition: fetchArxivDef, executor: fetchArxiv },
@@ -435,14 +412,14 @@ export function initializeDefaultTools(): void {
         { name: 'searchSemanticScholar', definition: searchSemanticScholarDef, executor: searchSemanticScholar }
     ])
 
-    // 文件管理工具（个）
+    // 文件管理工具(个)
     registerTools([
         { name: 'readFile', definition: readFileDef, executor: readFile },
         { name: 'writeFile', definition: writeFileDef, executor: writeFile },
         { name: 'listFiles', definition: listFilesDef, executor: listFiles }
     ])
 
-    // 平台解析工具（个）
+    // 平台解析工具(个)
     registerTools([
         { name: 'parseZhihu', definition: parseZhihuDef, executor: parseZhihu },
         { name: 'parseXiaohongshu', definition: parseXiaohongshuDef, executor: parseXiaohongshu },
@@ -455,7 +432,7 @@ export function initializeDefaultTools(): void {
         { name: 'processImage', definition: processImageDef, executor: processImage }
     ])
 
-    // GitHub 工具（4个）
+    // GitHub 工具(4个)
     registerTools([
         { name: 'githubGetRepo', definition: githubGetRepoDef, executor: githubGetRepo },
         { name: 'githubListRepoContents', definition: githubListRepoContentsDef, executor: githubListRepoContents },
@@ -493,33 +470,33 @@ export function initializeDefaultTools(): void {
         { name: 'githubGetRateLimit', definition: githubGetRateLimitDef, executor: githubGetRateLimit }
     ])
 
-    // 笔记工具（个）
+    // 笔记工具(个)
     registerTools([
         { name: 'createNote', definition: createNoteDef, executor: createNote },
         { name: 'listNotes', definition: listNotesDef, executor: listNotes },
         { name: 'queryKnowledge', definition: queryKnowledgeDef, executor: queryKnowledge }
     ])
 
-    // 文本处理工具（个）
+    // 文本处理工具(个)
     registerTools([
         { name: 'summarizeText', definition: summarizeTextDef, executor: summarizeText },
         { name: 'formatText', definition: formatTextDef, executor: formatText },
         { name: 'translateText', definition: translateTextDef, executor: translateText }
     ])
 
-    // 代码工具（个）
+    // 代码工具(个)
     registerTools([
         { name: 'executeCode', definition: executeCodeDef, executor: executeCode },
         { name: 'analyzeCode', definition: analyzeCodeDef, executor: analyzeCode }
     ])
 
-    // 网络工具（个）
+    // 网络工具(个)
     registerTools([
         { name: 'webSearch', definition: webSearchDef, executor: webSearch },
         { name: 'fetchUrl', definition: fetchUrlDef, executor: fetchUrl }
     ])
 
-    // 系统工具（个）
+    // 系统工具(个)
     registerTools([
         { name: 'getCurrentTime', definition: getCurrentTimeDef, executor: getCurrentTime },
         { name: 'getWeather', definition: getWeatherDef, executor: getWeather },
@@ -527,7 +504,7 @@ export function initializeDefaultTools(): void {
         { name: 'testEcho', definition: testEchoDef, executor: testEcho }
     ])
 
-    // 飞书文档工具（3个）
+    // 飞书文档工具(3个)
     registerTools([
         { name: 'feishuDocCreate', definition: feishuDocCreateDef, executor: feishuDocCreate },
         { name: 'feishuDocRead', definition: feishuDocReadDef, executor: feishuDocRead },
@@ -544,7 +521,7 @@ export function initializeDefaultTools(): void {
         { name: 'feishuUserSearch', definition: feishuUserSearchDef, executor: feishuUserSearch }
     ])
 
-    // 飞书 Wiki 知识库工具（13个）
+    // 飞书 Wiki 知识库工具(13个)
     registerTools([
         { name: 'feishuWikiSpaceCreate', definition: feishuWikiSpaceCreateDef, executor: feishuWikiSpaceCreate },
         { name: 'feishuWikiSpaceList', definition: feishuWikiSpaceListDef, executor: feishuWikiSpaceList },
@@ -561,7 +538,7 @@ export function initializeDefaultTools(): void {
         { name: 'feishuWikiMemberRemove', definition: feishuWikiMemberRemoveDef, executor: feishuWikiMemberRemove },
     ])
 
-    // 语雀文档工具（个）
+    // 语雀文档工具(个)
     registerTools([
         { name: 'yuqueRepoList', definition: yuqueRepoListDef, executor: yuqueRepoList },
         { name: 'yuqueTocGet', definition: yuqueTocGetDef, executor: yuqueTocGet },
@@ -574,7 +551,7 @@ export function initializeDefaultTools(): void {
         { name: 'yuqueSearch', definition: yuqueSearchDef, executor: yuqueSearch },
     ])
 
-    // 语雀知识库管理工具（6个）
+    // 语雀知识库管理工具(6个)
     registerTools([
         { name: 'yuqueRepoCreate', definition: yuqueRepoCreateDef, executor: yuqueRepoCreate },
         { name: 'yuqueRepoUpdate', definition: yuqueRepoUpdateDef, executor: yuqueRepoUpdate },
@@ -584,18 +561,18 @@ export function initializeDefaultTools(): void {
         { name: 'yuqueRepoSettingUpdate', definition: yuqueRepoSettingUpdateDef, executor: yuqueRepoSettingUpdate },
     ])
 
-    // Skill 加载工具（个）- 供 Agent 主动加载 Skill 内容
+    // Skill 加载工具(个)- 供 Agent 主动加载 Skill 内容
     registerTools([
         { name: 'loadSkill', definition: loadSkillDef, executor: executeLoadSkill }
     ])
 
-    // Meta 查询工具（个）- 供 Agent 查询系统能力全貌
+    // Meta 查询工具(个)- 供 Agent 查询系统能力全貌
     registerTools([
         { name: 'getAllTools', definition: getAllToolsDef, executor: executeGetAllTools },
         { name: 'getAllSkills', definition: getAllSkillsDef, executor: executeGetAllSkills }
     ])
 
-    // 能力搜索工具（个）- 供 Agent 通过关键词搜索工具和 Skills
+    // 能力搜索工具(个)- 供 Agent 通过关键词搜索工具和 Skills
     registerTools([
         { name: 'searchCapabilities', definition: searchCapabilitiesDef, executor: executeSearchCapabilities }
     ])
@@ -603,7 +580,7 @@ export function initializeDefaultTools(): void {
     console.log(`[ToolSystem] ${getRegisteredToolNames().length} 个工具已初始化`)
 }
 
-// 自动初始化（如果在浏览器环境中）
+// 自动初始化(如果在浏览器环境中)
 if (typeof window !== 'undefined') {
     initializeDefaultTools()
 }

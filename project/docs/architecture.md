@@ -70,7 +70,7 @@ Human
 ```
 
 ### 通信协议
-- **Control Channel**: 控制命令（暂停、恢复、停止）
+- **Control Channel**: 控制命令(暂停、恢复、停止)
 - **Task Channel**: 任务派发
 - **Message Channel**: 即时消息
 - **Report Channel**: 状态报告

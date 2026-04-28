@@ -25,8 +25,8 @@
 
 ### 1. Tool (工具)
 工具是 Agent 可以调用的功能单元，每个工具包含：
-- **Definition**: 工具定义（描述、参数 schema）- 给 AI 看的
-- **Executor**: 执行器（实际实现逻辑）- 真正执行代码
+- **Definition**: 工具定义(描述、参数 schema)- 给 AI 看的
+- **Executor**: 执行器(实际实现逻辑)- 真正执行代码
 
 ### 2. ToolResult (统一返回格式)
 所有工具必须返回统一的格式：
@@ -34,7 +34,7 @@
 interface ToolResult<T = any> {
   success: boolean      // 是否成功
   data?: T             // 返回数据
-  error?: string       // 错误信息（技术细节）
+  error?: string       // 错误信息(技术细节)
   message?: string     // 用户友好消息
   action?: string      // 操作类型
   suggestion?: string  // 下一步建议
@@ -43,9 +43,9 @@ interface ToolResult<T = any> {
 
 ### 3. Skill (技能)
 Skill 是工具的**组合包装**，定义了：
-- 使用场景（何时应该调用这些工具）
-- 工作流程（如何组合使用工具）
-- 系统提示词（角色定义）
+- 使用场景(何时应该调用这些工具)
+- 工作流程(如何组合使用工具)
+- 系统提示词(角色定义)
 
 ## 目录结构
 
@@ -58,9 +58,9 @@ tools/
 │
 ├── article/               # 文章管理工具
 │   ├── index.ts          # 导出所有工具
-│   └── <feature>.ts      # 工具定义 + 执行器（同一文件）
+│   └── <feature>.ts      # 工具定义 + 执行器(同一文件)
 │
-├── lark/                  # 飞书工具（已拆分）
+├── lark/                  # 飞书工具(已拆分)
 │   ├── index.ts
 │   ├── doc.ts            # 文档工具
 │   ├── wiki.ts           # Wiki 工具
@@ -69,7 +69,7 @@ tools/
 │   ├── image.ts          # 图片工具
 │   └── permission.ts     # 权限工具
 │
-├── yuque/                 # 语雀工具（已拆分）
+├── yuque/                 # 语雀工具(已拆分)
 │   ├── index.ts
 │   ├── repo.ts           # 知识库工具
 │   ├── doc.ts            # 文档工具
@@ -77,7 +77,7 @@ tools/
 │   ├── search.ts         # 搜索工具
 │   └── toc.ts            # 目录工具
 │
-├── github/                # GitHub 操作工具（已拆分）
+├── github/                # GitHub 操作工具(已拆分)
 │   ├── index.ts
 │   ├── repo.ts           # 仓库查询与管理
 │   ├── issue.ts          # Issue 操作
@@ -106,7 +106,7 @@ tools/
 import type { ToolDefinition, ToolExecutor } from '@/theme/tools/types'
 import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 
-// --- 工具定义（给 AI 看） ---
+// --- 工具定义(给 AI 看) ---
 export const myToolDef: ToolDefinition = {
   type: 'function',
   function: {
@@ -129,7 +129,7 @@ export const myToolDef: ToolDefinition = {
     }
   }
 }
-// --- 执行器（实际实现） ---
+// --- 执行器(实际实现) ---
 export const myTool: ToolExecutor = async (args): Promise<ToolResult> => {
   // 1. 参数验证
   if (!args.requiredParam) {
@@ -224,7 +224,7 @@ Claude Code 的设计理念：
 
 ### 1. Progressive Disclosure (渐进式披露)
 ```
-LOD-0 (System Prompt): 只有 Skills 列表（name + description）
+LOD-0 (System Prompt): 只有 Skills 列表(name + description)
 LOD-1 (Function Calling): Tool 详细定义
 LOD-2 (Skill Invoke): Skill 完整内容注入对话
 ```

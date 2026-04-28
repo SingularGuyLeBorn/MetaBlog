@@ -8,7 +8,7 @@
 - **验证**：Qwen2.5-32B在AIME 2024达到50分
 - **PDF**：见 `papers/` 目录
 
-**前置知识**：PPO（第5章）、GRPO（第8章）
+**前置知识**：PPO(第5章)、GRPO(第8章)
 
 ---
 
@@ -91,15 +91,15 @@ $$\text{clip}^{DAPO}(r_t, A_t) = \begin{cases}
 |------|------|------|
 | $\text{clip}^{DAPO}(r_t, A_t)$ | **DAPO解耦裁剪函数**，根据优势符号选择不同裁剪方式 | 核心创新 |
 | $r_t$ | 时刻 $t$ 的**概率比率** | $r_t = \frac{\pi_\theta(y_t\|y_{<t})}{\pi_{old}(y_t\|y_{<t})}$ |
-| $A_t$ | 时刻 $t$ 对应的**优势值**（通常是序列级优势 $A_i$ 广播到每个token） | 正值=好动作，负值=差动作 |
+| $A_t$ | 时刻 $t$ 对应的**优势值**(通常是序列级优势 $A_i$ 广播到每个token) | 正值=好动作，负值=差动作 |
 | $\epsilon_{high}$ | **正优势时的上界参数** | DAPO设为0.28，比标准PPO的0.2更宽 |
 | $\epsilon_{low}$ | **负优势时的下界参数** | DAPO设为0.2，与标准PPO相同 |
 | $\min(r_t, 1+\epsilon_{high})$ | 当 $A_t > 0$ 时，**只裁剪上界** | 下界不限，允许概率大幅下降 |
 | $\max(r_t, 1-\epsilon_{low})$ | 当 $A_t < 0$ 时，**只裁剪下界** | 上界不限，允许概率大幅上升 |
 
 **参数设置**：
-- $\epsilon_{high} = 0.28$（比标准0.2更宽，允许更大概率增益）
-- $\epsilon_{low} = 0.2$（与标准PPO相同）
+- $\epsilon_{high} = 0.28$(比标准0.2更宽，允许更大概率增益)
+- $\epsilon_{low} = 0.2$(与标准PPO相同)
 
 ---
 
@@ -111,9 +111,9 @@ $$\text{clip}^{DAPO}(r_t, A_t) = \begin{cases}
 
 此图对比了**PPO标准裁剪**与**DAPO解耦裁剪**的机制差异。
 
-**图片结构**（左右两个子图）：
+**图片结构**(左右两个子图)：
 
-#### 左图：PPO Standard Clipping（PPO标准裁剪）
+#### 左图：PPO Standard Clipping(PPO标准裁剪)
 
 1. **横轴：Policy Ratio $r_t(\theta)$**
    - 表示概率比率 $r_t = \frac{\pi_\theta(y_t)}{\pi_{old}(y_t)}$
@@ -121,19 +121,19 @@ $$\text{clip}^{DAPO}(r_t, A_t) = \begin{cases}
    - $r_t > 1$ 表示新策略更可能选择该动作
    - $r_t < 1$ 表示新策略更不可能选择该动作
 
-2. **纵轴：Value（损失贡献）**
+2. **纵轴：Value(损失贡献)**
    - 表示 $r_t \cdot A_t$ 或 $\text{clip}(r_t) \cdot A_t$ 的值
 
 3. **蓝色虚线标记 $1-\epsilon$ 和 $1+\epsilon$**
    - 表示对称裁剪边界
    - 当 $\epsilon = 0.2$ 时，边界为 $[0.8, 1.2]$
 
-4. **绿色区域：Positive Advantage ($A > 0$)（正优势）**
+4. **绿色区域：Positive Advantage ($A > 0$)(正优势)**
    - 表示"好动作"的区域
    - PPO同时限制上界和下界
    - **问题**：限制上界会阻止好动作获得更多概率增益
 
-5. **红色区域：Negative Advantage ($A < 0$)（负优势）**
+5. **红色区域：Negative Advantage ($A < 0$)(负优势)**
    - 表示"差动作"的区域
    - PPO同时限制上界和下界
    - **问题**：限制下界会阻止差动作被充分惩罚
@@ -142,18 +142,18 @@ $$\text{clip}^{DAPO}(r_t, A_t) = \begin{cases}
    - 强调PPO对正负优势使用**相同的对称边界**
    - 这是导致熵坍缩的原因之一
 
-#### 右图：DAPO Decoupled Clipping（DAPO解耦裁剪）
+#### 右图：DAPO Decoupled Clipping(DAPO解耦裁剪)
 
 1. **与左图相同的轴定义**
 
-2. **绿色区域（正优势，$A > 0$）**
-   - **"Clip Upper Bound Only"（只裁剪上界）标注**
-   - 上界设为 $1 + \epsilon_{high} = 1.28$（比PPO更宽）
+2. **绿色区域(正优势，$A > 0$)**
+   - **"Clip Upper Bound Only"(只裁剪上界)标注**
+   - 上界设为 $1 + \epsilon_{high} = 1.28$(比PPO更宽)
    - 下界不限制，允许 $r_t$ 无限小
    - **效果**：好动作可以获得更大的概率增益
 
-3. **红色区域（负优势，$A < 0$）**
-   - **"Clip Lower Bound Only"（只裁剪下界）标注**
+3. **红色区域(负优势，$A < 0$)**
+   - **"Clip Lower Bound Only"(只裁剪下界)标注**
    - 下界设为 $1 - \epsilon_{low} = 0.8$
    - 上界不限制，允许 $r_t$ 无限大
    - **效果**：差动作不会被过度惩罚
@@ -164,7 +164,7 @@ $$\text{clip}^{DAPO}(r_t, A_t) = \begin{cases}
 
 **关键理解**：
 - PPO：对称裁剪 $[1-\epsilon, 1+\epsilon]$ 同时限制好动作和差动作
-- DAPO：解耦裁剪，正优势只裁上界（鼓励好动作），负优势只裁下界（防止过度惩罚差动作）
+- DAPO：解耦裁剪，正优势只裁上界(鼓励好动作)，负优势只裁下界(防止过度惩罚差动作)
 - 结果：DAPO在长CoT推理中保持更高的策略熵，避免过早收敛
 
 ---
@@ -224,7 +224,7 @@ $$r_i^{seq} = \exp\left(\sum_t \log\frac{\pi_\theta(y_t)}{\pi_{old}(y_t)}\right)
 | 符号 | 含义 | 说明 |
 |------|------|------|
 | $L^{seq}$ | **序列级损失** | 对整个序列计算一个损失 |
-| $r_i^{seq}$ | 第 $i$ 个response的**序列级概率比率** | 所有token比率的乘积（在log空间是求和） |
+| $r_i^{seq}$ | 第 $i$ 个response的**序列级概率比率** | 所有token比率的乘积(在log空间是求和) |
 | $\sum_t$ | 对所有**token位置 $t$** 求和 | $t = 1, 2, \ldots, T$ |
 | $\pi_\theta(y_t)$ | 当前策略对第 $t$ 个token的概率 | 简写，完整为 $\pi_\theta(y_t\|y_{<t})$ |
 | $\pi_{old}(y_t)$ | 旧策略对第 $t$ 个token的概率 | 采样时的策略 |
@@ -246,11 +246,11 @@ $$r_{i,t}^{token} = \frac{\pi_\theta(y_t)}{\pi_{old}(y_t)}$$
 | $\sum_i$ | 对所有**response $i$** 求和 | $i = 1, \ldots, G \times B$，$B$ 是batch size |
 | $\sum_t$ | 对response $i$ 的所有**token $t$** 求和 | $t = 1, \ldots, T_i$ |
 | $r_{i,t}^{token}$ | 第 $i$ 个response第 $t$ 个token的**概率比率** | 独立计算每个token |
-| $A_i$ | 第 $i$ 个response的**优势**（广播到每个token） | 同一个response的所有token共享优势 |
+| $A_i$ | 第 $i$ 个response的**优势**(广播到每个token) | 同一个response的所有token共享优势 |
 
 **优势**：
 - 更细粒度的信用分配
-- 减少方差（序列比率可能因乘积而爆炸）
+- 减少方差(序列比率可能因乘积而爆炸)
 - 更稳定的训练
 
 ---
@@ -272,7 +272,7 @@ R_{original} - \lambda \cdot (|y| - L_{max}) & \text{if } |y| \geq L_{max}
 |------|------|------|------|
 | $R_{shaped}$ | **塑造后的奖励** | 标量 | 用于训练的最终奖励 |
 | $R_{original}$ | **原始奖励** | 标量 | 由奖励模型或验证器给出 |
-| $\|y\|$ | response $y$ 的**长度**（token数） | 正整数 | 例如500 tokens |
+| $\|y\|$ | response $y$ 的**长度**(token数) | 正整数 | 例如500 tokens |
 | $L_{max}$ | **最大允许长度** | 正整数 | 例如4096 tokens |
 | $\lambda$ | **过长惩罚系数** | 正标量 | 典型值0.01 |
 | $\|y\| - L_{max}$ | **超出长度** | 非负整数 | 超出的token数 |
@@ -336,7 +336,7 @@ R_{original} - \lambda \cdot (|y| - L_{max}) & \text{if } |y| \geq L_{max}
 | 特性 | PPO | GRPO | DAPO |
 |------|-----|------|------|
 | 基线来源 | 价值网络 $V(s)$ | 组均值 $\bar{R}$ | 组均值 $\bar{R}$ |
-| 裁剪方式 | 对称 $[1-\epsilon, 1+\epsilon]$ | 对称 | 解耦（$\epsilon_{high} \neq \epsilon_{low}$） |
+| 裁剪方式 | 对称 $[1-\epsilon, 1+\epsilon]$ | 对称 | 解耦($\epsilon_{high} \neq \epsilon_{low}$) |
 | 无效样本处理 | 无 | 无 | 动态过滤 |
 | 损失级别 | Token级 | 序列级 | Token级 |
 | 过长处理 | 硬截断 | 硬截断 | 软惩罚 |

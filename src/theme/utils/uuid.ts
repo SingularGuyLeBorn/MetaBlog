@@ -8,7 +8,7 @@
  * 生成标准 UUID v4
  */
 export function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0
     const v = c === 'x' ? r : (r & 0x3 | 0x8)
     return v.toString(16)
@@ -16,7 +16,7 @@ export function generateUUID(): string {
 }
 
 /**
- * 生成短 UUID（用于文件名，更简洁）
+ * 生成短 UUID(用于文件名，更简洁)
  * 格式：时间戳-随机数
  */
 export function generateShortUUID(): string {
@@ -38,12 +38,12 @@ export function generateReadableFilename(
   const time = now.toTimeString().slice(0, 8).replace(/:/g, '')
   const shortId = generateShortUUID()
   const cleanModel = model.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()
-  
+
   return `${date}-${time}-${prefix}-${cleanModel}-${shortId}`
 }
 
 /**
- * 生成 Session ID（持久化标识）
+ * 生成 Session ID(持久化标识)
  * 格式：sess-UUID
  */
 export function generateSessionId(): string {

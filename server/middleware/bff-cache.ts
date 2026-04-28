@@ -6,11 +6,11 @@
  * 纯服务端内存缓存，**绝不涉及浏览器 localStorage**。
  *
  * 设计目标：
- * - 减少重复的外部 API 调用（GitHub/Lark/Yuque 等）
+ * - 减少重复的外部 API 调用(GitHub/Lark/Yuque 等)
  * - 只缓存安全的 GET 2xx 响应
- * - 写操作（POST/PUT/PATCH/DELETE）绝不缓存
+ * - 写操作(POST/PUT/PATCH/DELETE)绝不缓存
  *
- * 缓存位置：Node.js 进程内存（Map）
+ * 缓存位置：Node.js 进程内存(Map)
  * 缓存键：  `${method}:${targetUrl}`
  * 默认 TTL：30 秒
  */
@@ -27,8 +27,8 @@ interface CacheEntry {
  *
  * 每个实例拥有独立的缓存存储，互不干扰。
  *
- * @param ttlMs 缓存有效期（毫秒），默认 30000（30 秒）
- * @param keyFn 自定义缓存键生成函数（默认按 method + URL）
+ * @param ttlMs 缓存有效期(毫秒)，默认 30000(30 秒)
+ * @param keyFn 自定义缓存键生成函数(默认按 method + URL)
  */
 export function createBffCache(
   ttlMs = 30000,
@@ -103,5 +103,5 @@ export function createBffCache(
   };
 }
 
-/** 默认 BFF 缓存实例（30 秒 TTL） */
+/** 默认 BFF 缓存实例(30 秒 TTL) */
 export const bffCache = createBffCache();

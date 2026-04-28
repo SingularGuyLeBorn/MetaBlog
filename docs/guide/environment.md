@@ -8,19 +8,19 @@ MetaBlog 通过 `.env` 文件管理所有配置。以下是目前支持的全部
 项目根目录/.env
 ```
 
-> 项目已包含 `.env` 文件（不在版本控制中）。如需重置，可复制 `.env.example`（如果存在）。
+> 项目已包含 `.env` 文件(不在版本控制中)。如需重置，可复制 `.env.example`(如果存在)。
 
 ---
 
-## 🔑 AI 模型配置（必填至少一项）
+## 🔑 AI 模型配置(必填至少一项)
 
-所有 AI Provider 支持 `LLM_` 前缀（推荐）和 `VITE_` 前缀（兼容旧配置）。系统会优先读取 `LLM_` 前缀的变量。
+所有 AI Provider 支持 `LLM_` 前缀(推荐)和 `VITE_` 前缀(兼容旧配置)。系统会优先读取 `LLM_` 前缀的变量。
 
 | 变量名 | 说明 | 示例 |
 |--------|------|------|
 | `LLM_DEEPSEEK_API_KEY` | DeepSeek API Key | `sk-...` |
-| `LLM_DEEPSEEK_MODEL` | 模型名称 | `deepseek-chat` |
-| `LLM_DEEPSEEK_BASE_URL` | 自定义 API 地址（可选） | `https://api.deepseek.com/v1` |
+| `LLM_DEEPSEEK_MODEL` | 模型名称 | `deepseek-v4-pro` |
+| `LLM_DEEPSEEK_BASE_URL` | 自定义 API 地址(可选) | `https://api.deepseek.com/v1` |
 | `LLM_KIMI_API_KEY` | Kimi API Key | `sk-...` |
 | `LLM_KIMI_MODEL` | 模型名称 | `kimi-k2.5` |
 | `LLM_ZHIPU_API_KEY` | 智谱 API Key | `your-api-key` |
@@ -47,24 +47,24 @@ MetaBlog 通过 `.env` 文件管理所有配置。以下是目前支持的全部
 | 变量名 | 说明 | 默认值 |
 |--------|------|--------|
 | `LLM_DEFAULT_PROVIDER` | 默认使用的 AI Provider | `deepseek` |
-| `LLM_DAILY_BUDGET` | 每日预算上限（美元） | `10` |
+| `LLM_DAILY_BUDGET` | 每日预算上限(美元) | `10` |
 
 ---
 
-## 📱 飞书集成（可选）
+## 📱 飞书集成(可选)
 
 | 变量名 | 说明 | 获取方式 |
 |--------|------|---------|
 | `FEISHU_APP_ID` | 飞书应用 ID | 飞书开放平台 → 应用详情 |
 | `FEISHU_APP_SECRET` | 飞书应用密钥 | 飞书开放平台 → 凭证管理 |
-| `LARK_APP_ID` |  Lark 应用 ID（兼容） | 同上 |
-| `LARK_APP_SECRET` | Lark 应用密钥（兼容） | 同上 |
+| `LARK_APP_ID` |  Lark 应用 ID(兼容) | 同上 |
+| `LARK_APP_SECRET` | Lark 应用密钥(兼容) | 同上 |
 
 > 配置后 AI 可调用 `feishuDocCreate`、`feishuDocAppend`、`feishuImSend` 等工具。
 
 ---
 
-## 📖 语雀集成（可选）
+## 📖 语雀集成(可选)
 
 | 变量名 | 说明 | 获取方式 |
 |--------|------|---------|
@@ -75,7 +75,7 @@ MetaBlog 通过 `.env` 文件管理所有配置。以下是目前支持的全部
 
 ---
 
-## 🔧 GitHub 集成（可选）
+## 🔧 GitHub 集成(可选)
 
 | 变量名 | 说明 | 获取方式 |
 |--------|------|---------|
@@ -85,7 +85,7 @@ MetaBlog 通过 `.env` 文件管理所有配置。以下是目前支持的全部
 
 ---
 
-## 🌐 网络代理（可选）
+## 🌐 网络代理(可选)
 
 | 变量名 | 说明 |
 |--------|------|
@@ -100,9 +100,9 @@ MetaBlog 通过 `.env` 文件管理所有配置。以下是目前支持的全部
 只需要配置一个 AI Provider 即可运行：
 
 ```env
-# DeepSeek（推荐）
+# DeepSeek(推荐)
 LLM_DEEPSEEK_API_KEY=sk-your-key-here
-LLM_DEEPSEEK_MODEL=deepseek-chat
+LLM_DEEPSEEK_MODEL=deepseek-v4-pro
 LLM_DEFAULT_PROVIDER=deepseek
 
 # 或 Kimi
@@ -115,7 +115,7 @@ LLM_DEFAULT_PROVIDER=deepseek
 
 ## 🔒 安全提示
 
-1. **不要提交 `.env` 文件到版本控制**（已配置 `.gitignore`）
+1. **不要提交 `.env` 文件到版本控制**(已配置 `.gitignore`)
 2. **API Key 只在服务端使用**：前端通过 `/api/chat` 代理调用 AI API，不会暴露 Key
 3. **定期轮换 API Key**：尤其是飞书 App Secret 等敏感凭证
 4. **使用 `LLM_` 前缀**：新配置统一使用 `LLM_` 前缀，`VITE_` 前缀仅为兼容保留

@@ -195,7 +195,7 @@ def compute_log_probs(
     logits: torch.Tensor,      # [B, T, V] 模型输出的logits
     labels: torch.Tensor,      # [B, T] 目标token ids
     attention_mask: torch.Tensor,  # [B, T] 注意力掩码
-    average_log_prob: bool = False  # 是否平均（用于长度归一化）
+    average_log_prob: bool = False  # 是否平均(用于长度归一化)
 ) -> torch.Tensor:
     """
     计算序列的对数概率
@@ -206,7 +206,7 @@ def compute_log_probs(
         logits: 语言模型输出的logits [batch, seq_len, vocab_size]
         labels: 目标token序列 [batch, seq_len]
         attention_mask: 掩码，标记有效token [batch, seq_len]
-        average_log_prob: 如果True，返回平均log概率（用于长度归一化）
+        average_log_prob: 如果True，返回平均log概率(用于长度归一化)
         
     Returns:
         log_probs: 序列log概率 [batch]
@@ -230,11 +230,11 @@ def compute_log_probs(
         index=labels.unsqueeze(-1)
     ).squeeze(-1)
     
-    # 应用掩码（忽略padding）
+    # 应用掩码(忽略padding)
     per_token_logps = per_token_logps * attention_mask
     
     if average_log_prob:
-        # 平均log概率（用于SimPO的长度归一化）
+        # 平均log概率(用于SimPO的长度归一化)
         return per_token_logps.sum(dim=-1) / attention_mask.sum(dim=-1).clamp(min=1)
     else:
         # 总log概率

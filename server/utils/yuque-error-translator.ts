@@ -23,17 +23,17 @@ export interface YuqueErrorTranslation {
  * - 404: 知识库/文档不存在
  * - 405: 方法不被允许
  * - 406: 不接受的格式
- * - 409: 资源冲突（如重复 slug）
+ * - 409: 资源冲突(如重复 slug)
  * - 410: 资源已删除
  * - 413: 请求体过大
  * - 415: 不支持的媒体类型
- * - 422: 参数验证失败（如重复 slug、非法字符）
+ * - 422: 参数验证失败(如重复 slug、非法字符)
  * - 429: 请求过于频繁
  * - 500/502/503/504: 语雀服务端错误
  *
  * 业务场景：
  * - 未登录 / Session 过期
- * - 没有权限（私有知识库、团队权限）
+ * - 没有权限(私有知识库、团队权限)
  * - 知识库/文档不存在
  * - slug 已存在
  * - 请求过于频繁
@@ -44,7 +44,7 @@ export interface YuqueErrorTranslation {
 export function translateYuqueError(errorMsg: string, status?: number): YuqueErrorTranslation {
   const lower = errorMsg.toLowerCase();
 
-  // 优先根据状态码判断（如果调用方传入）
+  // 优先根据状态码判断(如果调用方传入)
   if (status === 400) {
     return {
       message: "请求格式错误",
@@ -72,7 +72,7 @@ export function translateYuqueError(errorMsg: string, status?: number): YuqueErr
   if (status === 405) {
     return {
       message: "HTTP 方法不被允许",
-      suggestion: "请确认使用的 HTTP 方法（GET/POST/PUT/DELETE）与该 API 要求一致",
+      suggestion: "请确认使用的 HTTP 方法(GET/POST/PUT/DELETE)与该 API 要求一致",
     };
   }
   if (status === 406) {
@@ -109,12 +109,12 @@ export function translateYuqueError(errorMsg: string, status?: number): YuqueErr
     if (lower.includes("slug") || lower.includes("已存在")) {
       return {
         message: "参数验证失败：slug 已存在或格式错误",
-        suggestion: "请更换文档/知识库 slug（URL 路径名），确保唯一且仅包含字母、数字、连字符、下划线",
+        suggestion: "请更换文档/知识库 slug(URL 路径名)，确保唯一且仅包含字母、数字、连字符、下划线",
       };
     }
     return {
       message: "请求参数验证失败",
-      suggestion: "请检查参数格式是否符合语雀 API 要求（如字段类型、枚举值、字符串长度等）",
+      suggestion: "请检查参数格式是否符合语雀 API 要求(如字段类型、枚举值、字符串长度等)",
     };
   }
   if (status === 429 || lower.includes("rate limit") || lower.includes("频繁") || lower.includes("too many requests")) {

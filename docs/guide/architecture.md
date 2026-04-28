@@ -54,7 +54,7 @@ VitePress 作为静态站点生成器，同时承载博客内容和 AI 应用：
 
 ```
 vitepress/
-├── config.ts              # VitePress 配置（含 BFF 插件注册）
+├── config.ts              # VitePress 配置(含 BFF 插件注册)
 ├── theme/                 # 自定义主题
 │   ├── components/        # Vue 组件
 │   │   └── ai-chat/       # AI 聊天相关组件
@@ -65,8 +65,8 @@ vitepress/
 │   ├── tools/             # 工具系统
 │   │   ├── article/       # 文章管理工具
 │   │   ├── github/        # GitHub 工具
-│   │   ├── lark/          # 飞书工具（按功能分类：doc.ts, wiki.ts, ...）
-│   │   ├── yuque/         # 语雀工具（按功能分类：repo.ts, doc.ts, ...）
+│   │   ├── lark/          # 飞书工具(按功能分类：doc.ts, wiki.ts, ...)
+│   │   ├── yuque/         # 语雀工具(按功能分类：repo.ts, doc.ts, ...)
 │   │   ├── registry.ts    # 工具注册表
 │   │   └── index.ts       # 统一入口
 │   ├── composables/       # Vue 组合式函数
@@ -80,7 +80,7 @@ vitepress/
 ```
 src/theme/components/ai-chat/
 ├── ChatInterface.vue      # 聊天界面主容器
-├── MessageBubble.vue      # 消息气泡（支持工具调用展示）
+├── MessageBubble.vue      # 消息气泡(支持工具调用展示)
 ├── ChatInput.vue          # 输入框
 ├── AgentPanel.vue         # Agent 配置面板
 ├── ToolTester.vue         # 工具测试平台
@@ -110,7 +110,7 @@ vite: {
 ```
 server/
 ├── routes/
-│   ├── chat.ts              # AI 对话路由（/api/chat/*）
+│   ├── chat.ts              # AI 对话路由(/api/chat/*)
 │   ├── init.ts              # 初始化路由 + 文件操作 API
 │   ├── lark.ts              # 飞书 API 代理
 │   ├── yuque.ts             # 语雀 API 代理
@@ -119,8 +119,8 @@ server/
 │   ├── platform-parser.ts   # 平台链接解析
 │   └── ...
 ├── sandbox/
-│   ├── monty-runner.py      # Python 沙箱（Monty）
-│   └── js-runner.js         # JS 沙箱（vm.runInNewContext）
+│   ├── monty-runner.py      # Python 沙箱(Monty)
+│   └── js-runner.js         # JS 沙箱(vm.runInNewContext)
 ├── middleware/              # Express 中间件
 └── utils/                   # 后端工具函数
 ```
@@ -129,12 +129,12 @@ server/
 
 | 端点 | 方法 | 说明 |
 |------|------|------|
-| `/api/chat/completions` | POST | AI 对话（流式/非流式） |
+| `/api/chat/completions` | POST | AI 对话(流式/非流式) |
 | `/api/chat/models` | GET | 获取可用模型列表 |
 | `/api/sandbox/exec` | POST | 代码沙箱执行 |
 | `/api/files/read` | GET | 读取文件内容 |
 | `/api/files/save` | POST | 保存文件 |
-| `/api/files/delete` | POST | 删除文件（支持软删除） |
+| `/api/files/delete` | POST | 删除文件(支持软删除) |
 | `/api/files/trash` | GET | 获取回收站列表 |
 | `/api/files/restore` | POST | 恢复回收站文件 |
 | `/api/lark/*` | - | 飞书 API 代理 |
@@ -179,7 +179,7 @@ MessageBubble.vue 渲染
 ```
 AI 调用 createArticle / updateArticle
     ↓
-工具执行器（前端）
+工具执行器(前端)
     ↓
 POST /api/files/save
     ↓
@@ -211,7 +211,7 @@ gitCommit() → 自动 Git 提交
 
 | 语言 | 隔离机制 | 限制 |
 |------|---------|------|
-| Python | Monty 解释器（无文件/网络访问） | 30s 超时，1MB 输出 |
+| Python | Monty 解释器(无文件/网络访问) | 30s 超时，1MB 输出 |
 | JavaScript | vm.runInNewContext + 独立子进程 | 同上 |
 | Bash | 白名单命令过滤 | 同上 |
 
@@ -219,7 +219,7 @@ gitCommit() → 自动 Git 提交
 
 ## 📁 数据存储
 
-### 运行时数据（`.data/`）
+### 运行时数据(`.data/`)
 
 ```
 .data/
@@ -231,14 +231,14 @@ gitCommit() → 自动 Git 提交
 └── logs/                  # 运行时日志
 ```
 
-### 博客内容（`docs/sections/`）
+### 博客内容(`docs/sections/`)
 
 ```
 docs/sections/
 ├── posts/                 # 博客文章
-├── knowledge/             # 知识库（结构化内容）
+├── knowledge/             # 知识库(结构化内容)
 ├── resources/             # 公开资源
-└── about/                 # 关于页面（AI 不可操作）
+└── about/                 # 关于页面(AI 不可操作)
 ```
 
 ---
@@ -248,11 +248,11 @@ docs/sections/
 ### 前端内部
 
 - **Props/Events**：父子组件通信
-- **Pinia Stores**：全局状态（会话、Agent 配置）
-- **Event Bus**：工具调用结果通知（简化版）
+- **Pinia Stores**：全局状态(会话、Agent 配置)
+- **Event Bus**：工具调用结果通知(简化版)
 
 ### 前后端通信
 
 - **REST API**：文件操作、工具执行
 - **SSE (Server-Sent Events)**：AI 流式响应
-- **WebSocket**：预留（暂未使用）
+- **WebSocket**：预留(暂未使用)

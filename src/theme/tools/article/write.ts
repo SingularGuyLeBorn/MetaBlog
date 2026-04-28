@@ -1,19 +1,19 @@
 /**
  * ============================================================================
- * 文章管理工具 — 写入操作（创建 / 更新 / 删除）
+ * 文章管理工具 — 写入操作(创建 / 更新 / 删除)
  * ============================================================================
  */
 
-import type { ToolDefinition, ToolExecutor } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
 import { notifyFileSystemChange } from '@/theme/composables/useDynamicSidebar'
+import type { ToolDefinition, ToolExecutor } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 import {
   API_BASE,
   extractSection,
+  handleApiResponse,
+  normalizeFilePath,
   validateNoTraversal,
   validateSectionPath,
-  normalizeFilePath,
-  handleApiResponse,
 } from './utils'
 
 /** 创建文章 */
@@ -21,15 +21,15 @@ export const createArticleDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'createArticle',
-    description: '创建一篇新文章。只能在允许的板块内创建：posts（文章列表）、knowledge（知识库）、resources（公开资源）。创建时会自动为文章配备同名文件夹（folder/index.md），以预留资源文件夹并符合侧边栏渲染规范。',
+    description: '创建一篇新文章。只能在允许的板块内创建：posts(文章列表)、knowledge(知识库)、resources(公开资源)。创建时会自动为文章配备同名文件夹(folder/index.md)，以预留资源文件夹并符合侧边栏渲染规范。',
     parameters: {
       type: 'object',
       properties: {
-        title: { type: 'string', description: '文章标题（会自动转换为 URL 友好的英文 slug）' },
-        content: { type: 'string', description: '文章内容（支持 Markdown）' },
+        title: { type: 'string', description: '文章标题(会自动转换为 URL 友好的英文 slug)' },
+        content: { type: 'string', description: '文章内容(支持 Markdown)' },
         section: { type: 'string', description: '所属板块，必须是 "posts"、"knowledge" 或 "resources" 之一，默认 "posts"' },
         tags: { type: 'array', items: { type: 'string' }, description: '文章标签' },
-        path: { type: 'string', description: '可选的自定义路径（相对于 sections/）。例如 "posts/attention/flash-attention" 会创建为 "posts/attention/flash-attention/index.md"。路径必须在允许的板块内。' }
+        path: { type: 'string', description: '可选的自定义路径(相对于 sections/)。例如 "posts/attention/flash-attention" 会创建为 "posts/attention/flash-attention/index.md"。路径必须在允许的板块内。' }
       },
       required: ['title']
     }
@@ -41,12 +41,12 @@ export const updateArticleDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'updateArticle',
-    description: '更新/覆盖已有文章的完整内容。只能操作允许板块内的文章（posts、knowledge、resources）。',
+    description: '更新/覆盖已有文章的完整内容。只能操作允许板块内的文章(posts、knowledge、resources)。',
     parameters: {
       type: 'object',
       properties: {
         path: { type: 'string', description: '文章路径，如 "posts/my-article.md"，必须在允许的板块内' },
-        content: { type: 'string', description: '完整的 Markdown 内容（包含 frontmatter）' }
+        content: { type: 'string', description: '完整的 Markdown 内容(包含 frontmatter)' }
       },
       required: ['path', 'content']
     }
@@ -58,7 +58,7 @@ export const deleteArticleDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'deleteArticle',
-    description: '删除指定文章（操作不可逆，会同时清理缓存）。只能删除允许板块内的文章（posts、knowledge、resources）。',
+    description: '删除指定文章(操作不可逆，会同时清理缓存)。只能删除允许板块内的文章(posts、knowledge、resources)。',
     parameters: {
       type: 'object',
       properties: {
@@ -108,10 +108,10 @@ export const createArticle: ToolExecutor = async (args) => {
     if (result.success) {
       const data = result.data || {}
       const promoted = data.promotedNodes && data.promotedNodes.length > 0
-        ? `\n（自动提升叶子节点: ${data.promotedNodes.join(', ')}）`
+        ? `\n(自动提升叶子节点: ${data.promotedNodes.join(', ')})`
         : ''
       const autoIndex = data.notes && data.notes.length > 0
-        ? `\n（${data.notes.join('；')}）`
+        ? `\n(${data.notes.join('；')})`
         : ''
       // 触发侧边栏刷新
       if (typeof window !== 'undefined') {
@@ -183,7 +183,7 @@ export const updateArticle: ToolExecutor = async (args) => {
         newContent = content + '\n\n' + oldContent
         break
       default:
-        // replace: 使用新内容（保留 frontmatter）
+        // replace: 使用新内容(保留 frontmatter)
         const fmMatch = oldContent.match(/^---\n[\s\S]*?\n---\n/)
         if (fmMatch) {
           newContent = fmMatch[0] + content
@@ -222,7 +222,7 @@ export const updateArticle: ToolExecutor = async (args) => {
   }
 }
 
-/** 删除文章（带安全确认提示） */
+/** 删除文章(带安全确认提示) */
 export const deleteArticle: ToolExecutor = async (args) => {
   const { path: articlePath, confirm = false, backup_first = true } = args
 
@@ -245,7 +245,7 @@ export const deleteArticle: ToolExecutor = async (args) => {
     return createErrorResult('Section not allowed', sectionCheck.error)
   }
 
-  // 危险操作提示（AI 应该在调用前询问用户）
+  // 危险操作提示(AI 应该在调用前询问用户)
   if (!confirm) {
     return createErrorResult(
       'Confirmation required',
@@ -273,7 +273,7 @@ export const deleteArticle: ToolExecutor = async (args) => {
       }
       return createSuccessResult(
         { path: articlePath },
-        `文章已删除${backup_first ? '（已备份到回收站）' : ''}`,
+        `文章已删除${backup_first ? '(已备份到回收站)' : ''}`,
         'deleteArticle'
       )
     }

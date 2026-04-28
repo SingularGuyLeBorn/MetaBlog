@@ -8,8 +8,8 @@
  */
 
 import type { ToolDefinition, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
-import { yuqueApi, translateYuqueError } from './repo'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
+import { translateYuqueError, yuqueApi } from './repo'
 
 // =============================================================================
 // 工具定义与执行器
@@ -18,7 +18,7 @@ import { yuqueApi, translateYuqueError } from './repo'
 /**
  * 工具：上传图片到语雀 CDN
  *
- * 将图片上传到语雀的图床（cdn.nlark.com），返回可直接在文档中引用的 URL。
+ * 将图片上传到语雀的图床(cdn.nlark.com)，返回可直接在文档中引用的 URL。
  * 上传后可在 yuqueDocCreate / yuqueDocUpdate 的 content 中用 Markdown 图片语法引用：
  *   ![描述](https://cdn.nlark.com/...)
  *
@@ -34,14 +34,14 @@ export const yuqueImageUploadDef: ToolDefinition = {
 
 使用流程:
 1. 调用 yuqueImageUpload(image_base64="...", file_name="demo.png")
-2. 获取返回的 url（如 https://cdn.nlark.com/yuque/0/...）
+2. 获取返回的 url(如 https://cdn.nlark.com/yuque/0/...)
 3. 在 yuqueDocCreate / yuqueDocUpdate 的 content 中用 Markdown 引用:
    ![图片描述](https://cdn.nlark.com/yuque/0/...)
 
 注意事项:
 - image_base64 必须是完整的 base64 字符串，可带 data:image/...;base64, 前缀
 - 支持格式: png, jpg, jpeg, gif, webp, svg
-- 图片会自动上传到语雀 CDN（cdn.nlark.com），公网可访问`,
+- 图片会自动上传到语雀 CDN(cdn.nlark.com)，公网可访问`,
     parameters: {
       type: 'object',
       properties: {
@@ -51,7 +51,7 @@ export const yuqueImageUploadDef: ToolDefinition = {
         },
         file_name: {
           type: 'string',
-          description: '图片文件名（含扩展名），如 demo.png',
+          description: '图片文件名(含扩展名)，如 demo.png',
         },
       },
       required: ['image_base64'],

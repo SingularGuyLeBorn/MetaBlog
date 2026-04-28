@@ -1,10 +1,10 @@
 <!--
-  SessionManager - 会话管理模态框（液态玻璃风格）
+  SessionManager - 会话管理模态框(液态玻璃风格)
   
   功能：
-  - 显示所有会话（跨 Agent）
+  - 显示所有会话(跨 Agent)
   - 搜索和过滤
-  - 批量操作（删除）
+  - 批量操作(删除)
   - 编辑会话信息
 -->
 <template>
@@ -221,11 +221,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
-import { Icon } from '@/theme/components/common'
 import GlassSelect from '@/theme/components/agent/GlassSelect.vue'
+import { Icon } from '@/theme/components/common'
 import type { ChatSession } from '@/theme/types'
 import type { Agent } from '@/theme/types/agent'
+import { computed, nextTick, ref } from 'vue'
 
 const props = defineProps<{
   visible: boolean

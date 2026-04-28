@@ -14,19 +14,13 @@ export type MessageRole = 'user' | 'assistant' | 'system' | 'tool'
 /** 消息状态 */
 export type MessageStatus = 'pending' | 'streaming' | 'completed' | 'error' | 'interrupted'
 
-/** 模型类型 - 仅支持 DeepSeek 和 Kimi */
-export type ModelType = 
-  // DeepSeek 模型
-  | 'deepseek-chat' 
-  | 'deepseek-reasoner'
-  // Kimi 模型
+/** 模型类型 - 精简为 DeepSeek V4 + Kimi K2.5 */
+export type ModelType =
+  // DeepSeek V4 模型
+  | 'deepseek-v4-pro'
+  | 'deepseek-v4-flash'
+  // Kimi K2.5 模型
   | 'kimi-k2.5'
-  | 'kimi-k2-turbo-preview'
-  | 'kimi-k2-thinking'
-  | 'kimi-k2-thinking-turbo'
-  | 'moonshot-v1-8k-vision-preview'
-  | 'moonshot-v1-32k-vision-preview'
-  | 'moonshot-v1-128k-vision-preview'
 
 /** 深度思考内容 */
 export interface ReasoningContent {
@@ -49,9 +43,9 @@ export interface MessageAttachment {
   type: AttachmentType
   /** 文件名/标题 */
   name: string
-  /** 文件URL（本地blob URL或远程URL） */
+  /** 文件URL(本地blob URL或远程URL) */
   url: string
-  /** 文件大小（字节） */
+  /** 文件大小(字节) */
   size?: number
   /** MIME类型 */
   mimeType?: string
@@ -59,16 +53,18 @@ export interface MessageAttachment {
   width?: number
   /** 图片/视频高度 */
   height?: number
-  /** 视频时长（秒） */
+  /** 视频时长(秒) */
   duration?: number
   /** 视频缩略图 */
   thumbnail?: string
   /** 上传状态 */
   uploadStatus?: 'pending' | 'uploading' | 'completed' | 'error'
-  /** 上传进度（0-100） */
+  /** 上传进度(0-100) */
   progress?: number
   /** 错误信息 */
   error?: string
+  /** OCR 提取的文字（仅图片，由后端提取后注入，不展示给用户） */
+  ocrText?: string
 }
 
 /** Token 使用统计 */
@@ -78,10 +74,10 @@ export interface TokenUsage {
   total: number
 }
 
-import type { ToolCall, ToolCallRecord, ThinkingStep } from '@/theme/tools'
+import type { ThinkingStep, ToolCall, ToolCallRecord } from '@/theme/tools'
 
 /** 重新导出工具类型 */
-export type { ToolCall, ToolCallRecord, ThinkingStep }
+export type { ThinkingStep, ToolCall, ToolCallRecord }
 
 /** 消息元数据 */
 export interface MessageMetadata {
@@ -99,11 +95,11 @@ export interface MessageMetadata {
     icon: string
     content?: string
   }
-  /** 工具调用记录（用于展示完整调用过程） */
+  /** 工具调用记录(用于展示完整调用过程) */
   toolRecords?: ToolCallRecord[]
-  /** 思考步骤（用于分步展示思考过程） */
+  /** 思考步骤(用于分步展示思考过程) */
   thinkingSteps?: ThinkingStep[]
-  /** 错误信息（当消息处理出错时） */
+  /** 错误信息(当消息处理出错时) */
   error?: string
   /** 是否已经显示过打字机效果 */
   typewriterShown?: boolean
@@ -132,15 +128,15 @@ export interface ChatMessage {
   metadata?: MessageMetadata
   createdAt: number
   updatedAt: number
-  
-  // === 版本管理（仅 AI 消息使用）===
-  /** 关联的用户消息 ID（AI 响应时必填） */
+
+  // === 版本管理(仅 AI 消息使用)===
+  /** 关联的用户消息 ID(AI 响应时必填) */
   parentMessageId?: string
   /** 是否为当前激活的版本 */
   isActiveVersion?: boolean
 }
 
-/** 消息组（一个用户查询 + 多个 AI 响应版本） */
+/** 消息组(一个用户查询 + 多个 AI 响应版本) */
 export interface MessageGroup {
   /** 用户消息 */
   userMessage: ChatMessage
@@ -149,7 +145,7 @@ export interface MessageGroup {
   /** 当前显示的版本索引 */
   currentVersionIndex: number
   /** 
-   * 系统注入的消息（如 loadSkill 加载的 skill 内容）
+   * 系统注入的消息(如 loadSkill 加载的 skill 内容)
    * 这些消息会包含在对话历史中，但不会显示为独立的消息组
    */
   injectedMessages?: ChatMessage[]
@@ -166,6 +162,8 @@ export interface SessionConfig {
   maxTokens: number
   systemPrompt: string
   enableReasoning: boolean
+  /** DeepSeek V4 Pro 推理强度: high(标准) / max(深度) */
+  reasoningEffort?: 'high' | 'max'
   streaming: boolean
   /** 内部使用：标记 systemPrompt 是否已自定义 */
   _customSystemPrompt?: boolean
@@ -262,7 +260,7 @@ export interface PersistedData {
   version: number
 }
 
-/** 消息版本化的持久化数据结构（v2） */
+/** 消息版本化的持久化数据结构(v2) */
 export interface PersistedDataV2 {
   sessions: ChatSession[]
   /** 按会话存储的消息组 */
@@ -297,21 +295,11 @@ export interface LogEntry {
 // ═══════════════════════════════════════════════════════════════
 
 export type {
-  Agent,
-  AgentLevel,
-  AgentStatus,
-  AgentPermission,
-  AgentMemory,
-  AgentCapabilities,
+  Agent, AgentCapabilities,
   AgentConfigMode,
-  AgentCreateParams,
-  AgentUpdateParams,
-  Skill,
+  AgentCreateParams, AgentLevel, AgentMemory, AgentPermission, AgentStatus, AgentUpdateParams, CapabilityEdge,
+  CapabilityGraph, CapabilityNode, Skill,
   SkillCategory,
-  SkillCreateParams,
-  Tool,
-  CapabilityNode,
-  CapabilityEdge,
-  CapabilityGraph,
-  SystemPromptContext
+  SkillCreateParams, SystemPromptContext, Tool
 } from './agent'
+

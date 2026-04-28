@@ -29,7 +29,7 @@ $$
 r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)}
 $$
 
-### 对数形式（数值稳定）
+### 对数形式(数值稳定)
 
 $$
 r_t = \exp(\log \pi_\theta - \log \pi_{\text{old}})
@@ -213,9 +213,9 @@ $$
 
 其中：
 
-- $L^{CLIP}$: 策略损失（裁剪目标的负值）
+- $L^{CLIP}$: 策略损失(裁剪目标的负值)
 - $L^{VF} = (V_\theta(s) - V_{target})^2$: 价值损失
-- $S[\pi]$: 熵正则化（鼓励探索）
+- $S[\pi]$: 熵正则化(鼓励探索)
 
 ```python
 def ppo_loss(old_log_probs, new_log_probs, advantages, 
@@ -235,7 +235,7 @@ def ppo_loss(old_log_probs, new_log_probs, advantages,
     # 价值损失
     value_loss = F.mse_loss(values, returns)
   
-    # 熵正则化（负号因为要最大化熵）
+    # 熵正则化(负号因为要最大化熵)
     entropy_loss = -entropy.mean()
   
     # 总损失

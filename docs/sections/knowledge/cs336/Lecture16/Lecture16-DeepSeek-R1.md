@@ -8,7 +8,7 @@
 
 ### 1.1 实验设置
 
-**惊人假设**: 如果预训练模型足够强，能否**仅用RL**（无SFT）获得推理能力？
+**惊人假设**: 如果预训练模型足够强，能否**仅用RL**(无SFT)获得推理能力？
 
 **基础模型**: DeepSeek V3 Base
 - 通过预训练 + mid-training
@@ -87,7 +87,7 @@ def r1_zero_reward(response, ground_truth):
 - 从其他长CoT模型蒸馏
 
 **特点**:
-- 比普通SFT数据长很多（数千token）
+- 比普通SFT数据长很多(数千token)
 - 包含错误尝试和自我纠正
 - 显式的推理步骤
 
@@ -98,14 +98,14 @@ def r1_reasoning_reward(prompt, response, ground_truth, ref_model):
     """R1推理阶段的完整奖励"""
     rewards = {}
     
-    # 1. 准确性奖励（主要）
+    # 1. 准确性奖励(主要)
     answer = extract_final_answer(response)
     rewards['accuracy'] = 1.0 if answer == ground_truth else 0.0
     
     # 2. 格式奖励
     rewards['format'] = check_format_compliance(response)
     
-    # 3. 语言一致性奖励（关键创新！）
+    # 3. 语言一致性奖励(关键创新！)
     rewards['language'] = language_consistency_reward(prompt, response)
     
     # 组合
@@ -200,7 +200,7 @@ def language_consistency_reward(prompt, response):
 
 > "When you have a lot of data and compute, simple algorithms often win."
 
-这与其他AI领域的经验一致（如目标检测从复杂anchor到简单anchor-free）。
+这与其他AI领域的经验一致(如目标检测从复杂anchor到简单anchor-free)。
 
 ---
 

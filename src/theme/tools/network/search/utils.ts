@@ -31,11 +31,11 @@ export function formatSearchResults(results: SearchResult[], query: string, show
     `[${i + 1}] ${r.title}\nURL: ${r.url}${r.displayUrl ? ` (${r.displayUrl})` : ''}\n${r.snippet ? r.snippet : ''}`
   ).join('\n\n')
 
-  return `搜索 "${query}" 找到 ${total} 条结果（显示前 ${shown} 条）：\n\n${formatted}`
+  return `搜索 "${query}" 找到 ${total} 条结果(显示前 ${shown} 条)：\n\n${formatted}`
 }
 
 /**
- * 从 HTML 中提取文本（去除标签）
+ * 从 HTML 中提取文本(去除标签)
  */
 export function stripHtml(html: string): string {
   return html

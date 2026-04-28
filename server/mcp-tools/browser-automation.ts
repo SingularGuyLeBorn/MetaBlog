@@ -3,7 +3,7 @@
  * 
  * 让 Agent 拥有"眼睛"和"手"，能够：
  * - 打开真实浏览器访问社交媒体
- * - 模拟人类浏览行为（滚动、点击、停留）
+ * - 模拟人类浏览行为(滚动、点击、停留)
  * - 截图分析页面内容
  * - 提取文字、图片、视频信息
  * 
@@ -31,7 +31,7 @@ export interface BrowseOptions {
   waitTime?: number       // 每页等待时间(ms)
 }
 
-export type BrowseAction = 
+export type BrowseAction =
   | { type: 'click'; selector: string }
   | { type: 'scroll'; direction: 'down' | 'up'; amount: number }
   | { type: 'wait'; ms: number }
@@ -74,12 +74,12 @@ export interface BrowserAutomationResult {
  * 架构说明：
  * - 浏览器端通过 WebSocket 连接到 Playwright Server
  * - 或者调用本地运行的 Playwright HTTP API
- * - 支持截图分析（Agent 的"视觉"）
+ * - 支持截图分析(Agent 的"视觉")
  */
 export class BrowserAutomationTool {
   name = 'browser-automation'
   description = '浏览器自动化 - 让 Agent 拥有眼睛和手'
-  
+
   private sessions: Map<string, BrowserSession> = new Map()
   private API_BASE = 'http://localhost:3001'  // Playwright Server 地址
   private isServerAvailable = false
@@ -93,7 +93,7 @@ export class BrowserAutomationTool {
    */
   private async checkServerStatus(): Promise<void> {
     try {
-      const response = await fetch(`${this.API_BASE}/health`, { 
+      const response = await fetch(`${this.API_BASE}/health`, {
         method: 'GET',
         signal: AbortSignal.timeout(5000)
       })
@@ -135,7 +135,7 @@ export class BrowserAutomationTool {
 
       // 执行浏览流程
       const result = await this.runBrowseFlow(sessionId, options)
-      
+
       session.status = 'idle'
       session.lastActivity = new Date().toISOString()
 
@@ -171,21 +171,21 @@ export class BrowserAutomationTool {
    * 运行浏览流程
    */
   private async runBrowseFlow(
-    sessionId: string, 
+    sessionId: string,
     options: BrowseOptions
   ): Promise<{ content?: ExtractedContent; screenshots: string[]; actions: BrowseAction[] }> {
-    
+
     const screenshots: string[] = []
     const actions: BrowseAction[] = []
     let content: ExtractedContent | undefined
 
     // 1. 打开页面
-    await this.sendCommand('goto', { 
-      sessionId, 
+    await this.sendCommand('goto', {
+      sessionId,
       url: options.url,
       waitUntil: 'networkidle'
     })
-    
+
     actions.push({ type: 'wait', ms: 2000 })
     await this.wait(2000)
 
@@ -222,7 +222,7 @@ export class BrowserAutomationTool {
     // 等待笔记内容加载
     await this.wait(3000)
 
-    // 截图（Agent 的"眼睛"看到的内容）
+    // 截图(Agent 的"眼睛"看到的内容)
     if (options.takeScreenshots) {
       const screenshot = await this.sendCommand('screenshot', { sessionId, fullPage: true })
       if (screenshot?.data) {
@@ -239,7 +239,7 @@ export class BrowserAutomationTool {
     }
 
     // 提取内容
-    const extracted = await this.sendCommand('extract', { 
+    const extracted = await this.sendCommand('extract', {
       sessionId,
       selectors: {
         title: 'h1.title, .title',
@@ -294,7 +294,7 @@ export class BrowserAutomationTool {
     await this.wait(2000)
 
     // 提取内容
-    const extracted = await this.sendCommand('extract', { 
+    const extracted = await this.sendCommand('extract', {
       sessionId,
       selectors: {
         title: 'h1.video-title, .video-title',
@@ -341,7 +341,7 @@ export class BrowserAutomationTool {
       if (screenshot?.data) screenshots.push(screenshot.data)
     }
 
-    const extracted = await this.sendCommand('extract', { 
+    const extracted = await this.sendCommand('extract', {
       sessionId,
       selectors: {
         text: '[data-testid="tweetText"]',
@@ -392,7 +392,7 @@ export class BrowserAutomationTool {
       if (screenshot?.data) screenshots.push(screenshot.data)
     }
 
-    const extracted = await this.sendCommand('extract', { 
+    const extracted = await this.sendCommand('extract', {
       sessionId,
       selectors: {
         title: 'h1.QuestionHeader-title, h1',
@@ -437,7 +437,7 @@ export class BrowserAutomationTool {
     }
 
     // 尝试提取常见内容
-    const extracted = await this.sendCommand('extract', { 
+    const extracted = await this.sendCommand('extract', {
       sessionId,
       selectors: {
         title: 'h1, .title, article h1',
@@ -488,13 +488,13 @@ export class BrowserAutomationTool {
   }
 
   /**
-   * 解析数量字符串（如 "1.2万" -> 12000）
+   * 解析数量字符串(如 "1.2万" -> 12000)
    */
   private parseCount(text: string | undefined): number | undefined {
     if (!text) return undefined
-    
+
     const clean = text.replace(/,/g, '').trim()
-    
+
     // 处理中文数字
     if (clean.includes('万')) {
       const num = parseFloat(clean.replace('万', ''))
@@ -508,7 +508,7 @@ export class BrowserAutomationTool {
       const num = parseFloat(clean.replace('百万', ''))
       return Math.round(num * 1000000)
     }
-    
+
     const num = parseInt(clean, 10)
     return isNaN(num) ? undefined : num
   }

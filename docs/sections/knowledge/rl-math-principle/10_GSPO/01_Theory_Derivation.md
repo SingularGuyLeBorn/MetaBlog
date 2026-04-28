@@ -5,10 +5,10 @@
 - **作者**：Qwen Team, Alibaba Inc.
 - **年份**：2025
 - **arXiv**：2507.18071
-- **验证**：Qwen3全系列模型（Instruct、Coder、Thinking）的核心训练算法
+- **验证**：Qwen3全系列模型(Instruct、Coder、Thinking)的核心训练算法
 - **PDF**：见 `papers/` 目录
 
-**前置知识**：GRPO（第8章）、DAPO（第9章）
+**前置知识**：GRPO(第8章)、DAPO(第9章)
 
 ---
 
@@ -42,7 +42,7 @@ GSPO是**阿里巴巴Qwen团队**提出的LLM强化学习算法，解决了GRPO�
 
 $$r^{seq} = \prod_{t=1}^T \frac{\pi_\theta(y_t|y_{<t})}{\pi_{old}(y_t|y_{<t})} = \prod_{t=1}^T r_t$$
 
-当 $T$ 很大（长CoT推理）时：
+当 $T$ 很大(长CoT推理)时：
 - 如果多数 $r_t > 1$：$r^{seq}$ 可能爆炸到 $10^{10}$
 - 如果多数 $r_t < 1$：$r^{seq}$ 可能坍缩到 $10^{-10}$
 
@@ -76,7 +76,7 @@ $$r^{GSPO} = \exp\left(\log \pi_\theta(y) - \log \pi_{old}(y)\right)$$
 
 ![Token级 vs 序列级](images/sequence_vs_token.png)
 
-*图注：左边是GRPO的token级方法（概率比相乘可能爆炸），右边是GSPO的序列级方法（在log空间计算更稳定）。*
+*图注：左边是GRPO的token级方法(概率比相乘可能爆炸)，右边是GSPO的序列级方法(在log空间计算更稳定)。*
 
 ### 2.2 序列级裁剪
 
@@ -137,12 +137,12 @@ clipped_seq_ratio = clip(seq_ratio, 1-ε, 1+ε)  # 有界
 
 设每个token的 $\log r_t$ 服从均值为0、方差为 $\sigma^2$ 的分布。
 
-**GRPO（Token级乘积）**：
+**GRPO(Token级乘积)**：
 $$\text{Var}[\log r^{GRPO}] = T \cdot \sigma^2$$
 
 当 $T = 4096$，$r^{GRPO}$ 的范围可达 $e^{\pm 64\sigma}$。
 
-**GSPO（序列级裁剪）**：
+**GSPO(序列级裁剪)**：
 $$r^{GSPO} \in [1-\epsilon, 1+\epsilon]$$
 
 始终有界。

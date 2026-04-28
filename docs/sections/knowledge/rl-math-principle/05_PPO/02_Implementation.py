@@ -74,7 +74,7 @@ class ActorCritic(nn.Module):
     - Actor (策略头): 动作概率分布 π(a|s)
     - Critic (价值头): 状态价值 V(s)
     
-    这种设计在LLM-PPO中也广泛使用（添加Value Head）
+    这种设计在LLM-PPO中也广泛使用(添加Value Head)
     """
     def __init__(self, state_dim: int, action_dim: int, hidden_size: int):
         super().__init__()
@@ -121,7 +121,7 @@ class ActorCritic(nn.Module):
         
         用于:
         1. 采样时: action=None，返回采样的动作
-        2. 更新时: action给定，返回该动作的log_prob（用于计算概率比）
+        2. 更新时: action给定，返回该动作的log_prob(用于计算概率比)
         
         Args:
             state: 状态
@@ -145,7 +145,7 @@ class ActorCritic(nn.Module):
         # 计算对数概率
         log_prob = dist.log_prob(action)
         
-        # 计算熵（用于熵正则化）
+        # 计算熵(用于熵正则化)
         entropy = dist.entropy()
         
         return action, log_prob, entropy, value.squeeze(-1)
@@ -286,7 +286,7 @@ def compute_ppo_loss(
         clip_epsilon: 裁剪参数 ε
         
     Returns:
-        policy_loss: 策略损失（取负号因为要最大化）
+        policy_loss: 策略损失(取负号因为要最大化)
     """
     # 计算概率比 r_t = π_new / π_old = exp(log_new - log_old)
     ratio = torch.exp(new_log_probs - old_log_probs)
@@ -298,7 +298,7 @@ def compute_ppo_loss(
     surr2 = torch.clamp(ratio, 1.0 - clip_epsilon, 1.0 + clip_epsilon) * advantages
     
     # PPO目标: min(surr1, surr2)
-    # 取负号转化为损失（要最小化）
+    # 取负号转化为损失(要最小化)
     policy_loss = -torch.min(surr1, surr2).mean()
     
     return policy_loss
@@ -357,7 +357,7 @@ class PPOAgent:
         Returns:
             logs: 训练日志
         """
-        # 标准化优势（减少方差）
+        # 标准化优势(减少方差)
         advantages = torch.FloatTensor(self.buffer.advantages)
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
         self.buffer.advantages = advantages.tolist()
@@ -388,7 +388,7 @@ class PPOAgent:
                 # 价值损失 (MSE)
                 value_loss = F.mse_loss(new_values, returns)
                 
-                # 熵正则化（鼓励探索）
+                # 熵正则化(鼓励探索)
                 entropy_loss = -entropy.mean()
                 
                 # 总损失
@@ -423,7 +423,7 @@ class PPOAgent:
         }
 
 # ============================================
-# 第六部分: 简单环境（CartPole模拟）
+# 第六部分: 简单环境(CartPole模拟)
 # ============================================
 
 class SimpleCartPoleEnv:

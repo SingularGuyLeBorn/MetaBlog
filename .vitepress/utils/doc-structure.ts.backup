@@ -195,7 +195,7 @@ function formatDisplayName(name: string): string {
 }
 
 /**
- * 转换为 Sidebar 格式（兼容 VitePress）
+ * 转换为 Sidebar 格式(兼容 VitePress)
  */
 export function toSidebarFormat(nodes: DocNode[]): any[] {
   return nodes.map(node => {

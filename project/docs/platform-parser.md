@@ -14,7 +14,7 @@ Agent 读取网页的能力由 **Backend 统一解析器** + **Frontend 工具�
 用户输入链接
     │
     ▼
-LLM 选择工具（parsePlatformLink / parseZhihu / parseBilibili ...）
+LLM 选择工具(parsePlatformLink / parseZhihu / parseBilibili ...)
     │
     ▼
 Frontend Tool Executor ─────────────────────────────┐
@@ -26,8 +26,8 @@ Frontend Tool Executor ───────────────────
     ▼                                               │
 Backend /api/platform/parse ◄───────────────────────┘
     │
-    ├─ 平台检测（hostname 路由）
-    ├─ HTML 获取（fetch / Playwright）
+    ├─ 平台检测(hostname 路由)
+    ├─ HTML 获取(fetch / Playwright)
     ├─ 平台专用解析器
     └─ 返回结构化 ParseResult
 ```
@@ -49,10 +49,10 @@ Backend 返回统一结构 `ParseResult`：
 interface ParseResult {
   title: string;           // 页面标题
   author?: string;         // 作者/UP主/公众号名
-  content?: string;        // 正文（已清洗、已截断）
+  content?: string;        // 正文(已清洗、已截断)
   images?: string[];       // 图片 URL 列表
   videos?: string[];       // 视频 URL 列表
-  comments?: any[];        // 热评（预留）
+  comments?: any[];        // 热评(预留)
   metadata?: Record<string, any>;  // 平台特有字段
   platform: string;        // 平台标识: zhihu / wechat / bilibili / ...
   method: string;          // 解析方式: jina-reader / readability-js / playwright-render / ...
@@ -64,9 +64,9 @@ interface ParseResult {
 
 ## 二、当前实现详解
 
-### 2.1 专用平台解析器（6 个平台）
+### 2.1 专用平台解析器(6 个平台)
 
-#### 知乎 —— 双路提取（JSON + Regex）
+#### 知乎 —— 双路提取(JSON + Regex)
 
 知乎页面在 SSR 时将完整数据注入 `<script id="js-initialData">`：
 
@@ -79,8 +79,8 @@ const item = Object.values(data.initialState.entities.articles)[0];
 // item.title / item.author.name / item.content / img[src]
 ```
 
-**第一路**（最可靠）：提取内嵌 JSON。  
-**第二路**（兜底）：Regex 匹配 `.Post-RichTextContainer`。
+**第一路**(最可靠)：提取内嵌 JSON。  
+**第二路**(兜底)：Regex 匹配 `.Post-RichTextContainer`。
 
 截断：8000 字 / 10 图。
 
@@ -108,7 +108,7 @@ const videoData = data?.videoData || data?.epInfo;
 // videoData.title / videoData.owner.name / videoData.desc / videoData.pic
 ```
 
-截断：5000 字 / 10 图（视频简介通常较短）。
+截断：5000 字 / 10 图(视频简介通常较短)。
 
 #### 微博 —— OG 元数据
 
@@ -135,7 +135,7 @@ Playwright 渲染后，从完整 DOM 中提取：
 - 标题：`h1` → `div.title`
 - 正文：`#detail-desc` → `.desc`
 - 作者：`.author-name` → `.nickname`
-- 图片：所有 `<img src>`（过滤 avatar/icon）
+- 图片：所有 `<img src>`(过滤 avatar/icon)
 
 **当前状态**：Playwright Chromium 未安装时，fallback 到 fetchHtml，解析效果退化为 OG 级别。
 
@@ -150,16 +150,16 @@ Playwright 渲染后，从完整 DOM 中提取：
 非上述 6 个平台的任意 URL，走 `parseGeneric`，优先级如下：
 
 ```
-L1: Jina Reader（云端 API，零 Key，8秒超时）
+L1: Jina Reader(云端 API，零 Key，8秒超时)
     ↓ 失败或返回空
-L2: Readability.js（本地，jsdom + @mozilla/readability）
+L2: Readability.js(本地，jsdom + @mozilla/readability)
     ↓ 失败或返回空
-L3: OG 元数据 + cleanHtml（最后兜底）
+L3: OG 元数据 + cleanHtml(最后兜底)
 ```
 
 #### L1: Jina Reader
 
-- **格式**：`https://r.jina.ai/http://{原始URL}`（保留协议）
+- **格式**：`https://r.jina.ai/http://{原始URL}`(保留协议)
 - **返回**：Markdown 格式，第一行通常是 `# 标题`
 - **适用**：文章、博客、文档、PDF 等以正文为核心的页面
 - **陷阱**：数据面板、商品页等非文章结构可能提取到错误区块
@@ -168,8 +168,8 @@ L3: OG 元数据 + cleanHtml（最后兜底）
 #### L2: Readability.js
 
 - **原理**：Mozilla 的去噪算法，模拟浏览器阅读模式
-- **输入**：HTML + URL（用于相对路径解析）
-- **输出**：`article.title` + `article.content`（HTML）+ `article.textContent`
+- **输入**：HTML + URL(用于相对路径解析)
+- **输出**：`article.title` + `article.content`(HTML)+ `article.textContent`
 - **图片提取**：从 `article.content` 中提取 `<img src>`，比原始 HTML 更干净
 
 #### L3: OG + cleanHtml
@@ -237,14 +237,14 @@ return createSuccessResult({
 ```
 
 LLM 可调参数：
-- `extract_content`（默认 true）
-- `max_content_length`（默认 5000）
-- `extract_images`（默认 false）
-- `extract_comments`（默认 false）
+- `extract_content`(默认 true)
+- `max_content_length`(默认 5000)
+- `extract_images`(默认 false)
+- `extract_comments`(默认 false)
 
 #### Legacy 独立工具
 
-`parseZhihu` / `parseXiaohongshu` / `parseWechat` 仍保留，直接调用 `/api/proxy/fetch`（另一个 backend 代理路由），在前端自己做 HTML 解析。
+`parseZhihu` / `parseXiaohongshu` / `parseWechat` 仍保留，直接调用 `/api/proxy/fetch`(另一个 backend 代理路由)，在前端自己做 HTML 解析。
 
 **保留原因**：向后兼容、backend 不可用时降级、差异化 UA 控制。
 
@@ -258,22 +258,22 @@ LLM 可调参数：
 
 ### 3.1 web-access 是什么？
 
-- **类型**：Agent Skill（prompt + 本地脚本），非 npm 库
+- **类型**：Agent Skill(prompt + 本地脚本)，非 npm 库
 - **核心**：CDP Proxy 直连用户本地 Chrome，天然携带登录态
-- **作者**：一泽 Eze（eze-is/web-access）
+- **作者**：一泽 Eze(eze-is/web-access)
 - **能力**：搜索 / 抓取 / 点击 / 滚动 / 截图 / 文件上传 / 视频截帧
 
 ### 3.2 架构差异
 
 | 维度 | 我们的 platform-parser | web-access |
 |---|---|---|
-| **定位** | Backend API（server 端运行） | Agent Skill（用户本地运行） |
-| **浏览器** | Playwright（独立无头 Chromium） | CDP（用户日常 Chrome） |
+| **定位** | Backend API(server 端运行) | Agent Skill(用户本地运行) |
+| **浏览器** | Playwright(独立无头 Chromium) | CDP(用户日常 Chrome) |
 | **登录态** | ❌ 无 | ✅ 天然携带 |
-| **交互能力** | 只读 | 可读可写（点击、滚动、上传） |
+| **交互能力** | 只读 | 可读可写(点击、滚动、上传) |
 | **部署** | `pnpm install` 即可 | 需用户开 Chrome 远程调试 |
 | **站点经验** | ❌ 无 | ✅ 按域名存储解析策略 |
-| **工具选择** | 固定优先级 | LLM 自主判断（Jina / curl / CDP） |
+| **工具选择** | 固定优先级 | LLM 自主判断(Jina / curl / CDP) |
 
 ### 3.3 不能简单集成/取代的原因
 
@@ -285,7 +285,7 @@ LLM 可调参数：
 
 | 借鉴点 | 实现成本 | 价值 |
 |---|---|---|
-| **工具选择策略** | 低 | 按页面类型选择解析器（文章→Jina，面板→Readability） |
+| **工具选择策略** | 低 | 按页面类型选择解析器(文章→Jina，面板→Readability) |
 | **站点经验积累** | 中 | 按域名存储解析策略，跨 session 复用 |
 | **CDP Proxy 模式** | 高 | 作为可选组件，检测到本地 Chrome 时优先使用 |
 | **页面类型判断** | 低 | Jina 不适合数据面板/商品页，需要前置判断 |
@@ -301,7 +301,7 @@ LLM 可调参数：
 | Playwright Chromium 未安装 | 小红书/抖音只有 OG 数据 | 后续手动安装 |
 | pnpm 10 忽略 build scripts | esbuild 等原生模块可能异常 | 需执行 `pnpm approve-builds` |
 | 微博解析太浅 | 只有标题+一句话 | 待补充 `__INITIAL_STATE__` 提取 |
-| 无缓存机制 | 同一链接每次重新抓取 | 可加内存缓存（TTL 5分钟） |
+| 无缓存机制 | 同一链接每次重新抓取 | 可加内存缓存(TTL 5分钟) |
 | 无 Rate Limit | 高频调用可能触发平台封 IP | 后端加请求限流或代理池 |
 
 ### 4.2 代码层面已修复的 Bug
@@ -319,7 +319,7 @@ LLM 可调参数：
 
 ## 五、未来更新路线图
 
-### Phase 1: 策略优化（短期，1-2 天）
+### Phase 1: 策略优化(短期，1-2 天)
 
 #### 5.1.1 页面类型判断
 
@@ -347,7 +347,7 @@ function isArticlePage(url: string, html: string): boolean {
 }
 ```
 
-**非文章类页面**（数据面板、商品页、搜索结果页）跳过 Jina，直接用 Readability.js 或 OG。
+**非文章类页面**(数据面板、商品页、搜索结果页)跳过 Jina，直接用 Readability.js 或 OG。
 
 #### 5.1.2 站点经验系统
 
@@ -393,7 +393,7 @@ function isArticlePage(url: string, html: string): boolean {
 5. 通用流程成功后 → 自动生成/更新站点经验
 ```
 
-### Phase 2: 架构扩展（中期，1 周）
+### Phase 2: 架构扩展(中期，1 周)
 
 #### 5.2.1 CDP Proxy 可选模式
 
@@ -403,22 +403,22 @@ function isArticlePage(url: string, html: string): boolean {
 Backend 平台检测
     │
     ├─ 检测 localhost:3456 /health
-    │   ├─ 健康 → 走 CDP Proxy（快，带登录态）
+    │   ├─ 健康 → 走 CDP Proxy(快，带登录态)
     │   └─ 不健康 → 走 Playwright / fetch
     │
     └─ 无 CDP → 现有流程
 ```
 
 CDP 优于 Playwright 的场景：
-- 需要登录态（知乎个人主页、微信公众号后台、小红书创作者平台）
-- 需要与页面交互（点击"展开全文"、滚动加载）
-- 反爬严格的平台（小红书、抖音）
+- 需要登录态(知乎个人主页、微信公众号后台、小红书创作者平台)
+- 需要与页面交互(点击"展开全文"、滚动加载)
+- 反爬严格的平台(小红书、抖音)
 
 实现方式：在 `platform-parser.ts` 中增加 `parseViaCDP()` 函数，通过 HTTP 调用本地 CDP Proxy。
 
 #### 5.2.2 缓存层
 
-内存缓存（TTL 5 分钟）：
+内存缓存(TTL 5 分钟)：
 
 ```ts
 const cache = new Map<string, { result: ParseResult; ts: number }>();
@@ -440,11 +440,11 @@ const rateLimiters = new Map<string, { lastRequest: number; count: number }>();
 const DOMAIN_MIN_INTERVAL = 2000; // 同域名最小间隔 2 秒
 ```
 
-### Phase 3: 深度优化（长期）
+### Phase 3: 深度优化(长期)
 
 #### 5.3.1 微博正文提取
 
-微博页面也有内嵌 JSON（类似 B站），可提取完整微博正文：
+微博页面也有内嵌 JSON(类似 B站)，可提取完整微博正文：
 
 ```ts
 const weiboMatch = html.match(/\$CONFIG\['render_data']\s*=\s*\[0\]\s*\|\|\s*(\[.*?\]);/);
@@ -470,7 +470,7 @@ const weiboMatch = html.match(/\$CONFIG\['render_data']\s*=\s*\[0\]\s*\|\|\s*(\[
 
 ## 六、接入指南
 
-### 6.1 添加新平台（以 Twitter/X 为例）
+### 6.1 添加新平台(以 Twitter/X 为例)
 
 **Step 1**: Backend 添加解析器
 
@@ -498,7 +498,7 @@ async function parseTwitter(url: string, html: string): Promise<ParseResult> {
 }
 ```
 
-**Step 3**（可选）: 前端注册独立工具
+**Step 3**(可选): 前端注册独立工具
 
 ```ts
 // src/theme/tools/platform/definitions.ts
@@ -517,10 +517,10 @@ toolDefinitions.push(parseTwitterDef);
 # 1. 依赖安装
 pnpm install
 
-# 2. 允许 build scripts（pnpm 10 必需）
+# 2. 允许 build scripts(pnpm 10 必需)
 pnpm approve-builds
 
-# 3. Playwright 浏览器（可选，小红书/抖音深度解析需要）
+# 3. Playwright 浏览器(可选，小红书/抖音深度解析需要)
 pnpm exec playwright install chromium
 
 # 4. 验证
@@ -531,7 +531,7 @@ pnpm exec playwright chromium --version
 
 ## 七、附录
 
-### 7.1 工具清单（当前 9 个）
+### 7.1 工具清单(当前 9 个)
 
 | 工具名 | 类型 | 后端依赖 | 解析深度 |
 |---|---|---|---|
@@ -549,9 +549,9 @@ pnpm exec playwright chromium --version
 
 | 文件 | 说明 |
 |---|---|
-| `server/routes/platform-parser.ts` | Backend 统一解析器（核心） |
+| `server/routes/platform-parser.ts` | Backend 统一解析器(核心) |
 | `server/routes/proxy.ts` | `/api/proxy/fetch` 代理路由 |
 | `src/theme/tools/platform/executors.ts` | 前端工具执行器 |
-| `src/theme/tools/platform/definitions.ts` | 工具定义（LLM 可见） |
+| `src/theme/tools/platform/definitions.ts` | 工具定义(LLM 可见) |
 | `src/theme/tools/platform/index.ts` | 工具导出 |
 | `src/theme/tools/index.ts` | 工具注册中心 |

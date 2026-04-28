@@ -4,9 +4,8 @@
  * 用于查询系统级别的元信息：获取所有可用工具的完整列表
  */
 
-import type { ToolDefinition } from '../types'
-import type { ToolResult } from '../types'
 import { getToolDefinitions } from '../registry'
+import type { ToolDefinition, ToolResult } from '../types'
 
 export const getAllToolsDef: ToolDefinition = {
   type: 'function',
@@ -21,7 +20,7 @@ export const getAllToolsDef: ToolDefinition = {
       properties: {
         detail: {
           type: 'boolean',
-          description: '是否返回每个工具的完整描述。默认为 false（摘要模式）',
+          description: '是否返回每个工具的完整描述。默认为 false(摘要模式)',
           default: false
         }
       },
@@ -31,10 +30,10 @@ export const getAllToolsDef: ToolDefinition = {
 }
 
 /**
- * 获取所有工具的列表（支持摘要/详细模式）
+ * 获取所有工具的列表(支持摘要/详细模式)
  *
  * 返回所有工具的完整分类列表和描述。
- * detail=true 时格式更详细（适合首次了解系统）。
+ * detail=true 时格式更详细(适合首次了解系统)。
  */
 export async function executeGetAllTools(args?: { detail?: boolean }): Promise<ToolResult> {
   try {
@@ -66,7 +65,7 @@ export async function executeGetAllTools(args?: { detail?: boolean }): Promise<T
       if (detail) {
         items.forEach(item => lines.push(`- ${item.name}: ${item.desc}`))
       } else {
-        // 摘要模式：每行显示工具名 + 完整描述（不截断）
+        // 摘要模式：每行显示工具名 + 完整描述(不截断)
         items.forEach(item => {
           lines.push(`  • ${item.name} — ${item.desc}`)
         })
@@ -77,7 +76,7 @@ export async function executeGetAllTools(args?: { detail?: boolean }): Promise<T
 
     return {
       success: true,
-      message: `已获取全部 ${defs.length} 个工具（${detail ? '详细' : '摘要'}模式）`,
+      message: `已获取全部 ${defs.length} 个工具(${detail ? '详细' : '摘要'}模式)`,
       data: {
         count: defs.length,
         detail,

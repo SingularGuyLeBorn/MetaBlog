@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
-import Vditor from 'vditor'
-import 'vditor/dist/index.css'
+import Vditor from 'vditor';
+import 'vditor/dist/index.css';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
   initialValue?: string
@@ -153,14 +153,14 @@ const execCommand = (command: string, value?: string) => {
 onMounted(() => {
   if (!editorRef.value) return
 
-  // 尝试从备份恢复（如果初始值为空）
+  // 尝试从备份恢复(如果初始值为空)
   let initialContent = props.initialValue || ''
   if (!initialContent && props.path) {
     const backup = restoreBackup(props.path)
     if (backup && backup.content) {
       // 询问用户是否恢复
       const shouldRestore = window.confirm(
-        `检测到未保存的备份（${new Date(backup.timestamp).toLocaleString()}），是否恢复？`
+        `检测到未保存的备份(${new Date(backup.timestamp).toLocaleString()})，是否恢复？`
       )
       if (shouldRestore) {
         initialContent = backup.content

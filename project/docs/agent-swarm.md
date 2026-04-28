@@ -6,7 +6,7 @@
   <img src="../docs/public/images/architecture/agent-swarm-overview.png" width="600" alt="Agent Swarm Overview">
 </p>
 
-MetaBlog 的终极愿景是构建一个 **Agent Swarm（智能体蜂群）** 系统——多个专精 Agent 在 Meta-Agent 的调度下协同工作，像一个高效团队一样自主完成博客运营的全链路任务。
+MetaBlog 的终极愿景是构建一个 **Agent Swarm(智能体蜂群)** 系统——多个专精 Agent 在 Meta-Agent 的调度下协同工作，像一个高效团队一样自主完成博客运营的全链路任务。
 
 ---
 
@@ -69,24 +69,24 @@ MetaBlog 的终极愿景是构建一个 **Agent Swarm（智能体蜂群）** 系
 
 Meta-Agent 是 Swarm 的大脑，负责：
 
-- **Planner（规划器）**：将用户的高层意图分解为可执行的子任务
-- **Allocator（分配器）**：根据 Agent 能力和负载状态分配任务
-- **Supervisor（监管者）**：监控执行进度，处理异常和重试
+- **Planner(规划器)**：将用户的高层意图分解为可执行的子任务
+- **Allocator(分配器)**：根据 Agent 能力和负载状态分配任务
+- **Supervisor(监管者)**：监控执行进度，处理异常和重试
 
 #### 执行层 — Specialist Agents
 
 每个 Specialist Agent 具备：
 
-- 独立的 System Prompt（领域知识注入）
-- 专属的 Tool Set（只暴露必要工具）
-- 独立的 Memory Context（会话上下文隔离）
-- 状态上报机制（向 Meta-Agent 汇报进度）
+- 独立的 System Prompt(领域知识注入)
+- 专属的 Tool Set(只暴露必要工具)
+- 独立的 Memory Context(会话上下文隔离)
+- 状态上报机制(向 Meta-Agent 汇报进度)
 
 #### 基础层 — Shared Infrastructure
 
 - **Tool Registry**：统一管理 100+ 工具的注册、鉴权、限流
 - **Message Bus**：Agent 间的异步通信通道
-- **Shared Memory**：跨 Agent 的共享知识（如文章列表缓存、用户偏好）
+- **Shared Memory**：跨 Agent 的共享知识(如文章列表缓存、用户偏好)
 
 ---
 
@@ -116,10 +116,10 @@ sequenceDiagram
     end
     
     R-->>M: 返回 15 条热点 + 8 篇论文摘要
-    M->>W: 基于素材撰写周报（附模板）
+    M->>W: 基于素材撰写周报(附模板)
     W-->>M: 返回周报草稿
     M->>V: 审核周报质量
-    V-->>M: 返回修改建议（3 处）
+    V-->>M: 返回修改建议(3 处)
     M->>W: 按建议修改
     W-->>M: 返回终稿
     M->>D: 发布到博客 /posts/weekly/
@@ -129,7 +129,7 @@ sequenceDiagram
 
 ### 任务分解策略
 
-Meta-Agent 使用 **DAG（有向无环图）** 来管理任务依赖：
+Meta-Agent 使用 **DAG(有向无环图)** 来管理任务依赖：
 
 ```typescript
 interface SwarmTask {
@@ -216,7 +216,7 @@ interface SwarmMessage {
   payload: unknown
   timestamp: Date
   correlationId?: string          // 关联请求-响应对
-  ttl?: number                    // 消息过期时间（ms）
+  ttl?: number                    // 消息过期时间(ms)
 }
 ```
 
@@ -232,7 +232,7 @@ class SwarmMessageBus {
   /** 订阅主题 */
   subscribe(topic: string, handler: MessageHandler): Unsubscribe
 
-  /** 请求-响应模式（带超时） */
+  /** 请求-响应模式(带超时) */
   request(
     to: AgentId, 
     payload: unknown, 
@@ -253,7 +253,7 @@ class SwarmMessageBus {
 
 ## 🧩 预设 Agent 蓝图
 
-### Writer Agent（创作者）
+### Writer Agent(创作者)
 
 ```yaml
 name: writer-agent
@@ -274,7 +274,7 @@ system_prompt: |
   - 每篇文章都有清晰的 TL;DR
 ```
 
-### Research Agent（研究员）
+### Research Agent(研究员)
 
 ```yaml
 name: research-agent
@@ -298,7 +298,7 @@ system_prompt: |
   - 给出置信度评估
 ```
 
-### Reviewer Agent（审稿人）
+### Reviewer Agent(审稿人)
 
 ```yaml
 name: reviewer-agent
@@ -311,13 +311,13 @@ tools:
   - searchArticles
 system_prompt: |
   你是一位严谨的技术审稿人。检查要点：
-  - 技术准确性（代码能否运行？逻辑是否正确？）
-  - 行文质量（是否通顺？有无错别字？）
-  - SEO 友好度（标题、描述、关键词）
+  - 技术准确性(代码能否运行？逻辑是否正确？)
+  - 行文质量(是否通顺？有无错别字？)
+  - SEO 友好度(标题、描述、关键词)
   - 返回结构化的审核报告
 ```
 
-### DevOps Agent（运维）
+### DevOps Agent(运维)
 
 ```yaml
 name: devops-agent
@@ -351,20 +351,20 @@ system_prompt: |
 ### Phase 2: Meta-Agent 调度 (L4 后半)
 
 - [ ] 实现 `TaskDAG` 任务图
-- [ ] Meta-Agent Planner（LLM 驱动的任务分解）
-- [ ] Allocator（基于 Skill 匹配的任务分配）
-- [ ] Supervisor（进度监控 + 超时重试）
+- [ ] Meta-Agent Planner(LLM 驱动的任务分解)
+- [ ] Allocator(基于 Skill 匹配的任务分配)
+- [ ] Supervisor(进度监控 + 超时重试)
 
 ### Phase 3: Specialist Agents (L5)
 
 - [ ] 实现 4 个核心 Specialist Agent
-- [ ] Agent 蓝图（Blueprint）系统
+- [ ] Agent 蓝图(Blueprint)系统
 - [ ] Agent 动态创建与销毁
 - [ ] 跨 Agent 共享 Memory
 
 ### Phase 4: 监控与优化 (L6)
 
-- [ ] Swarm Dashboard（实时状态看板）
+- [ ] Swarm Dashboard(实时状态看板)
 - [ ] Agent 性能指标收集
 - [ ] 自适应负载均衡
 - [ ] 执行日志与回放

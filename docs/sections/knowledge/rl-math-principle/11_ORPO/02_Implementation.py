@@ -87,7 +87,7 @@ def get_batch_log_probs(
     average_log_prob: bool = True
 ) -> torch.Tensor:
     """
-    计算每个序列的总Log概率（或平均Log概率）
+    计算每个序列的总Log概率(或平均Log概率)
     
     ORPO论文中使用的是 "Average Log Probability" 来计算 Odds
     即: log_p = sum(token_log_probs) / length

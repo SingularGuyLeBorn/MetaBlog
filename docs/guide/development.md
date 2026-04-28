@@ -8,14 +8,14 @@
 
 ```
 MetaBlog/
-├── .data/                     # 运行时数据（Git 忽略）
+├── .data/                     # 运行时数据(Git 忽略)
 │   ├── agents/                # Agent 配置
 │   ├── sessions/              # 会话记录
 │   ├── memories/              # Agent 记忆
 │   └── logs/                  # 运行日志
 │
 ├── .vitepress/                # VitePress 配置与主题
-│   ├── config.ts              # 主配置（含 BFF 插件）
+│   ├── config.ts              # 主配置(含 BFF 插件)
 │   ├── theme/                 # 自定义主题组件
 │   │   ├── components/        # Vue 组件
 │   │   │   └── ai-chat/       # AI 聊天组件
@@ -36,7 +36,7 @@ MetaBlog/
 │   │   ├── resources/         # 公开资源
 │   │   └── about/             # 关于页面
 │   ├── public/                # 静态资源
-│   ├── guide/                 # 项目文档（本文档）
+│   ├── guide/                 # 项目文档(本文档)
 │   └── index.md               # 博客首页
 │
 ├── server/                    # BFF 后端
@@ -46,7 +46,7 @@ MetaBlog/
 │   ├── utils/                 # 后端工具
 │   └── vitepress-integration.ts  # VitePress 集成插件
 │
-├── src/                       # 前端源码（VitePress 主题）
+├── src/                       # 前端源码(VitePress 主题)
 │   └── theme/                 # 主题代码
 │       ├── components/        # Vue 组件
 │       ├── tools/             # 工具系统
@@ -67,11 +67,11 @@ MetaBlog/
 │   └── structure-checker.js   # 文档结构检查
 │
 ├── project/                   # 实验与原型
-│   ├── experiments/           # API 实验（飞书、语雀、GitHub 等）
+│   ├── experiments/           # API 实验(飞书、语雀、GitHub 等)
 │   ├── docs/                  # 项目文档
 │   └── requirements/          # 需求文档
 │
-├── .env                       # 环境变量（Git 忽略）
+├── .env                       # 环境变量(Git 忽略)
 ├── package.json
 └── README.md
 ```
@@ -101,8 +101,8 @@ MetaBlog/
 
 ### 工具开发规范
 
-1. **分类文件**（如 `doc.ts`、`wiki.ts`、`repo.ts`）：
-   - 每个文件同时包含 **ToolDefinition**（Schema 定义）和 **ToolExecutor**（执行器）
+1. **分类文件**(如 `doc.ts`、`wiki.ts`、`repo.ts`)：
+   - 每个文件同时包含 **ToolDefinition**(Schema 定义)和 **ToolExecutor**(执行器)
    - `description` 必须清晰，让 AI 知道何时调用
    - 每个参数都要有 `description`
    - `required` 必须包含所有不可省略的参数
@@ -110,7 +110,7 @@ MetaBlog/
    - 使用 `createSuccessResult` / `createErrorResult` 返回
    - 错误信息需要中英文双语
 
-2. **注册文件**（`index.ts`）：
+2. **注册文件**(`index.ts`)：
    - 统一从分类文件导出定义和执行器
    - 在 `src/theme/tools/index.ts` 中注册
 
@@ -180,7 +180,7 @@ pnpm test:run
 # 检查文档结构完整性
 pnpm check:structure
 
-# 干运行（不修复）
+# 干运行(不修复)
 pnpm check:structure:dry
 
 # 详细输出

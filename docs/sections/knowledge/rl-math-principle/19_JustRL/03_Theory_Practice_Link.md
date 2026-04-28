@@ -74,4 +74,4 @@ JustRL 的核心发现是：**对于 LLM，如果你的 Learning Rate 足够小�
 ## 4. 总结
 
 代码的**空缺**正是 JustRL 的精髓。
-你找不到的代码行（Critic class, GAE buffer, PPO Loss），正是它能 Scale Up 的原因。
+你找不到的代码行(Critic class, GAE buffer, PPO Loss)，正是它能 Scale Up 的原因。

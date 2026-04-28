@@ -2,9 +2,9 @@
  * DeepSeek Provider 实现
  */
 
-import { BaseProvider, type ProviderOptions } from './BaseProvider'
-import type { ProviderInfo, ChatOptions, StreamCallbacks, ToolCall } from './types'
 import type { ChatMessage } from '@/theme/types'
+import { BaseProvider } from './BaseProvider'
+import type { ChatOptions, ProviderInfo, StreamCallbacks, ToolCall } from './types'
 
 export class DeepSeekProvider extends BaseProvider {
   readonly info: ProviderInfo = {
@@ -15,7 +15,7 @@ export class DeepSeekProvider extends BaseProvider {
     website: 'https://deepseek.com',
     icon: '🔍'
   }
-  
+
   constructor(apiKey?: string) {
     super({
       apiConfig: {
@@ -24,24 +24,24 @@ export class DeepSeekProvider extends BaseProvider {
         // 生产环境由后端 /api/chat 代理所有 LLM 请求，Key 仅存在于服务端。
         // 此处 apiKey 仅在服务端 SSR 或测试场景下由调用方传入。
         apiKey: apiKey || '',
-        model: 'deepseek-chat'
+        model: 'deepseek-v4-pro'
       }
     })
   }
-  
+
   async chatStream(options: ChatOptions, callbacks: StreamCallbacks): Promise<void> {
     this.validateApiKey()
-    
+
     const { messages, config, tools, signal } = options
     const model = this.getModel(config.model)
-    
+
     if (!model) {
       throw new Error(`不支持的模型: ${config.model}`)
     }
-    
+
     // 转换消息格式
     const convertedMessages = await this.convertMessages(messages)
-    
+
     // 构建请求体
     const requestBody: any = {
       model: config.model,
@@ -53,19 +53,19 @@ export class DeepSeekProvider extends BaseProvider {
       temperature: config.temperature ?? model.defaultTemperature,
       max_tokens: config.maxTokens ?? model.maxOutputTokens
     }
-    
-    // 添加工具（如果支持）
+
+    // 添加工具(如果支持)
     if (model.capabilities.functionCalling && tools && tools.length > 0) {
       requestBody.tools = this.convertTools(tools)
     }
-    
+
     // DeepSeek Reasoner 特殊处理
-    if (config.model === 'deepseek-reasoner') {
+    if (config.model === 'deepseek-v4-pro') {
       // Reasoner 模型不支持 temperature 和 tools
       delete requestBody.temperature
       delete requestBody.tools
     }
-    
+
     try {
       const response = await this.fetchWithTimeout(
         `${this.apiConfig.baseURL}/chat/completions`,
@@ -76,43 +76,43 @@ export class DeepSeekProvider extends BaseProvider {
           signal
         }
       )
-      
+
       if (!response.ok) {
         const error = await response.json().catch(() => ({}))
         throw new Error(error.error?.message || `DeepSeek API 错误: ${response.status}`)
       }
-      
+
       // 解析流
       let reasoningBuffer = ''
       let contentBuffer = ''
-      
+
       for await (const chunk of this.parseSSEStream(response)) {
         if (signal?.aborted) break
-        
+
         const delta = chunk.choices?.[0]?.delta
         if (!delta) continue
-        
-        // 处理思考内容（reasoning_content）
+
+        // 处理思考内容(reasoning_content)
         if (delta.reasoning_content) {
           reasoningBuffer += delta.reasoning_content
           callbacks.onReasoning?.(delta.reasoning_content)
         }
-        
+
         // 处理普通内容
         if (delta.content) {
           contentBuffer += delta.content
           callbacks.onContent(delta.content)
         }
-        
+
         // 处理工具调用
         const toolCall = this.extractToolCalls(delta)
         if (toolCall) {
           callbacks.onToolCall?.(toolCall)
         }
       }
-      
+
       callbacks.onComplete?.()
-      
+
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         callbacks.onComplete?.()
@@ -122,9 +122,9 @@ export class DeepSeekProvider extends BaseProvider {
       throw error
     }
   }
-  
+
   /**
-   * DeepSeek 非流式请求（用于工具调用）
+   * DeepSeek 非流式请求(用于工具调用)
    */
   async chat(options: ChatOptions): Promise<{
     content: string
@@ -132,17 +132,17 @@ export class DeepSeekProvider extends BaseProvider {
     toolCalls?: ToolCall[]
   }> {
     this.validateApiKey()
-    
+
     const { messages, config, tools } = options
     const model = this.getModel(config.model)
-    
+
     if (!model) {
       throw new Error(`不支持的模型: ${config.model}`)
     }
-    
+
     // 转换消息格式
     const convertedMessages = await this.convertMessages(messages)
-    
+
     const requestBody: any = {
       model: config.model,
       messages: convertedMessages.map(m => ({
@@ -153,18 +153,18 @@ export class DeepSeekProvider extends BaseProvider {
       temperature: config.temperature ?? model.defaultTemperature,
       max_tokens: config.maxTokens ?? model.maxOutputTokens
     }
-    
+
     // 添加工具
     if (model.capabilities.functionCalling && tools && tools.length > 0) {
       requestBody.tools = this.convertTools(tools)
     }
-    
+
     // Reasoner 特殊处理
-    if (config.model === 'deepseek-reasoner') {
+    if (config.model === 'deepseek-v4-pro') {
       delete requestBody.temperature
       delete requestBody.tools
     }
-    
+
     const response = await this.fetchWithTimeout(
       `${this.apiConfig.baseURL}/chat/completions`,
       {
@@ -173,16 +173,16 @@ export class DeepSeekProvider extends BaseProvider {
         body: JSON.stringify(requestBody)
       }
     )
-    
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({}))
       throw new Error(error.error?.message || `DeepSeek API 错误: ${response.status}`)
     }
-    
+
     const result = await response.json()
     const choice = result.choices?.[0]
     const message = choice?.message
-    
+
     return {
       content: message?.content || '',
       reasoning: message?.reasoning_content,
@@ -193,7 +193,7 @@ export class DeepSeekProvider extends BaseProvider {
       }))
     }
   }
-  
+
   /**
    * 覆盖消息转换 - DeepSeek 不支持多模态
    */

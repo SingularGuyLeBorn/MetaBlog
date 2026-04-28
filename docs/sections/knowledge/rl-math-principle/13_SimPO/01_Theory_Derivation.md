@@ -7,7 +7,7 @@
 - **arXiv**：2405.14734
 - **PDF**：见 `papers/` 目录
 
-**前置知识**：DPO（第7章）、最大间隔损失 (Margin Loss)
+**前置知识**：DPO(第7章)、最大间隔损失 (Margin Loss)
 
 ---
 
@@ -22,7 +22,7 @@
 1. 揭示DPO中参考模型 (Reference Model) 的冗余性
 2. 推导SimPO的**长度归一化奖励**公式
 3. 解释**Target Margin**在防止长度欺骗中的作用
-4. 实现SimPO算法（可能目前最简单的对齐代码）
+4. 实现SimPO算法(可能目前最简单的对齐代码)
 
 ---
 
@@ -34,8 +34,8 @@ DPO的隐式奖励：
 $$r_{DPO}(x, y) = \beta \log \frac{\pi_\theta(y|x)}{\pi_{ref}(y|x)}$$
 
 这个公式里有两项：
-1. $\log \pi_\theta$：当前策略的生成概率（越高越好）
-2. $-\log \pi_{ref}$：参考策略的生成概率（作为基线）
+1. $\log \pi_\theta$：当前策略的生成概率(越高越好)
+2. $-\log \pi_{ref}$：参考策略的生成概率(作为基线)
 
 ### 1.2 SimPO的洞察
 
@@ -65,12 +65,12 @@ $$r_{SimPO}(x, y) = \frac{\beta}{|y|} \log \pi_\theta(y|x) = \frac{\beta}{|y|} \
 | $\log \pi_\theta$ | **序列总Log概率** | 所有token log prob之和 |
 
 **为什么要除以长度？**
-如果不除以长度，长句子天然 Log Prob 更低（因为是负数相加）。例如：
+如果不除以长度，长句子天然 Log Prob 更低(因为是负数相加)。例如：
 - 短回复 (len=10, avg_logp=-1.0): Sum = -10
 - 长回复 (len=100, avg_logp=-1.0): Sum = -100
 
 如果不归一化，模型会倾向于生成极短的回复来最大化 Sum Log Prob。
-归一化后，模型关注的是**生成质量**（平均概率）而非长度。
+归一化后，模型关注的是**生成质量**(平均概率)而非长度。
 
 ### 2.2 目标间距 (Target Margin)
 
@@ -118,7 +118,7 @@ SimPO的梯度：
 
 $$\nabla_\theta \mathcal{L} = -\sigma(-\Delta r + \gamma) \cdot \nabla_\theta (r_w - r_l)$$
 
-由于 $\gamma > 0$，即使模型已经能够区分 $y_w$ 和 $y_l$（即 $r_w > r_l$），只要差值还没达到 $\gamma$，损失函数依然会提供较大的梯度。
+由于 $\gamma > 0$，即使模型已经能够区分 $y_w$ 和 $y_l$(即 $r_w > r_l$)，只要差值还没达到 $\gamma$，损失函数依然会提供较大的梯度。
 这迫使模型**"过度自信"**地偏好优胜回复，从而获得更鲁棒的对齐效果。
 
 ---

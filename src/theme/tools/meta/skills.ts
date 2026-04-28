@@ -4,8 +4,7 @@
  * 用于查询系统级别的元信息：获取所有可用 Skills 的完整列表
  */
 
-import type { ToolDefinition } from '../types'
-import type { ToolResult } from '../types'
+import type { ToolDefinition, ToolResult } from '../types'
 
 export const getAllSkillsDef: ToolDefinition = {
   type: 'function',
@@ -20,7 +19,7 @@ export const getAllSkillsDef: ToolDefinition = {
       properties: {
         detail: {
           type: 'boolean',
-          description: '是否返回每个 Skill 的完整信息。默认为 false（摘要模式）',
+          description: '是否返回每个 Skill 的完整信息。默认为 false(摘要模式)',
           default: false
         }
       },
@@ -30,7 +29,7 @@ export const getAllSkillsDef: ToolDefinition = {
 }
 
 /**
- * 获取所有 Skills 的列表（支持摘要/详细模式）
+ * 获取所有 Skills 的列表(支持摘要/详细模式)
  *
  * 返回所有 Skills 的完整列表和描述。
  */
@@ -79,7 +78,7 @@ export async function executeGetAllSkills(args?: { detail?: boolean }): Promise<
 
     return {
       success: true,
-      message: `已获取全部 ${skills.length} 个 Skills（${detail ? '详细' : '摘要'}模式）`,
+      message: `已获取全部 ${skills.length} 个 Skills(${detail ? '详细' : '摘要'}模式)`,
       data: {
         count: skills.length,
         detail,

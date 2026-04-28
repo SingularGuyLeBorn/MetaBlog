@@ -1,5 +1,5 @@
 <!--
-  ChatLayout - 聊天主布局（支持多 Agent 独立会话）
+  ChatLayout - 聊天主布局(支持多 Agent 独立会话)
 -->
 <template>
   <div class="chat-layout">
@@ -236,17 +236,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted, watch, watchEffect } from 'vue'
-import { Teleport } from 'vue'
-import { Icon } from '@/theme/components/common'
-import SessionPanel from './SessionPanel.vue'
-import SessionManager from './SessionManager.vue'
-import MessageList from './MessageList.vue'
-import ChatInput from './ChatInput.vue'
-import SettingsPanel from './SettingsPanel.vue'
 import { AgentAdmin, AgentChatDialog } from '@/theme/components/agent'
-import type { SessionConfig, ChatSession, MessageAttachment, Skill, Agent } from '@/theme/types'
+import { Icon } from '@/theme/components/common'
 import { useAIChat, useAgentConfig } from '@/theme/stores'
+import type { Agent, MessageAttachment, SessionConfig, Skill } from '@/theme/types'
+import { Teleport, computed, nextTick, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
+import ChatInput from './ChatInput.vue'
+import MessageList from './MessageList.vue'
+import SessionManager from './SessionManager.vue'
+import SessionPanel from './SessionPanel.vue'
+import SettingsPanel from './SettingsPanel.vue'
 import TokenUsageBar from './TokenUsageBar.vue'
 
 const {
@@ -320,7 +319,7 @@ const filteredSessions = computed(() => {
     const sid = (s.config as any)?.agentId
     // 匹配当前 Agent 的会话
     if (sid) return sid === agentId
-    // 没有 agentId 的旧数据 → 不显示（避免所有 Agent 都看到同一批旧会话）
+    // 没有 agentId 的旧数据 → 不显示(避免所有 Agent 都看到同一批旧会话)
     return false
   })
 })
@@ -341,17 +340,13 @@ const currentAgentSystemPrompt = computed(() => {
 
 // 当前模型配置
 const currentModelConfig = computed(() => {
-  const model = currentSession.value?.config?.model || 'deepseek-chat'
-  // 从 aiService 获取模型配置
+  const model = currentSession.value?.config?.model || 'deepseek-v4-pro'
   const configs: Record<string, { supportsVision?: boolean; supportsVideo?: boolean; contextWindow: number }> = {
-    'deepseek-chat': { supportsVision: false, supportsVideo: false, contextWindow: 128000 },
-    'deepseek-reasoner': { supportsVision: false, supportsVideo: false, contextWindow: 128000 },
-    'kimi-k2.5': { supportsVision: true, supportsVideo: true, contextWindow: 256000 },
-    'kimi-k2-turbo-preview': { supportsVision: true, supportsVideo: false, contextWindow: 256000 },
-    'kimi-k2-thinking': { supportsVision: true, supportsVideo: false, contextWindow: 256000 },
-    'kimi-k2-thinking-turbo': { supportsVision: true, supportsVideo: false, contextWindow: 256000 }
+    'deepseek-v4-pro': { supportsVision: false, supportsVideo: false, contextWindow: 1000000 },
+    'deepseek-v4-flash': { supportsVision: false, supportsVideo: false, contextWindow: 1000000 },
+    'kimi-k2.5': { supportsVision: true, supportsVideo: true, contextWindow: 256000 }
   }
-  return configs[model] || { supportsVision: false, supportsVideo: false, contextWindow: 64000 }
+  return configs[model] || { supportsVision: false, supportsVideo: false, contextWindow: 1000000 }
 })
 
 // 当前模型是否支持视觉
@@ -360,7 +355,7 @@ const currentModelSupportsVision = computed(() => currentModelConfig.value.suppo
 // 当前模型是否支持视频
 const currentModelSupportsVideo = computed(() => currentModelConfig.value.supportsVideo)
 
-// System Prompt 是否已自定义（与会话初始值不同）
+// System Prompt 是否已自定义(与会话初始值不同)
 const isSystemPromptCustomized = computed((): boolean => {
   if (!currentSession.value) return false
   // 如果会话有 _customSystemPrompt 标记，说明用户手动修改过
@@ -411,7 +406,7 @@ watch(() => activeAgent.value, (agent) => {
   }
 })
 
-// 监听当前选中 Agent 的配置变化（实时同步 systemPrompt）
+// 监听当前选中 Agent 的配置变化(实时同步 systemPrompt)
 watchEffect(() => {
   if (!selectedAgent.value || !currentSession.value) return
   
@@ -473,7 +468,7 @@ async function selectAgent(agent: Agent) {
 
 // 为当前 Agent 创建会话
 async function createSessionForCurrentAgent() {
-  // 严格拦截：如果当前已经在空会话中，绝不重复新建空会话（直接转给新选的Agent用就行了）
+  // 严格拦截：如果当前已经在空会话中，绝不重复新建空会话(直接转给新选的Agent用就行了)
   if (currentSessionId.value) {
     const sid = currentSessionId.value
     const currentGroups = messageGroups.value
@@ -499,7 +494,7 @@ async function createSessionForCurrentAgent() {
     // 设置会话标题
     renameSession(newSession.id, `与 ${selectedAgent.value.name} 的对话`)
     
-    // 持久化 agentId + systemPrompt 到 config（会随会话保存到后端）
+    // 持久化 agentId + systemPrompt 到 config(会随会话保存到后端)
     const systemPrompt = selectedAgent.value.systemPrompt || buildSystemPrompt(selectedAgent.value)
     updateSessionConfig(newSession.id, {
       agentId: selectedAgent.value.id,
@@ -540,15 +535,57 @@ async function handleRegenerate() {
 async function handleSend(content: string, attachments: MessageAttachment[] = [], skillInfo?: Skill) {
   if (!content.trim() && attachments.length === 0) return
   // isStreaming 时不再阻止发送，消息会进入队列
-  
+
+  let finalContent = content.trim()
+
+  // ═════════════════════════════════════════════════════════════════
+  // 图片 OCR：模型不支持 vision 时，自动解析图片文字
+  // 结果写入 attachment.ocrText，不混入 content，用户看不见
+  // ═════════════════════════════════════════════════════════════════
+  if (!currentModelSupportsVision.value) {
+    const imageAttachments = attachments.filter(a => a.type === 'image')
+    for (const att of imageAttachments) {
+      try {
+        const resp = await fetch(att.url)
+        if (!resp.ok) throw new Error(`fetch blob 失败: ${resp.status}`)
+        const blob = await resp.blob()
+
+        const formData = new FormData()
+        formData.append('file', blob, att.name || 'image.png')
+        formData.append('language', 'auto')
+
+        const ocrResp = await fetch('/api/ocr', {
+          method: 'POST',
+          body: formData
+        })
+        if (!ocrResp.ok) {
+          const errText = await ocrResp.text().catch(() => '')
+          throw new Error(`OCR 服务 HTTP ${ocrResp.status}: ${errText}`)
+        }
+        const ocrResult = await ocrResp.json()
+
+        if (ocrResult.success && ocrResult.data?.text) {
+          att.ocrText = ocrResult.data.text
+        } else if (ocrResult.error) {
+          att.ocrText = `(OCR 失败: ${ocrResult.error})`
+        } else {
+          att.ocrText = '(未识别到文字)'
+        }
+      } catch (e: any) {
+        console.error('[OCR] 解析失败:', e)
+        att.ocrText = `(OCR 失败: ${e.message || '未知错误'})`
+      }
+    }
+  }
+
   inputText.value = ''
-  
+
   // 立即滚动到底部
   nextTick(() => {
     messageListRef.value?.scrollToBottom()
     chatInputRef.value?.focus()
   })
-  
+
   // 只有在使用了技能且技能有 content 时才更新
   // 保持用户自定义的 systemPrompt 不被覆盖
   if (currentSessionId.value && skillInfo?.content) {
@@ -558,9 +595,9 @@ async function handleSend(content: string, attachments: MessageAttachment[] = []
       session.config._customSystemPrompt = true // 标记为用户自定义
     }
   }
-  
-  // 发送消息
-  await sendMessage(content, attachments, skillInfo)
+
+  // 发送消息（attachments 保留给 UI 预览，content 已包含 OCR 结果）
+  await sendMessage(finalContent, attachments, skillInfo)
 }
 
 function handleQuickPrompt(text: string) {
@@ -648,7 +685,7 @@ function handleSelectSkill(skill: Skill | undefined) {
   selectedSkill.value = skill
 }
 
-// 从 AgentAdmin 切换 Agent（旧版方式，保留兼容）
+// 从 AgentAdmin 切换 Agent(旧版方式，保留兼容)
 async function handleAgentChange(agent: Agent) {
   await selectAgent(agent)
   showAgentAdmin.value = false

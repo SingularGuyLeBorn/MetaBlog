@@ -7,11 +7,11 @@
  * - LOD-2: 激活 Skill 的完整 Prompt (按需注入)
  */
 
-import type { 
-  SkillMetadata, 
-  ActiveSkill, 
-  PromptBuildContext, 
+import type {
+  ActiveSkill,
+  PromptBuildContext,
   PromptBuildOptions,
+  SkillMetadata,
   ToolDefinition
 } from './types'
 
@@ -32,14 +32,14 @@ function buildLOD0SkillList(skills: SkillMetadata[]): string {
   if (skills.length === 0) {
     return ''
   }
-  
+
   const lines: string[] = [
     '## 可用 Skills',
     '',
-    '以下技能包含各领域的**工作流指导**（最佳实践、标准流程、注意事项）。复杂任务加载对应 Skill 可以获得更专业的执行方案：',
+    '以下技能包含各领域的**工作流指导**(最佳实践、标准流程、注意事项)。复杂任务加载对应 Skill 可以获得更专业的执行方案：',
     ''
   ]
-  
+
   // 按分类分组
   const byCategory = new Map<string, SkillMetadata[]>()
   for (const skill of skills) {
@@ -48,7 +48,7 @@ function buildLOD0SkillList(skills: SkillMetadata[]): string {
     list.push(skill)
     byCategory.set(skill.category, list)
   }
-  
+
   const categoryNames: Record<string, string> = {
     content: '📚 内容管理',
     research: '🔬 学术研究',
@@ -58,31 +58,31 @@ function buildLOD0SkillList(skills: SkillMetadata[]): string {
     multimedia: '🎬 多媒体',
     custom: '✨ 其他'
   }
-  
+
   for (const [category, categorySkills] of byCategory) {
     lines.push(`### ${categoryNames[category] || category}`)
     lines.push('')
-    
+
     for (const skill of categorySkills) {
       const toolHint = skill.tools?.length ? ` [工具: ${skill.tools.join(', ')}]` : ''
       lines.push(`- ${skill.icon} **${skill.name}** \`${skill.id}\``)
       lines.push(`  ${skill.description}${toolHint}`)
     }
-    
+
     lines.push('')
   }
-  
+
   lines.push('---')
   lines.push('')
   lines.push('**Skill 与工具的关系**：')
-  lines.push('- Skill 加载的是**工作流指导**（告诉你这个领域该怎么组合工具、按什么顺序、注意什么）')
+  lines.push('- Skill 加载的是**工作流指导**(告诉你这个领域该怎么组合工具、按什么顺序、注意什么)')
   lines.push('- **不是工具权限**：所有工具始终可用，不需要加载 Skill 就能调用')
-  lines.push('- 简单任务（如查一个 GitHub 仓库）直接调工具即可')
-  lines.push('- 复杂任务（如完整的 PR 审查、文档排版）加载 Skill 后遵循其指导')
+  lines.push('- 简单任务(如查一个 GitHub 仓库)直接调工具即可')
+  lines.push('- 复杂任务(如完整的 PR 审查、文档排版)加载 Skill 后遵循其指导')
   lines.push('')
-  lines.push('**如何加载 Skill**：调用 `loadSkill` 工具，传入 `skill_id`（上表中的代码标记）。')
+  lines.push('**如何加载 Skill**：调用 `loadSkill` 工具，传入 `skill_id`(上表中的代码标记)。')
   lines.push('')
-  
+
   return lines.join('\n')
 }
 
@@ -100,14 +100,14 @@ function buildLOD1ToolSummary(tools: ToolDefinition[]): string {
   if (tools.length === 0) {
     return ''
   }
-  
+
   const lines: string[] = [
     '## 可用工具',
     '',
     '你可以调用以下工具来协助用户：',
     ''
   ]
-  
+
   // 按类别分组 (基于工具名前缀)
   const byPrefix = new Map<string, ToolDefinition[]>()
   for (const tool of tools) {
@@ -117,7 +117,7 @@ function buildLOD1ToolSummary(tools: ToolDefinition[]): string {
     list.push(tool)
     byPrefix.set(prefix, list)
   }
-  
+
   const prefixNames: Record<string, string> = {
     article: '📝 文章管理',
     kb: '📚 知识库',
@@ -136,19 +136,19 @@ function buildLOD1ToolSummary(tools: ToolDefinition[]): string {
     network: '🌐 网络',
     other: '📦 其他'
   }
-  
+
   for (const [prefix, prefixTools] of byPrefix) {
     lines.push(`### ${prefixNames[prefix] || prefix}`)
     lines.push('')
-    
+
     for (const tool of prefixTools) {
       // 完整描述，不截断 —— 1M 上下文时代，完整信息比碎片更有价值
       lines.push(`- **${tool.function.name}**: ${tool.function.description}`)
     }
-    
+
     lines.push('')
   }
-  
+
   return lines.join('\n')
 }
 
@@ -165,21 +165,21 @@ function buildLOD2ActiveSkills(activeSkills: ActiveSkill[]): string {
   if (activeSkills.length === 0) {
     return ''
   }
-  
+
   const lines: string[] = [
     '## 当前激活的技能',
     '',
     '以下技能已根据用户请求自动激活。请遵循这些技能的工作流程：',
     ''
   ]
-  
+
   for (const skill of activeSkills) {
-    const activationInfo = skill.activationSource === 'auto' 
+    const activationInfo = skill.activationSource === 'auto'
       ? `(自动匹配，置信度 ${((skill.matchScore || 0) * 100).toFixed(0)}%)`
       : skill.activationSource === 'manual'
-      ? '(用户手动激活)'
-      : '(AI 请求激活)'
-    
+        ? '(用户手动激活)'
+        : '(AI 请求激活)'
+
     lines.push(`### ${skill.icon} ${skill.name} ${activationInfo}`)
     lines.push('')
     lines.push(skill.content)
@@ -187,7 +187,7 @@ function buildLOD2ActiveSkills(activeSkills: ActiveSkill[]): string {
     lines.push('─'.repeat(40))
     lines.push('')
   }
-  
+
   return lines.join('\n')
 }
 
@@ -213,13 +213,13 @@ export function buildSystemPrompt(
     includeLOD2 = false,
     showToolInstructions = true
   } = options
-  
+
   const parts: string[] = []
-  
+
   // ═══════════════════════════════════════════════════════════════
   // 基础角色定义
   // ═══════════════════════════════════════════════════════════════
-  
+
   parts.push(`# ${context.baseRole}`)
   parts.push('')
 
@@ -227,11 +227,11 @@ export function buildSystemPrompt(
   parts.push([
     '你是 MetaBlog AI 助手，一个智能的博客和内容管理助手。',
     '',
-    '## 🚫 绝对禁止（红线）',
+    '## 🚫 绝对禁止(红线)',
     '',
     '以下行为**严格禁止**，违反会导致结果错误或系统故障：',
     '',
-    '1. **禁止猜测参数**：工具必需参数缺失时，**必须询问用户**，禁止编造（尤其是 token、密码、路径、仓库名等）',
+    '1. **禁止猜测参数**：工具必需参数缺失时，**必须询问用户**，禁止编造(尤其是 token、密码、路径、仓库名等)',
     '2. **禁止忽略工具错误**：工具返回 error 时，必须向用户报告错误原因，禁止假装成功',
     '3. **禁止公式纯文本输出**：所有数学公式必须用 `$...$` 或 `$$...$$` 包裹，禁止写成 `J(theta) = ...` 这类纯文本',
     '4. **禁止搜索死循环**：一次 searchCapabilities 没找到，可换关键词再搜一次；仍找不到就告诉用户，禁止连续三次以上搜索',
@@ -248,37 +248,37 @@ export function buildSystemPrompt(
     '## 输出格式规范',
     '',
     '### 数学公式',
-    '所有数学公式必须使用 **LaTeX 格式**（用美元符号包裹），内部写标准 LaTeX 语法：',
+    '所有数学公式必须使用 **LaTeX 格式**(用美元符号包裹)，内部写标准 LaTeX 语法：',
     '- 行内公式：$E = mc^2$、$\\pi$、$\\theta$、$\\frac{a}{b}$',
     '- 块级公式：',
     '  $$\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$$',
     '  $$\\mathcal{L}_{PPO}(\\theta) = \\mathbb{E}_{t}[\\min(r_t(\\theta)\\hat{A}_t, \\text{clip}(r_t(\\theta), 1-\\epsilon, 1+\\epsilon)\\hat{A}_t)]$$',
-    '**禁止**将公式写成纯文本（如 `J(theta) = E[...]`），否则下游系统无法渲染。',
-    '**注意**：你只需写标准 LaTeX 语法（如 `\\pi`、`\\frac`），框架会自动处理 JSON 序列化，不需要你手动双重转义。'
+    '**禁止**将公式写成纯文本(如 `J(theta) = E[...]`)，否则下游系统无法渲染。',
+    '**注意**：你只需写标准 LaTeX 语法(如 `\\pi`、`\\frac`)，框架会自动处理 JSON 序列化，不需要你手动双重转义。'
   ].join('\n'))
-  
+
   // ═══════════════════════════════════════════════════════════════
   // LOD-0: 可用 Skills (轻量级)
   // ═══════════════════════════════════════════════════════════════
-  
+
   if (includeLOD0 && context.availableSkills.length > 0) {
     parts.push('')
     parts.push(buildLOD0SkillList(context.availableSkills))
   }
-  
+
   // ═══════════════════════════════════════════════════════════════
   // LOD-1: 工具摘要 (可选)
   // ═══════════════════════════════════════════════════════════════
-  
+
   if (includeLOD1 && context.availableTools && context.availableTools.length > 0) {
     parts.push('')
     parts.push(buildLOD1ToolSummary(context.availableTools))
   }
-  
+
   // ═══════════════════════════════════════════════════════════════
   // 工具使用说明
   // ═══════════════════════════════════════════════════════════════
-  
+
   if (showToolInstructions && context.availableTools && context.availableTools.length > 0) {
     parts.push('')
     parts.push([
@@ -286,24 +286,24 @@ export function buildSystemPrompt(
       '',
       '### 两条路径找到能力',
       '',
-      '你默认只能调用约 7 个**核心工具**（searchCapabilities、loadSkill、webSearch 等）。另有约 69 个**领域工具**（GitHub、飞书、学术等）和多个 **Skills** 默认隐藏，需要主动发现。',
+      '你默认只能调用约 7 个**核心工具**(searchCapabilities、loadSkill、webSearch 等)。另有约 69 个**领域工具**(GitHub、飞书、学术等)和多个 **Skills** 默认隐藏，需要主动发现。',
       '',
-      '**路径一：直接搜索工具（简单/明确任务）**',
+      '**路径一：直接搜索工具(简单/明确任务)**',
       '- 场景：你知道要干什么，但不知道具体工具名。比如"我想创建 GitHub 仓库"、"我要搜索论文"。',
       '- 做法：调用 <searchCapabilities>，keyword 用中文描述你的需求。',
       '- 示例：',
       '  - searchCapabilities(keyword="github 创建仓库") → 返回 githubCreateRepo 等工具，自动激活 schema',
       '  - searchCapabilities(keyword="飞书 文档 公式") → 返回 feishuDocCreate、feishuDocAppend 等',
       '  - searchCapabilities(keyword="arxiv 论文搜索") → 返回 searchArxiv、fetchArxiv 等',
-      '- 搜索范围默认是 tools（工具和 Skills 都会搜），不需要指定 type。',
+      '- 搜索范围默认是 tools(工具和 Skills 都会搜)，不需要指定 type。',
       '',
-      '**路径二：加载 Skill（复杂/不熟悉领域）**',
+      '**路径二：加载 Skill(复杂/不熟悉领域)**',
       '- 场景：你不确定这个领域该怎么操作，需要工作流指导。比如"帮我做一个完整的代码审查"、"在飞书里创建一个带公式和代码的文档"。',
       '- 做法：',
       '  1. 先用 <searchCapabilities> 搜 Skills：searchCapabilities(keyword="代码审查", type="skills")',
       '  2. 或直接调用 <loadSkill> 加载已知 Skill：loadSkill(skill_id="github-assistant")',
       '- Skill 加载后会同时做两件事：',
-      '  1. 注入该领域的**工作流指导**（最佳实践、标准流程、注意事项）',
+      '  1. 注入该领域的**工作流指导**(最佳实践、标准流程、注意事项)',
       '  2. 自动暴露该 Skill 关联的**所有工具 schema**',
       '',
       '### 什么时候用哪条路径？',
@@ -335,7 +335,7 @@ export function buildSystemPrompt(
       '→ 结果中出现 searchArxiv、searchSemanticScholar 等工具。',
       '→ 直接调用 searchArxiv(keyword="PPO reinforcement learning")',
       '',
-      '### 调用格式示例（Few-Shot）',
+      '### 调用格式示例(Few-Shot)',
       '',
       '**例 A：搜到工具后直接调用**',
       '```',
@@ -367,7 +367,7 @@ export function buildSystemPrompt(
       '### 工具调用失败处理',
       '',
       '如果工具调用返回错误：',
-      '1. **读取错误信息**：错误信息通常包含具体原因（如 "Repository already exists"、"Invalid JSON"）',
+      '1. **读取错误信息**：错误信息通常包含具体原因(如 "Repository already exists"、"Invalid JSON")',
       '2. **尝试修复**：如果是参数格式问题，修正后**重试一次**；如果是权限/资源不存在问题，不要反复重试',
       '3. **搜索替代方案**：如果该工具确实无法完成，用 searchCapabilities 搜其他工具',
       '4. **向用户报告**：清楚说明错误原因 + 已尝试的解决方式 + 建议用户怎么做',
@@ -376,17 +376,17 @@ export function buildSystemPrompt(
       '',
       '### 重要提示',
       '- **searchCapabilities 是万能入口**：不确定时先用它搜，它能同时搜工具和 Skills。',
-      '- **getAllTools 只是目录**：getAllTools 返回文本列表（不暴露 schema），适合"看看有什么"；想调用具体工具必须用 searchCapabilities 激活 schema。',
+      '- **getAllTools 只是目录**：getAllTools 返回文本列表(不暴露 schema)，适合"看看有什么"；想调用具体工具必须用 searchCapabilities 激活 schema。',
       '- **不需要工具时**：直接回答，不要强行调用 searchCapabilities。',
       '- **多步骤任务**：分步执行，每步确认结果后再继续，不要把多步参数塞进一次调用。',
       '- **禁止伪工具调用**：绝对禁止在回复文本中输出 `<| DSML | tool_calls>`、`function(...)`、XML 标签等模拟工具调用的内容。想调用工具必须通过框架机制，不要把工具调用混入普通回复。'
     ].join('\n'))
   }
-  
+
   // ═══════════════════════════════════════════════════════════════
   // 用户输入上下文
   // ═══════════════════════════════════════════════════════════════
-  
+
   if (context.userInput) {
     parts.push('')
     parts.push(`## 当前用户输入
@@ -395,7 +395,7 @@ export function buildSystemPrompt(
 
 请基于以上信息和激活的技能，提供最佳帮助。`)
   }
-  
+
   return parts.join('\n')
 }
 
@@ -446,12 +446,12 @@ export function buildToolsOnlyPrompt(
   availableTools: ToolDefinition[]
 ): string {
   return buildSystemPrompt(
-    { 
-      baseRole, 
-      userInput: '', 
-      availableSkills: [], 
-      activeSkills: [], 
-      availableTools 
+    {
+      baseRole,
+      userInput: '',
+      availableSkills: [],
+      activeSkills: [],
+      availableTools
     },
     { includeLOD0: false, includeLOD1: true, includeLOD2: false, showToolInstructions: true }
   )
@@ -479,11 +479,11 @@ export function analyzePromptTokens(context: PromptBuildContext): {
   breakdown: Record<string, number>
 } {
   const lod0Prompt = buildLOD0SkillList(context.availableSkills)
-  const lod1Prompt = context.availableTools 
-    ? buildLOD1ToolSummary(context.availableTools) 
+  const lod1Prompt = context.availableTools
+    ? buildLOD1ToolSummary(context.availableTools)
     : ''
   const lod2Prompt = buildLOD2ActiveSkills(context.activeSkills)
-  
+
   return {
     lod0: estimateTokens(lod0Prompt),
     lod1: estimateTokens(lod1Prompt),

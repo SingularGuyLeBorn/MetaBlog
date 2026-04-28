@@ -1,5 +1,5 @@
 <!--
-  ChatInput - 智能输入框（支持多模态）
+  ChatInput - 智能输入框(支持多模态)
   支持图片/视频上传、附件预览、多模态输入
 -->
 <template>
@@ -88,27 +88,21 @@
             <button class="menu-item" @click="triggerImageInput">
               <Icon name="image" :size="18" />
               <span>图片</span>
-              <span class="menu-hint">
-                {{ props.supportsVision ? '支持 PNG, JPG, WebP, GIF' : '当前模型不支持图片输入' }}
+              <span class="menu-hint" :class="{ ocr: !props.supportsVision }">
+                {{ props.supportsVision ? '支持识图' : 'OCR 提取' }}
               </span>
             </button>
             <button class="menu-item" @click="triggerVideoInput">
               <Icon name="video" :size="18" />
               <span>视频</span>
-              <span class="menu-hint">
-                {{ props.supportsVideo ? '支持 MP4, MOV, WebM' : '当前模型不支持视频输入' }}
-              </span>
+              <span class="menu-hint ocr">暂不支持</span>
             </button>
             <button class="menu-item" @click="triggerFileInput">
               <Icon name="file" :size="18" />
               <span>文件</span>
-              <span class="menu-hint">任何类型</span>
+              <span class="menu-hint">仅保存</span>
             </button>
-            <button class="menu-item" @click="showLinkInput = true">
-              <Icon name="link" :size="18" />
-              <span>链接</span>
-              <span class="menu-hint">图片/视频URL</span>
-            </button>
+            <!-- 链接功能已由 parsePlatformLink 工具覆盖，此处不再提供 -->
           </div>
         </Transition>
       </div>
@@ -171,7 +165,7 @@
     <input
       ref="imageInputRef"
       type="file"
-      accept="image/png,image/jpeg,image/webp,image/gif"
+      accept="image/png,image/jpeg,image/webp,image/gif,image/bmp"
       multiple
       style="display: none"
       @change="handleFileSelect($event, 'image')"
@@ -192,46 +186,25 @@
       @change="handleFileSelect($event, 'file')"
     />
     
-    <!-- 链接输入弹窗 -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="showLinkInput" class="link-input-modal" @click.self="showLinkInput = false">
-          <div class="link-input-content">
-            <h4>添加链接</h4>
-            <input
-              v-model="linkUrl"
-              type="text"
-              placeholder="粘贴图片或视频URL..."
-              @keyup.enter="addLinkAttachment"
-            />
-            <div class="link-input-actions">
-              <button class="btn-secondary" @click="showLinkInput = false">取消</button>
-              <button class="btn-primary" @click="addLinkAttachment" :disabled="!isValidUrl(linkUrl)">
-                添加
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <!-- 链接输入已由 parsePlatformLink 工具覆盖 -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import {
+    detectMediaType,
+    formatDuration,
+    formatFileSize,
+    getImageDimensions,
+    getVideoInfo,
+    isSupportedFile
+} from '@/theme/api/services/multimediaService'
 import { Icon } from '@/theme/components/common'
 import MentionInput, { type Mention } from '@/theme/components/common/MentionInput.vue'
 import type { Skill } from '@/theme/types/agent'
 import type { MessageAttachment } from '@/theme/types/chat'
-import { 
-  detectMediaType, 
-  isSupportedFile, 
-  getImageDimensions, 
-  getVideoInfo,
-  formatFileSize,
-  formatDuration 
-} from '@/theme/api/services/multimediaService'
 import { estimateTextTokens } from '@/theme/utils/tokenEstimator'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
   modelValue: string
@@ -266,8 +239,6 @@ const currentMentions = ref<Mention[]>([])
 const isFocused = ref(false)
 const attachments = ref<MessageAttachment[]>([])
 const showAttachMenu = ref(false)
-const showLinkInput = ref(false)
-const linkUrl = ref('')
 
 // 计算属性
 const effectiveSkill = computed(() => props.selectedSkill || currentSkill.value)
@@ -295,7 +266,7 @@ function getPlaceholder(): string {
     return 'AI 思考中，可继续输入下一条...'
   }
   if (attachments.value.length > 0) {
-    return '添加描述（可选），按 Enter 发送...'
+    return '添加描述(可选)，按 Enter 发送...'
   }
   return '输入消息，/ 选择技能，@ 引用文章，按 Enter 发送...'
 }
@@ -340,9 +311,9 @@ async function handleFileSelect(event: Event, expectedType: 'image' | 'video' | 
       continue
     }
     
-    // 检查模型是否支持该媒体类型（不再阻止上传，仅做标记）
+    // 检查模型是否支持该媒体类型(不再阻止上传，仅做标记)
     if (mediaType === 'image' && !props.supportsVision) {
-      console.warn('[ChatInput] 当前模型不支持图片输入，附件将以链接形式发送')
+      console.warn('[ChatInput] 当前模型不支持直接识图，图片将通过 OCR 提取文字后发送')
     }
     if (mediaType === 'video' && !props.supportsVideo) {
       console.warn('[ChatInput] 当前模型不支持视频输入，附件将以链接形式发送')
@@ -377,7 +348,7 @@ async function handleFileSelect(event: Event, expectedType: 'image' | 'video' | 
 
     attachments.value.push(attachment)
     
-    // 模拟上传（实际项目中应该调用uploadFile）
+    // 模拟上传(实际项目中应该调用uploadFile)
     simulateUpload(attachment)
   }
 
@@ -400,34 +371,16 @@ function simulateUpload(attachment: MessageAttachment) {
   }, 200)
 }
 
-// 添加链接附件
-async function addLinkAttachment() {
-  if (!isValidUrl(linkUrl.value)) return
-  
-  const url = linkUrl.value
-  const isImage = await isImageUrl(url)
-  const isVideo = !isImage && await isVideoUrl(url)
-  
-  const attachment: MessageAttachment = {
-    id: `link_${Date.now()}`,
-    type: isImage ? 'image' : isVideo ? 'video' : 'link',
-    name: isImage ? '图片链接' : isVideo ? '视频链接' : '链接',
-    url: url,
-    uploadStatus: 'completed'
-  }
-  
-  attachments.value.push(attachment)
-  linkUrl.value = ''
-  showLinkInput.value = false
-}
-
 // 移除附件
 function removeAttachment(index: number) {
   const attachment = attachments.value[index]
+  if (!attachment) return
   if (attachment.url.startsWith('blob:')) {
     URL.revokeObjectURL(attachment.url)
   }
-  attachments.value.splice(index, 1)
+  // 用 filter 创建新数组，确保响应式更新
+  attachments.value = attachments.value.filter((_, i) => i !== index)
+  console.log('[ChatInput] 移除附件, 剩余:', attachments.value.length)
 }
 
 // 获取文件图标
@@ -438,37 +391,6 @@ function getFileIcon(mimeType?: string): string {
   if (mimeType.includes('excel') || mimeType.includes('sheet')) return 'table'
   if (mimeType.includes('code')) return 'code'
   return 'file'
-}
-
-// URL验证
-function isValidUrl(url: string): boolean {
-  try {
-    new URL(url)
-    return true
-  } catch {
-    return false
-  }
-}
-
-async function isImageUrl(url: string): Promise<boolean> {
-  try {
-    const response = await fetch(url, { method: 'HEAD' })
-    const contentType = response.headers.get('content-type')
-    return contentType?.startsWith('image/') || false
-  } catch {
-    // 根据扩展名判断
-    return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url)
-  }
-}
-
-async function isVideoUrl(url: string): Promise<boolean> {
-  try {
-    const response = await fetch(url, { method: 'HEAD' })
-    const contentType = response.headers.get('content-type')
-    return contentType?.startsWith('video/') || false
-  } catch {
-    return /\.(mp4|mov|webm|avi|mkv)$/i.test(url)
-  }
 }
 
 // 发送处理
@@ -514,12 +436,7 @@ async function handleSend() {
   currentSkill.value = undefined
   currentMentions.value = []
   
-  // 清理附件blob URL
-  attachments.value.forEach(att => {
-    if (att.url.startsWith('blob:')) {
-      URL.revokeObjectURL(att.url)
-    }
-  })
+  // 清空附件列表（blob URL 由调用方 ChatLayout 在发送完成后释放）
   attachments.value = []
   
   emit('selectSkill', undefined)
@@ -620,12 +537,8 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   flex-direction: column;
   justify-content: flex-end;
   padding: 8px;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.attachment-item:hover .attachment-overlay {
   opacity: 1;
+  transition: opacity 0.3s;
 }
 
 .attachment-name {
@@ -656,12 +569,8 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   border-radius: 50%;
   color: white;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.attachment-item:hover .remove-btn {
   opacity: 1;
+  transition: background 0.2s;
 }
 
 .remove-btn:hover {
@@ -843,7 +752,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   padding: 6px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.15);
   z-index: 100;
-  min-width: 180px;
+  min-width: 220px;
 }
 
 .menu-item {
@@ -874,6 +783,17 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   margin-left: auto;
   font-size: 11px;
   color: #94a3b8;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.menu-hint.ocr {
+  color: #f59e0b;
+  background: #fffbeb;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
 }
 
 .menu-enter-active,
@@ -993,103 +913,5 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   color: #db2777;
 }
 
-/* 链接输入弹窗 */
-.link-input-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
-}
-
-.link-input-content {
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 25px 50px rgba(0,0,0,0.25);
-}
-
-.link-input-content h4 {
-  margin: 0 0 16px;
-  color: #1e293b;
-  font-size: 16px;
-}
-
-.link-input-content input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 14px;
-  transition: all 0.2s;
-  margin-bottom: 16px;
-}
-
-.link-input-content input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.link-input-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.btn-secondary,
-.btn-primary {
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-secondary {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
-}
-
-.btn-secondary:hover {
-  background: #e2e8f0;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
-  border: none;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.modal-enter-active,
-.modal-leave-active {
-  transition: all 0.2s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
-.modal-enter-from .link-input-content,
-.modal-leave-to .link-input-content {
-  transform: scale(0.95);
-}
+/* 链接功能已由 parsePlatformLink 工具覆盖 */
 </style>

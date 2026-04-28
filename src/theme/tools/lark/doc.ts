@@ -1,5 +1,5 @@
 import type { ToolDefinition, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 import { markdownToBlocks } from './markdown-to-blocks'
 
 const API_BASE = '/api/lark'
@@ -37,14 +37,14 @@ export const feishuDocCreateDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'feishuDocCreate',
-    description: '创建一个新的飞书文档（docx 格式），返回文档 ID 和链接。支持创建后自动分享给指定用户。',
+    description: '创建一个新的飞书文档(docx 格式)，返回文档 ID 和链接。支持创建后自动分享给指定用户。',
     parameters: {
       type: 'object',
       properties: {
         title: { type: 'string', description: '文档标题' },
-        folder_token: { type: 'string', description: '父文件夹 token（可选）' },
-        owner_email: { type: 'string', description: '文档所有者的企业邮箱（可选）。传入后自动将该用户添加为协作者' },
-        owner_mobile: { type: 'string', description: '文档所有者的手机号（可选）。与 owner_email 二选一即可' },
+        folder_token: { type: 'string', description: '父文件夹 token(可选)' },
+        owner_email: { type: 'string', description: '文档所有者的企业邮箱(可选)。传入后自动将该用户添加为协作者' },
+        owner_mobile: { type: 'string', description: '文档所有者的手机号(可选)。与 owner_email 二选一即可' },
         enable_permission: { type: 'boolean', description: '是否自动分享权限给 owner_email/owner_mobile 指定的用户。默认 true', default: true },
         use_user_token: { type: 'boolean', description: '是否使用 user_access_token 创建文档。默认 false', default: false },
       },
@@ -73,7 +73,7 @@ export const feishuDocMetaDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'feishuDocMeta',
-    description: '读取飞书文档的元数据（标题、所有者、创建时间等）。',
+    description: '读取飞书文档的元数据(标题、所有者、创建时间等)。',
     parameters: {
       type: 'object',
       properties: {
@@ -105,7 +105,7 @@ export const feishuDocBlocksDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'feishuDocBlocks',
-    description: '获取飞书文档的块（block）结构列表。常见 block_type：2=text, 3-11=heading1-9, 12=bullet, 13=ordered, 14=code, 15=quote, 17=todo, 22=divider, 27=image, 31=table',
+    description: '获取飞书文档的块(block)结构列表。常见 block_type：2=text, 3-11=heading1-9, 12=bullet, 13=ordered, 14=code, 15=quote, 17=todo, 22=divider, 27=image, 31=table',
     parameters: {
       type: 'object',
       properties: {
@@ -122,13 +122,13 @@ export const feishuDocAppendDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'feishuDocAppend',
-    description: '在飞书文档末尾追加内容。content 参数支持 Markdown 语法，会自动解析为飞书 block 格式。超过 50 个块自动分批写入。\n\n⚠️ 重要：content 中包含数学公式（如 $...$）时，公式里的反斜杠在 JSON 参数中必须双重转义，例如 \\pi、\\theta、\\frac、\\cdot。未转义会导致参数解析失败。',
+    description: '在飞书文档末尾追加内容。content 参数支持 Markdown 语法，会自动解析为飞书 block 格式。超过 50 个块自动分批写入。\n\n⚠️ 重要：content 中包含数学公式(如 $...$)时，公式里的反斜杠在 JSON 参数中必须双重转义，例如 \\pi、\\theta、\\frac、\\cdot。未转义会导致参数解析失败。',
     parameters: {
       type: 'object',
       properties: {
         document_id: { type: 'string', description: '文档 ID' },
-        content: { type: 'string', description: '纯文本内容，按换行自动分段（与 blocks 二选一）' },
-        blocks: { type: 'array', description: '飞书块格式数组（与 content 二选一）', items: { type: 'object' } },
+        content: { type: 'string', description: '纯文本内容，按换行自动分段(与 blocks 二选一)' },
+        blocks: { type: 'array', description: '飞书块格式数组(与 content 二选一)', items: { type: 'object' } },
         use_user_token: { type: 'boolean', description: '是否使用 user_access_token。默认 false', default: false },
       },
       required: ['document_id'],
@@ -140,13 +140,13 @@ export const feishuDocUpdateBlockDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'feishuDocUpdateBlock',
-    description: '更新飞书文档中的指定块内容。需要先调用 feishuDocBlocks 获取 block_id。\n\n⚠️ 重要：text / heading 等字段中的 content 如果包含数学公式，反斜杠必须双重转义（如 \\pi、\\theta、\\frac），否则 JSON 参数解析会失败。',
+    description: '更新飞书文档中的指定块内容。需要先调用 feishuDocBlocks 获取 block_id。\n\n⚠️ 重要：text / heading 等字段中的 content 如果包含数学公式，反斜杠必须双重转义(如 \\pi、\\theta、\\frac)，否则 JSON 参数解析会失败。',
     parameters: {
       type: 'object',
       properties: {
         document_id: { type: 'string', description: '文档 ID' },
         block_id: { type: 'string', description: '块 ID' },
-        block_type: { type: 'number', description: '块类型（2=text, 3=heading1, ... 14=code 等）' },
+        block_type: { type: 'number', description: '块类型(2=text, 3=heading1, ... 14=code 等)' },
         use_user_token: { type: 'boolean', description: '是否使用 user_access_token。默认 false', default: false },
       },
       required: ['document_id', 'block_id', 'block_type'],
@@ -285,15 +285,15 @@ export const feishuDocAppend = async (args: Record<string, any>): Promise<ToolRe
         else if (code === 1770034) { reason = '单次请求块数量超过 50 个限制'; suggestion = '请减少 blocks 数量' }
         else if (code === 99992402) { reason = '请求字段校验失败'; suggestion = '检查内容长度和块数' }
         else if (code === 1770029) { reason = '不支持创建该类型的块'; suggestion = '使用支持的 block_type' }
-        return createErrorResult(reason, `追加内容失败：第 ${batchIndex + 1}/${totalBatches} 批写入出错（已写入 ${appendedCount}/${totalBlocks} 块）`, suggestion)
+        return createErrorResult(reason, `追加内容失败：第 ${batchIndex + 1}/${totalBatches} 批写入出错(已写入 ${appendedCount}/${totalBlocks} 块)`, suggestion)
       }
       appendedCount += batch.length
     } catch (error: any) {
-      return createErrorResult(error.message, `追加内容请求失败：第 ${batchIndex + 1}/${totalBatches} 批（已写入 ${appendedCount}/${totalBlocks} 块）`)
+      return createErrorResult(error.message, `追加内容请求失败：第 ${batchIndex + 1}/${totalBatches} 批(已写入 ${appendedCount}/${totalBlocks} 块)`)
     }
   }
 
-  return createSuccessResult({ appendedCount, totalBlocks, totalBatches }, `成功追加 ${appendedCount} 个内容块到文档 ${document_id}${totalBatches > 1 ? `（分 ${totalBatches} 批写入）` : ''}`, 'feishuDocAppend')
+  return createSuccessResult({ appendedCount, totalBlocks, totalBatches }, `成功追加 ${appendedCount} 个内容块到文档 ${document_id}${totalBatches > 1 ? `(分 ${totalBatches} 批写入)` : ''}`, 'feishuDocAppend')
 }
 
 export const feishuDocUpdateBlock = async (args: Record<string, any>): Promise<ToolResult> => {

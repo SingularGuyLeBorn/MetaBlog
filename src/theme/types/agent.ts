@@ -1,15 +1,15 @@
 /**
  * Agent 系统 - 统一类型定义
  * 
- * 架构设计（参考 Claude Code Skills）：
- * - Agent Identity: "你是谁"（baseRole 定义）
- * - Skills: "你能做什么"（按需加载的能力模块）
- * - Tools: "你有什么工具"（可执行函数）
+ * 架构设计(参考 Claude Code Skills)：
+ * - Agent Identity: "你是谁"(baseRole 定义)
+ * - Skills: "你能做什么"(按需加载的能力模块)
+ * - Tools: "你有什么工具"(可执行函数)
  * 
  * Skill 设计原则：
  * - Skill 不是身份定义，而是能力扩展
  * - Skill 详细内容在调用时注入对话上下文
- * - 系统提示词只包含 Skills 列表（name + description）
+ * - 系统提示词只包含 Skills 列表(name + description)
  */
 
 import type { ToolDefinition } from '@/theme/tools/types'
@@ -19,12 +19,7 @@ import type { ToolDefinition } from '@/theme/tools/types'
 // ═══════════════════════════════════════════════════════════════
 
 export type {
-  Skill,
-  SkillMetadata,
-  SkillCategory,
-  ActiveSkill,
-  SkillMatchResult,
-  SkillMatchOptions,
+  ActiveSkill, Skill, SkillCategory, SkillMatchOptions, SkillMatchResult, SkillMetadata
 } from '@/theme/skills/types'
 
 // ═══════════════════════════════════════════════════════════════
@@ -35,13 +30,13 @@ export type {
 export type CapabilityType = 'skill' | 'tool'
 
 /** 
- * Agent 配置模式（Claude Code 模式）
+ * Agent 配置模式(Claude Code 模式)
  * Agent 定义 availableSkills，AI 自行判断调用
  */
 export type AgentConfigMode = 'claude-code'
 
 // ═══════════════════════════════════════════════════════════════
-// Skill 创建参数（扩展 skills 系统的 Skill）
+// Skill 创建参数(扩展 skills 系统的 Skill)
 // ═══════════════════════════════════════════════════════════════
 
 export interface SkillCreateParams {
@@ -153,29 +148,29 @@ export interface Agent {
   level: AgentLevel
   status: AgentStatus
   seat: number
-  
+
   // 能力配置
   capabilities: AgentCapabilities
-  
+
   // 记忆配置
   memory: AgentMemory
-  
+
   // 权限
   permissions: AgentPermission[]
-  
+
   // 统计
   callCount: number
   isDefault: boolean
   createdAt: number
   updatedAt: number
   lastActiveAt: number
-  
-  // 系统提示词（运行时计算）
+
+  // 系统提示词(运行时计算)
   systemPrompt?: string
-  
+
   // 运行时配置
   runtime?: AgentRuntime
-  
+
   // 触发器
   triggers?: AgentTrigger[]
 }
@@ -269,7 +264,7 @@ export interface SkillInvocation {
 export interface SystemPromptContext {
   agent: Agent
   availableSkills: import('@/theme/skills/types').SkillMetadata[]
-  activeSkills?: Skill[]  // 已调用的 Skills（完整内容）
+  activeSkills?: Skill[]  // 已调用的 Skills(完整内容)
   availableTools: Tool[]
 }
 

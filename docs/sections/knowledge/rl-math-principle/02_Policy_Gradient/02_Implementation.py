@@ -43,7 +43,7 @@ class SimpleBanditEnv:
       - 动作2的期望奖励: 0.3
     
     这个简单环境让我们能够清晰地观察策略梯度如何工作:
-    策略应该逐渐学会偏好动作1（因为它的期望奖励最高）。
+    策略应该逐渐学会偏好动作1(因为它的期望奖励最高)。
     """
     def __init__(self):
         self.num_actions = 3
@@ -74,7 +74,7 @@ class SoftmaxPolicy:
     """
     Softmax参数化策略
     
-    对于Bandit问题（无状态），策略简化为:
+    对于Bandit问题(无状态)，策略简化为:
     π_θ(a) = exp(θ_a) / Σ_a' exp(θ_a')
     
     θ 是一个长度为 num_actions 的向量，表示每个动作的"偏好"。
@@ -145,7 +145,7 @@ class SoftmaxPolicy:
         
         θ ← θ + α * gradient
         
-        这是梯度上升（因为我们要最大化期望回报）
+        这是梯度上升(因为我们要最大化期望回报)
         """
         self.theta = self.theta + learning_rate * gradient
 

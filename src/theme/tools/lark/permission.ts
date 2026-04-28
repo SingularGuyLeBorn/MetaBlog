@@ -1,5 +1,5 @@
 import type { ToolDefinition, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 const API_BASE = '/api/lark'
 
@@ -39,7 +39,7 @@ export const feishuDocShareDef: ToolDefinition = {
       type: 'object',
       properties: {
         document_id: { type: 'string', description: '飞书文档 ID' },
-        member_id: { type: 'string', description: '用户标识（open_id / user_id / union_id / 邮箱 / 手机号）' },
+        member_id: { type: 'string', description: '用户标识(open_id / user_id / union_id / 邮箱 / 手机号)' },
         member_type: { type: 'string', enum: ['openid', 'userid', 'unionid', 'email', 'phone'], description: '用户标识类型', default: 'openid' },
         perm: { type: 'string', enum: ['full_access', 'edit', 'view'], description: '权限级别', default: 'full_access' },
         use_user_token: { type: 'boolean', description: '是否使用 user_access_token。默认 false', default: false },

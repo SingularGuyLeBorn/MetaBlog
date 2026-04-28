@@ -13,7 +13,7 @@ COCONUT 的核心在于 **Bypass Discrete Decoding**。
 ## 2. 为什么这是未来?
 
 目前的 DeepSeek R1 虽然强大，但在输出长达 10,000 Token 的 CoT 时，效率极低。
-而且很多中间步骤（如只有计算机能懂的数值计算）并不需要翻译成人类语言。
+而且很多中间步骤(如只有计算机能懂的数值计算)并不需要翻译成人类语言。
 
 `LatentThoughtModel` 展示了如何让模型"闭嘴思考"。
 在代码中，`current_thought` 向量直接在循环中递归更新，没有任何 `argmax` 或 `softmax` 操作打断梯度的流动。

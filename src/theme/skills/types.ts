@@ -33,16 +33,16 @@ export interface SkillMetadata {
   enabled: boolean
   /** 该 Skill 声明的工具列表 */
   tools: string[]
-  /** 使用场景（用于匹配） */
+  /** 使用场景(用于匹配) */
   usageScenarios: string[]
 }
 
 /** Skill 分类 */
-export type SkillCategory = 
+export type SkillCategory =
   | 'content'      // 内容管理
   | 'research'     // 学术研究
   | 'code'         // 代码开发
-  | 'coding'       // 编程开发（兼容旧代码）
+  | 'coding'       // 编程开发(兼容旧代码)
   | 'file'         // 文件管理
   | 'system'       // 系统工具
   | 'multimedia'   // 多媒体处理
@@ -85,7 +85,7 @@ export interface Skill extends SkillMetadata {
   /** 更新时间 */
   updatedAt: number
   /**
-   * 工具的详细定义（从 SKILL.md 解析）
+   * 工具的详细定义(从 SKILL.md 解析)
    * { toolName: { description, params: [{ name, type, description }] } }
    */
   toolDefinitions?: Record<string, {
@@ -98,7 +98,7 @@ export interface Skill extends SkillMetadata {
    * 用于定位 Skill 关联的脚本、模板等资源
    */
   basePath?: string
-  /** 作者（继承自 SkillMetadata，但可选） */
+  /** 作者(继承自 SkillMetadata，但可选) */
   author: string
 }
 

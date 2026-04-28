@@ -1,20 +1,20 @@
 # 后端代理层迁移计划
 
-> 状态：计划阶段 | 优先级：P1（API Key 安全）
+> 状态：计划阶段 | 优先级：P1(API Key 安全)
 > 基于代码实际读取日期：2026-04-23
 
 ---
 
 ## 一、当前真实架构
 
-### 1.1 LLM 调用链路（前端直连）
+### 1.1 LLM 调用链路(前端直连)
 
 ```
 用户输入
   │
   ▼
 ┌─────────────────────────────────────────┐
-│  src/theme/stores/chatStore.ts          │  ← 消息状态管理（Vue reactivity）
+│  src/theme/stores/chatStore.ts          │  ← 消息状态管理(Vue reactivity)
 │  sendMessage()                          │
 └────────┬────────────────────────────────┘
          │
@@ -25,12 +25,12 @@
 │  ├─ fetch(https://api.deepseek.com/...) │  ← API Key 暴露！
 │  ├─ getToolDefinitions()                │
 │  ├─ smartTruncateMessages()             │
-│  ├─ token 估算（js-tiktoken）            │
+│  ├─ token 估算(js-tiktoken)            │
 │  └─ 流式 SSE 解析 + 工具调用循环          │
 └────────┬────────────────────────────────┘
          │
          ▼
-    DeepSeek / Kimi API（公网）
+    DeepSeek / Kimi API(公网)
 ```
 
 ### 1.2 API Key 暴露证据
@@ -81,7 +81,7 @@ const llm: any = {
 |---|------|---------|---------|--------|
 | 1 | **隐藏 API Key** | 前端 bundle | 后端环境变量 | 🔴 P0 |
 | 2 | Token 估算显示 | `src/theme/utils/tokenEstimator.ts` | 后端代理层计算 | 🟡 P1 |
-| 3 | 消息/会话状态管理 | 前端 reactive + 后端 API | 保持现状即可（已后端化） | 🟢 无需改动 |
+| 3 | 消息/会话状态管理 | 前端 reactive + 后端 API | 保持现状即可(已后端化) | 🟢 无需改动 |
 | 4 | 流式响应代理 | 前端直连 LLM | 后端 SSE 透传 | 🟡 P1 |
 
 ---
@@ -95,22 +95,22 @@ const llm: any = {
   │
   ▼
 ┌─────────────────────────────────────────┐
-│  前端（保持不变）                         │
-│  ├─ chatStore.ts（消息状态、UI 回调）      │
-│  ├─ ChatLayout.vue（流式渲染、版本管理）   │
-│  └─ 工具执行（executeToolWithRecord）     │
+│  前端(保持不变)                         │
+│  ├─ chatStore.ts(消息状态、UI 回调)      │
+│  ├─ ChatLayout.vue(流式渲染、版本管理)   │
+│  └─ 工具执行(executeToolWithRecord)     │
 └────────┬────────────────────────────────┘
          │ fetch('/api/chat')
          ▼
 ┌─────────────────────────────────────────┐
-│  后端 BFF（Vite 中间件）                  │
-│  server/routes/chat.ts（新建）            │
+│  后端 BFF(Vite 中间件)                  │
+│  server/routes/chat.ts(新建)            │
 │  ├─ 从 process.env 读取 API Key           │
-│  ├─ Token 估算（js-tiktoken）             │
+│  ├─ Token 估算(js-tiktoken)             │
 │  ├─ 智能消息截断                         │
-│  ├─ 调用 LLM API（带真实 Key）            │
+│  ├─ 调用 LLM API(带真实 Key)            │
 │  ├─ SSE 透传 + token_estimate 事件注入    │
-│  └─ 审计日志（.logs/chat/）               │
+│  └─ 审计日志(.logs/chat/)               │
 └────────┬────────────────────────────────┘
          │
          ▼
@@ -127,7 +127,7 @@ const llm: any = {
   stream?: boolean          // 默认 true
   sessionId?: string        // 用于审计日志
   toolContext?: {...}       // agentId, availableTools, availableSkills...
-  tools?: any[]             // 工具定义（前端传入，后端透传）
+  tools?: any[]             // 工具定义(前端传入，后端透传)
 }
 ```
 
@@ -136,7 +136,7 @@ const llm: any = {
 // 1. 后端注入：输入 token 估算
 data: {"token_estimate":{"input":1234}}
 
-// 2. 透传 LLM 原始 SSE（透明代理）
+// 2. 透传 LLM 原始 SSE(透明代理)
 data: {"choices":[{"delta":{"content":"你好"}}]}
 data: {"choices":[{"delta":{"content":"！"}}]}
 data: {"choices":[{"delta":{"reasoning_content":"让我思考..."}}]}
@@ -157,7 +157,7 @@ data: [DONE]
 
 ### 3.3 API Key 环境变量迁移
 
-| 变量 | 当前（前端） | 迁移后（后端） | 兼容性 |
+| 变量 | 当前(前端) | 迁移后(后端) | 兼容性 |
 |------|------------|--------------|--------|
 | DeepSeek | `VITE_DEEPSEEK_API_KEY` | `LLM_DEEPSEEK_API_KEY` | 后端同时读取 `LLM_` 和 `VITE_` 前缀，过渡期兼容 |
 | Kimi | `VITE_KIMI_API_KEY` | `LLM_KIMI_API_KEY` | 同上 |
@@ -165,7 +165,7 @@ data: [DONE]
 操作步骤：
 1. 在 `.env` 文件中新增 `LLM_DEEPSEEK_API_KEY` 和 `LLM_KIMI_API_KEY`
 2. 删除 `.env` 中的 `VITE_DEEPSEEK_API_KEY` 和 `VITE_KIMI_API_KEY`
-3. 重新构建前端（确保旧 Key 不再被打包）
+3. 重新构建前端(确保旧 Key 不再被打包)
 
 ---
 
@@ -175,7 +175,7 @@ data: [DONE]
 
 | 文件 | 说明 |
 |------|------|
-| `server/routes/chat.ts` | 后端 LLM 代理路由（~400行） |
+| `server/routes/chat.ts` | 后端 LLM 代理路由(~400行) |
 
 ### 4.2 修改文件
 
@@ -199,24 +199,24 @@ data: [DONE]
 
 ---
 
-## 五、关键代码改动点（详细）
+## 五、关键代码改动点(详细)
 
 ### 5.1 后端 `server/routes/chat.ts` 核心逻辑
 
 ```ts
-// 模型配置（从后端环境变量读取）
+// 模型配置(从后端环境变量读取)
 const MODEL_CONFIGS = {
-  'deepseek-chat': {
+  'deepseek-v4-pro': {
     baseURL: 'https://api.deepseek.com/v1',
     apiKey: process.env.LLM_DEEPSEEK_API_KEY || process.env.VITE_DEEPSEEK_API_KEY || ''
   },
   // ... 其他模型
 }
 
-// Token 估算（复用 js-tiktoken）
+// Token 估算(复用 js-tiktoken)
 function estimateChatTokens(messages) { ... }
 
-// 智能截断（复用前端 smartTruncateMessages 逻辑）
+// 智能截断(复用前端 smartTruncateMessages 逻辑)
 function smartTruncateMessages(messages, modelConfig, systemPrompt) { ... }
 
 // SSE 代理
@@ -261,7 +261,7 @@ onTokenEstimate: (estimate) => {
 ## 六、实施步骤
 
 ```
-Step 1: 新建 server/routes/chat.ts（后端代理层）
+Step 1: 新建 server/routes/chat.ts(后端代理层)
         └─ 包含：模型配置、token估算、智能截断、SSE代理、审计日志
 
 Step 2: 修改 server/vitepress-integration.ts
@@ -299,11 +299,11 @@ Step 7: 测试验证
 | 后端 SSE 代理增加延迟 | 流式响应慢 50~100ms | 后端与前端同机部署，延迟可忽略 |
 | 工具调用循环多了一跳 | 每轮 tool call 增加一次 HTTP 往返 | 当前前端也是每轮重新 fetch LLM，行为一致 |
 | 环境变量配错导致服务不可用 | 聊天功能完全失效 | 后端同时读取 `LLM_` 和 `VITE_` 前缀，双保险 |
-| 多模态图片传输问题 | 图片过大导致后端内存溢出 | 后端图片大小限制（如 5MB），超大图拒绝或压缩 |
+| 多模态图片传输问题 | 图片过大导致后端内存溢出 | 后端图片大小限制(如 5MB)，超大图拒绝或压缩 |
 | 构建后测试发现 Key 仍在 bundle | 安全漏洞未修复 | 构建后用 `grep -r "sk-" dist/` 检查 |
 
 **回滚策略**：
-- 前端 `aiService.ts` 保留旧代码注释（或 git revert）
+- 前端 `aiService.ts` 保留旧代码注释(或 git revert)
 - 后端 `/api/chat` 是新增路由，移除 `registerChatRoutes` 即可恢复旧状态
 
 ---

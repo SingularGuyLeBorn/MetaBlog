@@ -6,41 +6,42 @@
  * 2. 重新生成时保留历史版本
  * 3. 支持版本切换、删除
  */
-import { ref, computed, watch } from 'vue'
-import type { ChatSession, ChatMessage, SessionConfig, MessageGroup, ToolCallRecord, ThinkingStep, MessageAttachment } from '@/theme/types'
-import { storage, convertGroupsToMessages } from '@/theme/api/services/storage'
 import { aiService } from '@/theme/api/services/aiService'
-import { getRegisteredToolNames, CORE_TOOL_NAMES } from '@/theme/tools'
-import { logger, addLog } from '@/theme/api/services/logger'
+import { addLog } from '@/theme/api/services/logger'
+import { convertGroupsToMessages, storage } from '@/theme/api/services/storage'
 import { useAgentConfig } from '@/theme/stores/agentStore'
-import { estimateChatTokens, estimateTextTokens, formatTokenCount, calculateUsagePercent, getUsageStatus } from '@/theme/utils/tokenEstimator'
+import { CORE_TOOL_NAMES } from '@/theme/tools'
+import type { ChatMessage, ChatSession, MessageAttachment, MessageGroup, SessionConfig, ThinkingStep, ToolCallRecord } from '@/theme/types'
+import { calculateUsagePercent, estimateChatTokens, estimateTextTokens, formatTokenCount, getUsageStatus } from '@/theme/utils/tokenEstimator'
+import { computed, ref, watch } from 'vue'
 
 const DEFAULT_CONFIG: SessionConfig = {
-  model: 'deepseek-chat',
-  temperature: 1.0,
+  model: 'deepseek-v4-pro',
+  temperature: 0.7,
   maxTokens: 8192,
   systemPrompt: '',
-  enableReasoning: false,
+  enableReasoning: true,
+  reasoningEffort: 'high',
   streaming: true
 }
 
 // ==================== 状态 ====================
 const sessions = ref<ChatSession[]>([])
 const currentSessionId = ref<string | null>(null)
-// 按会话存储消息组（支持版本）
+// 按会话存储消息组(支持版本)
 const messageGroups = ref<Record<string, MessageGroup[]>>({})
 const isStreaming = ref(false)
 const isInitialized = ref(false)
-// 每个会话独立的 AbortController（切换会话不中断）
+// 每个会话独立的 AbortController(切换会话不中断)
 const sessionControllers = new Map<string, AbortController>()
-// 消息发送队列（AI 执行期间用户发送的消息暂存于此）
+// 消息发送队列(AI 执行期间用户发送的消息暂存于此)
 const pendingMessages = ref<Record<string, Array<{
   content: string
   attachments?: MessageAttachment[]
   skillInfo?: { id: string; name: string; icon: string; content: string }
 }>>>({})
 
-// Token 用量追踪（按会话）
+// Token 用量追踪(按会话)
 interface TokenUsage {
   estimatedInput: number      // 估算的输入 token
   estimatedOutput: number     // 估算的输出 token
@@ -58,11 +59,11 @@ function getCurrentTokenUsage(sessionId: string | null): TokenUsage {
   return tokenUsageMap.value[sessionId] || { estimatedInput: 0, estimatedOutput: 0, apiReportedPrompt: 0, apiReportedCompletion: 0, apiReportedTotal: 0, lastUpdated: 0 }
 }
 
-// 估算当前会话的输入 token（基于消息历史）
+// 估算当前会话的输入 token(基于消息历史)
 function estimateSessionInputTokens(sessionId: string): number {
   const groups = messageGroups.value[sessionId] || []
   const messages: Array<{ role: string; content?: string }> = []
-  
+
   for (const group of groups) {
     messages.push({ role: 'user', content: group.userMessage.content })
     const activeVersion = group.aiVersions[group.currentVersionIndex]
@@ -70,29 +71,29 @@ function estimateSessionInputTokens(sessionId: string): number {
       messages.push({ role: 'assistant', content: activeVersion.content })
     }
   }
-  
+
   return estimateChatTokens(messages)
 }
 
 export function useAIChat() {
-  // 获取 Agent 配置（用于工具权限校验）
+  // 获取 Agent 配置(用于工具权限校验)
   const { activeAgent, skills } = useAgentConfig()
-  
+
   // ==================== 初始化 ====================
   async function initialize() {
     if (isInitialized.value) return
-    
+
     const data = await storage.load()
     sessions.value = data.sessions
     messageGroups.value = data.messageGroups
     currentSessionId.value = data.lastSessionId
-    
+
     if (sessions.value.length === 0) {
       await createSession('新对话')
     }
     isInitialized.value = true
   }
-  
+
   // 立即执行初始化
   initialize()
 
@@ -102,7 +103,7 @@ export function useAIChat() {
   })
 
   /**
-   * 当前会话的消息列表（将消息组转换为消息数组用于显示）
+   * 当前会话的消息列表(将消息组转换为消息数组用于显示)
    * 使用 ref 替代 computed，避免流式输出时全量重新计算
    */
   const currentMessages = ref<ChatMessage[]>([])
@@ -120,7 +121,7 @@ export function useAIChat() {
   watch(currentSessionId, syncCurrentMessages)
 
   /**
-   * 当前会话的消息组（用于版本管理）
+   * 当前会话的消息组(用于版本管理)
    */
   const currentMessageGroups = computed(() => {
     if (!currentSessionId.value) return []
@@ -133,23 +134,23 @@ export function useAIChat() {
     const session: ChatSession = {
       id: `session-${now}-${Math.random().toString(36).slice(2, 9)}`,
       title,
-      config: { 
+      config: {
         ...DEFAULT_CONFIG,
         // 如果有激活的 Agent，自动绑定
-        agentId: activeAgent.value?.id 
+        agentId: activeAgent.value?.id
       },
       stats: { messageCount: 0, totalTokens: 0 },
       createdAt: now,
       updatedAt: now
     }
-    
+
     sessions.value.unshift(session)
     currentSessionId.value = session.id
     messageGroups.value[session.id] = []
-    
+
     // 异步保存到服务器
     await storage.saveSession(session)
-    
+
     return session
   }
 
@@ -170,16 +171,16 @@ export function useAIChat() {
   async function deleteSession(id: string) {
     const index = sessions.value.findIndex(s => s.id === id)
     if (index === -1) return
-    
+
     sessions.value.splice(index, 1)
     delete messageGroups.value[id]
-    
+
     if (currentSessionId.value === id) {
       currentSessionId.value = sessions.value[0]?.id || null
     }
-    
+
     await storage.deleteSession(id)
-    
+
     if (sessions.value.length === 0) {
       await createSession('新对话')
     }
@@ -188,11 +189,11 @@ export function useAIChat() {
   async function autoRenameSession(sessionId: string, firstMessage: string) {
     const session = sessions.value.find(s => s.id === sessionId)
     if (!session || session.title !== '新对话') return
-    
+
     let title = firstMessage.trim().slice(0, 20)
     if (firstMessage.length > 20) title += '...'
     if (!title) title = '新对话'
-    
+
     session.title = title
     session.updatedAt = Date.now()
     await storage.saveSession(session)
@@ -201,11 +202,11 @@ export function useAIChat() {
   // ==================== 消息发送 ====================
   async function sendMessage(content: string, attachments?: MessageAttachment[], skillInfo?: { id: string; name: string; icon: string; content: string }, _isQueued = false): Promise<boolean> {
     if (!currentSession.value || (!content.trim() && (!attachments || attachments.length === 0))) return false
-    
+
     const sessionId = currentSessionId.value!
     const config = currentSession.value.config
     const groups = messageGroups.value[sessionId] || []
-    
+
     // 如果当前会话正在流式输出，将消息加入队列并立即显示用户消息
     if (isStreaming.value && sessionId === currentSessionId.value && !_isQueued) {
       const userMsg: ChatMessage = {
@@ -228,11 +229,11 @@ export function useAIChat() {
       if (sessionId === currentSessionId.value) {
         syncCurrentMessages()
       }
-      
+
       const queue = pendingMessages.value[sessionId] || []
       queue.push({ content: content.trim(), attachments, skillInfo })
       pendingMessages.value[sessionId] = queue
-      
+
       addLog({
         level: 'info',
         category: 'chat',
@@ -243,13 +244,13 @@ export function useAIChat() {
       })
       return true
     }
-    
-    // 自动重命名（第一条消息）—— 仅非队列消息
+
+    // 自动重命名(第一条消息)—— 仅非队列消息
     if (groups.length === 0 && !_isQueued) {
       await autoRenameSession(sessionId, content.trim())
     }
-    
-    // 估算输入 token（发送前）
+
+    // 估算输入 token(发送前)
     const inputTokens = estimateSessionInputTokens(sessionId) + estimateTextTokens(content.trim())
     const existingUsage = getCurrentTokenUsage(sessionId)
     tokenUsageMap.value[sessionId] = {
@@ -257,9 +258,9 @@ export function useAIChat() {
       estimatedInput: inputTokens,
       lastUpdated: Date.now()
     }
-    
+
     let userMsg: ChatMessage
-    
+
     if (_isQueued) {
       // 队列消费模式：复用最后一个没有 aiVersions 的消息组
       const lastGroup = groups[groups.length - 1]
@@ -269,7 +270,7 @@ export function useAIChat() {
       }
       userMsg = lastGroup.userMessage
     } else {
-      // 创建用户消息（@引用已经直接包含在 content 中）
+      // 创建用户消息(@引用已经直接包含在 content 中)
       userMsg = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         sessionId,
@@ -282,7 +283,7 @@ export function useAIChat() {
         metadata: skillInfo ? { skill: skillInfo } : undefined
       }
     }
-    
+
     // 创建第一个 AI 响应版本
     const aiMsg: ChatMessage = {
       id: `msg_${Date.now() + 1}_${Math.random().toString(36).substr(2, 9)}`,
@@ -295,7 +296,7 @@ export function useAIChat() {
       parentMessageId: userMsg.id,
       isActiveVersion: true
     }
-    
+
     if (_isQueued) {
       // 队列消费模式：为现有组添加 AI 响应
       groups[groups.length - 1].aiVersions = [aiMsg]
@@ -311,17 +312,17 @@ export function useAIChat() {
       groups.push(newGroup)
       messageGroups.value[sessionId] = groups
     }
-    
+
     // 同步 currentMessages 反映新消息
     if (sessionId === currentSessionId.value) {
       syncCurrentMessages()
     }
-    
+
     // 只为当前会话设置 isStreaming
     if (sessionId === currentSessionId.value) {
       isStreaming.value = true
     }
-    
+
     // 创建或获取当前会话的 AbortController
     let controller = sessionControllers.get(sessionId)
     if (controller) {
@@ -330,7 +331,7 @@ export function useAIChat() {
     }
     controller = new AbortController()
     sessionControllers.set(sessionId, controller)
-    
+
     // 创建对话追踪
     addLog({
       level: 'info',
@@ -341,17 +342,17 @@ export function useAIChat() {
       messageId: userMsg.id,
       data: { content: content.slice(0, 500), skill: skillInfo?.name }
     })
-    
+
     try {
-      // 构建历史记录（不再前端预注入 Skill 内容）
+      // 构建历史记录(不再前端预注入 Skill 内容)
       // Skill 内容改为由 Agent 主动调用 loadSkill 工具后注入
       const history = buildHistoryFromGroups(groups)
-      
+
       // 用于存储工具调用记录
       let toolRecords: ToolCallRecord[] = []
-      
+
       // 构建工具上下文：渐进式披露
-      // 默认只暴露核心工具（~7个），领域工具通过 searchCapabilities / loadSkill 动态激活
+      // 默认只暴露核心工具(~7个)，领域工具通过 searchCapabilities / loadSkill 动态激活
       const agent = activeAgent.value
       const skillIds = agent?.capabilities?.skillIds || []
       const toolContext = agent ? {
@@ -362,7 +363,7 @@ export function useAIChat() {
           .flatMap(s => s.tools || []),
         availableTools: CORE_TOOL_NAMES
       } : undefined
-      
+
       const { toolRecords: records, injectedMessages } = await aiService.chatStream(
         history,
         config,
@@ -384,7 +385,7 @@ export function useAIChat() {
             const currentProxyGroups = messageGroups.value[sessionId]
             if (!currentProxyGroups) return
             const targetMsg = currentProxyGroups[currentProxyGroups.length - 1].aiVersions[0]
-            // 如果已经有 thinkingSteps，不再更新传统 reasoning（避免覆盖串行显示）
+            // 如果已经有 thinkingSteps，不再更新传统 reasoning(避免覆盖串行显示)
             if (!targetMsg.metadata?.thinkingSteps?.length) {
               targetMsg.reasoning = { content: text, isVisible: true }
             }
@@ -416,7 +417,7 @@ export function useAIChat() {
               targetMsg.metadata.thinkingSteps.push(step)
             }
             targetMsg.updatedAt = Date.now()
-            // 同步 currentMessages（不再做整数组替换）
+            // 同步 currentMessages(不再做整数组替换)
             const lastMsg = currentMessages.value[currentMessages.value.length - 1]
             if (lastMsg && lastMsg.role === 'assistant') {
               if (!lastMsg.metadata) lastMsg.metadata = {}
@@ -446,8 +447,8 @@ export function useAIChat() {
             const targetMsg = currentProxyGroups[currentProxyGroups.length - 1].aiVersions[0]
             targetMsg.status = 'completed'
             targetMsg.updatedAt = Date.now()
-            // 保留现有的 metadata（包括 thinkingSteps），只添加新字段
-            targetMsg.metadata = { 
+            // 保留现有的 metadata(包括 thinkingSteps)，只添加新字段
+            targetMsg.metadata = {
               ...targetMsg.metadata,  // 保留 thinkingSteps 等
               model: config.model,
               toolRecords  // 保存工具调用记录到消息
@@ -461,7 +462,7 @@ export function useAIChat() {
             sessionControllers.delete(sessionId)
             // 同步 currentMessages 确保最终状态一致
             syncCurrentMessages()
-            
+
             // 更新 Token 用量：估算输出 token
             const existingUsage = getCurrentTokenUsage(sessionId)
             const outputTokens = estimateTextTokens(targetMsg.content)
@@ -470,7 +471,7 @@ export function useAIChat() {
               estimatedOutput: existingUsage.estimatedOutput + outputTokens,
               lastUpdated: Date.now()
             }
-            
+
             // 记录完成日志
             addLog({
               level: 'info',
@@ -479,13 +480,13 @@ export function useAIChat() {
               message: 'AI 回复完成',
               sessionId,
               messageId: targetMsg.id,
-              data: { 
+              data: {
                 contentLength: targetMsg.content.length,
                 estimatedOutputTokens: outputTokens,
                 hasToolCalls: (toolRecords?.length || 0) > 0
               }
             })
-            
+
             // 消费队列中的下一条消息
             const queue = pendingMessages.value[sessionId]
             if (queue && queue.length > 0) {
@@ -500,18 +501,18 @@ export function useAIChat() {
             const targetMsg = currentProxyGroups[currentProxyGroups.length - 1].aiVersions[0]
             const hasToolCalls = toolRecords.length > 0
             const errorMessage = err.message || String(err)
-            
+
             targetMsg.status = 'error'
-            
+
             // 如果工具调用成功但后续失败，显示更详细的错误
             if (hasToolCalls) {
               targetMsg.content = `⚠️ 工具调用成功，但获取 AI 回复时出错\n\n错误：${errorMessage}\n\n可能原因：\n1. 网络连接中断\n2. API 服务暂时不可用\n3. 请求超时\n\n建议：检查网络连接后重试，工具操作可能已完成`
             } else {
               targetMsg.content = `错误：${errorMessage}`
             }
-            
+
             targetMsg.updatedAt = Date.now()
-            targetMsg.metadata = { 
+            targetMsg.metadata = {
               ...targetMsg.metadata,
               model: config.model,
               toolRecords,
@@ -526,7 +527,7 @@ export function useAIChat() {
             storage.saveMessageGroups(sessionId, currentProxyGroups)
             // 同步 currentMessages 确保错误状态一致
             syncCurrentMessages()
-            
+
             // 记录错误日志
             addLog({
               level: 'error',
@@ -535,15 +536,15 @@ export function useAIChat() {
               message: hasToolCalls ? '工具成功但AI回复失败' : 'AI 回复失败',
               sessionId,
               messageId: targetMsg.id,
-              data: { 
+              data: {
                 error: errorMessage,
                 hasToolCalls,
                 toolCount: toolRecords.length,
                 type: err.name || 'UnknownError'
               }
             })
-            
-            // 消费队列中的下一条消息（即使出错也继续）
+
+            // 消费队列中的下一条消息(即使出错也继续)
             const queue = pendingMessages.value[sessionId]
             if (queue && queue.length > 0) {
               const next = queue.shift()!
@@ -559,7 +560,7 @@ export function useAIChat() {
             } else {
               toolRecords.push(record)
             }
-            
+
             // 实时更新工具调用记录到消息
             const targetMsg = groups[groups.length - 1].aiVersions[0]
             if (!targetMsg.metadata) {
@@ -582,13 +583,13 @@ export function useAIChat() {
         sessionId,
         toolContext
       )
-      
+
       // ========== 保存 loadSkill 注入的消息到对话历史 ==========
       const currentProxyGroups = messageGroups.value[sessionId]
       if (currentProxyGroups) {
         const lastGroup = currentProxyGroups[currentProxyGroups.length - 1]
-        
-        // 补充更新 toolRecords（aiService 返回的完整记录）
+
+        // 补充更新 toolRecords(aiService 返回的完整记录)
         if (records && records.length > 0) {
           const targetMsg = lastGroup.aiVersions[0]
           targetMsg.metadata = {
@@ -596,7 +597,7 @@ export function useAIChat() {
             toolRecords: records
           }
         }
-        
+
         // 保存注入消息到 MessageGroup，使其在后续对话中持久化
         if (injectedMessages && injectedMessages.length > 0) {
           const existingInjected = lastGroup.injectedMessages || []
@@ -615,11 +616,11 @@ export function useAIChat() {
             }))
           if (newInjected.length > 0) {
             lastGroup.injectedMessages = [...existingInjected, ...newInjected]
-            
+
             // 持久化到存储
             storage.saveMessageGroups(sessionId, currentProxyGroups)
             syncCurrentMessages()
-            
+
             addLog({
               level: 'info',
               category: 'chat',
@@ -631,7 +632,7 @@ export function useAIChat() {
           }
         }
       }
-      
+
       return true
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
@@ -641,7 +642,7 @@ export function useAIChat() {
       }
       // 清理 controller
       sessionControllers.delete(sessionId)
-      
+
       // 更新最后一条消息为错误状态
       const lastGroup = groups[groups.length - 1]
       if (lastGroup && lastGroup.aiVersions.length > 0) {
@@ -651,15 +652,15 @@ export function useAIChat() {
         targetMsg.updatedAt = Date.now()
         storage.saveMessageGroups(sessionId, groups)
       }
-      
-      // 消费队列中的下一条消息（即使异常也继续）
+
+      // 消费队列中的下一条消息(即使异常也继续)
       const queue = pendingMessages.value[sessionId]
       if (queue && queue.length > 0) {
         const next = queue.shift()!
         pendingMessages.value[sessionId] = queue
         sendMessage(next.content, next.attachments, next.skillInfo, true)
       }
-      
+
       // 记录详细错误日志
       addLog({
         level: 'error',
@@ -667,28 +668,28 @@ export function useAIChat() {
         event: 'message_error',
         message: `发送消息异常: ${error.message}`,
         sessionId,
-        data: { 
+        data: {
           error: error.message,
           stack: error.stack,
           name: error.name,
-          type: error.name === 'TypeError' && error.message.includes('fetch') 
-            ? 'NetworkError' 
+          type: error.name === 'TypeError' && error.message.includes('fetch')
+            ? 'NetworkError'
             : error.name
         }
       })
-      
+
       return false
     }
   }
 
-  // ==================== 重新生成（添加新版本）====================
+  // ==================== 重新生成(添加新版本)====================
   async function regenerateResponse(userMessageId?: string): Promise<boolean> {
     if (!currentSessionId.value || isStreaming.value) return false
-    
+
     const sessionId = currentSessionId.value
     const groups = messageGroups.value[sessionId]
     if (!groups || groups.length === 0) return false
-    
+
     // 找到目标消息组
     let targetGroupIndex: number
     if (userMessageId) {
@@ -698,10 +699,10 @@ export function useAIChat() {
       // 默认重新生成最后一个用户查询的响应
       targetGroupIndex = groups.length - 1
     }
-    
+
     const targetGroup = groups[targetGroupIndex]
     const config = currentSession.value?.config || DEFAULT_CONFIG
-    
+
     // 创建新版本
     const newVersion: ChatMessage = {
       id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -714,27 +715,27 @@ export function useAIChat() {
       parentMessageId: targetGroup.userMessage.id,
       isActiveVersion: false // 暂时不激活，等完成后再激活
     }
-    
+
     // 将之前的版本设为非激活
     targetGroup.aiVersions.forEach(v => v.isActiveVersion = false)
     targetGroup.aiVersions.push(newVersion)
     targetGroup.currentVersionIndex = targetGroup.aiVersions.length - 1
     newVersion.isActiveVersion = true
-    
+
     isStreaming.value = true
     const versionIndex = targetGroup.aiVersions.length - 1
-    
+
     // 同步 currentMessages 反映新版本
     syncCurrentMessages()
-    
+
     try {
-      // 构建历史记录（截断到目标用户消息）
+      // 构建历史记录(截断到目标用户消息)
       const history = buildHistoryForRegenerate(groups, targetGroupIndex)
-      
+
       // 用于存储工具调用记录
       let toolRecords: ToolCallRecord[] = []
-      
-      // 构建工具上下文：渐进式披露（默认只暴露核心工具）
+
+      // 构建工具上下文：渐进式披露(默认只暴露核心工具)
       const agent = activeAgent.value
       const skillIds = agent?.capabilities?.skillIds || []
       const toolContext = agent ? {
@@ -745,7 +746,7 @@ export function useAIChat() {
           .flatMap(s => s.tools || []),
         availableTools: CORE_TOOL_NAMES
       } : undefined
-      
+
       const { toolRecords: records, injectedMessages } = await aiService.chatStream(
         history,
         config,
@@ -761,9 +762,9 @@ export function useAIChat() {
             }
           },
           onReasoning: (text) => {
-            targetGroup.aiVersions[versionIndex].reasoning = { 
-              content: text, 
-              isVisible: true 
+            targetGroup.aiVersions[versionIndex].reasoning = {
+              content: text,
+              isVisible: true
             }
             targetGroup.aiVersions[versionIndex].updatedAt = Date.now()
             const msg = currentMessages.value.find(m => m.role === 'assistant' && m.parentMessageId === targetGroup.userMessage.id)
@@ -787,7 +788,7 @@ export function useAIChat() {
               targetMsg.metadata.thinkingSteps.push(step)
             }
             targetMsg.updatedAt = Date.now()
-            // 同步 currentMessages（不再整数组替换）
+            // 同步 currentMessages(不再整数组替换)
             const msg = currentMessages.value.find(m => m.role === 'assistant' && m.parentMessageId === targetGroup.userMessage.id)
             if (msg) {
               if (!msg.metadata) msg.metadata = {}
@@ -817,7 +818,7 @@ export function useAIChat() {
             isStreaming.value = false
             storage.saveMessageGroups(sessionId, groups)
             syncCurrentMessages()
-            
+
             // 更新 Token 用量：估算输出 token
             const existingUsage = getCurrentTokenUsage(sessionId)
             const outputTokens = estimateTextTokens(targetGroup.aiVersions[versionIndex].content)
@@ -841,7 +842,7 @@ export function useAIChat() {
         sessionId,  // sessionId
         toolContext
       )
-      
+
       // 补充更新 toolRecords 和注入消息
       if (records && records.length > 0) {
         targetGroup.aiVersions[versionIndex].metadata = {
@@ -869,7 +870,7 @@ export function useAIChat() {
           syncCurrentMessages()
         }
       }
-      
+
       return true
     } catch (err) {
       isStreaming.value = false
@@ -878,27 +879,27 @@ export function useAIChat() {
   }
 
   // ==================== 版本管理 ====================
-  
+
   /**
    * 切换到指定版本
    */
   function switchVersion(userMessageId: string, versionIndex: number): boolean {
     if (!currentSessionId.value) return false
-    
+
     const sessionId = currentSessionId.value
     const groups = messageGroups.value[sessionId]
     if (!groups) return false
-    
+
     const group = groups.find(g => g.userMessage.id === userMessageId)
     if (!group || versionIndex < 0 || versionIndex >= group.aiVersions.length) {
       return false
     }
-    
+
     group.currentVersionIndex = versionIndex
     group.aiVersions.forEach((v, i) => {
       v.isActiveVersion = (i === versionIndex)
     })
-    
+
     syncCurrentMessages()
     storage.switchVersion(sessionId, userMessageId, versionIndex)
     return true
@@ -909,10 +910,10 @@ export function useAIChat() {
    */
   function getVersions(userMessageId: string): ChatMessage[] {
     if (!currentSessionId.value) return []
-    
+
     const groups = messageGroups.value[currentSessionId.value]
     if (!groups) return []
-    
+
     const group = groups.find(g => g.userMessage.id === userMessageId)
     return group?.aiVersions || []
   }
@@ -922,10 +923,10 @@ export function useAIChat() {
    */
   function getCurrentVersionIndex(userMessageId: string): number {
     if (!currentSessionId.value) return 0
-    
+
     const groups = messageGroups.value[currentSessionId.value]
     if (!groups) return 0
-    
+
     const group = groups.find(g => g.userMessage.id === userMessageId)
     return group?.currentVersionIndex || 0
   }
@@ -935,23 +936,23 @@ export function useAIChat() {
    */
   async function deleteVersion(userMessageId: string, versionId: string): Promise<boolean> {
     if (!currentSessionId.value) return false
-    
+
     const sessionId = currentSessionId.value
     const result = await storage.deleteVersion(sessionId, userMessageId, versionId)
-    
+
     if (result) {
       // 重新加载
       messageGroups.value[sessionId] = await storage.loadMessageGroups(sessionId)
       syncCurrentMessages()
     }
-    
+
     return result
   }
 
   // ==================== 辅助函数 ====================
-  
+
   /**
-   * 从消息组构建历史记录（用于发送消息）
+   * 从消息组构建历史记录(用于发送消息)
    * 确保包含 tool_calls 和 tool_call_id 等字段，符合 DeepSeek API 要求
    */
   function buildHistoryFromGroups(groups: MessageGroup[]): ChatMessage[] {
@@ -959,15 +960,15 @@ export function useAIChat() {
     for (const group of groups) {
       // 添加用户消息
       history.push(group.userMessage)
-      
+
       // 只使用当前激活的版本
       const activeVersion = group.aiVersions[group.currentVersionIndex]
       if (activeVersion) {
         // 确保 metadata 中的 toolCalls 被正确保留
         history.push(activeVersion)
       }
-      
-      // 添加系统注入的消息（如 loadSkill 加载的 skill 内容）
+
+      // 添加系统注入的消息(如 loadSkill 加载的 skill 内容)
       if (group.injectedMessages && group.injectedMessages.length > 0) {
         history.push(...group.injectedMessages)
       }
@@ -1000,14 +1001,14 @@ export function useAIChat() {
   function interruptGeneration(sessionId?: string) {
     const targetSessionId = sessionId || currentSessionId.value
     if (!targetSessionId) return
-    
+
     // 获取该会话的 controller 并中断
     const controller = sessionControllers.get(targetSessionId)
     if (controller) {
       controller.abort()
       sessionControllers.delete(targetSessionId)
     }
-    
+
     // 只有当前会话才更新全局 isStreaming
     if (targetSessionId === currentSessionId.value) {
       isStreaming.value = false
@@ -1038,39 +1039,39 @@ export function useAIChat() {
     currentSession,
     isStreaming,
     defaultConfig: DEFAULT_CONFIG,
-    
-    // 消息（兼容旧接口）
+
+    // 消息(兼容旧接口)
     messages: currentMessages,
     messageGroups: currentMessageGroups,
-    
+
     // 会话管理
     createSession,
     switchSession,
     renameSession,
     deleteSession,
-    
+
     // 消息发送
     sendMessage,
     interruptGeneration,
     clearMessages,
-    
-    // 重新生成（新版本）
+
+    // 重新生成(新版本)
     regenerateResponse,
-    
+
     // 版本管理
     switchVersion,
     getVersions,
     getCurrentVersionIndex,
     deleteVersion,
-    
+
     // 配置
     updateSessionConfig,
-    
+
     // Token 用量追踪
     tokenUsage: computed(() => getCurrentTokenUsage(currentSessionId.value)),
     getSessionTokenUsage: getCurrentTokenUsage,
     estimateSessionInputTokens,
-    
+
     // 格式化辅助
     formatTokenCount,
     calculateUsagePercent,

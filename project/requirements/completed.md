@@ -10,7 +10,7 @@
 
 ## 2026-04 完成
 
-### [DONE-024] 实体链接卡片（EntityLinkCard）
+### [DONE-024] 实体链接卡片(EntityLinkCard)
 - **完成日期**: 2026-04-23
 - **领域**: Frontend
 - **关联层级**: L3
@@ -60,7 +60,7 @@ $$` 块级公式
 - **实现要点**: 避免工具结果过大导致请求体超过 AI API 限制
 - **相关文件**: `src/theme/tools/index.ts`
 
-### [DONE-018] 飞书工具链（10个）
+### [DONE-018] 飞书工具链(10个)
 - **完成日期**: 2026-04-19
 - **领域**: Platform
 - **关联层级**: L3
@@ -68,7 +68,7 @@ $$` 块级公式
 - **工具列表**: `feishuDocCreate`, `feishuDocRead`, `feishuDocSearch`, `feishuDocBlocks`, `feishuDocAppend`, `feishuDocUpdateBlock`, `feishuDocDeleteBlock`, `feishuImSend`, `feishuUserSearch`, `feishu_image_upload`
 - **相关文件**: `server/routes/lark.ts`, `src/theme/tools/lark/`
 
-### [DONE-017] 语雀工具链（9个）
+### [DONE-017] 语雀工具链(9个)
 - **完成日期**: 2026-04-19
 - **领域**: Platform
 - **关联层级**: L3
@@ -76,7 +76,7 @@ $$` 块级公式
 - **工具列表**: `yuqueRepoList`, `yuqueTocGet`, `yuqueDocList`, `yuqueDocRead`, `yuqueDocCreate`, `yuqueDocUpdate`, `yuqueDocDelete`, `yuqueImageUpload`, `yuqueSearch`
 - **相关文件**: `server/routes/yuque.ts`, `src/theme/tools/yuque/`
 
-### [DONE-016] 网络搜索（DuckDuckGo）
+### [DONE-016] 网络搜索(DuckDuckGo)
 - **完成日期**: 2026-04-18
 - **领域**: Data
 - **关联层级**: L3
@@ -92,7 +92,7 @@ $$` 块级公式
 - **实现要点**: section 白名单(posts/knowledge/resources) + `..` 遍历拦截 + 路径范围限制 + 软删除 + Git 自动提交
 - **相关文件**: `server/routes/init.ts`
 
-### [DONE-014] GitHub 工具（6个）
+### [DONE-014] GitHub 工具(6个)
 - **完成日期**: 2026-04-18
 - **领域**: Platform
 - **关联层级**: L3
@@ -100,13 +100,83 @@ $$` 块级公式
 - **工具列表**: `github_get_repo`, `github_list_repo_contents`, `github_get_file_content`, `github_search_code`, `github_get_commit_history`, `github_get_issues`
 - **相关文件**: `src/theme/tools/github/`
 
-### [DONE-013] 学术搜索工具（6个）
+### [DONE-013] 学术搜索工具(6个)
 - **完成日期**: 2026-04-18
 - **领域**: Academic
 - **关联层级**: L3
 - **描述**: 多平台学术论文搜索
 - **工具列表**: `searchArxiv`, `fetchArxiv`, `searchOpenReview`, `fetchOpenReview`, `searchHuggingFace`, `searchPapersWithCode`, `searchSemanticScholar`
 - **相关文件**: `src/theme/tools/academic/`
+
+### [DONE-025] 飞书 Wiki 知识库工具(13个)
+- **完成日期**: 2026-04-19
+- **领域**: Platform
+- **关联层级**: L3
+- **描述**: 完整的飞书 Wiki 知识库管理工具链
+- **工具列表**: `feishuWikiSpaceCreate`, `feishuWikiSpaceList`, `feishuWikiSpaceGet`, `feishuWikiSpaceUpdate`, `feishuWikiSpaceDelete`, `feishuWikiNodeCreate`, `feishuWikiNodeList`, `feishuWikiNodeDelete`, `feishuWikiNodeMove`, `feishuWikiMoveDoc`, `feishuWikiMemberList`, `feishuWikiMemberAdd`, `feishuWikiMemberRemove`
+- **相关文件**: `src/theme/tools/lark/wiki.ts`, `server/routes/external/lark.ts`
+
+### [DONE-026] 语雀知识库管理工具(6个)
+- **完成日期**: 2026-04-19
+- **领域**: Platform
+- **关联层级**: L3
+- **描述**: 语雀知识库 Repo 的 CRUD 和设置管理
+- **工具列表**: `yuqueRepoCreate`, `yuqueRepoUpdate`, `yuqueRepoDelete`, `yuqueRepoGet`, `yuqueRepoSettingGet`, `yuqueRepoSettingUpdate`
+- **相关文件**: `src/theme/tools/yuque/repo.ts`
+
+### [DONE-027] GitHub 工具全面扩展(34个)
+- **完成日期**: 2026-04-18 ~ 2026-04-19
+- **领域**: Platform
+- **关联层级**: L3
+- **描述**: 从 6 个基础工具扩展到 34 个，覆盖 Repo/Issue/PR/Branch/Workflow/File/Search
+- **实现要点**: 7 个分类文件模块化拆分，避免单文件过大
+- **相关文件**: `src/theme/tools/github/*.ts`
+
+### [DONE-028] 平台解析全面扩展
+- **完成日期**: 2026-04-28
+- **领域**: Data
+- **关联层级**: L3
+- **描述**: 新增抖音、B站、微博、微信公众号解析，Jina Reader 兜底反爬平台
+- **工具列表**: `parseDouyin`, `parseBilibili`, `parseWeibo`, `parseWechat`, `parsePlatformLink`, `processImage`
+- **相关文件**: `src/theme/tools/platform/`, `server/routes/platform/fetcher.ts`
+
+### [DONE-029] OCR 后端服务
+- **完成日期**: 2026-04-28
+- **领域**: Data
+- **关联层级**: L3
+- **描述**: 后端 `/api/ocr` 接口，三引擎自动降级图片文字提取
+- **实现要点**: PaddleOCR(本地最强中文) → Tesseract(轻量降级) → OCR.space(云端兜底)
+- **相关文件**: `server/routes/internal/ocr.ts`, `server/services/ocr.ts`
+
+### [DONE-030] 错误翻译系统
+- **完成日期**: 2026-04-22 ~ 2026-04-24
+- **领域**: Harness
+- **关联层级**: L3
+- **描述**: 飞书/语雀/GitHub/通用代理 API 错误码自动转中文
+- **实现要点**: 完整错误码映射表 + 前缀兜底匹配 + `sendXxxResult` 统一出口
+- **相关文件**: `server/utils/lark-error-translator.ts`, `server/utils/yuque-error-translator.ts`, `server/utils/github-error-translator.ts`
+
+### [DONE-031] Rate Limit 与 CORS 防护
+- **完成日期**: 2026-04-22
+- **领域**: Harness
+- **关联层级**: L3
+- **描述**: 基于 async-mutex 的并发限流 + 学术工具跨域检查
+- **相关文件**: `server/middleware/rate-limit.ts`
+
+### [DONE-032] 聊天体验增强套件
+- **完成日期**: 2026-04-24
+- **领域**: Frontend
+- **关联层级**: L3
+- **描述**: 消息队列 + Skill Slash 快捷指令 + Article Mentions 文章引用
+- **相关文件**: `src/theme/components/ai-chat/ChatInput.vue`, `src/theme/stores/chatStore.ts`
+
+### [DONE-033] 渐进式工具披露
+- **完成日期**: 2026-04-18
+- **领域**: Hermes
+- **关联层级**: L3
+- **描述**: 从 119 个工具动态降噪到 7~15 个，通过 searchCapabilities/loadSkill 按需激活
+- **实现要点**: `CORE_TOOL_NAMES` 核心层 + `sessionActiveTools` 动态层
+- **相关文件**: `src/theme/tools/index.ts`, `src/theme/tools/search_capabilities/`, `.dev-log/PROGRESSIVE_DISCLOSURE.md`
 
 ---
 
@@ -124,7 +194,7 @@ $$` 块级公式
 - **完成日期**: 2026-03
 - **领域**: Hermes
 - **关联层级**: L3
-- **描述**: Agent 创建/编辑/删除，四种配置模式（纯提示词/纯技能/纯工具/混合）
+- **描述**: Agent 创建/编辑/删除，四种配置模式(纯提示词/纯技能/纯工具/混合)
 - **实现要点**: Agent 配置面板 + Skill 系统 + 独立会话 + 工具权限控制
 - **相关文件**: `src/theme/components/ai-chat/AgentPanel.vue`
 
@@ -160,7 +230,7 @@ $$` 块级公式
 - **完成日期**: 2026-02
 - **领域**: Frontend
 - **关联层级**: L2
-- **描述**: 会话列表（按时间分组）、行内重命名、删除确认、消息版本切换
+- **描述**: 会话列表(按时间分组)、行内重命名、删除确认、消息版本切换
 - **相关文件**: `src/theme/composables/useSession.ts`
 
 ---
@@ -175,7 +245,7 @@ $$` 块级公式
 - **实现要点**: 自定义主题 + 动态侧边栏生成 + 面包屑导航 + 自动重写规则
 - **相关文件**: `.vitepress/config.ts`, `.vitepress/utils/`
 
-### [DONE-005] 文章管理工具（6个）
+### [DONE-005] 文章管理工具(6个)
 - **完成日期**: 2026-01
 - **领域**: Content
 - **关联层级**: L3
@@ -187,7 +257,7 @@ $$` 块级公式
 
 ## 更早完成
 
-### [DONE-004] 知识库工具（7个）
+### [DONE-004] 知识库工具(7个)
 - **完成日期**: 2025-12
 - **领域**: Hermes
 - **关联层级**: L3
@@ -195,7 +265,7 @@ $$` 块级公式
 - **工具列表**: `kb_list`, `kb_create`, `kb_delete`, `kb_query`, `kb_list_documents`, `kb_document_add`, `kb_document_delete`
 - **相关文件**: `src/theme/tools/loadSkill/`
 
-### [DONE-003] 文本处理工具（4个）
+### [DONE-003] 文本处理工具(4个)
 - **完成日期**: 2025-12
 - **领域**: Content
 - **关联层级**: L3
@@ -203,7 +273,7 @@ $$` 块级公式
 - **工具列表**: `summarizeText`, `formatText`, `translateText`
 - **相关文件**: `src/theme/tools/text/`
 
-### [DONE-002] 文件操作工具（3个）
+### [DONE-002] 文件操作工具(3个)
 - **完成日期**: 2025-12
 - **领域**: Execution
 - **关联层级**: L3
@@ -211,7 +281,7 @@ $$` 块级公式
 - **工具列表**: `readFile`, `writeFile`, `listFiles`
 - **相关文件**: `src/theme/tools/file/`
 
-### [DONE-001] 系统工具（4个）
+### [DONE-001] 系统工具(4个)
 - **完成日期**: 2025-12
 - **领域**: Execution
 - **关联层级**: L3
@@ -225,12 +295,12 @@ $$` 块级公式
 
 | 领域 | 已完成 |
 |------|--------|
-| Frontend | 7 |
+| Frontend | 9 |
 | Execution | 3 |
-| Platform | 4 |
-| Data | 1 |
+| Platform | 6 |
+| Data | 3 |
 | Academic | 1 |
 | Content | 2 |
-| Harness | 2 |
-| Hermes | 2 |
-| **总计** | **24** |
+| Harness | 4 |
+| Hermes | 3 |
+| **总计** | **31** |

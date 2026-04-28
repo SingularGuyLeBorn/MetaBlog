@@ -42,8 +42,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vitepress'
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 // 响应式状态
 const spotlightX = ref(0)
@@ -62,7 +62,7 @@ let rafId: number | null = null
 let mouseX = 0
 let mouseY = 0
 
-// 平滑光标位置（插值）
+// 平滑光标位置(插值)
 const smoothCursor = () => {
   const ease = 0.12
   spotlightX.value += (mouseX - spotlightX.value) * ease

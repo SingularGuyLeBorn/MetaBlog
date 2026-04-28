@@ -1,5 +1,5 @@
 import type { ToolDefinition, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 const API_BASE = '/api/lark'
 
@@ -33,7 +33,7 @@ export const feishuImSendDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        receive_id: { type: 'string', description: '接收者 ID（open_id / user_id / chat_id / email）' },
+        receive_id: { type: 'string', description: '接收者 ID(open_id / user_id / chat_id / email)' },
         receive_id_type: { type: 'string', enum: ['open_id', 'user_id', 'union_id', 'email', 'chat_id'], description: '接收者 ID 类型', default: 'open_id' },
         msg_type: { type: 'string', enum: ['text', 'post', 'image', 'file', 'interactive'], description: '消息类型', default: 'text' },
         content: { type: 'string', description: '消息内容。text 类型直接传纯文本字符串即可' },

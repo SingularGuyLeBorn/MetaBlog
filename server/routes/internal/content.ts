@@ -1,9 +1,9 @@
-import type { ViteDevServer } from "vite";
-import path from "path";
 import fs from "fs";
+import path from "path";
+import type { ViteDevServer } from "vite";
 
+import { scanDocStructure, toDirectoryTree, toSidebarFormat, type DocNode } from "../../../.vitepress/utils/doc-structure";
 import { clearSidebarCache } from "../../../.vitepress/utils/global-sidebar";
-import { scanDocStructure, toSidebarFormat, toDirectoryTree, type DocNode } from "../../../.vitepress/utils/doc-structure";
 import { createArticleInHarness } from "../../utils/article-creator";
 export interface RouteContext {
   system: any;
@@ -135,7 +135,7 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
 
   const SECTIONS_PATH = path.join(process.cwd(), "docs/sections");
 
-  // 生成 URL 友好的 slug（保留中文）
+  // 生成 URL 友好的 slug(保留中文)
   function generateSlug(title: string): string {
     if (!title || !title.trim()) return "untitled";
 
@@ -180,7 +180,7 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
           articles.push(meta);
         }
       }
-    } catch (e) {}
+    } catch (e) { }
     return articles;
   }
 
@@ -235,7 +235,7 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
     return articles;
   }
 
-  // 辅助函数：轻量级扫描文章列表（用于 @ 引用）
+  // 辅助函数：轻量级扫描文章列表(用于 @ 引用)
   async function scanArticlesForList(
     dir: string,
     section: string,
@@ -306,7 +306,7 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
           for (const section of ALLOWED_SECTIONS) {
             const sectionPath = path.join(SECTIONS_PATH, section);
             if (fs.existsSync(sectionPath)) {
-              // 使用 scanArticles 获取完整元数据（包括日期）
+              // 使用 scanArticles 获取完整元数据(包括日期)
               const articles = await scanArticles(sectionPath);
               // 添加 section 前缀到 path
               articles.forEach((a) => {
@@ -336,7 +336,7 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
     },
   );
 
-  // 获取所有文章列表（用于 @ 引用，轻量级）
+  // 获取所有文章列表(用于 @ 引用，轻量级)
   server.middlewares.use(
     "/api/articles/list-all",
     async (req, res, next) => {
@@ -375,7 +375,7 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
     },
   );
 
-  // 搜索文章（只在白名单板块内搜索）
+  // 搜索文章(只在白名单板块内搜索)
   server.middlewares.use(
     "/api/articles/search",
     async (req, res, next) => {

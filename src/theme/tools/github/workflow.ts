@@ -68,7 +68,7 @@ export const githubTriggerWorkflowDef: ToolDefinition = {
         repo: { type: 'string', description: '仓库名称' },
         workflow_id: { type: 'string', description: '工作ID 或文件名' },
         ref: { type: 'string', description: '触发分支，默认main', default: 'main' },
-        inputs: { type: 'object', description: '工作流输入参数（可选）' }
+        inputs: { type: 'object', description: '工作流输入参数(可选)' }
       },
       required: ['owner', 'repo', 'workflow_id']
     }

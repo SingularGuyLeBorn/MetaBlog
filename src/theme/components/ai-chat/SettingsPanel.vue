@@ -1,5 +1,5 @@
 <!--
-  SettingsPanel - 设置面板（3D 液态玻璃风格）
+  SettingsPanel - 设置面板(3D 液态玻璃风格)
 -->
 <template>
   <aside class="settings-panel-3d" :class="{ collapsed }">
@@ -56,6 +56,17 @@
             </div>
           </button>
         </div>
+        <!-- 多模态能力提示 -->
+        <div class="multimodal-hint">
+          <template v-if="currentModelConfig?.isMultimodal">
+            <span class="hint-icon">✅</span>
+            <span class="hint-text">支持图片输入</span>
+          </template>
+          <template v-else>
+            <span class="hint-icon">⚠️</span>
+            <span class="hint-text">当前模型不支持直接识图，上传的图片将通过 OCR 提取文字后发送</span>
+          </template>
+        </div>
       </div>
 
       <!-- 思考模式 -->
@@ -88,6 +99,26 @@
             : '显示 AI 的推理过程，适合复杂问题' 
           }}
         </p>
+        <!-- DeepSeek 推理强度选择 -->
+        <div v-if="currentModelConfig?.supportsReasoningEffort && (currentModelConfig?.reasoningRequired || config.enableReasoning)" class="reasoning-effort-row">
+          <label class="effort-label">推理强度</label>
+          <div class="effort-options">
+            <button
+              class="effort-btn"
+              :class="{ active: config.reasoningEffort === 'high' || !config.reasoningEffort }"
+              @click="setReasoningEffort('high')"
+            >
+              标准
+            </button>
+            <button
+              class="effort-btn"
+              :class="{ active: config.reasoningEffort === 'max' }"
+              @click="setReasoningEffort('max')"
+            >
+              深度
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- 温度 -->
@@ -236,10 +267,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { Teleport } from 'vue'
 import { Icon } from '@/theme/components/common'
-import type { SessionConfig, ModelType } from '@/theme/types'
+import type { ModelType, SessionConfig } from '@/theme/types'
+import { computed, ref, Teleport, watch } from 'vue'
 
 interface ModelConfig {
   id: ModelType
@@ -248,94 +278,53 @@ interface ModelConfig {
   recommended?: boolean
   supportsReasoning: boolean
   reasoningRequired?: boolean
+  /** 是否支持 reasoningEffort 调节（仅 DeepSeek V4） */
+  supportsReasoningEffort?: boolean
+  /** 是否原生多模态 */
+  isMultimodal: boolean
   defaultTemperature: number
   defaultMaxTokens: number
 }
 
 const modelConfigs: ModelConfig[] = [
   // ═══════════════════════════════════════════════════════════════
-  // DeepSeek 模型
+  // DeepSeek V4 模型 - 仅文本输入
   // ═══════════════════════════════════════════════════════════════
   {
-    id: 'deepseek-chat',
-    name: 'DeepSeek Chat',
-    description: '通用对话，适合日常交流',
+    id: 'deepseek-v4-pro',
+    name: 'DeepSeek V4 Pro',
+    description: '最强推理，适合深度分析与复杂任务',
     recommended: true,
-    supportsReasoning: false,
-    defaultTemperature: 0.7,
-    defaultMaxTokens: 4096
-  },
-  {
-    id: 'deepseek-reasoner',
-    name: 'DeepSeek Reasoner',
-    description: '深度思考，自动展示推理过程',
     supportsReasoning: true,
     reasoningRequired: true,
+    supportsReasoningEffort: true,
+    isMultimodal: false,
     defaultTemperature: 0.7,
-    defaultMaxTokens: 64000
+    defaultMaxTokens: 8192
   },
-  
+  {
+    id: 'deepseek-v4-flash',
+    name: 'DeepSeek V4 Flash',
+    description: '快速响应，性价比高，支持思考模式',
+    supportsReasoning: true,
+    supportsReasoningEffort: true,
+    isMultimodal: false,
+    defaultTemperature: 0.7,
+    defaultMaxTokens: 8192
+  },
+
   // ═══════════════════════════════════════════════════════════════
-  // Kimi 模型 - 支持多模态（图片输入）
+  // Kimi K2.5 - 原生多模态（图片+视频）
   // ═══════════════════════════════════════════════════════════════
   {
     id: 'kimi-k2.5',
     name: 'Kimi K2.5',
-    description: '最新多模态模型，支持图片理解和思考模式',
+    description: '原生多模态，支持图片/视频理解',
     recommended: true,
     supportsReasoning: true,
+    isMultimodal: true,
     defaultTemperature: 0.6,
     defaultMaxTokens: 8192
-  },
-  {
-    id: 'kimi-k2-turbo-preview',
-    name: 'Kimi K2 Turbo',
-    description: 'K2 快速预览版，响应更快',
-    supportsReasoning: false,
-    defaultTemperature: 0.6,
-    defaultMaxTokens: 8192
-  },
-  {
-    id: 'kimi-k2-thinking',
-    name: 'Kimi K2 Thinking',
-    description: 'K2 思考模式，适合复杂问题',
-    supportsReasoning: true,
-    reasoningRequired: true,
-    defaultTemperature: 0.6,
-    defaultMaxTokens: 8192
-  },
-  {
-    id: 'kimi-k2-thinking-turbo',
-    name: 'Kimi K2 Thinking Turbo',
-    description: 'K2 思考模式快速版',
-    supportsReasoning: true,
-    reasoningRequired: true,
-    defaultTemperature: 0.6,
-    defaultMaxTokens: 8192
-  },
-  {
-    id: 'moonshot-v1-8k-vision-preview',
-    name: 'Kimi Vision 8K',
-    description: '视觉版 8K 上下文，支持图片输入',
-    supportsReasoning: false,
-    defaultTemperature: 0.6,
-    defaultMaxTokens: 8192
-  },
-  {
-    id: 'moonshot-v1-32k-vision-preview',
-    name: 'Kimi Vision 32K',
-    description: '视觉版 32K 上下文，支持图片输入',
-    supportsReasoning: false,
-    defaultTemperature: 0.6,
-    defaultMaxTokens: 32000
-  },
-  {
-    id: 'moonshot-v1-128k-vision-preview',
-    name: 'Kimi Vision 128K',
-    description: '视觉版 128K 上下文，支持长文档+图片',
-    supportsReasoning: false,
-    defaultTemperature: 0.6,
-    defaultMaxTokens: 128000
   }
 ]
 
@@ -376,12 +365,23 @@ function selectModel(modelId: ModelType) {
     updates.enableReasoning = false
   }
 
+  // DeepSeek 模型默认 reasoningEffort 为 high
+  if (model.supportsReasoningEffort) {
+    updates.reasoningEffort = props.config.reasoningEffort || 'high'
+  } else {
+    updates.reasoningEffort = undefined
+  }
+
   emit('update:config', updates)
 }
 
 function toggleReasoning() {
   if (currentModelConfig.value?.reasoningRequired) return
   emit('update:config', { enableReasoning: !props.config.enableReasoning })
+}
+
+function setReasoningEffort(level: 'high' | 'max') {
+  emit('update:config', { reasoningEffort: level })
 }
 
 function resetSettings() {
@@ -392,7 +392,8 @@ function resetSettings() {
     temperature: model.defaultTemperature,
     maxTokens: model.defaultMaxTokens,
     systemPrompt: '',
-    enableReasoning: model.reasoningRequired || false
+    enableReasoning: model.reasoningRequired || false,
+    reasoningEffort: model.supportsReasoningEffort ? 'high' : undefined
   })
 }
 
@@ -665,6 +666,8 @@ function resetToAgentPrompt() {
 .model-info {
   position: relative;
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .model-name {
@@ -677,6 +680,9 @@ function resetToAgentPrompt() {
 .model-desc {
   font-size: 12px;
   color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .model-badge-3d {
@@ -1311,6 +1317,75 @@ function resetToAgentPrompt() {
 .modal-scale-leave-to {
   opacity: 0;
   transform: scale(0.95);
+}
+
+/* 多模态能力提示 */
+.multimodal-hint {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.multimodal-hint .hint-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.multimodal-hint .hint-text {
+  font-weight: 500;
+}
+
+/* 推理强度选择 */
+.reasoning-effort-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.effort-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.effort-options {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.effort-btn {
+  flex: 1;
+  padding: 6px 12px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 8px;
+  background: rgba(241, 245, 249, 0.6);
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.effort-btn:hover {
+  background: rgba(226, 232, 240, 0.8);
+  color: #475569;
+}
+
+.effort-btn.active {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
 /* 响应式 */

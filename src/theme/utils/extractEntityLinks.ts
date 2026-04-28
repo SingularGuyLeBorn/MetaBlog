@@ -17,7 +17,7 @@ export interface EntityLink {
 /** URL 正则 */
 const URL_REGEX = /https?:\/\/[^\s<>"'{}|\\^`[\]]+/gi
 
-/** 已知工具类型的 URL 字段映射（支持嵌套路径，如 document.document_id） */
+/** 已知工具类型的 URL 字段映射(支持嵌套路径，如 document.document_id) */
 const TOOL_URL_FIELDS: Record<string, string[]> = {
   // 飞书
   feishuDocCreate: ['url', 'docUrl', 'link', 'web_url', 'document.document_id'],
@@ -36,9 +36,9 @@ const TOOL_URL_FIELDS: Record<string, string[]> = {
  * 从单个 ToolResult 中提取实体链接
  *
  * 扫描顺序：
- * 1. 已知字段（从 data 中按路径提取）
+ * 1. 已知字段(从 data 中按路径提取)
  * 2. message 文本中的 URL
- * 3. data 全量递归 URL 扫描（兜底）
+ * 3. data 全量递归 URL 扫描(兜底)
  */
 export function extractEntityLinks(toolName: string, toolResult: any): EntityLink[] {
   const links: EntityLink[] = []
@@ -65,7 +65,7 @@ export function extractEntityLinks(toolName: string, toolResult: any): EntityLin
     }
   }
 
-  // 2. 从 message 文本中提取 URL（仅限已知工具类型，避免查询类工具误渲染）
+  // 2. 从 message 文本中提取 URL(仅限已知工具类型，避免查询类工具误渲染)
   // webSearch / fetchUrl 等工具的 message 中包含搜索结果 URL，不应渲染为实体卡片
   if (knownFields && typeof message === 'string') {
     const msgLinks = extractUrlsFromText(message)

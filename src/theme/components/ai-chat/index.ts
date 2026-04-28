@@ -11,26 +11,17 @@
  */
 
 // ===== API =====
+export { BaseProvider } from '@/theme/api/providers/BaseProvider'
+export { DeepSeekProvider } from '@/theme/api/providers/DeepSeekProvider'
+export * from '@/theme/api/providers/models'
 export { aiService } from '@/theme/api/services/aiService'
 export { storage } from '@/theme/api/services/storage'
-export { DeepSeekProvider } from '@/theme/api/providers/DeepSeekProvider'
-export { BaseProvider } from '@/theme/api/providers/BaseProvider'
-export * from '@/theme/api/providers/models'
 
 // Provider types (避免与 tools/types 和 chat/types 重复导出)
 export type {
-  IProvider,
-  ProviderInfo,
-  ModelInfo,
-  ModelCapabilities,
-  ModelPricing,
-  ChatOptions,
-  ToolResult,
-  StandardMessage,
-  ContentPart,
-  StreamCallbacks as ProviderStreamCallbacks,
+  ChatOptions, ContentPart, IProvider, ModelCapabilities, ModelInfo, ModelPricing, ProviderInfo, StreamCallbacks as ProviderStreamCallbacks,
   ToolCall as ProviderToolCall,
-  ToolDefinition as ProviderToolDefinition,
+  ToolDefinition as ProviderToolDefinition, StandardMessage, ToolResult
 } from '@/theme/api/providers/types'
 
 // ===== Stores =====
@@ -38,81 +29,38 @@ export * from '@/theme/stores'
 
 // ===== Tools (避免与 provider types 冲突) =====
 export {
-  registerTool,
-  registerTools,
-  getTool,
-  hasTool,
-  executeTool,
-  executeToolWithRecord,
-  getToolDefinitions,
-  getRegisteredToolNames,
-  getToolCount,
-  unregisterTool,
-  clearTools,
-  initializeDefaultTools,
+  clearTools, executeTool,
+  executeToolWithRecord, getRegisteredToolNames, getTool, getToolCount, getToolDefinitions, hasTool, initializeDefaultTools, registerTool,
+  registerTools, unregisterTool
 } from '@/theme/tools'
 
-// 平台解析工具（从子模块导出）
+// 平台解析工具(从子模块导出)
 export {
-  parseZhihuDef,
-  parseXiaohongshuDef,
-  parseWechatDef,
-  parsePlatformLinkDef,
-  ocrImageDef,
-  processImageDef,
+  ocrImageDef, parsePlatformLinkDef, parseWechatDef, parseXiaohongshuDef, parseZhihuDef, processImageDef
 } from '@/theme/tools/platform'
 
 export type {
-  ToolDefinition,
+  ThinkingStep, ToolCallRecord, ToolDefinition,
   ToolExecutor,
-  ToolRegistration,
-  ToolCallRecord,
-  ThinkingStep,
+  ToolRegistration
 } from '@/theme/tools/types'
 
 // ===== Types (避免与其他导出冲突) =====
 export type {
-  MessageRole,
-  MessageStatus,
-  ModelType,
-  ReasoningContent,
-  AttachmentType,
-  MessageAttachment,
-  TokenUsage,
-  MessageMetadata,
-  MessageVersion,
-  ChatMessage,
-  MessageGroup,
-  SessionConfig,
-  SessionStats,
-  ChatSession,
-  GroupedSessions,
-  DeepSeekRequest,
-  DeepSeekStreamChunk,
-  ChatState,
-  PersistedData,
-  PersistedDataV2,
-  StreamState,
+  AttachmentType, ChatMessage, ChatSession, ChatState, DeepSeekRequest,
+  DeepSeekStreamChunk, GroupedSessions, MessageAttachment, MessageGroup, MessageMetadata, MessageRole,
+  MessageStatus, MessageVersion, ModelType, PersistedData,
+  PersistedDataV2, ReasoningContent, SessionConfig,
+  SessionStats, StreamState, TokenUsage
 } from '@/theme/types/chat'
 
 export type {
-  Agent,
-  AgentLevel,
-  AgentStatus,
-  AgentPermission,
-  AgentMemory,
-  AgentCapabilities,
+  Agent, AgentCapabilities,
   AgentConfigMode,
-  AgentCreateParams,
-  AgentUpdateParams,
-  Skill,
+  AgentCreateParams, AgentLevel, AgentMemory, AgentPermission, AgentStatus, AgentUpdateParams, CapabilityEdge,
+  CapabilityGraph, CapabilityNode, Skill,
   SkillCategory,
-  SkillCreateParams,
-  Tool,
-  CapabilityNode,
-  CapabilityEdge,
-  CapabilityGraph,
-  SystemPromptContext,
+  SkillCreateParams, SystemPromptContext, Tool
 } from '@/theme/types/agent'
 
 // ===== Utils =====
@@ -120,12 +68,12 @@ export * from '@/theme/utils'
 
 // ===== Components =====
 // Chat 组件
-export { default as ChatLayout } from './ChatLayout.vue'
 export { default as ChatInput } from './ChatInput.vue'
-export { default as MessageList } from './MessageList.vue'
+export { default as ChatLayout } from './ChatLayout.vue'
 export { default as MessageBubble } from './MessageBubble.vue'
-export { default as SessionPanel } from './SessionPanel.vue'
+export { default as MessageList } from './MessageList.vue'
 export { default as SessionManager } from './SessionManager.vue'
+export { default as SessionPanel } from './SessionPanel.vue'
 export { default as SettingsPanel } from './SettingsPanel.vue'
 
 // Agent 组件
@@ -136,3 +84,4 @@ export {
   AgentDetail,
   SkillsPanel
 } from '@/theme/components/agent'
+

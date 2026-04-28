@@ -2,9 +2,8 @@
  * ArXiv 学术工具
  */
 
-import type { ToolDefinition } from '@/theme/tools/types'
-import type { ToolExecutor, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import type { ToolDefinition, ToolExecutor, ToolResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 import { proxyFetch } from './other'
 
 // ==================== ArXiv 类型与辅助函数 ====================
@@ -34,8 +33,8 @@ function cleanXmlText(text: string): string {
 
 function formatDate(dateStr: string): string {
   try {
-    return new Date(dateStr).toLocaleDateString('zh-CN', { 
-      year: 'numeric', month: 'short', day: 'numeric' 
+    return new Date(dateStr).toLocaleDateString('zh-CN', {
+      year: 'numeric', month: 'short', day: 'numeric'
     })
   } catch { return dateStr }
 }
@@ -44,30 +43,30 @@ function parseArxivXml(xml: string): ArxivPaper[] {
   const papers: ArxivPaper[] = []
   const entryRegex = /<entry>([\s\S]*?)<\/entry>/g
   let match
-  
+
   while ((match = entryRegex.exec(xml)) !== null) {
     const entry = match[1]
     const idMatch = entry.match(/<id>(.*?)<\/id>/)
     const titleMatch = entry.match(/<title>([\s\S]*?)<\/title>/)
     const summaryMatch = entry.match(/<summary>([\s\S]*?)<\/summary>/)
     const publishedMatch = entry.match(/<published>(.*?)<\/published>/)
-    
+
     const authors: string[] = []
     const authorRegex = /<author>\s*<name>(.*?)<\/name>\s*<\/author>/g
     let authorMatch
     while ((authorMatch = authorRegex.exec(entry)) !== null) {
       authors.push(authorMatch[1].trim())
     }
-    
+
     const categories: string[] = []
     const catRegex = /<category term="(.*?)"/g
     let catMatch
     while ((catMatch = catRegex.exec(entry)) !== null) {
       categories.push(catMatch[1])
     }
-    
+
     const arxivId = idMatch ? idMatch[1].split('/').pop()?.replace('abs/', '').replace(/v\d+$/, '') || '' : ''
-    
+
     if (arxivId && titleMatch) {
       papers.push({
         id: arxivId,
@@ -81,7 +80,7 @@ function parseArxivXml(xml: string): ArxivPaper[] {
       })
     }
   }
-  
+
   return papers
 }
 
@@ -91,7 +90,7 @@ export const searchArxivDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'searchArxiv',
-    description: '搜索 ArXiv 学术论文。支持关键词、分类过滤。常用分类：cs.AI(AI), cs.CL(NLP), cs.CV(计算机视觉), cs.LG(机器学习)。注意：ArXiv 免费 API 有速率限制（约每 3 秒 1 次），请尽量把相关主题用 OR 合并到一次查询中，避免连续发起多次搜索。',
+    description: '搜索 ArXiv 学术论文。支持关键词、分类过滤。常用分类：cs.AI(AI), cs.CL(NLP), cs.CV(计算机视觉), cs.LG(机器学习)。注意：ArXiv 免费 API 有速率限制(约每 3 秒 1 次)，请尽量把相关主题用 OR 合并到一次查询中，避免连续发起多次搜索。',
     parameters: {
       type: 'object',
       properties: {
@@ -128,7 +127,7 @@ export const fetchArxivDef: ToolDefinition = {
 
 export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
   const { query, category = '', max_results = 5, sort_by = 'relevance' } = args
-  
+
   if (!query) {
     return createErrorResult(
       'Missing query parameter',
@@ -136,17 +135,17 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
       '示例: searchArxiv(query="transformer")'
     )
   }
-  
+
   const limit = Math.min(Math.max(1, max_results), 50)
-  
+
   try {
     let searchQuery = encodeURIComponent(query)
     if (category) searchQuery = `cat:${category}+AND+${searchQuery}`
-    
+
     const url = `https://export.arxiv.org/api/query?search_query=${searchQuery}&start=0&max_results=${limit}&sortBy=${sort_by}&sortOrder=descending`
-    
+
     const response = await proxyFetch(url, { 'Accept': 'application/atom+xml' })
-    
+
     if (!response.ok) {
       return createErrorResult(
         `HTTP ${response.status}`,
@@ -154,10 +153,10 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
         '请稍后重试或检查网络连接'
       )
     }
-    
+
     const xmlText = await response.text()
     const papers = parseArxivXml(xmlText)
-    
+
     if (papers.length === 0) {
       return createSuccessResult(
         [],
@@ -166,8 +165,8 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
         '尝试使用不同的关键词或放宽搜索条件'
       )
     }
-    
-    // 格式化输出（给人类/AI 看）
+
+    // 格式化输出(给人类/AI 看)
     let formattedResult = `📚 ArXiv 搜索结果: "${query}" (${papers.length}篇)\n\n`
     papers.forEach((p, i) => {
       formattedResult += `${i + 1}. **${p.title}**\n`
@@ -176,7 +175,7 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
       formattedResult += `   📝 ${p.summary}\n`
       formattedResult += `   🔗 fetchArxiv(paper_id="${p.id}")\n\n`
     })
-    
+
     // 精简 data，去掉长摘要，避免 JSON.stringify 后体积过大导致 UI 卡顿
     const slimPapers = papers.map(p => ({
       id: p.id,
@@ -188,7 +187,7 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
       absUrl: p.absUrl,
       summaryPreview: p.summary
     }))
-    
+
     return createSuccessResult(
       slimPapers,
       formattedResult,

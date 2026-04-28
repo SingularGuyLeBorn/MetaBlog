@@ -20,7 +20,7 @@ for i, cell in enumerate(nb["cells"]):
             '    if patch_result.get("code", 0) == 0 or "block" in patch_result:\n        print(f"[OK] Cell {idx} updated")\n    else:\n        print(f"[WARN] Cell {idx} patch failed: {patch_result.get(\'msg\')}")'
         )
         nb["cells"][i]["source"] = new_src.split("\n")
-        # 确保每行末尾有换行符（除了最后一行）
+        # 确保每行末尾有换行符(除了最后一行)
         nb["cells"][i]["source"] = [line + "\n" for line in new_src.split("\n")[:-1]] + [new_src.split("\n")[-1]]
         print(f"[OK] Fixed cell {i+1}: table indexing + PATCH check")
         break

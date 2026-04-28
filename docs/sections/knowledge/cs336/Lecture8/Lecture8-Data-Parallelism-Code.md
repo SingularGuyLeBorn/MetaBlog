@@ -1,10 +1,10 @@
 # 精英笔记：数据并行 (DDP) 代码实现
 
-本笔记将深入解析 `data_parallelism_main` 函数，它是分布式数据并行（Distributed Data Parallelism, DDP）的一个最小化但功能完整的实现。
+本笔记将深入解析 `data_parallelism_main` 函数，它是分布式数据并行(Distributed Data Parallelism, DDP)的一个最小化但功能完整的实现。
 
 ### 核心功能
 
-数据并行的核心思想是在多个设备上维护一份完全相同的模型副本，并将一个大的数据批次（batch）切分成多个子批次（mini-batches）。每个设备独立地在自己的子批次上进行前向和反向传播计算梯度。关键的同步步骤发生在梯度计算之后，所有设备通过 `All-Reduce` 操作将其梯度进行平均，然后每个设备使用这个全局一致的平均梯度来更新自己的模型参数。
+数据并行的核心思想是在多个设备上维护一份完全相同的模型副本，并将一个大的数据批次(batch)切分成多个子批次(mini-batches)。每个设备独立地在自己的子批次上进行前向和反向传播计算梯度。关键的同步步骤发生在梯度计算之后，所有设备通过 `All-Reduce` 操作将其梯度进行平均，然后每个设备使用这个全局一致的平均梯度来更新自己的模型参数。
 
 ```python
 def data_parallelism_main(rank: int, world_size: int, data: torch.Tensor, num_layers: int, num_steps: int):
@@ -57,7 +57,7 @@ def data_parallelism_main(rank: int, world_size: int, data: torch.Tensor, num_la
 
 *   **1. `setup(rank, world_size)`**: 初始化 `torch.distributed` 进程组。它会设置 `MASTER_ADDR` 和 `MASTER_PORT` 环境变量，让所有进程能够相互发现并建立通信。
 *   **2. 数据分片**: 这部分代码模拟了数据加载过程。在实际应用中，每个进程通常会使用一个 `DistributedSampler` 来直接从磁盘加载属于自己的那部分数据，以避免不必要的内存开销。这里的 `local_data` 就是每个设备独有的输入。
-*   **3. 模型和优化器初始化**: `get_init_params` 确保了在训练开始前，所有rank上的模型参数是完全一致的（通过设置相同的随机种子）。每个rank都创建自己的优化器实例，管理本地模型参数的更新。
+*   **3. 模型和优化器初始化**: `get_init_params` 确保了在训练开始前，所有rank上的模型参数是完全一致的(通过设置相同的随机种子)。每个rank都创建自己的优化器实例，管理本地模型参数的更新。
 *   **4a. 前向传播**: 完全是标准的模型前向计算流程，但只作用于 `local_data`。
 *   **4b. 反向传播**: PyTorch的自动微分机制会计算出`loss`相对于`params`中每个参数的梯度，并存储在`.grad`属性中。此时，`param.grad`是**本地梯度**，仅基于本地数据计算得出。
 *   **4c. 梯度同步**: 这是魔法发生的地方。`dist.all_reduce(tensor=param.grad, op=dist.ReduceOp.AVG)` 是一个阻塞操作，它会：
@@ -92,6 +92,6 @@ def data_parallelism_main(rank: int, world_size: int, data: torch.Tensor, num_la
 
 ### 与理论的连接
 
-这个实现是**同步随机梯度下降 (Synchronous SGD)** 的一个典型例子。在每个训练步骤中，所有工作节点（ranks）都必须等待梯度同步完成才能进行下一步的参数更新。`dist.all_reduce`在这里起到了一个**同步点 (Synchronization Point)** 的作用。
+这个实现是**同步随机梯度下降 (Synchronous SGD)** 的一个典型例子。在每个训练步骤中，所有工作节点(ranks)都必须等待梯度同步完成才能进行下一步的参数更新。`dist.all_reduce`在这里起到了一个**同步点 (Synchronization Point)** 的作用。
 
-这种同步机制确保了算法的确定性和收敛性，与单GPU训练在数学上是等价的（当学习率等价调整后）。其代价是，最慢的那个节点会成为整个系统的瓶颈，因为所有其他节点都必须等待它完成梯度计算和通信。
+这种同步机制确保了算法的确定性和收敛性，与单GPU训练在数学上是等价的(当学习率等价调整后)。其代价是，最慢的那个节点会成为整个系统的瓶颈，因为所有其他节点都必须等待它完成梯度计算和通信。

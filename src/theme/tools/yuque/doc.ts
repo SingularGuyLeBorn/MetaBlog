@@ -8,8 +8,8 @@
  */
 
 import type { ToolDefinition, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
-import { yuqueApi, translateYuqueError } from './repo'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
+import { translateYuqueError, yuqueApi } from './repo'
 
 // =============================================================================
 // 工具定义与执行器
@@ -23,14 +23,14 @@ import { yuqueApi, translateYuqueError } from './repo'
  * 本工具通过获取 TOC 并过滤出 DOC 类型条目来实现。
  *
  * 【与 yuqueTocGet 的区别】
- *   - yuqueTocGet：返回完整目录（含 TITLE 和 DOC）
+ *   - yuqueTocGet：返回完整目录(含 TITLE 和 DOC)
  *   - yuqueDocList：只返回 DOC 类型的文档
  */
 export const yuqueDocListDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'yuqueDocList',
-    description: `列出语雀知识库中的文档列表（只包含文档，不包含目录项）。
+    description: `列出语雀知识库中的文档列表(只包含文档，不包含目录项)。
 
 返回文档标题、slug、创建时间、更新时间等基本信息。
 
@@ -64,10 +64,10 @@ yuqueDocList(repo_id="68025057")
  *
  * 【返回值中的关键字段】
  *   - title: 文档标题
- *   - content: 文档内容（Lake HTML 格式）
- *   - id: 文档数字 ID（更新/删除时需要）
+ *   - content: 文档内容(Lake HTML 格式)
+ *   - id: 文档数字 ID(更新/删除时需要)
  *   - slug: 文档 URL 标识
- *   - format: 格式（通常为 "lake"）
+ *   - format: 格式(通常为 "lake")
  */
 export const yuqueDocReadDef: ToolDefinition = {
   type: 'function',
@@ -75,11 +75,11 @@ export const yuqueDocReadDef: ToolDefinition = {
     name: 'yuqueDocRead',
     description: `读取语雀文档的完整内容。
 
-返回文档的标题、正文（Lake HTML 格式）、创建时间、更新时间等。
+返回文档的标题、正文(Lake HTML 格式)、创建时间、更新时间等。
 
 【重要】repo_id 和 doc_slug 可从 yuqueTocGet 或 yuqueDocList 结果中获取。
 
-返回结果中包含 doc_id（数字 ID），这是后续更新或删除文档的必需参数。
+返回结果中包含 doc_id(数字 ID)，这是后续更新或删除文档的必需参数。
 
 使用示例:
 yuqueDocRead(repo_id="68025057", doc_slug="abc123")`,
@@ -92,7 +92,7 @@ yuqueDocRead(repo_id="68025057", doc_slug="abc123")`,
         },
         doc_slug: {
           type: 'string',
-          description: '文档 Slug（从 TOC 结果中获取，字段名为 url）',
+          description: '文档 Slug(从 TOC 结果中获取，字段名为 url)',
         },
       },
       required: ['repo_id', 'doc_slug'],
@@ -137,7 +137,7 @@ Python 字符串中 \f 会被当作 form feed 吃掉！LaTeX 公式中 \frac、\
 ⚠️ 创建后文档不会自动出现在知识库目录中，如需加入目录请后续在语雀网页版手动调整。
 
 示例:
-# Markdown 格式（推荐，公式/表格/代码块/图片都能正确渲染）
+# Markdown 格式(推荐，公式/表格/代码块/图片都能正确渲染)
 yuqueDocCreate(repo_id="68025057", title="项目文档", content="# 标题\n\n正文", format="markdown")
 
 # 带图片的文档
@@ -168,7 +168,7 @@ yuqueDocCreate(repo_id="68025057", title="带图片的文档", content="# 标题
         },
         slug: {
           type: 'string',
-          description: '自定义文档 URL slug（可选）',
+          description: '自定义文档 URL slug(可选)',
         },
         public: {
           type: 'number',
@@ -191,7 +191,7 @@ yuqueDocCreate(repo_id="68025057", title="带图片的文档", content="# 标题
  *
  * 【示例工作流】
  *   1. yuqueDocRead(repo_id="68025057", doc_slug="abc123")
- *      → 获取 doc_id（如 266422684）
+ *      → 获取 doc_id(如 266422684)
  *   2. yuqueDocUpdate(repo_id="68025057", doc_id="266422684", title="新标题", content="<h1>新内容</h1>")
  */
 export const yuqueDocUpdateDef: ToolDefinition = {
@@ -212,7 +212,7 @@ export const yuqueDocUpdateDef: ToolDefinition = {
 - 如果只传 title 不传 content：只改标题，保留原有内容 ✅
 - 如果传了 content：整个文档内容会被替换为新的 content
 
-【局部替换（推荐）】
+【局部替换(推荐)】
 使用 replace_text 参数实现"只改一句话"：
 yuqueDocUpdate(
   repo_id="68025057",
@@ -222,7 +222,7 @@ yuqueDocUpdate(
 后端会自动：读取当前内容 → 替换指定文本 → 提交更新。
 
 示例:
-# 只更新标题（保留内容）
+# 只更新标题(保留内容)
 yuqueDocUpdate(repo_id="68025057", doc_id="266422684", title="新标题")
 
 # 全量替换内容
@@ -239,15 +239,15 @@ yuqueDocUpdate(repo_id="68025057", doc_id="266422684", replace_text={"old": "错
         },
         doc_id: {
           type: 'string',
-          description: '文档数字 ID（从 yuqueDocRead 结果中获取，不是 slug！）',
+          description: '文档数字 ID(从 yuqueDocRead 结果中获取，不是 slug！)',
         },
         title: {
           type: 'string',
-          description: '新标题（可选，只传 title 时不影响内容）',
+          description: '新标题(可选，只传 title 时不影响内容)',
         },
         content: {
           type: 'string',
-          description: '新正文（可选，如果传入会全量替换原有内容）',
+          description: '新正文(可选，如果传入会全量替换原有内容)',
         },
         format: {
           type: 'string',
@@ -257,7 +257,7 @@ yuqueDocUpdate(repo_id="68025057", doc_id="266422684", replace_text={"old": "错
         },
         replace_text: {
           type: 'object',
-          description: '局部替换（可选）。传入 { old: "原文本", new: "新文本" } 实现只改一句话，不需要自己读取拼接',
+          description: '局部替换(可选)。传入 { old: "原文本", new: "新文本" } 实现只改一句话，不需要自己读取拼接',
         },
       },
       required: ['repo_id', 'doc_id'],
@@ -298,7 +298,7 @@ yuqueDocDelete(repo_id="68025057", doc_id="266422684")`,
         },
         doc_id: {
           type: 'string',
-          description: '文档数字 ID（从 yuqueDocRead 结果中获取，不是 slug！）',
+          description: '文档数字 ID(从 yuqueDocRead 结果中获取，不是 slug！)',
         },
       },
       required: ['repo_id', 'doc_id'],

@@ -1,8 +1,8 @@
 # Lecture 10 Deep Dive: 投机采样 (Speculative Sampling) 的理论正确性
 
-投机采样 (Speculative Sampling/Decoding) 最反直觉也最迷人的性质是：**虽然使用了弱模型（Draft Model）来生成 Token，但最终输出的概率分布与只使用强模型（Target Model）完全一致。**
+投机采样 (Speculative Sampling/Decoding) 最反直觉也最迷人的性质是：**虽然使用了弱模型(Draft Model)来生成 Token，但最终输出的概率分布与只使用强模型(Target Model)完全一致。**
 
-这是一个**无损**的加速算法。本文将详细解释其背后的数学原理（拒绝采样）。
+这是一个**无损**的加速算法。本文将详细解释其背后的数学原理(拒绝采样)。
 
 ## 1. 核心问题
 
@@ -35,7 +35,7 @@
 *   Draft Model 提出 $x$ 的概率是 $p(x)$。
 *   一旦提出，必被接受。
 *   所以这部分的贡献是 $p(x) \times 1 = p(x)$。
-*   但这还不够 $q(x)$，缺少的 $q(x) - p(x)$ 部分将由**拒绝恢复机制**（Resampling）补足。
+*   但这还不够 $q(x)$，缺少的 $q(x) - p(x)$ 部分将由**拒绝恢复机制**(Resampling)补足。
 
 ### Case 2: $q(x) < p(x)$
 这意味着 Draft Model 高估了 $x$ 的概率。
@@ -53,6 +53,6 @@ $$ p'(x) = \text{norm}(\max(0, q(x) - p(x))) $$
 
 ## 4. 结论
 
-通过这种拒绝采样机制（Rejection Sampling），投机采样巧妙地利用了“小模型的猜测”来减少大模型的计算次数，同时**完全保留了大模型的“智商”（概率分布）**。
+通过这种拒绝采样机制(Rejection Sampling)，投机采样巧妙地利用了“小模型的猜测”来减少大模型的计算次数，同时**完全保留了大模型的“智商”(概率分布)**。
 
 这与类似于 Beam Search 的近似搜索不同，Speculative Decoding 是**精确**的。如果你的应用需要严格的 Temperature=0 (Greedy) 或特定的 Top-P 采样，Speculative Decoding 都能保证结果 bit-level 一致。

@@ -3,10 +3,10 @@
  * 参考: agent-id.dev
  * 
  * 每个 Agent 拥有独立的身份标识，包括：
- * - 基础信息（ID、名称、头像）
- * - 联系方式（邮箱、手机号）
- * - Web3 身份（钱包地址）
- * - 平台账号（各社交媒体登录态）
+ * - 基础信息(ID、名称、头像)
+ * - 联系方式(邮箱、手机号)
+ * - Web3 身份(钱包地址)
+ * - 平台账号(各社交媒体登录态)
  */
 
 export type ChainType = 'ethereum' | 'solana' | 'bitcoin' | 'polygon'
@@ -55,24 +55,24 @@ export interface AgentIdentity {
   avatar?: string
   createdAt: string
   updatedAt: string
-  
+
   // 联系方式
   email?: string
   phone?: string
-  
+
   // Web3 身份
   wallets: Wallet[]
   defaultWallet?: string     // 默认钱包地址
-  
+
   // 平台账号
   accounts: PlatformAccount[]
-  
+
   // 权限配置
   permissions: AgentPermissions
-  
+
   // 行为偏好
   preferences: AgentPreferences
-  
+
   // 元数据
   metadata?: Record<string, any>
 }
@@ -254,7 +254,7 @@ export class AgentIdentityManager {
     if (!identity) return null
 
     // 检查地址是否已存在
-    const exists = identity.wallets.some(w => 
+    const exists = identity.wallets.some(w =>
       w.address.toLowerCase() === wallet.address.toLowerCase()
     )
     if (exists) {
@@ -279,7 +279,7 @@ export class AgentIdentityManager {
     const identity = this.identities.get(identityId)
     if (!identity) return false
 
-    const wallet = identity.wallets.find(w => 
+    const wallet = identity.wallets.find(w =>
       w.address.toLowerCase() === address.toLowerCase()
     )
     if (!wallet) return false
@@ -319,7 +319,7 @@ export class AgentIdentityManager {
   }
 
   /**
-   * 导出 Identity（备份）
+   * 导出 Identity(备份)
    */
   exportIdentity(id: string): string | null {
     const identity = this.identities.get(id)
@@ -367,7 +367,7 @@ export class AgentIdentityManager {
    */
   private saveToStorage(): void {
     if (typeof localStorage === 'undefined') return
-    
+
     const data = Array.from(this.identities.entries())
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data))
   }

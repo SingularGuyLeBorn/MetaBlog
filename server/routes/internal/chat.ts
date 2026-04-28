@@ -1,8 +1,8 @@
-import type { ViteDevServer } from "vite";
-import path from "path";
 import fs from "fs";
 import { Tiktoken } from "js-tiktoken/lite";
 import cl100k_base from "js-tiktoken/ranks/cl100k_base";
+import path from "path";
+import type { ViteDevServer } from "vite";
 
 export interface RouteContext {
   system: any;
@@ -19,7 +19,7 @@ function translateLLMError(status: number, errorText: string, provider: string):
   if (status === 401) {
     return {
       message: `${provider} API Key 无效或已过期`,
-      suggestion: "请检查 LLM API Key 配置是否正确（DEEPSEEK_API_KEY 或 KIMI_API_KEY），或密钥是否已过期/被撤销",
+      suggestion: "请检查 LLM API Key 配置是否正确(DEEPSEEK_API_KEY 或 KIMI_API_KEY)，或密钥是否已过期/被撤销",
     };
   }
   if (status === 402 || lower.includes("insufficient_quota") || lower.includes("quota") || lower.includes("billing") || lower.includes("balance")) {
@@ -30,7 +30,7 @@ function translateLLMError(status: number, errorText: string, provider: string):
   }
   if (status === 429 || lower.includes("rate limit") || lower.includes("too many requests")) {
     return {
-      message: `${provider} 请求过于频繁（速率限制）`,
+      message: `${provider} 请求过于频繁(速率限制)`,
       suggestion: "触发了 API 速率限制，请降低请求频率，稍后重试。如频繁出现，考虑升级账户或增加并发配额",
     };
   }
@@ -106,7 +106,7 @@ interface ModelConfig {
 }
 
 /**
- * 读取环境变量（兼容 LLM_ 和 VITE_ 前缀）
+ * 读取环境变量(兼容 LLM_ 和 VITE_ 前缀)
  *
  * 设计说明：
  *   依赖 server/vitepress-integration.ts 顶部预加载的 process.env。
@@ -114,42 +114,42 @@ interface ModelConfig {
  *   无需每次调用 loadEnv() 读文件。
  *
  * 优先级：
- *   1. process.env[key]（精确匹配）
- *   2. process.env[key.replace("LLM_", "VITE_")]（VITE_ 前缀回退）
- *   3. fallback（默认值）
+ *   1. process.env[key](精确匹配)
+ *   2. process.env[key.replace("LLM_", "VITE_")](VITE_ 前缀回退)
+ *   3. fallback(默认值)
  */
 function env(key: string, fallback: string = ""): string {
   return process.env[key] || process.env[key.replace("LLM_", "VITE_")] || fallback;
 }
 
 /**
- * 模型配置模板（不含动态 apiKey）
+ * 模型配置模板(不含动态 apiKey)
  *
  * 注意：apiKey 等敏感配置在 getModelConfig() 中动态读取，
  * 避免模块级常量导致的初始化时机问题。
  */
 const MODEL_CONFIG_TEMPLATES: Record<string, Omit<ModelConfig, "apiKey"> & { apiKeyEnv: string }> = {
-  "deepseek-chat": {
+  "deepseek-v4-pro": {
     provider: "deepseek",
-    model: "deepseek-chat",
+    model: "deepseek-v4-pro",
     baseURL: "https://api.deepseek.com/v1",
     apiKeyEnv: "LLM_DEEPSEEK_API_KEY",
     supportsVision: false,
     supportsVideo: false,
     supportsFunctionCalling: true,
     maxTokens: 8192,
-    contextWindow: 128000,
+    contextWindow: 1000000,
   },
-  "deepseek-reasoner": {
+  "deepseek-v4-flash": {
     provider: "deepseek",
-    model: "deepseek-reasoner",
+    model: "deepseek-v4-flash",
     baseURL: "https://api.deepseek.com/v1",
     apiKeyEnv: "LLM_DEEPSEEK_API_KEY",
     supportsVision: false,
     supportsVideo: false,
     supportsFunctionCalling: true,
-    maxTokens: 64000,
-    contextWindow: 128000,
+    maxTokens: 8192,
+    contextWindow: 1000000,
   },
   "kimi-k2.5": {
     provider: "kimi",
@@ -157,89 +157,23 @@ const MODEL_CONFIG_TEMPLATES: Record<string, Omit<ModelConfig, "apiKey"> & { api
     baseURL: "https://api.moonshot.cn/v1",
     apiKeyEnv: "LLM_KIMI_API_KEY",
     supportsVision: true,
-    supportsVideo: false,
+    supportsVideo: true,
     supportsFunctionCalling: true,
     maxTokens: 8192,
     contextWindow: 256000,
-  },
-  "kimi-k2-turbo-preview": {
-    provider: "kimi",
-    model: "kimi-k2-turbo-preview",
-    baseURL: "https://api.moonshot.cn/v1",
-    apiKeyEnv: "LLM_KIMI_API_KEY",
-    supportsVision: true,
-    supportsVideo: false,
-    supportsFunctionCalling: true,
-    maxTokens: 8192,
-    contextWindow: 256000,
-  },
-  "kimi-k2-thinking": {
-    provider: "kimi",
-    model: "kimi-k2-thinking",
-    baseURL: "https://api.moonshot.cn/v1",
-    apiKeyEnv: "LLM_KIMI_API_KEY",
-    supportsVision: true,
-    supportsVideo: false,
-    supportsFunctionCalling: true,
-    maxTokens: 8192,
-    contextWindow: 256000,
-  },
-  "kimi-k2-thinking-turbo": {
-    provider: "kimi",
-    model: "kimi-k2-thinking-turbo",
-    baseURL: "https://api.moonshot.cn/v1",
-    apiKeyEnv: "LLM_KIMI_API_KEY",
-    supportsVision: true,
-    supportsVideo: false,
-    supportsFunctionCalling: true,
-    maxTokens: 8192,
-    contextWindow: 256000,
-  },
-  "moonshot-v1-8k-vision-preview": {
-    provider: "kimi",
-    model: "moonshot-v1-8k-vision-preview",
-    baseURL: "https://api.moonshot.cn/v1",
-    apiKeyEnv: "LLM_KIMI_API_KEY",
-    supportsVision: true,
-    supportsVideo: false,
-    supportsFunctionCalling: true,
-    maxTokens: 8192,
-    contextWindow: 8192,
-  },
-  "moonshot-v1-32k-vision-preview": {
-    provider: "kimi",
-    model: "moonshot-v1-32k-vision-preview",
-    baseURL: "https://api.moonshot.cn/v1",
-    apiKeyEnv: "LLM_KIMI_API_KEY",
-    supportsVision: true,
-    supportsVideo: false,
-    supportsFunctionCalling: true,
-    maxTokens: 32000,
-    contextWindow: 32000,
-  },
-  "moonshot-v1-128k-vision-preview": {
-    provider: "kimi",
-    model: "moonshot-v1-128k-vision-preview",
-    baseURL: "https://api.moonshot.cn/v1",
-    apiKeyEnv: "LLM_KIMI_API_KEY",
-    supportsVision: true,
-    supportsVideo: false,
-    supportsFunctionCalling: true,
-    maxTokens: 128000,
-    contextWindow: 128000,
   },
 };
 
 /**
- * 获取模型配置（惰性初始化）
+ * 获取模型配置(惰性初始化)
  *
  * 每次调用时从 process.env 动态读取 apiKey，确保：
- * 1. 不依赖模块加载顺序（.env 预加载后 process.env 始终可用）
- * 2. 支持运行时更换 Key（无需重启服务器）
+ * 1. 不依赖模块加载顺序(.env 预加载后 process.env 始终可用)
+ * 2. 支持运行时更换 Key(无需重启服务器)
  * 3. 避免模块级常量导致的初始化时机问题
  *
- * @param modelName - 模型名称，如 "deepseek-chat"、"kimi-k2.5"
- * @returns 完整的 ModelConfig（含动态读取的 apiKey）
+ * @param modelName - 模型名称，如 "deepseek-v4-pro"、"kimi-k2.5"
+ * @returns 完整的 ModelConfig(含动态读取的 apiKey)
  * @throws Error 当模型名称不存在时
  */
 function getModelConfig(modelName: string): ModelConfig {
@@ -460,7 +394,7 @@ export function registerChatRoutes(server: ViteDevServer, _ctx: RouteContext) {
       const modelConfig = getModelConfig(config.model);
       validateApiKey(modelConfig);
 
-      // Token 估算（基于原始消息）
+      // Token 估算(基于原始消息)
       const inputTokens = estimateChatTokens(messages);
 
       // 智能截断
@@ -477,21 +411,29 @@ export function registerChatRoutes(server: ViteDevServer, _ctx: RouteContext) {
         stream: stream !== false,
       };
 
-      if (!config.model?.includes("reasoner")) {
+      // DeepSeek V4 Pro 始终推理，不传 temperature；Kimi 也只接受 temperature=1，干脆不传
+      if (config.model !== "deepseek-v4-pro" && !config.model.startsWith("kimi")) {
         requestBody.temperature = config.temperature ?? 1.0;
       }
 
-      if (config.model === "deepseek-chat" && config.enableReasoning) {
-        requestBody.thinking = { type: "enabled" };
+      // DeepSeek V4 系列推理控制：reasoning_effort (high / max)
+      if (config.model.startsWith("deepseek-v4")) {
+        if (config.model === "deepseek-v4-pro" || config.enableReasoning) {
+          requestBody.reasoning_effort = config.reasoningEffort || "high";
+        }
       }
 
-      // Kimi K2.5 思考模式与内置工具冲突处理
-      if (config.model === "kimi-k2.5" && config.enableReasoning) {
+      // Kimi K2.5 思考模式：通过 extra_body.enable_thinking 控制
+      if (config.model === "kimi-k2.5") {
         const hasBuiltinTools = clientTools?.some((t: any) => t.function?.name?.startsWith("$"));
-        requestBody.thinking = { type: hasBuiltinTools ? "disabled" : "enabled" };
+        const enableThinking = config.enableReasoning && !hasBuiltinTools;
+        requestBody.extra_body = {
+          ...(requestBody.extra_body || {}),
+          enable_thinking: enableThinking,
+        };
       }
 
-      // 透传工具定义（前端传入）
+      // 透传工具定义(前端传入)
       if (clientTools && clientTools.length > 0 && modelConfig.supportsFunctionCalling) {
         requestBody.tools = clientTools;
       }

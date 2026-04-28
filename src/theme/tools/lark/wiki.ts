@@ -1,5 +1,5 @@
 import type { ToolDefinition, ToolResult } from '@/theme/tools/types'
-import { createSuccessResult, createErrorResult } from '@/theme/tools/types'
+import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
 
 const API_BASE = '/api/lark'
 
@@ -36,12 +36,12 @@ export const feishuWikiSpaceCreateDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'feishuWikiSpaceCreate',
-    description: '创建飞书知识库空间（Wiki Space）。创建成功后，可用 feishuWikiNodeCreate 在知识库中挂载文档。',
+    description: '创建飞书知识库空间(Wiki Space)。创建成功后，可用 feishuWikiNodeCreate 在知识库中挂载文档。',
     parameters: {
       type: 'object',
       properties: {
         name: { type: 'string', description: '知识库名称' },
-        description: { type: 'string', description: '知识库描述（可选）' },
+        description: { type: 'string', description: '知识库描述(可选)' },
       },
       required: ['name'],
     },
@@ -56,7 +56,7 @@ export const feishuWikiSpaceListDef: ToolDefinition = {
     parameters: {
       type: 'object',
       properties: {
-        page_size: { type: 'number', description: '每页数量（1-50，默认 10）', default: 10 },
+        page_size: { type: 'number', description: '每页数量(1-50，默认 10)', default: 10 },
       },
       required: [],
     },
@@ -87,8 +87,8 @@ export const feishuWikiSpaceUpdateDef: ToolDefinition = {
       type: 'object',
       properties: {
         space_id: { type: 'string', description: '知识库空间 ID' },
-        name: { type: 'string', description: '新名称（可选）' },
-        description: { type: 'string', description: '新描述（可选）' },
+        name: { type: 'string', description: '新名称(可选)' },
+        description: { type: 'string', description: '新描述(可选)' },
       },
       required: ['space_id'],
     },
@@ -114,13 +114,13 @@ export const feishuWikiNodeCreateDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'feishuWikiNodeCreate',
-    description: '在飞书知识库中创建节点（挂载文档）。创建成功后返回 node_token。',
+    description: '在飞书知识库中创建节点(挂载文档)。创建成功后返回 node_token。',
     parameters: {
       type: 'object',
       properties: {
         space_id: { type: 'string', description: '知识库空间 ID' },
-        title: { type: 'string', description: '节点标题（创建 docx 时需要）' },
-        parent_node_token: { type: 'string', description: '父节点 token（可选），不传则挂载到根节点' },
+        title: { type: 'string', description: '节点标题(创建 docx 时需要)' },
+        parent_node_token: { type: 'string', description: '父节点 token(可选)，不传则挂载到根节点' },
         obj_type: { type: 'string', enum: ['docx', 'sheet', 'bitable', 'mindnote'], description: '对象类型，默认 docx', default: 'docx' },
       },
       required: ['space_id', 'title'],
@@ -132,13 +132,13 @@ export const feishuWikiNodeListDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'feishuWikiNodeList',
-    description: '列出飞书知识库中的节点（文档列表）。会自动翻页获取全部节点。',
+    description: '列出飞书知识库中的节点(文档列表)。会自动翻页获取全部节点。',
     parameters: {
       type: 'object',
       properties: {
         space_id: { type: 'string', description: '知识库空间 ID' },
-        parent_node_token: { type: 'string', description: '父节点 token（可选），不传则获取根节点下的节点' },
-        page_size: { type: 'number', description: '每页数量（默认 10）', default: 10 },
+        parent_node_token: { type: 'string', description: '父节点 token(可选)，不传则获取根节点下的节点' },
+        page_size: { type: 'number', description: '每页数量(默认 10)', default: 10 },
       },
       required: ['space_id'],
     },
@@ -171,7 +171,7 @@ export const feishuWikiNodeMoveDef: ToolDefinition = {
       properties: {
         space_id: { type: 'string', description: '知识库空间 ID' },
         node_token: { type: 'string', description: '要移动的节点 token' },
-        parent_node_token: { type: 'string', description: '目标父节点 token（可选）' },
+        parent_node_token: { type: 'string', description: '目标父节点 token(可选)' },
       },
       required: ['space_id', 'node_token'],
     },
@@ -182,14 +182,14 @@ export const feishuWikiMoveDocDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'feishuWikiMoveDoc',
-    description: '将外部云文档（docx）迁入飞书 Wiki 知识库。【重要】文档必须用 user_access_token 创建，用户才是文档拥有者，才有权限迁入 Wiki。',
+    description: '将外部云文档(docx)迁入飞书 Wiki 知识库。【重要】文档必须用 user_access_token 创建，用户才是文档拥有者，才有权限迁入 Wiki。',
     parameters: {
       type: 'object',
       properties: {
         space_id: { type: 'string', description: '知识库空间 ID' },
-        doc_token: { type: 'string', description: '要迁入的文档 token（docx 的 document_id）' },
-        parent_node_token: { type: 'string', description: '目标父节点 token（可选）' },
-        title: { type: 'string', description: '迁入后的节点标题（可选）' },
+        doc_token: { type: 'string', description: '要迁入的文档 token(docx 的 document_id)' },
+        parent_node_token: { type: 'string', description: '目标父节点 token(可选)' },
+        title: { type: 'string', description: '迁入后的节点标题(可选)' },
       },
       required: ['space_id', 'doc_token'],
     },
@@ -205,7 +205,7 @@ export const feishuWikiMemberListDef: ToolDefinition = {
       type: 'object',
       properties: {
         space_id: { type: 'string', description: '知识库空间 ID' },
-        page_size: { type: 'number', description: '每页数量（默认 100）', default: 100 },
+        page_size: { type: 'number', description: '每页数量(默认 100)', default: 100 },
       },
       required: ['space_id'],
     },
@@ -216,7 +216,7 @@ export const feishuWikiMemberAddDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'feishuWikiMemberAdd',
-    description: '添加成员到飞书知识库。权限: view（可阅读）或 edit（可编辑）。',
+    description: '添加成员到飞书知识库。权限: view(可阅读)或 edit(可编辑)。',
     parameters: {
       type: 'object',
       properties: {

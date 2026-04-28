@@ -7,7 +7,7 @@
  *
  * 默认限制：
  * - 窗口：60 秒
- * - 最大请求数：30 次/窗口（外部 API 代理）
+ * - 最大请求数：30 次/窗口(外部 API 代理)
  * - 超出返回 429 Too Many Requests
  */
 
@@ -18,7 +18,7 @@ interface Bucket {
 
 const limiters = new Map<string, Bucket>();
 
-/** 清理过期的限流记录（防止内存泄漏） */
+/** 清理过期的限流记录(防止内存泄漏) */
 function cleanupExpired(now: number): void {
   for (const [key, bucket] of limiters.entries()) {
     if (now > bucket.resetAt) {
@@ -30,9 +30,9 @@ function cleanupExpired(now: number): void {
 /**
  * 创建速率限制中间件
  *
- * @param windowMs   时间窗口（毫秒），默认 60 秒
+ * @param windowMs   时间窗口(毫秒)，默认 60 秒
  * @param maxRequests 窗口内最大请求数，默认 30
- * @param keyFn      自定义限流键生成函数（默认按 IP + URL）
+ * @param keyFn      自定义限流键生成函数(默认按 IP + URL)
  */
 export function createRateLimit(
   windowMs = 60000,
@@ -80,8 +80,8 @@ export function createRateLimit(
 /**
  * 按外部 API 域名分组的速率限制
  *
- * GitHub 认证用户每小时 5000 次，我们按 60 秒 30 次（约 1800 次/小时）保守限制，
- * 为其他用途（如人工操作、其他工具）保留配额。
+ * GitHub 认证用户每小时 5000 次，我们按 60 秒 30 次(约 1800 次/小时)保守限制，
+ * 为其他用途(如人工操作、其他工具)保留配额。
  */
 export const rateLimitExternal = createRateLimit(60000, 30);
 

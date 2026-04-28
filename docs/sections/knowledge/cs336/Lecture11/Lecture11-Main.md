@@ -1,13 +1,13 @@
 # Lecture 11: 如何用好 Scaling Law (Scaling Case Studies & μP)
 
 **主讲人**: CS336 Instructor
-**核心议题**: Scaling Law 的工程实践、案例研究（Cerebras-GPT, MiniCPM, DeepSeek）、WSD 学习率调度、μP (Maximal Update Parametrization) 的数学推导与实证验证。
+**核心议题**: Scaling Law 的工程实践、案例研究(Cerebras-GPT, MiniCPM, DeepSeek)、WSD 学习率调度、μP (Maximal Update Parametrization) 的数学推导与实证验证。
 
 ---
 
 ## 1. 引言：为什么需要 Scaling Law？
 
-上一讲我们探讨了 Scaling Law 的理论基础，特别是 Chinchilla 论文提出的计算最优比例（约 20:1 的 Token/Parameter 比）。然而，在实际工程中，我们面临着更复杂的问题：
+上一讲我们探讨了 Scaling Law 的理论基础，特别是 Chinchilla 论文提出的计算最优比例(约 20:1 的 Token/Parameter 比)。然而，在实际工程中，我们面临着更复杂的问题：
 
 > **核心疑问**: Chinchilla 的方法真的有效吗？在 Log-Log 图上拟合曲线真的能指导大模型训练吗？
 
@@ -40,7 +40,7 @@
 
 ### 2.1 概览
 
-Cerebras-GPT 是一系列从 **111M 到 13B** 参数的模型，使用 Chinchilla 比例（约 20:1 Token/Parameter）进行训练。
+Cerebras-GPT 是一系列从 **111M 到 13B** 参数的模型，使用 Chinchilla 比例(约 20:1 Token/Parameter)进行训练。
 
 ![Cerebras Overview](images/03_cerebras_overview.png)
 
@@ -53,7 +53,7 @@ Cerebras-GPT 是一系列从 **111M 到 13B** 参数的模型，使用 Chinchill
 ![Cerebras Scaling Comparison](images/04_cerebras_scaling_comparison.png)
 
 > **关键观察**:
-> - **蓝色 (SP)**: 标准参数化下，Loss 曲线与预测值有较大偏离（振荡）
+> - **蓝色 (SP)**: 标准参数化下，Loss 曲线与预测值有较大偏离(振荡)
 > - **橙色 (μP)**: μP 下的 Loss 曲线更接近拟合的 Scaling Law 预测线
 > - μP 的表现**不亚于甚至优于** Pythia 和 GPT-J
 
@@ -102,11 +102,11 @@ MiniCPM 同样采用 μP 来稳定超参数：
 
 ### 3.3 Critical Batch Size 分析
 
-与 Kaplan 论文一致，MiniCPM 团队研究了**临界 Batch Size**（收益递减点）与目标 Loss 的关系：
+与 Kaplan 论文一致，MiniCPM 团队研究了**临界 Batch Size**(收益递减点)与目标 Loss 的关系：
 
 ![MiniCPM Batch Size](images/09_minicpm_batch_size.png)
 
-> **结论**: 目标 Loss 越低（模型越强），可以使用的 Batch Size 越大。这与 Kaplan 论文的结论一致。
+> **结论**: 目标 Loss 越低(模型越强)，可以使用的 Batch Size 越大。这与 Kaplan 论文的结论一致。
 
 ### 3.4 学习率稳定性验证
 
@@ -116,7 +116,7 @@ MiniCPM 同样采用 μP 来稳定超参数：
 
 > **关键观察**:
 > - 浅色线代表小模型，深色线代表大模型
-> - **最优学习率位置保持不变**（约 $10^{-2}$）
+> - **最优学习率位置保持不变**(约 $10^{-2}$)
 > - 这证明了 μP 的有效性：正确的初始化和每层学习率缩放可以避免反复调参
 
 ---
@@ -135,7 +135,7 @@ MiniCPM 同样采用 μP 来稳定超参数：
 
 **WSD (Warm-up Stable Decay)** 是一种梯形学习率调度：
 1. **Warm-up Phase**: 与 Cosine 相同的预热阶段
-2. **Stable Phase**: 学习率保持**恒定**（平台期）
+2. **Stable Phase**: 学习率保持**恒定**(平台期)
 3. **Decay Phase**: 快速冷却到最小学习率
 
 > **优势**: Stable Phase 是平的！这意味着你可以在一次训练运行中，通过在不同时间点"回退到 Stable Phase 的某个检查点 + Decay"来模拟不同数据量的训练结果。
@@ -155,7 +155,7 @@ MiniCPM 同样采用 μP 来稳定超参数：
 
 ### 4.4 MiniCPM 的 Chinchilla 复现
 
-借助 WSD，MiniCPM 团队以极低的成本完成了 Chinchilla 分析（Method 1 和 Method 3）：
+借助 WSD，MiniCPM 团队以极低的成本完成了 Chinchilla 分析(Method 1 和 Method 3)：
 
 ![MiniCPM Chinchilla](images/13_minicpm_chinchilla.png)
 
@@ -169,7 +169,7 @@ MiniCPM 同样采用 μP 来稳定超参数：
 
 ### 5.1 概览
 
-DeepSeek LLM (7B & 67B) 是 2024 年初发布的模型，在当时的开源模型中表现顶尖（匹配 Llama 2 和 Mistral）。
+DeepSeek LLM (7B & 67B) 是 2024 年初发布的模型，在当时的开源模型中表现顶尖(匹配 Llama 2 和 Mistral)。
 
 ![DeepSeek Overview](images/14_deepseek_overview.png)
 
@@ -191,17 +191,17 @@ DeepSeek LLM (7B & 67B) 是 2024 年初发布的模型，在当时的开源模�
 
 ![DeepSeek Scaling Fit](images/16_deepseek_scaling_fit.png)
 
-> **讲师观点**: Batch Size 的 Scaling Law 看起来比较清晰（左图）。Learning Rate 的拟合（右图）"看起来有点可疑"，我甚至觉得画一条水平线可能也说得过去。但他们确实这样做了并取得了成功。
+> **讲师观点**: Batch Size 的 Scaling Law 看起来比较清晰(左图)。Learning Rate 的拟合(右图)"看起来有点可疑"，我甚至觉得画一条水平线可能也说得过去。但他们确实这样做了并取得了成功。
 >
 > **一个广泛的教训**: Chinchilla 风格的 IsoFLOP 分析通常拟合得非常漂亮，而超参数的 Scaling Law 往往看起来更嘈杂。
 
 ### 5.4 DeepSeek 的 WSD 实现
 
-DeepSeek 同样采用了 WSD 调度，但有一点不同：他们使用了**两阶段 Decay**（约 10% + 10%）。
+DeepSeek 同样采用了 WSD 调度，但有一点不同：他们使用了**两阶段 Decay**(约 10% + 10%)。
 
 ![DeepSeek WSD](images/17_deepseek_wsd.png)
 
-> 研究表明，Decay 阶段占总计算预算的比例（如 20%）并不敏感。
+> 研究表明，Decay 阶段占总计算预算的比例(如 20%)并不敏感。
 
 ### 5.5 DeepSeek 的 Chinchilla 复现
 
@@ -225,17 +225,17 @@ DeepSeek 从零开始重新进行了 Chinchilla 分析，而不是简单地"Carg
 
 ### 6.1 Llama 3
 
-Llama 3 重新进行了 IsoFLOP 分析，得出的最优比例约为 **39:1**（高于 Chinchilla 的 20:1）。
+Llama 3 重新进行了 IsoFLOP 分析，得出的最优比例约为 **39:1**(高于 Chinchilla 的 20:1)。
 
 ![Llama 3 IsoFLOP](images/20_llama3_isoflop.png)
 
-此外，Llama 3 尝试将 Perplexity 与下游任务的准确率关联起来（通过拟合 Sigmoid 曲线）。
+此外，Llama 3 尝试将 Perplexity 与下游任务的准确率关联起来(通过拟合 Sigmoid 曲线)。
 
 ![Llama 3 Downstream](images/21_llama3_downstream.png)
 
 ### 6.2 Hunyuan Large (MoE)
 
-腾讯的 Hunyuan Large 是一个 MoE 模型。他们针对 MoE 架构重新进行了 Chinchilla 分析，得出的比例约为 **96:1**（Token / Active Parameter）。
+腾讯的 Hunyuan Large 是一个 MoE 模型。他们针对 MoE 架构重新进行了 Chinchilla 分析，得出的比例约为 **96:1**(Token / Active Parameter)。
 
 ![Hunyuan IsoFLOP](images/22_hunyuan_isoflop.png)
 
@@ -243,7 +243,7 @@ Llama 3 重新进行了 IsoFLOP 分析，得出的最优比例约为 **39:1**（
 
 ### 6.3 MiniMax-01 (线性注意力)
 
-MiniMax-01 是一个混合架构（Softmax Attention + Linear Attention）。他们的 Scaling 研究旨在证明 Linear Attention 的性能与 Softmax Attention **相当**。
+MiniMax-01 是一个混合架构(Softmax Attention + Linear Attention)。他们的 Scaling 研究旨在证明 Linear Attention 的性能与 Softmax Attention **相当**。
 
 ![MiniMax Scaling](images/23_minimax_scaling.png)
 
@@ -268,7 +268,7 @@ MiniMax-01 是一个混合架构（Softmax Attention + Linear Attention）。他
 
 ### 7.1 核心思想
 
-> **目标**: 随着模型宽度 ($n$) 增加，我们希望某些量保持 $\Theta(1)$ 的阶数（不发散也不消失）。
+> **目标**: 随着模型宽度 ($n$) 增加，我们希望某些量保持 $\Theta(1)$ 的阶数(不发散也不消失)。
 
 ![muP Intro](images/25_mup_intro.png)
 
@@ -278,7 +278,7 @@ MiniMax-01 是一个混合架构（Softmax Attention + Linear Attention）。他
 
 **条件 A1 (激活值稳定性)**: 在初始化时，每个激活值坐标应为 $\Theta(1)$。
 $$ \|h^{(l)}\|_2 = \Theta(\sqrt{n_l}) $$
-（范数随维度增长，因为坐标之间独立）
+(范数随维度增长，因为坐标之间独立)
 
 **条件 A2 (更新量稳定性)**: 经过一次梯度步进后，激活值的变化应为 $\Theta(1)$。
 $$ \|\Delta h^{(l)}\|_2 = \Theta(\sqrt{n_l}) $$
@@ -301,7 +301,7 @@ $$ \|W^{(l)}\|_{op} \approx \sigma_l \cdot (\sqrt{n_l} + \sqrt{n_{l-1}}) $$
 - 选取 $\sigma_l = \frac{1}{\sqrt{n_{l-1}}} \cdot \min\left(1, \sqrt{\frac{n_{l-1}}{n_l}}\right)$
 - 代入可得 $\|h^{(l)}\|_2 = \sqrt{n_l}$
 
-**结论**: 初始化标准差应约为 **$1/\sqrt{\text{fan\_in}}$**（与 Kaiming 初始化一致）。
+**结论**: 初始化标准差应约为 **$1/\sqrt{\text{fan\_in}}$**(与 Kaiming 初始化一致)。
 
 ### 7.3 推导学习率规则 (Condition A2)
 
@@ -368,14 +368,14 @@ $$ \eta_{Adam} = \frac{1}{n_{l-1}} \quad (\text{1 / fan\_in}) $$
 
 ![Lingle Batch Size](images/34_lingle_batch_size.png)
 
-- Batch Size 变化 4 倍（上下），最优学习率**稳定**
+- Batch Size 变化 4 倍(上下)，最优学习率**稳定**
 - μP 对 Batch Size 变化**鲁棒**
 
 ### 8.5 对初始化变体的鲁棒性
 
 ![Lingle Init](images/35_lingle_init.png)
 
-- Query 矩阵初始化为 0（使初始注意力均匀）
+- Query 矩阵初始化为 0(使初始注意力均匀)
 - Unembedding 层使用 SP 或 μP 缩放
 - 以上变体**不影响**最优学习率
 
@@ -389,7 +389,7 @@ $$ \eta_{Adam} = \frac{1}{n_{l-1}} \quad (\text{1 / fan\_in}) $$
 
 ![Lingle Optimizer](images/36_lingle_optimizer.png)
 
-- Lion 优化器（符号梯度）会**破坏** μP
+- Lion 优化器(符号梯度)会**破坏** μP
 - 这是预期的，因为 μP 是为 Adam/SGD 设计的
 
 **强权重衰减 (Weight Decay)**:

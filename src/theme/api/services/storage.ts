@@ -1,27 +1,18 @@
 /**
- * Storage Service - 后端API数据源（支持消息版本 v2）
+ * Storage Service - 后端API数据源(支持消息版本 v2)
  * 
  * 数据格式：v2 - 消息组版本化管理
- * 数据源：后端API（唯一数据源）
+ * 数据源：后端API(唯一数据源)
  */
 
-import type { ChatSession, ChatMessage, MessageGroup } from '@/theme/types'
+import type { ChatMessage, ChatSession, MessageGroup } from '@/theme/types'
 import * as chatStorage from './chatStorage'
 
 // 重新导出 API 函数
 export {
-  getSessions,
-  getSession,
-  createSession,
-  updateSession,
-  deleteSession,
-  getMessageGroups,
-  saveMessageGroup,
-  updateMessageGroup,
-  deleteMessageGroup,
-  saveAllMessageGroups,
-  clearCache,
-  initializeStorage,
+  clearCache, createSession, deleteMessageGroup, deleteSession,
+  getMessageGroups, getSession, getSessions, initializeStorage, saveAllMessageGroups, saveMessageGroup,
+  updateMessageGroup, updateSession
 } from './chatStorage'
 
 // ==================== 工具函数 ====================
@@ -33,7 +24,7 @@ export function convertMessagesToGroups(messages: ChatMessage[]): MessageGroup[]
   const groups: MessageGroup[] = []
   let currentUserMsg: ChatMessage | null = null
   let currentAiVersions: ChatMessage[] = []
-  
+
   for (const msg of messages) {
     if (msg.role === 'user') {
       // 保存之前的组
@@ -55,7 +46,7 @@ export function convertMessagesToGroups(messages: ChatMessage[]): MessageGroup[]
       currentAiVersions.push(msg)
     }
   }
-  
+
   // 保存最后一组
   if (currentUserMsg && currentAiVersions.length > 0) {
     groups.push({
@@ -64,17 +55,17 @@ export function convertMessagesToGroups(messages: ChatMessage[]): MessageGroup[]
       currentVersionIndex: currentAiVersions.findIndex(v => v.isActiveVersion) || 0
     })
   }
-  
+
   return groups
 }
 
 /**
- * 将消息组转换为消息列表（用于显示）
+ * 将消息组转换为消息列表(用于显示)
  * 只返回当前激活的版本
  */
 export function convertGroupsToMessages(groups: MessageGroup[]): ChatMessage[] {
   const messages: ChatMessage[] = []
-  
+
   for (const group of groups) {
     messages.push(group.userMessage)
     // 只添加当前激活的版本
@@ -83,11 +74,11 @@ export function convertGroupsToMessages(groups: MessageGroup[]): ChatMessage[] {
       messages.push({ ...activeVersion, isActiveVersion: true })
     }
   }
-  
+
   return messages
 }
 
-// 已知存在的会话 ID 集合（避免 GET 检查的 404，也避免 POST 造成重复）
+// 已知存在的会话 ID 集合(避免 GET 检查的 404，也避免 POST 造成重复)
 const knownSessionIds = new Set<string>()
 
 export const storage = {
@@ -113,7 +104,7 @@ export const storage = {
           }
           return chatStorage.updateSession(s.id, s)
         }),
-        ...Object.entries(data.messageGroups).map(([sessionId, groups]) => 
+        ...Object.entries(data.messageGroups).map(([sessionId, groups]) =>
           chatStorage.saveAllMessageGroups(sessionId, groups)
         )
       ])
@@ -130,10 +121,10 @@ export const storage = {
   async load(): Promise<{ sessions: ChatSession[]; messageGroups: Record<string, MessageGroup[]>; lastSessionId: string | null; version: 2 }> {
     const sessions = await chatStorage.getSessions()
     const messageGroups: Record<string, MessageGroup[]> = {}
-    
+
     // 标记所有已加载的会话为已知
     sessions.forEach(s => knownSessionIds.add(s.id))
-    
+
     // 加载所有会话的消息组
     for (const session of sessions) {
       const groups = await chatStorage.getMessageGroups(session.id)
@@ -141,12 +132,12 @@ export const storage = {
         messageGroups[session.id] = groups
       }
     }
-    
-    return { 
-      sessions, 
-      messageGroups, 
-      lastSessionId: sessions[0]?.id || null, 
-      version: 2 
+
+    return {
+      sessions,
+      messageGroups,
+      lastSessionId: sessions[0]?.id || null,
+      version: 2
     }
   },
 
@@ -157,7 +148,7 @@ export const storage = {
       const updated = await chatStorage.updateSession(session.id, session)
       return !!updated
     }
-    
+
     // 未知会话 → 创建
     const created = await chatStorage.createSession({
       id: session.id,
@@ -168,8 +159,8 @@ export const storage = {
       knownSessionIds.add(session.id)
       return true
     }
-    
-    // 创建失败（罕见），尝试更新
+
+    // 创建失败(罕见)，尝试更新
     const updated = await chatStorage.updateSession(session.id, session)
     return !!updated
   },
@@ -198,7 +189,7 @@ export const storage = {
   /** 添加 AI 响应版本 */
   async addAiVersion(sessionId: string, userMessageId: string, aiMessage: ChatMessage): Promise<boolean> {
     const groups = await chatStorage.getMessageGroups(sessionId)
-    
+
     // 找到对应的用户消息组
     const group = groups.find(g => g.userMessage.id === userMessageId)
     if (group) {
@@ -210,21 +201,21 @@ export const storage = {
       group.aiVersions.push(aiMessage)
       group.currentVersionIndex = group.aiVersions.length - 1
     } else {
-      // 如果没有找到组，创建新组（异常情况）
+      // 如果没有找到组，创建新组(异常情况)
       groups.push({
         userMessage: { id: userMessageId } as ChatMessage,
         aiVersions: [{ ...aiMessage, isActiveVersion: true, parentMessageId: userMessageId }],
         currentVersionIndex: 0
       })
     }
-    
+
     return chatStorage.saveAllMessageGroups(sessionId, groups)
   },
 
   /** 切换当前显示的版本 */
   async switchVersion(sessionId: string, userMessageId: string, versionIndex: number): Promise<boolean> {
     const groups = await chatStorage.getMessageGroups(sessionId)
-    
+
     const group = groups.find(g => g.userMessage.id === userMessageId)
     if (group && versionIndex >= 0 && versionIndex < group.aiVersions.length) {
       group.currentVersionIndex = versionIndex
@@ -233,20 +224,20 @@ export const storage = {
       })
       return chatStorage.saveAllMessageGroups(sessionId, groups)
     }
-    
+
     return false
   },
 
   /** 删除特定版本 */
   async deleteVersion(sessionId: string, userMessageId: string, versionId: string): Promise<boolean> {
     const groups = await chatStorage.getMessageGroups(sessionId)
-    
+
     const group = groups.find(g => g.userMessage.id === userMessageId)
     if (group) {
       const versionIndex = group.aiVersions.findIndex(v => v.id === versionId)
       if (versionIndex >= 0) {
         group.aiVersions.splice(versionIndex, 1)
-        
+
         // 调整当前索引
         if (group.aiVersions.length === 0) {
           // 如果没有版本了，删除整个组
@@ -258,26 +249,26 @@ export const storage = {
           }
           group.aiVersions[group.currentVersionIndex].isActiveVersion = true
         }
-        
+
         return chatStorage.saveAllMessageGroups(sessionId, groups)
       }
     }
-    
+
     return false
   },
 
   /** 获取消息统计 */
   async getStats(sessionId: string): Promise<{ totalVersions: number; currentIndex: number } | null> {
     const groups = await chatStorage.getMessageGroups(sessionId)
-    
+
     let totalVersions = 0
     let currentIndex = 0
-    
+
     for (const group of groups) {
       totalVersions += group.aiVersions.length
       currentIndex += group.currentVersionIndex + 1
     }
-    
+
     return { totalVersions, currentIndex }
   }
 }

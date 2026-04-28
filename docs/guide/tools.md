@@ -22,16 +22,16 @@ Function Calling (OpenAI 格式)
 
 | 概念 | 说明 |
 |------|------|
-| **ToolDefinition** | 工具 Schema 定义（OpenAI Function Calling 格式） |
+| **ToolDefinition** | 工具 Schema 定义(OpenAI Function Calling 格式) |
 | **ToolExecutor** | 工具执行函数 |
-| **ToolResult** | 统一返回格式（成功/失败） |
-| **ToolRegistration** | 工具注册信息（定义 + 执行器绑定） |
+| **ToolResult** | 统一返回格式(成功/失败) |
+| **ToolRegistration** | 工具注册信息(定义 + 执行器绑定) |
 
 ---
 
 ## 📋 内置工具清单
 
-### 文章管理（6个）
+### 文章管理(6个)
 
 | 工具名 | 功能 | 示例调用 |
 |--------|------|---------|
@@ -42,7 +42,7 @@ Function Calling (OpenAI 格式)
 | `updateArticle` | 更新文章 | `updateArticle(path="...", content="...", mode="append")` |
 | `deleteArticle` | 删除文章 | `deleteArticle(path="...", confirm=true)` |
 
-### GitHub 仓库查询与管理（13个）
+### GitHub 仓库查询与管理(13个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -60,7 +60,7 @@ Function Calling (OpenAI 格式)
 | `github_delete_repo` | 删除仓库 |
 | `github_create_release` | 创建 Release |
 
-### GitHub Issue（6个）
+### GitHub Issue(6个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -71,7 +71,7 @@ Function Calling (OpenAI 格式)
 | `github_list_issue_comments` | 列出评论 |
 | `github_search_issues` | 搜索 Issues |
 
-### GitHub Pull Request（6个）
+### GitHub Pull Request(6个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -82,14 +82,14 @@ Function Calling (OpenAI 格式)
 | `github_get_pull_request_files` | 获取 PR 文件变更 |
 | `github_create_pull_request_review` | 创建 PR Review |
 
-### GitHub 文件操作（2个）
+### GitHub 文件操作(2个)
 
 | 工具名 | 功能 |
 |--------|------|
 | `github_create_or_update_file` | 创建/更新文件 |
 | `github_delete_file` | 删除文件 |
 
-### GitHub 分支与 Fork（4个）
+### GitHub 分支与 Fork(4个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -98,7 +98,7 @@ Function Calling (OpenAI 格式)
 | `github_fork_repo` | Fork 仓库 |
 | `github_list_branches` | 列出分支 |
 
-### GitHub 工作流（3个）
+### GitHub 工作流(3个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -106,16 +106,16 @@ Function Calling (OpenAI 格式)
 | `github_list_workflow_runs` | 列出工作流运行 |
 | `github_trigger_workflow` | 触发工作流 |
 
-### 飞书文档（13个）
+### 飞书文档(13个)
 
 | 工具名 | 功能 |
 |--------|------|
-| `feishuDocCreate` | 创建飞书文档（支持自动分配权限） |
+| `feishuDocCreate` | 创建飞书文档(支持自动分配权限) |
 | `feishuDocRead` | 读取文档内容 |
 | `feishuDocMeta` | 获取文档元信息 |
 | `feishuDocSearch` | 搜索文档 |
 | `feishuDocBlocks` | 获取文档块列表 |
-| `feishuDocAppend` | 追加内容（支持表格、代码块、公式） |
+| `feishuDocAppend` | 追加内容(支持表格、代码块、公式) |
 | `feishuDocUpdateBlock` | 更新文档块 |
 | `feishuDocDeleteBlock` | 删除文档块 |
 | `feishuDocInsertImage` | 插入图片到文档 |
@@ -124,7 +124,7 @@ Function Calling (OpenAI 格式)
 | `feishuImSend` | 发送 IM 消息 |
 | `feishuUserSearch` | 搜索用户 |
 
-### 飞书 Wiki 知识库（13个）
+### 飞书 Wiki 知识库(13个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -142,7 +142,7 @@ Function Calling (OpenAI 格式)
 | `feishuWikiMemberAdd` | 添加成员 |
 | `feishuWikiMemberRemove` | 移除成员 |
 
-### 语雀文档（9个）
+### 语雀文档(9个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -156,7 +156,7 @@ Function Calling (OpenAI 格式)
 | `yuqueImageUpload` | 上传图片 |
 | `yuqueSearch` | 搜索文档 |
 
-### 语雀知识库管理（6个）
+### 语雀知识库管理(6个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -167,21 +167,21 @@ Function Calling (OpenAI 格式)
 | `yuqueRepoSettingGet` | 获取知识库设置 |
 | `yuqueRepoSettingUpdate` | 更新知识库设置 |
 
-### 网络（2个）
+### 网络(2个)
 
 | 工具名 | 功能 |
 |--------|------|
-| `fetchUrl` | HTTP 请求（GET/POST/PUT/DELETE），支持 HTML 提取 |
-| `webSearch` | DuckDuckGo 搜索（零成本） |
+| `fetchUrl` | HTTP 请求(GET/POST/PUT/DELETE)，支持 HTML 提取 |
+| `webSearch` | DuckDuckGo 搜索(零成本) |
 
-### 代码（2个）
+### 代码(2个)
 
 | 工具名 | 功能 |
 |--------|------|
 | `executeCode` | 在沙箱中执行 Python/JS/Bash |
 | `analyzeCode` | 代码分析 |
 
-### 学术研究（8个）
+### 学术研究(8个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -194,7 +194,7 @@ Function Calling (OpenAI 格式)
 | `searchPaperswithcode` | 搜索 Papers with Code |
 | `searchSemanticScholar` | 搜索 Semantic Scholar |
 
-### 文件操作（3个）
+### 文件操作(3个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -202,7 +202,7 @@ Function Calling (OpenAI 格式)
 | `writeFile` | 写入文件 |
 | `listFiles` | 列出目录 |
 
-### 平台解析（9个）
+### 平台解析(9个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -216,7 +216,7 @@ Function Calling (OpenAI 格式)
 | `ocrImage` | OCR 图片识别 |
 | `processImage` | 图片处理 |
 
-### 文本处理（3个）
+### 文本处理(3个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -224,7 +224,7 @@ Function Calling (OpenAI 格式)
 | `formatText` | 文本格式化 |
 | `translateText` | 文本翻译 |
 
-### 系统（4个）
+### 系统(4个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -233,7 +233,7 @@ Function Calling (OpenAI 格式)
 | `calculate` | 数学计算 |
 | `testEcho` | 回声测试 |
 
-### 笔记（3个）
+### 笔记(3个)
 
 | 工具名 | 功能 |
 |--------|------|
@@ -247,7 +247,7 @@ Function Calling (OpenAI 格式)
 
 通过 MCP (Model Context Protocol) 接入外部工具服务。
 
-### 预设配置（20+）
+### 预设配置(20+)
 
 | 类别 | 服务 |
 |------|------|
@@ -270,7 +270,7 @@ Function Calling (OpenAI 格式)
 
 ```
 src/theme/tools/<category>/
-├── <feature>.ts     # 工具定义 + 执行器（同一文件）
+├── <feature>.ts     # 工具定义 + 执行器(同一文件)
 ├── ...              # 其他功能分类文件
 └── index.ts         # 统一导出
 ```
@@ -338,7 +338,7 @@ registerTools([
 
 ## 🧪 工具测试
 
-访问 `/chat` 页面的工具测试面板（ToolTester.vue），可以：
+访问 `/chat` 页面的工具测试面板(ToolTester.vue)，可以：
 
 1. **单个测试**：选择工具，填写参数，执行测试
 2. **批量测试**：一键测试所有工具

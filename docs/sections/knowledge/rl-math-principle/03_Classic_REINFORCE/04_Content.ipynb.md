@@ -42,7 +42,7 @@ np.random.seed(42)
 $$\pi_\theta(a|s) = \frac{\exp(h_\theta(s, a))}{\sum_{a'} \exp(h_\theta(s, a'))}$$
 
 其中：
-- $h_\theta(s, a)$ 是神经网络对状态-动作对的评分（logits）
+- $h_\theta(s, a)$ 是神经网络对状态-动作对的评分(logits)
 - $\theta$ 是神经网络的所有参数
 
 ### 代码实现
@@ -69,7 +69,7 @@ class PolicyNetwork(nn.Module):
         
         数学过程：
         1. h₁ = ReLU(W₁ · s + b₁)     -- 第一层
-        2. logits = W₂ · h₁ + b₂       -- 第二层（未归一化）
+        2. logits = W₂ · h₁ + b₂       -- 第二层(未归一化)
         3. π(a|s) = Softmax(logits)    -- 归一化为概率
         """
         x = F.relu(self.fc1(state))        # h₁ = ReLU(W₁ · s + b₁)
@@ -87,7 +87,7 @@ test_state = torch.randn(1, 4)
 action_probs = policy(test_state)
 print(f"状态: {test_state.numpy().flatten()}")
 print(f"动作概率: π(a=0|s)={action_probs[0,0]:.4f}, π(a=1|s)={action_probs[0,1]:.4f}")
-print(f"概率和: {action_probs.sum().item():.6f}（应该等于1）")
+print(f"概率和: {action_probs.sum().item():.6f}(应该等于1)")
 ```
 
 ---
@@ -99,7 +99,7 @@ print(f"概率和: {action_probs.sum().item():.6f}（应该等于1）")
 根据策略分布采样动作：
 $$a \sim \pi_\theta(\cdot|s)$$
 
-同时计算对数概率（用于后续梯度计算）：
+同时计算对数概率(用于后续梯度计算)：
 $$\log \pi_\theta(a|s)$$
 
 ### 代码实现
@@ -120,7 +120,7 @@ def select_action(policy, state):
     # 获取动作概率分布
     action_probs = policy(state_tensor)
     
-    # 创建分类分布（Categorical Distribution）
+    # 创建分类分布(Categorical Distribution)
     # 这是PyTorch对离散概率分布的封装
     dist = Categorical(action_probs)
     
@@ -147,7 +147,7 @@ print(f"对应的概率 π(a|s): {np.exp(log_prob.item()):.4f}")
 
 ### 理论公式
 
-回报（Return）是从时刻 $t$ 开始的折扣奖励和：
+回报(Return)是从时刻 $t$ 开始的折扣奖励和：
 
 $$G_t = r_{t+1} + \gamma r_{t+2} + \gamma^2 r_{t+3} + \ldots = \sum_{k=0}^{T-t-1} \gamma^k r_{t+k+1}$$
 
@@ -169,7 +169,7 @@ def compute_returns(rewards, gamma):
     returns = [0.0] * T
     
     # 边界条件：最后一步
-    # G_{T-1} = r_T（没有更多未来奖励）
+    # G_{T-1} = r_T(没有更多未来奖励)
     returns[T-1] = rewards[T-1]
     
     # 从后往前递归
@@ -205,7 +205,7 @@ print(f"理论值: {theoretical:.4f}, 计算值: {returns[0]:.4f}")
 解决方案：将回报标准化为均值0、标准差1的分布：
 $$G'_t = \frac{G_t - \mu_G}{\sigma_G + \epsilon}$$
 
-这样，约一半的 $G'_t$ 是正的（增大概率），一半是负的（减小概率）。
+这样，约一半的 $G'_t$ 是正的(增大概率)，一半是负的(减小概率)。
 
 ### 代码实现
 
@@ -234,8 +234,8 @@ print("\n标准化后:")
 for t, (g, g_norm) in enumerate(zip(raw_returns, normalized.tolist())):
     sign = "+" if g_norm > 0 else ""
     print(f"  G_{t}={g} → G'_{t}={sign}{g_norm:.3f}")
-print(f"\n标准化后均值: {normalized.mean():.6f}（应接近0）")
-print(f"标准化后标准差: {normalized.std():.6f}（应接近1）")
+print(f"\n标准化后均值: {normalized.mean():.6f}(应接近0)")
+print(f"标准化后标准差: {normalized.std():.6f}(应接近1)")
 ```
 
 ---
@@ -247,7 +247,7 @@ print(f"标准化后标准差: {normalized.std():.6f}（应接近1）")
 策略梯度定理给出了目标函数的梯度：
 $$\nabla_\theta J(\theta) = \mathbb{E}\left[\sum_t \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot G_t\right]$$
 
-在PyTorch中，我们定义**损失函数**（因为PyTorch做梯度下降来最小化损失）：
+在PyTorch中，我们定义**损失函数**(因为PyTorch做梯度下降来最小化损失)：
 $$\text{Loss} = -\sum_t \log \pi_\theta(a_t|s_t) \cdot G_t$$
 
 **注意负号**：因为 $\min(-J) = \max(J)$
@@ -264,7 +264,7 @@ def compute_policy_loss(log_probs, returns):
     
     负号的原因：
     - 我们想最大化期望回报 J(θ)
-    - PyTorch的optimizer.step()做的是梯度下降（最小化）
+    - PyTorch的optimizer.step()做的是梯度下降(最小化)
     - 所以 loss = -J(θ)，最小化 -J 等于最大化 J
     """
     # 将log_prob列表转换为张量
@@ -302,7 +302,7 @@ for t, (lp, g) in enumerate(zip(fake_log_probs, fake_returns)):
 3. 标准化回报
 4. 计算损失 $L = -\sum_t \log\pi(a_t|s_t) \cdot G_t$
 5. 反向传播计算梯度
-6. 更新参数 $\theta \leftarrow \theta - \alpha \nabla L$（注意是减，因为loss是负的J）
+6. 更新参数 $\theta \leftarrow \theta - \alpha \nabla L$(注意是减，因为loss是负的J)
 
 ### 代码实现
 
@@ -316,7 +316,7 @@ def reinforce_update(policy, optimizer, log_probs, rewards, gamma):
     1. 计算回报 G_t = Σ γ^k r_{t+k+1}
     2. 标准化回报
     3. 计算损失 Loss = -Σ log π · G
-    4. θ ← θ + α · ∇_θ J（通过 optimizer 实现）
+    4. θ ← θ + α · ∇_θ J(通过 optimizer 实现)
     """
     # 步骤1：计算回报
     returns = compute_returns(rewards, gamma)
@@ -330,7 +330,7 @@ def reinforce_update(policy, optimizer, log_probs, rewards, gamma):
     # 步骤4：梯度更新
     optimizer.zero_grad()  # 清空之前的梯度
     loss.backward()        # 反向传播计算 ∇_θ Loss
-    optimizer.step()       # θ ← θ - α · ∇_θ Loss（等价于 θ ← θ + α · ∇_θ J）
+    optimizer.step()       # θ ← θ - α · ∇_θ Loss(等价于 θ ← θ + α · ∇_θ J)
     
     return loss.item()
 

@@ -16,16 +16,18 @@ export const githubCreateBranchDef: ToolDefinition = {
       type: 'object',
       properties: {
         owner: {
-          type: 'string', description: '仓库所有者' },
-          repo: {type: 'string', description: '仓库名称'},
-          branch: {
-            type: 'string', description: '新分支名' },
-            from_branch: {type: 'string', description: '源分支，默认 main', default: 'main'}
-          },
-          required: ['owner', 'repo', 'branch']
-        }
-      }
+          type: 'string', description: '仓库所有者'
+        },
+        repo: { type: 'string', description: '仓库名称' },
+        branch: {
+          type: 'string', description: '新分支名'
+        },
+        from_branch: { type: 'string', description: '源分支，默认 main', default: 'main' }
+      },
+      required: ['owner', 'repo', 'branch']
     }
+  }
+}
 
 
 export const githubDeleteBranchDef: ToolDefinition = {
@@ -39,8 +41,8 @@ export const githubDeleteBranchDef: ToolDefinition = {
         owner: {
           type: 'string', description: '仓库所有者'
         },
-        repo: {type: 'string', description: '仓库名称'},
-        branch: {type: 'string', description: '分支名称'}
+        repo: { type: 'string', description: '仓库名称' },
+        branch: { type: 'string', description: '分支名称' }
       },
       required: ['owner', 'repo', 'branch']
     }
@@ -61,8 +63,8 @@ export const githubForkRepoDef: ToolDefinition = {
         repo: {
           type: 'string', description: '源仓库名'
         },
-        organization: {type: 'string', description: '目标组织（可选）'},
-        name: {type: 'string', description: '新仓库名（可选）'}
+        organization: { type: 'string', description: '目标组织(可选)' },
+        name: { type: 'string', description: '新仓库名(可选)' }
       },
       required: ['owner', 'repo']
     }
@@ -80,8 +82,8 @@ export const githubListBranchesDef: ToolDefinition = {
         owner: {
           type: 'string', description: '仓库所有者'
         },
-        repo: {type: 'string', description: '仓库名称'},
-        per_page: {type: 'number', description: '返回数量，默认30', default: 30}
+        repo: { type: 'string', description: '仓库名称' },
+        per_page: { type: 'number', description: '返回数量，默认30', default: 30 }
       },
       required: ['owner', 'repo']
     }

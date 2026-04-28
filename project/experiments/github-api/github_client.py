@@ -2,7 +2,7 @@
 """
 GitHub API 客户端封装
 
-同时支持直接 REST API 调用（requests）和 gh CLI 命令参考。
+同时支持直接 REST API 调用(requests)和 gh CLI 命令参考。
 Agent 工具最终采用 REST API 方式，gh CLI 仅作为本地测试参考。
 
 等效 gh CLI 命令在 docstring 中标注，格式：
@@ -62,7 +62,7 @@ class GitHubClient:
     def __init__(self, token: Optional[str] = None):
         self.token = token or os.getenv("GITHUB_TOKEN") or os.getenv("VITE_GITHUB_TOKEN")
         if not self.token:
-            warnings.warn("GitHub token 未提供，部分 API（尤其是搜索）将不可用", stacklevel=2)
+            warnings.warn("GitHub token 未提供，部分 API(尤其是搜索)将不可用", stacklevel=2)
         self.session = requests.Session()
         self.session.headers.update({
             "Accept": "application/vnd.github+json",
@@ -216,7 +216,7 @@ class GitHubClient:
         """
         调用 GitHub GraphQL API
 
-        对于复杂查询（如批量获取 PR 文件列表、关联数据），GraphQL 通常比 REST 更高效。
+        对于复杂查询(如批量获取 PR 文件列表、关联数据)，GraphQL 通常比 REST 更高效。
         """
         payload: dict[str, Any] = {"query": query}
         if variables:
@@ -282,7 +282,7 @@ class GitHubClient:
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
-        更新仓库设置（可见性、描述、归档等）
+        更新仓库设置(可见性、描述、归档等)
 
         gh> gh repo edit owner/repo --visibility private
         """
@@ -346,7 +346,7 @@ class GitHubClient:
             payload["default_branch_only"] = True
         return self.post(f"/repos/{quote(owner, safe='')}/{quote(repo, safe='')}/forks", json_data=payload or None)
 
-    # ---------- 内容（类型安全） ----------
+    # ---------- 内容(类型安全) ----------
 
     def list_contents(
         self,
@@ -356,7 +356,7 @@ class GitHubClient:
         ref: Optional[str] = None,
     ) -> list[dict[str, Any]]:
         """
-        获取仓库**目录**内容（保证返回列表）
+        获取仓库**目录**内容(保证返回列表)
 
         gh> gh api repos/owner/repo/contents/path
         """
@@ -379,7 +379,7 @@ class GitHubClient:
         ref: Optional[str] = None,
     ) -> dict[str, Any]:
         """
-        获取**文件**元数据（保证返回字典）
+        获取**文件**元数据(保证返回字典)
 
         gh> gh api repos/owner/repo/contents/path
         """
@@ -402,7 +402,7 @@ class GitHubClient:
         ref: Optional[str] = None,
     ) -> dict[str, Any] | list[dict[str, Any]]:
         """
-        获取仓库目录内容或文件元数据（底层方法，返回类型不确定）
+        获取仓库目录内容或文件元数据(底层方法，返回类型不确定)
 
         推荐优先使用类型安全的方法：
         - 目录 → list_contents()
@@ -420,7 +420,7 @@ class GitHubClient:
 
     def get_file_content(self, owner: str, repo: str, path: str, ref: Optional[str] = None) -> str:
         """
-        获取文件原始内容（自动 base64 解码）
+        获取文件原始内容(自动 base64 解码)
 
         gh> gh api repos/owner/repo/contents/path | jq -r .content | base64 -d
         """
@@ -685,7 +685,7 @@ class GitHubClient:
 
     def get_pull_request_status(self, owner: str, repo: str, number: int) -> dict[str, Any]:
         """
-        获取 PR 的合并状态检查（combined status）
+        获取 PR 的合并状态检查(combined status)
 
         gh> gh pr checks 123 --repo owner/repo
         """
@@ -1029,7 +1029,7 @@ class GitHubClient:
 
     def delete_repo(self, owner: str, repo: str) -> dict[str, Any]:
         """
-        删除仓库（危险操作！）
+        删除仓库(危险操作！)
 
         gh> gh repo delete owner/repo --yes
         """

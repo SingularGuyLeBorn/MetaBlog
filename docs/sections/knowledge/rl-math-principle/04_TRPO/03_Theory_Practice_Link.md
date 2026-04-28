@@ -16,7 +16,7 @@ TRPO 是现代 RL 的数学巅峰之一，它用精确的二阶优化替代了�
 
 ### 2.1 共轭梯度法 (Conjugate Gradient)
 
-我们无法直接计算 Hessian 矩阵 $H$ 的逆（参数量太大）。
+我们无法直接计算 Hessian 矩阵 $H$ 的逆(参数量太大)。
 TRPO 利用 CG 算法近似计算 $x = H^{-1} g$。
 
 ```python

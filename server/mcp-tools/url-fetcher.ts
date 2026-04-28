@@ -1,12 +1,15 @@
 /**
  * MCP Tool: URL Fetcher
  * 从各种 URL 提取内容
+ *
+ * 对齐后端架构：统一走 /api/platform/parse，不再自己调 Jina Reader
  */
 
 export interface FetchOptions {
   url: string
   type?: 'auto' | 'article' | 'video' | 'social'
   timeout?: number
+  options?: { maxAnswers?: number }
 }
 
 export interface FetchedContent {
@@ -26,19 +29,97 @@ export class URLFetcherTool {
   description = '从 URL 提取网页内容'
 
   async execute(options: FetchOptions): Promise<FetchedContent> {
-    const { url, type = 'auto' } = options
+    const { url, type = 'auto', options: parseOptions } = options
 
-    // 根据 URL 自动判断类型
     const detectedType = type === 'auto' ? this.detectType(url) : type
 
     switch (detectedType) {
       case 'video':
         return this.fetchVideo(url)
       case 'social':
-        return this.fetchSocial(url)
+        return this.fetchSocial(url, parseOptions)
       case 'article':
       default:
-        return this.fetchArticle(url)
+        return this.fetchArticle(url, parseOptions)
+    }
+  }
+
+  /**
+   * 统一走 platform-parser 获取内容
+   */
+  private async fetchWithPlatformParser(url: string, timeout = 30000, options?: { maxAnswers?: number }): Promise<FetchedContent | null> {
+    try {
+      const response = await fetch('http://localhost:3000/api/platform/parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, timeout, options })
+      })
+      if (!response.ok) return null
+
+      const data = await response.json()
+      if (!data.success || !data.data?.content) return null
+
+      const { title, author, content, images, method, platform } = data.data
+      return {
+        title: title || 'Untitled',
+        content,
+        author,
+        images: images || [],
+        tags: this.extractTags(content),
+        platform: platform || this.detectPlatform(url),
+        url,
+        fetchedAt: new Date().toISOString(),
+      }
+    } catch {
+      return null
+    }
+  }
+
+  private async fetchArticle(url: string, parseOptions?: { maxAnswers?: number }): Promise<FetchedContent> {
+    const platform = this.detectPlatform(url)
+
+    // 统一走 platform-parser（后端自动选择Fetcher + Parser）
+    const result = await this.fetchWithPlatformParser(url, 30000, parseOptions)
+    if (result) return result
+
+    // 兜底：返回占位
+    console.error('URL Fetch failed:', url)
+    return {
+      title: '获取失败',
+      content: `[无法获取 ${platform} 内容，请检查链接或稍后重试]`,
+      images: [],
+      tags: [platform],
+      platform,
+      url,
+      fetchedAt: new Date().toISOString(),
+    }
+  }
+
+  private async fetchVideo(url: string): Promise<FetchedContent> {
+    return {
+      title: `Video: ${url}`,
+      content: `[Video content from ${url}]`,
+      images: [],
+      tags: ['video'],
+      platform: this.detectPlatform(url),
+      url,
+      fetchedAt: new Date().toISOString(),
+    }
+  }
+
+  private async fetchSocial(url: string, parseOptions?: { maxAnswers?: number }): Promise<FetchedContent> {
+    const result = await this.fetchWithPlatformParser(url, 30000, parseOptions)
+    if (result) return result
+
+    const platform = this.detectPlatform(url)
+    return {
+      title: `${platform} 内容提取中`,
+      content: `[无法获取 ${platform} 内容，请检查链接或稍后重试]`,
+      images: [],
+      tags: [platform],
+      platform,
+      url,
+      fetchedAt: new Date().toISOString(),
     }
   }
 
@@ -49,7 +130,7 @@ export class URLFetcherTool {
       /douyin\.com/,
       /tiktok\.com/,
     ]
-    
+
     const socialPatterns = [
       /xiaohongshu\.com|xhslink\.com/,
       /weibo\.com/,
@@ -62,79 +143,6 @@ export class URLFetcherTool {
     return 'article'
   }
 
-  // 使用 Jina Reader API 提取文章内容
-  private async fetchArticle(url: string): Promise<FetchedContent> {
-    try {
-      const jinaUrl = `https://r.jina.ai/${encodeURIComponent(url)}`
-      const response = await fetch(jinaUrl)
-      
-      if (!response.ok) {
-        const msg = response.status === 429
-          ? "Jina Reader 请求过于频繁，请稍后重试"
-          : response.status === 403
-            ? "Jina Reader 拒绝访问，可能是目标网站被屏蔽"
-            : response.status === 404
-              ? "Jina Reader 无法获取该页面，请检查 URL 是否正确"
-              : `Jina Reader 请求失败 (HTTP ${response.status})`;
-        throw new Error(`Jina Reader ${response.status}: ${msg}。建议: 可尝试直接访问原 URL 或使用 /api/proxy/fetch 获取内容`)
-      }
-
-      const text = await response.text()
-      
-      // 解析 Jina 返回的格式
-      const lines = text.split('\n')
-      const title = lines[0]?.replace(/^Title:\s*/, '') || 'Untitled'
-      const content = lines.slice(1).join('\n').trim()
-      
-      return {
-        title,
-        content,
-        images: this.extractImages(content),
-        tags: this.extractTags(content),
-        platform: this.detectPlatform(url),
-        url,
-        fetchedAt: new Date().toISOString(),
-      }
-    } catch (error) {
-      console.error('URL Fetch failed:', error)
-      throw error
-    }
-  }
-
-  // 提取视频信息（使用 yt-dlp 逻辑）
-  private async fetchVideo(url: string): Promise<FetchedContent> {
-    // 这里应该调用 yt-dlp 或视频解析服务
-    // 简化版本：返回基础信息
-    
-    return {
-      title: `Video: ${url}`,
-      content: `[Video content from ${url}]`,
-      images: [],
-      tags: ['video'],
-      platform: this.detectPlatform(url),
-      url,
-      fetchedAt: new Date().toISOString(),
-    }
-  }
-
-  // 社交媒体提取（调用专用服务）
-  private async fetchSocial(url: string): Promise<FetchedContent> {
-    // 检测平台并调用对应 MCP 服务
-    const platform = this.detectPlatform(url)
-    
-    // 这里会调用 social-media-reader tool
-    // 简化版本
-    return {
-      title: `Social Post: ${url}`,
-      content: `[Social content from ${platform}]`,
-      images: [],
-      tags: [platform],
-      platform,
-      url,
-      fetchedAt: new Date().toISOString(),
-    }
-  }
-
   private detectPlatform(url: string): string {
     if (/xiaohongshu|xhslink/.test(url)) return 'xiaohongshu'
     if (/bilibili|b23\.tv/.test(url)) return 'bilibili'
@@ -143,6 +151,13 @@ export class URLFetcherTool {
     if (/zhihu/.test(url)) return 'zhihu'
     if (/douyin/.test(url)) return 'douyin'
     if (/youtube|youtu\.be/.test(url)) return 'youtube'
+    if (/juejin\.cn/.test(url)) return 'juejin'
+    if (/csdn\.net/.test(url)) return 'csdn'
+    if (/cnblogs\.com/.test(url)) return 'cnblogs'
+    if (/jianshu\.com/.test(url)) return 'jianshu'
+    if (/infoq\.cn/.test(url)) return 'infoq'
+    if (/segmentfault\.com/.test(url)) return 'segmentfault'
+    if (/oschina\.net/.test(url)) return 'oschina'
     return 'web'
   }
 
@@ -157,7 +172,6 @@ export class URLFetcherTool {
   }
 
   private extractTags(content: string): string[] {
-    // 简单的标签提取逻辑
     const tagRegex = /#(\w+)/g
     const tags: string[] = []
     let match

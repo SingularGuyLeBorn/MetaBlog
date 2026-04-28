@@ -295,8 +295,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { logger, logFileOperation } from '@/theme/composables/useLogger'
+import { logFileOperation, logger } from '@/theme/composables/useLogger';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{
   item: any
@@ -462,7 +462,7 @@ const doRename = async () => {
   const desiredName = newName.value.trim()
   
   try {
-    // Step 1: 调用后端重命名 API（修改实际文件名）
+    // Step 1: 调用后端重命名 API(修改实际文件名)
     const relativePath = linkToRelativePath(props.item.link)
     
     const renameRes = await fetch('/api/files/rename', {
@@ -490,11 +490,11 @@ const doRename = async () => {
     const backendName = result.data.displayName
     const backendNewPath = result.data.newPath
     
-    // 校验逻辑：如果后端返回的名字与前端期望的不一样，使用后端的（作为标准）
+    // 校验逻辑：如果后端返回的名字与前端期望的不一样，使用后端的(作为标准)
     const finalName = (backendName && backendName !== desiredName) ? backendName : desiredName
     const finalPath = backendNewPath || relativePath
     
-    // 校验警告（仅调试用，实际使用时会静默处理后端的规范化结果）
+    // 校验警告(仅调试用，实际使用时会静默处理后端的规范化结果)
     if (backendName && backendName !== desiredName) {
       console.log(`[Rename] 名称已规范化: "${desiredName}" -> "${backendName}"`)
     }

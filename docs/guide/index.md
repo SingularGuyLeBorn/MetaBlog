@@ -54,4 +54,4 @@
 
 - 查看 [快速开始](./quickstart.md) 中的常见问题
 - 阅读 [开发指南](./development.md) 了解调试技巧
-- 检查 `.env` 配置是否正确（参考 [环境变量](./environment.md)）
+- 检查 `.env` 配置是否正确(参考 [环境变量](./environment.md))

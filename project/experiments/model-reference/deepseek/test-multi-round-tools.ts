@@ -4,7 +4,7 @@
  * 用途：排查"连续调用 10+ 工具后卡死/无响应"问题
  * 测试项：
  *   1. 流式连接建立超时
- *   2. 流式 idle 超时（长时间无 chunk）
+ *   2. 流式 idle 超时(长时间无 chunk)
  *   3. 多轮 tool_calls + reasoning_content 回传正确性
  *   4. 总耗时与 chunk 频率统计
  *
@@ -233,10 +233,10 @@ async function executeTool(toolCall: any) {
   const args = JSON.parse(toolCall.function.arguments || '{}')
   await sleep(200) // 模拟网络延迟
   if (name === 'search_web') {
-    return `搜索结果：关于 "${args.query}" 的最新信息（模拟数据）`
+    return `搜索结果：关于 "${args.query}" 的最新信息(模拟数据)`
   }
   if (name === 'getWeather') {
-    return `${args.city} 今天晴，25°C（模拟数据）`
+    return `${args.city} 今天晴，25°C(模拟数据)`
   }
   return '未知工具结果'
 }
@@ -252,7 +252,7 @@ async function runTest() {
     {
       role: 'system',
       content:
-        '你是测试助手。请使用工具搜索多个主题（如：LLM推理优化、KV Cache、Speculative Decoding），' +
+        '你是测试助手。请使用工具搜索多个主题(如：LLM推理优化、KV Cache、Speculative Decoding)，' +
         '每轮搜索一个主题，至少搜索 8 次，最后给出总结。'
     },
     {
@@ -295,7 +295,7 @@ async function runTest() {
         break
       }
 
-      // 构建 assistant message（必须包含 reasoning_content，否则 API 会 400）
+      // 构建 assistant message(必须包含 reasoning_content，否则 API 会 400)
       const assistantMsg: Message = {
         role: 'assistant',
         content: result.content || '',

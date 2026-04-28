@@ -7,7 +7,7 @@
 - **arXiv**：2305.18290
 - **PDF**：见 `papers/` 目录
 
-**前置知识**：PPO（第5章）、RLHF基本流程
+**前置知识**：PPO(第5章)、RLHF基本流程
 
 ---
 
@@ -23,7 +23,7 @@ DPO是**LLM对齐领域的里程碑算法**，它证明了：
 2. 详细推导DPO的**隐式奖励**公式
 3. 从数学上证明DPO与RLHF等价
 4. 解释DPO为什么更简单、更稳定
-5. 介绍DPO的变体（IPO、SimPO、ORPO）
+5. 介绍DPO的变体(IPO、SimPO、ORPO)
 
 ---
 
@@ -48,9 +48,9 @@ $$\max_{\pi_\theta} \mathbb{E}_{x, y \sim \pi_\theta}[r_\phi(x, y)] - \beta D_{K
 
 ### 1.2 RLHF的问题
 
-1. **复杂性**：需要训练三个独立模型（SFT、RM、Policy）
+1. **复杂性**：需要训练三个独立模型(SFT、RM、Policy)
 2. **不稳定**：PPO训练LLM容易崩溃
-3. **采样开销**：PPO需要on-policy采样（生成新样本）
+3. **采样开销**：PPO需要on-policy采样(生成新样本)
 4. **超参敏感**：PPO有很多需要调整的超参数
 
 ### 1.3 DPO的核心洞察
@@ -67,24 +67,24 @@ DPO的关键发现：
 
 **左侧：RLHF三阶段流程**
 
-1. **Stage 1: SFT（监督微调）**
+1. **Stage 1: SFT(监督微调)**
    - 输入：高质量标注数据
    - 输出：初始策略 $\pi_{SFT}$
    - 目的：让模型学会基本的指令遵循能力
 
-2. **Stage 2: Reward Model Training（奖励模型训练）**
+2. **Stage 2: Reward Model Training(奖励模型训练)**
    - 输入：人类偏好数据 $(x, y_w, y_l)$，其中 $y_w$ 是人类更偏好的回复
    - 输出：奖励模型 $r_\phi(x, y)$
    - 目的：学习预测人类偏好
 
-3. **Stage 3: PPO（强化学习优化）**
+3. **Stage 3: PPO(强化学习优化)**
    - 输入：奖励模型 + 参考策略
    - 输出：最终策略 $\pi_\theta$
    - 关键：需要on-policy采样，训练不稳定
 
 **右侧：DPO单阶段流程**
 
-1. **Direct Optimization（直接优化）**
+1. **Direct Optimization(直接优化)**
    - 输入：偏好数据 $(x, y_w, y_l)$ + 参考模型 $\pi_{ref}$
    - 输出：最终策略 $\pi_\theta$
    - 关键：跳过奖励模型，直接从偏好数据优化
@@ -110,7 +110,7 @@ $$P(y_w \succ y_l | x) = \sigma(r(x, y_w) - r(x, y_l))$$
 
 - $P(y_w \succ y_l | x)$：给定prompt $x$，$y_w$ 被偏好于 $y_l$ 的概率
 - $\sigma(\cdot) = \frac{1}{1+e^{-(\cdot)}}$：sigmoid函数
-- $r(x, y)$：真实奖励函数（未知，需要从数据中学习）
+- $r(x, y)$：真实奖励函数(未知，需要从数据中学习)
 
 ### 2.2 RLHF目标函数的解析解
 
@@ -182,7 +182,7 @@ $$\nabla_\theta \mathcal{L}_{DPO} = -\beta \mathbb{E}\left[\underbrace{\sigma(\h
 
 **直观理解**：
 
-1. $\sigma(\hat{r}_\theta(y_l) - \hat{r}_\theta(y_w))$：当前模型"犯错"的程度（即认为 $y_l$ 更好的概率）
+1. $\sigma(\hat{r}_\theta(y_l) - \hat{r}_\theta(y_w))$：当前模型"犯错"的程度(即认为 $y_l$ 更好的概率)
 
 2. 梯度做两件事：
    - **增大** $\log \pi_\theta(y_w)$：提高好回复的概率
@@ -212,9 +212,9 @@ DPO本质上是一个**二元分类问题**：
 | 阶段数 | 3 (SFT → RM → PPO) | 1 (直接优化) |
 | 需要奖励模型 | ✓ | ✗ |
 | 需要采样 | ✓ (on-policy) | ✗ (离线数据) |
-| 训练稳定性 | 中（PPO敏感） | 高 |
+| 训练稳定性 | 中(PPO敏感) | 高 |
 | 计算开销 | 高 | 低 |
-| 内存需求 | 高（多模型） | 中（2模型） |
+| 内存需求 | 高(多模型) | 中(2模型) |
 
 ### 4.2 数学等价性
 
