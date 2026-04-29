@@ -95,13 +95,11 @@ const toolIcons: Record<string, string> = {
   searchArxiv: '📚',
   fetchArxiv: '📖',
   webSearch: '🌐',
-  fetchUrl: '🔗',
   readFile: '📂',
   writeFile: '💾',
   listFiles: '📁',
   getCurrentTime: '⏰',
   calculate: '🧮',
-  translateText: '🌐',
   executeCode: '▶️',
   analyzeCode: '🔍',
   default: '🔧'

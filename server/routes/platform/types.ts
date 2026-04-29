@@ -15,6 +15,8 @@ export interface ParseResult {
   author: string;
   content: string;
   images: string[];
+  /** Kimi file_id 列表（vision 模型通过 ms:// 协议引用） */
+  imageFiles?: Array<{ file_id: string; url: string }>;
   videos: string[];
   comments: any[];
   metadata: Record<string, any>;
@@ -23,11 +25,9 @@ export interface ParseResult {
   url: string;
 }
 
-/** 获取器接口：输入 URL，输出原始 HTML */
+/** 获取器接口：输入 platform 标识，输出原始 HTML */
 export interface ContentFetcher {
   name: string;
-  /** 判断该获取器是否能处理此 URL */
-  canHandle(url: string, hostname: string): boolean;
   /** 获取原始 HTML */
   fetch(url: string, timeout?: number): Promise<string>;
 }
@@ -76,6 +76,10 @@ export interface PlatformExtractConfig {
 export interface ParseOptions {
   /** 知乎问题页面：最多提取几个回答，默认 1 */
   maxAnswers?: number;
+  /** 是否对文章中的图片进行 OCR 并将结果嵌入 Markdown（非 vision 模型建议开启） */
+  embedOcr?: boolean;
+  /** 是否将文章图片下载并上传到 Kimi 获取 file_id（vision 模型建议开启，让 Kimi 能直接"看"原图） */
+  fetchImageFiles?: boolean;
 }
 
 export interface FetchedContent {

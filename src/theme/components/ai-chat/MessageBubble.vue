@@ -234,10 +234,23 @@ import { extractAllEntityLinks, extractLinksFromRecord, type EntityLink } from '
 import { estimateTextTokens, formatTokenCount } from '@/theme/utils/tokenEstimator'
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
+import markedKatex from 'marked-katex-extension'
 import { computed, onMounted, ref, watch } from 'vue'
+import 'katex/dist/katex.min.css'
 
 // 启用 GFM（表格、任务列表、删除线等）
 marked.use({ gfm: true })
+
+// 启用 LaTeX 公式渲染
+marked.use(markedKatex({ throwOnError: false, nonStandard: true }))
+
+// 图片 URL 代理（绕过微信/知乎防盗链）
+const proxyImageRenderer = new marked.Renderer()
+proxyImageRenderer.image = ({ href, title, text }: any) => {
+  const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(href)}`
+  return `<img src="${proxyUrl}" alt="${text || ''}" title="${title || ''}" loading="lazy" />`
+}
+marked.use({ renderer: proxyImageRenderer })
 import EntityLinkCard from './EntityLinkCard.vue'
 import MessageVersions from './MessageVersions.vue'
 
@@ -977,6 +990,23 @@ async function copyContent() {
 .response-body :deep(a) {
   color: var(--sr-morandi-blue, #9aa8b3);
   text-decoration: underline;
+}
+
+/* 图片代理渲染 */
+.response-body :deep(img) {
+  max-width: 100%;
+  border-radius: 10px;
+  margin: 8px 0;
+  display: block;
+}
+
+/* LaTeX 公式样式 */
+.response-body :deep(.katex) {
+  font-size: 1.05em;
+}
+.response-body :deep(.katex-display) {
+  margin: 12px 0;
+  overflow-x: auto;
 }
 
 /* ========== 传统兼容 ========== */

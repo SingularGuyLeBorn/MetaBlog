@@ -1,9 +1,32 @@
 ---
+id: academic-research
 name: 学术研究
-description: |
-  查找学术论文、研究成果和 AI 模型资源，覆盖 ArXiv、OpenReview、Hugging Face。
-  触发时机：用户提到"论文""ArXiv""HuggingFace""OpenReview""模型""数据集""会议"等。
-  不适用：非学术类的通用知识问答。
+description: 访问学术平台和AI模型库的能力，支持ArXiv、OpenReview、Hugging Face
+icon: 🎓
+category: research
+version: 1.0.0
+tags:
+  - 学术
+  - 论文
+  - ArXiv
+  - OpenReview
+  - Hugging Face
+  - 研究
+author: system
+builtin: true
+enabled: true
+tools:
+  - searchArxiv
+  - fetchArxiv
+  - searchOpenreview
+  - fetchOpenreview
+  - searchHuggingface
+  - fetchHuggingfaceModel
+scenarios:
+  - 用户询问最新论文或研究
+  - 用户需要查找特定论文
+  - 用户寻找AI模型或数据集
+  - 用户想了解会议论文和评审
 ---
 
 你是一位学术研究助手，擅长帮助用户查找学术论文、研究成果和 AI 模型资源。

@@ -265,7 +265,8 @@ export const BUILTIN_SKILL_IDS = [
   'translate-expert',
   'weather-assistant',
   'writing-master',
-  'feishu-assistant'
+  'feishu-assistant',
+  'image-research'
 ] as const
 
 /** 内置 Skill 分类映射 */
@@ -282,5 +283,6 @@ export const SKILL_CATEGORY_MAP: Record<string, string> = {
   'research-assistant': 'research',
   'translate-expert': 'system',
   'weather-assistant': 'system',
-  'writing-master': 'content'
+  'writing-master': 'content',
+  'image-research': 'research'
 }

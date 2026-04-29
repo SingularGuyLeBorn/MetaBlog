@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from "vitepress";
+import { withMermaid } from "vitepress-plugin-mermaid";
 import { fileURLToPath, URL } from "node:url";
 import path from "path";
 import fs from "fs";
@@ -118,7 +119,7 @@ function scanForRewrites(
   }
 }
 
-export default defineConfig({
+export default withMermaid({
   // Source directory for content files
   srcDir: "./docs",
 

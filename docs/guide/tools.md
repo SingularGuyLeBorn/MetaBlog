@@ -206,13 +206,7 @@ Function Calling (OpenAI 格式)
 
 | 工具名 | 功能 |
 |--------|------|
-| `parseZhihu` | 解析知乎文章 |
-| `parseXiaohongshu` | 解析小红书笔记 |
-| `parseWechat` | 解析微信公众号文章 |
-| `parseDouyin` | 解析抖音 |
-| `parseBilibili` | 解析 B 站 |
-| `parseWeibo` | 解析微博 |
-| `parsePlatformLink` | 通用平台链接解析 |
+| `readArticle` | 读取网页文章/帖子内容（支持所有平台） |
 | `ocrImage` | OCR 图片识别 |
 | `processImage` | 图片处理 |
 

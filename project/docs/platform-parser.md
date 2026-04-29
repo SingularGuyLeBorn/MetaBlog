@@ -14,17 +14,16 @@ Agent 读取网页的能力由 **Backend 统一解析器** + **Frontend 工具�
 用户输入链接
     │
     ▼
-LLM 选择工具(parsePlatformLink / parseZhihu / parseBilibili ...)
+LLM 选择工具(readArticle)
     │
     ▼
-Frontend Tool Executor ─────────────────────────────┐
-    │                                               │
-    │ 统一入口: parsePlatformLink                    │ Legacy 独立工具
-    │    POST /api/platform/parse                   │    parseZhihu
-    │        { url }                                │    parseXiaohongshu
-    │                                               │    parseWechat
-    ▼                                               │
-Backend /api/platform/parse ◄───────────────────────┘
+Frontend Tool Executor
+    │
+    │ 统一入口: readArticle
+    │    POST /api/platform/parse
+    │        { url, platform?, options? }
+    ▼
+Backend /api/platform/parse
     │
     ├─ 平台检测(hostname 路由)
     ├─ HTML 获取(fetch / Playwright)
@@ -218,7 +217,7 @@ await browser.close();
 
 ### 2.4 前端 Executor 设计
 
-#### 统一入口：parsePlatformLink
+#### 统一入口：readArticle
 
 ```ts
 const response = await fetch('/api/platform/parse', {
@@ -237,20 +236,14 @@ return createSuccessResult({
 ```
 
 LLM 可调参数：
+- `url`(必需): 文章链接
+- `platform`(可选): 平台类型提示，如 wechat/zhihu/xiaohongshu 等
+- `embed_ocr`(默认 false): 非 vision 模型建议开启
+- `fetch_image_files`(默认 false): vision 模型建议开启
 - `extract_content`(默认 true)
-- `max_content_length`(默认 5000)
-- `extract_images`(默认 false)
+- `max_content_length`(默认 200000)
+- `extract_images`(默认 true)
 - `extract_comments`(默认 false)
-
-#### Legacy 独立工具
-
-`parseZhihu` / `parseXiaohongshu` / `parseWechat` 仍保留，直接调用 `/api/proxy/fetch`(另一个 backend 代理路由)，在前端自己做 HTML 解析。
-
-**保留原因**：向后兼容、backend 不可用时降级、差异化 UA 控制。
-
-#### 新增薄包装工具
-
-`parseDouyin` / `parseBilibili` / `parseWeibo` 是薄包装，直接调用 `parsePlatformLink`。
 
 ---
 
@@ -379,7 +372,7 @@ function isArticlePage(url: string, html: string): boolean {
     "xsec_token 机制：部分回答需要特定 token 才能访问",
     "登录墙：未登录时部分内容折叠"
   ],
-  "recommendedTool": "parseZhihu"
+  "recommendedTool": "readArticle"
 }
 ```
 
@@ -509,7 +502,7 @@ import { parseTwitterDef } from './platform/definitions';
 toolDefinitions.push(parseTwitterDef);
 ```
 
-**完成**。`parsePlatformLink` 自动覆盖，无需改 LLM prompt。
+**完成**。`readArticle` 自动覆盖所有平台，无需改 LLM prompt。
 
 ### 6.2 环境准备检查清单
 
@@ -535,15 +528,9 @@ pnpm exec playwright chromium --version
 
 | 工具名 | 类型 | 后端依赖 | 解析深度 |
 |---|---|---|---|
-| `parsePlatformLink` | 统一入口 | `/api/platform/parse` | 按平台自动 |
-| `parseZhihu` | Legacy 独立 | `/api/proxy/fetch` | ⭐⭐⭐⭐⭐ |
-| `parseXiaohongshu` | Legacy 独立 | `/api/proxy/fetch` | ⭐⭐ |
-| `parseWechat` | Legacy 独立 | `/api/proxy/fetch` | ⭐⭐⭐⭐⭐ |
-| `parseDouyin` | 薄包装 | `/api/platform/parse` | ⭐⭐ |
-| `parseBilibili` | 薄包装 | `/api/platform/parse` | ⭐⭐⭐⭐ |
-| `parseWeibo` | 薄包装 | `/api/platform/parse` | ⭐⭐ |
-| `ocrImage` | 未实现 | — | ❌ |
-| `processImage` | 元数据 | HEAD 请求 | ⭐ |
+| `readArticle` | 统一入口 | `/api/platform/parse` | 按平台自动 |
+| `ocrImage` | 独立工具 | `/api/ocr` | ⭐⭐⭐ |
+| `processImage` | 已废弃 | — | ⭐ |
 
 ### 7.2 相关文件索引
 

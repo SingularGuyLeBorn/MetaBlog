@@ -10,6 +10,7 @@
 | [环境变量配置](./environment.md) | 部署者 | 完整的 `.env` 配置说明 |
 | [架构设计](./architecture.md) | 开发者 | 系统架构、模块划分、数据流 |
 | [工具系统](./tools.md) | 使用者 & 开发者 | 工具列表、使用示例、自定义开发 |
+| [Agent 工具调用交互](./agent-tool-interaction.md) | 开发者 | 时序图、UML 图、系统各方交互 |
 | [Agent 系统](./agent-system.md) | 使用者 | Agent 配置、Skill 开发、会话管理 |
 | [开发指南](./development.md) | 贡献者 | 目录结构、编码规范、调试技巧 |
 

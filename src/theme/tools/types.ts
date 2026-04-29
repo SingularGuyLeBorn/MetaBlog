@@ -14,11 +14,11 @@
  * 
  * @example
  * ```typescript
- * const getWeatherDef: ToolDefinition = {
+ * const readArticleDef: ToolDefinition = {
  *   type: 'function',
  *   function: {
- *     name: 'getWeather',
- *     description: '获取指定城市的天气',
+ *     name: 'readArticle',
+ *     description: '获取网页文章内容',
  *     parameters: {
  *       type: 'object',
  *       properties: {
@@ -178,8 +178,8 @@ export interface ToolCallRecord {
  *   "id": "call_abc123",
  *   "type": "function",
  *   "function": {
- *     "name": "getWeather",
- *     "arguments": "{\"city\": \"北京\"}"
+ *     "name": "readArticle",
+ *     "arguments": "{\"url\": \"https://example.com\"}"
  *   }
  * }
  * ```

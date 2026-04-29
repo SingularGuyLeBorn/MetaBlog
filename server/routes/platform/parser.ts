@@ -1,5 +1,8 @@
 import type { ParseResult, PlatformExtractConfig, ParseOptions } from "./types";
 import { MAX_CONTENT_CHARS } from "./types";
+import { ocrRemoteImage, downloadImageToTemp } from "../../services/ocr";
+import { uploadFileToKimi } from "../../services/kimi-file-upload";
+import fs from "fs";
 
 // ============================================
 // 基础工具
@@ -245,6 +248,152 @@ const PLATFORM_CONFIGS: Record<string, PlatformExtractConfig> = {
 };
 
 // ============================================
+// Markdown 行号辅助函数
+// ============================================
+
+function addLineNumbers(content: string): string {
+  return content
+    .split("\n")
+    .map((line, index) => `${index + 1} | ${line}`)
+    .join("\n");
+}
+
+// ============================================
+// OCR 嵌入辅助函数
+// ============================================
+
+const MAX_OCR_IMAGES = 5;
+const OCR_CONCURRENCY = 3;
+const OCR_TIMEOUT_MS = 20000;
+const MAX_OCR_TEXT_LENGTH = 500;
+
+/**
+ * 对文章中的图片进行 OCR，并将结果嵌入 Markdown 对应位置。
+ * 用于非 vision 模型场景，让 AI 能"看到"图片中的文字内容。
+ */
+async function embedOcrIntoMarkdown(content: string, images: string[]): Promise<string> {
+  const targetImages = images.slice(0, MAX_OCR_IMAGES);
+  const results = new Map<string, string>();
+
+  // 分批并行 OCR，避免一次性触发太多请求
+  for (let i = 0; i < targetImages.length; i += OCR_CONCURRENCY) {
+    const batch = targetImages.slice(i, i + OCR_CONCURRENCY);
+    const batchResults = await Promise.all(
+      batch.map(async (url) => {
+        try {
+          const result = await Promise.race([
+            ocrRemoteImage(url, "auto"),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error("OCR 超时")), OCR_TIMEOUT_MS)
+            ),
+          ]);
+          return { url, text: result.success ? result.text : "" };
+        } catch (err: any) {
+          console.error(`[OCR Embed] 图片 OCR 失败 ${url}: ${err.message}`);
+          return { url, text: "" };
+        }
+      })
+    );
+    for (const { url, text } of batchResults) {
+      if (text.trim()) results.set(url, text.trim());
+    }
+  }
+
+  if (results.size === 0) return content;
+
+  // 将 OCR 结果嵌入 Markdown 对应图片位置
+  let result = content;
+  const replacedUrls = new Set<string>();
+
+  for (const [url, text] of results) {
+    // 限制单张图片 OCR 结果长度，避免文章暴增
+    const truncated =
+      text.length > MAX_OCR_TEXT_LENGTH
+        ? text.slice(0, MAX_OCR_TEXT_LENGTH) + "..."
+        : text;
+
+    // 转义 URL 中的正则特殊字符
+    const escapedUrl = url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`!\\[([^\\]]*)\\]\\(${escapedUrl}\\)`, "g");
+
+    result = result.replace(regex, (match) => {
+      replacedUrls.add(url);
+      const lines = truncated.split("\n").filter((line) => line.trim());
+      if (lines.length === 0) return match;
+      const formatted = lines.map((line) => `> ${line}`).join("\n");
+      return `${match}\n\n> **图片内容：**\n${formatted}`;
+    });
+  }
+
+  // 对于未能在正文中精确定位的图片，在文末追加
+  const missedUrls = Array.from(results.keys()).filter((url) => !replacedUrls.has(url));
+  if (missedUrls.length > 0) {
+    const missedParts = missedUrls.map((url) => {
+      const text = results.get(url)!;
+      const truncated =
+        text.length > MAX_OCR_TEXT_LENGTH
+          ? text.slice(0, MAX_OCR_TEXT_LENGTH) + "..."
+          : text;
+      const lines = truncated.split("\n").filter((line) => line.trim());
+      const formatted = lines.map((line) => `> ${line}`).join("\n");
+      return `> **图片 [${url.slice(0, 60)}...]：**\n${formatted}`;
+    });
+    result += `\n\n---\n\n> **以下图片 OCR 结果（未在正文中定位到精确位置）：**\n\n${missedParts.join("\n\n")}`;
+  }
+
+  return result;
+}
+
+// ============================================
+// Vision 图片上传辅助函数（Kimi file_id）
+// ============================================
+
+const MAX_VISION_IMAGES = 10;
+const VISION_UPLOAD_CONCURRENCY = 3;
+
+/**
+ * 下载文章中的图片并上传到 Kimi，获取 file_id。
+ * 同时将 Markdown 中的图片 URL 替换为 ms://file_id，供消息层识别并转成 vision 输入。
+ * Vision 模型通过 ms://file_id 协议引用原图，不受 100MB 请求体限制。
+ */
+async function fetchImageFilesForVision(
+  content: string,
+  images: string[]
+): Promise<{ content: string; imageFiles: Array<{ file_id: string; url: string }> }> {
+  const targetImages = images.slice(0, MAX_VISION_IMAGES);
+  const results: Array<{ file_id: string; url: string }> = [];
+
+  for (let i = 0; i < targetImages.length; i += VISION_UPLOAD_CONCURRENCY) {
+    const batch = targetImages.slice(i, i + VISION_UPLOAD_CONCURRENCY);
+    const batchResults = await Promise.all(
+      batch.map(async (url) => {
+        try {
+          const tempPath = await downloadImageToTemp(url);
+          try {
+            const uploadResult = await uploadFileToKimi(tempPath, "image");
+            return { file_id: uploadResult.fileId, url };
+          } finally {
+            fs.unlink(tempPath, (err) => {
+              if (err) console.error("[Vision] 清理临时文件失败:", err.message);
+            });
+          }
+        } catch (err: any) {
+          console.error(`[Vision] 图片上传失败 ${url}: ${err.message}`);
+          return null;
+        }
+      })
+    );
+    for (const result of batchResults) {
+      if (result) results.push(result);
+    }
+  }
+
+  // 不再替换 content 中的图片 URL（前端通过 /api/image-proxy 代理加载）
+  // imageFiles 仅用于 vision 模型的 ms://file_id 引用
+  return { content, imageFiles: results };
+}
+
+// ============================================
 // 统一解析器
 // ============================================
 
@@ -262,6 +411,7 @@ export async function parseHtmlToMarkdown(
   let contentHtml = "";
   let content = "";
   let images: string[] = [];
+  let extractMethod = "";
   let method = fetcherMeta.method;
   let videos: string[] = [];
 
@@ -356,7 +506,7 @@ export async function parseHtmlToMarkdown(
       if (article) {
         title = title || article.title || "";
         contentHtml = article.content || "";
-        method = method || "readability-js";
+        extractMethod = extractMethod || "readability-js";
         const articleImgMatches = (article.content || "").matchAll(/<img[^>]*src="(https?:\/\/[^"]+)"/g);
         images = Array.from(articleImgMatches).map((m) => m[1]).filter(Boolean).slice(0, 10);
       }
@@ -366,52 +516,99 @@ export async function parseHtmlToMarkdown(
   }
 
   // ====== L4: DOM 选择器（平台适配配置） ======
+  // 优先用 jsdom 做真正的 DOM 查询（能正确处理嵌套标签），失败再回退到正则
   if (config.contentSelectors && !contentHtml) {
-    for (const selector of config.contentSelectors) {
-      // 用正则模拟 CSS 选择器（服务端无完整 DOM）
-      const className = selector.startsWith(".") ? selector.slice(1) : selector;
-      const idName = selector.startsWith("#") ? selector.slice(1) : "";
-      const attr = idName ? `id="${idName}"` : `class="[^"]*${className}[^"]*"`;
-      const regex = new RegExp(`<[^>]*${attr}[^>]*>([\\s\\S]*?)</[^>]+>`, "i");
-      const match = html.match(regex);
-      if (match) {
-        contentHtml = match[1];
-        method = method || `dom-selector-${selector}`;
-        break;
+    try {
+      const { JSDOM } = await import("jsdom");
+      const dom = new JSDOM(html, { url });
+      const doc = dom.window.document;
+      for (const selector of config.contentSelectors) {
+        const el = doc.querySelector(selector);
+        if (el && el.innerHTML.trim().length > 50) {
+          contentHtml = el.innerHTML;
+          extractMethod = extractMethod || `dom-selector-${selector}`;
+          break;
+        }
+      }
+    } catch (err: any) {
+      console.warn(`[Parser] jsdom querySelector failed for ${platform}: ${err.message}, falling back to regex`);
+    }
+
+    // jsdom 失败或没匹配到，回退到正则
+    if (!contentHtml) {
+      for (const selector of config.contentSelectors) {
+        const className = selector.startsWith(".") ? selector.slice(1) : selector;
+        const idName = selector.startsWith("#") ? selector.slice(1) : "";
+        const attr = idName ? `id="${idName}"` : `class="[^"]*${className}[^"]*"`;
+        const regex = new RegExp(`<[^>]*${attr}[^>]*>([\\s\\S]*?)</[^>]+>`, "i");
+        const match = html.match(regex);
+        if (match && match[1].trim().length > 50) {
+          contentHtml = match[1];
+          extractMethod = extractMethod || `dom-selector-${selector}`;
+          break;
+        }
       }
     }
   }
 
   // 标题选择器
   if (config.titleSelectors && !title) {
-    for (const selector of config.titleSelectors) {
-      const className = selector.startsWith(".") ? selector.slice(1) : "";
-      const tagName = /^[a-zA-Z0-9]+$/.test(selector) ? selector : "";
-      let regex: RegExp;
-      if (tagName) {
-        regex = new RegExp(`<${tagName}[^>]*>([\\s\\S]*?)</${tagName}>`, "i");
-      } else {
-        regex = new RegExp(`<[^>]*class="[^"]*${className}[^"]*"[^>]*>([\\s\\S]*?)</[^>]+>`, "i");
+    try {
+      const { JSDOM } = await import("jsdom");
+      const dom = new JSDOM(html, { url });
+      const doc = dom.window.document;
+      for (const selector of config.titleSelectors) {
+        const el = doc.querySelector(selector);
+        if (el) {
+          title = el.textContent?.trim() || "";
+          if (title) break;
+        }
       }
-      const match = html.match(regex);
-      if (match) {
-        title = match[1].replace(/<[^>]+>/g, "").trim();
-        if (title) break;
+    } catch {
+      // fallback to regex
+      for (const selector of config.titleSelectors) {
+        const className = selector.startsWith(".") ? selector.slice(1) : "";
+        const tagName = /^[a-zA-Z0-9]+$/.test(selector) ? selector : "";
+        let regex: RegExp;
+        if (tagName) {
+          regex = new RegExp(`<${tagName}[^>]*>([\\s\\S]*?)</${tagName}>`, "i");
+        } else {
+          regex = new RegExp(`<[^>]*class="[^"]*${className}[^"]*"[^>]*>([\\s\\S]*?)</[^>]+>`, "i");
+        }
+        const match = html.match(regex);
+        if (match) {
+          title = match[1].replace(/<[^>]+>/g, "").trim();
+          if (title) break;
+        }
       }
     }
   }
 
   // 作者选择器
   if (config.authorSelectors && !author) {
-    for (const selector of config.authorSelectors) {
-      const className = selector.startsWith(".") ? selector.slice(1) : "";
-      const idName = selector.startsWith("#") ? selector.slice(1) : "";
-      const attr = idName ? `id="${idName}"` : `class="[^"]*${className}[^"]*"`;
-      const regex = new RegExp(`<[^>]*${attr}[^>]*>([\\s\\S]*?)</[^>]+>`, "i");
-      const match = html.match(regex);
-      if (match) {
-        author = match[1].replace(/<[^>]+>/g, "").trim();
-        if (author) break;
+    try {
+      const { JSDOM } = await import("jsdom");
+      const dom = new JSDOM(html, { url });
+      const doc = dom.window.document;
+      for (const selector of config.authorSelectors) {
+        const el = doc.querySelector(selector);
+        if (el) {
+          author = el.textContent?.trim() || "";
+          if (author) break;
+        }
+      }
+    } catch {
+      // fallback to regex
+      for (const selector of config.authorSelectors) {
+        const className = selector.startsWith(".") ? selector.slice(1) : "";
+        const idName = selector.startsWith("#") ? selector.slice(1) : "";
+        const attr = idName ? `id="${idName}"` : `class="[^"]*${className}[^"]*"`;
+        const regex = new RegExp(`<[^>]*${attr}[^>]*>([\\s\\S]*?)</[^>]+>`, "i");
+        const match = html.match(regex);
+        if (match) {
+          author = match[1].replace(/<[^>]+>/g, "").trim();
+          if (author) break;
+        }
       }
     }
   }
@@ -429,19 +626,19 @@ export async function parseHtmlToMarkdown(
   }
   if (!contentHtml) {
     content = extractMeta(html, "og:description") || "";
-    method = method || "og-extract";
+    extractMethod = extractMethod || "og-extract";
   }
 
   // ====== 转换为 Markdown ======
   if (contentHtml) {
     content = htmlToMarkdown(contentHtml);
-    method = method || "html-to-markdown";
+    extractMethod = extractMethod || "html-to-markdown";
   }
 
   // 最终兜底
   if (!content || content.trim().length === 0) {
     content = cleanHtml(html);
-    method = method || "clean-html";
+    extractMethod = extractMethod || "clean-html";
   }
 
   // 提取图片
@@ -459,15 +656,32 @@ export async function parseHtmlToMarkdown(
     videos = Array.from(videoMatches).map((m) => m[1]).filter(Boolean).slice(0, 5);
   }
 
+  // ====== 自动 OCR 嵌入 ======
+  if (options?.embedOcr && images.length > 0) {
+    content = await embedOcrIntoMarkdown(content, images);
+  }
+
+  // ====== 下载图片并上传 Kimi（vision 模型场景） ======
+  let imageFiles: Array<{ file_id: string; url: string }> | undefined;
+  if (options?.fetchImageFiles && images.length > 0) {
+    const visionResult = await fetchImageFilesForVision(content, images);
+    content = visionResult.content;
+    imageFiles = visionResult.imageFiles;
+  }
+
+  // ====== 全文加行号（方便 AI 定位） ======
+  content = addLineNumbers(content);
+
   return {
     title: title || `${platform} 内容`,
     author: author || "",
     content: content.slice(0, MAX_CONTENT_CHARS),
     images: images.slice(0, 20),
+    imageFiles,
     videos,
     comments: [],
-    metadata: { source: platform, method, fetcher: fetcherMeta.fetcher },
-    method,
+    metadata: { source: platform, method: extractMethod || method, fetcher: fetcherMeta.fetcher },
+    method: extractMethod || method,
     platform,
     url,
   };

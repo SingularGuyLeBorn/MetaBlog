@@ -34,7 +34,7 @@ async function fetchHtml(url: string, headers?: Record<string, string>, timeoutM
 // Playwright 渲染器（复用）
 // ============================================
 
-async function fetchWithPlaywright(url: string, opts: { isZhihu?: boolean; timeout?: number } = {}): Promise<string> {
+export async function fetchWithPlaywright(url: string, opts: { isZhihu?: boolean; timeout?: number } = {}): Promise<string> {
   const { chromium } = await import("playwright");
   const fs = await import("fs");
 
@@ -94,31 +94,37 @@ async function fetchWithPlaywright(url: string, opts: { isZhihu?: boolean; timeo
 /** 知乎：必须用 Playwright + stealth，反爬极强 */
 class ZhihuFetcher implements ContentFetcher {
   name = "zhihu";
-  canHandle(_url: string, hostname: string) {
-    return hostname.includes("zhihu.com");
-  }
   async fetch(url: string, timeout?: number): Promise<string> {
     return fetchWithPlaywright(url, { isZhihu: true, timeout });
   }
 }
 
-/** 微信：服务端渲染，普通 HTTP 即可 */
+/** 微信：反爬强，Playwright 模拟浏览器 */
 class WechatFetcher implements ContentFetcher {
   name = "wechat";
-  canHandle(_url: string, hostname: string) {
-    return hostname.includes("mp.weixin.qq.com");
-  }
   async fetch(url: string, timeout?: number): Promise<string> {
-    return fetchHtml(url, undefined, timeout);
+    // 先尝试 HTTP（快），失败再用 Playwright（稳）
+    try {
+      const html = await fetchHtml(url, undefined, timeout);
+      // 快速校验：如果 HTML 中没有正文特征，说明可能触发了反爬
+      if (html.includes("id=\"js_content\"") && html.includes("rich_media")) {
+        return html;
+      }
+      // 有 js_content 但内容明显是验证码/提示页，也走 Playwright
+      if (html.includes("环境异常") || html.includes("完成验证")) {
+        throw new Error("wechat anti-bot detected");
+      }
+      return html;
+    } catch {
+      console.warn(`[WechatFetcher] HTTP fetch failed or anti-bot detected for ${url}, falling back to Playwright...`);
+      return fetchWithPlaywright(url, { timeout });
+    }
   }
 }
 
 /** 小红书：反爬强，需要 Playwright */
 class XiaohongshuFetcher implements ContentFetcher {
   name = "xiaohongshu";
-  canHandle(_url: string, hostname: string) {
-    return hostname.includes("xiaohongshu.com") || hostname.includes("xhslink.com");
-  }
   async fetch(url: string, timeout?: number): Promise<string> {
     return fetchWithPlaywright(url, { timeout });
   }
@@ -127,11 +133,24 @@ class XiaohongshuFetcher implements ContentFetcher {
 /** 抖音：反爬强，需要 Playwright */
 class DouyinFetcher implements ContentFetcher {
   name = "douyin";
-  canHandle(_url: string, hostname: string) {
-    return hostname.includes("douyin.com") || hostname.includes("iesdouyin.com");
-  }
   async fetch(url: string, timeout?: number): Promise<string> {
     return fetchWithPlaywright(url, { timeout });
+  }
+}
+
+/** B站：服务端渲染，普通 HTTP 即可 */
+class BilibiliFetcher implements ContentFetcher {
+  name = "bilibili";
+  async fetch(url: string, timeout?: number): Promise<string> {
+    return fetchHtml(url, undefined, timeout);
+  }
+}
+
+/** 微博：服务端渲染，普通 HTTP 即可 */
+class WeiboFetcher implements ContentFetcher {
+  name = "weibo";
+  async fetch(url: string, timeout?: number): Promise<string> {
+    return fetchHtml(url, undefined, timeout);
   }
 }
 
@@ -141,9 +160,6 @@ class DouyinFetcher implements ContentFetcher {
 
 class GenericFetcher implements ContentFetcher {
   name = "generic";
-  canHandle() {
-    return true; // 兜底，最后匹配
-  }
 
   async fetch(url: string, timeout?: number): Promise<string> {
     const effectiveTimeout = timeout ?? 10000;
@@ -160,8 +176,6 @@ class GenericFetcher implements ContentFetcher {
       const jinaUrl = `https://r.jina.ai/http://${url}`;
       const res = await fetchWithTimeout(jinaUrl, effectiveTimeout);
       if (res.ok) {
-        // Jina 返回的是 Markdown，但这里我们需要 HTML
-        // 为了兼容，我们把 Jina 的 Markdown 包装成简单 HTML
         const md = await res.text();
         return `<html><body><pre>${md}</pre></body></html>`;
       }
@@ -175,48 +189,63 @@ class GenericFetcher implements ContentFetcher {
 }
 
 // ============================================
-// 获取器注册表
+// 获取器注册表（按 platform 映射）
 // ============================================
 
-const FETCHERS: ContentFetcher[] = [
-  new ZhihuFetcher(),
-  new WechatFetcher(),
-  new XiaohongshuFetcher(),
-  new DouyinFetcher(),
-  new GenericFetcher(), // 必须放最后，作为兜底
-];
+const FETCHER_MAP: Record<string, ContentFetcher> = {
+  zhihu: new ZhihuFetcher(),
+  wechat: new WechatFetcher(),
+  xiaohongshu: new XiaohongshuFetcher(),
+  douyin: new DouyinFetcher(),
+  bilibili: new BilibiliFetcher(),
+  weibo: new WeiboFetcher(),
+};
 
-/** 根据 URL 选择合适的获取器，获取原始 HTML */
-export async function fetchContent(url: string, timeout?: number): Promise<FetchedContent> {
-  let targetUrl: URL;
-  try {
-    targetUrl = new URL(url);
-  } catch {
-    throw new Error("Invalid URL");
-  }
+/** 根据 URL 解析 hostname */
+export function detectPlatform(hostname: string): string {
+  if (hostname.includes("zhihu.com")) return "zhihu";
+  if (hostname.includes("mp.weixin.qq.com")) return "wechat";
+  if (hostname.includes("xiaohongshu.com") || hostname.includes("xhslink.com")) return "xiaohongshu";
+  if (hostname.includes("douyin.com") || hostname.includes("iesdouyin.com")) return "douyin";
+  if (hostname.includes("bilibili.com") || hostname.includes("b23.tv")) return "bilibili";
+  if (hostname.includes("weibo.com") || hostname.includes("weibo.cn")) return "weibo";
+  if (hostname.includes("juejin.cn")) return "juejin";
+  if (hostname.includes("csdn.net")) return "csdn";
+  if (hostname.includes("cnblogs.com")) return "cnblogs";
+  if (hostname.includes("jianshu.com")) return "jianshu";
+  if (hostname.includes("infoq.cn")) return "infoq";
+  if (hostname.includes("segmentfault.com")) return "segmentfault";
+  if (hostname.includes("oschina.net")) return "oschina";
+  return "unknown";
+}
 
-  const hostname = targetUrl.hostname;
+/** 根据 platform 标识获取原始 HTML */
+export async function fetchContent(
+  url: string,
+  platform: string,
+  timeout?: number
+): Promise<FetchedContent> {
+  const fetcher = FETCHER_MAP[platform];
 
-  // 按注册顺序匹配第一个能处理的获取器
-  for (const fetcher of FETCHERS) {
-    if (fetcher.canHandle(url, hostname)) {
-      try {
-        const html = await fetcher.fetch(url, timeout);
-        return {
-          html,
-          fetcher: fetcher.name,
-          method: fetcher.name === "generic" ? "http-jina-playwright" : fetcher.name,
-        };
-      } catch (err: any) {
-        // 专用获取器失败，继续尝试下一个（主要是 generic fallback）
-        if (fetcher.name !== "generic") {
-          console.warn(`[Fetcher] ${fetcher.name} failed for ${url}: ${err.message}. Falling back...`);
-          continue;
-        }
-        throw err;
-      }
+  if (fetcher) {
+    try {
+      const html = await fetcher.fetch(url, timeout);
+      return {
+        html,
+        fetcher: fetcher.name,
+        method: fetcher.name,
+      };
+    } catch (err: any) {
+      console.warn(`[Fetcher] ${fetcher.name} failed for ${url}: ${err.message}. Falling back to generic...`);
     }
   }
 
-  throw new Error("No fetcher available for this URL");
+  // 兜底：通用获取器
+  const generic = new GenericFetcher();
+  const html = await generic.fetch(url, timeout);
+  return {
+    html,
+    fetcher: generic.name,
+    method: generic.name,
+  };
 }

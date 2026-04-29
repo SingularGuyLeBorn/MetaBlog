@@ -1,6 +1,6 @@
 import type { ViteDevServer } from "vite";
 import type { RouteContext, ParseResult } from "./types";
-import { fetchContent } from "./fetcher";
+import { fetchContent, detectPlatform, fetchWithPlaywright } from "./fetcher";
 import { parseHtmlToMarkdown } from "./parser";
 
 async function readBody(req: any): Promise<any> {
@@ -18,22 +18,10 @@ async function readBody(req: any): Promise<any> {
   });
 }
 
-function detectPlatform(hostname: string): string {
-  if (hostname.includes("zhihu.com")) return "zhihu";
-  if (hostname.includes("mp.weixin.qq.com")) return "wechat";
-  if (hostname.includes("xiaohongshu.com") || hostname.includes("xhslink.com")) return "xiaohongshu";
-  if (hostname.includes("douyin.com") || hostname.includes("iesdouyin.com")) return "douyin";
-  if (hostname.includes("bilibili.com") || hostname.includes("b23.tv")) return "bilibili";
-  if (hostname.includes("weibo.com") || hostname.includes("weibo.cn")) return "weibo";
-  if (hostname.includes("juejin.cn")) return "juejin";
-  if (hostname.includes("csdn.net")) return "csdn";
-  if (hostname.includes("cnblogs.com")) return "cnblogs";
-  if (hostname.includes("jianshu.com")) return "jianshu";
-  if (hostname.includes("infoq.cn")) return "infoq";
-  if (hostname.includes("segmentfault.com")) return "segmentfault";
-  if (hostname.includes("oschina.net")) return "oschina";
-  return "unknown";
-}
+const VALID_PLATFORMS = new Set([
+  "zhihu", "wechat", "xiaohongshu", "douyin", "bilibili", "weibo",
+  "juejin", "csdn", "cnblogs", "jianshu", "infoq", "segmentfault", "oschina", "unknown",
+]);
 
 export function registerPlatformParserRoutes(server: ViteDevServer, _ctx: RouteContext) {
   server.middlewares.use("/api/platform/parse", async (req, res, next) => {
@@ -41,7 +29,7 @@ export function registerPlatformParserRoutes(server: ViteDevServer, _ctx: RouteC
 
     try {
       const body = await readBody(req);
-      const { url, timeout = 30000, options } = body;
+      const { url, timeout = 30000, options, platform: aiPlatform } = body;
 
       if (!url) {
         res.statusCode = 400;
@@ -60,16 +48,37 @@ export function registerPlatformParserRoutes(server: ViteDevServer, _ctx: RouteC
         return;
       }
 
+      // 平台判断：优先用 AI 传入的，否则根据 URL hostname 自动判断
+      let platform: string;
+      if (aiPlatform && VALID_PLATFORMS.has(aiPlatform)) {
+        platform = aiPlatform;
+      } else {
+        platform = detectPlatform(targetUrl.hostname);
+      }
+
       // 1. 获取层：根据平台选择专用/通用获取链路，拿到原始 HTML
-      const fetched = await fetchContent(url, timeout);
+      let html: string;
+      let fetcherName: string;
+      let methodName: string;
+
+      if (body.method === "playwright") {
+        console.log(`[PlatformParser] Force Playwright render for ${url}`);
+        html = await fetchWithPlaywright(url, { timeout });
+        fetcherName = "playwright";
+        methodName = "playwright";
+      } else {
+        const fetched = await fetchContent(url, platform, timeout);
+        html = fetched.html;
+        fetcherName = fetched.fetcher;
+        methodName = fetched.method;
+      }
 
       // 2. 解析层：统一解析器，不区分平台（平台差异通过配置体现）
-      const platform = detectPlatform(targetUrl.hostname);
       const result: ParseResult = await parseHtmlToMarkdown(
-        fetched.html,
+        html,
         url,
         platform,
-        { fetcher: fetched.fetcher, method: fetched.method },
+        { fetcher: fetcherName, method: methodName },
         options
       );
 

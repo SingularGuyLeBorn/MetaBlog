@@ -52,6 +52,12 @@ function translateLLMError(status: number, errorText: string, provider: string):
       suggestion: "请检查请求参数是否正确，常见原因：上下文过长、JSON 格式错误、参数值不合法",
     };
   }
+  if (status === 413 || lower.includes("payload too large") || lower.includes("request entity too large")) {
+    return {
+      message: `${provider} 请求体过大 (Payload Too Large)`,
+      suggestion: "请求内容超出了 API 的 100MB 限制。可能原因：一次发送了太多图片或视频。建议减少单次请求中的图片数量，或改用 file_id 方式引用文件",
+    };
+  }
   if (status === 403) {
     return {
       message: `${provider} 访问被拒绝`,

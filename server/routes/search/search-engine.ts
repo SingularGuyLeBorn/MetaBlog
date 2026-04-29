@@ -1,7 +1,18 @@
 /**
  * 免费搜索引擎封装
  * 使用 DuckDuckGo Lite（无需 API Key，无需登录）
+ *
+ * 代理支持：读取环境变量 HTTPS_PROXY / HTTP_PROXY，自动走代理
  */
+
+import { HttpsProxyAgent } from "https-proxy-agent";
+
+/** 获取代理 Agent（如果配置了环境变量） */
+function getProxyAgent(): any | undefined {
+  const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || process.env.https_proxy || process.env.http_proxy;
+  if (!proxyUrl) return undefined;
+  return new HttpsProxyAgent(proxyUrl);
+}
 
 export interface SearchResult {
   title: string;
@@ -23,13 +34,15 @@ export interface SearchResponse {
 export async function searchDuckDuckGo(query: string, limit = 10): Promise<SearchResponse> {
   const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
 
+  const agent = getProxyAgent();
   const res = await fetch(searchUrl, {
+    agent,
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
       "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
     },
-  });
+  } as any);
 
   if (!res.ok) {
     throw new Error(`DuckDuckGo search failed: HTTP ${res.status}`);

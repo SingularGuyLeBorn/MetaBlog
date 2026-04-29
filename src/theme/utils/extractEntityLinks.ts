@@ -66,7 +66,7 @@ export function extractEntityLinks(toolName: string, toolResult: any): EntityLin
   }
 
   // 2. 从 message 文本中提取 URL(仅限已知工具类型，避免查询类工具误渲染)
-  // webSearch / fetchUrl 等工具的 message 中包含搜索结果 URL，不应渲染为实体卡片
+  // webSearch 等工具的 message 中包含搜索结果 URL，不应渲染为实体卡片
   if (knownFields && typeof message === 'string') {
     const msgLinks = extractUrlsFromText(message)
     for (const url of msgLinks) {

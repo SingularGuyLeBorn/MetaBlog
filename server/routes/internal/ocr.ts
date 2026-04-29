@@ -1,11 +1,11 @@
 /**
  * OCR 路由
  *
- * 提供图片 OCR 提取接口，供前端在 DeepSeek 等非多模态模型对话中使用。
+ * 提供图片 OCR 提取接口，支持两种调用方式：
+ * 1. POST multipart/form-data — 上传图片文件（前端 blob 用）
+ * 2. POST application/json — 传入远程图片 URL，后端自动下载并 OCR
  *
- * POST /api/ocr
- *   - 上传图片文件，自动调用 OCR 引擎提取文本
- *   - 引擎优先级: PaddleOCR → Tesseract → OCR.space（自动降级）
+ * 引擎优先级: PaddleOCR → Tesseract → OCR.space（自动降级）
  *
  * GET /api/ocr/status
  *   - 查看各 OCR 引擎的可用性状态
@@ -14,13 +14,13 @@
 import type { ViteDevServer } from "vite";
 import fs from "fs";
 import path from "path";
-import { performOCR, getOCRStatus } from "../../services/ocr";
+import { performOCR, getOCRStatus, ocrRemoteImage } from "../../services/ocr";
 
 interface ServerContext {
   system: any;
 }
 
-// 上传文件临时目录
+// 上传文件临时目录（multipart 文件上传用）
 const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads", "ocr");
 
 function ensureUploadDir(): void {
@@ -107,44 +107,83 @@ function parseMultipart(req: any): Promise<{ fields: Record<string, string>; fil
 }
 
 export function registerOCRRoutes(server: ViteDevServer, _ctx: ServerContext) {
-  // POST /api/ocr — 上传图片进行 OCR
+  // POST /api/ocr — 上传图片进行 OCR（支持两种模式）
   server.middlewares.use("/api/ocr", async (req, res, next) => {
     if (req.method !== "POST") {
       next();
       return;
     }
 
+    const contentType = req.headers["content-type"] || "";
+
     try {
       ensureUploadDir();
-      const parsed = await parseMultipart(req);
+      let tempPath: string;
+      let language = "auto";
 
-      if (!parsed.file) {
-        res.statusCode = 400;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ success: false, error: "未上传图片文件" }));
-        return;
-      }
+      if (contentType.includes("application/json")) {
+        // 模式 2: JSON body { url: "...", language?: "auto" }
+        const chunks: Buffer[] = [];
+        await new Promise<void>((resolve, reject) => {
+          req.on("data", (chunk: Buffer) => chunks.push(chunk));
+          req.on("end", resolve);
+          req.on("error", reject);
+        });
+        const body = JSON.parse(Buffer.concat(chunks).toString("utf-8"));
+        const imageUrl = body.url;
+        language = body.language || "auto";
 
-      // 检查文件类型
-      const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif", "image/bmp"];
-      if (!allowedTypes.includes(parsed.file.mimetype)) {
-        res.statusCode = 400;
+        if (!imageUrl) {
+          res.statusCode = 400;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ success: false, error: "缺少 url 参数" }));
+          return;
+        }
+
+        // 后端下载远程图片并 OCR（不受浏览器 CORS 限制，可设置 Referer 绕过防盗链）
+        const ocrResult = await ocrRemoteImage(imageUrl, language);
         res.setHeader("Content-Type", "application/json");
         res.end(JSON.stringify({
-          success: false,
-          error: `不支持的文件类型: ${parsed.file.mimetype}。仅支持: ${allowedTypes.join(", ")}`,
+          success: ocrResult.success,
+          data: {
+            text: ocrResult.text,
+            engine: ocrResult.engine,
+          },
+          error: ocrResult.error || undefined,
         }));
         return;
+      } else {
+        // 模式 1: multipart/form-data 文件上传（前端 blob 用）
+        const parsed = await parseMultipart(req);
+
+        if (!parsed.file) {
+          res.statusCode = 400;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ success: false, error: "未上传图片文件" }));
+          return;
+        }
+
+        // 检查文件类型
+        const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif", "image/bmp"];
+        if (!allowedTypes.includes(parsed.file.mimetype)) {
+          res.statusCode = 400;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({
+            success: false,
+            error: `不支持的文件类型: ${parsed.file.mimetype}。仅支持: ${allowedTypes.join(", ")}`,
+          }));
+          return;
+        }
+
+        // 保存临时文件
+        const ext = path.extname(parsed.file.filename) || ".png";
+        const tempName = `ocr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}${ext}`;
+        tempPath = path.join(UPLOAD_DIR, tempName);
+        fs.writeFileSync(tempPath, parsed.file.data);
+        language = parsed.fields.language || "auto";
       }
 
-      // 保存临时文件
-      const ext = path.extname(parsed.file.filename) || ".png";
-      const tempName = `ocr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}${ext}`;
-      const tempPath = path.join(UPLOAD_DIR, tempName);
-      fs.writeFileSync(tempPath, parsed.file.data);
-
       // 调用 OCR 服务
-      const language = parsed.fields.language || "auto";
       const result = await performOCR({ imagePath: tempPath, language });
 
       // 清理临时文件（异步，不阻塞响应）

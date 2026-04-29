@@ -48,6 +48,80 @@ function translateHttpError(status: number, statusText: string, url: string): { 
 
 export function registerProxyRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
+
+  // ============================================
+  // Image Proxy - 图片代理（绕过防盗链）
+  // ============================================
+  server.middlewares.use("/api/image-proxy", async (req, res, next) => {
+    if (req.method !== "GET") return next();
+
+    const urlParam = new URL(req.url || "", `http://localhost`).searchParams.get("url");
+    if (!urlParam) {
+      res.statusCode = 400;
+      res.end(JSON.stringify({ success: false, error: "Missing url parameter" }));
+      return;
+    }
+
+    let targetUrl: URL;
+    try {
+      targetUrl = new URL(urlParam);
+    } catch {
+      res.statusCode = 400;
+      res.end(JSON.stringify({ success: false, error: "Invalid URL format" }));
+      return;
+    }
+
+    if (!["http:", "https:"].includes(targetUrl.protocol)) {
+      res.statusCode = 400;
+      res.end(JSON.stringify({ success: false, error: "Only HTTP/HTTPS allowed" }));
+      return;
+    }
+
+    // 根据目标域名设置合适的 Referer，绕过防盗链
+    const hostname = targetUrl.hostname;
+    let referer = targetUrl.origin + "/";
+    if (hostname.includes("mp.weixin.qq.com") || hostname.includes("mmbiz.qpic.cn") || hostname.includes("mmbiz.qlogo.cn")) {
+      referer = "https://mp.weixin.qq.com/";
+    } else if (hostname.includes("zhimg.com")) {
+      referer = "https://zhuanlan.zhihu.com/";
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const fetchResponse = await fetch(urlParam, {
+        method: "GET",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept: "image/webp,image/apng,image/*,*/*;q=0.8",
+          Referer: referer,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!fetchResponse.ok) {
+        res.statusCode = fetchResponse.status;
+        res.end(JSON.stringify({ success: false, error: `HTTP ${fetchResponse.status}` }));
+        return;
+      }
+
+      const blob = await fetchResponse.blob();
+      const contentType = fetchResponse.headers.get("content-type") || blob.type || "image/png";
+      const buffer = Buffer.from(await blob.arrayBuffer());
+
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      res.end(buffer);
+    } catch (err: any) {
+      console.error("[ImageProxy] Failed:", err.message);
+      res.statusCode = 502;
+      res.end(JSON.stringify({ success: false, error: err.message }));
+    }
+  });
+
   // ============================================
   // Proxy API - 网络抓取代理
   // ============================================

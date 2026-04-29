@@ -11,9 +11,99 @@
 
 import fs from "fs";
 import https from "https";
+import http from "http";
+import { URL } from "url";
 import FormData from "form-data";
 import { spawn } from "child_process";
 import path from "path";
+
+// 上传文件临时目录
+const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads", "ocr");
+
+function ensureUploadDir(): void {
+  if (!fs.existsSync(UPLOAD_DIR)) {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+  }
+}
+
+/** 根据 URL 获取对应的 Referer（绕过防盗链） */
+function getRefererForUrl(url: string): string {
+  if (url.includes("mmbiz.qpic.cn") || url.includes("mmbiz.qlogo.cn")) {
+    return "https://mp.weixin.qq.com/";
+  }
+  if (url.includes("zhimg.com")) {
+    return "https://zhuanlan.zhihu.com/";
+  }
+  if (url.includes("byteimg.com")) {
+    return "https://www.toutiao.com/";
+  }
+  return "";
+}
+
+/** 后端下载远程图片到临时文件 */
+export async function downloadImageToTemp(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const protocol = parsed.protocol === "https:" ? https : http;
+    const referer = getRefererForUrl(url);
+
+    const ext = path.extname(parsed.pathname) || ".png";
+    const tempName = `ocr_dl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}${ext}`;
+    const tempPath = path.join(UPLOAD_DIR, tempName);
+
+    const request = protocol.request(
+      url,
+      {
+        method: "GET",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept: "image/webp,image/apng,image/*,*/*;q=0.8",
+          Referer: referer,
+        },
+        timeout: 15000,
+      },
+      (response) => {
+        if (response.statusCode !== 200) {
+          reject(new Error(`上游返回 HTTP ${response.statusCode}`));
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        response.on("data", (chunk: Buffer) => chunks.push(chunk));
+        response.on("end", () => {
+          try {
+            const buffer = Buffer.concat(chunks);
+            fs.writeFileSync(tempPath, buffer);
+            resolve(tempPath);
+          } catch (err: any) {
+            reject(new Error(`保存临时文件失败: ${err.message}`));
+          }
+        });
+      }
+    );
+
+    request.on("error", (err) => reject(new Error(`下载失败: ${err.message}`)));
+    request.on("timeout", () => {
+      request.destroy();
+      reject(new Error("下载超时"));
+    });
+    request.end();
+  });
+}
+
+/** 对远程图片 URL 执行 OCR（下载 + 识别，自动清理临时文件） */
+export async function ocrRemoteImage(url: string, language = "auto"): Promise<OCRResult> {
+  ensureUploadDir();
+  const tempPath = await downloadImageToTemp(url);
+  try {
+    const result = await performOCR({ imagePath: tempPath, language });
+    return result;
+  } finally {
+    fs.unlink(tempPath, (err) => {
+      if (err) console.error("[OCR] 清理临时文件失败:", err.message);
+    });
+  }
+}
 
 // ═════════════════════════════════════════════════════════════════════════════
 // 类型定义

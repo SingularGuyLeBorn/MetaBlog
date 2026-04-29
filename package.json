@@ -39,8 +39,10 @@
     "js-tiktoken": "1.0.21",
     "js-yaml": "4.1.1",
     "jszip": "3.10.1",
+    "katex": "0.16.21",
     "marked": "17.0.3",
     "marked-highlight": "2.2.3",
+    "marked-katex-extension": "5.1.8",
     "node-cron": "4.2.1",
     "pinia": "2.3.1",
     "pinyin": "4.0.0",
@@ -50,6 +52,7 @@
     "vue": "3.5.28"
   },
   "devDependencies": {
+    "@braintree/sanitize-url": "^7.1.2",
     "@pinia/testing": "0.1.7",
     "@types/express": "5.0.6",
     "@types/markdown-it": "14.1.2",
@@ -60,6 +63,8 @@
     "@vue/test-utils": "2.4.6",
     "autoprefixer": "10.4.24",
     "concurrently": "8.2.2",
+    "cytoscape-cose-bilkent": "^4.1.0",
+    "dayjs": "^1.11.20",
     "diff-match-patch": "1.0.5",
     "express": "5.2.1",
     "jsdom": "23.2.0",
@@ -67,6 +72,7 @@
     "markdown-it": "14.1.1",
     "markdown-it-container": "3.0.0",
     "markdown-it-mathjax3": "4.3.2",
+    "mermaid": "^11.14.0",
     "playwright": "1.59.1",
     "postcss": "8.5.6",
     "sass-embedded": "1.97.3",
@@ -76,6 +82,7 @@
     "typescript": "5.9.3",
     "vite": "5.4.21",
     "vitepress": "1.6.4",
+    "vitepress-plugin-mermaid": "^2.0.17",
     "vitest": "2.1.9",
     "winston": "3.19.0",
     "winston-daily-rotate-file": "5.0.0"

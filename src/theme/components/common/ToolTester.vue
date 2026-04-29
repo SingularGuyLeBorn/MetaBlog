@@ -498,38 +498,7 @@ const toolCategories = [
     name: '网络内容抓取',
     icon: '🌐',
     tools: [
-      {
-        name: 'fetchUrl',
-        description: '通用网页内容提取，支持多种内容类型识别',
-        status: 'available',
-        parameters: {
-          type: 'object',
-          properties: {
-            url: { 
-              type: 'string', 
-              description: '要抓取的 URL'
-            },
-            selector: {
-              type: 'string',
-              description: 'CSS 选择器，提取特定元素内容'
-            },
-            extract_type: {
-              type: 'string',
-              description: '提取类型',
-              enum: ['text', 'html', 'markdown', 'structured']
-            },
-            timeout: {
-              type: 'integer',
-              description: '超时时间(秒)，默认30'
-            },
-            headers: {
-              type: 'object',
-              description: '自定义请求头'
-            }
-          },
-          required: ['url']
-        }
-      },
+
       {
         name: 'fetchArxiv',
         description: '抓取 ArXiv 论文信息，支持摘要、作者、PDF链接',
@@ -681,58 +650,10 @@ const toolCategories = [
           required: []
         }
       },
-      {
-        name: 'testEcho',
-        description: '回声测试工具',
-        status: 'available',
-        parameters: {
-          type: 'object',
-          properties: {
-            message: { type: 'string', description: '要回显的消息' },
-            repeat_count: { type: 'integer', description: '重复次数' }
-          },
-          required: ['message']
-        }
-      }
+
     ]
   },
-  {
-    id: 'text',
-    name: '文本处理',
-    icon: '📝',
-    tools: [
-      {
-        name: 'summarizeText',
-        description: '对给定文本生成简短摘要',
-        status: 'available',
-        parameters: {
-          type: 'object',
-          properties: {
-            text: { type: 'string', description: '需要摘要的文本' },
-            max_length: { type: 'integer', description: '摘要最大长度' }
-          },
-          required: ['text']
-        }
-      },
-      {
-        name: 'formatText',
-        description: '将文本格式化为指定格式',
-        status: 'available',
-        parameters: {
-          type: 'object',
-          properties: {
-            text: { type: 'string', description: '原始文本' },
-            format: { 
-              type: 'string', 
-              description: '目标格式',
-              enum: ['markdown', 'json', 'yaml', 'html', 'table']
-            }
-          },
-          required: ['text', 'format']
-        }
-      }
-    ]
-  }
+
 ]
 
 // ============ 状态 ============
@@ -958,12 +879,7 @@ function generateMockResult(toolName, params) {
         iso: new Date().toISOString(),
         formatted: new Date().toLocaleString('zh-CN')
       }
-    case 'testEcho':
-      return {
-        message: params.message,
-        repeat_count: params.repeat_count || 1,
-        echoed: Array(params.repeat_count || 1).fill(params.message)
-      }
+
     default:
       return { message: 'Mock result for ' + toolName, params }
   }

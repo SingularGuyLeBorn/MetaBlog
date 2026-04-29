@@ -51,7 +51,7 @@ export {
 
 // ==================== 平台解析工具 ====================
 export {
-    ocrImage, ocrImageDef, parseBilibili, parseBilibiliDef, parseDouyin, parseDouyinDef, parsePlatformLink, parsePlatformLinkDef, parseWechat, parseWechatDef, parseWeibo, parseWeiboDef, parseXiaohongshu, parseXiaohongshuDef, parseZhihu, parseZhihuDef, processImage, processImageDef
+    ocrImage, ocrImageDef, readArticle, readArticleDef
 } from './platform'
 
 // ==================== GitHub 工具 ====================
@@ -67,7 +67,7 @@ export {
 
 // ==================== 文本工具 ====================
 export {
-    formatText, formatTextDef, summarizeText, summarizeTextDef, translateText, translateTextDef
+
 } from './text'
 
 // ==================== 代码工具 ====================
@@ -77,12 +77,12 @@ export {
 
 // ==================== 网络工具 ====================
 export {
-    fetchUrl, fetchUrlDef, webSearch, webSearchDef
+    webSearch, webSearchDef
 } from './network'
 
 // ==================== 系统工具 ====================
 export {
-    calculate, calculateDef, getCurrentTime, getCurrentTimeDef, getWeather, getWeatherDef, testEcho, testEchoDef
+    calculate, calculateDef, getCurrentTime, getCurrentTimeDef
 } from './system'
 
 // ==================== 飞书工具 ====================
@@ -152,22 +152,8 @@ import { listFiles, listFilesDef, readFile, readFileDef, writeFile, writeFileDef
 import {
     ocrImage,
     ocrImageDef,
-    parseBilibili,
-    parseBilibiliDef,
-    parseDouyin,
-    parseDouyinDef,
-    parsePlatformLink,
-    parsePlatformLinkDef,
-    parseWechat,
-    parseWechatDef,
-    parseWeibo,
-    parseWeiboDef,
-    parseXiaohongshu,
-    parseXiaohongshuDef,
-    parseZhihu,
-    parseZhihuDef,
-    processImage,
-    processImageDef
+    readArticle,
+    readArticleDef
 } from './platform'
 
 // GitHub 工具
@@ -247,16 +233,16 @@ import {
 import { createNote, createNoteDef, listNotes, listNotesDef, queryKnowledge, queryKnowledgeDef } from './note'
 
 // 文本工具
-import { formatText, formatTextDef, summarizeText, summarizeTextDef, translateText, translateTextDef } from './text'
+
 
 // 代码工具
 import { analyzeCode, analyzeCodeDef, executeCode, executeCodeDef } from './code'
 
 // 网络工具
-import { fetchUrl, fetchUrlDef, webSearch, webSearchDef } from './network'
+import { webSearch, webSearchDef } from './network'
 
 // 系统工具
-import { calculate, calculateDef, getCurrentTime, getCurrentTimeDef, getWeather, getWeatherDef, testEcho, testEchoDef } from './system'
+import { calculate, calculateDef, getCurrentTime, getCurrentTimeDef } from './system'
 
 // 飞书工具
 import {
@@ -369,13 +355,16 @@ import { executeSearchCapabilities, searchCapabilitiesDef } from './search_capab
  * MCP 专家建议不超过10-15 个，graph-tool-call 项目 248个 减少 79% token
  */
 export const CORE_TOOL_NAMES = [
+    'readArticle',          // 【核心】获取网页文章/帖子内容，看到链接直接调用
+    'ocrImage',             // 【核心】OCR 识别图片文字
     'searchCapabilities',   // 能力发现器- 搜索所有工具和 Skills
     'loadSkill',            // 工作流加载器 - 加载 Skill 工作流指南
     'getAllTools',         // 工具目录 - 获取完整工具列表(文本形式)
     'getAllSkills',        // Skill 目录 - 获取完整 Skill 列表(文本形式)
     'getCurrentTime',      // 通用基础工具
     'calculate',             // 通用基础工具
-    'webSearch'             // 通用网络搜索
+    'webSearch',             // 通用网络搜索
+    'createArticle'          // 内容创作核心 - 创建博客文章
 ]
 
 // ==================== 初始化函数====================
@@ -419,17 +408,10 @@ export function initializeDefaultTools(): void {
         { name: 'listFiles', definition: listFilesDef, executor: listFiles }
     ])
 
-    // 平台解析工具(个)
+    // 平台解析工具
     registerTools([
-        { name: 'parseZhihu', definition: parseZhihuDef, executor: parseZhihu },
-        { name: 'parseXiaohongshu', definition: parseXiaohongshuDef, executor: parseXiaohongshu },
-        { name: 'parseWechat', definition: parseWechatDef, executor: parseWechat },
-        { name: 'parsePlatformLink', definition: parsePlatformLinkDef, executor: parsePlatformLink },
-        { name: 'parseDouyin', definition: parseDouyinDef, executor: parseDouyin },
-        { name: 'parseBilibili', definition: parseBilibiliDef, executor: parseBilibili },
-        { name: 'parseWeibo', definition: parseWeiboDef, executor: parseWeibo },
-        { name: 'ocrImage', definition: ocrImageDef, executor: ocrImage },
-        { name: 'processImage', definition: processImageDef, executor: processImage }
+        { name: 'readArticle', definition: readArticleDef, executor: readArticle },
+        { name: 'ocrImage', definition: ocrImageDef, executor: ocrImage }
     ])
 
     // GitHub 工具(4个)
@@ -479,9 +461,7 @@ export function initializeDefaultTools(): void {
 
     // 文本处理工具(个)
     registerTools([
-        { name: 'summarizeText', definition: summarizeTextDef, executor: summarizeText },
-        { name: 'formatText', definition: formatTextDef, executor: formatText },
-        { name: 'translateText', definition: translateTextDef, executor: translateText }
+
     ])
 
     // 代码工具(个)
@@ -490,18 +470,17 @@ export function initializeDefaultTools(): void {
         { name: 'analyzeCode', definition: analyzeCodeDef, executor: analyzeCode }
     ])
 
-    // 网络工具(个)
+    // 网络工具(1个)
     registerTools([
-        { name: 'webSearch', definition: webSearchDef, executor: webSearch },
-        { name: 'fetchUrl', definition: fetchUrlDef, executor: fetchUrl }
+        { name: 'webSearch', definition: webSearchDef, executor: webSearch }
     ])
 
     // 系统工具(个)
     registerTools([
         { name: 'getCurrentTime', definition: getCurrentTimeDef, executor: getCurrentTime },
-        { name: 'getWeather', definition: getWeatherDef, executor: getWeather },
+
         { name: 'calculate', definition: calculateDef, executor: calculate },
-        { name: 'testEcho', definition: testEchoDef, executor: testEcho }
+
     ])
 
     // 飞书文档工具(3个)

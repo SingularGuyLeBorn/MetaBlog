@@ -102,7 +102,7 @@
               <span>文件</span>
               <span class="menu-hint">仅保存</span>
             </button>
-            <!-- 链接功能已由 parsePlatformLink 工具覆盖，此处不再提供 -->
+            <!-- 链接功能已由 readArticle 工具覆盖，此处不再提供 -->
           </div>
         </Transition>
       </div>
@@ -186,7 +186,7 @@
       @change="handleFileSelect($event, 'file')"
     />
     
-    <!-- 链接输入已由 parsePlatformLink 工具覆盖 -->
+    <!-- 链接输入已由 readArticle 工具覆盖 -->
   </div>
 </template>
 
@@ -913,5 +913,5 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   color: #db2777;
 }
 
-/* 链接功能已由 parsePlatformLink 工具覆盖 */
+/* 链接功能已由 readArticle 工具覆盖 */
 </style>

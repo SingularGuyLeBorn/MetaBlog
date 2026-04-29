@@ -36,7 +36,7 @@ export {
 
 // 平台解析工具(从子模块导出)
 export {
-  ocrImageDef, parsePlatformLinkDef, parseWechatDef, parseXiaohongshuDef, parseZhihuDef, processImageDef
+  ocrImageDef, readArticleDef
 } from '@/theme/tools/platform'
 
 export type {

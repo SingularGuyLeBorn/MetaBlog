@@ -33,11 +33,13 @@ export const searchCapabilitiesDef: ToolDefinition = {
     name: 'searchCapabilities',
     description: `通过关键词搜索系统中可用的工具和 Skills，找到最适合当前任务的能力。
 
-使用场景：
-1. 用户提出需求后，你不确定有哪些工具可以帮上忙
-2. 想确认某个领域(如 GitHub、飞书、学术)有哪些可用能力
-3. 工具调用失败后，想找替代方案
-4. 用户问"你能做什么"时，提供精准回答
+【什么时候用】
+- 用户提出需求后，你完全不知道有哪些工具可以帮上忙
+- 用户问"你能做什么"时，提供精准回答
+
+【什么时候不用】
+- 如果你已经知道工具的名字（如 readArticle、ocrImage、webSearch），直接调用即可，不要用 searchCapabilities 搜索确认
+- 不要每次调用工具前都先 searchCapabilities，这是浪费
 
 示例：
 - 搜索 GitHub 相关：keyword="github"

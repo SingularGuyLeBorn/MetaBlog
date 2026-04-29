@@ -41,9 +41,9 @@ const toolCallRecords = new Map<string, ToolCallRecord>()
  * @example
  * ```typescript
  * registerTool(
- *   'getWeather',
- *   getWeatherDef,
- *   getWeather
+ *   'readArticle',
+ *   readArticleDef,
+ *   readArticle
  * )
  * ```
  */
@@ -176,8 +176,8 @@ function generateRecordId(): string {
  *   id: 'call_123',
  *   type: 'function',
  *   function: {
- *     name: 'getWeather',
- *     arguments: '{"city": "北京"}'
+ *     name: 'readArticle',
+ *     arguments: '{"url": "https://example.com"}'
  *   }
  * })
  * ```

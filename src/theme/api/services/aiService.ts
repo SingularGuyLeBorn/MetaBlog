@@ -331,6 +331,15 @@ export interface StreamCallbacks {
 // ==================== 多模态消息处理 ====================
 
 /**
+ * 从文本中提取 ms://file_id 格式的 Kimi 文件引用
+ * 用于识别 readArticle 返回的 vision 图片引用
+ */
+function extractMsFileIds(content: string): string[] {
+  const matches = content.matchAll(/ms:\/\/([a-zA-Z0-9_\-]+)/g)
+  return Array.from(new Set(Array.from(matches).map((m) => m[1])))
+}
+
+/**
  * 将ChatMessage转换为API消息格式
  * 支持多模态内容(图片、视频)
  */
@@ -439,6 +448,19 @@ async function convertMessageToApiFormat(
 
   if (message.role === 'tool' && message.metadata?.toolCallId) {
     baseMsg.tool_call_id = message.metadata.toolCallId
+  }
+
+  // 检测 ms://file_id（来自 readArticle 的 vision 图片引用）并转换为 vision 输入
+  if (modelConfig.supportsVision && typeof baseMsg.content === 'string') {
+    const fileIds = extractMsFileIds(baseMsg.content)
+    if (fileIds.length > 0) {
+      const contentParts: any[] = []
+      contentParts.push({ type: 'text', text: baseMsg.content })
+      for (const fileId of fileIds) {
+        contentParts.push({ type: 'image_url', image_url: { url: `ms://${fileId}` } })
+      }
+      baseMsg.content = contentParts
+    }
   }
 
   return baseMsg
@@ -1319,7 +1341,7 @@ export const aiService = {
           } else if (result && typeof result === 'object') {
             if (result.success) {
               // 【关键修复】优先将 data 序列化传给 AI，message 只作为状态提示
-              // 之前只传 message 导致 AI 看不到 fetchUrl 的 content、readFile 的内容等真实数据
+              // 之前只传 message 导致 AI 看不到 readArticle 的 content、readFile 的内容等真实数据
               if (result.data !== undefined) {
                 const dataStr = typeof result.data === 'string'
                   ? result.data

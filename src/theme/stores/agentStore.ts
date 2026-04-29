@@ -21,6 +21,7 @@ import {
   updateSkill as updateSkillStorage
 } from '@/theme/api/services/agentStorage'
 import { getToolDefinitions } from '@/theme/tools'
+import { modelSupports } from '@/theme/api/providers/models'
 import type {
   Agent,
   AgentCreateParams,
@@ -80,20 +81,14 @@ export function useAgentConfig() {
       updateArticle: '✏️',
       deleteArticle: '🗑️',
       searchArticles: '🔍',
-      testEcho: '🔊',
-      summarizeText: '📝',
-      formatText: '📐',
       readFile: '📂',
       writeFile: '💾',
       listFiles: '📁',
       webSearch: '🌐',
-      fetchUrl: '🔗',
       calculate: '🧮',
-      translateText: '🌏',
       executeCode: '▶️',
       analyzeCode: '🔍',
       queryKnowledge: '🧠',
-      getWeather: '🌤️',
       createNote: '📓',
       listNotes: '📔',
       // 学术平台工具
@@ -286,9 +281,15 @@ export function useAgentConfig() {
     const skillIds = capabilities.skillIds || []
     const agentSkills = skills.value.filter(s => skillIds.includes(s.id))
 
-    // 1. 基础角色
+    // 1. 基础角色 + 模型能力声明
+    const modelId = agent.runtime?.model || ''
+    const isVisionModel = modelId ? modelSupports(modelId, 'vision') : false
+    const visionHint = isVisionModel
+      ? '【模型能力】你是 vision 多模态模型，可以直接理解图片内容。当调用 readArticle 时，请传 fetch_image_files=true 让后端把文章图片转成 ms://file_id 供你查看。'
+      : '【模型能力】你是文本模型，无法直接查看图片。当调用 readArticle 时，请传 embed_ocr=true 让后端对文章图片做 OCR 识别文字。'
+
     const roleSection = capabilities.customSystemPrompt ||
-      `你是 ${agent.name}，${agent.description}`
+      `你是 ${agent.name}，${agent.description}\n\n${visionHint}`
 
     // 2. 只展示少量高频 Skill 作为示例(完整列表通过 getAllSkills 获取)
     const showcaseSkills = agentSkills.slice(0, 5)
@@ -299,9 +300,9 @@ export function useAgentConfig() {
 
     // 3. 只展示少量高频工具作为示例(完整列表通过 getAllTools 获取)
     const showcaseToolNames = new Set([
-      'searchArticles', 'createArticle', 'webSearch', 'fetchUrl',
+      'readArticle', 'ocrImage', 'searchArticles', 'createArticle', 'webSearch',
       'readFile', 'writeFile', 'executeCode', 'getCurrentTime',
-      'getWeather', 'calculate', 'summarizeText', 'translateText',
+      'calculate',
       'loadSkill', 'getAllTools', 'getAllSkills'
     ])
     const showcaseTools = allTools.value.filter(t => showcaseToolNames.has(t.name))
@@ -324,7 +325,9 @@ export function useAgentConfig() {
     sections.push('')
     sections.push('### 关键规则')
     sections.push('- **不需要工具时**：直接回答，不要强行调用')
-    sections.push('- **loadSkill 是第一入口**：当用户请求涉及某个 Skill 时，必须先调用 loadSkill 加载该 Skill 的完整指导')
+    sections.push('- **看到网页链接时**：直接调用 `readArticle(url=链接)` 获取内容，不需要加载任何 Skill')
+    sections.push('- **readArticle 失败时**：如果 readArticle 返回的内容明显不完整或为空（特别是微信、知乎等反爬强的网站），重新调用 `readArticle({"url": "链接", "method": "playwright"})` 强制使用浏览器渲染获取')
+    sections.push('- **loadSkill 是第一入口**：当用户请求涉及某个 Skill（如 GitHub、学术研究）时，必须先调用 loadSkill 加载该 Skill 的完整指导')
     sections.push('- **参数准确**：确保传入的参数符合工具的 schema 要求')
     sections.push('- **工具失败时**：告知用户并提供替代方案')
     sections.push('- **禁止编造**：不要编造工具调用结果，必须等待真实的 tool 结果消息')
@@ -353,6 +356,14 @@ export function useAgentConfig() {
     sections.push('')
     sections.push('### 完整工作流程示例')
     sections.push('')
+    sections.push('**示例 0 - 用户分享链接（最重要）：**')
+    sections.push('```')
+    sections.push('用户: "https://mp.weixin.qq.com/s/xxx 这篇文章讲了什么？"')
+    sections.push('-> 判断：用户分享了一个网页链接')
+    sections.push('-> 直接调用 readArticle({"url": "https://mp.weixin.qq.com/s/xxx", "fetch_image_files": true})')
+    sections.push('-> 基于返回的 Markdown 内容回复用户')
+    sections.push('```')
+    sections.push('')
     sections.push('**示例 1 - 文章管理：**')
     sections.push('```')
     sections.push('用户: "找一下 React 的文章"')
@@ -375,6 +386,7 @@ export function useAgentConfig() {
     sections.push('')
     sections.push('### 注意事项')
     sections.push('- 不要在没有加载 Skill 的情况下直接调用 Skill 关联的工具')
+    sections.push('- 看到网页链接时，不需要加载 Skill，直接调用 `readArticle(url=链接)` 即可')
     sections.push('- loadSkill 只需调用一次，加载后该 Skill 的内容会在后续对话中持续有效')
     sections.push('- 如果用户请求不涉及任何 Skill，你可以直接调用通用工具或直接用文本回复')
 
