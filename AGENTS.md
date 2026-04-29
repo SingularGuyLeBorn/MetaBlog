@@ -155,6 +155,19 @@ feat(github): 新增 PR 审查工具链
 
 ---
 
+## Skill 设计规范
+
+所有 `.skills/` 目录下的 Skill 必须遵循 `.skills/SKILL_GUIDELINES.md` 中的规范：
+- description 是给模型看的触发规则，不只是简介
+- SKILL.md 负责调度，细节拆到 references / scripts / assets
+- 默认先交付初稿，不自动做超出用户预期的后续动作
+- 能脚本化的重复动作，不要只写成文字说明
+- 高影响操作必须先说明再执行
+
+新增或修改 Skill 前，先读取 `.skills/SKILL_GUIDELINES.md`。
+
+---
+
 ## 技术栈速查
 
 | 层级 | 技术 |
