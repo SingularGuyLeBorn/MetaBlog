@@ -1,53 +1,13 @@
 ---
-id: feishu-assistant
 name: 飞书助手
-description: 通过飞书 Open API 操作文档、发送消息、查找用户
-icon: 📋
-category: productivity
-tags:
-  - 飞书
-  - 文档
-  - 消息
-  - Lark
-tools:
-  - feishuDocCreate # 支持 owner_email/owner_mobile 自动下放权限
-  - feishuDocRead
-  - feishuDocMeta
-  - feishuDocSearch
-  - feishuDocBlocks
-  - feishuDocAppend # 支持 $latex$ 公式转换与代码语言高亮
-  - feishuDocUpdateBlock # 支持 $latex$ 公式转换与样式叠加
-  - feishuDocDeleteBlock
-  - feishuDocInsertImage # 插入图片到文档
-  - feishuDocShare # 分享文档权限
-  - feishuDocUnshare # 取消文档权限
-  - feishuImSend
-  - feishuUserSearch
-  - feishuWikiSpaceCreate
-  - feishuWikiSpaceList
-  - feishuWikiSpaceGet
-  - feishuWikiSpaceUpdate
-  - feishuWikiSpaceDelete
-  - feishuWikiNodeCreate
-  - feishuWikiNodeList
-  - feishuWikiNodeDelete
-  - feishuWikiNodeMove
-  - feishuWikiMoveDoc
-  - feishuWikiMemberList
-  - feishuWikiMemberAdd
-  - feishuWikiMemberRemove
-usageScenarios:
-  - 创建并自动分配权限的飞书文档
-  - 在文档中插入数学公式 ($latex$)
-  - 具有语法高亮的代码片段写入
-  - 上传图片并插入文档
-  - 读取、搜索并修改文档内容
-  - 发送消息并查找用户
+description: |
+  通过飞书 Open API 操作文档、发送消息、管理知识库和查找用户。
+  触发时机：用户提到"飞书""文档""消息""Lark""知识库""Wiki"等。
+  不适用：与飞书无关的通用聊天或需要飞书 API 开发指导（使用飞书集成导师 skill）。
 ---
 
 # 飞书助手
 
-## 描述
 通过飞书 Open API 直接操作云文档、发送即时消息、查找用户，无需用户手动登录。
 
 ## 核心概念
@@ -68,7 +28,7 @@ usageScenarios:
 ```typescript
 feishuDocCreate(
   title="量子力学笔记", 
-  owner_email="user@example.com" // 可选，指定后自动分配 Full Access 权限
+  owner_email="user@example.com"
 ) 
 ```
 - 创建成功后，工具会返回 `permission_result` 告知权限分配状态。
@@ -81,29 +41,24 @@ feishuDocCreate(
 **绝对禁止**：将公式写成纯文本，如 `J(θ) = E[...]`、`log π(a|s)` 等。
 
 **必须写成**(标准 LaTeX 语法，无需额外转义)：
-- 行内公式(短公式，嵌入段落中)：`$J(\theta) = \mathbb{E}_{\pi_\theta}[\log \pi_\theta(a|s) \cdot A(s,a)]$`
-- 块级公式(重要公式，独立一行)：`$$\mathcal{L}_{PPO}(\theta) = \mathbb{E}_{t}[\min(r_t(\theta)\hat{A}_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\hat{A}_t)]$$`
+- 行内公式：`$J(\theta) = \mathbb{E}_{\pi_\theta}[\log \pi_\theta(a|s) \cdot A(s,a)]$`
+- 块级公式：`$$\mathcal{L}_{PPO}(\theta) = \mathbb{E}_{t}[\min(r_t(\theta)\hat{A}_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\hat{A}_t)]$$`
 
-**重要提醒**：你只需写标准 LaTeX 语法(如 `\pi`、`\theta`、`\frac`)，JSON 序列化由框架自动处理。不要在 content 中写双重反斜杠(如 `\\pi`)，否则飞书会渲染为 `\pi` 纯文本。
+**重要提醒**：你只需写标准 LaTeX 语法，JSON 序列化由框架自动处理。不要在 content 中写双重反斜杠(如 `\\pi`)，否则飞书会渲染为 `\pi` 纯文本。
 
 **常见错误自查**：
 - ❌ `KL divergence: D_KL(π_θ || π_ref)` → ✅ `$D_{KL}(\pi_\theta \| \pi_{ref})$`
 - ❌ `reward = r + γV(s')` → ✅ `$r + \gamma V(s')$`
-- ❌ `PPO loss = E[min(...)]` → ✅ `$\mathcal{L}_{PPO} = \mathbb{E}[\min(\cdots)]$`
-- ❌ `\\pi`(双重反斜杠) → ✅ `\pi`(标准 LaTeX)
-
-后端会自动将 `$...$` 和 `$$...$$` 转换为飞书原生公式节点。**如果公式没有用 `$` 包裹，飞书会显示为纯文本，完全无法渲染。**
+- ❌ `\pi`(双重反斜杠) → ✅ `\pi`(标准 LaTeX)
 
 #### 代码块
 在创建 `code` 类型的块时，可以指定语言。
 
-### 4. 读取文档内容
-```
-feishuDocRead(document_id="xxx")
-```
+### 3. 读取与修改文档内容
 
-### 5. 修改文档中的某段内容
-**必须先获取块结构，再更新：**
+**读取**：`feishuDocRead(document_id="xxx")`
+
+**修改某段内容**（必须先获取块结构）：
 ```
 feishuDocBlocks(document_id="xxx")
   → 找到目标块的 block_id
@@ -114,22 +69,21 @@ feishuDocBlocks(document_id="xxx")
      )
 ```
 
-### 6. 删除文档中的某段内容
-**同样需要先获取块结构：**
+**删除某段内容**（同样需要先获取块结构）：
 ```
 feishuDocBlocks(document_id="xxx")
   → 找到目标块的 block_id
   → feishuDocDeleteBlock(document_id="xxx", block_id="block_xxx")
 ```
 
-### 7. 发送飞书消息
+### 4. 发送飞书消息
 ```
 feishuImSend(receive_id="ou_xxx", content="消息内容")
 ```
 - `receive_id` 可以是 open_id、user_id、chat_id 或 email
 - 默认 msg_type="text"
 
-### 8. 知识库 (Wiki) 操作
+### 5. 知识库 (Wiki) 操作
 ```
 feishuWikiSpaceList()                          # 列出知识库
 feishuWikiNodeCreate(space_id="xxx", title="新文档")   # 在知识库中创建节点
@@ -137,7 +91,7 @@ feishuWikiMemberList(space_id="xxx")           # 获取成员列表
 feishuWikiMemberAdd(space_id="xxx", member_id="ou_xxx", perm="view")  # 添加成员
 ```
 
-### 9. 查找用户
+### 6. 查找用户
 ```
 feishuUserSearch(email="zhangsan@company.com")
 ```
