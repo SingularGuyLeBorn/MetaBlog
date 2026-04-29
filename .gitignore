@@ -26,6 +26,10 @@ web-access/
 # pnpm workspace (auto-generated)
 pnpm-workspace.yaml
 
+# 临时文件目录（临时/实验性文件统一放这里，禁止散落在根目录）
+tmp/*
+!tmp/.gitkeep
+
 # Python
 __pycache__/
 *.pyc
