@@ -167,7 +167,12 @@ const filteredGroups = computed(() => {
       groups[2].sessions.push(session)
     }
   })
-  
+
+  // 每组内按更新时间降序排列（最新的在最上面）
+  groups.forEach(g => {
+    g.sessions.sort((a, b) => b.updatedAt - a.updatedAt)
+  })
+
   return groups.filter(g => g.sessions.length > 0)
 })
 
