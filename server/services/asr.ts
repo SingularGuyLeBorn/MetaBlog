@@ -11,7 +11,6 @@
  * @module server/services
  */
 
-
 import fs from "fs";
 import path from "path";
 import { spawn } from "child_process";
@@ -23,7 +22,7 @@ import { spawn } from "child_process";
 export interface ASROptions {
   /** 音频文件绝对路径(支持 wav/mp3/m4a/ogg 等) */
   audioPath: string;
-  /** 语言代码,默认中文(zh). whisper 支持 auto 自动检测,但指定语言更准确 */
+  /** 语言代码,默认中文(zh). whisper 支持 auto 自动检测,但指定语言更准 */
   language?: string;
 }
 
@@ -60,24 +59,24 @@ function env(key: string, fallback = ""): string {
 }
 
 const ASR_CONFIG = {
-  /** whisper.cpp 可执行文件路径. 新版叫 whisper-cli,旧版叫 main */
+  /** whisper.cpp 可执行文件路径. 新版: whisper-cli,旧版: main */
   whisperPath: env(
     "WHISPER_CLI_PATH",
     process.platform === "win32"
-      ? path.join(process.cwd(), "tools", "whisper", "whisper-cli.exe")
-      : path.join(process.cwd(), "tools", "whisper", "whisper-cli")
+      ? path.join(process.cwd(), "vendor", "whisper", "whisper-cli.exe")
+      : path.join(process.cwd(), "vendor", "whisper", "whisper-cli")
   ),
   /** 备选可执行文件名(旧版 whisper.cpp) */
   whisperFallbackPath: env(
     "WHISPER_FALLBACK_PATH",
     process.platform === "win32"
-      ? path.join(process.cwd(), "tools", "whisper", "main.exe")
-      : path.join(process.cwd(), "tools", "whisper", "main")
+      ? path.join(process.cwd(), "vendor", "whisper", "main.exe")
+      : path.join(process.cwd(), "vendor", "whisper", "main")
   ),
   /** Whisper 模型路径(ggml 格式) */
   modelPath: env(
     "WHISPER_MODEL_PATH",
-    path.join(process.cwd(), "tools", "whisper", "ggml-tiny.bin")
+    path.join(process.cwd(), "vendor", "whisper", "ggml-tiny.bin")
   ),
   /** 音频文件大小限制(50MB) */
   maxFileSize: 50 * 1024 * 1024,
@@ -178,7 +177,7 @@ export async function transcribeSpeech(options: ASROptions): Promise<ASRResult> 
       "-f", audioPath,
       "-l", language,
       "--output-json",
-      "--no-prints",        // 不打印进度条,保持 stdout 干净
+      "--no-prints",      // 不打印进度条,保持 stdout 干净
     ];
 
     const proc = spawn(executable.path, args);
@@ -248,7 +247,7 @@ export async function transcribeSpeech(options: ASROptions): Promise<ASRResult> 
         return;
       }
 
-      // 退出码 0 但没有文本 → 音频可能是静音或无法识别
+      // 退出码 0 但没有文本 -> 音频可能是静音或无法识别
       resolve({
         text: "",
         engine: `Whisper (${executable.name})`,

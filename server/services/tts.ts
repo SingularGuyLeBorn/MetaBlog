@@ -65,13 +65,13 @@ const TTS_CONFIG = {
   piperPath: env(
     "PIPER_PATH",
     process.platform === "win32"
-      ? path.join(process.cwd(), "tools", "piper", "piper.exe")
-      : path.join(process.cwd(), "tools", "piper", "piper")
+      ? path.join(process.cwd(), "vendor", "piper", "piper.exe")
+      : path.join(process.cwd(), "vendor", "piper", "piper")
   ),
   /** Piper 语音模型路径(.onnx) */
   modelPath: env(
     "PIPER_MODEL_PATH",
-    path.join(process.cwd(), "tools", "piper", "zh_CN-huayan-medium.onnx")
+    path.join(process.cwd(), "vendor", "piper", "zh_CN-huayan-medium.onnx")
   ),
   /** Piper 模型配置文件路径(.json),可选 */
   configPath: env("PIPER_CONFIG_PATH", ""),
