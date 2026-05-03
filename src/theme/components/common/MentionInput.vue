@@ -125,10 +125,10 @@ const props = withDefaults(defineProps<{
   rows?: number
   selectedSkill?: Skill
   skills?: Skill[]
-  /** AI 是否正在流式输出中。为 true 时禁止通过键盘发送消息 */
+  /** AI 是否正在流式输出中. 为 true 时禁止通过键盘发送消息 */
   isStreaming?: boolean
 }>(), {
-  placeholder: '输入消息，/ 选择技能，@ 引用文章，按 Enter 发送...',
+  placeholder: '输入消息,/ 选择技能,@ 引用文章,按 Enter 发送...',
   rows: 3,
   skills: () => [],
   isStreaming: false
@@ -282,9 +282,8 @@ function handleKeydown(e: KeyboardEvent) {
     return
   }
 
-  // 发送：Enter 或 Ctrl+Enter（Shift+Enter 换行）
-  // AI 流式输出中 Enter 也会触发发送，消息会自动加入队列
-  if (e.key === 'Enter' && !e.shiftKey) {
+  // 发送：Ctrl+Enter 发送，Enter 换行，Shift+Enter 换行
+  if (e.key === 'Enter' && e.ctrlKey && !e.shiftKey) {
     e.preventDefault()
     emit('send')
   }
@@ -375,7 +374,7 @@ function removeMention(mention: Mention) {
 
 // 处理失焦
 function handleBlur() {
-  // 延迟关闭，让点击事件先处理
+  // 延迟关闭,让点击事件先处理
   setTimeout(() => {
     showSkillDropdown.value = false
     showMentionDropdown.value = false

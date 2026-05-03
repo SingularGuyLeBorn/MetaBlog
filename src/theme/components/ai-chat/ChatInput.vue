@@ -70,8 +70,24 @@
       </button>
     </TransitionGroup>
     
+    <!-- 队列预览 -->
+    <TransitionGroup name="queue" tag="div" class="queue-preview" v-if="props.taskQueue && props.taskQueue.length > 0">
+      <div
+        v-for="(task, index) in props.taskQueue"
+        :key="task.id"
+        class="queue-item"
+      >
+        <span class="queue-index">{{ index + 1 }}</span>
+        <span class="queue-content">{{ task.content.slice(0, 40) }}{{ task.content.length > 40 ? '...' : '' }}</span>
+        <span v-if="task.attachments.length > 0" class="queue-attachments">📎{{ task.attachments.length }}</span>
+        <button class="queue-remove" @click="$emit('removeFromQueue', index)">
+          <Icon name="x" :size="12" />
+        </button>
+      </div>
+    </TransitionGroup>
+
     <!-- 主输入区域 -->
-    <div class="input-container-3d" :class="{ focused: isFocused, 'has-attachments': attachments.length > 0 }">
+    <div class="input-container-3d" :class="{ focused: isFocused, 'has-attachments': attachments.length > 0, 'has-queue': props.taskQueue && props.taskQueue.length > 0 }">
       <!-- 附件按钮 -->
       <div class="attach-menu-wrapper">
         <button 
@@ -102,7 +118,7 @@
               <span>文件</span>
               <span class="menu-hint">仅保存</span>
             </button>
-            <!-- 链接功能已由 readArticle 工具覆盖，此处不再提供 -->
+            <!-- 链接功能已由 readArticle 工具覆盖,此处不再提供 -->
           </div>
         </Transition>
       </div>
@@ -145,7 +161,7 @@
     <!-- 输入提示 -->
     <div class="input-hint-3d">
       <template v-if="!isStreaming">
-        <span class="hint-key">Enter</span>
+        <span class="hint-key">Ctrl+Enter</span>
         <span>发送 ·</span>
         <span class="hint-key">Shift+Enter</span>
         <span>换行 ·</span>
@@ -156,8 +172,8 @@
       </template>
       <template v-else>
         <span class="hint-key" style="color: #f59e0b;">处理中</span>
-        <span>Enter 加入队列 · 点击 ⏹ 停止</span>
-        <span v-if="queueCount && queueCount > 0" class="queue-badge">队列 {{ queueCount }} 条</span>
+        <span>Ctrl+Enter 加入队列 · 点击 ⏹ 停止</span>
+        <span v-if="taskQueue && taskQueue.length > 0" class="queue-badge">队列 {{ taskQueue.length }} 条</span>
       </template>
       <span v-if="attachments.length > 0" class="hint-separator">·</span>
       <span v-if="attachments.length > 0" class="hint-attachments">
@@ -214,10 +230,17 @@ import type { MessageAttachment } from '@/theme/types/chat'
 import { estimateTextTokens } from '@/theme/utils/tokenEstimator'
 import { computed, ref, watch } from 'vue'
 
+interface QueuedTask {
+  id: string
+  content: string
+  attachments: MessageAttachment[]
+  skillInfo?: Skill
+}
+
 const props = defineProps<{
   modelValue: string
   isStreaming: boolean
-  queueCount?: number
+  taskQueue?: QueuedTask[]
   selectedSkill?: Skill
   skills?: Skill[]
   supportsVision?: boolean
@@ -230,6 +253,7 @@ const emit = defineEmits<{
   'send': [content: string, attachments: MessageAttachment[], skill?: Skill]
   'stop': []
   'selectSkill': [skill: Skill | undefined]
+  'removeFromQueue': [index: number]
 }>()
 
 // 配置
@@ -255,7 +279,7 @@ const effectiveSkill = computed(() => props.selectedSkill || currentSkill.value)
 const canSend = computed(() => {
   const hasText = inputValue.value.trim().length > 0
   const hasAttachments = attachments.value.length > 0
-  // AI 处理中仍可输入，消息会自动加入队列
+  // AI 处理中仍可输入,消息会自动加入队列
   return hasText || hasAttachments
 })
 
@@ -272,15 +296,15 @@ const inputTokenCount = computed(() => {
 // 方法
 function getPlaceholder(): string {
   if (props.isStreaming) {
-    const queueHint = props.queueCount && props.queueCount > 0
-      ? ` · 队列中还有 ${props.queueCount} 条`
+    const queueHint = props.taskQueue && props.taskQueue.length > 0
+      ? ` · 队列中还有 ${props.taskQueue.length} 条`
       : ''
-    return `AI 处理中${queueHint}，Enter 加入队列...`
+    return `AI 处理中${queueHint}，Ctrl+Enter 加入队列...`
   }
   if (attachments.value.length > 0) {
-    return '添加描述(可选)，按 Enter 发送...'
+    return '添加描述(可选)，按 Ctrl+Enter 发送...'
   }
-  return '输入消息，/ 选择技能，@ 引用文章，按 Enter 发送...'
+  return '输入消息，/ 选择技能，@ 引用文章，按 Ctrl+Enter 发送...'
 }
 
 function toggleAttachMenu() {
@@ -323,12 +347,12 @@ async function handleFileSelect(event: Event, expectedType: 'image' | 'video' | 
       continue
     }
     
-    // 检查模型是否支持该媒体类型(不再阻止上传，仅做标记)
+    // 检查模型是否支持该媒体类型(不再阻止上传,仅做标记)
     if (mediaType === 'image' && !props.supportsVision) {
-      console.warn('[ChatInput] 当前模型不支持直接识图，图片将通过 OCR 提取文字后发送')
+      console.warn('[ChatInput] 当前模型不支持直接识图,图片将通过 OCR 提取文字后发送')
     }
     if (mediaType === 'video' && !props.supportsVideo) {
-      console.warn('[ChatInput] 当前模型不支持视频输入，附件将以链接形式发送')
+      console.warn('[ChatInput] 当前模型不支持视频输入,附件将以链接形式发送')
     }
 
     // 创建附件对象
@@ -364,7 +388,7 @@ async function handleFileSelect(event: Event, expectedType: 'image' | 'video' | 
     simulateUpload(attachment)
   }
 
-  // 清空input，允许重复选择相同文件
+  // 清空input,允许重复选择相同文件
   input.value = ''
 }
 
@@ -390,7 +414,7 @@ function removeAttachment(index: number) {
   if (attachment.url.startsWith('blob:')) {
     URL.revokeObjectURL(attachment.url)
   }
-  // 用 filter 创建新数组，确保响应式更新
+  // 用 filter 创建新数组,确保响应式更新
   attachments.value = attachments.value.filter((_, i) => i !== index)
   console.log('[ChatInput] 移除附件, 剩余:', attachments.value.length)
 }
@@ -448,7 +472,7 @@ async function handleSend() {
   currentSkill.value = undefined
   currentMentions.value = []
   
-  // 清空附件列表（blob URL 由调用方 ChatLayout 在发送完成后释放）
+  // 清空附件列表(blob URL 由调用方 ChatLayout 在发送完成后释放)
   attachments.value = []
   
   emit('selectSkill', undefined)

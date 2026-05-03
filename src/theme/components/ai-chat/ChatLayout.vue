@@ -137,7 +137,7 @@
         ref="chatInputRef"
         v-model="inputText"
         :is-streaming="isStreaming"
-        :queue-count="currentQueueCount"
+        :task-queue="taskQueue"
         :selected-skill="selectedSkill"
         :skills="allSkills"
         :supports-vision="currentModelSupportsVision"
@@ -145,6 +145,7 @@
         :max-attachments="10"
         @send="handleSend"
         @stop="interruptGeneration"
+        @remove-from-queue="(index: number) => taskQueue.splice(index, 1)"
         @select-skill="handleSelectSkill"
       />
     </main>
@@ -208,7 +209,7 @@
               </div>
               
               <h4 class="glass-title">确认删除会话</h4>
-              <p class="glass-hint">删除后无法恢复，该会话的所有消息都将被清除</p>
+              <p class="glass-hint">删除后无法恢复,该会话的所有消息都将被清除</p>
               
               <div class="glass-actions">
                 <button class="glass-btn secondary" @click="showDeleteConfirm = false">
@@ -271,11 +272,14 @@ const {
   tokenUsage
 } = useAIChat()
 
-// 当前会话的队列数量
-const currentQueueCount = computed(() => {
-  if (!currentSessionId.value) return 0
-  return pendingMessages.value[currentSessionId.value]?.length || 0
-})
+// 前端消息队列（AI 执行期间用户发送的消息暂存于此）
+interface QueuedTask {
+  id: string
+  content: string
+  attachments: MessageAttachment[]
+  skillInfo?: Skill
+}
+const taskQueue = ref<QueuedTask[]>([])
 
 const { activeAgent, agents: allAgents, skills: allSkills, setActive } = useAgentConfig()
 const { buildSystemPrompt } = useAgentConfig()
@@ -366,14 +370,14 @@ const currentModelSupportsVideo = computed(() => currentModelConfig.value.suppor
 // System Prompt 是否已自定义(与会话初始值不同)
 const isSystemPromptCustomized = computed((): boolean => {
   if (!currentSession.value) return false
-  // 如果会话有 _customSystemPrompt 标记，说明用户手动修改过
+  // 如果会话有 _customSystemPrompt 标记,说明用户手动修改过
   if (currentSession.value.config._customSystemPrompt) return true
   
   // 或者与会话创建时的 Agent systemPrompt 不同
   const agentPrompt = currentAgentSystemPrompt.value
   const sessionPrompt = currentSession.value.config.systemPrompt
   
-  // 如果两者不同，且 sessionPrompt 不为空，说明被自定义了
+  // 如果两者不同,且 sessionPrompt 不为空,说明被自定义了
   return !!(sessionPrompt && sessionPrompt !== agentPrompt)
 })
 
@@ -396,7 +400,7 @@ onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
   document.addEventListener('click', handleClickOutside)
   
-  // 初始化：如果有活跃 Agent，选中它
+  // 初始化：如果有活跃 Agent,选中它
   if (activeAgent.value) {
     selectedAgent.value = activeAgent.value
   }
@@ -414,6 +418,13 @@ watch(() => activeAgent.value, (agent) => {
   }
 })
 
+// 监听 AI 执行状态：执行完成后自动消费队列
+watch(isStreaming, (newVal, oldVal) => {
+  if (oldVal === true && newVal === false && taskQueue.value.length > 0) {
+    nextTick(() => consumeQueue())
+  }
+})
+
 // 监听当前选中 Agent 的配置变化(实时同步 systemPrompt)
 watchEffect(() => {
   if (!selectedAgent.value || !currentSession.value) return
@@ -422,7 +433,7 @@ watchEffect(() => {
   const currentAgent = allAgents.value.find(a => a.id === selectedAgent.value?.id)
   if (!currentAgent) return
   
-  // 如果会话没有自定义 systemPrompt，则同步 Agent 的配置
+  // 如果会话没有自定义 systemPrompt,则同步 Agent 的配置
   if (!currentSession.value.config._customSystemPrompt) {
     const newSystemPrompt = currentAgent.systemPrompt || buildSystemPrompt(currentAgent)
     const currentSystemPrompt = currentSession.value.config.systemPrompt
@@ -456,14 +467,14 @@ async function selectAgent(agent: Agent) {
   const agentSessions = sessions.value.filter(s => (s.config as any)?.agentId === agent.id)
   
   if (agentSessions.length === 0) {
-    // 没有会话，自动创建一个
+    // 没有会话,自动创建一个
     await createSessionForCurrentAgent()
   } else {
-    // 切换到最新的会话 (因为 sessions 是最新的在前面，所以取 [0])
+    // 切换到最新的会话 (因为 sessions 是最新的在前面,所以取 [0])
     const latestSession = agentSessions[0]
     switchSession(latestSession.id)
     
-    // 如果当前会话没有自定义 systemPrompt，更新为新 Agent 的
+    // 如果当前会话没有自定义 systemPrompt,更新为新 Agent 的
     if (!latestSession.config._customSystemPrompt) {
       const agentPrompt = agent.capabilities?.customSystemPrompt || buildSystemPrompt(agent)
       updateSessionConfig(latestSession.id, { 
@@ -476,7 +487,7 @@ async function selectAgent(agent: Agent) {
 
 // 为当前 Agent 创建会话
 async function createSessionForCurrentAgent() {
-  // 严格拦截：如果当前已经在空会话中，绝不重复新建空会话(直接转给新选的Agent用就行了)
+  // 严格拦截：如果当前已经在空会话中,绝不重复新建空会话(直接转给新选的Agent用就行了)
   if (currentSessionId.value) {
     const sid = currentSessionId.value
     const currentGroups = messageGroups.value
@@ -508,7 +519,7 @@ async function createSessionForCurrentAgent() {
       agentId: selectedAgent.value.id,
       agentName: selectedAgent.value.name,
       systemPrompt,
-      _customSystemPrompt: false, // 标记为未自定义，跟随 Agent
+      _customSystemPrompt: false, // 标记为未自定义,跟随 Agent
     } as any)
     
     // 强制切换到新创建的会话
@@ -540,18 +551,50 @@ async function handleRegenerate() {
   }
 }
 
-async function handleSend(content: string, attachments: MessageAttachment[] = [], skillInfo?: Skill) {
-  if (!content.trim() && attachments.length === 0) return
-  // AI 流式输出中发送的消息会自动加入队列（由 chatStore 处理）
+// ═══════════════════════════════════════════════════════════════
+// 消息队列管理
+// ═══════════════════════════════════════════════════════════════
 
-  let finalContent = content.trim()
+/**
+ * 用户触发发送：消息先入队，然后尝试消费
+ * 无论 isStreaming 状态如何，行为一致
+ */
+function handleSend(content: string, attachments: MessageAttachment[] = [], skillInfo?: Skill) {
+  if (!content.trim() && attachments.length === 0) return
+
+  taskQueue.value.push({
+    id: `queue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    content: content.trim(),
+    attachments: [...attachments],
+    skillInfo
+  })
+
+  inputText.value = ''
+
+  nextTick(() => {
+    messageListRef.value?.scrollToBottom()
+    chatInputRef.value?.focus()
+  })
+
+  consumeQueue()
+}
+
+/**
+ * 消费队列：取出最前面的一条消息执行
+ * 只有 !isStreaming 时才能真正发送
+ */
+async function consumeQueue() {
+  if (taskQueue.value.length === 0) return
+  if (isStreaming.value) return // 当前正在执行，等完成后再消费
+
+  const next = taskQueue.value.shift()!
+  let finalContent = next.content
 
   // ═════════════════════════════════════════════════════════════════
-  // 图片 OCR：模型不支持 vision 时，自动解析图片文字
-  // 结果写入 attachment.ocrText，不混入 content，用户看不见
+  // 图片 OCR：模型不支持 vision 时,自动解析图片文字
   // ═════════════════════════════════════════════════════════════════
   if (!currentModelSupportsVision.value) {
-    const imageAttachments = attachments.filter(a => a.type === 'image')
+    const imageAttachments = next.attachments.filter(a => a.type === 'image')
     for (const att of imageAttachments) {
       try {
         const resp = await fetch(att.url)
@@ -586,26 +629,16 @@ async function handleSend(content: string, attachments: MessageAttachment[] = []
     }
   }
 
-  inputText.value = ''
-
-  // 立即滚动到底部
-  nextTick(() => {
-    messageListRef.value?.scrollToBottom()
-    chatInputRef.value?.focus()
-  })
-
   // 只有在使用了技能且技能有 content 时才更新
-  // 保持用户自定义的 systemPrompt 不被覆盖
-  if (currentSessionId.value && skillInfo?.content) {
-    updateSessionConfig(currentSessionId.value, { systemPrompt: skillInfo.content })
+  if (currentSessionId.value && next.skillInfo?.content) {
+    updateSessionConfig(currentSessionId.value, { systemPrompt: next.skillInfo.content })
     const session = sessions.value.find(s => s.id === currentSessionId.value)
     if (session) {
-      session.config._customSystemPrompt = true // 标记为用户自定义
+      session.config._customSystemPrompt = true
     }
   }
 
-  // 发送消息（attachments 保留给 UI 预览，content 已包含 OCR 结果）
-  await sendMessage(finalContent, attachments, skillInfo)
+  await sendMessage(finalContent, next.attachments, next.skillInfo)
 }
 
 function handleQuickPrompt(text: string) {
@@ -670,7 +703,7 @@ function executeDelete() {
 
 function updateConfig(config: Partial<SessionConfig>) {
   if (currentSessionId.value) {
-    // 如果修改了 systemPrompt，检查是否与会话初始值不同
+    // 如果修改了 systemPrompt,检查是否与会话初始值不同
   if ('systemPrompt' in config) {
     const newPrompt = config.systemPrompt
     const agentPrompt = currentAgentSystemPrompt.value
@@ -693,7 +726,7 @@ function handleSelectSkill(skill: Skill | undefined) {
   selectedSkill.value = skill
 }
 
-// 从 AgentAdmin 切换 Agent(旧版方式，保留兼容)
+// 从 AgentAdmin 切换 Agent(旧版方式,保留兼容)
 async function handleAgentChange(agent: Agent) {
   await selectAgent(agent)
   showAgentAdmin.value = false
@@ -714,7 +747,7 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   // 在完整界面中选中该 Agent
   await selectAgent(agent)
   
-  // 如果对话框有消息，可以合并到新会话
+  // 如果对话框有消息,可以合并到新会话
   if (dialogMessages.length > 1) { // 不止欢迎消息
     // 可以在这里实现消息同步
     console.log('同步对话框消息:', dialogMessages.length)
