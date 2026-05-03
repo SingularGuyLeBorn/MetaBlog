@@ -1,14 +1,14 @@
 /**
- * AI Service - DeepSeek/Kimi API (支持多模态的 Function Call 实现)
- * 
- * 核心流程：
- * 1. 发送用户消息 + tools 定义(支持图片/视频)
- * 2. AI 返回 tool_calls(非流式)
- * 3. 执行工具函数
- * 4. 发送 tool 结果(流式)获取最终回复
- * 
- * 更新：增加Kimi多模态支持(图片/视频理解)
+ * ============================================================================
+ * 后端服务 - aiService
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/services
  */
+
+
 import {
   executeToolWithRecord,
   getToolDefinitions,
@@ -248,8 +248,16 @@ function logApiError(endpoint: string, error: any, duration?: number, requestDat
 
 // ==================== 多模型配置 ====================
 
+/**
+ * ModelProvider 类型别名
+ *
+ */
 export type ModelProvider = 'deepseek' | 'kimi'
 
+/**
+ * ModelConfig 接口定义
+ *
+ */
 export interface ModelConfig {
   provider: ModelProvider
   model: string
@@ -289,7 +297,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
   },
 
   // ═══════════════════════════════════════════════════════════════
-  // Kimi K2.5 - 原生多模态（图片+视频）
+  // Kimi K2.5 - 原生多模态(图片+视频)
   // ═══════════════════════════════════════════════════════════════
   'kimi-k2.5': {
     provider: 'kimi',
@@ -310,13 +318,17 @@ function getModelConfig(modelName: string): ModelConfig {
     return config
   }
 
-  // 如果找不到配置，抛出错误(不再自动推断，确保使用预定义模型)
-  throw new Error(`不支持的模型: ${modelName}。请使用 DeepSeek 或 Kimi 系列模型。`)
+  // 如果找不到配置,抛出错误(不再自动推断,确保使用预定义模型)
+  throw new Error(`不支持的模型: ${modelName}. 请使用 DeepSeek 或 Kimi 系列模型. `)
 }
 
 
 // ==================== 类型定义 ====================
 
+/**
+ * StreamCallbacks 接口定义
+ *
+ */
 export interface StreamCallbacks {
   onContent: (text: string) => void
   onReasoning: (text: string) => void
@@ -364,7 +376,7 @@ async function convertMessageToApiFormat(
       for (const attachment of message.attachments) {
         if (attachment.type === 'image' && modelConfig.supportsVision) {
           try {
-            // 如果是本地文件，转换为base64
+            // 如果是本地文件,转换为base64
             if (attachment.url.startsWith('blob:') || attachment.url.startsWith('data:')) {
               const response = await fetch(attachment.url)
               const blob = await response.blob()
@@ -386,7 +398,7 @@ async function convertMessageToApiFormat(
               })
             }
           } catch {
-            // blob URL 可能已失效（页面刷新后）或网络异常，静默跳过
+            // blob URL 可能已失效(页面刷新后)或网络异常,静默跳过
           }
         } else if (attachment.type === 'video' && modelConfig.supportsVideo) {
           try {
@@ -417,9 +429,9 @@ async function convertMessageToApiFormat(
 
       baseMsg.content = contentParts
     } else {
-      // 模型不支持多模态，只发送文本
+      // 模型不支持多模态,只发送文本
       let textContent = message.content || ''
-      // 收集图片的 OCR 结果（由 ChatLayout 在发送前写入 attachment.ocrText）
+      // 收集图片的 OCR 结果(由 ChatLayout 在发送前写入 attachment.ocrText)
       const ocrTexts: string[] = []
       for (const att of message.attachments) {
         if (att.type === 'image' && att.ocrText) {
@@ -450,7 +462,7 @@ async function convertMessageToApiFormat(
     baseMsg.tool_call_id = message.metadata.toolCallId
   }
 
-  // 检测 ms://file_id（来自 readArticle 的 vision 图片引用）并转换为 vision 输入
+  // 检测 ms://file_id(来自 readArticle 的 vision 图片引用)并转换为 vision 输入
   if (modelConfig.supportsVision && typeof baseMsg.content === 'string') {
     const fileIds = extractMsFileIds(baseMsg.content)
     if (fileIds.length > 0) {
@@ -488,9 +500,9 @@ import { estimateTextTokens } from '@/theme/utils/tokenEstimator'
  * 智能截断消息 —— 按模型上下文窗口动态调整
  * 
  * 三级策略：
- * 1. 估算总 token，如果在预算内 → 不截断
- * 2. 对 tool 结果按可用空间比例截断(保底 3k 字符，上限按模型定)
- * 3. 如果还超 → 丢弃最早的消息，优先保留最近对话
+ * 1. 估算总 token,如果在预算内 → 不截断
+ * 2. 对 tool 结果按可用空间比例截断(保底 3k 字符,上限按模型定)
+ * 3. 如果还超 → 丢弃最早的消息,优先保留最近对话
  */
 function smartTruncateMessages(
   messages: any[],
@@ -511,12 +523,12 @@ function smartTruncateMessages(
     return sum + estimateTextTokens(text)
   }, 0)
 
-  // 没超预算，原样返回
+  // 没超预算,原样返回
   if (currentTokens <= availableTokens) {
     return messages
   }
 
-  console.log(`[smartTruncate] 当前 ${currentTokens} tokens > 预算 ${availableTokens}，开始处理`)
+  console.log(`[smartTruncate] 当前 ${currentTokens} tokens > 预算 ${availableTokens},开始处理`)
 
   // ═══════════════════════════════════════════════════════════════
   // 第一阶段：截断 tool 结果(通常最长)
@@ -534,7 +546,7 @@ function smartTruncateMessages(
   const toolBudget = Math.max(availableTokens - nonToolTokens, Math.floor(availableTokens * 0.3))
   const perToolTokens = toolMsgs.length > 0 ? Math.floor(toolBudget / toolMsgs.length) : 0
 
-  // 单条 tool 截断上限：1M 上下文时代，不设固定上限，由 budget 决定
+  // 单条 tool 截断上限：1M 上下文时代,不设固定上限,由 budget 决定
   // 小模型仍保留保护上限防止单条结果撑爆上下文
   const maxToolChars = contextWindow >= 1000000 ? Infinity
     : contextWindow >= 256000 ? 200000
@@ -542,7 +554,7 @@ function smartTruncateMessages(
         : contextWindow >= 64000 ? 50000
           : 20000
 
-  // 保底 12000 字符，不超过上限
+  // 保底 12000 字符,不超过上限
   const toolTruncateLimit = Math.max(Math.min(perToolTokens * 3, maxToolChars), 12000)
 
   let processed = messages.map(m => {
@@ -553,13 +565,13 @@ function smartTruncateMessages(
       ...m,
       content: m.content.substring(0, toolTruncateLimit) +
         `\n\n---` +
-        `\n[历史消息中的工具结果被截断] 原长 ${m.content.length} 字符，当前限制 ${toolTruncateLimit} 字符。` +
-        `\n注意：这是之前某次工具调用的返回结果，因上下文长度限制被截断。如需完整信息，请重新调用相关工具。`
+        `\n[历史消息中的工具结果被截断] 原长 ${m.content.length} 字符,当前限制 ${toolTruncateLimit} 字符. ` +
+        `\n注意：这是之前某次工具调用的返回结果,因上下文长度限制被截断. 如需完整信息,请重新调用相关工具. `
     }
   })
 
   // ═══════════════════════════════════════════════════════════════
-  // 第二阶段：检查还超不超，对早期 assistant 消息截断
+  // 第二阶段：检查还超不超,对早期 assistant 消息截断
   // ═══════════════════════════════════════════════════════════════
   const afterToolTokens = processed.reduce((sum, m) => {
     const text = typeof m.content === 'string' ? m.content : JSON.stringify(m.content || '')
@@ -567,8 +579,8 @@ function smartTruncateMessages(
   }, 0)
 
   if (afterToolTokens > availableTokens) {
-    // 保留最近 8 条(4轮)完整，更早的 assistant 消息保留完整内容
-    // 1M 上下文时代，完整信息比碎片更有价值；如仍超预算，第三阶段会丢弃最早消息
+    // 保留最近 8 条(4轮)完整,更早的 assistant 消息保留完整内容
+    // 1M 上下文时代,完整信息比碎片更有价值;如仍超预算,第三阶段会丢弃最早消息
     const keepRecent = 8
     const recent = processed.slice(-keepRecent)
     const older = processed.slice(0, -keepRecent)
@@ -577,7 +589,7 @@ function smartTruncateMessages(
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 第三阶段：如果还超，逐步丢弃最早的消息
+  // 第三阶段：如果还超,逐步丢弃最早的消息
   // ═══════════════════════════════════════════════════════════════
   let finalTokens = processed.reduce((sum, m) => {
     const text = typeof m.content === 'string' ? m.content : JSON.stringify(m.content || '')
@@ -606,20 +618,20 @@ function smartTruncateMessages(
     }, 0)
   }
 
-  console.log(`[smartTruncate] 处理后 ${finalTokens} tokens，保留 ${processed.length}/${messages.length} 条消息`)
+  console.log(`[smartTruncate] 处理后 ${finalTokens} tokens,保留 ${processed.length}/${messages.length} 条消息`)
   return processed
 }
 
-/** @deprecated 兼容旧接口，内部转发到 smartTruncateMessages */
+/** @deprecated 兼容旧接口,内部转发到 smartTruncateMessages */
 function truncateMessages(messages: any[], maxContentLength: number = 128000): any[] {
-  // 旧接口不感知模型，按传入的 maxContentLength 做简单截断
+  // 旧接口不感知模型,按传入的 maxContentLength 做简单截断
   return messages.map(m => {
     if (typeof m.content !== 'string') return m
     if (m.role === 'tool' && m.content.length > maxContentLength) {
       return {
         ...m,
         content: m.content.substring(0, maxContentLength) +
-          `\n\n... [内容已截断，省略 ${m.content.length - maxContentLength} 字符]`
+          `\n\n... [内容已截断,省略 ${m.content.length - maxContentLength} 字符]`
       }
     }
     if (m.role === 'assistant' && m.content.length > maxContentLength * 2) {
@@ -728,7 +740,7 @@ async function chatNonStream(
     const duration = Date.now() - startTime
     let errorMessage = error instanceof Error ? error.message : String(error)
     if (errorMessage.includes('Failed to fetch')) {
-      errorMessage = `网络请求失败。可能原因: 1) 网络问题 2) 请求体过大。详细信息: ${errorMessage}`
+      errorMessage = `网络请求失败. 可能原因: 1) 网络问题 2) 请求体过大. 详细信息: ${errorMessage}`
     }
     logApiError('/api/chat (non-stream)', new Error(errorMessage), duration, proxyBody)
     return { error: errorMessage }
@@ -807,7 +819,7 @@ async function chatStreamInternal(
   let chunkCount = 0
   let toolCalls: any[] = []
 
-  // 流式回调 throttle，避免前端每 1~2 个 token 就重渲染一次
+  // 流式回调 throttle,避免前端每 1~2 个 token 就重渲染一次
   const CONTENT_THROTTLE_MS = 80
   let lastContentFlush = 0
   let pendingContent = ''
@@ -994,26 +1006,26 @@ export const aiService = {
     // ═══════════════════════════════════════════════════════════════
     //
     // 设计背景：
-    //   OpenAI 官方建议每轮对话暴露的工具不超过 20 个。
-    //   本系统有 80+ 个工具，全部暴露会导致：
+    //   OpenAI 官方建议每轮对话暴露的工具不超过 20 个. 
+    //   本系统有 80+ 个工具,全部暴露会导致：
     //   - Context bloat(工具定义占 40-50% 上下文)
     //   - LLM 选择困惑(从 80+ 个工具中挑选)
     //   - Token 浪费和响应延迟增加
     //
     // 解决方案：
     //   1. 默认只暴露 ~7 个核心元工具(CORE_TOOL_NAMES)
-    //   2. 领域工具默认隐藏，通过以下方式动态激活：
+    //   2. 领域工具默认隐藏,通过以下方式动态激活：
     //      - searchCapabilities 搜索匹配 → 自动暴露 schema
     //      - loadSkill 加载 Skill → 自动暴露关联工具 schema
-    //   3. 激活状态保存在 sessionActiveTools(Set)中，跨轮次持久
+    //   3. 激活状态保存在 sessionActiveTools(Set)中,跨轮次持久
     //   4. 每轮对话前 buildDynamicToolContext() 合并核心+激活工具
     //
     // 核心工具(始终暴露)：
     const CORE_TOOL_NAMES = [
       'searchCapabilities',   // 能力发现器：搜索并激活匹配工具
       'loadSkill',            // 工作流加载器：加载 Skill 指导+激活工具
-      'getAllTools',         // 工具目录浏览(文本形式，不暴露 schema)
-      'getAllSkills',        // Skill 目录浏览(文本形式，不暴露 schema)
+      'getAllTools',         // 工具目录浏览(文本形式,不暴露 schema)
+      'getAllSkills',        // Skill 目录浏览(文本形式,不暴露 schema)
       'getCurrentTime',      // 通用基础工具
       'calculate',             // 通用基础工具
       'webSearch'             // 通用网络搜索
@@ -1024,28 +1036,28 @@ export const aiService = {
     // 激活触发点：
     // - searchCapabilities 执行后 → result.activateTools 中的工具被加入
     // - loadSkill 执行后 → skill.tools 中的工具被加入
-    // - 一旦加入，后续所有轮次都保持可用，直到会话结束
+    // - 一旦加入,后续所有轮次都保持可用,直到会话结束
     const sessionActiveTools = new Set<string>()
 
     /**
      * 构建动态 toolContext
      * 
-     * 将外部传入的 toolContext 与 sessionActiveTools 合并，
-     * 生成每轮对话实际使用的可用工具列表。
+     * 将外部传入的 toolContext 与 sessionActiveTools 合并,
+     * 生成每轮对话实际使用的可用工具列表. 
      * 
      * 合并规则：
-     * - 如果外部 toolContext 未传入 availableTools，默认使用 CORE_TOOL_NAMES
+     * - 如果外部 toolContext 未传入 availableTools,默认使用 CORE_TOOL_NAMES
      * - 将 sessionActiveTools 中的工具追加到基础列表
-     * - 使用 Set 去重，避免同一工具重复暴露
+     * - 使用 Set 去重,避免同一工具重复暴露
      * 
-     * @returns 包含 merged availableTools 的 toolContext 对象；
-     *          如果外部未传入 toolContext，返回 undefined
+     * @returns 包含 merged availableTools 的 toolContext 对象;
+     *          如果外部未传入 toolContext,返回 undefined
      */
     const buildDynamicToolContext = () => {
       if (!toolContext) return undefined
-      // 基础工具列表：外部配置优先，未配置则使用核心工具
+      // 基础工具列表：外部配置优先,未配置则使用核心工具
       const baseTools = toolContext.availableTools || CORE_TOOL_NAMES
-      // 合并核心工具 + 会话中动态激活的工具，自动去重
+      // 合并核心工具 + 会话中动态激活的工具,自动去重
       const merged = [...new Set([...baseTools, ...sessionActiveTools])]
       return {
         ...toolContext,
@@ -1076,7 +1088,7 @@ export const aiService = {
     addLog({
       level: 'info', category: 'chat', component: 'aiService',
       event: 'message_start',
-      message: `开始新对话，模型: ${config.model}`,
+      message: `开始新对话,模型: ${config.model}`,
       data: {
         model: config.model,
         messageCount: messages.length,
@@ -1091,7 +1103,7 @@ export const aiService = {
     const allInjectedMessages: Array<{ role: string; content: string }> = []
 
     try {
-      // 转换消息格式，支持多模态
+      // 转换消息格式,支持多模态
       const apiMessages: any[] = []
 
       // 添加系统提示词 (支持 Skills 的渐进式披露)
@@ -1099,15 +1111,15 @@ export const aiService = {
         // 为多模态模型添加提示
         let enhancedPrompt = config.systemPrompt
         if (modelConfig.supportsVision && messages.some(m => m.attachments?.some(a => a.type === 'image'))) {
-          enhancedPrompt += '\n\n你可以理解用户上传的图片内容。'
+          enhancedPrompt += '\n\n你可以理解用户上传的图片内容. '
         }
         if (modelConfig.supportsVideo && messages.some(m => m.attachments?.some(a => a.type === 'video'))) {
-          enhancedPrompt += '\n\n你可以理解用户上传的视频内容。'
+          enhancedPrompt += '\n\n你可以理解用户上传的视频内容. '
         }
         apiMessages.push({ role: 'system', content: enhancedPrompt })
       }
 
-      // 转换每条消息(不再硬编码 slice(-10)，由 smartTruncateMessages 在内部按需截断)
+      // 转换每条消息(不再硬编码 slice(-10),由 smartTruncateMessages 在内部按需截断)
       for (const message of messages) {
         const apiMsg = await convertMessageToApiFormat(message, modelConfig)
         apiMessages.push(apiMsg)
@@ -1208,14 +1220,14 @@ export const aiService = {
           stepIndex++
           callbacks.onThinkingStep?.(textStep)
 
-          // 清空 content 区域，避免中间文本残留为最终回复
+          // 清空 content 区域,避免中间文本残留为最终回复
           callbacks.onContent('')
 
           apiDebugLogger.logNote('intermediate_text', '【UI展示】中间文本', { content: response.content }, true)
         }
 
         if (!toolCalls || toolCalls.length === 0) {
-          // 没有工具调用，直接显示最终回复
+          // 没有工具调用,直接显示最终回复
           if (response.content) {
             apiDebugLogger.logNote('final_response', '【UI展示】最终回复(流式输出完毕)', { content: response.content }, true)
           }
@@ -1235,7 +1247,7 @@ export const aiService = {
           return { toolRecords, injectedMessages: allInjectedMessages }
         }
 
-        // 达到最大轮次前，记录最后一轮的内容，用于轮次耗尽时给出总结
+        // 达到最大轮次前,记录最后一轮的内容,用于轮次耗尽时给出总结
         if (response.content) {
           lastResponseContent = response.content
         }
@@ -1271,13 +1283,13 @@ export const aiService = {
             createdAt: toolStartTime
           }
           stepIndex++
-          // 先显示 running 状态，让用户立刻看到工具正在执行
+          // 先显示 running 状态,让用户立刻看到工具正在执行
           callbacks.onThinkingStep?.(runningStep)
 
           // 执行工具并获取结果
           // executeToolWithRecord 返回：
           // - result: ToolResult(执行结果)
-          // - record: ToolCallRecord(调用记录，用于 UI 展示)
+          // - record: ToolCallRecord(调用记录,用于 UI 展示)
           // - injectMessages: 需要注入对话上下文的额外消息(如 loadSkill 的 Skill 内容)
           // - activateTools: 执行后应动态激活的工具名称列表(渐进式披露关键字段)
           const { result, record, injectMessages: toolInjectMessages, activateTools: toolActivated } = await executeToolWithRecord(toolCall)
@@ -1286,9 +1298,9 @@ export const aiService = {
           // ─────────────────────────────────────────────────────────────
           // 【渐进式披露】动态工具激活
           // ─────────────────────────────────────────────────────────────
-          // searchCapabilities、loadSkill 等元工具执行后，会在 result.activateTools
-          // 中返回需要激活的领域工具名称。将这些工具加入 sessionActiveTools，
-          // 下轮对话的 buildDynamicToolContext() 会自动将其 schema 暴露给模型。
+          // searchCapabilities、loadSkill 等元工具执行后,会在 result.activateTools
+          // 中返回需要激活的领域工具名称. 将这些工具加入 sessionActiveTools,
+          // 下轮对话的 buildDynamicToolContext() 会自动将其 schema 暴露给模型. 
           //
           // 示例流程：
           //   Round 1: searchCapabilities("github repo") → activateTools: ["githubGetRepo"]
@@ -1306,7 +1318,7 @@ export const aiService = {
           }
 
           // 收集需要注入到对话上下文中的消息
-          // 典型场景：loadSkill 执行后，将 Skill 完整内容作为新消息注入，
+          // 典型场景：loadSkill 执行后,将 Skill 完整内容作为新消息注入,
           // 让模型在下一轮可以看到工作流指导(LOD-2 渐进式披露)
           if (toolInjectMessages && toolInjectMessages.length > 0) {
             injectMessages.push(...toolInjectMessages)
@@ -1340,7 +1352,7 @@ export const aiService = {
             resultContent = result
           } else if (result && typeof result === 'object') {
             if (result.success) {
-              // 【关键修复】优先将 data 序列化传给 AI，message 只作为状态提示
+              // 【关键修复】优先将 data 序列化传给 AI,message 只作为状态提示
               // 之前只传 message 导致 AI 看不到 readArticle 的 content、readFile 的内容等真实数据
               if (result.data !== undefined) {
                 const dataStr = typeof result.data === 'string'
@@ -1360,12 +1372,12 @@ export const aiService = {
           }
 
           // 工具结果截断：单条结果上限大幅提高(1M 上下文时代)
-          // loadSkill 的结果通常较短(成功消息)，其完整内容通过 injectMessages 注入
+          // loadSkill 的结果通常较短(成功消息),其完整内容通过 injectMessages 注入
           const MAX_TOOL_RESULT_LENGTH = 100000
           const originalLength = resultContent.length
           if (originalLength > MAX_TOOL_RESULT_LENGTH) {
             resultContent = resultContent.substring(0, MAX_TOOL_RESULT_LENGTH) +
-              `\n\n... [内容已截断，原始长度 ${originalLength} 字符]`
+              `\n\n... [内容已截断,原始长度 ${originalLength} 字符]`
           }
 
           toolResultMessages.push({
@@ -1414,11 +1426,11 @@ export const aiService = {
         })
       }
 
-      // 如果是因为达到 maxToolRounds 而退出循环，尝试再发一次不带 tools 的请求获取最终总结
+      // 如果是因为达到 maxToolRounds 而退出循环,尝试再发一次不带 tools 的请求获取最终总结
       if (toolRound >= maxToolRounds && lastResponseContent) {
         addLog({
           level: 'warn', category: 'chat', component: 'aiService',
-          event: 'max_rounds_reached', message: `已达到最大工具轮次 (${maxToolRounds})，尝试获取最终回复`,
+          event: 'max_rounds_reached', message: `已达到最大工具轮次 (${maxToolRounds}),尝试获取最终回复`,
           data: { maxToolRounds }
         })
         filteredMessages.push({
@@ -1427,7 +1439,7 @@ export const aiService = {
         })
         filteredMessages.push({
           role: 'user',
-          content: '请基于以上搜索结果，直接给出最终回答，不要再调用任何工具。'
+          content: '请基于以上搜索结果,直接给出最终回答,不要再调用任何工具. '
         })
         const finalContext = buildDynamicToolContext()
         const finalResponse = await chatStreamInternal(filteredMessages, config, callbacks, signal, true, false, finalContext, sessionId)

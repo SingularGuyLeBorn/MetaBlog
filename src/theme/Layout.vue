@@ -1,25 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, provide, nextTick, defineAsyncComponent, onUnmounted } from 'vue'
-import DefaultTheme from 'vitepress/theme'
 import { useData, useRoute, useRouter } from 'vitepress'
-import GlobalSidebar from './components/common/GlobalSidebar.vue'
-import TocSidebar from './components/common/TocSidebar.vue'
-import TocFab from './components/common/TocFab.vue'
-import EditFab from './components/editor/EditFab.vue'
+import DefaultTheme from 'vitepress/theme'
+import { computed, nextTick, onMounted, provide, ref, watch } from 'vue'
 import Breadcrumb from './components/common/Breadcrumb.vue'
 import DocTitleBar from './components/common/DocTitleBar.vue'
+import GlobalSidebar from './components/common/GlobalSidebar.vue'
 import StarRiverLayout from './components/common/StarRiverLayout.vue'
+import TocFab from './components/common/TocFab.vue'
+import TocSidebar from './components/common/TocSidebar.vue'
+import EditFab from './components/editor/EditFab.vue'
 
 // 椤甸潰缁勪欢瀵煎叆
-import HomePage from './components/pages/HomePage.vue'
-import AboutPage from './components/pages/AboutPage.vue'
-import KnowledgePage from './components/pages/KnowledgePage.vue'
-import PostsPage from './components/pages/PostsPage.vue'
-import ResourcesPage from './components/pages/ResourcesPage.vue'
-import ChatPage from './components/pages/ChatPage.vue'
 
-import ControlCenter from './components/common/ControlCenter.vue'
 import AgentAdmin from './components/agent/AgentAdmin.vue'
+import ControlCenter from './components/common/ControlCenter.vue'
 // import LogDashboard from './features/chat/components/agent/LogDashboard.vue'
 import { useAppStore } from './stores/app'
 
@@ -276,7 +270,7 @@ const rightResizerPosition = computed(() => rightWidth.value + 'px')
               <!-- 绾?Vue 椤甸潰涓嶉渶瑕侀澶栬楗?-->
             </template>
             
-            <!-- 鏂囨。甯冨眬鎻掓Ы (榛樿 layout: doc) -->
+            <!-- 鏂囨. 甯冨眬鎻掓Ы (榛樿 layout: doc) -->
             <template #doc-before v-if="!isPureVuePage">
               <Breadcrumb />
               <DocTitleBar />

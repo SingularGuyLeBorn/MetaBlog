@@ -12,7 +12,7 @@
           <span class="title-accent">资源</span>
         </h1>
         <p class="sr-subtitle hero-desc">
-          精选开源项目、实用工具与学习资料，助力你的技术成长之路
+          精选开源项目、实用工具与学习资料,助力你的技术成长之路
         </p>
 
         <div class="hero-stats">
@@ -136,7 +136,7 @@
       <div class="cta-card glass-card tilt-card">
         <div class="cta-content">
           <h3>想要贡献资源？</h3>
-          <p class="sr-body">如果你有优质的开源项目或工具想要分享，欢迎提交</p>
+          <p class="sr-body">如果你有优质的开源项目或工具想要分享,欢迎提交</p>
         </div>
         <button class="star-btn star-btn-primary magnetic-btn ripple-btn">
           <span>提交资源</span>
@@ -150,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 
 interface Resource {
   title: string
@@ -166,7 +166,7 @@ const resources: Resource[] = [
   {
     title: 'Leaf 1-1',
     icon: '📄',
-    desc: 'A leaf node at depth 1 - 一级目录下的资源文件，包含基础文档和参考资料',
+    desc: 'A leaf node at depth 1 - 一级目录下的资源文件,包含基础文档和参考资料',
     link: './leaf-1-1/leaf-1-1.html',
     type: '文档',
     typeClass: 'doc',
@@ -184,7 +184,7 @@ const resources: Resource[] = [
   {
     title: 'Node L1',
     icon: '📁',
-    desc: 'A paired hub node at depth 1 - 一级目录节点，包含子资源和嵌套内容',
+    desc: 'A paired hub node at depth 1 - 一级目录节点,包含子资源和嵌套内容',
     link: './node-L1/node-L1.html',
     type: '目录',
     typeClass: 'folder',
@@ -218,7 +218,7 @@ const projects = [
   {
     emoji: '🧠',
     title: 'MetaBlog',
-    desc: 'AI 驱动的智能博客系统，支持知识图谱、RAG 检索、Agent 工作流',
+    desc: 'AI 驱动的智能博客系统,支持知识图谱、RAG 检索、Agent 工作流',
     language: 'Vue + TypeScript',
     stars: '128',
     gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -227,7 +227,7 @@ const projects = [
   {
     emoji: '📊',
     title: 'RL-Notebooks',
-    desc: '强化学习算法实现集合，包含 DQN、PPO、SAC 等算法的 PyTorch 实现',
+    desc: '强化学习算法实现集合,包含 DQN、PPO、SAC 等算法的 PyTorch 实现',
     language: 'Python',
     stars: '256',
     gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
@@ -236,7 +236,7 @@ const projects = [
   {
     emoji: '🤖',
     title: 'LLM-Toolkit',
-    desc: '大语言模型工具包，支持多种模型接入、Prompt 管理、对话导出',
+    desc: '大语言模型工具包,支持多种模型接入、Prompt 管理、对话导出',
     language: 'Python',
     stars: '89',
     gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',

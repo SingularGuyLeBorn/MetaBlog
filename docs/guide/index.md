@@ -1,6 +1,6 @@
 # MetaBlog 文档
 
-欢迎来到 MetaBlog 文档中心。这里包含了从快速上手到深度定制的完整指南。
+欢迎来到 MetaBlog 文档中心. 这里包含了从快速上手到深度定制的完整指南. 
 
 ## 📑 文档导航
 
@@ -18,10 +18,10 @@
 
 ## 🚀 一分钟速览
 
-**MetaBlog** 是 AI 驱动的智能博客与 Agent 平台，核心能力包括：
+**MetaBlog** 是 AI 驱动的智能博客与 Agent 平台,核心能力包括：
 
-- **智能博客**：基于 VitePress，支持 Markdown、数学公式、代码高亮
-- **AI 对话**：多模型支持，流式响应，工具调用
+- **智能博客**：基于 VitePress,支持 Markdown、数学公式、代码高亮
+- **AI 对话**：多模型支持,流式响应,工具调用
 - **代码沙箱**：后端安全执行 Python / JavaScript / Bash
 - **平台集成**：飞书、语雀、GitHub 深度集成
 - **Agent 系统**：多 Agent 管理、Skill 技能组合、独立会话
@@ -35,13 +35,13 @@
 1. 打开 `http://localhost:5173/chat`
 2. 告诉 AI 想写的主题
 3. AI 会自动调用 `createArticle` 工具生成文章
-4. 文章保存到 `docs/sections/posts/`，自动触发 Git 提交
+4. 文章保存到 `docs/sections/posts/`,自动触发 Git 提交
 
 ### 场景 2：代码验证与演示
 
 1. 在聊天中让 AI 写一段代码
 2. AI 调用 `executeCode` 工具在沙箱中执行
-3. 查看执行结果，确认代码正确性
+3. 查看执行结果,确认代码正确性
 
 ### 场景 3：飞书文档同步
 

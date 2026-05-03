@@ -1,11 +1,16 @@
 /**
- * Utils - 工具函数
+ * ============================================================================
+ * Vue Composable - index
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/composables
  */
 
+
 export {
-  generateUUID,
-  generateShortUUID,
   generateReadableFilename,
-  generateSessionId,
-  isValidSessionId
-} from '@/theme/utils/uuid'
+  generateSessionId, generateShortUUID, generateUUID, isValidSessionId
+} from '@/theme/utils/uuid';
+

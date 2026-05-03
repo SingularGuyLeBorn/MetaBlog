@@ -1,19 +1,30 @@
-import { h } from "vue";
+/**
+ * ============================================================================
+ * 主题入口导出
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme
+ */
+
+
+import { createPinia } from "pinia";
+import type { Theme } from "vitepress";
 import DefaultTheme from "vitepress/theme";
+import { h } from "vue";
 import Layout from "./Layout.vue";
 import "./style.css";
 import "./styles/animations.css";
 import "./styles/liquid-glass-theme.css";
-import type { Theme } from "vitepress";
-import { createPinia } from "pinia";
 
 // ========== Pages ==========
-import HomePage from "./components/pages/HomePage.vue";
-import PostsPage from "./components/pages/PostsPage.vue";
-import KnowledgePage from "./components/pages/KnowledgePage.vue";
-import ResourcesPage from "./components/pages/ResourcesPage.vue";
 import AboutPage from "./components/pages/AboutPage.vue";
 import ChatPage from "./components/pages/ChatPage.vue";
+import HomePage from "./components/pages/HomePage.vue";
+import KnowledgePage from "./components/pages/KnowledgePage.vue";
+import PostsPage from "./components/pages/PostsPage.vue";
+import ResourcesPage from "./components/pages/ResourcesPage.vue";
 
 // ========== Features ==========
 // Chat
@@ -26,17 +37,17 @@ import EditFab from "./components/editor/EditFab.vue";
 // Layout
 import Breadcrumb from "./components/common/Breadcrumb.vue";
 import GlobalSidebar from "./components/common/GlobalSidebar.vue";
-import TocSidebar from "./components/common/TocSidebar.vue";
 import TocFab from "./components/common/TocFab.vue";
+import TocSidebar from "./components/common/TocSidebar.vue";
 
 // UI
-import AnimatedContainer from "./components/common/AnimatedContainer.vue";
 import AnimatedButton from "./components/common/AnimatedButton.vue";
+import AnimatedContainer from "./components/common/AnimatedContainer.vue";
 
 // Home
 import HomePortal from "./components/pages/HomePortal.vue";
-import SectionHub from "./components/pages/SectionHub.vue";
 import SectionHero from "./components/pages/SectionHero.vue";
+import SectionHub from "./components/pages/SectionHub.vue";
 
 // KB Features
 import InlineMarkdownEditor from "./components/features/InlineMarkdownEditor.vue";
@@ -44,8 +55,8 @@ import KnowledgeGraph from "./components/features/KnowledgeGraph.vue";
 import RAGSearch from "./components/features/RAGSearch.vue";
 
 // Dashboards
-import AboutProfile from "./components/common/AboutProfile.vue";
 import { ArticleCards, SectionIndex } from "./components/common";
+import AboutProfile from "./components/common/AboutProfile.vue";
 
 // Legacy
 import ControlCenter from "./components/common/ControlCenter.vue";

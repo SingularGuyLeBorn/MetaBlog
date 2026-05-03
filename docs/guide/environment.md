@@ -1,6 +1,6 @@
 # 环境变量配置
 
-MetaBlog 通过 `.env` 文件管理所有配置。以下是目前支持的全部环境变量说明。
+MetaBlog 通过 `.env` 文件管理所有配置. 以下是目前支持的全部环境变量说明. 
 
 ## 📋 配置文件位置
 
@@ -8,13 +8,13 @@ MetaBlog 通过 `.env` 文件管理所有配置。以下是目前支持的全部
 项目根目录/.env
 ```
 
-> 项目已包含 `.env` 文件(不在版本控制中)。如需重置，可复制 `.env.example`(如果存在)。
+> 项目已包含 `.env` 文件(不在版本控制中). 如需重置,可复制 `.env.example`(如果存在). 
 
 ---
 
 ## 🔑 AI 模型配置(必填至少一项)
 
-所有 AI Provider 支持 `LLM_` 前缀(推荐)和 `VITE_` 前缀(兼容旧配置)。系统会优先读取 `LLM_` 前缀的变量。
+所有 AI Provider 支持 `LLM_` 前缀(推荐)和 `VITE_` 前缀(兼容旧配置). 系统会优先读取 `LLM_` 前缀的变量. 
 
 | 变量名 | 说明 | 示例 |
 |--------|------|------|
@@ -60,7 +60,7 @@ MetaBlog 通过 `.env` 文件管理所有配置。以下是目前支持的全部
 | `LARK_APP_ID` |  Lark 应用 ID(兼容) | 同上 |
 | `LARK_APP_SECRET` | Lark 应用密钥(兼容) | 同上 |
 
-> 配置后 AI 可调用 `feishuDocCreate`、`feishuDocAppend`、`feishuImSend` 等工具。
+> 配置后 AI 可调用 `feishuDocCreate`、`feishuDocAppend`、`feishuImSend` 等工具. 
 
 ---
 
@@ -71,7 +71,7 @@ MetaBlog 通过 `.env` 文件管理所有配置。以下是目前支持的全部
 | `YUQUE_SESSION` | 语雀 Session Cookie | 浏览器开发者工具 → Application → Cookies → `_yuque_session` |
 | `YUQUE_CTOKEN` | 语雀 CToken | 浏览器开发者工具 → Application → Cookies → `_ctoken` |
 
-> 配置后 AI 可调用 `yuqueDocCreate`、`yuqueDocUpdate`、`yuqueImageUpload` 等工具。
+> 配置后 AI 可调用 `yuqueDocCreate`、`yuqueDocUpdate`、`yuqueImageUpload` 等工具. 
 
 ---
 
@@ -81,7 +81,7 @@ MetaBlog 通过 `.env` 文件管理所有配置。以下是目前支持的全部
 |--------|------|---------|
 | `LLM_GITHUB_TOKEN` | GitHub Personal Access Token | GitHub Settings → Developer settings → Personal access tokens |
 
-> 配置后 AI 可调用 `github_get_repo`、`github_search_code` 等工具，API 速率限制更高。
+> 配置后 AI 可调用 `github_get_repo`、`github_search_code` 等工具,API 速率限制更高. 
 
 ---
 
@@ -116,6 +116,6 @@ LLM_DEFAULT_PROVIDER=deepseek
 ## 🔒 安全提示
 
 1. **不要提交 `.env` 文件到版本控制**(已配置 `.gitignore`)
-2. **API Key 只在服务端使用**：前端通过 `/api/chat` 代理调用 AI API，不会暴露 Key
+2. **API Key 只在服务端使用**：前端通过 `/api/chat` 代理调用 AI API,不会暴露 Key
 3. **定期轮换 API Key**：尤其是飞书 App Secret 等敏感凭证
-4. **使用 `LLM_` 前缀**：新配置统一使用 `LLM_` 前缀，`VITE_` 前缀仅为兼容保留
+4. **使用 `LLM_` 前缀**：新配置统一使用 `LLM_` 前缀,`VITE_` 前缀仅为兼容保留

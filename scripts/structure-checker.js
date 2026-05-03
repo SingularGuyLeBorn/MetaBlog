@@ -7,7 +7,7 @@
  * 规则：
  *   1. 优先检查是否存在 foldername.md
  *   2. 其次检查是否存在 index.md
- *   3. 如果两者都不存在，则创建 foldername.md
+ *   3. 如果两者都不存在,则创建 foldername.md
  * 
  * 用法: node scripts/structure-checker.js [选项] [目标路径]
  */
@@ -75,7 +75,7 @@ function checkAndCreateMd(dirPath, options = {}) {
         const hasIndexMd = fs.existsSync(indexMdPath);
 
         if (!hasFolderMd && !hasIndexMd) {
-          // 两者都不存在，创建 foldername.md
+          // 两者都不存在,创建 foldername.md
           if (!dryRun) {
             try {
               fs.writeFileSync(folderMdPath, '', 'utf8');
@@ -114,10 +114,10 @@ function checkAndCreateMd(dirPath, options = {}) {
   const rootName = path.basename(dirPath);
   const rootFolderMd = path.join(dirPath, `${rootName}.md`);
   const rootIndexMd = path.join(dirPath, 'index.md');
-  
+
   const hasRootFolderMd = fs.existsSync(rootFolderMd);
   const hasRootIndexMd = fs.existsSync(rootIndexMd);
-  
+
   if (!hasRootFolderMd && !hasRootIndexMd) {
     if (!dryRun) {
       try {
@@ -155,7 +155,7 @@ ${colors.cyan}结构检查器 - Structure Checker${colors.reset}
 
 选项:
   -h, --help       显示帮助信息
-  -d, --dry-run    模拟运行，不实际创建文件
+  -d, --dry-run    模拟运行,不实际创建文件
   -v, --verbose    显示详细信息
 
 示例:
@@ -164,7 +164,7 @@ ${colors.cyan}结构检查器 - Structure Checker${colors.reset}
   node scripts/structure-checker.js --dry-run docs/sections/knowledge
   node scripts/structure-checker.js -v ./docs
 
-如果没有指定目标路径，默认检查 docs/sections/knowledge/cs336
+如果没有指定目标路径,默认检查 docs/sections/knowledge/cs336
 `);
 }
 
@@ -173,7 +173,7 @@ ${colors.cyan}结构检查器 - Structure Checker${colors.reset}
  */
 function main() {
   const args = process.argv.slice(2);
-  
+
   // 解析参数
   const options = {
     dryRun: false,
@@ -183,7 +183,7 @@ function main() {
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    
+
     if (arg === '-h' || arg === '--help') {
       showHelp();
       process.exit(0);
@@ -218,7 +218,7 @@ function main() {
   console.log(`\n${colors.cyan}========================================${colors.reset}`);
   console.log(`${colors.cyan}    结构检查器 - Structure Checker${colors.reset}`);
   console.log(`${colors.cyan}========================================${colors.reset}\n`);
-  
+
   log('info', `目标路径: ${path.relative(process.cwd(), targetPath)}`);
   log('info', `模式: ${options.dryRun ? '模拟运行 (dry-run)' : '实际执行'}`);
   console.log('');

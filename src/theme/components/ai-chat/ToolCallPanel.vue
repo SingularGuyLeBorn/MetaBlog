@@ -159,7 +159,7 @@ function getResultLinks(record: ToolCallRecord) {
   return extractEntityLinks(record.toolName || '', result.data || result)
 }
 
-// 将文本中的 URL 转换为可点击链接(简单版，仅用于展示)
+// 将文本中的 URL 转换为可点击链接(简单版,仅用于展示)
 function linkifyText(text: string): string {
   const urlRegex = /(https?:\/\/[^\s<>"'{}|\\^`[\]]+)/g
   return text.replace(urlRegex, (url) => {

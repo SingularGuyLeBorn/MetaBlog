@@ -106,9 +106,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { Icon } from '@/theme/components/common'
-import { LiquidGlass } from '@/theme/components/common'
+import { Icon, LiquidGlass } from '@/theme/components/common'
+import { computed, onMounted, ref } from 'vue'
 
 interface Memory {
   id: string
@@ -220,7 +219,7 @@ async function deleteMemory(id: string) {
 }
 
 async function clearAll() {
-  if (!confirm('确定要清空所有记忆吗？此操作不可恢复。')) return
+  if (!confirm('确定要清空所有记忆吗？此操作不可恢复. ')) return
   try {
     const res = await fetch('/api/memories/clear', { method: 'POST' })
     const json = await res.json()

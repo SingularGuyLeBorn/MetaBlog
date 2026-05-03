@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { markdownToBlocks } from '../src/theme/tools/lark/markdown-to-blocks'
 
 describe('markdownToBlocks', () => {
@@ -95,6 +95,35 @@ describe('markdownToBlocks', () => {
     expect(blocks[0].table.property.row_size).toBe(2)
     expect(blocks[0]._cell_contents).toHaveLength(4)
     expect(blocks[0]._cell_contents[0][0].text_run.content).toBe('A')
+  })
+
+  it('protects formula | inside table cells', () => {
+    // 公式 $Q(y|x)$ 中的 | 不应被当作列分隔符
+    const blocks = markdownToBlocks('| Method | Formula |\n|---|---|\n| OPD | $Q(y|x)$ |')
+    expect(blocks).toHaveLength(1)
+    expect(blocks[0].block_type).toBe(31)
+    const contents = blocks[0]._cell_contents
+    expect(contents).toHaveLength(4)
+    // cell[2] = "OPD" 单元格
+    expect(contents[2][0].text_run.content).toBe('OPD')
+    // cell[3] = "$Q(y|x)$" 应作为一个完整公式,不被拆分
+    expect(contents[3]).toHaveLength(1)
+    expect(contents[3][0].equation.content).toBe('Q(y|x)')
+  })
+
+  it('handles escaped pipe \\| in table cells', () => {
+    const blocks = markdownToBlocks('| A | B |\n|---|---|\n| a \\| b | c |')
+    expect(blocks[0]._cell_contents[2][0].text_run.content).toBe('a | b')
+  })
+
+  it('downgrades equation with \\ newline in table cells', () => {
+    // 表格单元格中包含 \\ 的公式应降级为普通文本,避免 LaTeX 换行导致显示异常
+    const blocks = markdownToBlocks('| A | B |\n|---|---|\n| test | $\\text{KL}(\\pi)\\\\$ |')
+    expect(blocks[0].block_type).toBe(31)
+    const cell = blocks[0]._cell_contents[3]
+    // 包含 \\ 的 equation 应降级为 text_run
+    expect(cell[0].text_run).toBeDefined()
+    expect(cell[0].text_run.content).toContain('\\text{KL}')
   })
 
   it('merges adjacent plain text runs', () => {

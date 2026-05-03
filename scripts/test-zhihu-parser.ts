@@ -177,7 +177,7 @@ async function main() {
   try {
     await page.goto(TEST_URL, { waitUntil: "networkidle", timeout: 30000 });
   } catch (e: any) {
-    console.log(`   ⚠️  networkidle 超时，但页面可能已加载: ${e.message}`);
+    console.log(`   ⚠️  networkidle 超时,但页面可能已加载: ${e.message}`);
   }
 
   // 等待正文容器

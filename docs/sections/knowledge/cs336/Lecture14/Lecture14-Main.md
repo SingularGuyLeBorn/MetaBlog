@@ -2,7 +2,7 @@
 
 > **编辑蓝图 (Editorial Blueprint)**
 > 
-> **核心主题**: 本讲座是CS336课程中最具实践性的一讲，深入讲解了大规模语言模型预训练数据处理流水线的两大核心：**数据过滤 (Filtering)** 和 **数据去重 (Deduplication)**。从算法原理到工程实现，从语言识别到毒性过滤，全面覆盖。
+> **核心主题**: 本讲座是CS336课程中最具实践性的一讲,深入讲解了大规模语言模型预训练数据处理流水线的两大核心：**数据过滤 (Filtering)** 和 **数据去重 (Deduplication)**. 从算法原理到工程实现,从语言识别到毒性过滤,全面覆盖. 
 > 
 > **知识结构**: 
 > - 第一部分：过滤算法基础(N-gram语言模型、KenLM、fastText分类器、重要性重采样DSIR)
@@ -19,20 +19,20 @@
 
 ### 1.1 为什么需要过滤？
 
-预训练数据的质量直接决定模型性能。互联网数据(如Common Crawl)包含大量：
+预训练数据的质量直接决定模型性能. 互联网数据(如Common Crawl)包含大量：
 - **低质量内容**: 垃圾邮件、广告文本、重复模板
 - **非目标语言**: 多语言混杂
 - **有害内容**: 毒性文本、违法信息
 
-过滤的目标是：**从海量噪声数据中高效筛选出高质量、目标语言、安全的文本**。
+过滤的目标是：**从海量噪声数据中高效筛选出高质量、目标语言、安全的文本**. 
 
 ### 1.2 N-gram 语言模型 (N-gram Language Models)
 
-N-gram模型是过滤流水线的基础工具，用于评估文本质量。
+N-gram模型是过滤流水线的基础工具,用于评估文本质量. 
 
 #### 核心思想
 
-给定一个token序列 $x_1, x_2, ..., x_n$，N-gram模型将其概率分解为：
+给定一个token序列 $x_1, x_2, ..., x_n$,N-gram模型将其概率分解为：
 
 $$P(x_1, ..., x_n) = \prod_{i=1}^{n} P(x_i | x_{i-n+1}, ..., x_{i-1})$$
 
@@ -74,7 +74,7 @@ class BigramModel:
                 p = (self.unigram_counts[token] + 1) / (self.total_count + len(self.unigram_counts))
             else:
                 prev_token = tokens[i - 1]
-                # Bigram概率，使用加一平滑
+                # Bigram概率,使用加一平滑
                 count = self.bigram_counts[prev_token][token]
                 total = sum(self.bigram_counts[prev_token].values())
                 p = (count + 1) / (total + len(self.unigram_counts))
@@ -84,9 +84,9 @@ class BigramModel:
 
 ### 1.3 KenLM：高效N-gram语言模型
 
-**KenLM** 是一个高度优化的N-gram语言模型库，支持:
+**KenLM** 是一个高度优化的N-gram语言模型库,支持:
 - **修改Kneser-Ney平滑**: 比简单的加一平滑效果更好
-- **回退机制 (Backoff)**: 当高阶n-gram未见过时，回退到低阶
+- **回退机制 (Backoff)**: 当高阶n-gram未见过时,回退到低阶
 - **压缩存储**: 使用Trie结构和量化技术
 
 #### 安装与使用
@@ -113,18 +113,18 @@ print(f"Perplexity: {perplexity}")
 
 #### 回退机制详解
 
-当遇到未见过的n-gram时，KenLM使用回退：
+当遇到未见过的n-gram时,KenLM使用回退：
 
 $$P(x_i | x_{i-n+1:i-1}) = \begin{cases} 
 P_{MLE}(x_i | x_{i-n+1:i-1}) & \text{if count} > 0 \\
 \alpha(x_{i-n+1:i-1}) \cdot P(x_i | x_{i-n+2:i-1}) & \text{otherwise}
 \end{cases}$$
 
-其中 $\alpha$ 是回退权重，确保概率归一化。
+其中 $\alpha$ 是回退权重,确保概率归一化. 
 
 ### 1.4 fastText 文本分类器
 
-**fastText** 是Facebook开发的高效文本分类工具，特别适合：
+**fastText** 是Facebook开发的高效文本分类工具,特别适合：
 - **语言识别 (Language Identification)**
 - **主题分类**
 - **质量评分**
@@ -155,7 +155,7 @@ print(f"Language: {label.replace('__label__', '')}, Confidence: {confidence:.2f}
 
 ### 1.5 重要性重采样 (DSIR - Data Selection via Importance Resampling)
 
-**DSIR** 是一种数据选择方法，核心思想是：**让选中的数据分布接近目标分布**。
+**DSIR** 是一种数据选择方法,核心思想是：**让选中的数据分布接近目标分布**. 
 
 #### 数学原理
 
@@ -166,7 +166,7 @@ print(f"Language: {label.replace('__label__', '')}, Confidence: {confidence:.2f}
 重要性权重:
 $$w(x) = \frac{P_{target}(x)}{P_{raw}(x)}$$
 
-对于文本 $x$，以概率 $\min(1, \lambda \cdot w(x))$ 选择它，其中 $\lambda$ 控制选择率。
+对于文本 $x$,以概率 $\min(1, \lambda \cdot w(x))$ 选择它,其中 $\lambda$ 控制选择率. 
 
 #### 实现：使用KenLM计算重要性权重
 
@@ -184,7 +184,7 @@ class DSIRFilter:
     
     def compute_importance_weight(self, text: str) -> float:
         """计算重要性权重 w(x) = P_target(x) / P_raw(x)"""
-        # KenLM返回log10概率，需要转换
+        # KenLM返回log10概率,需要转换
         log_p_target = self.target_model.score(text)
         log_p_raw = self.raw_model.score(text)
         
@@ -207,7 +207,7 @@ class DSIRFilter:
 
 ![DSIR实验结果](./images/dsir-results.png)
 
-DSIR在下游任务上的表现显著优于随机采样，证明了重要性重采样的有效性。
+DSIR在下游任务上的表现显著优于随机采样,证明了重要性重采样的有效性. 
 
 ---
 
@@ -215,7 +215,7 @@ DSIR在下游任务上的表现显著优于随机采样，证明了重要性重�
 
 ### 2.1 语言识别过滤 (Language Identification)
 
-语言识别是最基础的过滤步骤，用于筛选特定语言的文本。
+语言识别是最基础的过滤步骤,用于筛选特定语言的文本. 
 
 ```python
 import fasttext
@@ -298,7 +298,7 @@ class QualityClassifier:
 
 ### 2.3 毒性过滤 (Toxicity Filtering)
 
-毒性过滤移除有害、攻击性或不当内容。
+毒性过滤移除有害、攻击性或不当内容. 
 
 ```python
 class ToxicityFilter:
@@ -342,7 +342,7 @@ class ToxicityFilter:
 
 ### 3.2 精确去重 (Exact Deduplication)
 
-精确去重移除完全相同的文档或段落。
+精确去重移除完全相同的文档或段落. 
 
 #### 3.2.1 基于哈希的精确去重
 
@@ -390,12 +390,12 @@ def deduplicate_lines(texts: list[str]) -> list[str]:
 
 ### 3.3 布隆过滤器 (Bloom Filter)
 
-布隆过滤器是一种空间高效的概率数据结构，用于测试元素是否在集合中。
+布隆过滤器是一种空间高效的概率数据结构,用于测试元素是否在集合中. 
 
 #### 特性
 
 - **可能有假阳性 (False Positive)**: 可能错误地认为不在集合中的元素在集合中
-- **绝无假阴性 (No False Negative)**: 如果说不在，则确实不在
+- **绝无假阴性 (No False Negative)**: 如果说不在,则确实不在
 - **空间效率极高**: 远小于存储实际元素
 
 #### Python实现
@@ -474,7 +474,7 @@ def bloom_ngram_dedup(texts: list[str], n: int = 5,
         
         duplicate_ratio = duplicate_count / len(ngrams) if ngrams else 0
         
-        # 如果重复率低于阈值，保留文档
+        # 如果重复率低于阈值,保留文档
         if duplicate_ratio < 0.5:
             result.append(text)
     
@@ -483,7 +483,7 @@ def bloom_ngram_dedup(texts: list[str], n: int = 5,
 
 ### 3.4 近似去重：MinHash
 
-**MinHash** 用于估计两个集合的Jaccard相似度，是近似去重的核心算法。
+**MinHash** 用于估计两个集合的Jaccard相似度,是近似去重的核心算法. 
 
 #### Jaccard相似度
 
@@ -518,7 +518,7 @@ class MinHash:
         # 初始化签名为最大值
         signature = np.full(self.num_hashes, np.iinfo(np.int32).max, dtype=np.int32)
         
-        # 对每个n-gram计算所有哈希值，取最小
+        # 对每个n-gram计算所有哈希值,取最小
         for ngram in ngrams:
             for i, seed in enumerate(self.seeds):
                 hash_value = mmh3.hash(ngram, seed)
@@ -534,12 +534,12 @@ class MinHash:
 
 ### 3.5 局部敏感哈希 (LSH - Locality Sensitive Hashing)
 
-**LSH** 用于高效查找相似文档，避免两两比较。
+**LSH** 用于高效查找相似文档,避免两两比较. 
 
 #### 分桶策略 (Banding)
 
-将MinHash签名分成 $b$ 个带 (bands)，每带 $r$ 行：
-- 如果任意一个带的签名完全相同，则认为是候选对
+将MinHash签名分成 $b$ 个带 (bands),每带 $r$ 行：
+- 如果任意一个带的签名完全相同,则认为是候选对
 - 调整 $b$ 和 $r$ 可以控制相似度阈值
 
 ```python
@@ -676,16 +676,16 @@ class DataProcessingPipeline:
 
 | 技术 | 复杂度 | 空间 | 特点 |
 |------|--------|------|------|
-| 哈希精确去重 | O(n) | O(n) | 无损，只处理完全相同 |
-| 布隆过滤器 | O(n) | O(1)* | 有假阳性，极省空间 |
-| MinHash | O(n) | O(n·k) | 近似，处理相似文档 |
+| 哈希精确去重 | O(n) | O(n) | 无损,只处理完全相同 |
+| 布隆过滤器 | O(n) | O(1)* | 有假阳性,极省空间 |
+| MinHash | O(n) | O(n·k) | 近似,处理相似文档 |
 | MinHash + LSH | O(n) 期望 | O(n·k) | 避免两两比较 |
 
 ### 最佳实践
 
 1. **流水线顺序**: 先便宜的过滤(规则、语言)→ 再昂贵的(模型质量)→ 最后去重
 2. **阈值调优**: 根据下游任务表现调整各过滤阈值
-3. **分布式处理**: 对于TB级数据，需要MapReduce/Spark分布式实现
+3. **分布式处理**: 对于TB级数据,需要MapReduce/Spark分布式实现
 4. **多次迭代**: 可能需要多轮去重达到最佳效果
 
 ---

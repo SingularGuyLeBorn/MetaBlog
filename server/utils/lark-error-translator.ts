@@ -1,10 +1,21 @@
 /**
  * ============================================================================
+ * 工具函数 - lark-error-translator
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/utils
+ */
+
+
+/**
+ * ============================================================================
  * 飞书 (Lark/Feishu) API 错误翻译器
  * ============================================================================
  *
- * 将飞书 REST API 的错误响应翻译为中文友好提示。
- * 覆盖 HTTP 状态码 + 飞书业务错误码(code 字段)。
+ * 将飞书 REST API 的错误响应翻译为中文友好提示. 
+ * 覆盖 HTTP 状态码 + 飞书业务错误码(code 字段). 
  */
 
 export interface LarkErrorTranslation {
@@ -112,19 +123,31 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 99991400 || bizCode === 99991401 || lower.includes("tenant_access_token") || lower.includes("app_access_token")) {
     return {
       message: "飞书 Token 无效或已过期",
-      suggestion: "请检查 FEISHU_APP_ID / FEISHU_APP_SECRET 配置是否正确，或重新获取 tenant_access_token / app_access_token",
+      suggestion: "请检查 FEISHU_APP_ID / FEISHU_APP_SECRET 配置是否正确,或重新获取 tenant_access_token / app_access_token",
     };
   }
   if (bizCode === 99991403) {
     return {
       message: "应用无权限调用此 API",
-      suggestion: "当前应用未获得该 API 的调用权限，请在飞书开发者后台检查并申请对应的权限范围(scope)",
+      suggestion: "当前应用未获得该 API 的调用权限,请在飞书开发者后台检查并申请对应的权限范围(scope)",
     };
   }
   if (bizCode === 99991405) {
     return {
       message: "tenant_access_token 已过期",
-      suggestion: "tenant_access_token 已过期，请重新获取有效的访问令牌，或检查 FEISHU_APP_ID / FEISHU_APP_SECRET 配置",
+      suggestion: "tenant_access_token 已过期,请重新获取有效的访问令牌,或检查 FEISHU_APP_ID / FEISHU_APP_SECRET 配置",
+    };
+  }
+  if (bizCode === 99991677 || lower.includes("authentication token expired")) {
+    return {
+      message: "user_access_token 已过期",
+      suggestion: "用户访问令牌已过期. 后端会自动尝试刷新,如果刷新失败则需要重新授权. 可调用 feishuTokenRefresh 手动刷新,或运行 notebook 授权流程获取新 token. ",
+    };
+  }
+  if (bizCode === 99991679 || lower.includes("required one of these privileges")) {
+    return {
+      message: "缺少 API 调用权限(scope 不足)",
+      suggestion: "当前 token 的权限范围不包含该操作所需的 scope. 解决步骤：1) 开发者后台 → 权限管理 → 开通对应权限(如 wiki:wiki);2) 重新授权(授权链接的 scope 参数必须包含新权限);3) 用新 code 换 token. ",
     };
   }
 
@@ -132,13 +155,13 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 99991501) {
     return {
       message: "参数解析失败",
-      suggestion: "请求参数无法被正确解析，请检查 JSON 格式、字段类型或编码是否正确",
+      suggestion: "请求参数无法被正确解析,请检查 JSON 格式、字段类型或编码是否正确",
     };
   }
   if (bizCode === 99991502) {
     return {
       message: "请求超时",
-      suggestion: "请求处理超时，请稍后重试，或简化请求参数、减少数据量",
+      suggestion: "请求处理超时,请稍后重试,或简化请求参数、减少数据量",
     };
   }
 
@@ -146,13 +169,13 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 99991661) {
     return {
       message: "缺少必填参数",
-      suggestion: "请求中缺少必填参数，请对照飞书 API 文档检查所有必填项是否已提供",
+      suggestion: "请求中缺少必填参数,请对照飞书 API 文档检查所有必填项是否已提供",
     };
   }
   if (bizCode === 99991662) {
     return {
       message: "参数类型错误",
-      suggestion: "请求参数的数据类型不符合要求，请检查字符串/数字/布尔值等类型是否正确",
+      suggestion: "请求参数的数据类型不符合要求,请检查字符串/数字/布尔值等类型是否正确",
     };
   }
   if (bizCode === 99991663 || bizCode === 99991664 || bizCode === 99991665) {
@@ -164,55 +187,55 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 99991666) {
     return {
       message: "参数值无效",
-      suggestion: "请求参数的值不合法或超出允许范围，请检查枚举值、格式或业务规则",
+      suggestion: "请求参数的值不合法或超出允许范围,请检查枚举值、格式或业务规则",
     };
   }
   if (bizCode === 99991668) {
     return {
       message: "请求频率超限",
-      suggestion: "API 调用过于频繁，触发了速率限制，请降低请求频率，稍后重试",
+      suggestion: "API 调用过于频繁,触发了速率限制,请降低请求频率,稍后重试",
     };
   }
   if (bizCode === 99991669) {
     return {
       message: "API 调用配额已用完",
-      suggestion: "当前应用的 API 调用配额已耗尽，请联系管理员或等待配额重置",
+      suggestion: "当前应用的 API 调用配额已耗尽,请联系管理员或等待配额重置",
     };
   }
   if (bizCode === 99991670) {
     return {
       message: "应用未启用",
-      suggestion: "当前应用在该租户下未启用，请联系租户管理员在飞书管理后台启用该应用",
+      suggestion: "当前应用在该租户下未启用,请联系租户管理员在飞书管理后台启用该应用",
     };
   }
   if (bizCode === 99991671) {
     return {
       message: "权限不足",
-      suggestion: "当前身份(应用/用户)没有执行该操作的权限，请检查应用权限范围(scope)或用户角色",
+      suggestion: "当前身份(应用/用户)没有执行该操作的权限,请检查应用权限范围(scope)或用户角色",
     };
   }
   if (bizCode === 99991672) {
     return {
       message: "缺少必要的权限范围(scope)",
-      suggestion: "当前应用缺少执行此操作所需的权限范围(scope)，请在飞书开发者后台申请并发布对应权限",
+      suggestion: "当前应用缺少执行此操作所需的权限范围(scope),请在飞书开发者后台申请并发布对应权限",
     };
   }
   if (bizCode === 99991673) {
     return {
       message: "应用未获得授权",
-      suggestion: "当前应用尚未获得用户或租户的授权，请引导用户完成授权流程",
+      suggestion: "当前应用尚未获得用户或租户的授权,请引导用户完成授权流程",
     };
   }
   if (bizCode === 99991674) {
     return {
       message: "租户未开通该功能",
-      suggestion: "当前租户未开通此功能，请联系租户管理员了解功能开通情况",
+      suggestion: "当前租户未开通此功能,请联系租户管理员了解功能开通情况",
     };
   }
   if (bizCode === 99991675) {
     return {
       message: "该 API 已废弃",
-      suggestion: "调用的 API 接口已被飞书废弃，请查阅官方文档迁移至新接口",
+      suggestion: "调用的 API 接口已被飞书废弃,请查阅官方文档迁移至新接口",
     };
   }
 
@@ -220,13 +243,13 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 99991701) {
     return {
       message: "飞书内部服务错误",
-      suggestion: "飞书服务端内部异常，请稍后重试。如持续出现，请联系飞书技术支持",
+      suggestion: "飞书服务端内部异常,请稍后重试. 如持续出现,请联系飞书技术支持",
     };
   }
   if (bizCode === 99991702) {
     return {
       message: "飞书外部依赖服务错误",
-      suggestion: "飞书依赖的外部服务出现异常，请稍后重试",
+      suggestion: "飞书依赖的外部服务出现异常,请稍后重试",
     };
   }
 
@@ -234,43 +257,43 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 99992000) {
     return {
       message: "业务异常",
-      suggestion: "飞书业务层发生异常，请检查请求参数是否符合业务规则，稍后重试",
+      suggestion: "飞书业务层发生异常,请检查请求参数是否符合业务规则,稍后重试",
     };
   }
   if (bizCode === 99992001) {
     return {
       message: "业务参数错误",
-      suggestion: "业务参数不符合要求，请对照 API 文档检查参数值的有效性",
+      suggestion: "业务参数不符合要求,请对照 API 文档检查参数值的有效性",
     };
   }
   if (bizCode === 99992002) {
     return {
       message: "业务逻辑错误",
-      suggestion: "当前操作不符合业务逻辑(如状态不允许、前置条件未满足)，请确认业务规则后重试",
+      suggestion: "当前操作不符合业务逻辑(如状态不允许、前置条件未满足),请确认业务规则后重试",
     };
   }
   if (bizCode === 99992101) {
     return {
       message: "数据不存在",
-      suggestion: "请求的数据记录不存在，请检查 ID 或查询条件是否正确",
+      suggestion: "请求的数据记录不存在,请检查 ID 或查询条件是否正确",
     };
   }
   if (bizCode === 99992102) {
     return {
       message: "数据已存在",
-      suggestion: "尝试创建的数据记录已存在，请更换唯一标识或使用更新接口",
+      suggestion: "尝试创建的数据记录已存在,请更换唯一标识或使用更新接口",
     };
   }
   if (bizCode === 99992103) {
     return {
       message: "数据冲突",
-      suggestion: "当前操作与已有数据发生冲突(如并发修改)，请刷新后重试",
+      suggestion: "当前操作与已有数据发生冲突(如并发修改),请刷新后重试",
     };
   }
   if (bizCode === 99992104) {
     return {
       message: "数据已过期",
-      suggestion: "相关数据或凭证已过期，请重新获取或更新数据",
+      suggestion: "相关数据或凭证已过期,请重新获取或更新数据",
     };
   }
 
@@ -278,7 +301,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 99993005) {
     return {
       message: "用户未授权应用",
-      suggestion: "用户尚未同意应用的授权请求，请引导用户在飞书客户端中完成授权",
+      suggestion: "用户尚未同意应用的授权请求,请引导用户在飞书客户端中完成授权",
     };
   }
 
@@ -286,7 +309,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 100004 || lower.includes("100004")) {
     return {
       message: "请求过于频繁(业务限流)",
-      suggestion: "飞书 API 触发了业务层频率限制，请降低请求频率，稍后重试",
+      suggestion: "飞书 API 触发了业务层频率限制,请降低请求频率,稍后重试",
     };
   }
 
@@ -294,19 +317,19 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 112000 || lower.includes("112000")) {
     return {
       message: "应用无权限",
-      suggestion: "当前应用未获得该 API 的调用权限，请在飞书开发者后台检查并申请对应的权限范围(scope)",
+      suggestion: "当前应用未获得该 API 的调用权限,请在飞书开发者后台检查并申请对应的权限范围(scope)",
     };
   }
   if (bizCode === 112001 || lower.includes("112001")) {
     return {
       message: "租户无权限",
-      suggestion: "当前租户未开通该功能或未授权应用，请联系租户管理员",
+      suggestion: "当前租户未开通该功能或未授权应用,请联系租户管理员",
     };
   }
   if (bizCode === 112002 || lower.includes("112002")) {
     return {
       message: "用户无权限",
-      suggestion: "当前用户没有执行该操作的权限，请确认用户角色或文档分享设置",
+      suggestion: "当前用户没有执行该操作的权限,请确认用户角色或文档分享设置",
     };
   }
   if (bizCode === 112003 || lower.includes("112003")) {
@@ -318,7 +341,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 112004 || lower.includes("112004")) {
     return {
       message: "请求签名错误",
-      suggestion: "请检查请求的签名计算逻辑，确保时间戳、nonce、app_secret 等参数正确",
+      suggestion: "请检查请求的签名计算逻辑,确保时间戳、nonce、app_secret 等参数正确",
     };
   }
 
@@ -332,19 +355,19 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 113001 || lower.includes("113001")) {
     return {
       message: "资源已存在",
-      suggestion: "尝试创建的资源(如群聊名称、日历名称)已存在，请更换名称或使用查询/更新接口",
+      suggestion: "尝试创建的资源(如群聊名称、日历名称)已存在,请更换名称或使用查询/更新接口",
     };
   }
   if (bizCode === 113002 || lower.includes("113002")) {
     return {
       message: "资源被占用",
-      suggestion: "该资源正被其他操作锁定，请稍后重试",
+      suggestion: "该资源正被其他操作锁定,请稍后重试",
     };
   }
   if (bizCode === 113003 || lower.includes("113003")) {
     return {
       message: "资源已过期",
-      suggestion: "该资源(如分享链接、临时凭证)已过期，请重新获取",
+      suggestion: "该资源(如分享链接、临时凭证)已过期,请重新获取",
     };
   }
 
@@ -352,7 +375,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 114001 || lower.includes("114001")) {
     return {
       message: "上传文件过大",
-      suggestion: "请压缩文件或分批上传，飞书单文件大小限制请参考官方文档",
+      suggestion: "请压缩文件或分批上传,飞书单文件大小限制请参考官方文档",
     };
   }
   if (bizCode === 114002 || lower.includes("114002")) {
@@ -366,49 +389,49 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 131001) {
     return {
       message: "文档创建失败",
-      suggestion: "文档创建失败，请检查参数(如标题、父目录、文档类型)是否正确，或稍后重试",
+      suggestion: "文档创建失败,请检查参数(如标题、父目录、文档类型)是否正确,或稍后重试",
     };
   }
   if (bizCode === 131002 || lower.includes("131002")) {
     return {
       message: "文档不存在或无访问权限",
-      suggestion: "请检查 document_id 是否正确，或确认当前用户/应用有权限访问该文档",
+      suggestion: "请检查 document_id 是否正确,或确认当前用户/应用有权限访问该文档",
     };
   }
   if (bizCode === 131003) {
     return {
       message: "文档已存在",
-      suggestion: "同名文档已存在，请更换标题或使用现有文档",
+      suggestion: "同名文档已存在,请更换标题或使用现有文档",
     };
   }
   if (bizCode === 131004) {
     return {
       message: "不支持的文档类型",
-      suggestion: "请求的文档类型不被支持，请检查文档类型参数是否正确",
+      suggestion: "请求的文档类型不被支持,请检查文档类型参数是否正确",
     };
   }
   if (bizCode === 131005) {
     return {
       message: "文档大小超出限制",
-      suggestion: "文档内容过大，请精简内容或分批操作",
+      suggestion: "文档内容过大,请精简内容或分批操作",
     };
   }
   if (bizCode === 131006 || lower.includes("131006")) {
     return {
       message: "Wiki 知识库需要 user_access_token",
-      suggestion: "请在 .env 中配置 FEISHU_USER_ACCESS_TOKEN，或显式设置 use_user_token=true",
+      suggestion: "请在 .env 中配置 FEISHU_USER_ACCESS_TOKEN,或显式设置 use_user_token=true",
     };
   }
   if (bizCode === 131007) {
     return {
       message: "Wiki 空间不存在",
-      suggestion: "请检查 wiki_space_id 是否正确，或确认该空间是否已被删除",
+      suggestion: "请检查 wiki_space_id 是否正确,或确认该空间是否已被删除",
     };
   }
   if (bizCode === 131008) {
     return {
       message: "无权限访问该 Wiki 空间",
-      suggestion: "当前用户或应用没有该 Wiki 空间的访问权限，请确认空间权限设置",
+      suggestion: "当前用户或应用没有该 Wiki 空间的访问权限,请确认空间权限设置",
     };
   }
 
@@ -416,55 +439,55 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 1770001 || lower.includes("1770001")) {
     return {
       message: "飞书文档 API 参数不合法",
-      suggestion: "传入的参数不符合飞书文档 API 要求。常见原因：1) block_type 与内容不匹配(如用 text block 传了公式内容)；2) content 字段格式错误；3) 缺少必填参数(如 document_id、block_id)。请检查参数类型和格式，参考飞书文档 API 规范",
+      suggestion: "传入的参数不符合飞书文档 API 要求. 常见原因：1) block_type 与内容不匹配(如用 text block 传了公式内容);2) content 字段格式错误;3) 缺少必填参数(如 document_id、block_id). 请检查参数类型和格式,参考飞书文档 API 规范",
     };
   }
   if (bizCode === 1770002 || lower.includes("1770002")) {
     return {
       message: "文档或文档块不存在",
-      suggestion: "请确认 document_id 或 block_id 是否正确，或文档是否已被删除",
+      suggestion: "请确认 document_id 或 block_id 是否正确,或文档是否已被删除",
     };
   }
   if (bizCode === 1770003 || lower.includes("1770003")) {
     return {
       message: "无权限访问该文档",
-      suggestion: "当前用户或应用没有该文档的访问权限，请确认文档已分享给当前用户，或应用有 docs:document:readonly 权限",
+      suggestion: "当前用户或应用没有该文档的访问权限,请确认文档已分享给当前用户,或应用有 docs:document:readonly 权限",
     };
   }
   if (bizCode === 1770004 || lower.includes("1770004")) {
     return {
       message: "文档块不存在",
-      suggestion: "请确认 block_id 是否正确，或该块是否已被删除",
+      suggestion: "请确认 block_id 是否正确,或该块是否已被删除",
     };
   }
   if (bizCode === 1770005 || lower.includes("1770005")) {
     return {
       message: "文档块已被删除",
-      suggestion: "该文档块已被删除，无法更新。请尝试重新创建该块",
+      suggestion: "该文档块已被删除,无法更新. 请尝试重新创建该块",
     };
   }
   if (bizCode === 1770006 || lower.includes("1770006")) {
     return {
       message: "文档版本冲突(并发编辑)",
-      suggestion: "该文档正在被其他用户或应用编辑，请稍后重试",
+      suggestion: "该文档正在被其他用户或应用编辑,请稍后重试",
     };
   }
   if (bizCode === 1770007 || lower.includes("1770007")) {
     return {
       message: "请求体过大",
-      suggestion: "单次请求的内容过大，请拆分为多个小块分批发送",
+      suggestion: "单次请求的内容过大,请拆分为多个小块分批发送",
     };
   }
   if (bizCode === 177004 || lower.includes("177004")) {
     return {
       message: "文档已被删除",
-      suggestion: "该文档已被移入回收站或永久删除，无法访问",
+      suggestion: "该文档已被移入回收站或永久删除,无法访问",
     };
   }
   if (bizCode === 177005 || lower.includes("177005")) {
     return {
       message: "文档无权限访问",
-      suggestion: "请确认当前用户已被添加到文档的协作者列表中，或文档已开启对外分享",
+      suggestion: "请确认当前用户已被添加到文档的协作者列表中,或文档已开启对外分享",
     };
   }
 
@@ -472,19 +495,19 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (bizCode === 230301 || lower.includes("230301")) {
     return {
       message: "表格范围无效",
-      suggestion: "请检查表格范围参数(如 A1:B2)格式是否正确，或是否超出了表格实际大小",
+      suggestion: "请检查表格范围参数(如 A1:B2)格式是否正确,或是否超出了表格实际大小",
     };
   }
   if (bizCode === 230302) {
     return {
       message: "表格单元格数据无效",
-      suggestion: "表格单元格的数据格式或内容无效，请检查单元格值类型是否符合要求",
+      suggestion: "表格单元格的数据格式或内容无效,请检查单元格值类型是否符合要求",
     };
   }
   if (bizCode === 230303) {
     return {
       message: "表格范围超出限制",
-      suggestion: "请求的表格范围超出了实际表格大小，请检查行列范围是否正确",
+      suggestion: "请求的表格范围超出了实际表格大小,请检查行列范围是否正确",
     };
   }
 
@@ -495,79 +518,79 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
     if (codeStr.startsWith("99991")) {
       return {
         message: `Token 或认证相关错误 (错误码: ${bizCode})`,
-        suggestion: "访问令牌无效、过期或权限不足，请检查 FEISHU_APP_ID / FEISHU_APP_SECRET 配置，或重新获取有效的 access_token",
+        suggestion: "访问令牌无效、过期或权限不足,请检查 FEISHU_APP_ID / FEISHU_APP_SECRET 配置,或重新获取有效的 access_token",
       };
     }
     if (codeStr.startsWith("99992")) {
       return {
         message: `应用或租户相关错误 (错误码: ${bizCode})`,
-        suggestion: "应用状态、租户配置或业务逻辑异常，请检查应用是否已启用、授权状态及租户功能开通情况",
+        suggestion: "应用状态、租户配置或业务逻辑异常,请检查应用是否已启用、授权状态及租户功能开通情况",
       };
     }
     if (codeStr.startsWith("99993")) {
       return {
         message: `用户授权相关错误 (错误码: ${bizCode})`,
-        suggestion: "用户未授权应用或授权已过期，请引导用户完成授权流程",
+        suggestion: "用户未授权应用或授权已过期,请引导用户完成授权流程",
       };
     }
     if (codeStr.startsWith("99995") || codeStr.startsWith("99996")) {
       return {
         message: `参数校验相关错误 (错误码: ${bizCode})`,
-        suggestion: "请求参数缺失、类型错误或值不合法，请对照飞书 API 文档检查所有参数",
+        suggestion: "请求参数缺失、类型错误或值不合法,请对照飞书 API 文档检查所有参数",
       };
     }
     if (codeStr.startsWith("99997")) {
       return {
         message: `飞书内部服务错误 (错误码: ${bizCode})`,
-        suggestion: "飞书服务端内部异常，请稍后重试。如持续出现，请联系飞书技术支持",
+        suggestion: "飞书服务端内部异常,请稍后重试. 如持续出现,请联系飞书技术支持",
       };
     }
     if (codeStr.startsWith("99999")) {
       return {
         message: `系统级错误 (错误码: ${bizCode})`,
-        suggestion: "飞书系统级异常，请稍后重试",
+        suggestion: "飞书系统级异常,请稍后重试",
       };
     }
     if (codeStr.startsWith("100")) {
       return {
         message: `请求频率限制 (错误码: ${bizCode})`,
-        suggestion: "API 调用过于频繁，触发了速率限制，请降低请求频率，稍后重试",
+        suggestion: "API 调用过于频繁,触发了速率限制,请降低请求频率,稍后重试",
       };
     }
     if (codeStr.startsWith("112")) {
       return {
         message: `权限或授权范围错误 (错误码: ${bizCode})`,
-        suggestion: "应用、用户或 IP 权限不足，请在飞书开发者后台检查权限范围(scope)和安全设置",
+        suggestion: "应用、用户或 IP 权限不足,请在飞书开发者后台检查权限范围(scope)和安全设置",
       };
     }
     if (codeStr.startsWith("113")) {
       return {
         message: `资源不存在或冲突 (错误码: ${bizCode})`,
-        suggestion: "请求的资源不存在、已存在、被占用或已过期，请检查资源 ID 是否正确",
+        suggestion: "请求的资源不存在、已存在、被占用或已过期,请检查资源 ID 是否正确",
       };
     }
     if (codeStr.startsWith("114")) {
       return {
         message: `文件上传相关错误 (错误码: ${bizCode})`,
-        suggestion: "文件大小超限、类型不支持或上传失败，请检查文件规格",
+        suggestion: "文件大小超限、类型不支持或上传失败,请检查文件规格",
       };
     }
     if (codeStr.startsWith("131")) {
       return {
         message: `文档或 Wiki 相关错误 (错误码: ${bizCode})`,
-        suggestion: "文档/Wiki 不存在、无权限、创建失败或参数错误，请检查 document_id / space_id 及权限设置",
+        suggestion: "文档/Wiki 不存在、无权限、创建失败或参数错误,请检查 document_id / space_id 及权限设置",
       };
     }
     if (codeStr.startsWith("177")) {
       return {
         message: `文档块或内容相关错误 (错误码: ${bizCode})`,
-        suggestion: "文档块不存在、参数不合法、内容过大或并发冲突，请检查 block_id 和 content 格式",
+        suggestion: "文档块不存在、参数不合法、内容过大或并发冲突,请检查 block_id 和 content 格式",
       };
     }
     if (codeStr.startsWith("230")) {
       return {
         message: `表格相关错误 (错误码: ${bizCode})`,
-        suggestion: "表格范围、单元格数据或 sheet 操作异常，请检查表格参数",
+        suggestion: "表格范围、单元格数据或 sheet 操作异常,请检查表格参数",
       };
     }
   }
@@ -588,7 +611,7 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (lower.includes("403") || lower.includes("forbidden")) {
     return {
       message: "没有权限访问该资源",
-      suggestion: "请检查应用是否有对应 API 的权限范围(scope)，或用户是否有该资源的访问权限",
+      suggestion: "请检查应用是否有对应 API 的权限范围(scope),或用户是否有该资源的访问权限",
     };
   }
   if (lower.includes("404") || lower.includes("not found")) {
@@ -612,25 +635,25 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (lower.includes("409") || lower.includes("conflict")) {
     return {
       message: "资源冲突",
-      suggestion: "可能存在并发修改或资源状态冲突，请刷新后重试",
+      suggestion: "可能存在并发修改或资源状态冲突,请刷新后重试",
     };
   }
   if (lower.includes("410") || lower.includes("gone")) {
     return {
       message: "资源已被永久删除",
-      suggestion: "该资源已被硬删除，无法恢复",
+      suggestion: "该资源已被硬删除,无法恢复",
     };
   }
   if (lower.includes("413") || lower.includes("payload too large")) {
     return {
       message: "请求体过大",
-      suggestion: "请减小请求体大小，或分批发送数据",
+      suggestion: "请减小请求体大小,或分批发送数据",
     };
   }
   if (lower.includes("415") || lower.includes("unsupported media type")) {
     return {
       message: "不支持的媒体类型",
-      suggestion: "请检查 Content-Type 请求头，确保使用 application/json 或正确的媒体类型",
+      suggestion: "请检查 Content-Type 请求头,确保使用 application/json 或正确的媒体类型",
     };
   }
   if (lower.includes("422") || lower.includes("unprocessable")) {
@@ -642,44 +665,100 @@ export function translateLarkError(errorMsg: string, code?: number): LarkErrorTr
   if (lower.includes("429") || lower.includes("rate limit") || lower.includes("too many requests")) {
     return {
       message: "请求过于频繁",
-      suggestion: "飞书 API 有速率限制，请降低请求频率，稍后重试",
+      suggestion: "飞书 API 有速率限制,请降低请求频率,稍后重试",
     };
   }
   if (lower.includes("500") || lower.includes("internal server error")) {
     return {
       message: "飞书服务器内部错误",
-      suggestion: "飞书服务端异常，请稍后重试",
+      suggestion: "飞书服务端异常,请稍后重试",
     };
   }
   if (lower.includes("502") || lower.includes("bad gateway")) {
     return {
       message: "飞书网关错误",
-      suggestion: "飞书服务暂时不可用，请稍后重试",
+      suggestion: "飞书服务暂时不可用,请稍后重试",
     };
   }
   if (lower.includes("503") || lower.includes("service unavailable")) {
     return {
       message: "飞书服务维护中",
-      suggestion: "飞书可能正在进行维护，请稍后重试",
+      suggestion: "飞书可能正在进行维护,请稍后重试",
     };
   }
   if (lower.includes("504") || lower.includes("gateway timeout")) {
     return {
       message: "飞书网关超时",
-      suggestion: "请求在飞书服务端处理超时，请稍后重试或简化请求参数",
+      suggestion: "请求在飞书服务端处理超时,请稍后重试或简化请求参数",
     };
   }
 
-  // ── 4. 最终兜底 ──
+  // ── 4. 系统/网络/解析层错误(飞书 API 之外)──
+  if (lower.includes("unexpected token") || lower.includes("unexpected non-whitespace") || lower.includes("unexpected character") || lower.includes("json.parse") || lower.includes("invalid json") || lower.includes("is not valid json")) {
+    return {
+      message: "飞书 API 返回的数据格式不正确,无法解析为 JSON",
+      suggestion: "该 API 可能返回了 HTML 页面(如登录页、错误页)而非 JSON. 建议：1) 检查该接口是否需要特定的 Content-Type 或 Accept 头;2) 如果是 document_render 等渲染接口,接口可能直接返回 HTML 而非 JSON;3) 检查 Token 是否有效,过期 Token 有时会返回 HTML 登录页",
+    };
+  }
+  if (lower.includes("econnrefused") || lower.includes("connection refused")) {
+    return {
+      message: "无法连接到飞书服务器(连接被拒绝)",
+      suggestion: "请检查服务器网络连接、防火墙设置,或确认飞书 API 域名 open.feishu.cn 是否可访问",
+    };
+  }
+  if (lower.includes("etimedout") || lower.includes("timeout") || lower.includes("timed out")) {
+    return {
+      message: "连接飞书服务器超时",
+      suggestion: "网络延迟过高或飞书服务端响应缓慢,请检查网络连接,稍后重试",
+    };
+  }
+  if (lower.includes("enotfound") || lower.includes("getaddrinfo") || lower.includes("dns")) {
+    return {
+      message: "无法解析飞书服务器域名",
+      suggestion: "DNS 解析失败,请检查服务器网络配置,确认域名 open.feishu.cn 可正常解析",
+    };
+  }
+  if (lower.includes("econnreset") || lower.includes("connection reset")) {
+    return {
+      message: "与飞书服务器的连接被重置",
+      suggestion: "网络不稳定或飞书服务端主动断开连接,请稍后重试",
+    };
+  }
+  if (lower.includes("fetch failed") || lower.includes("unable to fetch")) {
+    return {
+      message: "请求发送失败",
+      suggestion: "请检查网络连接、代理配置,或确认目标地址是否正确",
+    };
+  }
+  if (lower.includes("certificate") || lower.includes("ssl") || lower.includes("tls")) {
+    return {
+      message: "SSL/TLS 证书验证失败",
+      suggestion: "请检查系统时间是否正确,或确认飞书服务器的 SSL 证书是否有效",
+    };
+  }
+  if (lower.includes("permission denied") || lower.includes("access denied")) {
+    return {
+      message: "本地权限不足,无法执行该操作",
+      suggestion: "请检查文件/目录权限,或确认当前进程是否有足够的系统权限",
+    };
+  }
+  if (lower.includes("enoent") || lower.includes("no such file")) {
+    return {
+      message: "本地文件或目录不存在",
+      suggestion: "请检查文件路径是否正确,或确认文件是否已被删除/移动",
+    };
+  }
+
+  // ── 5. 最终兜底 ──
   if (bizCode) {
     return {
       message: `飞书 API 错误 (错误码: ${bizCode})`,
-      suggestion: `未识别的错误码 ${bizCode}。建议：1) 查阅飞书开放平台官方文档搜索该错误码；2) 检查请求参数是否符合该 API 的 schema 要求；3) 如果是文档块操作，确认 block_type 与 content 内容匹配`,
+      suggestion: `未识别的错误码 ${bizCode}. 建议：1) 查阅飞书开放平台官方文档搜索该错误码;2) 检查请求参数是否符合该 API 的 schema 要求;3) 如果是文档块操作,确认 block_type 与 content 内容匹配`,
     };
   }
 
   return {
     message: errorMsg || "飞书 API 请求失败",
-    suggestion: `请检查参数或稍后重试。原始错误信息：${errorMsg || "无详细信息"}`,
+    suggestion: `请检查参数或稍后重试. 原始错误信息：${errorMsg || "无详细信息"}`,
   };
 }

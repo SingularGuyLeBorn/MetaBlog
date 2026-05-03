@@ -130,6 +130,7 @@
         @use-prompt="handleQuickPrompt"
         @regenerate="handleRegenerate"
         @switch-version="switchVersion"
+        @active-message-change="handleActiveMessageChange"
       />
 
       <!-- 输入框 -->
@@ -149,6 +150,36 @@
         @select-skill="handleSelectSkill"
       />
     </main>
+
+    <!-- 右侧对话导航栏 -->
+    <aside
+      v-if="showNavigator && messages.length > 0"
+      class="chat-navigator"
+      :class="{ expanded: !navCollapsed || isHovering }"
+      @mouseenter="isHovering = true"
+      @mouseleave="isHovering = false"
+    >
+      <div class="nav-content">
+        <div class="nav-header">
+          <span class="nav-title">对话导航</span>
+          <button class="nav-toggle" @click.stop="navCollapsed = !navCollapsed">
+            <Icon name="chevron-right" :size="14" />
+          </button>
+        </div>
+        <div class="nav-list">
+          <div
+            v-for="item in messageNavItems"
+            :key="item.id"
+            class="nav-item"
+            :class="{ active: activeMessageId === item.id }"
+            @click="scrollToMessage(item.id)"
+          >
+            <span class="nav-dot" :class="{ active: activeMessageId === item.id }" />
+            <span class="nav-text">{{ item.summary }}</span>
+          </div>
+        </div>
+      </div>
+    </aside>
 
     <!-- 右侧设置面板 -->
     <SettingsPanel
@@ -293,6 +324,31 @@ const chatInputRef = ref<InstanceType<typeof ChatInput>>()
 const showAgentAdmin = ref(false)
 const showLogDashboard = ref(false)
 const selectedSkill = ref<Skill | undefined>(undefined)
+
+// 右侧对话导航栏状态
+const showNavigator = ref(true)
+const navCollapsed = ref(true)     // 默认折叠成窄条
+const isHovering = ref(false)      // 鼠标悬停时临时展开
+const activeMessageId = ref('')
+
+// 用户消息导航项
+const messageNavItems = computed(() => {
+  return messages.value
+    .filter(m => m.role === 'user')
+    .map(m => {
+      const text = m.content.replace(/<[^>]+>/g, '').trim()
+      const summary = text.length > 20 ? text.slice(0, 20) + '…' : text || '无内容'
+      return { id: m.id, summary }
+    })
+})
+
+function handleActiveMessageChange(messageId: string) {
+  activeMessageId.value = messageId
+}
+
+function scrollToMessage(messageId: string) {
+  messageListRef.value?.scrollToMessage(messageId)
+}
 
 // Toast 状态
 const toastMessage = ref('')
@@ -1361,5 +1417,136 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 .toast-leave-to {
   opacity: 0;
   transform: translateX(-50%) translateY(-12px);
+}
+
+/* ========== 右侧对话导航栏 ========== */
+.chat-navigator {
+  width: 6px;
+  flex-shrink: 0;
+  background: rgba(59, 130, 246, 0.08);
+  border-left: 1px solid rgba(59, 130, 246, 0.15);
+  transition: width 0.25s ease, background 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.chat-navigator:hover,
+.chat-navigator.expanded {
+  width: 180px;
+  background: rgba(248, 250, 252, 0.6);
+  border-left-color: var(--ai-border-light);
+  cursor: default;
+}
+
+.nav-content {
+  width: 180px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.chat-navigator:hover .nav-content,
+.chat-navigator.expanded .nav-content {
+  opacity: 1;
+  transition: opacity 0.2s ease 0.08s;
+}
+
+.nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid var(--ai-border-light);
+}
+
+.nav-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ai-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.nav-toggle {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--ai-text-tertiary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-toggle:hover {
+  background: var(--ai-gray-100);
+  color: var(--ai-text-primary);
+}
+
+.nav-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+
+.nav-item:hover {
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.nav-item.active {
+  background: rgba(59, 130, 246, 0.08);
+  border-left-color: var(--vp-c-brand);
+}
+
+.nav-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ai-gray-300);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.nav-dot.active {
+  background: var(--vp-c-brand);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.nav-text {
+  font-size: 12px;
+  color: var(--ai-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.nav-item.active .nav-text {
+  color: var(--ai-text-primary);
+  font-weight: 500;
+}
+
+/* 小屏幕隐藏导航栏 */
+@media (max-width: 1200px) {
+  .chat-navigator {
+    display: none;
+  }
 }
 </style>

@@ -1,6 +1,6 @@
 # Agent 工具调用交互图
 
-本文档用 UML 图完整描述 MetaBlog 中 AI Agent 调用工具的全流程，涵盖从用户输入到工具执行、再到结果返回的各个环节。
+本文档用 UML 图完整描述 MetaBlog 中 AI Agent 调用工具的全流程,涵盖从用户输入到工具执行、再到结果返回的各个环节. 
 
 ---
 
@@ -14,7 +14,7 @@ sequenceDiagram
     participant LLM as LLM API
     participant Ext as 外部服务
 
-    U->>F: 输入消息（可能含图片附件）
+    U->>F: 输入消息(可能含图片附件)
 
     alt 非 vision 模型 + 有图片附件
         F->>B: POST /api/ocr
@@ -84,11 +84,11 @@ sequenceDiagram
 
 | 阶段 | 说明 |
 |------|------|
-| 附件预处理 | 非 vision 模型自动 OCR 图片附件，vision 模型跳过 |
-| 消息转换 | 根据模型能力转换消息格式（纯文本 / vision 多模态） |
+| 附件预处理 | 非 vision 模型自动 OCR 图片附件,vision 模型跳过 |
+| 消息转换 | 根据模型能力转换消息格式(纯文本 / vision 多模态) |
 | AI 决策 | LLM 决定直接回复或调用工具 |
-| 工具执行 | 前端执行工具，后端处理平台解析、OCR、文件上传等 |
-| 结果回传 | 工具结果追加到对话，再次请求 LLM 生成最终回复 |
+| 工具执行 | 前端执行工具,后端处理平台解析、OCR、文件上传等 |
+| 结果回传 | 工具结果追加到对话,再次请求 LLM 生成最终回复 |
 
 ---
 
@@ -112,7 +112,7 @@ sequenceDiagram
     BE->>BE: HTML 转 Markdown
     BE->>BE: 提取图片 URLs
 
-    Note over BE,KS: 并行处理图片（最多10张，并发3）
+    Note over BE,KS: 并行处理图片(最多10张,并发3)
     loop 每张图片
         BE->>BE: downloadImageToTemp
         BE->>KS: POST /v1/files
@@ -146,7 +146,7 @@ sequenceDiagram
 | 模型类型 | 参数 | 后端动作 | AI 看到的内容 |
 |----------|------|----------|---------------|
 | 非 vision (DeepSeek) | embed_ocr=true | 下载图片 - OCR - 文字嵌入 Markdown | 带行号的 Markdown + 图片 OCR 引用块 |
-| vision (Kimi) | fetch_image_files=true | 下载图片 - 上传 Kimi - 替换为 ms file_id | 带行号的 Markdown + 原图（通过 ms file_id） |
+| vision (Kimi) | fetch_image_files=true | 下载图片 - 上传 Kimi - 替换为 ms file_id | 带行号的 Markdown + 原图(通过 ms file_id) |
 
 ---
 

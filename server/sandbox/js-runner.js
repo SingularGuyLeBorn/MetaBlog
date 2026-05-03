@@ -2,8 +2,8 @@
 /**
  * JavaScript 受限执行器
  *
- * 在独立 Node 进程中运行 LLM 生成的 JS 代码，通过 vm.runInNewContext
- * 提供基础隔离。相比主进程 eval 更安全，但不如完整 VM/容器隔离。
+ * 在独立 Node 进程中运行 LLM 生成的 JS 代码,通过 vm.runInNewContext
+ * 提供基础隔离. 相比主进程 eval 更安全,但不如完整 VM/容器隔离. 
  *
  * 安全限制：
  * - 无 require/import(模块系统未暴露)

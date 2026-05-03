@@ -144,7 +144,7 @@
       <div class="footer-content">
         <div class="footer-section">
           <h4>📊 统计</h4>
-          <p>共 {{ dynamicFolders.length }} 个子专题，{{ totalArticles }} 篇文章</p>
+          <p>共 {{ dynamicFolders.length }} 个子专题,{{ totalArticles }} 篇文章</p>
         </div>
         <div class="footer-section">
           <h4>🕐 最近更新</h4>
@@ -164,8 +164,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import { useData, useRoute } from 'vitepress'
+import { computed, ref } from 'vue'
 
 interface SubFolder {
   path: string

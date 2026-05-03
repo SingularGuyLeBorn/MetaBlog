@@ -1,15 +1,26 @@
 /**
  * ============================================================================
+ * 工具函数 - github-tool-executor
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/utils
+ */
+
+
+/**
+ * ============================================================================
  * GitHub 工具执行器
  * ============================================================================
  *
- * 所有 GitHub 工具的业务逻辑集中在这里。
+ * 所有 GitHub 工具的业务逻辑集中在这里. 
  * 前端工具只需调用本层的 executeGitHubTool(toolName, params)
  *
  * 职责：? * - 参数校验(第一道防线)
  * - GitHub API 调用
- * - 结果格式化(精简字段，避免 context bloat。 * - 错误翻译(中文友好提示)
- * - base64 编解码。? */
+ * - 结果格式化(精简字段,避免 context bloat.  * - 错误翻译(中文友好提示)
+ * - base64 编解码. ? */
 
 import { github } from "../config/env";
 import { translateGitHubError } from "./github-error-translator";
@@ -165,9 +176,9 @@ async function githubGetFileContent(params: any) {
     const isTruncated = rawContent.length > max_length;
     const content = isTruncated
       ? rawContent.substring(0, max_length) +
-      `\n\n---\n[内容已截断] 文件共 ${rawContent.length} 字符，当前限制 ${max_length} 字符。`
+      `\n\n---\n[内容已截断] 文件共 ${rawContent.length} 字符,当前限制 ${max_length} 字符. `
       : rawContent;
-    return ok({ name: data.name, path: data.path, size: data.size, content, truncated: isTruncated }, `${data.name} (${data.size} bytes${isTruncated ? "，已截断，" + max_length + " 字符" : ""})`, "githubGetFileContent");
+    return ok({ name: data.name, path: data.path, size: data.size, content, truncated: isTruncated }, `${data.name} (${data.size} bytes${isTruncated ? ",已截断," + max_length + " 字符" : ""})`, "githubGetFileContent");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
     return err(e.message, t, "githubGetFileContent", e.status);
@@ -297,11 +308,11 @@ async function githubCreateRepo(params: any) {
     return ok({ name: data.name, full_name: data.full_name, url: data.html_url, private: data.private }, `仓库创建成功：?{data.full_name} (${data.private ? "私有" : "公开"})\n${data.html_url}`, "githubCreateRepo");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
-    // 对 create_repo 的 422 做进一步语义增强：如果是"已存在"，给出更具体的操作指引
+    // 对 create_repo 的 422 做进一步语义增强：如果是"已存在",给出更具体的操作指引
     if (t.message === "资源已存在") {
       return err(e.message, {
-        message: `仓库 "${name}" 已存在，无法重复创建`,
-        suggestion: "如需操作该仓库，请使用 githubGetRepo 查询详情，或使用 githubUpdateRepo 更新配置",
+        message: `仓库 "${name}" 已存在,无法重复创建`,
+        suggestion: "如需操作该仓库,请使用 githubGetRepo 查询详情,或使用 githubUpdateRepo 更新配置",
       }, "githubCreateRepo");
     }
     return err(e.message, t, "githubCreateRepo", e.status);
@@ -549,7 +560,7 @@ async function githubGetPullRequestFiles(params: any) {
     const items = data.map((f: any) => ({ filename: f.filename, status: f.status, additions: f.additions, deletions: f.deletions, changes: f.changes, patch: f.patch }));
     const totalAdditions = items.reduce((sum: number, f: any) => sum + f.additions, 0);
     const totalDeletions = items.reduce((sum: number, f: any) => sum + f.deletions, 0);
-    return ok({ files: items, totalAdditions, totalDeletions, fileCount: items.length }, `PR #${number} 变更文件 (${items.length} 个)，${totalAdditions}/-${totalDeletions}`, "githubGetPullRequestFiles");
+    return ok({ files: items, totalAdditions, totalDeletions, fileCount: items.length }, `PR #${number} 变更文件 (${items.length} 个),${totalAdditions}/-${totalDeletions}`, "githubGetPullRequestFiles");
   } catch (e: any) {
     const t = translateGitHubError(e.message);
     return err(e.message, t, "githubGetPullRequestFiles", e.status);
@@ -772,10 +783,27 @@ const toolRegistry: Record<string, (params: any) => Promise<any>> = {
   githubTriggerWorkflow,
 };
 
+/**
+ * 获取所有可用的 GitHub 工具名称列表
+ *
+ * 前端通过此接口发现支持的 GitHub 操作,再按需调用 executeGitHubTool. 
+ *
+ * @returns 工具名称数组,如 ['github_create_repo', 'github_create_file', ...]
+ */
 export function listGitHubTools(): string[] {
   return Object.keys(toolRegistry);
 }
 
+/**
+ * 执行指定的 GitHub 工具
+ *
+ * 所有前端 GitHub 工具调用的统一入口. 根据 toolName 从 toolRegistry 中
+ * 查找对应的执行函数,传入参数并返回结果. 
+ *
+ * @param toolName - 工具名称,如 "github_create_repo"
+ * @param params   - 工具参数,由前端根据工具定义传入
+ * @returns 工具执行结果(success 为 true/false,失败时含 error 字段)
+ */
 export async function executeGitHubTool(toolName: string, params: any): Promise<any> {
   const executor = toolRegistry[toolName];
   if (!executor) {

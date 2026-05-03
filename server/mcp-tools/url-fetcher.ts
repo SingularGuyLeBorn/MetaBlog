@@ -1,9 +1,13 @@
 /**
- * MCP Tool: URL Fetcher
- * 从各种 URL 提取内容
+ * ============================================================================
+ * MCP 工具模块 - url-fetcher
+ * ============================================================================
  *
- * 对齐后端架构：统一走 /api/platform/parse，不再自己调 Jina Reader
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/mcp-tools
  */
+
 
 export interface FetchOptions {
   url: string
@@ -12,6 +16,10 @@ export interface FetchOptions {
   options?: { maxAnswers?: number }
 }
 
+/**
+ * FetchedContent 接口定义
+ *
+ */
 export interface FetchedContent {
   title: string
   content: string
@@ -24,6 +32,10 @@ export interface FetchedContent {
   fetchedAt: string
 }
 
+/**
+ * URLFetcherTool 类
+ *
+ */
 export class URLFetcherTool {
   name = 'url-fetcher'
   description = '从 URL 提取网页内容'
@@ -78,7 +90,7 @@ export class URLFetcherTool {
   private async fetchArticle(url: string, parseOptions?: { maxAnswers?: number }): Promise<FetchedContent> {
     const platform = this.detectPlatform(url)
 
-    // 统一走 platform-parser（后端自动选择Fetcher + Parser）
+    // 统一走 platform-parser(后端自动选择Fetcher + Parser)
     const result = await this.fetchWithPlatformParser(url, 30000, parseOptions)
     if (result) return result
 
@@ -86,7 +98,7 @@ export class URLFetcherTool {
     console.error('URL Fetch failed:', url)
     return {
       title: '获取失败',
-      content: `[无法获取 ${platform} 内容，请检查链接或稍后重试]`,
+      content: `[无法获取 ${platform} 内容,请检查链接或稍后重试]`,
       images: [],
       tags: [platform],
       platform,
@@ -114,7 +126,7 @@ export class URLFetcherTool {
     const platform = this.detectPlatform(url)
     return {
       title: `${platform} 内容提取中`,
-      content: `[无法获取 ${platform} 内容，请检查链接或稍后重试]`,
+      content: `[无法获取 ${platform} 内容,请检查链接或稍后重试]`,
       images: [],
       tags: [platform],
       platform,

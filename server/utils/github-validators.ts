@@ -1,17 +1,20 @@
 /**
  * ============================================================================
- * GitHub 参数校验器
+ * 工具函数 - github-validators
  * ============================================================================
  *
- * 对 GitHub API 调用参数进行服务端校验，作为第一道安全防线。
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/utils
  */
+
 
 export interface ValidationResult {
   valid: boolean;
   error?: { code: string; message: string };
 }
 
-/** GitHub username/organization 正则(最多 39 字符，允许字母、数字、连字符、下划线、点号) */
+/** GitHub username/organization 正则(最多 39 字符,允许字母、数字、连字符、下划线、点号) */
 const OWNER_REGEX = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/;
 
 /** GitHub 仓库名正则(最多 100 字符) */
@@ -26,6 +29,12 @@ function ok(): ValidationResult {
 }
 
 /** 校验 owner */
+/**
+ * 校验Owner
+ *
+ * @param owner - 参数(unknown)
+ * @returns 返回值(ValidationResult)
+ */
 export function validateOwner(owner: unknown): ValidationResult {
   if (!owner || typeof owner !== "string") {
     return fail("MISSING_OWNER", "请提供仓库所有者(owner)");
@@ -40,6 +49,12 @@ export function validateOwner(owner: unknown): ValidationResult {
 }
 
 /** 校验 repo */
+/**
+ * 校验Repo
+ *
+ * @param repo - 参数(unknown)
+ * @returns 返回值(ValidationResult)
+ */
 export function validateRepo(repo: unknown): ValidationResult {
   if (!repo || typeof repo !== "string") {
     return fail("MISSING_REPO", "请提供仓库名称(repo)");
@@ -75,6 +90,12 @@ export function validatePath(path: unknown): ValidationResult {
 }
 
 /** 校验分支/标签名 */
+/**
+ * 校验Ref
+ *
+ * @param ref - 参数(unknown)
+ * @returns 返回值(ValidationResult)
+ */
 export function validateRef(ref: unknown): ValidationResult {
   if (typeof ref !== "string") return ok(); // 可选参数
   if (ref.length > 255) {
@@ -84,6 +105,12 @@ export function validateRef(ref: unknown): ValidationResult {
 }
 
 /** 校验 Issue/PR number */
+/**
+ * 校验Number
+ *
+ * @param num - 参数(unknown)
+ * @returns 返回值(ValidationResult)
+ */
 export function validateNumber(num: unknown): ValidationResult {
   if (typeof num !== "number" || !Number.isInteger(num) || num < 1) {
     return fail("INVALID_NUMBER", "编号必须是正整数");
@@ -92,6 +119,12 @@ export function validateNumber(num: unknown): ValidationResult {
 }
 
 /** 校验搜索查询 */
+/**
+ * 校验Query
+ *
+ * @param query - 参数(unknown)
+ * @returns 返回值(ValidationResult)
+ */
 export function validateQuery(query: unknown): ValidationResult {
   if (!query || typeof query !== "string") {
     return fail("MISSING_QUERY", "请提供搜索关键词");
@@ -103,6 +136,13 @@ export function validateQuery(query: unknown): ValidationResult {
 }
 
 /** 校验分页参数 */
+/**
+ * 校验PerPage
+ *
+ * @param perPage - 参数(unknown)
+ * @param max - 参数
+ * @returns 返回值(ValidationResult)
+ */
 export function validatePerPage(perPage: unknown, max = 100): ValidationResult {
   if (perPage === undefined) return ok();
   const n = typeof perPage === "string" ? parseInt(perPage) : perPage;

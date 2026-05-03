@@ -1,6 +1,6 @@
 <template>
   <div class="message-versions">
-    <!-- 版本切换器(始终显示，方便知道当前是第几个版本) -->
+    <!-- 版本切换器(始终显示,方便知道当前是第几个版本) -->
     <div class="version-switcher">
       <button 
         class="version-btn prev"

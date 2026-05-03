@@ -1,7 +1,22 @@
+/**
+ * ============================================================================
+ * 内部业务路由 - skills
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/internal
+ */
+
+
 import fs from "fs";
 import path from "path";
 import type { ViteDevServer } from "vite";
 
+/**
+ * RouteContext 接口定义
+ *
+ */
 export interface RouteContext {
   system: any;
   structuredLog: any;
@@ -9,6 +24,22 @@ export interface RouteContext {
   triggerReload: () => void;
 }
 
+/**
+ * 注册技能管理路由
+ *
+ * 挂载 /api/skills/* 端点,支持 Skill 的完整生命周期：
+ * - 列表：读取 .skills/ 目录下所有 SKILL.md
+ * - 读取：解析 YAML frontmatter + Markdown 正文
+ * - 创建/更新：写回 SKILL.md(保留原有 frontmatter)
+ * - 删除：移除整个技能目录
+ *
+ * 内部工具：
+ * - parseSimpleYAML —— 轻量级 YAML 解析器(仅处理单层键值对)
+ * - parseSkillMd / generateSkillMd —— Skill 文件往返序列化
+ *
+ * @param server - Vite 开发服务器实例
+ * @param ctx    - 路由上下文
+ */
 export function registerSkillsRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
   // ============================================
@@ -270,7 +301,7 @@ ${skill.content || skill.systemPrompt || ""}
   server.middlewares.use("/api/skills/", (req, res, next) => {
     const url = req.url || "";
     const parts = url.split("/").filter(Boolean);
-    // 只处理单个 ID 的情况，排除 update/delete 等子路径
+    // 只处理单个 ID 的情况,排除 update/delete 等子路径
     if (
       parts.length !== 1 ||
       ["update", "delete"].includes(parts[0]) ||

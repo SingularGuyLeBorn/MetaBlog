@@ -1,14 +1,13 @@
 /**
- * MCP Tool: Browser Automation (AgentReach)
- * 
- * 让 Agent 拥有"眼睛"和"手"，能够：
- * - 打开真实浏览器访问社交媒体
- * - 模拟人类浏览行为(滚动、点击、停留)
- * - 截图分析页面内容
- * - 提取文字、图片、视频信息
- * 
- * 参考: agentreach - 给 Agent 装上眼睛刷小红书/B站
+ * ============================================================================
+ * MCP 工具模块 - browser-automation
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/mcp-tools
  */
+
 
 export interface BrowserSession {
   id: string
@@ -21,6 +20,10 @@ export interface BrowserSession {
   cookies?: Record<string, string>
 }
 
+/**
+ * BrowseOptions 接口定义
+ *
+ */
 export interface BrowseOptions {
   url: string
   platform: 'xiaohongshu' | 'bilibili' | 'twitter' | 'zhihu' | 'weibo' | 'generic'
@@ -31,6 +34,10 @@ export interface BrowseOptions {
   waitTime?: number       // 每页等待时间(ms)
 }
 
+/**
+ * BrowseAction 类型别名
+ *
+ */
 export type BrowseAction =
   | { type: 'click'; selector: string }
   | { type: 'scroll'; direction: 'down' | 'up'; amount: number }
@@ -38,6 +45,10 @@ export type BrowseAction =
   | { type: 'type'; selector: string; text: string }
   | { type: 'screenshot' }
 
+/**
+ * ExtractedContent 接口定义
+ *
+ */
 export interface ExtractedContent {
   title: string
   text: string
@@ -56,6 +67,10 @@ export interface ExtractedContent {
   url: string
 }
 
+/**
+ * BrowserAutomationResult 接口定义
+ *
+ */
 export interface BrowserAutomationResult {
   success: boolean
   sessionId: string

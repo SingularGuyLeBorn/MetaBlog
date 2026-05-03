@@ -1,11 +1,13 @@
 /**
- * 光标特效 - Cursor Effects
- * 
- * - 自定义光标 (mix-blend-mode: difference)
- * - 磁性按钮 (magnetic buttons)
- * - 聚光灯跟随 (spotlight gradient)
- * - 视差背景 (parallax background)
+ * ============================================================================
+ * Vue Composable - useCursorEffects
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/composables
  */
+
 
 import { onMounted, onUnmounted, ref } from 'vue'
 
@@ -14,6 +16,11 @@ interface CursorPosition {
   y: number
 }
 
+/**
+ * useCursorEffects 函数
+ *
+ * @returns 返回值
+ */
 export function useCursorEffects() {
   const cursorPos = ref<CursorPosition>({ x: 0, y: 0 })
   const isHovering = ref(false)
@@ -178,6 +185,11 @@ export function useCursorEffects() {
 }
 
 // 单独使用 spotlight
+/**
+ * useSpotlight 函数
+ *
+ * @returns 返回值
+ */
 export function useSpotlight() {
   const spotlightX = ref(0)
   const spotlightY = ref(0)

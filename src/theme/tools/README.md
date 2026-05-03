@@ -24,7 +24,7 @@
 ## 核心概念
 
 ### 1. Tool (工具)
-工具是 Agent 可以调用的功能单元，每个工具包含：
+工具是 Agent 可以调用的功能单元,每个工具包含：
 - **Definition**: 工具定义(描述、参数 schema)- 给 AI 看的
 - **Executor**: 执行器(实际实现逻辑)- 真正执行代码
 
@@ -42,7 +42,7 @@ interface ToolResult<T = any> {
 ```
 
 ### 3. Skill (技能)
-Skill 是工具的**组合包装**，定义了：
+Skill 是工具的**组合包装**,定义了：
 - 使用场景(何时应该调用这些工具)
 - 工作流程(如何组合使用工具)
 - 系统提示词(角色定义)
@@ -52,7 +52,7 @@ Skill 是工具的**组合包装**，定义了：
 ```
 tools/
 ├── README.md              # 本文件
-├── index.ts               # 统一入口，注册所有工具
+├── index.ts               # 统一入口,注册所有工具
 ├── types.ts               # 类型定义
 ├── registry.ts            # 工具注册表
 │
@@ -100,7 +100,7 @@ tools/
 ## 如何添加新工具
 
 ### 步骤 1: 创建分类文件
-在对应目录创建 `<feature>.ts`，同时包含定义和执行器：
+在对应目录创建 `<feature>.ts`,同时包含定义和执行器：
 
 ```typescript
 import type { ToolDefinition, ToolExecutor } from '@/theme/tools/types'
@@ -111,7 +111,7 @@ export const myToolDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'my_tool',
-    description: '工具的详细描述，告诉 AI 什么时候应该使用这个工具',
+    description: '工具的详细描述,告诉 AI 什么时候应该使用这个工具',
     parameters: {
       type: 'object',
       properties: {
@@ -231,10 +231,10 @@ LOD-2 (Skill Invoke): Skill 完整内容注入对话
 
 ### 2. Skill 不是身份
 - ❌ "你是一个文章管理助手"
-- ✅ "你有一个文章管理 Skill，当用户涉及文章操作时使用"
+- ✅ "你有一个文章管理 Skill,当用户涉及文章操作时使用"
 
 ### 3. 自动匹配
-AI 根据用户输入自动匹配应该调用的 Skill，不需要用户显式选择。
+AI 根据用户输入自动匹配应该调用的 Skill,不需要用户显式选择. 
 
 ## 最佳实践
 

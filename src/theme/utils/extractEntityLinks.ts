@@ -1,11 +1,13 @@
 /**
- * 从工具执行结果中提取可点击的实体链接
+ * ============================================================================
+ * 工具函数 - extractEntityLinks
+ * ============================================================================
  *
- * 设计原则：工具执行成功后，系统立即从结果中捕捉 URL 并渲染为卡片，
- * 不依赖 AI 在回复文本中提及链接。
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
  *
- * 支持：飞书文档、GitHub Repo/Issue/PR、语雀文档、通用 URL 扫描
+ * @module server/utils
  */
+
 
 export interface EntityLink {
   url: string
@@ -17,12 +19,14 @@ export interface EntityLink {
 /** URL 正则 */
 const URL_REGEX = /https?:\/\/[^\s<>"'{}|\\^`[\]]+/gi
 
-/** 已知工具类型的 URL 字段映射(支持嵌套路径，如 document.document_id) */
+/** 已知工具类型的 URL 字段映射(支持嵌套路径,如 document.document_id) */
 const TOOL_URL_FIELDS: Record<string, string[]> = {
   // 飞书
   feishuDocCreate: ['url', 'docUrl', 'link', 'web_url', 'document.document_id'],
   feishuDocShare: ['url', 'docUrl'],
   feishuDocAppend: ['url', 'docUrl'],
+  feishuWikiSpaceCreate: ['space_url'],
+  feishuWikiNodeCreate: ['node_url', 'doc_url'],
   // GitHub
   githubCreateRepo: ['html_url', 'url'],
   githubCreateIssue: ['html_url', 'url'],
@@ -48,7 +52,7 @@ export function extractEntityLinks(toolName: string, toolResult: any): EntityLin
   const message = toolResult.message
 
   // 1. 按工具类型从 data 中提取已知字段
-  // 只有 TOOL_URL_FIELDS 中明确配置的工具才会提取，避免查询类工具返回的
+  // 只有 TOOL_URL_FIELDS 中明确配置的工具才会提取,避免查询类工具返回的
   // 描述文本中碰巧包含示例 URL 被误渲染为卡片
   const knownFields = TOOL_URL_FIELDS[toolName]
   if (knownFields) {
@@ -65,8 +69,8 @@ export function extractEntityLinks(toolName: string, toolResult: any): EntityLin
     }
   }
 
-  // 2. 从 message 文本中提取 URL(仅限已知工具类型，避免查询类工具误渲染)
-  // webSearch 等工具的 message 中包含搜索结果 URL，不应渲染为实体卡片
+  // 2. 从 message 文本中提取 URL(仅限已知工具类型,避免查询类工具误渲染)
+  // webSearch 等工具的 message 中包含搜索结果 URL,不应渲染为实体卡片
   if (knownFields && typeof message === 'string') {
     const msgLinks = extractUrlsFromText(message)
     for (const url of msgLinks) {
@@ -95,6 +99,12 @@ export function extractAllEntityLinks(toolRecords: any[]): EntityLink[] {
 }
 
 /** 从单个工具记录中提取链接 */
+/**
+ * 提取LinksFromRecord
+ *
+ * @param record - 参数
+ * @returns 返回值(EntityLink[])
+ */
 export function extractLinksFromRecord(record: any): EntityLink[] {
   if (!record?.result?.success) return []
   return extractEntityLinks(record.name || record.toolName || '', record.result)
@@ -118,8 +128,8 @@ function extractUrlsFromText(text: string): string[] {
 }
 
 /**
- * 判断 URL 是否为示例/占位符，避免将工具 description 中的示例链接
- * 误渲染为实体卡片。
+ * 判断 URL 是否为示例/占位符,避免将工具 description 中的示例链接
+ * 误渲染为实体卡片. 
  *
  * 常见占位符模式：
  * - 示例域名：xxx.feishu.cn、example.com、localhost

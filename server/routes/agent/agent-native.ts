@@ -1,8 +1,23 @@
+/**
+ * ============================================================================
+ * Agent 路由 - agent-native
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/agent
+ */
+
+
 import fs from "fs";
 import path from "path";
 import type { ViteDevServer } from "vite";
 
 import { execSync } from "child_process";
+/**
+ * RouteContext 接口定义
+ *
+ */
 export interface RouteContext {
   system: any;
   structuredLog: any;
@@ -10,6 +25,19 @@ export interface RouteContext {
   triggerReload: () => void;
 }
 
+/**
+ * 注册 AI-Native Agent 路由
+ *
+ * 挂载 /api/agent/* 端点,支持：
+ * - /api/agent/task —— 提交任务(自动写入文件 + Git commit,带元数据尾注)
+ * - /api/agent/context/init —— 初始化 Agent 上下文(读取实体记忆)
+ * - /api/agent/slugify —— URL slug 生成
+ * - /api/agent/git/commit —— Git 提交 API
+ * - /api/agent/git/log —— Git 日志查询
+ *
+ * @param server - Vite 开发服务器实例
+ * @param ctx    - 路由上下文
+ */
 export function registerAgentNativeRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
   // ============================================

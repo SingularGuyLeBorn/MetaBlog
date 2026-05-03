@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * Pinia Store - app
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/stores
+ */
+
+
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
@@ -5,7 +16,7 @@ export const useAppStore = defineStore('app', () => {
   const isEditorOpen = ref(false)
   const isEditing = ref(false)
   const currentFilePath = ref('')
-  
+
   function toggleEditor(path?: string) {
     if (path) {
       currentFilePath.value = path

@@ -1,12 +1,14 @@
 /**
- * UUID 生成工具
- * 
- * 用于生成持久化的唯一标识符
+ * ============================================================================
+ * 工具函数 - uuid
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/utils
  */
 
-/**
- * 生成标准 UUID v4
- */
+
 export function generateUUID(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0
@@ -16,7 +18,7 @@ export function generateUUID(): string {
 }
 
 /**
- * 生成短 UUID(用于文件名，更简洁)
+ * 生成短 UUID(用于文件名,更简洁)
  * 格式：时间戳-随机数
  */
 export function generateShortUUID(): string {

@@ -160,13 +160,13 @@ onMounted(() => {
     if (backup && backup.content) {
       // 询问用户是否恢复
       const shouldRestore = window.confirm(
-        `检测到未保存的备份(${new Date(backup.timestamp).toLocaleString()})，是否恢复？`
+        `检测到未保存的备份(${new Date(backup.timestamp).toLocaleString()}),是否恢复？`
       )
       if (shouldRestore) {
         initialContent = backup.content
         console.log('[VditorEditor] 已从备份恢复')
       } else {
-        // 用户选择不恢复，清理备份
+        // 用户选择不恢复,清理备份
         clearBackup(props.path)
       }
     }

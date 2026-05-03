@@ -1,7 +1,13 @@
 /**
- * MCP Tool: Social Media Reader
- * 读取社交媒体平台内容
+ * ============================================================================
+ * MCP 工具模块 - social-media-reader
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/mcp-tools
  */
+
 
 export interface SocialMediaOptions {
   platform: 'xiaohongshu' | 'bilibili' | 'twitter' | 'weibo' | 'douyin' | 'zhihu'
@@ -9,6 +15,10 @@ export interface SocialMediaOptions {
   cookie?: string
 }
 
+/**
+ * SocialMediaContent 接口定义
+ *
+ */
 export interface SocialMediaContent {
   title: string
   content: string
@@ -26,6 +36,10 @@ export interface SocialMediaContent {
   fetchedAt: string
 }
 
+/**
+ * SocialMediaReaderTool 类
+ *
+ */
 export class SocialMediaReaderTool {
   name = 'social-media-reader'
   description = '读取社交媒体平台内容'

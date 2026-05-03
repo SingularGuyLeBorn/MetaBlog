@@ -6,13 +6,13 @@
 - **定义**: 可以执行的具体功能
 - **形式**: TypeScript 函数
 - **例子**: `createArticle`, `searchArxiv`
-- **粒度**: 细粒度，单一职责
+- **粒度**: 细粒度,单一职责
 
 ### Skill (技能) = 使用指南
 - **定义**: 何时以及如何使用一组工具
 - **形式**: Markdown 文档(Prompt Template)
 - **例子**: "文章管理专家", "学术研究助手"
-- **粒度**: 粗粒度，工作流指导
+- **粒度**: 粗粒度,工作流指导
 
 ## 为什么需要 Skills？
 
@@ -61,10 +61,10 @@ Skill 告诉 AI：
 #### 1. Skill 不是身份
 ```
 ❌ 错误：
-"你是一个文章管理专家，专门负责管理博客文章..."
+"你是一个文章管理专家,专门负责管理博客文章..."
 
 ✅ 正确：
-"你有一个 '文章管理' Skill，当用户涉及文章操作时：
+"你有一个 '文章管理' Skill,当用户涉及文章操作时：
  1. 先搜索确认是否已存在
  2. 根据结果决定创建或修改"
 ```
@@ -137,7 +137,7 @@ function buildSystemPrompt(agent: Agent, userInput: string): string {
   const matchedSkills = matchSkills(userInput)
   
   // 2. 构建基础提示词
-  let prompt = `你是 ${agent.name}，${agent.description}`
+  let prompt = `你是 ${agent.name},${agent.description}`
   
   // 3. 添加 Skills 列表(LOD-0)
   prompt += '\n\n## 你的 Skills\n'
@@ -145,7 +145,7 @@ function buildSystemPrompt(agent: Agent, userInput: string): string {
     prompt += `- ${skill.name}: ${skill.description}\n`
   }
   
-  // 4. 如果有匹配的 Skill，注入详细内容(LOD-2)
+  // 4. 如果有匹配的 Skill,注入详细内容(LOD-2)
   if (matchedSkills.length > 0) {
     prompt += '\n## 当前激活的 Skills\n'
     for (const skillId of matchedSkills) {
@@ -187,11 +187,11 @@ tags:
 
 ## 能力范围
 
-你是一个专业的 VitePress 内容管理专家，可以通过直接调用后端 API 对 `/sections/` 目录下的 Markdown 文稿进行 CRUD 操作。
+你是一个专业的 VitePress 内容管理专家,可以通过直接调用后端 API 对 `/sections/` 目录下的 Markdown 文稿进行 CRUD 操作. 
 
 ## 核心概念
 
-**路径格式**：所有操作均基于文章的 `path` (相对路径) 进行。
+**路径格式**：所有操作均基于文章的 `path` (相对路径) 进行. 
 - 路径示例：`posts/my-post.md`, `knowledge/ai/transformer.md`
 - 文件夹路径以 `/` 结尾
 
@@ -213,7 +213,7 @@ tags:
 3. 保留原有 frontmatter
 
 ### 4. 删除文章
-1. **警告**：删除前必须确认，询问用户是否确定
+1. **警告**：删除前必须确认,询问用户是否确定
 2. 使用 `deleteArticle(path="...", confirm=true)`
 
 ## 示例对话
@@ -221,7 +221,7 @@ tags:
 用户："帮我写一篇 React 入门指南"
 → 调用 `createArticle(title="React 入门指南", path="posts/react-guide.md", ...)`
 
-用户："修改刚才那篇文章，添加 Hooks 章节"
+用户："修改刚才那篇文章,添加 Hooks 章节"
 → 调用 `getArticleContent` 读取 → `updateArticle` 添加内容
 
 用户："删除旧的那篇 Vue2 文章"
@@ -263,13 +263,13 @@ tags:
 ## 实现建议
 
 ### 1. Skill 热更新
-Skills 应该存储在文件系统中(如 `.skills/` 目录)，支持：
+Skills 应该存储在文件系统中(如 `.skills/` 目录),支持：
 - 运行时重新加载
 - 用户自定义创建
 - 导入/导出分享
 
 ### 2. Skill 匹配优化
-简单的关键词匹配可能不够准确，可以考虑：
+简单的关键词匹配可能不够准确,可以考虑：
 - 向量相似度匹配(语义理解)
 - 历史对话学习
 - 用户反馈优化

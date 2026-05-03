@@ -1,21 +1,13 @@
 /**
- * Skill Integrated AI Service
- * 
- * 集成 Skills + Tools 的增强版 AI Service
- * 
- * 核心流程:
- * 1. 接收用户输入
- * 2. 匹配并激活相关 Skills
- * 3. 构建渐进式 System Prompt (LOD-0/1/2)
- * 4. 过滤可用工具 (仅激活 Skills 声明的工具)
- * 5. 执行 AI 对话 (支持工具调用)
- * 
- * 对比原版 aiService.ts 的增强:
- * - Skills 上下文感知
- * - 工具权限控制
- * - 渐进式 Prompt 构建
- * - Skill 匹配可视化
+ * ============================================================================
+ * 后端服务 - skillIntegratedService
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/services
  */
+
 
 import {
   buildFullPrompt,
@@ -30,6 +22,10 @@ import { aiService } from './aiService'
 // 类型定义
 // ═══════════════════════════════════════════════════════════════
 
+/**
+ * SkillIntegratedConfig 接口定义
+ *
+ */
 export interface SkillIntegratedConfig extends Omit<SessionConfig, 'availableSkills'> {
   /** 可用 Skills (元数据) */
   availableSkills?: SkillMetadata[]
@@ -43,12 +39,20 @@ export interface SkillIntegratedConfig extends Omit<SessionConfig, 'availableSki
   enableSkills?: boolean
 }
 
+/**
+ * SkillActivationResult 接口定义
+ *
+ */
 export interface SkillActivationResult {
   matches: SkillMatchResult[]
   activated: ActiveSkill[]
   deactivated: string[]
 }
 
+/**
+ * EnhancedStreamCallbacks 接口定义
+ *
+ */
 export interface EnhancedStreamCallbacks {
   onContent: (text: string) => void
   onReasoning: (text: string) => void
@@ -124,7 +128,7 @@ class SkillsContextManager {
         // 从可用 Skills 中查找完整定义
         const fullSkill = this.availableSkills.find(s => s.id === match.skill.id)
         if (fullSkill) {
-          // SkillMetadata 没有 content，使用空字符串作为默认值
+          // SkillMetadata 没有 content,使用空字符串作为默认值
           // 实际内容应该从完整的 Skill 对象或缓存中获取
           const activeSkill: ActiveSkill = {
             ...fullSkill,
@@ -212,13 +216,13 @@ class SkillsContextManager {
   buildSystemPrompt(baseRole: string, userInput: string): string {
     const allTools = getToolDefinitions()
 
-    // 不再传入 activeSkills，System Prompt 只包含 Catalog(LOD-0)
+    // 不再传入 activeSkills,System Prompt 只包含 Catalog(LOD-0)
     // Skill 完整内容通过 Agent 调用 loadSkill 工具后注入
     return buildFullPrompt(
       baseRole,
       userInput,
       this.availableSkills,
-      [], // activeSkills: 空数组，不预注入 LOD-2
+      [], // activeSkills: 空数组,不预注入 LOD-2
       allTools
     )
   }
@@ -301,7 +305,7 @@ export const skillIntegratedService = {
 
     if (config.enableSkills !== false) {
       const baseRole = config.systemPrompt?.split('\n')[0] || 'MetaBlog AI 助手'
-      // 不再传入 activeSkills，System Prompt 只包含 Skill Catalog
+      // 不再传入 activeSkills,System Prompt 只包含 Skill Catalog
       enhancedSystemPrompt = skillsContext.buildSystemPrompt(baseRole, userInput)
 
       console.log('[SkillIntegratedService] Built system prompt (catalog only):', {
@@ -313,14 +317,14 @@ export const skillIntegratedService = {
     // Step 2: 所有工具都可用(Agent 通过 loadSkill 自主加载 Skill 后使用)
     // ═══════════════════════════════════════════════════════════════
 
-    // 不再按 activeSkills 过滤工具，所有注册工具都可用
+    // 不再按 activeSkills 过滤工具,所有注册工具都可用
     const allToolNames = getRegisteredToolNames()
 
     // ═══════════════════════════════════════════════════════════════
     // Step 3: 调用底层 aiService
     // ═══════════════════════════════════════════════════════════════
 
-    // 排除 SkillIntegratedConfig 特有的属性，只保留 SessionConfig 的属性
+    // 排除 SkillIntegratedConfig 特有的属性,只保留 SessionConfig 的属性
     const { availableSkills, activeSkills, skillMatchThreshold, maxActiveSkills, enableSkills, ...sessionConfig } = config
     const enhancedConfig: SessionConfig = {
       ...sessionConfig,
@@ -337,7 +341,7 @@ export const skillIntegratedService = {
       100, // maxToolRounds
       sessionId,
       {
-        // 渐进式披露：默认只暴露核心工具，领域工具通过 search/load 动态激活
+        // 渐进式披露：默认只暴露核心工具,领域工具通过 search/load 动态激活
         availableTools: CORE_TOOL_NAMES,
         availableSkills: skillsContext.getAvailableSkills().map(s => s.id)
       }
@@ -352,7 +356,7 @@ export const skillIntegratedService = {
   /**
    * 快速模式 (无 Skills)
    * 
-   * 直接调用底层 aiService，不经过 Skills 处理
+   * 直接调用底层 aiService,不经过 Skills 处理
    */
   async chatStreamSimple(
     messages: ChatMessage[],

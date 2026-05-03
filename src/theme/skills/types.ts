@@ -1,9 +1,13 @@
 /**
- * Skill System - 类型定义
- * 
- * Claude Code 风格的 Skills + Tools 整合系统
- * 核心概念：渐进式披露 (Progressive Disclosure)
+ * ============================================================================
+ * Skill 系统 - types
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/skills
  */
+
 
 // ═══════════════════════════════════════════════════════════════
 // LOD-0: 轻量级元数据 (始终保留在 System Prompt 中)
@@ -57,6 +61,10 @@ export type SkillCategory =
 // ═══════════════════════════════════════════════════════════════
 
 /** 工具定义 - 符合 OpenAI Function Calling 规范 */
+/**
+ * ToolDefinition 接口定义
+ *
+ */
 export interface ToolDefinition {
   type: 'function'
   function: {
@@ -75,6 +83,10 @@ export interface ToolDefinition {
 // ═══════════════════════════════════════════════════════════════
 
 /** 完整 Skill 定义 */
+/**
+ * Skill 接口定义
+ *
+ */
 export interface Skill extends SkillMetadata {
   /** 完整 Prompt 内容 (LOD-2) */
   content: string
@@ -98,7 +110,7 @@ export interface Skill extends SkillMetadata {
    * 用于定位 Skill 关联的脚本、模板等资源
    */
   basePath?: string
-  /** 作者(继承自 SkillMetadata，但可选) */
+  /** 作者(继承自 SkillMetadata,但可选) */
   author: string
 }
 
@@ -144,6 +156,10 @@ export interface SkillMatchOptions {
 // ═══════════════════════════════════════════════════════════════
 
 /** System Prompt 构建上下文 */
+/**
+ * PromptBuildContext 接口定义
+ *
+ */
 export interface PromptBuildContext {
   /** 基础角色定义 */
   baseRole: string
@@ -160,6 +176,10 @@ export interface PromptBuildContext {
 }
 
 /** Prompt 构建选项 */
+/**
+ * PromptBuildOptions 接口定义
+ *
+ */
 export interface PromptBuildOptions {
   /** 是否包含 LOD-0 (Skill 列表) */
   includeLOD0?: boolean
@@ -176,6 +196,10 @@ export interface PromptBuildOptions {
 // ═══════════════════════════════════════════════════════════════
 
 /** Skill 文件解析结果 */
+/**
+ * ParsedSkillFile 接口定义
+ *
+ */
 export interface ParsedSkillFile {
   metadata: SkillMetadata
   /** 正文内容 (不含 frontmatter) */
@@ -185,6 +209,10 @@ export interface ParsedSkillFile {
 }
 
 /** Skill 加载器配置 */
+/**
+ * SkillLoaderConfig 接口定义
+ *
+ */
 export interface SkillLoaderConfig {
   /** Skill 文件目录 */
   skillsDir: string
@@ -211,6 +239,10 @@ export interface SkillRuntimeState {
 }
 
 /** Skill 匹配记录 */
+/**
+ * SkillMatchRecord 接口定义
+ *
+ */
 export interface SkillMatchRecord {
   timestamp: number
   userInput: string

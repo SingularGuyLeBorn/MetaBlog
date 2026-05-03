@@ -3,7 +3,7 @@
  * Pinia Store - chatStore
  * ============================================================================
  *
- * 本文件属于 MetaBlog 项目，遵循项目注释规范。
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
  *
  * @module src/theme/stores
  */
@@ -112,7 +112,7 @@ export function useAIChat() {
 
   /**
    * 当前会话的消息列表(将消息组转换为消息数组用于显示)
-   * 使用 ref 替代 computed，避免流式输出时全量重新计算
+   * 使用 ref 替代 computed,避免流式输出时全量重新计算
    */
   const currentMessages = ref<ChatMessage[]>([])
 
@@ -144,7 +144,7 @@ export function useAIChat() {
       title,
       config: {
         ...DEFAULT_CONFIG,
-        // 如果有激活的 Agent，自动绑定
+        // 如果有激活的 Agent,自动绑定
         agentId: activeAgent.value?.id
       },
       stats: { messageCount: 0, totalTokens: 0 },
@@ -215,7 +215,7 @@ export function useAIChat() {
     const config = currentSession.value.config
     const groups = messageGroups.value[sessionId] || []
 
-    // 如果当前会话正在流式输出，将消息加入队列并立即显示用户消息
+    // 如果当前会话正在流式输出,将消息加入队列并立即显示用户消息
     if (isStreaming.value && sessionId === currentSessionId.value && !_isQueued) {
       const userMsg: ChatMessage = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -334,7 +334,7 @@ export function useAIChat() {
     // 创建或获取当前会话的 AbortController
     let controller = sessionControllers.get(sessionId)
     if (controller) {
-      // 如果已有 controller，先中断之前的请求
+      // 如果已有 controller,先中断之前的请求
       controller.abort()
     }
     controller = new AbortController()
@@ -360,7 +360,7 @@ export function useAIChat() {
       let toolRecords: ToolCallRecord[] = []
 
       // 构建工具上下文：渐进式披露
-      // 默认只暴露核心工具(~7个)，领域工具通过 searchCapabilities / loadSkill 动态激活
+      // 默认只暴露核心工具(~7个),领域工具通过 searchCapabilities / loadSkill 动态激活
       const agent = activeAgent.value
       const skillIds = agent?.capabilities?.skillIds || []
       const toolContext = agent ? {
@@ -382,7 +382,7 @@ export function useAIChat() {
             const targetMsg = currentProxyGroups[currentProxyGroups.length - 1].aiVersions[0]
             targetMsg.content = text
             targetMsg.updatedAt = Date.now()
-            // 直接同步 currentMessages，避免全量 convertGroupsToMessages
+            // 直接同步 currentMessages,避免全量 convertGroupsToMessages
             const lastMsg = currentMessages.value[currentMessages.value.length - 1]
             if (lastMsg && lastMsg.role === 'assistant') {
               lastMsg.content = text
@@ -393,7 +393,7 @@ export function useAIChat() {
             const currentProxyGroups = messageGroups.value[sessionId]
             if (!currentProxyGroups) return
             const targetMsg = currentProxyGroups[currentProxyGroups.length - 1].aiVersions[0]
-            // 如果已经有 thinkingSteps，不再更新传统 reasoning(避免覆盖串行显示)
+            // 如果已经有 thinkingSteps,不再更新传统 reasoning(避免覆盖串行显示)
             if (!targetMsg.metadata?.thinkingSteps?.length) {
               targetMsg.reasoning = { content: text, isVisible: true }
             }
@@ -417,7 +417,7 @@ export function useAIChat() {
             if (!targetMsg.metadata.thinkingSteps) {
               targetMsg.metadata.thinkingSteps = []
             }
-            // 检查是否已存在相同ID的步骤，存在则更新，否则添加
+            // 检查是否已存在相同ID的步骤,存在则更新,否则添加
             const existingIndex = targetMsg.metadata.thinkingSteps.findIndex(s => s.id === step.id)
             if (existingIndex >= 0) {
               targetMsg.metadata.thinkingSteps.splice(existingIndex, 1, step)
@@ -455,7 +455,7 @@ export function useAIChat() {
             const targetMsg = currentProxyGroups[currentProxyGroups.length - 1].aiVersions[0]
             targetMsg.status = 'completed'
             targetMsg.updatedAt = Date.now()
-            // 保留现有的 metadata(包括 thinkingSteps)，只添加新字段
+            // 保留现有的 metadata(包括 thinkingSteps),只添加新字段
             targetMsg.metadata = {
               ...targetMsg.metadata,  // 保留 thinkingSteps 等
               model: config.model,
@@ -512,9 +512,9 @@ export function useAIChat() {
 
             targetMsg.status = 'error'
 
-            // 如果工具调用成功但后续失败，显示更详细的错误
+            // 如果工具调用成功但后续失败,显示更详细的错误
             if (hasToolCalls) {
-              targetMsg.content = `⚠️ 工具调用成功，但获取 AI 回复时出错\n\n错误：${errorMessage}\n\n可能原因：\n1. 网络连接中断\n2. API 服务暂时不可用\n3. 请求超时\n\n建议：检查网络连接后重试，工具操作可能已完成`
+              targetMsg.content = `⚠️ 工具调用成功,但获取 AI 回复时出错\n\n错误：${errorMessage}\n\n可能原因：\n1. 网络连接中断\n2. API 服务暂时不可用\n3. 请求超时\n\n建议：检查网络连接后重试,工具操作可能已完成`
             } else {
               targetMsg.content = `错误：${errorMessage}`
             }
@@ -606,7 +606,7 @@ export function useAIChat() {
           }
         }
 
-        // 保存注入消息到 MessageGroup，使其在后续对话中持久化
+        // 保存注入消息到 MessageGroup,使其在后续对话中持久化
         if (injectedMessages && injectedMessages.length > 0) {
           const existingInjected = lastGroup.injectedMessages || []
           // 去重：避免同一轮次中重复注入相同内容
@@ -721,7 +721,7 @@ export function useAIChat() {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       parentMessageId: targetGroup.userMessage.id,
-      isActiveVersion: false // 暂时不激活，等完成后再激活
+      isActiveVersion: false // 暂时不激活,等完成后再激活
     }
 
     // 将之前的版本设为非激活
@@ -961,7 +961,7 @@ export function useAIChat() {
 
   /**
    * 从消息组构建历史记录(用于发送消息)
-   * 确保包含 tool_calls 和 tool_call_id 等字段，符合 DeepSeek API 要求
+   * 确保包含 tool_calls 和 tool_call_id 等字段,符合 DeepSeek API 要求
    */
   function buildHistoryFromGroups(groups: MessageGroup[]): ChatMessage[] {
     const history: ChatMessage[] = []

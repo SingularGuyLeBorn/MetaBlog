@@ -1,16 +1,21 @@
 /**
- * 文档结构规范 - 定义文件夹结构与前端显示的映射关系
- * 
- * 规范:
- * 1. 叶子文档: {name}.md → 显示为文章
- * 2. Folder Note: {folder}/{folder}.md → 文件夹可点击，标题来自文件
- * 3. Index 模式: {folder}/index.md → 文件夹可点击，标题来自 index.md
- * 4. 混合模式: {folder}/{folder}.md + {folder}/child.md → 可展开父节点
+ * ============================================================================
+ * 工具函数 - doc-structure
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/utils
  */
+
 
 import { existsSync, readdirSync } from 'fs'
 import { basename, join } from 'path'
 
+/**
+ * DocNode 接口定义
+ *
+ */
 export interface DocNode {
   id: string
   type: 'file' | 'folder'
@@ -25,7 +30,7 @@ export interface DocNode {
 }
 
 /**
- * 扫描 section 目录，生成规范化的文档树
+ * 扫描 section 目录,生成规范化的文档树
  */
 export function scanDocStructure(
   sectionPath: string,
@@ -33,13 +38,13 @@ export function scanDocStructure(
 ): DocNode[] {
   const nodes: DocNode[] = []
 
-  // 如果没有提供 sectionName，从路径提取
+  // 如果没有提供 sectionName,从路径提取
   const secName = sectionName || basename(sectionPath)
 
   const entries = readdirSync(sectionPath, { withFileTypes: true })
     .filter(e => !e.name.startsWith('.') && e.name !== 'manifest.json')
     .sort((a, b) => {
-      // 文件夹在前，文件在后
+      // 文件夹在前,文件在后
       if (a.isDirectory() && !b.isDirectory()) return -1
       if (!a.isDirectory() && b.isDirectory()) return 1
       return a.name.localeCompare(b.name)
@@ -75,7 +80,7 @@ export function scanDocStructure(
 }
 
 /**
- * 扫描文件夹，识别 Folder Note 或 Index 模式
+ * 扫描文件夹,识别 Folder Note 或 Index 模式
  */
 function scanFolder(
   dirPath: string,
@@ -137,7 +142,7 @@ function scanFolder(
     }
   }
 
-  // 如果没有 Folder Note/Index 且没有子项，忽略此文件夹
+  // 如果没有 Folder Note/Index 且没有子项,忽略此文件夹
   if (!link && children.length === 0) return null
 
   return {
@@ -238,7 +243,7 @@ export function toSidebarFormat(nodes: DocNode[]): any[] {
       description: node.desc
     }
 
-    // 确保链接格式一致性：文件夹以 / 结尾，文件不以 / 结尾
+    // 确保链接格式一致性：文件夹以 / 结尾,文件不以 / 结尾
     if (node.link) {
       result.link = node.type === 'folder'
         ? (node.link.endsWith('/') ? node.link : `${node.link}/`)

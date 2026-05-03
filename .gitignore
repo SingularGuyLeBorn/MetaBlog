@@ -51,3 +51,6 @@ vendor/**/*
 .stylelintcache
 .cache/
 .turbo/
+
+# Legacy tools directory (replaced by vendor/)
+tools/

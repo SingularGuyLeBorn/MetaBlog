@@ -1,13 +1,22 @@
 /**
- * Agent Runtime System - 类型定义
- * 
- * 支持 Agent 长期自主运行
+ * ============================================================================
+ * 类型定义 - agent-runtime
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/types
  */
+
 
 import type { Task } from './task'
 
 /** Agent 运行状态 */
-export type AgentRuntimeStatus = 
+/**
+ * AgentRuntimeStatus 类型别名
+ *
+ */
+export type AgentRuntimeStatus =
   | 'created'      // 已创建
   | 'starting'     // 启动中
   | 'running'      // 运行中
@@ -18,12 +27,20 @@ export type AgentRuntimeStatus =
   | 'recovering'   // 恢复中
 
 /** Agent 运行模式 */
+/**
+ * AgentRuntimeMode 类型别名
+ *
+ */
 export type AgentRuntimeMode =
   | 'manual'       // 手动模式
   | 'auto'         // 自动模式
   | 'daemon'       // 守护模式
 
 /** Agent 心跳 */
+/**
+ * AgentHeartbeat 接口定义
+ *
+ */
 export interface AgentHeartbeat {
   agentId: string
   timestamp: number
@@ -39,31 +56,35 @@ export interface AgentHeartbeat {
 }
 
 /** Agent 运行时配置 */
+/**
+ * AgentRuntimeConfig 接口定义
+ *
+ */
 export interface AgentRuntimeConfig {
   agentId: string
   mode: AgentRuntimeMode
-  
+
   // 自动恢复配置
   recovery: {
     enabled: boolean
     maxRetries: number
     retryDelay: number
   }
-  
+
   // 心跳配置
   heartbeat: {
     enabled: boolean
     interval: number  // ms
     timeout: number   // ms
   }
-  
+
   // 任务调度配置
   scheduler: {
     enabled: boolean
     maxConcurrentTasks: number
     taskTimeout: number
   }
-  
+
   // 日志配置
   logging: {
     enabled: boolean
@@ -73,12 +94,16 @@ export interface AgentRuntimeConfig {
 }
 
 /** Agent 运行时实例 */
+/**
+ * AgentRuntime 接口定义
+ *
+ */
 export interface AgentRuntime {
   id: string
   agentId: string
   status: AgentRuntimeStatus
   config: AgentRuntimeConfig
-  
+
   // 运行统计
   stats: {
     startedAt?: number
@@ -89,15 +114,15 @@ export interface AgentRuntime {
     errorCount: number
     recoveryCount: number
   }
-  
+
   // 当前任务
   activeTasks: Task[]
   queuedTasks: Task[]
   completedTasks: Task[]
-  
+
   // 消息队列
   messages: AgentMessage[]
-  
+
   // 元数据
   metadata: {
     createdAt: number
@@ -107,6 +132,10 @@ export interface AgentRuntime {
 }
 
 /** Agent 消息 */
+/**
+ * AgentMessage 接口定义
+ *
+ */
 export interface AgentMessage {
   id: string
   type: 'command' | 'notification' | 'query' | 'response'
@@ -120,6 +149,10 @@ export interface AgentMessage {
 }
 
 /** Agent 控制命令 */
+/**
+ * AgentControlCommand 接口定义
+ *
+ */
 export interface AgentControlCommand {
   id: string
   type: 'start' | 'pause' | 'resume' | 'stop' | 'restart' | 'kill'
@@ -131,6 +164,10 @@ export interface AgentControlCommand {
 }
 
 /** Agent 运行日志 */
+/**
+ * AgentRuntimeLog 接口定义
+ *
+ */
 export interface AgentRuntimeLog {
   id: string
   agentId: string
@@ -142,24 +179,28 @@ export interface AgentRuntimeLog {
 }
 
 /** Agent 性能指标 */
+/**
+ * AgentMetrics 接口定义
+ *
+ */
 export interface AgentMetrics {
   agentId: string
   timestamp: number
-  
+
   // 执行指标
   execution: {
     tasksPerMinute: number
     averageTaskDuration: number
     successRate: number
   }
-  
+
   // 资源指标
   resources: {
     cpuPercent: number
     memoryMB: number
     diskUsageMB: number
   }
-  
+
   // 效率指标
   efficiency: {
     idleTimePercent: number
@@ -169,6 +210,10 @@ export interface AgentMetrics {
 }
 
 /** 创建运行时参数 */
+/**
+ * CreateAgentRuntimeParams 接口定义
+ *
+ */
 export interface CreateAgentRuntimeParams {
   agentId: string
   mode?: AgentRuntimeMode
@@ -176,12 +221,20 @@ export interface CreateAgentRuntimeParams {
 }
 
 /** 更新运行时参数 */
+/**
+ * UpdateAgentRuntimeParams 接口定义
+ *
+ */
 export interface UpdateAgentRuntimeParams {
   mode?: AgentRuntimeMode
   config?: Partial<AgentRuntimeConfig>
 }
 
 /** 运行时查询选项 */
+/**
+ * AgentRuntimeQueryOptions 接口定义
+ *
+ */
 export interface AgentRuntimeQueryOptions {
   status?: AgentRuntimeStatus[]
   mode?: AgentRuntimeMode[]
@@ -191,11 +244,15 @@ export interface AgentRuntimeQueryOptions {
 }
 
 /** 运行时统计 */
+/**
+ * AgentRuntimeStats 接口定义
+ *
+ */
 export interface AgentRuntimeStats {
   total: number
   byStatus: Record<AgentRuntimeStatus, number>
   byMode: Record<AgentRuntimeMode, number>
-  
+
   // 全局统计
   global: {
     totalTasksExecuted: number
@@ -206,6 +263,10 @@ export interface AgentRuntimeStats {
 }
 
 /** 干预操作 */
+/**
+ * AgentIntervention 接口定义
+ *
+ */
 export interface AgentIntervention {
   id: string
   agentId: string

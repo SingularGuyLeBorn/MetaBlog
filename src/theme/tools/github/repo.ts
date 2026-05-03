@@ -1,5 +1,13 @@
 /**
- * GitHub 工具：仓库查询 + 管理
+ * ============================================================================
+ * GitHub 仓库查询与管理工具
+ * ============================================================================
+ *
+ * 提供 GitHub 仓库的信息查询、代码搜索、提交历史、README 读取、
+ * 仓库创建/更新/删除、Release 创建等功能. 
+ * 所有操作通过后端 BFF 代理转发,前端只负责传参. 
+ *
+ * @module src/theme/tools/github/repo
  */
 
 import type { ToolDefinition, ToolExecutor } from '@/theme/tools/types'
@@ -7,11 +15,14 @@ import { callGitHubTool } from './utils'
 
 // ============ ToolDefinitions ============
 
+/**
+ * 获取仓库信息的工具定义
+ */
 export const githubGetRepoDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubGetRepo',
-    description: `获取 GitHub 仓库信息。查看仓库详情、统计信息、最近更新等。
+    description: `获取 GitHub 仓库信息. 查看仓库详情、统计信息、最近更新等. 
 
 使用场景：
 1. 了解一个开源项目的基本信息
@@ -31,7 +42,7 @@ export const githubGetRepoDef: ToolDefinition = {
         },
         repo: {
           type: 'string',
-          description: '仓库名称，例如"react"vscode"next.js"'
+          description: '仓库名称,例如"react""vscode""next.js"'
         }
       },
       required: ['owner', 'repo']
@@ -39,11 +50,14 @@ export const githubGetRepoDef: ToolDefinition = {
   }
 }
 
+/**
+ * 列出仓库内容的工具定义
+ */
 export const githubListRepoContentsDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubListRepoContents',
-    description: `列出 GitHub 仓库的文件和目录内容。浏览代码结构、查找特定文件。
+    description: `列出 GitHub 仓库的文件和目录内容. 浏览代码结构、查找特定文件. 
 
 使用场景：
 1. 浏览仓库的目录结构
@@ -67,12 +81,12 @@ export const githubListRepoContentsDef: ToolDefinition = {
         },
         path: {
           type: 'string',
-          description: '目录或文件路径，默认空字符串(根目录)。例如"src"docs"package.json"',
+          description: '目录或文件路径,默认空字符串(根目录). 例如"src""docs""package.json"',
           default: ''
         },
         ref: {
           type: 'string',
-          description: '分支、标签或 commit SHA，默认主分支(main/master)'
+          description: '分支、标签或 commit SHA,默认主分支(main/master)'
         }
       },
       required: ['owner', 'repo']
@@ -80,11 +94,14 @@ export const githubListRepoContentsDef: ToolDefinition = {
   }
 }
 
+/**
+ * 获取文件内容的工具定义
+ */
 export const githubGetFileContentDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubGetFileContent',
-    description: `获取 GitHub 仓库中特定文件的内容。读取源代码、配置文件等。支持限制读取长度避免大文件占用过多上下文。
+    description: `获取 GitHub 仓库中特定文件的内容. 读取源代码、配置文件等. 支持限制读取长度避免大文件占用过多上下文. 
 
 使用场景：
 1. 查看源代码实现
@@ -110,15 +127,15 @@ export const githubGetFileContentDef: ToolDefinition = {
         },
         path: {
           type: 'string',
-          description: '文件路径，例如"src/index.ts"package.json"README.md"'
+          description: '文件路径,例如"src/index.ts""package.json""README.md"'
         },
         ref: {
           type: 'string',
-          description: '分支、标签或 commit SHA，默认主分支'
+          description: '分支、标签或 commit SHA,默认主分支'
         },
         max_length: {
           type: 'number',
-          description: '最大读取字符数，默认5000。大文件建议调大或分多次读取',
+          description: '最大读取字符数,默认5000. 大文件建议调大或分多次读取',
           default: 5000
         }
       },
@@ -127,11 +144,14 @@ export const githubGetFileContentDef: ToolDefinition = {
   }
 }
 
+/**
+ * 搜索代码的工具定义
+ */
 export const githubSearchCodeDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubSearchCode',
-    description: `在 GitHub 上搜索代码。查找开源项目中的代码示例、特定实现。
+    description: `在 GitHub 上搜索代码. 查找开源项目中的代码示例、特定实现. 
 
 使用场景：
 1. 查找特定函数的代码实现示例
@@ -149,15 +169,15 @@ export const githubSearchCodeDef: ToolDefinition = {
       properties: {
         query: {
           type: 'string',
-          description: '搜索查询，支GitHub 代码搜索语法。例如"useEffect cleanup"language:typescript react hooks"'
+          description: '搜索查询,支GitHub 代码搜索语法. 例如"useEffect cleanup""language:typescript react hooks"'
         },
         language: {
           type: 'string',
-          description: '可选：限定编程语言，例如"javascript"python"typescript"go"'
+          description: '可选：限定编程语言,例如"javascript""python""typescript""go"'
         },
         limit: {
           type: 'number',
-          description: '返回结果数量，默认5，最多10',
+          description: '返回结果数量,默认5,最多10',
           default: 5
         }
       },
@@ -166,11 +186,14 @@ export const githubSearchCodeDef: ToolDefinition = {
   }
 }
 
+/**
+ * 获取提交历史的工具定义
+ */
 export const githubGetCommitHistoryDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubGetCommitHistory',
-    description: `获取 GitHub 仓库的提交历史。查看最近的代码变更、提交信息。
+    description: `获取 GitHub 仓库的提交历史. 查看最近的代码变更、提交信息. 
 
 使用场景：
 1. 了解项目最近的发展动态
@@ -194,7 +217,7 @@ export const githubGetCommitHistoryDef: ToolDefinition = {
         },
         per_page: {
           type: 'number',
-          description: '返回的提交数量，默认 10，最多30',
+          description: '返回的提交数量,默认 10,最多30',
           default: 10
         }
       },
@@ -203,11 +226,14 @@ export const githubGetCommitHistoryDef: ToolDefinition = {
   }
 }
 
+/**
+ * 获取 README 的工具定义
+ */
 export const githubGetReadmeDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubGetReadme',
-    description: `获取 GitHub 仓库 README 内容(自动解码)。`,
+    description: `获取 GitHub 仓库 README 内容(自动解码). `,
     parameters: {
       type: 'object',
       properties: {
@@ -220,11 +246,14 @@ export const githubGetReadmeDef: ToolDefinition = {
   }
 }
 
+/**
+ * 比较提交差异的工具定义
+ */
 export const githubCompareCommitsDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubCompareCommits',
-    description: `比较两个分支或 commit 的差异。`,
+    description: `比较两个分支或 commit 的差异. `,
     parameters: {
       type: 'object',
       properties: {
@@ -238,11 +267,14 @@ export const githubCompareCommitsDef: ToolDefinition = {
   }
 }
 
+/**
+ * 查看 API 配额的工具定义
+ */
 export const githubGetRateLimitDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubGetRateLimit',
-    description: `查看 GitHub API 配额使用情况。了解剩余请求次数和重置时间。
+    description: `查看 GitHub API 配额使用情况. 了解剩余请求次数和重置时间. 
 
 使用场景：
 1. 排查 API 调用失败是否因配额耗尽
@@ -256,11 +288,14 @@ export const githubGetRateLimitDef: ToolDefinition = {
   }
 }
 
+/**
+ * 搜索仓库的工具定义
+ */
 export const githubSearchReposDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubSearchRepos',
-    description: `搜索 GitHub 仓库。通过关键词查找公开或私有仓库，支持按语言、Star 数、更新时间等过滤。
+    description: `搜索 GitHub 仓库. 通过关键词查找公开或私有仓库,支持按语言、Star 数、更新时间等过滤. 
 
 使用场景：
 1. 发现优秀的开源项目
@@ -278,11 +313,11 @@ export const githubSearchReposDef: ToolDefinition = {
       properties: {
         query: {
           type: 'string',
-          description: '搜索关键词，支持 GitHub 搜索语法，如 "react stars:>1000 language:typescript"'
+          description: '搜索关键词,支持 GitHub 搜索语法,如 "react stars:>1000 language:typescript"'
         },
         per_page: {
           type: 'number',
-          description: '每页结果数，默认 10，最多100',
+          description: '每页结果数,默认 10,最多100',
           default: 10
         }
       },
@@ -291,11 +326,14 @@ export const githubSearchReposDef: ToolDefinition = {
   }
 }
 
+/**
+ * 创建仓库的工具定义
+ */
 export const githubCreateRepoDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubCreateRepo',
-    description: `创建新的 GitHub 仓库。在用户名下创建一个新的代码仓库。
+    description: `创建新的 GitHub 仓库. 在用户名下创建一个新的代码仓库. 
 
 使用场景：
 1. 为新项目创建代码仓库
@@ -305,14 +343,14 @@ export const githubCreateRepoDef: ToolDefinition = {
 
 注意事项：
 - 仓库名只能包含字母、数字、连字符、下划线和点号
-- 如果已存在同名仓库，会报错 422
+- 如果已存在同名仓库,会报错 422
 - 创建的仓库默认归属到当前 Token 对应的用户`,
     parameters: {
       type: 'object',
       properties: {
         name: {
           type: 'string',
-          description: '仓库名称，例如"my-project"api-docs"'
+          description: '仓库名称,例如"my-project""api-docs"'
         },
         description: {
           type: 'string',
@@ -320,12 +358,12 @@ export const githubCreateRepoDef: ToolDefinition = {
         },
         private: {
           type: 'boolean',
-          description: '是否私有仓库，默认false(公开)',
+          description: '是否私有仓库,默认false(公开)',
           default: false
         },
         auto_init: {
           type: 'boolean',
-          description: '是否自动初始README，默认false',
+          description: '是否自动初始README,默认false',
           default: false
         }
       },
@@ -334,11 +372,14 @@ export const githubCreateRepoDef: ToolDefinition = {
   }
 }
 
+/**
+ * 更新仓库设置的工具定义
+ */
 export const githubUpdateRepoDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubUpdateRepo',
-    description: `更新 GitHub 仓库设置。修改仓库的可见性、描述、Topics 等元信息。
+    description: `更新 GitHub 仓库设置. 修改仓库的可见性、描述、Topics 等元信息. 
 
 使用场景：
 1. 将仓库设为公开或私有
@@ -366,11 +407,14 @@ export const githubUpdateRepoDef: ToolDefinition = {
   }
 }
 
+/**
+ * 删除仓库的工具定义
+ */
 export const githubDeleteRepoDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubDeleteRepo',
-    description: `删除 GitHub 仓库。⚠️ 危险操作，删除后无法恢复！
+    description: `删除 GitHub 仓库. ⚠️ 危险操作,删除后无法恢复！
 
 使用场景：
 1. 清理不再需要的实验仓库
@@ -379,7 +423,7 @@ export const githubDeleteRepoDef: ToolDefinition = {
 注意事项：
 - 删除操作不可逆
 - 需要仓库的 admin 权限
-- 如果开启了删除保护(Dependabot 等)，可能无法删除`,
+- 如果开启了删除保护(Dependabot 等),可能无法删除`,
     parameters: {
       type: 'object',
       properties: {
@@ -391,17 +435,20 @@ export const githubDeleteRepoDef: ToolDefinition = {
   }
 }
 
+/**
+ * 创建 Release 的工具定义
+ */
 export const githubCreateReleaseDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'githubCreateRelease',
-    description: `创建 GitHub Release。`,
+    description: `创建 GitHub Release. `,
     parameters: {
       type: 'object',
       properties: {
         owner: { type: 'string', description: '仓库所有者' },
         repo: { type: 'string', description: '仓库名称' },
-        tag_name: { type: 'string', description: '标签名，例如 "v1.0.0"' },
+        tag_name: { type: 'string', description: '标签名,例如 "v1.0.0"' },
         name: { type: 'string', description: 'Release 标题' },
         body: { type: 'string', description: 'Release 正文' },
         draft: { type: 'boolean', description: '是否为 Draft', default: false },
@@ -414,28 +461,106 @@ export const githubCreateReleaseDef: ToolDefinition = {
 
 // ============ ToolExecutors ============
 
+/**
+ * 获取仓库信息
+ *
+ * @param args - 工具参数
+ * @returns 操作结果
+ */
 export const githubGetRepo: ToolExecutor = async (args) => callGitHubTool('githubGetRepo', args)
 
+/**
+ * 列出仓库内容
+ *
+ * @param args - 工具参数
+ * @returns 操作结果
+ */
 export const githubListRepoContents: ToolExecutor = async (args) => callGitHubTool('githubListRepoContents', args)
 
+/**
+ * 获取文件内容
+ *
+ * @param args - 工具参数
+ * @returns 操作结果
+ */
 export const githubGetFileContent: ToolExecutor = async (args) => callGitHubTool('githubGetFileContent', args)
 
+/**
+ * 搜索代码
+ *
+ * @param args - 工具参数
+ * @returns 操作结果
+ */
 export const githubSearchCode: ToolExecutor = async (args) => callGitHubTool('githubSearchCode', args)
 
+/**
+ * 获取提交历史
+ *
+ * @param args - 工具参数
+ * @returns 操作结果
+ */
 export const githubGetCommitHistory: ToolExecutor = async (args) => callGitHubTool('githubGetCommitHistory', args)
 
+/**
+ * 获取 README
+ *
+ * @param args - 工具参数
+ * @returns 操作结果
+ */
 export const githubGetReadme: ToolExecutor = async (args) => callGitHubTool('githubGetReadme', args)
 
+/**
+ * 比较提交差异
+ *
+ * @param args - 工具参数
+ * @returns 操作结果
+ */
 export const githubCompareCommits: ToolExecutor = async (args) => callGitHubTool('githubCompareCommits', args)
 
+/**
+ * 查看 API 配额
+ *
+ * @param args - 工具参数
+ * @returns 操作结果
+ */
 export const githubGetRateLimit: ToolExecutor = async (args) => callGitHubTool('githubGetRateLimit', args)
 
+/**
+ * 搜索仓库
+ *
+ * @param args - 工具参数
+ * @returns 操作结果
+ */
 export const githubSearchRepos: ToolExecutor = async (args) => callGitHubTool('githubSearchRepos', args)
 
+/**
+ * 创建仓库
+ *
+ * @param args - 工具参数
+ * @returns 操作结果
+ */
 export const githubCreateRepo: ToolExecutor = async (args) => callGitHubTool('githubCreateRepo', args)
 
+/**
+ * 更新仓库设置
+ *
+ * @param args - 工具参数
+ * @returns 操作结果
+ */
 export const githubUpdateRepo: ToolExecutor = async (args) => callGitHubTool('githubUpdateRepo', args)
 
+/**
+ * 删除仓库
+ *
+ * @param args - 工具参数
+ * @returns 操作结果
+ */
 export const githubDeleteRepo: ToolExecutor = async (args) => callGitHubTool('githubDeleteRepo', args)
 
+/**
+ * 创建 Release
+ *
+ * @param args - 工具参数
+ * @returns 操作结果
+ */
 export const githubCreateRelease: ToolExecutor = async (args) => callGitHubTool('githubCreateRelease', args)

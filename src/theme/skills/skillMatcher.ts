@@ -1,18 +1,15 @@
 /**
- * Skill Matcher - Skill 意图匹配器
- * 
- * 基于 Claude Code 的启发式匹配算法：
- * 1. 关键词匹配 (标签、工具名、场景描述)
- * 2. 语义相似度 (简单向量空间模型)
- * 3. 上下文连续性 (优先保持已激活的 Skill)
- * 
- * 设计原则：
- * - 简单可解释 (不需要神经网络)
- * - 快速响应 (O(n) 复杂度)
- * - 可调试 (输出匹配原因)
+ * ============================================================================
+ * Skill 系统 - skillMatcher
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/skills
  */
 
-import type { SkillMetadata, SkillMatchResult, SkillMatchOptions, ActiveSkill } from './types'
+
+import type { ActiveSkill, SkillMatchOptions, SkillMatchResult, SkillMetadata } from './types'
 
 // ═══════════════════════════════════════════════════════════════
 // 文本预处理
@@ -33,14 +30,14 @@ const STOP_WORDS = new Set([
 function tokenize(text: string): string[] {
   const tokens: string[] = []
   const normalized = text.toLowerCase()
-  
+
   // 提取英文单词
   const englishWords = normalized.match(/[a-z]+/g) || []
   tokens.push(...englishWords)
-  
+
   // 提取中文字符和数字
   const chars = normalized.replace(/[^\u4e00-\u9fa5a-z0-9]/g, '').split('')
-  
+
   // 生成 2-4 字词组
   for (let i = 0; i < chars.length; i++) {
     for (let len = 2; len <= 4 && i + len <= chars.length; len++) {
@@ -50,7 +47,7 @@ function tokenize(text: string): string[] {
       }
     }
   }
-  
+
   return [...new Set(tokens)]
 }
 
@@ -81,7 +78,7 @@ const MATCH_RULES: MatchRule[] = [
     match: (input, tokens, skill) => {
       let score = 0
       const keywords: string[] = []
-      
+
       for (const scenario of skill.usageScenarios) {
         const scenarioTokens = new Set(tokenize(scenario))
         const similarity = jaccardSimilarity(tokens, scenarioTokens)
@@ -90,18 +87,18 @@ const MATCH_RULES: MatchRule[] = [
           keywords.push(scenario)
         }
       }
-      
+
       return { score, keywords }
     }
   },
-  
+
   // 规则 2: 标签匹配
   {
     name: 'tag',
     weight: 0.8,
     match: (input, tokens, skill) => {
       const keywords: string[] = []
-      
+
       for (const tag of skill.tags) {
         const tagTokens = tokenize(tag)
         for (const token of tagTokens) {
@@ -111,30 +108,30 @@ const MATCH_RULES: MatchRule[] = [
           }
         }
       }
-      
+
       // 计算覆盖比例
-      const tagCoverage = skill.tags.length > 0 
-        ? keywords.length / Math.min(skill.tags.length, 3) 
+      const tagCoverage = skill.tags.length > 0
+        ? keywords.length / Math.min(skill.tags.length, 3)
         : 0
-      
+
       return { score: Math.min(tagCoverage, 1), keywords }
     }
   },
-  
+
   // 规则 3: 工具名匹配
   {
     name: 'tool',
     weight: 0.7,
     match: (input, tokens, skill) => {
       const keywords: string[] = []
-      
+
       for (const tool of skill.tools) {
         // 工具名直接出现在输入中
         if (input.includes(tool)) {
           keywords.push(tool)
           continue
         }
-        
+
         // 工具名的词匹配
         const toolTokens = tokenize(tool.replace(/_/g, ' '))
         for (const token of toolTokens) {
@@ -144,14 +141,14 @@ const MATCH_RULES: MatchRule[] = [
           }
         }
       }
-      
-      return { 
+
+      return {
         score: keywords.length > 0 ? 0.5 + (keywords.length * 0.1) : 0,
-        keywords 
+        keywords
       }
     }
   },
-  
+
   // 规则 4: 名称匹配
   {
     name: 'name',
@@ -160,7 +157,7 @@ const MATCH_RULES: MatchRule[] = [
       const nameTokens = tokenize(skill.name)
       const nameSet = new Set(nameTokens)
       const similarity = jaccardSimilarity(tokens, nameSet)
-      
+
       // ID 匹配 (如 article-manager 匹配 article)
       const idParts = skill.id.split(/[-_]/)
       for (const part of idParts) {
@@ -168,14 +165,14 @@ const MATCH_RULES: MatchRule[] = [
           return { score: 0.8, keywords: [skill.id] }
         }
       }
-      
-      return { 
+
+      return {
         score: similarity > 0.3 ? similarity : 0,
         keywords: similarity > 0.3 ? [skill.name] : []
       }
     }
   },
-  
+
   // 规则 5: 描述匹配
   {
     name: 'description',
@@ -183,8 +180,8 @@ const MATCH_RULES: MatchRule[] = [
     match: (input, tokens, skill) => {
       const descTokens = new Set(tokenize(skill.description))
       const similarity = jaccardSimilarity(tokens, descTokens)
-      
-      return { 
+
+      return {
         score: similarity > 0.2 ? similarity * 0.4 : 0,
         keywords: similarity > 0.2 ? [skill.description] : []
       }
@@ -207,7 +204,7 @@ function calculateMatchScore(
   let totalScore = 0
   let totalWeight = 0
   const reasons = new Map<string, string[]>()
-  
+
   for (const rule of MATCH_RULES) {
     const result = rule.match(input, tokens, skill)
     if (result.score > 0) {
@@ -216,10 +213,10 @@ function calculateMatchScore(
       reasons.set(rule.name, result.keywords)
     }
   }
-  
+
   // 归一化
   const normalizedScore = totalWeight > 0 ? totalScore / totalWeight : 0
-  
+
   return { score: normalizedScore, reasons }
 }
 
@@ -242,16 +239,16 @@ export function matchSkills(
     include = [],
     exclude = []
   } = options
-  
+
   // 过滤掉禁用的 skill 和排除列表
-  const candidates = skills.filter(s => 
-    s.enabled && 
+  const candidates = skills.filter(s =>
+    s.enabled &&
     !exclude.includes(s.id)
   )
-  
+
   // 计算匹配分数
   const results: SkillMatchResult[] = []
-  
+
   for (const skill of candidates) {
     // 强制包含
     if (include.includes(skill.id)) {
@@ -263,21 +260,21 @@ export function matchSkills(
       })
       continue
     }
-    
+
     const { score, reasons } = calculateMatchScore(userInput, skill)
-    
+
     if (score >= threshold) {
       // 构建匹配原因字符串
       const reasonParts: string[] = []
       const allKeywords: string[] = []
-      
+
       for (const [ruleName, keywords] of reasons) {
         if (keywords.length > 0) {
           reasonParts.push(`${ruleName}(${keywords.join(', ')})`)
           allKeywords.push(...keywords)
         }
       }
-      
+
       results.push({
         skill,
         score,
@@ -286,8 +283,8 @@ export function matchSkills(
       })
     }
   }
-  
-  // 按分数排序，返回前 N 个
+
+  // 按分数排序,返回前 N 个
   return results
     .sort((a, b) => b.score - a.score)
     .slice(0, maxMatches)
@@ -300,7 +297,7 @@ export function matchSkills(
 /**
  * 上下文感知匹配
  * 
- * 考虑已激活的 Skills，给予连续性奖励
+ * 考虑已激活的 Skills,给予连续性奖励
  */
 export function matchSkillsWithContext(
   userInput: string,
@@ -310,10 +307,10 @@ export function matchSkillsWithContext(
 ): SkillMatchResult[] {
   // 基础匹配
   const results = matchSkills(userInput, skills, options)
-  
+
   // 连续性奖励: 已激活的 Skill 获得分数加成
   const activeIds = new Set(activeSkills.map(s => s.id))
-  
+
   for (const result of results) {
     if (activeIds.has(result.skill.id)) {
       // 已激活的 Skill 获得 20% 加成
@@ -321,7 +318,7 @@ export function matchSkillsWithContext(
       result.reason += ' + context-active'
     }
   }
-  
+
   // 重新排序
   return results.sort((a, b) => b.score - a.score)
 }
@@ -329,7 +326,7 @@ export function matchSkillsWithContext(
 /**
  * 快速匹配 (用于实时建议)
  * 
- * 只使用高效的规则，牺牲准确性换取速度
+ * 只使用高效的规则,牺牲准确性换取速度
  */
 export function quickMatchSkills(
   userInput: string,
@@ -338,13 +335,13 @@ export function quickMatchSkills(
 ): SkillMatchResult[] {
   const results: SkillMatchResult[] = []
   const inputLower = userInput.toLowerCase()
-  
+
   for (const skill of skills) {
     if (!skill.enabled) continue
-    
+
     let score = 0
     const keywords: string[] = []
-    
+
     // 只检查标签和场景 (最快的规则)
     for (const tag of skill.tags) {
       if (inputLower.includes(tag.toLowerCase())) {
@@ -353,7 +350,7 @@ export function quickMatchSkills(
         break
       }
     }
-    
+
     if (score === 0) {
       for (const scenario of skill.usageScenarios) {
         const scenarioTokens = tokenize(scenario)
@@ -367,7 +364,7 @@ export function quickMatchSkills(
         if (score > 0) break
       }
     }
-    
+
     if (score > 0) {
       results.push({
         skill,
@@ -377,7 +374,7 @@ export function quickMatchSkills(
       })
     }
   }
-  
+
   return results
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
@@ -396,7 +393,7 @@ export function debugMatch(
   options?: SkillMatchOptions
 ): string {
   const results = matchSkills(userInput, skills, options)
-  
+
   const lines: string[] = [
     `输入: "${userInput}"`,
     `阈值: ${options?.threshold ?? 0.15}`,
@@ -404,7 +401,7 @@ export function debugMatch(
     '─'.repeat(50),
     ''
   ]
-  
+
   for (let i = 0; i < results.length; i++) {
     const r = results[i]
     lines.push(
@@ -415,10 +412,10 @@ export function debugMatch(
       ''
     )
   }
-  
+
   if (results.length === 0) {
     lines.push('没有匹配的 Skill')
   }
-  
+
   return lines.join('\n')
 }

@@ -2,7 +2,7 @@
 
 > **编辑蓝图 (Editorial Blueprint)**
 > 
-> **核心主题**: 本讲座是CS336课程RL系列的高潮，从RLHF过渡到**可验证奖励的强化学习 (RL from Verifiable Rewards)**。详细讲解PPO算法、GRPO算法，并深入分析三个重要的推理模型案例：**DeepSeek R1**、**Kimi K1.5**和**Qwen 3**。
+> **核心主题**: 本讲座是CS336课程RL系列的高潮,从RLHF过渡到**可验证奖励的强化学习 (RL from Verifiable Rewards)**. 详细讲解PPO算法、GRPO算法,并深入分析三个重要的推理模型案例：**DeepSeek R1**、**Kimi K1.5**和**Qwen 3**. 
 > 
 > **知识结构**: 
 > - 第一部分：RLHF收尾 - DPO变体、过度优化、校准问题
@@ -24,16 +24,16 @@ DPO更新形式:
 
 $$\nabla \mathcal{L}_{DPO} \propto \beta \cdot w(\theta) \cdot \left( \nabla \log \pi_\theta(y_w|x) - \nabla \log \pi_\theta(y_l|x) \right)$$
 
-其中 $w(\theta)$ 在奖励估计错误时更大——这是一种隐式的困难样本挖掘。
+其中 $w(\theta)$ 在奖励估计错误时更大——这是一种隐式的困难样本挖掘. 
 
-**核心思想**: RL算法本质上都是"上调好的，下调坏的"，区别在于如何确定"好坏"和"多少"。
+**核心思想**: RL算法本质上都是"上调好的,下调坏的",区别在于如何确定"好坏"和"多少". 
 
 ### 1.2 DPO变体
 
 #### SimPO
 
 SimPO做了两个简化:
-1. **长度归一化**: 除以回复长度，避免长度偏差
+1. **长度归一化**: 除以回复长度,避免长度偏差
 2. **移除参考模型**: 不再计算与参考模型的比率
 
 $$\mathcal{L}_{SimPO} = -\log \sigma\left(\frac{\beta}{|y_w|}\log \pi_\theta(y_w|x) - \frac{\beta}{|y_l|}\log \pi_\theta(y_l|x)\right)$$
@@ -41,9 +41,9 @@ $$\mathcal{L}_{SimPO} = -\log \sigma\left(\frac{\beta}{|y_w|}\log \pi_\theta(y_w
 #### 实验发现的矛盾结论
 
 **Tulu 2研究**: PPO优于DPO(因为在线特性)
-**Tulu 3研究**: 如果SFT做得好，DPO和PPO差距消失，长度归一化DPO最佳
+**Tulu 3研究**: 如果SFT做得好,DPO和PPO差距消失,长度归一化DPO最佳
 
-> **重要启示**: RL的实验结论高度依赖具体设置(模型、数据、评估方法)，不应盲目泛化单篇论文的结论。
+> **重要启示**: RL的实验结论高度依赖具体设置(模型、数据、评估方法),不应盲目泛化单篇论文的结论. 
 
 ### 1.3 过度优化 (Over-optimization)
 
@@ -62,7 +62,7 @@ $$\mathcal{L}_{SimPO} = -\log \sigma\left(\frac{\beta}{|y_w|}\log \pi_\theta(y_w
 **原因分析**:
 - 奖励模型是有噪声的近似
 - 模型学会"欺骗"奖励模型
-- 类似于过拟合，但发生在策略层面
+- 类似于过拟合,但发生在策略层面
 
 **实验证据** (来自作者实验室):
 - RLHF on 人类偏好: 过度优化
@@ -73,8 +73,8 @@ $$\mathcal{L}_{SimPO} = -\log \sigma\left(\frac{\beta}{|y_w|}\log \pi_\theta(y_w
 
 RLHF后的模型**不再是校准的概率模型**:
 
-- 我们优化的是奖励，不是概率分布
-- 温度=1时，模型表现过度自信
+- 我们优化的是奖励,不是概率分布
+- 温度=1时,模型表现过度自信
 - 预测的置信度 ≠ 实际正确率
 
 来自多个论文的证据:
@@ -93,11 +93,11 @@ RLHF后的模型**不再是校准的概率模型**:
 | 人类偏好噪声大 | 标注员会犯错、有偏见 |
 | 难以规模化 | 人类标注成本高 |
 | 过度优化风险 | 模型学会欺骗奖励模型 |
-| 无法验证正确性 | 对于数学/代码，正确性是客观的 |
+| 无法验证正确性 | 对于数学/代码,正确性是客观的 |
 
 ### 2.2 可验证奖励的优势
 
-**核心思想**: 如果我们有**确定性的奖励函数**(不是学习的)，就可以充分发挥RL的威力。
+**核心思想**: 如果我们有**确定性的奖励函数**(不是学习的),就可以充分发挥RL的威力. 
 
 | 领域 | 可验证奖励 |
 |------|-----------|
@@ -106,7 +106,7 @@ RLHF后的模型**不再是校准的概率模型**:
 | 游戏 | 是否获胜 |
 | 形式验证 | 证明是否有效 |
 
-**类比AlphaGo/AlphaFold**: 这些成功案例都有**确定性的奖励函数**。
+**类比AlphaGo/AlphaFold**: 这些成功案例都有**确定性的奖励函数**. 
 
 ---
 
@@ -122,17 +122,17 @@ $$J(\theta) = \mathbb{E}_{a \sim \pi_\theta}[R(a)]$$
 
 $$\nabla J(\theta) = \mathbb{E}_{a \sim \pi_\theta}\left[\nabla \log \pi_\theta(a|s) \cdot R\right]$$
 
-**朴素策略梯度**: 采样 $a \sim \pi_\theta$，更新 $\theta \leftarrow \theta + \alpha \nabla \log \pi_\theta(a|s) R$
+**朴素策略梯度**: 采样 $a \sim \pi_\theta$,更新 $\theta \leftarrow \theta + \alpha \nabla \log \pi_\theta(a|s) R$
 
-**问题**: 纯在线，每次采样后只能更新一次。
+**问题**: 纯在线,每次采样后只能更新一次. 
 
 ### 3.2 TRPO: 引入重要性采样
 
-核心想法: 从旧策略 $\pi_{\theta_{old}}$ 采样，但对新策略 $\pi_\theta$ 进行更新。
+核心想法: 从旧策略 $\pi_{\theta_{old}}$ 采样,但对新策略 $\pi_\theta$ 进行更新. 
 
 $$\nabla J(\theta) = \mathbb{E}_{a \sim \pi_{\theta_{old}}}\left[\frac{\pi_\theta(a|s)}{\pi_{\theta_{old}}(a|s)} \nabla \log \pi_\theta(a|s) \cdot A \right]$$
 
-其中 $A$ 是优势函数(Advantage)，是$R$的低方差版本。
+其中 $A$ 是优势函数(Advantage),是$R$的低方差版本. 
 
 TRPO添加KL约束: $D_{KL}(\pi_\theta || \pi_{\theta_{old}}) \leq \delta$
 
@@ -140,10 +140,10 @@ TRPO添加KL约束: $D_{KL}(\pi_\theta || \pi_{\theta_{old}}) \leq \delta$
 
 $$L^{CLIP}(\theta) = \mathbb{E}\left[\min\left( r_t(\theta) A_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon) A_t \right)\right]$$
 
-其中 $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{old}}(a_t|s_t)}$，$\epsilon$通常取0.2。
+其中 $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{old}}(a_t|s_t)}$,$\epsilon$通常取0.2. 
 
 **直观解释**:
-- 如果新策略偏离太远($r_t$ 超出 $[1-\epsilon, 1+\epsilon]$)，梯度被裁剪
+- 如果新策略偏离太远($r_t$ 超出 $[1-\epsilon, 1+\epsilon]$),梯度被裁剪
 - 这自然地限制了策略更新幅度
 
 ### 3.4 PPO的复杂性
@@ -173,10 +173,10 @@ PPO实现不当可能导致:
 
 ### 4.1 GRPO的动机
 
-**核心问题**: 能否**移除价值函数**，同时保持PPO的效果？
+**核心问题**: 能否**移除价值函数**,同时保持PPO的效果？
 
 **语言模型的特殊性**:
-- 对于同一个prompt，可以生成多个responses
+- 对于同一个prompt,可以生成多个responses
 - 这提供了**自然的基线估计**
 
 ### 4.2 GRPO公式
@@ -185,7 +185,7 @@ PPO实现不当可能导致:
 
 $$A_i = \frac{r_i - \text{mean}(r_1, ..., r_G)}{\text{std}(r_1, ..., r_G)}$$
 
-其中 $G$ 是每个prompt生成的response数量。
+其中 $G$ 是每个prompt生成的response数量. 
 
 **解释**:
 - 不需要训练价值函数
@@ -211,7 +211,7 @@ $$L^{GRPO}(\theta) = \mathbb{E}\left[\min\left( r_t(\theta) A_i, \text{clip}(r_t
 
 除以标准差是否合法？
 
-**理论分析**: 标准的策略梯度定理只允许**减去**与动作无关的基线，**除法**不在允许范围内。
+**理论分析**: 标准的策略梯度定理只允许**减去**与动作无关的基线,**除法**不在允许范围内. 
 
 **问题**:
 - 标准差小 → 放大梯度 → 问题太简单或太难时梯度过大
@@ -226,7 +226,7 @@ GRPO原始公式对奖励进行长度归一化:
 - 答对时: 最优策略是生成最短回复(集中正奖励)
 - 导致: 乱七八糟的长回复
 
-**Dr. GRPO论文**建议移除这两个归一化。
+**Dr. GRPO论文**建议移除这两个归一化. 
 
 ![GRPO算法](./images/grpo-algorithm.png)
 
@@ -239,7 +239,7 @@ GRPO原始公式对奖励进行长度归一化:
 #### R1-Zero: 纯RL实验
 
 **设置**:
-- 基础模型: DeepSeek V3(预训练+mid-training，无RLHF)
+- 基础模型: DeepSeek V3(预训练+mid-training,无RLHF)
 - 奖励: 准确性(正误)+ 格式(thinking标签)
 - 算法: GRPO
 
@@ -315,9 +315,9 @@ $$r_{length} = \begin{cases}
 \text{batch average} & \text{if incorrect (不过度惩罚长回答)}
 \end{cases}$$
 
-其中 $\lambda$ 与回复长度在batch内的相对位置有关。
+其中 $\lambda$ 与回复长度在batch内的相对位置有关. 
 
-**注意**: 长度奖励不能太早启用，否则会导致RL停滞。
+**注意**: 长度奖励不能太早启用,否则会导致RL停滞. 
 
 ##### RL算法
 
@@ -325,7 +325,7 @@ Kimi使用了不同于GRPO的目标:
 
 1. 非参数假设 → 奖励可写成策略比率形式(类似DPO推导)
 2. 使用平方损失驱动等式成立
-3. 梯度形式类似GRPO，但有不同的正则化
+3. 梯度形式类似GRPO,但有不同的正则化
 
 $$\nabla L \propto \underbrace{(r_i - \bar{r})}_{\text{基线}} \cdot \underbrace{\nabla \log \pi_\theta(y_i|x)}_{\text{策略梯度}} - \underbrace{(\log \pi_\theta - \log \pi_{ref})^2}_{\text{正则化}}$$
 
@@ -356,8 +356,8 @@ Base Model
 
 #### 数据选择
 
-与Kimi类似，使用best-of-N过滤:
-- 如果base model已经能做对 → 太简单，排除
+与Kimi类似,使用best-of-N过滤:
+- 如果base model已经能做对 → 太简单,排除
 - 去污染: 移除与测试集相似的数据
 - 人工筛选: 确保SFT数据无猜测
 
@@ -383,13 +383,13 @@ Model: 相对论是... [直接回答]
 **额外能力**: 可以在思考过程中**提前终止**
 
 ```
-User: 考虑到时间有限，我需要直接给出答案...
+User: 考虑到时间有限,我需要直接给出答案...
 Model: [停止思考] </think> 答案是...
 ```
 
 #### 测试时计算扩展
 
-通过控制思考token预算，实现平滑的性能-延迟权衡:
+通过控制思考token预算,实现平滑的性能-延迟权衡:
 
 ```
 思考预算 ◀────────────────────────────▶
@@ -409,7 +409,7 @@ Model: [停止思考] </think> 答案是...
 数学(no_think)        ↑            ↑              ↑
 ```
 
-**观察**: 通用RL可能**损害**思考模式下的数学性能——存在tradeoff。
+**观察**: 通用RL可能**损害**思考模式下的数学性能——存在tradeoff. 
 
 ---
 
@@ -432,7 +432,7 @@ RLHF的困境:
 ### GRPO核心洞察
 
 1. **语言模型特有结构**: 多response提供自然基线
-2. **移除价值函数**: 减半内存，简化实现
+2. **移除价值函数**: 减半内存,简化实现
 3. **注意陷阱**: 标准差归一化和长度归一化可能有害
 
 ### 推理模型的共同模式
@@ -453,8 +453,8 @@ RLHF的困境:
 
 ### 关键不确定性
 
-1. **PRM vs ORM**: DeepSeek说ORM更好，但其他研究可能不同
-2. **MCTS**: 目前似乎不如简单RL，但可能还有探索空间
+1. **PRM vs ORM**: DeepSeek说ORM更好,但其他研究可能不同
+2. **MCTS**: 目前似乎不如简单RL,但可能还有探索空间
 3. **最优RL算法**: GRPO、Kimi的变体、还是其他？
 
 ---

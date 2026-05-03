@@ -1,7 +1,14 @@
 /**
- * 代码工具集
- * 包含：代码分析、执行等功能
+ * ============================================================================
+ * 主题入口导出
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme
  */
 
-export { executeCode, executeCodeDef } from './execute'
+
 export { analyzeCode, analyzeCodeDef } from './analyze'
+export { executeCode, executeCodeDef } from './execute'
+

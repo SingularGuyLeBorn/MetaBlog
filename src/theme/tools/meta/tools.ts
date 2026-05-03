@@ -1,26 +1,31 @@
 /**
- * Meta 工具定义 — getAllTools
+ * ============================================================================
+ * 元信息工具 — 获取所有工具
+ * ============================================================================
  *
- * 用于查询系统级别的元信息：获取所有可用工具的完整列表
+ * 用于查询系统级别的元信息：获取所有可用工具的完整列表. 
+ * 按类别分组展示,支持摘要模式和详细模式. 
+ *
+ * @module src/theme/tools/meta/tools
  */
 
 import { getToolDefinitions } from '../registry'
 import type { ToolDefinition, ToolResult } from '../types'
 
+/**
+ * 获取所有工具的工具定义
+ */
 export const getAllToolsDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'getAllTools',
-    description: `获取当前系统中所有可用工具的列表。
-
-当你不确定有哪些工具可用，或用户要求查看系统能力时，调用此工具。
-返回所有工具的完整分类列表和描述，方便 AI 全面理解系统能力。`,
+    description: `元信息工具：获取当前系统中所有可用工具的完整清单. \n\n【什么时候调用】\n- 用户问"你能做什么"、"系统有哪些工具"、"有什么功能"\n- 你需要全面了解系统具备哪些具体操作能力\n- 想确认某个工具是否存在及其用途\n- 作为 searchCapabilities 的替代方案,一次性浏览全部工具\n\n【不调用的情况】\n- 已经知道具体工具名称,直接调用即可\n- 只想搜索某个特定功能的工具,用 searchCapabilities 更高效\n\n【示例用法】\n- getAllTools() → 摘要模式,按类别浏览所有工具\n- getAllTools(detail=true) → 详细模式,查看每个工具的完整描述\n\n【注意事项】\n- 本工具返回的是系统中已注册的所有工具元信息\n- 部分工具可能需要先加载对应 Skill 才能调用`,
     parameters: {
       type: 'object',
       properties: {
         detail: {
           type: 'boolean',
-          description: '是否返回每个工具的完整描述。默认为 false(摘要模式)',
+          description: '是否返回详细模式. false=摘要模式(默认),按类别列出工具名和简短描述;true=详细模式,显示每个工具的完整描述. 默认 false. ',
           default: false
         }
       },
@@ -30,10 +35,13 @@ export const getAllToolsDef: ToolDefinition = {
 }
 
 /**
- * 获取所有工具的列表(支持摘要/详细模式)
+ * 获取所有工具的列表
  *
- * 返回所有工具的完整分类列表和描述。
- * detail=true 时格式更详细(适合首次了解系统)。
+ * 按类别分组展示,支持摘要/详细两种模式. 
+ * detail=true 时格式更详细(适合首次了解系统). 
+ *
+ * @param args - 包含 detail 参数(可选)
+ * @returns 工具分类列表及统计信息
  */
 export async function executeGetAllTools(args?: { detail?: boolean }): Promise<ToolResult> {
   try {
@@ -57,7 +65,7 @@ export async function executeGetAllTools(args?: { detail?: boolean }): Promise<T
     })
 
     const lines: string[] = []
-    lines.push(`系统共有 ${defs.length} 个工具，分为以下类别：\n`)
+    lines.push(`系统共有 ${defs.length} 个工具,分为以下类别：\n`)
 
     Object.entries(categoryMap).forEach(([category, items]) => {
       if (items.length === 0) return
@@ -72,7 +80,7 @@ export async function executeGetAllTools(args?: { detail?: boolean }): Promise<T
       }
     })
 
-    const hint = '\n\n💡 提示：如需查找特定工具，请使用 searchCapabilities 关键词搜索。'
+    const hint = '\n\n💡 提示：如需查找特定工具,请使用 searchCapabilities 关键词搜索. '
 
     return {
       success: true,
@@ -93,11 +101,20 @@ export async function executeGetAllTools(args?: { detail?: boolean }): Promise<T
   }
 }
 
+/**
+ * 根据工具名称推断所属分类
+ *
+ * 通过关键词匹配实现简单分类,用于工具列表分组展示. 
+ * 注意：github 必须在 code 之前判断,否则会被误判. 
+ *
+ * @param name - 工具名称
+ * @returns 分类名称
+ */
 function getToolCategory(name: string): string {
   if (name.includes('article')) return '文章管理'
   if (name.includes('file')) return '文件管理'
   if (name.includes('web') || name.includes('fetch') || name.includes('url')) return '网络工具'
-  // github 必须在 code 之前判断，否则 github* 会被误判为代码工具
+  // github 必须在 code 之前判断,否则 github* 会被误判为代码工具
   if (name.includes('github')) return '🐙 GitHub'
   if (name.includes('code') || name.includes('execute') || name.includes('analyze')) return '代码工具'
   if (name.includes('text') || name.includes('summarize') || name.includes('format') || name.includes('translate')) return '文本处理'

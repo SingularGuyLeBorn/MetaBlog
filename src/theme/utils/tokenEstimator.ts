@@ -1,10 +1,13 @@
 /**
- * Token Estimator - 基于 js-tiktoken 的 Token 估算工具
+ * ============================================================================
+ * 工具函数 - tokenEstimator
+ * ============================================================================
  *
- * 注意：DeepSeek 和 Kimi 使用各自的 tokenizer，没有开源 JS 实现。
- * 这里统一使用 cl100k_base(GPT-4)进行估算，对英文非常准确，
- * 对中文可能有 10-20% 偏差，但量级正确，完全满足用量条和截断决策的需求。
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/utils
  */
+
 
 import { Tiktoken } from 'js-tiktoken/lite'
 import cl100k_base from 'js-tiktoken/ranks/cl100k_base'
@@ -62,7 +65,7 @@ export function estimateChatTokens(
         if (part.type === 'text' && part.text) {
           total += estimateTextTokens(part.text)
         } else if (part.type === 'image_url' || part.type === 'image') {
-          total += 500 // 图片占位 token(实际取决于分辨率，这里用保守值)
+          total += 500 // 图片占位 token(实际取决于分辨率,这里用保守值)
         }
       }
     }

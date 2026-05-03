@@ -75,8 +75,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useData, useRoute } from 'vitepress'
+import { computed } from 'vue'
 
 interface Article {
   link: string
@@ -150,7 +150,7 @@ const displayArticles = computed(() => {
 })
 
 const lastUpdated = computed(() => {
-  // 简化处理，返回空字符串或当前日期
+  // 简化处理,返回空字符串或当前日期
   return ''
 })
 
@@ -162,32 +162,32 @@ const formatDate = (dateStr: string): string => {
 
 const getDefaultDescription = (title: string): string => {
   const descs: Record<string, string> = {
-    'Foundations': '强化学习基础理论，涵盖MDP、价值函数等核心概念',
-    'Bellman': '贝尔曼方程与动态规划，理解强化学习的数学基础',
-    'Policy Gradient': '策略梯度定理，从理论推导到实践应用',
-    'REINFORCE': '经典策略梯度算法，蒙特卡洛方法的基本实现',
-    'TRPO': '信任区域策略优化，保证策略更新的稳定性',
-    'PPO': '近端策略优化，OpenAI的主流算法实现',
-    'Actor-Critic': '演员-评论家架构，结合值函数与策略梯度',
-    'DPO': '直接偏好优化，无需Reward Model的对齐方法',
-    'GRPO': '组相对策略优化，DeepSeek-R1的核心算法',
-    'DAPO': '分布式偏好优化，扩展DPO到分布式场景',
-    'GSPO': '广义自偏好优化，统一的偏好学习框架',
-    'ORPO': '赔率比偏好优化，单阶段对齐方法',
-    'RLOO': '强化学习 leave-one-out，高效的优势估计',
-    'SimPO': '简单偏好优化，简化DPO的目标函数',
-    'IPO': '身份偏好优化，解决DPO的过拟合问题',
-    'KTO': 'Kahneman-Tversky优化，基于人类偏好的对齐',
-    'GMPO': '几何平均偏好优化，基于几何平均的目标函数',
-    'GDPO': '广义直接偏好优化，统一的DPO变体',
-    'GHPO': '广义混合偏好优化，结合多种偏好信号',
-    'JustRL': 'Justified Reinforcement Learning，可解释的强化学习',
-    'RLHF Pipeline': 'RLHF完整流程，从数据收集到模型部署',
-    'Scaling': '强化学习的规模扩展，大模型的训练技巧',
-    'LitePPO': '轻量级PPO，适用于资源受限场景',
-    'RLVR': '强化学习 with Verified Rewards，验证奖励的训练',
-    'OREO': '优化奖励估计与优化，高效的对齐策略',
-    'COCONUT': '连续思维链，非语言推理的新范式',
+    'Foundations': '强化学习基础理论,涵盖MDP、价值函数等核心概念',
+    'Bellman': '贝尔曼方程与动态规划,理解强化学习的数学基础',
+    'Policy Gradient': '策略梯度定理,从理论推导到实践应用',
+    'REINFORCE': '经典策略梯度算法,蒙特卡洛方法的基本实现',
+    'TRPO': '信任区域策略优化,保证策略更新的稳定性',
+    'PPO': '近端策略优化,OpenAI的主流算法实现',
+    'Actor-Critic': '演员-评论家架构,结合值函数与策略梯度',
+    'DPO': '直接偏好优化,无需Reward Model的对齐方法',
+    'GRPO': '组相对策略优化,DeepSeek-R1的核心算法',
+    'DAPO': '分布式偏好优化,扩展DPO到分布式场景',
+    'GSPO': '广义自偏好优化,统一的偏好学习框架',
+    'ORPO': '赔率比偏好优化,单阶段对齐方法',
+    'RLOO': '强化学习 leave-one-out,高效的优势估计',
+    'SimPO': '简单偏好优化,简化DPO的目标函数',
+    'IPO': '身份偏好优化,解决DPO的过拟合问题',
+    'KTO': 'Kahneman-Tversky优化,基于人类偏好的对齐',
+    'GMPO': '几何平均偏好优化,基于几何平均的目标函数',
+    'GDPO': '广义直接偏好优化,统一的DPO变体',
+    'GHPO': '广义混合偏好优化,结合多种偏好信号',
+    'JustRL': 'Justified Reinforcement Learning,可解释的强化学习',
+    'RLHF Pipeline': 'RLHF完整流程,从数据收集到模型部署',
+    'Scaling': '强化学习的规模扩展,大模型的训练技巧',
+    'LitePPO': '轻量级PPO,适用于资源受限场景',
+    'RLVR': '强化学习 with Verified Rewards,验证奖励的训练',
+    'OREO': '优化奖励估计与优化,高效的对齐策略',
+    'COCONUT': '连续思维链,非语言推理的新范式',
   }
   for (const [key, value] of Object.entries(descs)) {
     if (title?.toLowerCase().includes(key.toLowerCase())) return value
@@ -280,7 +280,7 @@ const extractTags = (title: string): string[] => {
   gap: 20px;
 }
 
-/* 文章卡片 - 宽卡片，纵向排列 */
+/* 文章卡片 - 宽卡片,纵向排列 */
 .article-card {
   display: flex;
   align-items: stretch;

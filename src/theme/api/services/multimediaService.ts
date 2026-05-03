@@ -1,11 +1,21 @@
 /**
- * 多媒体服务
- * 处理图片、视频等媒体文件的转换和验证
+ * ============================================================================
+ * 后端服务 - multimediaService
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/services
  */
+
 
 import type { MessageAttachment } from '@/theme/types/chat'
 
 /** 支持的媒体类型 */
+/**
+ * MediaType 类型别名
+ *
+ */
 export type MediaType = 'image' | 'video' | 'audio' | 'file'
 
 /**
@@ -22,7 +32,7 @@ export function detectMediaType(file: File): MediaType {
  * 检查文件是否受支持
  */
 export function isSupportedFile(file: File): { supported: boolean; reason?: string } {
-  // 图片格式（OCR 支持的位图格式，SVG 矢量图不支持）
+  // 图片格式(OCR 支持的位图格式,SVG 矢量图不支持)
   const SUPPORTED_IMAGE_FORMATS = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp']
   // 视频格式
   const SUPPORTED_VIDEO_FORMATS = ['video/mp4', 'video/quicktime', 'video/webm']
@@ -35,15 +45,15 @@ export function isSupportedFile(file: File): { supported: boolean; reason?: stri
   if (file.size > MAX_FILE_SIZE) {
     return {
       supported: false,
-      reason: `文件过大 (${formatFileSize(file.size)})，最大支持 ${formatFileSize(MAX_FILE_SIZE)}`
+      reason: `文件过大 (${formatFileSize(file.size)}),最大支持 ${formatFileSize(MAX_FILE_SIZE)}`
     }
   }
   
-  // 明确拦截 SVG（矢量图 OCR 无法处理）
+  // 明确拦截 SVG(矢量图 OCR 无法处理)
   if (file.type === 'image/svg+xml') {
     return {
       supported: false,
-      reason: '不支持 SVG 格式。OCR 引擎和视觉模型均无法处理矢量图，请转换为 PNG/JPEG/BMP'
+      reason: '不支持 SVG 格式. OCR 引擎和视觉模型均无法处理矢量图,请转换为 PNG/JPEG/BMP'
     }
   }
 
@@ -51,14 +61,14 @@ export function isSupportedFile(file: File): { supported: boolean; reason?: stri
   if (mediaType === 'image' && !SUPPORTED_IMAGE_FORMATS.includes(file.type)) {
     return {
       supported: false,
-      reason: `不支持的图片格式: ${file.type}。支持: PNG, JPEG, WebP, GIF, BMP`
+      reason: `不支持的图片格式: ${file.type}. 支持: PNG, JPEG, WebP, GIF, BMP`
     }
   }
   
   if (mediaType === 'video' && !SUPPORTED_VIDEO_FORMATS.includes(file.type)) {
     return {
       supported: false,
-      reason: `不支持的视频格式: ${file.type}。支持: MP4, MOV, WebM`
+      reason: `不支持的视频格式: ${file.type}. 支持: MP4, MOV, WebM`
     }
   }
   

@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * 外部 API BFF 路由 - yuque
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/external
+ */
+
+
 import type { ViteDevServer } from "vite";
 import { yuque as yuqueEnv } from "../../config/env";
 import { rateLimitExternal } from "../../middleware/rate-limit";
@@ -10,7 +21,7 @@ import type { RouteContext } from "../types";
 // =============================================================================
 //
 // 【重要说明】
-// 本路由使用语雀的「内部 Web API」，通过浏览器 Cookie 认证。
+// 本路由使用语雀的「内部 Web API」,通过浏览器 Cookie 认证. 
 // 与官方 Open API v2 的区别：
 //   - 无需 Personal Access Token(不需要超级会员)
 //   - 使用 Cookie: _yuque_session + _ctoken 认证
@@ -26,14 +37,14 @@ import type { RouteContext } from "../types";
 //   2. 按 F12 打开浏览器开发者工具
 //   3. 切换到 Application(应用)标签
 //   4. 左侧点击 Cookies → https://www.yuque.com
-//   5. 找到 _yuque_session，双击 Value 列复制值
-//   6. 找到 _ctoken，双击 Value 列复制值
+//   5. 找到 _yuque_session,双击 Value 列复制值
+//   6. 找到 _ctoken,双击 Value 列复制值
 //   7. 粘贴到 .env 文件中
 //
 // 【安全提醒】
-//   _yuque_session 和 _ctoken 是你的登录凭证，等同于账号密码。
-//   切勿泄露给他人，切勿提交到 Git 仓库！
-//   .env 文件已被 .gitignore 保护，不会进入版本控制。
+//   _yuque_session 和 _ctoken 是你的登录凭证,等同于账号密码. 
+//   切勿泄露给他人,切勿提交到 Git 仓库！
+//   .env 文件已被 .gitignore 保护,不会进入版本控制. 
 //
 // 【API 端点总览】
 //   读取操作(无需 CSRF)：
@@ -56,8 +67,8 @@ const YUQUE_BASE = "https://www.yuque.com";
 /**
  * 从环境变量获取语雀认证凭据
  *
- * 需要同时配置 YUQUE_SESSION 和 YUQUE_CTOKEN，缺一不可。
- * 如果只配了一个，会抛出错误并提示配置方法。
+ * 需要同时配置 YUQUE_SESSION 和 YUQUE_CTOKEN,缺一不可. 
+ * 如果只配了一个,会抛出错误并提示配置方法. 
  */
 function getYuqueCredentials(): { session: string; ctoken: string } {
   const session = yuqueEnv.session;
@@ -65,7 +76,7 @@ function getYuqueCredentials(): { session: string; ctoken: string } {
 
   if (!session || !ctoken) {
     throw new Error(
-      "【语雀认证失败】YUQUE_SESSION 或 YUQUE_CTOKEN 未配置。\n\n" +
+      "【语雀认证失败】YUQUE_SESSION 或 YUQUE_CTOKEN 未配置. \n\n" +
       "配置方法：\n" +
       "  1. 登录语雀网页版 https://www.yuque.com\n" +
       "  2. F12 → Application → Cookies → https://www.yuque.com\n" +
@@ -73,7 +84,7 @@ function getYuqueCredentials(): { session: string; ctoken: string } {
       "  4. 粘贴到 .env 文件：\n" +
       "       YUQUE_SESSION=xxx\n" +
       "       YUQUE_CTOKEN=xxx\n\n" +
-      "注意：这两个值是你的登录凭证，不要泄露给他人！"
+      "注意：这两个值是你的登录凭证,不要泄露给他人！"
     );
   }
 
@@ -83,22 +94,22 @@ function getYuqueCredentials(): { session: string; ctoken: string } {
 /**
  * 构建 HTTP 请求头
  *
- * 【注意】写操作(POST/PUT/DELETE)必须提供 referer 参数，
- * 否则语雀会返回 403 "missing csrf referer or origin" 错误。
+ * 【注意】写操作(POST/PUT/DELETE)必须提供 referer 参数,
+ * 否则语雀会返回 403 "missing csrf referer or origin" 错误. 
  */
 function buildHeaders(ctoken: string, referer?: string): Record<string, string> {
   const headers: Record<string, string> = {
-    // 模拟浏览器请求，避免被识别为机器人
+    // 模拟浏览器请求,避免被识别为机器人
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     // 语雀 Web API 返回 JSON
     "Accept": "application/json, text/plain, */*",
     // CSRF 防护：_ctoken 的值必须放在这个 header 里
     "X-CSRF-Token": ctoken,
-    // 标记为 Ajax 请求，某些接口需要
+    // 标记为 Ajax 请求,某些接口需要
     "X-Requested-With": "XMLHttpRequest",
   };
 
-  // 【关键】写操作必须有 Referer，否则 403
+  // 【关键】写操作必须有 Referer,否则 403
   if (referer) {
     headers["Referer"] = referer;
   }
@@ -138,7 +149,7 @@ async function yuqueApi(
 
   // 3. 构建请求头
   const headers = buildHeaders(ctoken, referer);
-  // Cookie 是认证的核心：_yuque_session 是登录态，_ctoken 是 CSRF token
+  // Cookie 是认证的核心：_yuque_session 是登录态,_ctoken 是 CSRF token
   headers["Cookie"] = `_yuque_session=${session}; _ctoken=${ctoken}`;
 
   // 4. 写操作需要 Content-Type
@@ -190,7 +201,7 @@ function parseBody(req: any): Promise<any> {
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString()));
       } catch (e) {
-        // 解析失败时返回空对象，避免报错中断
+        // 解析失败时返回空对象,避免报错中断
         resolve({});
       }
     });
@@ -237,8 +248,8 @@ function requireParams(res: any, params: Record<string, any>, ...keys: string[])
 /**
  * 注册标准 API 路由
  *
- * 自动处理方法匹配和错误捕获，减少每个路由的样板代码。
- * 特殊路由(如健康检查、multipart 上传)仍需手动注册。
+ * 自动处理方法匹配和错误捕获,减少每个路由的样板代码. 
+ * 特殊路由(如健康检查、multipart 上传)仍需手动注册. 
  */
 function registerRoute(
   server: ViteDevServer,
@@ -260,7 +271,7 @@ function registerRoute(
 /**
  * 调用语雀内部 Web API(支持 multipart/form-data)
  *
- * 用于图片上传等需要文件上传的场景。
+ * 用于图片上传等需要文件上传的场景. 
  */
 async function yuqueApiMultipart(
   path: string,
@@ -272,7 +283,7 @@ async function yuqueApiMultipart(
   const url = `${YUQUE_BASE}${path}`;
   const headers = buildHeaders(ctoken, referer);
   headers["Cookie"] = `_yuque_session=${session}; _ctoken=${ctoken}`;
-  // 注意：不设置 Content-Type，让 fetch 自动设置 multipart boundary
+  // 注意：不设置 Content-Type,让 fetch 自动设置 multipart boundary
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -295,6 +306,22 @@ async function yuqueApiMultipart(
 // 路由注册
 // =============================================================================
 
+/**
+ * 注册语雀(Yuque)Web API BFF 路由
+ *
+ * 使用浏览器 Cookie 认证(YUQUE_SESSION + YUQUE_CTOKEN),
+ * 覆盖语雀内部 Web API：
+ * - 知识库：列表、创建、详情、更新
+ * - 文档：列表、创建、读取、更新、删除、目录(TOC)
+ * - 图片：上传
+ * - 设置：读取和更新
+ *
+ * 写入操作自动添加 CSRF token 和 Referer 头,模拟真实浏览器请求. 
+ * 非 Lake 内容通过 markdownToLake() 自动转换为语雀专有格式. 
+ *
+ * @param server - Vite 开发服务器实例
+ * @param ctx    - 路由上下文
+ */
 export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   server.middlewares.use("/api/yuque", rateLimitExternal);
   const { structuredLog } = ctx;
@@ -303,7 +330,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // 1. 健康检查
   // ==========================================================================
   // GET /api/yuque/health
-  // 用途：验证语雀连接是否正常，返回知识库数量
+  // 用途：验证语雀连接是否正常,返回知识库数量
   // ==========================================================================
   server.middlewares.use("/api/yuque/health", async (req, res, next) => {
     if (req.method !== "GET") { next(); return; }
@@ -350,7 +377,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // 3. 知识库：获取目录(TOC)
   // ==========================================================================
   // GET /api/yuque/toc?repo_id={repo_id}
-  // 返回知识库的目录结构，包含 TITLE(目录项)和 DOC(文档项)
+  // 返回知识库的目录结构,包含 TITLE(目录项)和 DOC(文档项)
   //
   // 响应示例：
   //   {"data": {"toc": [
@@ -375,9 +402,9 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // 4. 文档：读取
   // ==========================================================================
   // GET /api/yuque/doc/read?repo_id={repo_id}&doc_slug={doc_slug}
-  // 返回文档详情，包括标题、内容、格式等
+  // 返回文档详情,包括标题、内容、格式等
   //
-  // 【注意】内容字段是 content(Lake 格式 HTML)，不是 body 或 body_asl
+  // 【注意】内容字段是 content(Lake 格式 HTML),不是 body 或 body_asl
   //
   // 响应示例：
   //   {"data": {
@@ -410,13 +437,13 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // Body: { repo_id, title, content?, format?, public? }
   //
   // 【format 参数说明】
-  //   - "lake" (默认): 内容必须是 Lake HTML，非 Lake 格式会自动调用 markdownToLake 转换
-  //   - "markdown": 直接上传 Markdown 原文，语雀服务端自动解析渲染
-  //   - "html": 直接上传 HTML，语雀服务端自动转换
+  //   - "lake" (默认): 内容必须是 Lake HTML,非 Lake 格式会自动调用 markdownToLake 转换
+  //   - "markdown": 直接上传 Markdown 原文,语雀服务端自动解析渲染
+  //   - "html": 直接上传 HTML,语雀服务端自动转换
   //
   // 【注意】
-  //   - lake 格式必须提供 Referer，否则 403
-  //   - markdown 格式上传时，传 body 字段(不是 body_asl)
+  //   - lake 格式必须提供 Referer,否则 403
+  //   - markdown 格式上传时,传 body 字段(不是 body_asl)
   //
   // 响应示例：
   //   {"data": {"id": 266476793, "slug": "nxh6ktx04drq0uft", "title": "...", ...}}
@@ -440,13 +467,13 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       const finalContent = body_asl || content;
       if (finalContent !== undefined) {
         if (format === "markdown" || format === "html") {
-          // 直接传 body，让语雀服务端自己解析
+          // 直接传 body,让语雀服务端自己解析
           payload.body = String(finalContent);
         } else {
-          // lake 格式：如果不是标准 Lake HTML，自动转换
+          // lake 格式：如果不是标准 Lake HTML,自动转换
           let lakeContent = String(finalContent);
           if (!lakeContent.startsWith("<!doctype lake>")) {
-            structuredLog.info("yuque.doc.create", "检测到非 Lake 格式，正在转换为 Lake HTML");
+            structuredLog.info("yuque.doc.create", "检测到非 Lake 格式,正在转换为 Lake HTML");
             lakeContent = markdownToLake(lakeContent);
           }
           payload.body_asl = lakeContent;
@@ -475,14 +502,14 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // Body: { repo_id, doc_id, title?, content?, format? }
   //
   // 【format 参数说明】
-  //   - "lake" (默认): 内容必须是 Lake HTML，非 Lake 格式会自动调用 markdownToLake 转换
-  //   - "markdown": 直接上传 Markdown 原文，语雀服务端自动解析渲染
-  //   - "html": 直接上传 HTML，语雀服务端自动转换
+  //   - "lake" (默认): 内容必须是 Lake HTML,非 Lake 格式会自动调用 markdownToLake 转换
+  //   - "markdown": 直接上传 Markdown 原文,语雀服务端自动解析渲染
+  //   - "html": 直接上传 HTML,语雀服务端自动转换
   //
   // 【注意】
-  //   - doc_id 是数字 ID，不是 slug
+  //   - doc_id 是数字 ID,不是 slug
   //   - 必须先调用 read 获取 doc_id
-  //   - 必须提供 Referer，否则 403
+  //   - 必须提供 Referer,否则 403
   // ==========================================================================
   server.middlewares.use("/api/yuque/doc/update", async (req, res, next) => {
     if (req.method !== "PUT" && req.method !== "POST") { next(); return; }
@@ -495,7 +522,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       const payload: any = { format: String(format) };
       if (title !== undefined) payload.title = String(title);
 
-      // 如果提供了 replace_text，先读取文档内容，执行局部替换，再提交
+      // 如果提供了 replace_text,先读取文档内容,执行局部替换,再提交
       let finalContent = body_asl || content;
       if (replace_text && typeof replace_text === "object" && replace_text.old !== undefined) {
         structuredLog.info("yuque.doc.update", "执行局部文本替换", {
@@ -512,14 +539,14 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
         );
         const docData = readResult.data || {};
 
-        // 2. 获取可编辑内容：优先原始格式字段，回退到 content
+        // 2. 获取可编辑内容：优先原始格式字段,回退到 content
         let currentContent = docData.body || docData.body_asl || docData.content || "";
 
         if (!currentContent) {
           sendJson(res, 400, {
             code: -1,
             msg: "替换失败：无法读取文档内容",
-            hint: "语雀 API 未返回 body/body_asl/content 字段，建议改用 content 参数进行全量更新",
+            hint: "语雀 API 未返回 body/body_asl/content 字段,建议改用 content 参数进行全量更新",
           });
           return;
         }
@@ -532,13 +559,13 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
           const textVersion = currentContent.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
           const searchText = oldText.replace(/\s+/g, " ").trim();
           if (searchText && textVersion.includes(searchText)) {
-            // 纯文本匹配成功，在原始内容中直接替换
+            // 纯文本匹配成功,在原始内容中直接替换
             finalContent = currentContent.replace(oldText, newText);
           } else {
             sendJson(res, 400, {
               code: -1,
               msg: `替换失败：文档中未找到指定文本 "${oldText.slice(0, 50)}"`,
-              hint: "replace_text 只能替换文档中确切存在的文本片段，请确保 old 文本与文档内容完全一致(包括空格)",
+              hint: "replace_text 只能替换文档中确切存在的文本片段,请确保 old 文本与文档内容完全一致(包括空格)",
               preview: currentContent.slice(0, 200),
             });
             return;
@@ -548,9 +575,9 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
         }
 
         // 4. 智能选择提交字段
-        // 如果原始内容来自 body/body_asl，保持原字段；否则传 body
+        // 如果原始内容来自 body/body_asl,保持原字段;否则传 body
         if (!docData.body && !docData.body_asl && docData.content) {
-          // 只能从 content 获取内容，传 body 让服务端解析
+          // 只能从 content 获取内容,传 body 让服务端解析
           if (format === "lake" && !finalContent.startsWith("<!doctype lake>")) {
             payload.format = "markdown";
           }
@@ -560,13 +587,13 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
       // 内容处理策略根据 format 不同而不同
       if (finalContent !== undefined) {
         if (format === "markdown" || format === "html") {
-          // 直接传 body，让语雀服务端自己解析
+          // 直接传 body,让语雀服务端自己解析
           payload.body = String(finalContent);
         } else {
-          // lake 格式：如果不是标准 Lake HTML，自动转换
+          // lake 格式：如果不是标准 Lake HTML,自动转换
           let lakeContent = String(finalContent);
           if (!lakeContent.startsWith("<!doctype lake>")) {
-            structuredLog.info("yuque.doc.update", "检测到非 Lake 格式，正在转换为 Lake HTML");
+            structuredLog.info("yuque.doc.update", "检测到非 Lake 格式,正在转换为 Lake HTML");
             lakeContent = markdownToLake(lakeContent);
           }
           payload.body_asl = lakeContent;
@@ -595,8 +622,8 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // Body: { repo_id, doc_id }
   //
   // 【注意】
-  //   - doc_id 是数字 ID，不是 slug
-  //   - 必须提供 Referer，否则 403
+  //   - doc_id 是数字 ID,不是 slug
+  //   - 必须提供 Referer,否则 403
   // ==========================================================================
   registerRoute(server, "/api/yuque/doc/delete", ["DELETE", "POST"], async (req, res) => {
     const body = await parseBody(req);
@@ -621,7 +648,7 @@ export function registerYuqueRoutes(server: ViteDevServer, ctx: RouteContext) {
   // POST /api/yuque/image/upload
   // Body: { image_base64, file_name? }
   //
-  // 将图片上传到语雀 CDN，返回可直接使用的图片 URL。
+  // 将图片上传到语雀 CDN,返回可直接使用的图片 URL. 
   // ==========================================================================
   server.middlewares.use("/api/yuque/image/upload", async (req, res, next) => {
     if (req.method !== "POST") { next(); return; }

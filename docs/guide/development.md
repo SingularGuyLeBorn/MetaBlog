@@ -1,6 +1,6 @@
 # 开发指南
 
-本文档面向开发者，介绍 MetaBlog 的开发规范、调试技巧和贡献流程。
+本文档面向开发者,介绍 MetaBlog 的开发规范、调试技巧和贡献流程. 
 
 ---
 
@@ -103,7 +103,7 @@ MetaBlog/
 
 1. **分类文件**(如 `doc.ts`、`wiki.ts`、`repo.ts`)：
    - 每个文件同时包含 **ToolDefinition**(Schema 定义)和 **ToolExecutor**(执行器)
-   - `description` 必须清晰，让 AI 知道何时调用
+   - `description` 必须清晰,让 AI 知道何时调用
    - 每个参数都要有 `description`
    - `required` 必须包含所有不可省略的参数
    - 必须做参数校验
@@ -120,13 +120,13 @@ MetaBlog/
 
 ### 前端调试
 
-1. **Vue DevTools**：安装浏览器扩展，查看组件状态和 Pinia store
-2. **控制台日志**：关键流程已添加日志，搜索 `[EntityLink]`、`[Tool]`、`[Agent]` 等前缀
+1. **Vue DevTools**：安装浏览器扩展,查看组件状态和 Pinia store
+2. **控制台日志**：关键流程已添加日志,搜索 `[EntityLink]`、`[Tool]`、`[Agent]` 等前缀
 3. **Network 面板**：查看 `/api/*` 请求和响应
 
 ### 后端调试
 
-后端日志使用结构化日志系统，格式如下：
+后端日志使用结构化日志系统,格式如下：
 
 ```
 [类别] 操作: 描述 {metadata}
@@ -143,10 +143,10 @@ MetaBlog/
 
 | 问题 | 调试方法 |
 |------|---------|
-| AI 不调用工具 | 检查工具定义 `description` 是否清晰；检查工具是否正确注册 |
-| 工具执行失败 | 查看浏览器 Network 面板；查看后端控制台错误日志 |
-| 文件保存失败 | 检查路径是否包含 `..`；检查是否在允许的板块内 |
-| 沙箱执行失败 | 检查本地 Python/Node 是否安装；查看 `/api/sandbox/exec` 响应 |
+| AI 不调用工具 | 检查工具定义 `description` 是否清晰;检查工具是否正确注册 |
+| 工具执行失败 | 查看浏览器 Network 面板;查看后端控制台错误日志 |
+| 文件保存失败 | 检查路径是否包含 `..`;检查是否在允许的板块内 |
+| 沙箱执行失败 | 检查本地 Python/Node 是否安装;查看 `/api/sandbox/exec` 响应 |
 
 ---
 
@@ -216,7 +216,7 @@ pnpm check:structure:verbose
 
 ### 添加新工具
 
-参考 [工具系统 - 自定义工具开发](./tools.md#自定义工具开发)。
+参考 [工具系统 - 自定义工具开发](./tools.md#自定义工具开发). 
 
 ### 添加新文档
 
@@ -230,7 +230,7 @@ pnpm check:structure:verbose
 
 ### 前端日志
 
-使用 `console.log` 时添加前缀，便于过滤：
+使用 `console.log` 时添加前缀,便于过滤：
 
 ```typescript
 console.log('[Tool] executing:', toolName)
@@ -261,7 +261,7 @@ system.error('category.action', '描述')
 | `LLM_DAILY_BUDGET` | 限制每日 API 花费 |
 | `HTTP_PROXY` | 开发时如需代理 |
 
-修改 `.env` 后需要重启开发服务器才能生效。
+修改 `.env` 后需要重启开发服务器才能生效. 
 
 ---
 

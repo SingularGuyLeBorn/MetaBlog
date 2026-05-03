@@ -1,12 +1,23 @@
 /**
  * ============================================================================
+ * 配置模块 - env
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/config
+ */
+
+
+/**
+ * ============================================================================
  * 统一环境变量配置层
  * ============================================================================
  *
  * 设计原则：
- * 1. 禁止业务代码直接读取 process.env，所有配置通过本文件收口
+ * 1. 禁止业务代码直接读取 process.env,所有配置通过本文件收口
  * 2. 敏感变量(Token/Key)绝不以 VITE_ 前缀暴露给前端
- * 3. 兼容旧变量名(如 FEISHU_APP_ID / LARK_APP_ID)，平滑迁移
+ * 3. 兼容旧变量名(如 FEISHU_APP_ID / LARK_APP_ID),平滑迁移
  * 4. 配置加载时自动清理引号和空值
  */
 
@@ -41,7 +52,7 @@ function readEnvNumber(...keys: string[]): number | undefined {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const github = {
-  /** GitHub Personal Access Token(后端 BFF 注入，不暴露前端) */
+  /** GitHub Personal Access Token(后端 BFF 注入,不暴露前端) */
   get token(): string {
     return readEnv("GITHUB_TOKEN", "VITE_GITHUB_TOKEN") || "";
   },
@@ -67,7 +78,7 @@ export const llm = {
   dailyBudget: readEnvNumber("LLM_DAILY_BUDGET") || 10,
 } as const;
 
-/** 按优先级读取 LLM Provider 配置(LLM_ 优先，兼容 VITE_ 回退) */
+/** 按优先级读取 LLM Provider 配置(LLM_ 优先,兼容 VITE_ 回退) */
 export function getLLMConfig(key: string): string | undefined {
   return readEnv(`LLM_${key}`, `VITE_${key}`);
 }

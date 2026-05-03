@@ -1,16 +1,27 @@
 /**
- * DeepSeek Provider 实现
+ * ============================================================================
+ * API 服务 - DeepSeekProvider
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/api
  */
+
 
 import type { ChatMessage } from '@/theme/types'
 import { BaseProvider } from './BaseProvider'
 import type { ChatOptions, ProviderInfo, StreamCallbacks, ToolCall } from './types'
 
+/**
+ * DeepSeekProvider 类
+ *
+ */
 export class DeepSeekProvider extends BaseProvider {
   readonly info: ProviderInfo = {
     id: 'deepseek',
     name: 'DeepSeek',
-    description: '深度求索，专注于大语言模型研发',
+    description: '深度求索,专注于大语言模型研发',
     themeColor: '#4D6BFA',
     website: 'https://deepseek.com',
     icon: '🔍'
@@ -20,11 +31,11 @@ export class DeepSeekProvider extends BaseProvider {
     super({
       apiConfig: {
         baseURL: 'https://api.deepseek.com/v1',
-        // 注意：前端不应直接持有 API Key。
-        // 生产环境由后端 /api/chat 代理所有 LLM 请求，Key 仅存在于服务端。
-        // 此处 apiKey 仅在服务端 SSR 或测试场景下由调用方传入。
+        // 注意：前端不应直接持有 API Key. 
+        // 生产环境由后端 /api/chat 代理所有 LLM 请求,Key 仅存在于服务端. 
+        // 此处 apiKey 仅在服务端 SSR 或测试场景下由调用方传入. 
         apiKey: apiKey || '',
-        model: 'deepseek-v4-pro'
+        model: 'deepseek-v4-flash'
       }
     })
   }
@@ -198,7 +209,7 @@ export class DeepSeekProvider extends BaseProvider {
    * 覆盖消息转换 - DeepSeek 不支持多模态
    */
   protected async convertMessages(messages: ChatMessage[]): Promise<any[]> {
-    // DeepSeek 目前不支持 vision，忽略图片附件
+    // DeepSeek 目前不支持 vision,忽略图片附件
     return messages.map(m => ({
       role: m.role,
       content: m.content

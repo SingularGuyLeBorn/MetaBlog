@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * Vue Composable - useDynamicSidebar
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/composables
+ */
+
+
 import { useData } from 'vitepress'
 import { computed, ref } from 'vue'
 
@@ -15,7 +26,7 @@ const lastUpdate = ref(Date.now())
 
 /**
  * 动态 Sidebar Hook
- * 实时获取文件系统结构，覆盖 VitePress 静态 Sidebar
+ * 实时获取文件系统结构,覆盖 VitePress 静态 Sidebar
  */
 export function useDynamicSidebar() {
   const { site } = useData()
@@ -66,10 +77,10 @@ export function useDynamicSidebar() {
   }
 
   /**
-   * 监听文件变动事件，自动刷新
+   * 监听文件变动事件,自动刷新
    */
   function setupAutoRefresh() {
-    // 事件处理器引用，用于后续清理
+    // 事件处理器引用,用于后续清理
     const fileChangeHandler = (e: Event) => {
       const customEvent = e as CustomEvent
       const { section } = customEvent.detail || {}

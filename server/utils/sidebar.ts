@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * 工具函数 - sidebar
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/utils
+ */
+
+
 import fs from 'fs'
 import path from 'path'
 
@@ -7,6 +18,13 @@ function formatName(name: string): string {
     return name.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
 }
 
+/**
+ * scanStrictSidebar 函数
+ *
+ * @param rootPath - 参数(string)
+ * @param relativePath - 参数(string)
+ * @returns 返回值(SidebarNode[])
+ */
 export function scanStrictSidebar(rootPath: string, relativePath: string): SidebarNode[] {
     const fullPath = path.resolve(rootPath, relativePath)
     if (!fs.existsSync(fullPath)) return []

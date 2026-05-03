@@ -1,13 +1,15 @@
-import { defineConfig, loadEnv } from "vitepress";
-import { withMermaid } from "vitepress-plugin-mermaid";
-import { fileURLToPath, URL } from "node:url";
-import path from "path";
 import fs from "fs";
-import { execSync } from "child_process";
-import https from "https";
-import http from "http";
 import MarkdownIt from "markdown-it";
 import mathjax3 from "markdown-it-mathjax3";
+import { fileURLToPath, URL } from "node:url";
+import path from "path";
+import { loadEnv } from "vitepress";
+import { withMermaid } from "vitepress-plugin-mermaid";
+import { metaBlogBffPlugin, metaBlogRoutingPlugin } from "../server/vitepress-integration";
+import {
+  scanDocStructure,
+  toSidebarFormat
+} from "./utils/doc-structure";
 
 // 数据目录
 const DATA_DIR = path.join(process.cwd(), ".data");
@@ -21,21 +23,6 @@ const yuqueEnv = loadEnv("", process.cwd(), "YUQUE_");
 
 // 合并环境变量到 process.env
 Object.assign(process.env, env, serverEnv, feishuEnv, larkEnv, yuqueEnv);
-import {
-  generateSectionSidebar,
-  clearSidebarCache,
-} from "./utils/global-sidebar";
-import {
-  scanDocStructure,
-  toSidebarFormat,
-  toDirectoryTree,
-  DocNode,
-} from "./utils/doc-structure";
-import { getTaskManager } from "../server/mcp-tools/task-manager";
-import { getAgentRuntimeManager } from "../server/mcp-tools/agent-runtime-manager";
-import { getMetaAgentManager } from "../server/mcp-tools/meta-agent-manager";
-import { getReportAgentManager } from "../server/mcp-tools/report-agent-manager";
-import { metaBlogRoutingPlugin, metaBlogBffPlugin } from "../server/vitepress-integration";
 
 
 // Helper to calculate word count
@@ -46,19 +33,11 @@ const getWordCount = (content: string) => {
 
 /**
  * Format a name for breadcrumb display
+ *
+ * 直接原样返回文件名,不做任何格式化. 
  */
 function formatBreadcrumbName(name: string): string {
-  let formatted = name.replace(/[_-]/g, " ");
-  formatted = formatted.replace(/^(\d+)\s*/, "$1 ");
-  return formatted
-    .split(" ")
-    .map((word) => {
-      if (!word) return "";
-      if (/^\d+$/.test(word)) return word;
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    })
-    .join(" ")
-    .trim();
+  return name;
 }
 
 /**
@@ -261,7 +240,7 @@ export default withMermaid({
     ssr: {
       noExternal: ["three"],
     },
-    // P1-8 修复：排除 Agent 数据目录和日志目录，避免 Vite HMR OOM
+    // P1-8 修复：排除 Agent 数据目录和日志目录,避免 Vite HMR OOM
     server: {
       watch: {
         ignored: [

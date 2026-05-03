@@ -1,7 +1,22 @@
+/**
+ * ============================================================================
+ * 内部业务路由 - files
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/internal
+ */
+
+
 import type { ViteDevServer } from "vite";
 import path from "path";
 import fs from "fs";
 
+/**
+ * RouteContext 接口定义
+ *
+ */
 export interface RouteContext {
   system: any;
   structuredLog: any;
@@ -9,6 +24,17 @@ export interface RouteContext {
   triggerReload: () => void;
 }
 
+/**
+ * 注册文件目录操作路由
+ *
+ * 挂载 /api/files/directory/* 端点,支持：
+ * - 目录树读取(递归列出 sections/ 下的所有文件)
+ * - 目录创建和删除
+ * - 文件重命名和移动
+ *
+ * @param server - Vite 开发服务器实例
+ * @param ctx    - 路由上下文
+ */
 export function registerFilesRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
   // ============================================
@@ -92,7 +118,7 @@ export function registerFilesRoutes(server: ViteDevServer, ctx: RouteContext) {
           ? process.cwd()
           : path.join(process.cwd(), "docs");
         
-        // 如果 dirPath 已经是 basePath 的子目录，不要重复拼接
+        // 如果 dirPath 已经是 basePath 的子目录,不要重复拼接
         const resolvedDirPath = path.resolve(dirPath);
         const resolvedBasePath = path.resolve(basePath);
         let fullPath: string;

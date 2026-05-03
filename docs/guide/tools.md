@@ -1,6 +1,6 @@
 # 工具系统
 
-MetaBlog 拥有完整的工具调用框架，AI 可以通过工具直接操作博客内容、查询外部信息、执行代码等。
+MetaBlog 拥有完整的工具调用框架,AI 可以通过工具直接操作博客内容、查询外部信息、执行代码等. 
 
 ---
 
@@ -171,7 +171,7 @@ Function Calling (OpenAI 格式)
 
 | 工具名 | 功能 |
 |--------|------|
-| `fetchUrl` | HTTP 请求(GET/POST/PUT/DELETE)，支持 HTML 提取 |
+| `fetchUrl` | HTTP 请求(GET/POST/PUT/DELETE),支持 HTML 提取 |
 | `webSearch` | DuckDuckGo 搜索(零成本) |
 
 ### 代码(2个)
@@ -206,7 +206,7 @@ Function Calling (OpenAI 格式)
 
 | 工具名 | 功能 |
 |--------|------|
-| `readArticle` | 读取网页文章/帖子内容（支持所有平台） |
+| `readArticle` | 读取网页文章/帖子内容(支持所有平台) |
 | `ocrImage` | OCR 图片识别 |
 | `processImage` | 图片处理 |
 
@@ -239,7 +239,7 @@ Function Calling (OpenAI 格式)
 
 ## 🔌 MCP 外部扩展
 
-通过 MCP (Model Context Protocol) 接入外部工具服务。
+通过 MCP (Model Context Protocol) 接入外部工具服务. 
 
 ### 预设配置(20+)
 
@@ -281,7 +281,7 @@ export const myToolDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'my_tool',
-    description: '一句话描述工具功能，让 AI 知道何时调用它',
+    description: '一句话描述工具功能,让 AI 知道何时调用它',
     parameters: {
       type: 'object',
       properties: {
@@ -332,9 +332,9 @@ registerTools([
 
 ## 🧪 工具测试
 
-访问 `/chat` 页面的工具测试面板(ToolTester.vue)，可以：
+访问 `/chat` 页面的工具测试面板(ToolTester.vue),可以：
 
-1. **单个测试**：选择工具，填写参数，执行测试
+1. **单个测试**：选择工具,填写参数,执行测试
 2. **批量测试**：一键测试所有工具
 3. **查看报告**：成功率统计、错误详情
 
@@ -369,6 +369,6 @@ createSuccessResult(
 ```typescript
 createErrorResult(
   'Path not found',
-  '文件路径不存在，请检查路径是否正确'
+  '文件路径不存在,请检查路径是否正确'
 )
 ```

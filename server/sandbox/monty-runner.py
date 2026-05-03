@@ -2,8 +2,8 @@
 """
 Monty Python 执行器包装脚本
 
-由 Node.js 后端通过 child_process.spawn 调用，使用 pydantic-monty
-安全执行 LLM 生成的 Python 代码。
+由 Node.js 后端通过 child_process.spawn 调用,使用 pydantic-monty
+安全执行 LLM 生成的 Python 代码. 
 
 安全特性：
 - Monty 解释器完全隔离宿主机(无文件系统、网络、环境变量访问)

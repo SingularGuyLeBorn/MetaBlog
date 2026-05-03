@@ -1,6 +1,14 @@
 /**
- * useToast - Toast 通知组合式函数
+ * ============================================================================
+ * Vue Composable - useToast
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/composables
  */
+
+
 // import { eventBus } from '@/theme/components/agent/core/EventBus'  // Agent module deprecated - using local implementation
 interface EventBus {
   on: (event: string, handler: (...args: any[]) => void) => (() => void)
@@ -20,6 +28,11 @@ interface ToastOptions {
   actionText?: string
 }
 
+/**
+ * useToast 函数
+ *
+ * @returns 返回值
+ */
 export function useToast() {
   function show(options: ToastOptions) {
     const resolvedType = options.type || 'info'

@@ -1,17 +1,22 @@
 /**
- * Meta-Agent - 控制其他 Agent 的类型定义
- * 
- * Meta-Agent 负责：
- * 1. Worker Agent 生命周期管理
- * 2. 任务分配和负载均衡
- * 3. 故障检测和恢复
- * 4. 资源调度
+ * ============================================================================
+ * 类型定义 - meta-agent
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/types
  */
 
-import type { AgentRuntime, AgentRuntimeStatus } from './agent-runtime'
-import type { Task, TaskPriority } from './task'
+
+import type { AgentRuntimeStatus } from './agent-runtime'
+import type { TaskPriority } from './task'
 
 /** Worker Agent 注册信息 */
+/**
+ * WorkerRegistration 接口定义
+ *
+ */
 export interface WorkerRegistration {
   agentId: string
   name: string
@@ -25,14 +30,22 @@ export interface WorkerRegistration {
 }
 
 /** Worker 优先级 */
+/**
+ * WorkerPriority 类型别名
+ *
+ */
 export type WorkerPriority = 'low' | 'normal' | 'high' | 'critical'
 
 /** Worker 状态 */
+/**
+ * WorkerStatus 接口定义
+ *
+ */
 export interface WorkerStatus {
   agentId: string
   status: AgentRuntimeStatus
   health: 'healthy' | 'degraded' | 'unhealthy'
-  
+
   // 负载信息
   load: {
     currentTasks: number
@@ -41,7 +54,7 @@ export interface WorkerStatus {
     cpuUsage: number
     memoryUsage: number
   }
-  
+
   // 性能指标
   performance: {
     tasksCompleted: number
@@ -49,7 +62,7 @@ export interface WorkerStatus {
     averageTaskDuration: number
     lastTaskCompletedAt?: number
   }
-  
+
   // 可用性
   availability: {
     isAvailable: boolean
@@ -59,7 +72,11 @@ export interface WorkerStatus {
 }
 
 /** 任务分配策略 */
-export type TaskAssignmentStrategy = 
+/**
+ * TaskAssignmentStrategy 类型别名
+ *
+ */
+export type TaskAssignmentStrategy =
   | 'round-robin'      // 轮询
   | 'least-loaded'     // 最小负载
   | 'priority-based'   // 优先级
@@ -67,6 +84,10 @@ export type TaskAssignmentStrategy =
   | 'random'           // 随机
 
 /** Meta-Agent 配置 */
+/**
+ * MetaAgentConfig 接口定义
+ *
+ */
 export interface MetaAgentConfig {
   // 负载均衡配置
   loadBalancing: {
@@ -75,7 +96,7 @@ export interface MetaAgentConfig {
     healthCheckInterval: number
     failoverEnabled: boolean
   }
-  
+
   // 任务分配配置
   taskAssignment: {
     maxRetries: number
@@ -85,7 +106,7 @@ export interface MetaAgentConfig {
     capabilityWeight: number
     loadWeight: number
   }
-  
+
   // 故障恢复配置
   faultRecovery: {
     enabled: boolean
@@ -93,7 +114,7 @@ export interface MetaAgentConfig {
     recoveryDelay: number
     autoRestart: boolean
   }
-  
+
   // 监控配置
   monitoring: {
     enabled: boolean
@@ -107,13 +128,17 @@ export interface MetaAgentConfig {
 }
 
 /** 任务分配结果 */
+/**
+ * TaskAssignment 接口定义
+ *
+ */
 export interface TaskAssignment {
   taskId: string
   assignedTo: string  // Worker agentId
   assignedAt: number
   priority: TaskPriority
   expectedDuration?: number
-  
+
   // 分配原因
   reason: {
     strategy: TaskAssignmentStrategy
@@ -126,6 +151,10 @@ export interface TaskAssignment {
 }
 
 /** 任务分配请求 */
+/**
+ * TaskAssignmentRequest 接口定义
+ *
+ */
 export interface TaskAssignmentRequest {
   taskId: string
   type: string
@@ -137,11 +166,15 @@ export interface TaskAssignmentRequest {
 }
 
 /** Meta-Agent 状态 */
+/**
+ * MetaAgentStatus 接口定义
+ *
+ */
 export interface MetaAgentStatus {
   // 基本信息
   status: 'initializing' | 'running' | 'stopped' | 'error'
   startedAt: number
-  
+
   // Worker 统计
   workers: {
     total: number
@@ -150,7 +183,7 @@ export interface MetaAgentStatus {
     unhealthy: number
     byStatus: Record<AgentRuntimeStatus, number>
   }
-  
+
   // 任务统计
   tasks: {
     totalAssigned: number
@@ -159,7 +192,7 @@ export interface MetaAgentStatus {
     currentlyRunning: number
     queued: number
   }
-  
+
   // 性能指标
   performance: {
     averageAssignmentTime: number
@@ -169,17 +202,21 @@ export interface MetaAgentStatus {
 }
 
 /** 负载均衡决策 */
+/**
+ * LoadBalanceDecision 接口定义
+ *
+ */
 export interface LoadBalanceDecision {
   type: 'assign' | 'rebalance' | 'scale-up' | 'scale-down'
   reason: string
-  
+
   // 任务迁移建议
   migrations?: {
     fromWorker: string
     toWorker: string
     tasks: string[]
   }[]
-  
+
   // 扩容建议
   scaleRecommendation?: {
     recommendedWorkers: number
@@ -189,6 +226,10 @@ export interface LoadBalanceDecision {
 }
 
 /** 故障事件 */
+/**
+ * WorkerFailureEvent 接口定义
+ *
+ */
 export interface WorkerFailureEvent {
   agentId: string
   timestamp: number
@@ -199,7 +240,7 @@ export interface WorkerFailureEvent {
     stackTrace?: string
     metricsSnapshot?: any
   }
-  
+
   // 恢复操作
   recovery: {
     attempted: boolean
@@ -210,6 +251,10 @@ export interface WorkerFailureEvent {
 }
 
 /** 资源调度计划 */
+/**
+ * ResourceSchedule 接口定义
+ *
+ */
 export interface ResourceSchedule {
   timestamp: number
   workers: {
@@ -217,7 +262,7 @@ export interface ResourceSchedule {
     allocatedTasks: string[]
     expectedLoad: number  // 0-1
   }[]
-  
+
   // 优化目标
   objectives: {
     minimizeMakespan: boolean
@@ -228,6 +273,10 @@ export interface ResourceSchedule {
 }
 
 /** Worker 注册请求 */
+/**
+ * RegisterWorkerRequest 接口定义
+ *
+ */
 export interface RegisterWorkerRequest {
   agentId: string
   name: string
@@ -238,6 +287,10 @@ export interface RegisterWorkerRequest {
 }
 
 /** Worker 注销请求 */
+/**
+ * UnregisterWorkerRequest 接口定义
+ *
+ */
 export interface UnregisterWorkerRequest {
   agentId: string
   reason?: string
@@ -245,6 +298,10 @@ export interface UnregisterWorkerRequest {
 }
 
 /** 批量任务分配请求 */
+/**
+ * BatchTaskAssignmentRequest 接口定义
+ *
+ */
 export interface BatchTaskAssignmentRequest {
   tasks: TaskAssignmentRequest[]
   strategy?: TaskAssignmentStrategy
@@ -255,6 +312,10 @@ export interface BatchTaskAssignmentRequest {
 }
 
 /** 批量任务分配结果 */
+/**
+ * BatchTaskAssignmentResult 接口定义
+ *
+ */
 export interface BatchTaskAssignmentResult {
   success: boolean
   assignments: TaskAssignment[]
@@ -262,7 +323,7 @@ export interface BatchTaskAssignmentResult {
     taskId: string
     reason: string
   }[]
-  
+
   // 统计
   stats: {
     total: number

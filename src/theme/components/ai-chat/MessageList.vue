@@ -2,55 +2,57 @@
   MessageList - 消息列表组件(3D 液态玻璃风格)
 -->
 <template>
-  <div ref="containerRef" class="message-list-3d" @scroll="handleScroll">
-    <!-- 欢迎页面 -->
-    <div v-if="!sessionId || messages.length === 0" class="welcome-page-3d">
-      <!-- 背景光效 -->
-      <div class="welcome-bg-effects">
-        <div class="bg-orb orb-1"></div>
-        <div class="bg-orb orb-2"></div>
-        <div class="bg-orb orb-3"></div>
+  <div class="message-list-wrapper">
+    <div ref="containerRef" class="message-list-3d" @scroll="handleScroll">
+      <!-- 欢迎页面 -->
+      <div v-if="!sessionId || messages.length === 0" class="welcome-page-3d">
+        <!-- 背景光效 -->
+        <div class="welcome-bg-effects">
+          <div class="bg-orb orb-1"></div>
+          <div class="bg-orb orb-2"></div>
+          <div class="bg-orb orb-3"></div>
+        </div>
+        
+        <div class="welcome-logo-3d">
+          <div class="logo-glow"></div>
+          <div class="logo-ring ring-1"></div>
+          <div class="logo-ring ring-2"></div>
+          <span class="logo-icon">✨</span>
+        </div>
+        <h1 class="welcome-title-3d">
+          <span class="gradient-text-3d">AI 助手</span>
+        </h1>
+        <p class="welcome-desc-3d">基于 DeepSeek 大模型,为您提供专业智能对话体验</p>
+        <div class="quick-actions-3d">
+          <button
+            v-for="(action, index) in quickActions"
+            :key="action.text"
+            class="quick-action-btn-3d"
+            :style="{ animationDelay: `${index * 0.1}s` }"
+            @click="$emit('use-prompt', action.text)"
+          >
+            <span class="action-icon-3d">{{ action.icon }}</span>
+            <span class="action-text">{{ action.text }}</span>
+          </button>
+        </div>
       </div>
-      
-      <div class="welcome-logo-3d">
-        <div class="logo-glow"></div>
-        <div class="logo-ring ring-1"></div>
-        <div class="logo-ring ring-2"></div>
-        <span class="logo-icon">✨</span>
-      </div>
-      <h1 class="welcome-title-3d">
-        <span class="gradient-text-3d">AI 助手</span>
-      </h1>
-      <p class="welcome-desc-3d">基于 DeepSeek 大模型，为您提供专业智能对话体验</p>
-      <div class="quick-actions-3d">
-        <button
-          v-for="(action, index) in quickActions"
-          :key="action.text"
-          class="quick-action-btn-3d"
-          :style="{ animationDelay: `${index * 0.1}s` }"
-          @click="$emit('use-prompt', action.text)"
-        >
-          <span class="action-icon-3d">{{ action.icon }}</span>
-          <span class="action-text">{{ action.text }}</span>
-        </button>
-      </div>
+
+      <!-- 消息列表 -->
+      <template v-else>
+        <MessageBubble
+          v-for="(message, index) in messages"
+          :key="message.id"
+          :message="message"
+          :is-streaming="isStreaming && index === messages.length - 1"
+          :is-last="index === messages.length - 1"
+          :versions="getMessageVersions(message)"
+          @regenerate="$emit('regenerate')"
+          @switch-version="$emit('switch-version', $event.userMessageId, $event.versionIndex)"
+        />
+      </template>
     </div>
 
-    <!-- 消息列表 -->
-    <template v-else>
-      <MessageBubble
-        v-for="(message, index) in messages"
-        :key="message.id"
-        :message="message"
-        :is-streaming="isStreaming && index === messages.length - 1"
-        :is-last="index === messages.length - 1"
-        :versions="getMessageVersions(message)"
-        @regenerate="$emit('regenerate')"
-        @switch-version="$emit('switch-version', $event.userMessageId, $event.versionIndex)"
-      />
-    </template>
-
-    <!-- 滚动到底部按钮 -->
+    <!-- 滚动到底部按钮（固定在视口，不随消息滚动） -->
     <Transition name="fade-3d">
       <button
         v-if="showScrollBtn"
@@ -67,7 +69,7 @@
 <script setup lang="ts">
 import { Icon } from '@/theme/components/common'
 import type { ChatMessage, MessageGroup } from '@/theme/types'
-import { nextTick, ref, watch } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import MessageBubble from './MessageBubble.vue'
 
 interface Props {
@@ -83,6 +85,7 @@ const emit = defineEmits<{
   'use-prompt': [text: string]
   regenerate: []
   'switch-version': [userMessageId: string, versionIndex: number]
+  'active-message-change': [messageId: string]
 }>()
 
 const getMessageVersions = (message: ChatMessage) => {
@@ -101,6 +104,55 @@ const getMessageVersions = (message: ChatMessage) => {
 const containerRef = ref<HTMLElement>()
 const showScrollBtn = ref(false)
 const userScrolledUp = ref(false)
+const activeMessageId = ref('')
+
+// IntersectionObserver 追踪消息可见性
+let messageObserver: IntersectionObserver | null = null
+let observedElements = new Map<Element, string>()
+
+function setupMessageObserver() {
+  if (!containerRef.value) return
+  if (messageObserver) messageObserver.disconnect()
+  observedElements.clear()
+
+  messageObserver = new IntersectionObserver(
+    (entries) => {
+      // 找出最可见的元素(相交比例最大的)
+      let maxRatio = 0
+      let mostVisibleId = ''
+      for (const entry of entries) {
+        if (entry.isIntersecting && entry.intersectionRatio > maxRatio) {
+          maxRatio = entry.intersectionRatio
+          mostVisibleId = observedElements.get(entry.target) || ''
+        }
+      }
+      if (mostVisibleId && mostVisibleId !== activeMessageId.value) {
+        activeMessageId.value = mostVisibleId
+        emit('active-message-change', mostVisibleId)
+      }
+    },
+    {
+      root: containerRef.value,
+      threshold: [0, 0.25, 0.5, 0.75, 1.0],
+    }
+  )
+
+  // 观察所有消息元素
+  const wrappers = containerRef.value.querySelectorAll('.message-wrapper')
+  for (const el of wrappers) {
+    const id = el.getAttribute('id')?.replace('msg-', '')
+    if (id) {
+      observedElements.set(el, id)
+      messageObserver.observe(el)
+    }
+  }
+}
+
+function teardownMessageObserver() {
+  messageObserver?.disconnect()
+  messageObserver = null
+  observedElements.clear()
+}
 
 const quickActions = [
   { icon: '📝', text: '帮我写一篇技术博客' },
@@ -121,12 +173,12 @@ let scrollTimeout: ReturnType<typeof setTimeout> | null = null
 function handleScroll() {
   const container = containerRef.value
   if (!container) return
-  
+
   if (scrollTimeout) clearTimeout(scrollTimeout)
-  
+
   const nearBottom = isNearBottom()
   showScrollBtn.value = !nearBottom
-  
+
   if (!nearBottom) {
     userScrolledUp.value = true
   } else {
@@ -134,28 +186,47 @@ function handleScroll() {
   }
 }
 
+onMounted(() => {
+  nextTick(() => setupMessageObserver())
+})
+
+onUnmounted(() => {
+  teardownMessageObserver()
+})
+
 function scrollToBottom(smooth = true) {
   const container = containerRef.value
   if (!container) return
-  
+
   container.scrollTo({
     top: container.scrollHeight,
     behavior: smooth ? 'smooth' : 'auto'
   })
-  
+
   userScrolledUp.value = false
   showScrollBtn.value = false
+}
+
+function scrollToMessage(messageId: string) {
+  const el = document.getElementById('msg-' + messageId)
+  const container = containerRef.value
+  if (el && container) {
+    const top = el.offsetTop - container.clientHeight / 2 + el.clientHeight / 2
+    container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+  }
 }
 
 watch(
   () => props.messages.length,
   (newLength, oldLength) => {
     if (newLength <= (oldLength || 0)) return
-    
+
     nextTick(() => {
       if (!userScrolledUp.value) {
         scrollToBottom(false)
       }
+      // 消息变化后重新观察
+      setupMessageObserver()
     })
   },
   { flush: 'post' }
@@ -206,15 +277,22 @@ watch(() => props.isStreaming, (streaming, wasStreaming) => {
   }
 })
 
-defineExpose({ scrollToBottom })
+defineExpose({ scrollToBottom, scrollToMessage })
 </script>
 
 <style scoped>
+.message-list-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .message-list-3d {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
-  position: relative;
   scroll-behavior: smooth;
 }
 

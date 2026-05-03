@@ -88,5 +88,5 @@ function checkPythonVersions() {
 checkNodeVersions();
 checkPythonVersions();
 
-console.log('\n' + (hasError ? `${RED}❌ 发现版本问题，请修复后再提交${RESET}` : `${GREEN}✅ 所有依赖版本一致且已锁定${RESET}`) + '\n');
+console.log('\n' + (hasError ? `${RED}❌ 发现版本问题,请修复后再提交${RESET}` : `${GREEN}✅ 所有依赖版本一致且已锁定${RESET}`) + '\n');
 process.exit(hasError ? 1 : 0);

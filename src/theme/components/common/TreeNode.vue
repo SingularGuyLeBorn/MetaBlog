@@ -395,7 +395,7 @@ const createChild = async () => {
   if (!newDocTitle.value.trim()) return
   
   try {
-    // 使用 /api/articles/create 端点，它会自动处理叶子文档转换
+    // 使用 /api/articles/create 端点,它会自动处理叶子文档转换
     const baseName = newDocTitle.value.trim()
     
     // 从 parent link 提取 section
@@ -490,11 +490,11 @@ const doRename = async () => {
     const backendName = result.data.displayName
     const backendNewPath = result.data.newPath
     
-    // 校验逻辑：如果后端返回的名字与前端期望的不一样，使用后端的(作为标准)
+    // 校验逻辑：如果后端返回的名字与前端期望的不一样,使用后端的(作为标准)
     const finalName = (backendName && backendName !== desiredName) ? backendName : desiredName
     const finalPath = backendNewPath || relativePath
     
-    // 校验警告(仅调试用，实际使用时会静默处理后端的规范化结果)
+    // 校验警告(仅调试用,实际使用时会静默处理后端的规范化结果)
     if (backendName && backendName !== desiredName) {
       console.log(`[Rename] 名称已规范化: "${desiredName}" -> "${backendName}"`)
     }
@@ -506,7 +506,7 @@ const doRename = async () => {
     showToast('success', `已重命名为 "${finalName}"`)
     showRenameModal.value = false
     
-    // 触发刷新，让父组件重新加载侧边栏数据
+    // 触发刷新,让父组件重新加载侧边栏数据
     emit('refresh', {
       oldPath: props.item.link,
       newPath: '/' + finalPath.replace(/\.md$/, ''),
@@ -514,7 +514,7 @@ const doRename = async () => {
       oldName: originalName
     })
     
-    // Step 5: 如果当前页面是被重命名的页面，自动导航到新路径
+    // Step 5: 如果当前页面是被重命名的页面,自动导航到新路径
     const currentPath = window.location.pathname.replace(/\/$/, '')
     const oldPath = props.item.link.replace(/\/$/, '')
     

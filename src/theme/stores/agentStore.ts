@@ -1,12 +1,13 @@
 /**
- * useAgentConfig - 统一的 Agent 配置管理
- * 
- * 数据源：后端API(唯一数据源)
- * 原则：
- * - 内存只做临时存储
- * - 所有数据通过API持久化到后端
- * - 空状态由UI处理
+ * ============================================================================
+ * Pinia Store - agentStore
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/stores
  */
+
 
 import {
   createAgent as createAgentStorage,
@@ -43,6 +44,11 @@ const isLoading = ref(false)
 
 // ==================== 计算属性 ====================
 
+/**
+ * useAgentConfig 函数
+ *
+ * @returns 返回值
+ */
 export function useAgentConfig() {
   // ----- Agents -----
   const activeAgent = computed(() =>
@@ -148,7 +154,7 @@ export function useAgentConfig() {
 
       activeAgentId.value = activeId
 
-      // 如果没有活跃 Agent，默认第一个
+      // 如果没有活跃 Agent,默认第一个
       if (!activeAgentId.value && agents.value.length > 0) {
         activeAgentId.value = agents.value[0].id
         await setActiveAgentId(agents.value[0].id)
@@ -180,7 +186,7 @@ export function useAgentConfig() {
     const success = await deleteAgentStorage(id)
     if (success) {
       agents.value = await getAgents()
-      // 如果删除的是活跃 Agent，切换到第一个
+      // 如果删除的是活跃 Agent,切换到第一个
       if (activeAgentId.value === id) {
         const defaultAgent = agents.value.find(a => a.isDefault) || agents.value[0]
         activeAgentId.value = defaultAgent?.id || null
@@ -261,7 +267,7 @@ export function useAgentConfig() {
       })
     })
 
-    lines.push('\n当需要调用工具时，系统会自动提供完整的参数定义。')
+    lines.push('\n当需要调用工具时,系统会自动提供完整的参数定义. ')
     return lines.join('\n')
   }
 
@@ -275,7 +281,7 @@ export function useAgentConfig() {
   function buildSystemPrompt(agent: Agent): string {
     const capabilities = agent.capabilities
     if (!capabilities) {
-      return '你是一个 helpful 的 AI 助手。'
+      return '你是一个 helpful 的 AI 助手. '
     }
 
     const skillIds = capabilities.skillIds || []
@@ -285,11 +291,11 @@ export function useAgentConfig() {
     const modelId = agent.runtime?.model || ''
     const isVisionModel = modelId ? modelSupports(modelId, 'vision') : false
     const visionHint = isVisionModel
-      ? '【模型能力】你是 vision 多模态模型，可以直接理解图片内容。当调用 readArticle 时，请传 fetch_image_files=true 让后端把文章图片转成 ms://file_id 供你查看。'
-      : '【模型能力】你是文本模型，无法直接查看图片。当调用 readArticle 时，请传 embed_ocr=true 让后端对文章图片做 OCR 识别文字。'
+      ? '【模型能力】你是 vision 多模态模型,可以直接理解图片内容. 当调用 readArticle 时,请传 fetch_image_files=true 让后端把文章图片转成 ms://file_id 供你查看. '
+      : '【模型能力】你是文本模型,无法直接查看图片. 当调用 readArticle 时,请传 embed_ocr=true 让后端对文章图片做 OCR 识别文字. '
 
     const roleSection = capabilities.customSystemPrompt ||
-      `你是 ${agent.name}，${agent.description}\n\n${visionHint}`
+      `你是 ${agent.name},${agent.description}\n\n${visionHint}`
 
     // 2. 只展示少量高频 Skill 作为示例(完整列表通过 getAllSkills 获取)
     const showcaseSkills = agentSkills.slice(0, 5)
@@ -314,49 +320,49 @@ export function useAgentConfig() {
     sections.push('')
     sections.push('## 你的核心能力：Function Calling(工具调用)')
     sections.push('')
-    sections.push('你配备了工具调用能力。API 请求中已经附带了所有可用工具的 schema 定义(参数类型、必填项等)。')
+    sections.push('你配备了工具调用能力. API 请求中已经附带了所有可用工具的 schema 定义(参数类型、必填项等). ')
     sections.push('')
     sections.push('### 工具调用流程')
-    sections.push('1. **判断需求**：分析用户请求，判断是否需要工具辅助')
-    sections.push('2. **输出 tool_calls**：当需要调用工具时，在 assistant 消息中输出 tool_calls(而非普通文本)')
+    sections.push('1. **判断需求**：分析用户请求,判断是否需要工具辅助')
+    sections.push('2. **输出 tool_calls**：当需要调用工具时,在 assistant 消息中输出 tool_calls(而非普通文本)')
     sections.push('3. **接收结果**：工具执行结果会以 tool 角色的消息返回给你')
-    sections.push('4. **继续处理**：基于工具结果，继续思考或直接回复用户')
+    sections.push('4. **继续处理**：基于工具结果,继续思考或直接回复用户')
     sections.push('5. **多轮调用**：复杂任务可以进行多轮工具调用')
     sections.push('')
     sections.push('### 关键规则')
-    sections.push('- **不需要工具时**：直接回答，不要强行调用')
-    sections.push('- **看到网页链接时**：直接调用 `readArticle(url=链接)` 获取内容，不需要加载任何 Skill')
-    sections.push('- **readArticle 失败时**：如果 readArticle 返回的内容明显不完整或为空（特别是微信、知乎等反爬强的网站），重新调用 `readArticle({"url": "链接", "method": "playwright"})` 强制使用浏览器渲染获取')
-    sections.push('- **loadSkill 是第一入口**：当用户请求涉及某个 Skill（如 GitHub、学术研究）时，必须先调用 loadSkill 加载该 Skill 的完整指导')
+    sections.push('- **不需要工具时**：直接回答,不要强行调用')
+    sections.push('- **看到网页链接时**：直接调用 `readArticle(url=链接)` 获取内容,不需要加载任何 Skill')
+    sections.push('- **readArticle 失败时**：如果 readArticle 返回的内容明显不完整或为空(特别是微信、知乎等反爬强的网站),重新调用 `readArticle({"url": "链接", "method": "playwright"})` 强制使用浏览器渲染获取')
+    sections.push('- **loadSkill 是第一入口**：当用户请求涉及某个 Skill(如 GitHub、学术研究)时,必须先调用 loadSkill 加载该 Skill 的完整指导')
     sections.push('- **参数准确**：确保传入的参数符合工具的 schema 要求')
     sections.push('- **工具失败时**：告知用户并提供替代方案')
-    sections.push('- **禁止编造**：不要编造工具调用结果，必须等待真实的 tool 结果消息')
+    sections.push('- **禁止编造**：不要编造工具调用结果,必须等待真实的 tool 结果消息')
     sections.push('')
     sections.push('## 你的 Skills(能力领域)')
-    sections.push(`你有 ${agentSkills.length} 个已启用的 Skills。以下是部分示例：`)
+    sections.push(`你有 ${agentSkills.length} 个已启用的 Skills. 以下是部分示例：`)
     sections.push(skillsShowcase || '(暂无已启用 Skills)')
     if (agentSkills.length > 5) {
-      sections.push(`\n... 还有 ${agentSkills.length - 5} 个 Skills 未展示。如需完整列表，调用 **getAllSkills** 工具。`)
+      sections.push(`\n... 还有 ${agentSkills.length - 5} 个 Skills 未展示. 如需完整列表,调用 **getAllSkills** 工具. `)
     }
     sections.push('')
     sections.push('## 常用工具示例')
     sections.push(toolsShowcase || '(暂无可用工具)')
     sections.push('')
-    sections.push('> **提示**：系统共有大量工具。如需查看完整工具列表(含分类和详细描述)，调用 **getAllTools** 工具。')
+    sections.push('> **提示**：系统共有大量工具. 如需查看完整工具列表(含分类和详细描述),调用 **getAllTools** 工具. ')
     sections.push('')
     sections.push('## 如何加载 Skill(重要！)')
     sections.push('')
-    sections.push('当你判断用户请求涉及某个 Skill 时，第一步是调用 loadSkill 工具：')
+    sections.push('当你判断用户请求涉及某个 Skill 时,第一步是调用 loadSkill 工具：')
     sections.push('')
     sections.push('```')
     sections.push('function loadSkill:0 {"skill_id": "article-manager"}')
     sections.push('```')
     sections.push('')
-    sections.push('加载后，该 Skill 的完整工作流程会作为一条新消息注入对话上下文，你在后续回复中必须遵循其指导。')
+    sections.push('加载后,该 Skill 的完整工作流程会作为一条新消息注入对话上下文,你在后续回复中必须遵循其指导. ')
     sections.push('')
     sections.push('### 完整工作流程示例')
     sections.push('')
-    sections.push('**示例 0 - 用户分享链接（最重要）：**')
+    sections.push('**示例 0 - 用户分享链接(最重要)：**')
     sections.push('```')
     sections.push('用户: "https://mp.weixin.qq.com/s/xxx 这篇文章讲了什么？"')
     sections.push('-> 判断：用户分享了一个网页链接')
@@ -386,9 +392,9 @@ export function useAgentConfig() {
     sections.push('')
     sections.push('### 注意事项')
     sections.push('- 不要在没有加载 Skill 的情况下直接调用 Skill 关联的工具')
-    sections.push('- 看到网页链接时，不需要加载 Skill，直接调用 `readArticle(url=链接)` 即可')
-    sections.push('- loadSkill 只需调用一次，加载后该 Skill 的内容会在后续对话中持续有效')
-    sections.push('- 如果用户请求不涉及任何 Skill，你可以直接调用通用工具或直接用文本回复')
+    sections.push('- 看到网页链接时,不需要加载 Skill,直接调用 `readArticle(url=链接)` 即可')
+    sections.push('- loadSkill 只需调用一次,加载后该 Skill 的内容会在后续对话中持续有效')
+    sections.push('- 如果用户请求不涉及任何 Skill,你可以直接调用通用工具或直接用文本回复')
 
     return sections.join('\n')
   }
@@ -485,7 +491,7 @@ export function useAgentConfig() {
    * - LOD-1: 工具定义通过 Function Calling 传递(已包含)
    * - LOD-2: Skill 详细内容(工作流、最佳实践)按需注入
    * 
-   * 当 Agent 匹配到 Skill 后，通过此方法加载完整 Skill 指导
+   * 当 Agent 匹配到 Skill 后,通过此方法加载完整 Skill 指导
    */
   function invokeSkill(skillId: string): { role: 'user', content: string } | null {
     const skill = skills.value.find(s => s.id === skillId)
@@ -506,7 +512,7 @@ export function useAgentConfig() {
 ${skill.content}${toolList}${usageScenarios}
 
 ---
-请根据以上 Skill 指导，使用提供的工具完成用户请求。
+请根据以上 Skill 指导,使用提供的工具完成用户请求. 
 `
 
     return {

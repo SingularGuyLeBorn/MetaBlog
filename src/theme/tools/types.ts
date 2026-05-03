@@ -1,17 +1,20 @@
 /**
+ * ============================================================================
  * 工具系统类型定义
- * 
- * 本文件定义了工具系统的核心类型，确保整个工具系统的类型安全。
- * 
- * @module ToolTypes
+ * ============================================================================
+ *
+ * 本文件定义了工具系统的核心类型,确保整个工具系统的类型安全. 
+ * 包括工具定义、执行结果、执行器类型、注册信息、调用记录等. 
+ *
+ * @module src/theme/tools/types
  */
 
 /**
  * 工具定义(Function Calling 格式)
- * 
- * 这是 OpenAI / DeepSeek 等 LLM 使用的函数调用格式。
- * 当 AI 决定调用工具时，会根据这个定义生成参数。
- * 
+ *
+ * 这是 OpenAI / DeepSeek 等 LLM 使用的函数调用格式. 
+ * 当 AI 决定调用工具时,会根据这个定义生成参数. 
+ *
  * @example
  * ```typescript
  * const readArticleDef: ToolDefinition = {
@@ -33,11 +36,11 @@
 export interface ToolDefinition {
   type: 'function'
   function: {
-    /** 工具名称，必须唯一，使用 snake_case */
+    /** 工具名称,必须唯一,使用 snake_case */
     name: string
-    /** 
-     * 工具描述，告诉 AI 什么时候应该使用这个工具
-     * 描述越清晰，AI 调用越准确
+    /**
+     * 工具描述,告诉 AI 什么时候应该使用这个工具
+     * 描述越清晰,AI 调用越准确
      */
     description: string
     /** 参数定义(支持 anyOf、oneOf 等 JSON Schema 扩展) */
@@ -55,14 +58,14 @@ export interface ToolDefinition {
 
 /**
  * 统一工具返回格式
- * 
- * 所有工具必须返回这个格式，确保 AI 能正确处理工具执行结果。
- * 
+ *
+ * 所有工具必须返回这个格式,确保 AI 能正确处理工具执行结果. 
+ *
  * 为什么需要统一格式？
  * 1. AI 不需要处理各种不同格式的返回
  * 2. 统一的错误处理机制
  * 3. 便于在 UI 中展示工具执行状态
- * 
+ *
  * @example
  * 成功返回：
  * ```typescript
@@ -72,7 +75,7 @@ export interface ToolDefinition {
  *   message: '找到 5 篇文章'
  * }
  * ```
- * 
+ *
  * 错误返回：
  * ```typescript
  * return {
@@ -86,9 +89,9 @@ export interface ToolDefinition {
 export interface ToolResult<T = any> {
   /** 是否成功 */
   success: boolean
-  /** 返回数据，成功时必填 */
+  /** 返回数据,成功时必填 */
   data?: T
-  /** 错误信息(技术细节)，失败时必填 */
+  /** 错误信息(技术细节),失败时必填 */
   error?: string
   /** 用户友好的提示消息 */
   message?: string
@@ -96,36 +99,36 @@ export interface ToolResult<T = any> {
   action?: string
   /** 建议的下一步操作 */
   suggestion?: string
-  /** 
-   * 错误码(HTTP 状态码或业务错误码)，供 AI 根据码做不同决策
-   * 例如 422→"仓库已存在，改用查询"，401→"Token 无效，告知用户配置"，429→"速率限制，等待重试"
+  /**
+   * 错误码(HTTP 状态码或业务错误码),供 AI 根据码做不同决策
+   * 例如 422→"仓库已存在,改用查询",401→"Token 无效,告知用户配置",429→"速率限制,等待重试"
    */
   code?: string | number
   /**
    * 要注入到对话上下文中的额外消息
-   * 
+   *
    * 用于 loadSkill 等工具：调用后需要将 skill 内容
-   * 作为新消息注入到后续对话中，让 Agent 可以看到完整指导
+   * 作为新消息注入到后续对话中,让 Agent 可以看到完整指导
    */
   injectMessages?: Array<{ role: string; content: string }>
   /**
    * 执行此工具后应激活的其他工具名称列表
-   * 
+   *
    * 用于渐进式披露：searchCapabilities、loadSkill 等元工具
-   * 执行后，将匹配的工具 schema 加入下轮对话的可用工具列表
+   * 执行后,将匹配的工具 schema 加入下轮对话的可用工具列表
    */
   activateTools?: string[]
 }
 
 /**
  * 工具执行器类型
- * 
- * 工具执行器是一个函数，接收参数，返回 ToolResult 或字符串。
- * 支持异步和同步两种模式。
- * 
+ *
+ * 工具执行器是一个函数,接收参数,返回 ToolResult 或字符串. 
+ * 支持异步和同步两种模式. 
+ *
  * 为什么支持返回字符串？
- * 为了向后兼容，旧的工具可能直接返回字符串。
- * 但新工具应该始终返回 ToolResult。
+ * 为了向后兼容,旧的工具可能直接返回字符串. 
+ * 但新工具应该始终返回 ToolResult. 
  */
 export type ToolExecutor = (
   args: Record<string, any>
@@ -133,7 +136,7 @@ export type ToolExecutor = (
 
 /**
  * 工具注册信息
- * 
+ *
  * 注册工具时需要提供：
  * - name: 工具唯一标识
  * - definition: 工具定义(给 AI 看)
@@ -147,8 +150,8 @@ export interface ToolRegistration {
 
 /**
  * 工具调用记录(用于 UI 展示)
- * 
- * 每次工具调用都会生成一条记录，用于：
+ *
+ * 每次工具调用都会生成一条记录,用于：
  * 1. 在 UI 中展示工具调用过程
  * 2. 调试和日志记录
  * 3. 重放工具调用
@@ -169,9 +172,9 @@ export interface ToolCallRecord {
 
 /**
  * AI 返回的工具调用
- * 
- * 这是 LLM API 返回的工具调用格式。
- * 
+ *
+ * 这是 LLM API 返回的工具调用格式. 
+ *
  * @example
  * ```json
  * {
@@ -195,8 +198,8 @@ export interface ToolCall {
 
 /**
  * 思考步骤(用于展示推理过程)
- * 
- * 在多轮工具调用中，展示 AI 的思考过程。
+ *
+ * 在多轮工具调用中,展示 AI 的思考过程. 
  */
 export interface ThinkingStep {
   id: string
@@ -217,13 +220,14 @@ export interface ThinkingStep {
 
 /**
  * 创建成功结果
- * 
+ *
  * @param data - 返回的数据
  * @param message - 用户友好的消息
  * @param action - 操作类型
  * @param suggestion - 下一步建议
+ * @param code - 错误码或状态码
  * @returns ToolResult
- * 
+ *
  * @example
  * ```typescript
  * return createSuccessResult(
@@ -253,12 +257,13 @@ export function createSuccessResult<T>(
 
 /**
  * 创建错误结果
- * 
+ *
  * @param error - 错误信息(技术细节)
  * @param message - 用户友好的错误消息
  * @param suggestion - 如何解决或重试的建议
+ * @param code - 错误码或状态码
  * @returns ToolResult
- * 
+ *
  * @example
  * ```typescript
  * return createErrorResult(
@@ -278,7 +283,7 @@ export function createErrorResult(
     success: false,
     error,
     message: message || `操作失败: ${error}`,
-    suggestion: suggestion || '请检查参数后重试，或尝试其他方式',
+    suggestion: suggestion || '请检查参数后重试,或尝试其他方式',
     code
   }
 }

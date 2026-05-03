@@ -1,31 +1,15 @@
 /**
- * Skill Parser - 解析 .skills/ 目录下的 Skill 文件
- * 
- * 文件格式: YAML frontmatter + Markdown 内容
- * 
- * 示例:
- * ```
- * ---
- * id: article-manager
- * name: 文章管理
- * description: 管理 VitePress 博客文章
- * icon: 📝
- * category: content
- * tags: [文章, 博客, 知识库]
- * tools: [searchArticles, createArticle, ...]
- * ---
- * 
- * ## 使用场景
- * - 用户想要查找已有文章
- * - 用户想要创建新文章
- * 
- * ## Prompt
- * 
- * 你是文章管理专家...
- * ```
+ * ============================================================================
+ * Skill 系统 - skillParser
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/skills
  */
 
-import type { SkillMetadata, ParsedSkillFile, Skill } from './types'
+
+import type { ParsedSkillFile, Skill, SkillMetadata } from './types'
 
 // ═══════════════════════════════════════════════════════════════
 // YAML Frontmatter 解析
@@ -45,10 +29,10 @@ function parseYAML(yaml: string): Record<string, any> {
 
   for (const line of lines) {
     const trimmed = line.trim()
-    
+
     // 跳过空行和注释
     if (!trimmed || trimmed.startsWith('#')) continue
-    
+
     // 列表项
     if (trimmed.startsWith('- ')) {
       if (isInList && currentKey) {
@@ -56,7 +40,7 @@ function parseYAML(yaml: string): Record<string, any> {
       }
       continue
     }
-    
+
     // 键值对
     const match = trimmed.match(/^([^:]+):\s*(.*)$/)
     if (match) {
@@ -66,11 +50,11 @@ function parseYAML(yaml: string): Record<string, any> {
         currentList = []
         isInList = false
       }
-      
+
       const [, key, value] = match
       currentKey = key.trim()
       const trimmedValue = value.trim()
-      
+
       if (trimmedValue === '') {
         // 可能是列表的开始
         isInList = true
@@ -82,12 +66,12 @@ function parseYAML(yaml: string): Record<string, any> {
       }
     }
   }
-  
+
   // 处理最后的列表
   if (isInList && currentKey) {
     result[currentKey] = currentList
   }
-  
+
   return result
 }
 
@@ -110,14 +94,14 @@ function parseList(value: string | string[] | undefined): string[] {
  */
 export function parseSkillFile(content: string, filePath?: string): ParsedSkillFile {
   const match = content.match(FRONTMATTER_REGEX)
-  
+
   if (!match) {
     throw new Error(`Invalid skill file format: missing frontmatter${filePath ? ` in ${filePath}` : ''}`)
   }
-  
+
   const [, yamlContent, markdownContent] = match
   const yaml = parseYAML(yamlContent)
-  
+
   // 提取 metadata
   const metadata: SkillMetadata = {
     id: yaml.id || '',
@@ -133,19 +117,19 @@ export function parseSkillFile(content: string, filePath?: string): ParsedSkillF
     tools: parseList(yaml.tools),
     usageScenarios: parseList(yaml.scenarios)
   }
-  
+
   // 验证必要字段
   if (!metadata.id) {
     throw new Error(`Skill missing required field: id${filePath ? ` in ${filePath}` : ''}`)
   }
-  
+
   // 提取 Prompt 部分 (从 ## Prompt 开始)
   let prompt = markdownContent
   const promptMatch = markdownContent.match(/##\s*Prompt\s*\n([\s\S]*)/i)
   if (promptMatch) {
     prompt = promptMatch[1].trim()
   }
-  
+
   return {
     metadata,
     content: markdownContent.trim(),
@@ -159,7 +143,7 @@ export function parseSkillFile(content: string, filePath?: string): ParsedSkillF
 export function extractSkillIdFromPath(filePath: string): string {
   const parts = filePath.split(/[/\\]/)
   const filename = parts[parts.length - 1]
-  // 如果是 SKILL.md，取父目录名
+  // 如果是 SKILL.md,取父目录名
   if (filename === 'SKILL.md') {
     return parts[parts.length - 2] || ''
   }
@@ -177,7 +161,7 @@ export function extractSkillIdFromPath(filePath: string): string {
 export function buildSkillFromContent(content: string, filePath?: string): Skill {
   const parsed = parseSkillFile(content, filePath)
   const now = Date.now()
-  
+
   return {
     ...parsed.metadata,
     content: parsed.prompt,
@@ -189,7 +173,7 @@ export function buildSkillFromContent(content: string, filePath?: string): Skill
 /**
  * 加载所有 Skill 文件
  * 
- * 注意: 这个函数在浏览器环境中使用 fetch，
+ * 注意: 这个函数在浏览器环境中使用 fetch,
  * 在 Node 环境中需要传入自定义的 readFile 函数
  */
 export async function loadSkillsFromDirectory(
@@ -197,17 +181,17 @@ export async function loadSkillsFromDirectory(
   skillIds: string[]
 ): Promise<Skill[]> {
   const skills: Skill[] = []
-  
+
   for (const id of skillIds) {
     try {
       const url = `${baseUrl}/${id}/SKILL.md`
       const response = await fetch(url)
-      
+
       if (!response.ok) {
         console.warn(`[SkillParser] Failed to load skill ${id}: ${response.status}`)
         continue
       }
-      
+
       const content = await response.text()
       const skill = buildSkillFromContent(content, url)
       skills.push(skill)
@@ -215,7 +199,7 @@ export async function loadSkillsFromDirectory(
       console.error(`[SkillParser] Error loading skill ${id}:`, error)
     }
   }
-  
+
   return skills
 }
 
@@ -231,7 +215,7 @@ export async function loadAllSkillsFromFS(
   subDirs: string[]
 ): Promise<Skill[]> {
   const skills: Skill[] = []
-  
+
   for (const dir of subDirs) {
     try {
       const filePath = `${skillsDir}/${dir}/SKILL.md`
@@ -242,7 +226,7 @@ export async function loadAllSkillsFromFS(
       console.warn(`[SkillParser] Failed to load skill from ${dir}:`, error)
     }
   }
-  
+
   return skills
 }
 

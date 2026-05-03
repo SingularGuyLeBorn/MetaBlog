@@ -1,12 +1,13 @@
 /**
- * Chat Storage Service - 后端API数据源
- * 
- * 数据源：后端API(唯一数据源)
- * 原则：
- * - 所有会话和消息通过API持久化到后端
- * - 内存只做临时缓存
- * - 空状态由UI处理
+ * ============================================================================
+ * 后端服务 - chatStorage
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/services
  */
+
 
 import { API_CONFIG, API_ENDPOINTS } from '@/theme/api/config'
 import type { ChatSession, MessageGroup, SessionConfig } from '@/theme/types'
@@ -60,7 +61,7 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
 
     if (!response.ok) {
       // 只有基础API端点返回404时才禁用API
-      // 特定资源不存在(如某个session ID不存在)是正常的业务逻辑，不应禁用API
+      // 特定资源不存在(如某个session ID不存在)是正常的业务逻辑,不应禁用API
       if (response.status === 404 && isEndpointNotFound(url, response.status)) {
         apiAvailable = false
         console.warn('[ChatStorage] API endpoint not available (404):', url)
@@ -95,16 +96,31 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
   }
 }
 
+/**
+ * 判断是否为ApiAvailable
+ *
+ * @returns 返回值(boolean)
+ */
 export function isApiAvailable(): boolean {
   return apiAvailable
 }
 
+/**
+ * resetApiStatus 函数
+ *
+ * @returns 返回值
+ */
 export function resetApiStatus(): void {
   apiAvailable = true
 }
 
 // ==================== Session API ====================
 
+/**
+ * 获取Sessions
+ *
+ * @returns 返回值(Promise<ChatSession[]>)
+ */
 export async function getSessions(): Promise<ChatSession[]> {
   if (cache.sessions) return cache.sessions
 
@@ -118,11 +134,17 @@ export async function getSessions(): Promise<ChatSession[]> {
   }
 }
 
+/**
+ * 获取Session
+ *
+ * @param id - 参数(string)
+ * @returns 返回值(Promise<ChatSession | null>)
+ */
 export async function getSession(id: string): Promise<ChatSession | null> {
   try {
     return await apiRequest<ChatSession>(API_ENDPOINTS.SESSION_DETAIL(id))
   } catch (e: any) {
-    // 404 表示 session 不存在，这是正常的业务逻辑，不记录为错误
+    // 404 表示 session 不存在,这是正常的业务逻辑,不记录为错误
     if (e.message?.includes('404')) {
       return null
     }
@@ -131,6 +153,12 @@ export async function getSession(id: string): Promise<ChatSession | null> {
   }
 }
 
+/**
+ * 创建Session
+ *
+ * @param params - 参数
+ * @returns 返回值(Promise<ChatSession | null>)
+ */
 export async function createSession(params?: { id?: string; title?: string; config?: Partial<SessionConfig> }): Promise<ChatSession | null> {
   try {
     const session = await apiRequest<ChatSession>(API_ENDPOINTS.SESSIONS, {
@@ -146,6 +174,13 @@ export async function createSession(params?: { id?: string; title?: string; conf
   }
 }
 
+/**
+ * 更新Session
+ *
+ * @param id - 参数(string)
+ * @param updates - 参数(Partial<ChatSession>)
+ * @returns 返回值(Promise<ChatSession | null>)
+ */
 export async function updateSession(id: string, updates: Partial<ChatSession>): Promise<ChatSession | null> {
   try {
     const session = await apiRequest<ChatSession>(API_ENDPOINTS.SESSION_DETAIL(id), {
@@ -156,7 +191,7 @@ export async function updateSession(id: string, updates: Partial<ChatSession>): 
     cache.sessions = null
     return session
   } catch (e: any) {
-    // 404 表示 session 不存在，可能已被删除
+    // 404 表示 session 不存在,可能已被删除
     if (e.message?.includes('404')) {
       return null
     }
@@ -165,6 +200,12 @@ export async function updateSession(id: string, updates: Partial<ChatSession>): 
   }
 }
 
+/**
+ * 删除Session
+ *
+ * @param id - 参数(string)
+ * @returns 返回值(Promise<boolean>)
+ */
 export async function deleteSession(id: string): Promise<boolean> {
   try {
     await apiRequest(API_ENDPOINTS.SESSION_DETAIL(id), {
@@ -182,6 +223,12 @@ export async function deleteSession(id: string): Promise<boolean> {
 
 // ==================== Message API ====================
 
+/**
+ * 获取MessageGroups
+ *
+ * @param sessionId - 参数(string)
+ * @returns 返回值(Promise<MessageGroup[]>)
+ */
 export async function getMessageGroups(sessionId: string): Promise<MessageGroup[]> {
   if (cache.messageGroups[sessionId]) return cache.messageGroups[sessionId]
 
@@ -195,6 +242,13 @@ export async function getMessageGroups(sessionId: string): Promise<MessageGroup[
   }
 }
 
+/**
+ * saveMessageGroup 函数
+ *
+ * @param sessionId - 参数(string)
+ * @param group - 参数(MessageGroup)
+ * @returns 返回值(Promise<boolean>)
+ */
 export async function saveMessageGroup(sessionId: string, group: MessageGroup): Promise<boolean> {
   try {
     await apiRequest(API_ENDPOINTS.MESSAGES(sessionId), {
@@ -217,6 +271,14 @@ export async function saveMessageGroup(sessionId: string, group: MessageGroup): 
 // 注意：后端不支持单个消息组的 PUT/DELETE 操作
 // 这些操作通过 saveAllMessageGroups 批量替换实现
 
+/**
+ * 更新MessageGroup
+ *
+ * @param sessionId - 参数(string)
+ * @param groupId - 参数(string)
+ * @param updates - 参数(Partial<MessageGroup>)
+ * @returns 返回值(Promise<boolean>)
+ */
 export async function updateMessageGroup(sessionId: string, groupId: string, updates: Partial<MessageGroup>): Promise<boolean> {
   // 先获取当前所有消息组
   const groups = await getMessageGroups(sessionId)
@@ -232,6 +294,13 @@ export async function updateMessageGroup(sessionId: string, groupId: string, upd
   return saveAllMessageGroups(sessionId, groups)
 }
 
+/**
+ * 删除MessageGroup
+ *
+ * @param sessionId - 参数(string)
+ * @param groupId - 参数(string)
+ * @returns 返回值(Promise<boolean>)
+ */
 export async function deleteMessageGroup(sessionId: string, groupId: string): Promise<boolean> {
   // 先获取当前所有消息组
   const groups = await getMessageGroups(sessionId)
@@ -239,7 +308,7 @@ export async function deleteMessageGroup(sessionId: string, groupId: string): Pr
   // 过滤掉要删除的消息组
   const filteredGroups = groups.filter(g => g.userMessage.id !== groupId && !g.aiVersions.some(v => v.id === groupId))
 
-  // 如果数量没变，说明没找到
+  // 如果数量没变,说明没找到
   if (filteredGroups.length === groups.length) return false
 
   // 批量保存剩余的消息组
@@ -248,6 +317,13 @@ export async function deleteMessageGroup(sessionId: string, groupId: string): Pr
 
 // ==================== 批量操作 ====================
 
+/**
+ * saveAllMessageGroups 函数
+ *
+ * @param sessionId - 参数(string)
+ * @param groups - 参数(MessageGroup[])
+ * @returns 返回值(Promise<boolean>)
+ */
 export async function saveAllMessageGroups(sessionId: string, groups: MessageGroup[]): Promise<boolean> {
   try {
     await apiRequest(API_ENDPOINTS.MESSAGES_BATCH(sessionId), {
@@ -258,7 +334,7 @@ export async function saveAllMessageGroups(sessionId: string, groups: MessageGro
     cache.messageGroups[sessionId] = groups
     return true
   } catch (e: any) {
-    // 404 表示 session 不存在，可能已被删除
+    // 404 表示 session 不存在,可能已被删除
     if (e.message?.includes('404')) {
       return false
     }
@@ -269,15 +345,31 @@ export async function saveAllMessageGroups(sessionId: string, groups: MessageGro
 
 // ==================== 缓存管理 ====================
 
+/**
+ * clearCache 函数
+ *
+ * @returns 返回值
+ */
 export function clearCache(): void {
   cache.sessions = null
   cache.messageGroups = {}
 }
 
+/**
+ * invalidateSessionsCache 函数
+ *
+ * @returns 返回值
+ */
 export function invalidateSessionsCache(): void {
   cache.sessions = null
 }
 
+/**
+ * invalidateMessagesCache 函数
+ *
+ * @param sessionId - 参数
+ * @returns 返回值
+ */
 export function invalidateMessagesCache(sessionId?: string): void {
   if (sessionId) {
     delete cache.messageGroups[sessionId]
@@ -288,6 +380,11 @@ export function invalidateMessagesCache(sessionId?: string): void {
 
 // ==================== 初始化 ====================
 
+/**
+ * initializeStorage 函数
+ *
+ * @returns 返回值
+ */
 export function initializeStorage(): void {
   clearCache()
 }

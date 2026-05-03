@@ -1,10 +1,21 @@
 /**
+ * ============================================================================
+ * 工具函数 - lake-builder
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/utils
+ */
+
+
+/**
  * =============================================================================
  * 语雀 Lake HTML 构建工具 (lake-builder.ts)
  * =============================================================================
  * 
- * 将 Markdown / 纯文本转换为语雀专用的 Lake HTML 格式。
- * Lake 是语雀自研的富文本格式，其特点是每个块级元素都有唯一的 uID。
+ * 将 Markdown / 纯文本转换为语雀专用的 Lake HTML 格式. 
+ * Lake 是语雀自研的富文本格式,其特点是每个块级元素都有唯一的 uID. 
  * 
  * 【2024-04-21 修复记录】
  * 1. 表格检测：支持 | :-- | :-- | 等带空格的 Markdown 表格分隔符
@@ -14,9 +25,6 @@
  * 5. 图片：改用语雀 Lake 标准 <card name="image"> 格式(基础支持)
  */
 
-/**
- * 简单的 HTML 转义函数
- */
 function escape(text: string): string {
   const map: Record<string, string> = {
     '&': '&amp;',
@@ -192,7 +200,7 @@ export const Lake = {
   /**
    * 代码块 —— 使用语雀 Lake 标准 <card name="codeblock"> 格式
    * 
-   * 语雀 Lake 的代码块不是 <pre><code>，而是嵌入的卡片：
+   * 语雀 Lake 的代码块不是 <pre><code>,而是嵌入的卡片：
    * <card name="codeblock" value="data:%7B%22code%22%3A%22...%22%2C%22mode%22%3A%22python%22%7D"></card>
    */
   code_block: (language: string, code: string) => {
@@ -264,7 +272,7 @@ export const Lake = {
  */
 function isTableSeparator(line: string): boolean {
   if (!line.trim().startsWith('|')) return false;
-  // 去掉首尾的 |，然后检查每一部分是否是 :-+ 格式
+  // 去掉首尾的 |,然后检查每一部分是否是 :-+ 格式
   const inner = line.trim().slice(1, line.trim().endsWith('|') ? -1 : undefined);
   const parts = inner.split('|');
   return parts.every(p => /^\s*:?-+:?\s*$/.test(p));

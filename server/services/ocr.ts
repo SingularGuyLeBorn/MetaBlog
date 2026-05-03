@@ -1,13 +1,13 @@
 /**
- * OCR 服务模块
+ * ============================================================================
+ * 后端服务 - ocr
+ * ============================================================================
  *
- * 三引擎自动降级策略：
- *   1. PaddleOCR — 本地最强中文 OCR（需 pip install paddleocr）
- *   2. Tesseract — 本地轻量降级（需安装 tesseract-ocr + pip install pytesseract）
- *   3. OCR.space — 云端兜底（需 API Key，免费 25K/月）
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
  *
- * 降级顺序：PaddleOCR → Tesseract → OCR.space → 失败返回提示
+ * @module server/services
  */
+
 
 import fs from "fs";
 import https from "https";
@@ -26,7 +26,7 @@ function ensureUploadDir(): void {
   }
 }
 
-/** 根据 URL 获取对应的 Referer（绕过防盗链） */
+/** 根据 URL 获取对应的 Referer(绕过防盗链) */
 function getRefererForUrl(url: string): string {
   if (url.includes("mmbiz.qpic.cn") || url.includes("mmbiz.qlogo.cn")) {
     return "https://mp.weixin.qq.com/";
@@ -91,7 +91,14 @@ export async function downloadImageToTemp(url: string): Promise<string> {
   });
 }
 
-/** 对远程图片 URL 执行 OCR（下载 + 识别，自动清理临时文件） */
+/** 对远程图片 URL 执行 OCR(下载 + 识别,自动清理临时文件) */
+/**
+ * ocrRemoteImage 函数
+ *
+ * @param url - 参数(string)
+ * @param language - 参数
+ * @returns 返回值(Promise<OCRResult>)
+ */
 export async function ocrRemoteImage(url: string, language = "auto"): Promise<OCRResult> {
   ensureUploadDir();
   const tempPath = await downloadImageToTemp(url);
@@ -109,13 +116,21 @@ export async function ocrRemoteImage(url: string, language = "auto"): Promise<OC
 // 类型定义
 // ═════════════════════════════════════════════════════════════════════════════
 
+/**
+ * OCROptions 接口定义
+ *
+ */
 export interface OCROptions {
   /** 图片文件路径 */
   imagePath: string;
-  /** 语言，默认 auto（让引擎自己判断） */
+  /** 语言,默认 auto(让引擎自己判断) */
   language?: string;
 }
 
+/**
+ * OCRResult 接口定义
+ *
+ */
 export interface OCRResult {
   /** 提取的文本 */
   text: string;
@@ -123,9 +138,9 @@ export interface OCRResult {
   engine: string;
   /** 是否成功 */
   success: boolean;
-  /** 错误信息（失败时） */
+  /** 错误信息(失败时) */
   error?: string;
-  /** 原始引擎输出（调试用） */
+  /** 原始引擎输出(调试用) */
   raw?: any;
 }
 
@@ -138,7 +153,7 @@ function env(key: string, fallback = ""): string {
 }
 
 const OCR_CONFIG = {
-  // OCR.space API Key（从环境变量读取）
+  // OCR.space API Key(从环境变量读取)
   ocrSpaceApiKey: env("OCR_SPACE_API_KEY", ""),
   // OCR.space 默认语言
   ocrSpaceDefaultLang: env("OCR_SPACE_DEFAULT_LANG", "chs"),
@@ -153,7 +168,7 @@ const OCR_CONFIG = {
   } as Record<string, string>,
   // PaddleOCR CLI 脚本路径
   paddleCliPath: env("PADDLEOCR_CLI_PATH", path.join(process.cwd(), "project/experiments/paddleocr-test/paddleocr_cli.py")),
-  // 默认使用 baseenv 的 Python 3.11（PaddleOCR 2.7.3 安装在此环境中）
+  // 默认使用 baseenv 的 Python 3.11(PaddleOCR 2.7.3 安装在此环境中)
   paddlePythonPath: env(
     "PADDLEOCR_PYTHON_PATH",
     process.platform === "win32"
@@ -221,7 +236,7 @@ async function ocrWithPaddleOCR(imagePath: string, lang: string): Promise<OCRRes
       }
 
       try {
-        // PaddleOCR 2.x 会把 warning 日志输出到 stdout，需要提取 JSON 部分
+        // PaddleOCR 2.x 会把 warning 日志输出到 stdout,需要提取 JSON 部分
         const jsonMatch = stdout.match(/\{[\s\S]*\}/);
         const result = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(stdout.trim());
         if (!result.success) {
@@ -236,7 +251,7 @@ async function ocrWithPaddleOCR(imagePath: string, lang: string): Promise<OCRRes
 
         const text = result.data?.text || "";
         const lines = result.data?.lines || [];
-        console.log(`[OCR] PaddleOCR 成功，耗时 ${Date.now() - startTime}ms，提取 ${lines.length} 行`);
+        console.log(`[OCR] PaddleOCR 成功,耗时 ${Date.now() - startTime}ms,提取 ${lines.length} 行`);
         resolve({ text, engine: "PaddleOCR", success: true, raw: result.data });
       } catch (parseErr: any) {
         resolve({
@@ -257,14 +272,14 @@ async function ocrWithPaddleOCR(imagePath: string, lang: string): Promise<OCRRes
       });
     });
 
-    // 超时保护（30秒）
+    // 超时保护(30秒)
     const timeout = setTimeout(() => {
       proc.kill("SIGTERM");
       resolve({
         text: "",
         engine: "PaddleOCR",
         success: false,
-        error: "PaddleOCR 识别超时（30秒）",
+        error: "PaddleOCR 识别超时(30秒)",
       });
     }, 30000);
 
@@ -286,7 +301,7 @@ async function ocrWithTesseract(imagePath: string, lang: string): Promise<OCRRes
         text: "",
         engine: "Tesseract",
         success: false,
-        error: "pytesseract 未安装。请运行: pip install pytesseract",
+        error: "pytesseract 未安装. 请运行: pip install pytesseract",
       };
     }
 
@@ -299,7 +314,7 @@ async function ocrWithTesseract(imagePath: string, lang: string): Promise<OCRRes
         engine: "Tesseract",
         success: false,
         error:
-          "Tesseract OCR 引擎未安装。\n" +
+          "Tesseract OCR 引擎未安装. \n" +
           "Windows: 下载安装包 https://github.com/UB-Mannheim/tesseract/wiki\n" +
           "macOS: brew install tesseract tesseract-lang\n" +
           "Ubuntu: apt install tesseract-ocr tesseract-ocr-chi-sim",
@@ -309,7 +324,7 @@ async function ocrWithTesseract(imagePath: string, lang: string): Promise<OCRRes
     const tessLang = OCR_CONFIG.tesseractLangMap[lang] || "chi_sim+eng";
     const text = pytesseract.image_to_string(imagePath, { lang: tessLang });
 
-    console.log(`[OCR] Tesseract 成功，耗时 ${Date.now() - startTime}ms`);
+    console.log(`[OCR] Tesseract 成功,耗时 ${Date.now() - startTime}ms`);
     return { text: text.trim(), engine: "Tesseract", success: true };
   } catch (err: any) {
     console.error(`[OCR] Tesseract 失败:`, err.message);
@@ -330,7 +345,7 @@ async function ocrWithOCRSpace(imagePath: string, lang: string): Promise<OCRResu
         engine: "OCR.space",
         success: false,
         error:
-          "OCR.space API Key 未配置。\n" +
+          "OCR.space API Key 未配置. \n" +
           "1. 访问 https://ocr.space/ocrapi/freekey 注册获取免费 API Key\n" +
           "2. 在 .env 中添加: OCR_SPACE_API_KEY=your_key_here",
       };
@@ -389,7 +404,7 @@ async function ocrWithOCRSpace(imagePath: string, lang: string): Promise<OCRResu
     const text = parsedResults.map((r: any) => r.ParsedText).join("\n\n").trim();
 
     console.log(
-      `[OCR] OCR.space 成功，耗时 ${Date.now() - startTime}ms，处理 ${parsedResults.length} 个区域`
+      `[OCR] OCR.space 成功,耗时 ${Date.now() - startTime}ms,处理 ${parsedResults.length} 个区域`
     );
     return { text, engine: "OCR.space", success: true, raw: response };
   } catch (err: any) {
@@ -403,7 +418,7 @@ async function ocrWithOCRSpace(imagePath: string, lang: string): Promise<OCRResu
 // ═════════════════════════════════════════════════════════════════════════════
 
 /**
- * 执行 OCR，自动按优先级降级
+ * 执行 OCR,自动按优先级降级
  *
  * 顺序: PaddleOCR → Tesseract → OCR.space
  */
@@ -427,7 +442,7 @@ export async function performOCR(options: OCROptions): Promise<OCRResult> {
       text: "",
       engine: "none",
       success: false,
-      error: `文件过大 (${(stats.size / 1024 / 1024).toFixed(1)}MB)，最大支持 10MB`,
+      error: `文件过大 (${(stats.size / 1024 / 1024).toFixed(1)}MB),最大支持 10MB`,
     };
   }
 
@@ -463,12 +478,12 @@ export async function performOCR(options: OCROptions): Promise<OCRResult> {
     text: "",
     engine: "none",
     success: false,
-    error: `所有 OCR 引擎均失败。\n${combinedError}`,
+    error: `所有 OCR 引擎均失败. \n${combinedError}`,
   };
 }
 
 /**
- * 获取 OCR 服务状态（各引擎可用性）
+ * 获取 OCR 服务状态(各引擎可用性)
  */
 export async function getOCRStatus(): Promise<
   Array<{ name: string; available: boolean; reason?: string }>
@@ -482,7 +497,7 @@ export async function getOCRStatus(): Promise<
     results.push({
       name: "PaddleOCR",
       available: false,
-      reason: `CLI 脚本未找到: ${OCR_CONFIG.paddleCliPath}。请配置 PADDLEOCR_CLI_PATH 环境变量`,
+      reason: `CLI 脚本未找到: ${OCR_CONFIG.paddleCliPath}. 请配置 PADDLEOCR_CLI_PATH 环境变量`,
     });
   }
 
@@ -507,7 +522,7 @@ export async function getOCRStatus(): Promise<
     results.push({
       name: "OCR.space",
       available: false,
-      reason: "未配置 OCR_SPACE_API_KEY。请在 .env 中添加",
+      reason: "未配置 OCR_SPACE_API_KEY. 请在 .env 中添加",
     });
   }
 

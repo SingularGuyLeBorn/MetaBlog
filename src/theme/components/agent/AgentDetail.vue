@@ -218,7 +218,7 @@
           <div class="form-group-3d">
             <label>座次</label>
             <input v-model.number="form.seat" type="number" class="form-input-3d" min="1" />
-            <span class="form-hint-3d">数字越小，排名越靠前</span>
+            <span class="form-hint-3d">数字越小,排名越靠前</span>
           </div>
           
           <div class="form-group-3d danger-zone-3d">
@@ -370,10 +370,10 @@ const availableSkills = [
 const permissionTemplates = PERMISSION_TEMPLATES.default
 
 const promptTemplates = [
-  { name: '通用助手', content: '你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。' },
-  { name: '编程专家', content: '你是一个专业的编程助手，精通多种编程语言，擅长代码审查、调试和优化。' },
-  { name: '写作助手', content: '你是一个专业的写作助手，擅长撰写、编辑和润色各种文体的文章。' },
-  { name: '数据分析', content: '你是一个数据分析专家，擅长数据清洗、统计分析、可视化和洞察提取。' },
+  { name: '通用助手', content: '你是一个 helpful 的 AI 助手,擅长回答问题、提供建议和协助完成各种任务. ' },
+  { name: '编程专家', content: '你是一个专业的编程助手,精通多种编程语言,擅长代码审查、调试和优化. ' },
+  { name: '写作助手', content: '你是一个专业的写作助手,擅长撰写、编辑和润色各种文体的文章. ' },
+  { name: '数据分析', content: '你是一个数据分析专家,擅长数据清洗、统计分析、可视化和洞察提取. ' },
 ]
 
 const levelConfig = computed(() => LEVEL_CONFIG[form.level])
@@ -450,7 +450,7 @@ function applyPromptTemplate(tpl: { name: string; content: string }) {
 }
 
 function confirmDelete() {
-  if (confirm(`确定要删除 Agent "${props.agent.name}" 吗？此操作无法撤销。`)) {
+  if (confirm(`确定要删除 Agent "${props.agent.name}" 吗？此操作无法撤销. `)) {
     emit('delete', props.agent)
   }
 }

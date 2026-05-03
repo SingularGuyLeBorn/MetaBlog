@@ -1,7 +1,22 @@
+/**
+ * ============================================================================
+ * 内部业务路由 - mcp
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/internal
+ */
+
+
 import fs from "fs";
 import path from "path";
 import type { ViteDevServer } from "vite";
 
+/**
+ * RouteContext 接口定义
+ *
+ */
 export interface RouteContext {
   system: any;
   structuredLog: any;
@@ -9,6 +24,19 @@ export interface RouteContext {
   triggerReload: () => void;
 }
 
+/**
+ * 注册 MCP 服务器管理路由
+ *
+ * 挂载 /api/mcp/* 端点,支持：
+ * - /api/mcp/servers —— MCP 服务器列表(含连接状态)
+ * - /api/mcp/servers/:id/connect —— 连接 MCP 服务器
+ * - /api/mcp/servers/:id/disconnect —— 断开连接
+ * - /api/mcp/servers/:id/tools —— 获取服务器工具列表
+ * - /api/mcp/servers/:id/tools/:toolName —— 执行工具
+ *
+ * @param server - Vite 开发服务器实例
+ * @param ctx    - 路由上下文
+ */
 export function registerMcpRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
   // ============================================
@@ -64,7 +92,7 @@ export function registerMcpRoutes(server: ViteDevServer, ctx: RouteContext) {
           const body = JSON.parse(Buffer.concat(chunks).toString());
           const servers = readMCPServers();
 
-          // FIX: 统一生成一个 ID，避免 server.id 和 server.config.id 不一致
+          // FIX: 统一生成一个 ID,避免 server.id 和 server.config.id 不一致
           const serverId =
             body.id ||
             `mcp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -95,7 +123,7 @@ export function registerMcpRoutes(server: ViteDevServer, ctx: RouteContext) {
   server.middlewares.use("/api/mcp/servers/", (req, res, next) => {
     const url = req.url || "";
     const parts = url.split("/").filter(Boolean);
-    // 只处理单个 ID 的情况，排除 update/delete/connect/disconnect/tools 等子路径
+    // 只处理单个 ID 的情况,排除 update/delete/connect/disconnect/tools 等子路径
     const reservedPaths = [
       "update",
       "delete",

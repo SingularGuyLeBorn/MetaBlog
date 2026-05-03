@@ -1,11 +1,21 @@
 /**
- * MCP Tool: File Operator
- * 文件操作和 Git 管理
+ * ============================================================================
+ * MCP 工具模块 - file-operator
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/mcp-tools
  */
+
 
 import { promises as fs } from 'fs'
 import path from 'path'
 
+/**
+ * ArticleContent 接口定义
+ *
+ */
 export interface ArticleContent {
   title: string
   content: string
@@ -13,12 +23,20 @@ export interface ArticleContent {
   images?: { url: string; filename: string }[]
 }
 
+/**
+ * FileOperationResult 接口定义
+ *
+ */
 export interface FileOperationResult {
   success: boolean
   path: string
   message: string
 }
 
+/**
+ * FileOperatorTool 类
+ *
+ */
 export class FileOperatorTool {
   name = 'file-operator'
   description = '文件操作和 Git 管理'
@@ -88,7 +106,7 @@ export class FileOperatorTool {
             : response.status === 429
               ? "图片服务器速率限制"
               : `下载失败 (HTTP ${response.status})`;
-        throw new Error(`图片下载 ${response.status}: ${msg}。建议: 检查图片 URL 是否正确，或尝试其他图片来源`)
+        throw new Error(`图片下载 ${response.status}: ${msg}. 建议: 检查图片 URL 是否正确,或尝试其他图片来源`)
       }
       
       const buffer = await response.arrayBuffer()
@@ -226,4 +244,10 @@ export class FileOperatorTool {
   }
 }
 
+/**
+ * 创建FileOperator
+ *
+ * @param basePath - 参数
+ * @returns 返回值
+ */
 export const createFileOperator = (basePath?: string) => new FileOperatorTool(basePath)

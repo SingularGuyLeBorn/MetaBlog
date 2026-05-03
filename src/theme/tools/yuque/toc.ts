@@ -1,10 +1,12 @@
 /**
- * =============================================================================
- * 语雀 (Yuque) 目录操作
- * =============================================================================
+ * ============================================================================
+ * 语雀(Yuque)目录操作工具
+ * ============================================================================
  *
- * 包含获取知识库目录结构(TOC)。
- * =============================================================================
+ * 提供获取语雀知识库目录结构(TOC, Table of Contents)的能力. 
+ * 返回结果包含 TITLE(目录分组)和 DOC(实际文档)两种类型的层级结构. 
+ *
+ * @module src/theme/tools/yuque/toc
  */
 
 import type { ToolDefinition, ToolResult } from '@/theme/tools/types'
@@ -16,44 +18,48 @@ import { translateYuqueError, yuqueApi } from './repo'
 // =============================================================================
 
 /**
- * 工具：获取知识库目录结构
+ * 获取语雀知识库目录结构的工具定义
  *
- * 返回知识库的 TOC(Table of Contents)，包含两类条目：
+ * 返回知识库的 TOC(Table of Contents),包含两类条目：
  *   - TITLE：目录项(文件夹)
  *   - DOC：文档项(实际文档)
  *
- * 目录是层级结构，通过 depth 字段表示层级深度。
+ * 目录是层级结构,通过 depth 字段表示层级深度. 
  *
- * 【使用示例】
+ * 使用示例：
  *   yuqueTocGet(repo_id="68025057")
  */
 export const yuqueTocGetDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'yuqueTocGet',
-    description: `获取语雀知识库的目录结构(TOC)。
+    description: `【功能】获取语雀知识库的完整目录结构(TOC, Table of Contents). 
 
-返回知识库中所有文档的层级关系，包括：
-- TITLE: 目录/分组项
-- DOC: 实际文档项
+【使用场景】
+- 用户想浏览知识库的文档层级和分类结构时调用
+- 查找某篇文档在知识库中的位置时调用
+- 获取文档的 slug(URL 路径名)以便后续调用 yuqueDocRead 读取内容
+- 与 yuqueDocList 的区别：本工具返回完整层级结构(含目录分组),yuqueDocList 只返回文档列表
 
-每个条目包含 title、slug(字段名为 url)、depth 层级等。
-
-使用示例:
+【示例用法】
 yuqueTocGet(repo_id="68025057")
-
-返回示例:
-📁 第一章 (slug: xxx)
+→ 返回:
+📁 第一章 (slug: chapter1)
   📄 1.1 概述 (slug: abc123)
   📄 1.2 详细说明 (slug: def456)
 📁 第二章
-  📄 2.1 总结 (slug: ghi789)`,
+  📄 2.1 总结 (slug: ghi789)
+
+【注意事项】
+- 返回结果中的 url 字段就是文档的 slug,用于 yuqueDocRead 的 doc_slug 参数
+- depth 字段表示层级深度,0 为顶层
+- TITLE 类型是目录分组,DOC 类型是实际可读的文档`,
     parameters: {
       type: 'object',
       properties: {
         repo_id: {
           type: 'string',
-          description: '知识库 ID(从 yuqueRepoList 结果中获取)',
+          description: '知识库数字 ID,如 "68025057". 先从 yuqueRepoList 返回值中获取',
         },
       },
       required: ['repo_id'],
@@ -62,14 +68,17 @@ yuqueTocGet(repo_id="68025057")
 }
 
 /**
- * 执行器：获取知识库目录结构
+ * 获取语雀知识库目录结构
  *
  * 调用后端 GET /api/yuque/toc?repo_id=xxx
  *
- * 【响应格式差异】
- * 内部 Web API 返回 { data: { toc: [...] } }，
- * 而 Open API v2 返回 { data: [...] }。
- * 本执行器兼容两种格式。
+ * 响应格式差异：
+ * 内部 Web API 返回 { data: { toc: [...] } },
+ * 而 Open API v2 返回 { data: [...] }. 
+ * 本执行器兼容两种格式. 
+ *
+ * @param args - 包含 repo_id 参数
+ * @returns 目录结构列表,包含层级深度和类型标识
  */
 export const yuqueTocGet = async (args: Record<string, any>): Promise<ToolResult> => {
   const { repo_id } = args

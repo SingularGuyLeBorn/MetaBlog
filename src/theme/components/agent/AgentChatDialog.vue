@@ -42,7 +42,7 @@
             <!-- 欢迎消息 -->
             <div class="message system">
               <div class="message-content">
-                <p>你好！我是 {{ agent?.name }}，{{ agent?.description || '有什么可以帮你的吗？' }}</p>
+                <p>你好！我是 {{ agent?.name }},{{ agent?.description || '有什么可以帮你的吗？' }}</p>
               </div>
             </div>
             
@@ -169,7 +169,7 @@ async function handleSend() {
   
   // 模拟 AI 回复(实际项目中应该调用 API)
   setTimeout(() => {
-    assistantMsg.content = `我是 ${props.agent?.name}，收到你的消息："${content}"`
+    assistantMsg.content = `我是 ${props.agent?.name},收到你的消息："${content}"`
     assistantMsg.isStreaming = false
     isLoading.value = false
     nextTick(scrollToBottom)

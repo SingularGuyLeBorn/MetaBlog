@@ -1,13 +1,13 @@
 /**
- * Agent Runtime Manager - Agent 运行时管理系统
- * 
- * 功能：
- * 1. Agent 生命周期管理(启动、暂停、恢复、停止)
- * 2. 心跳检测
- * 3. 任务调度
- * 4. 状态持久化
- * 5. 自动恢复
+ * ============================================================================
+ * MCP 工具模块 - agent-runtime-manager
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/mcp-tools
  */
+
 
 import type {
   AgentControlCommand,
@@ -240,7 +240,7 @@ class AgentRuntimeManager {
     const runtime = this.runtimes.get(id)
     if (!runtime) return false
 
-    // 如果正在运行，先停止
+    // 如果正在运行,先停止
     if (runtime.status === 'running' || runtime.status === 'paused') {
       this.stopRuntime(id)
     }
@@ -696,6 +696,11 @@ class AgentRuntimeManager {
 // 单例实例
 let manager: AgentRuntimeManager | null = null
 
+/**
+ * 获取AgentRuntimeManager
+ *
+ * @returns 返回值(AgentRuntimeManager)
+ */
 export function getAgentRuntimeManager(): AgentRuntimeManager {
   if (!manager) {
     manager = new AgentRuntimeManager()

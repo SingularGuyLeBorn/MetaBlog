@@ -1,8 +1,13 @@
 /**
- * AI Chat - 核心类型定义
- * 
- * 注意：类型定义在 composables 层，避免循环依赖
+ * ============================================================================
+ * 类型定义 - chat
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/types
  */
+
 
 // ═══════════════════════════════════════════════════════════════
 // 基础类型
@@ -15,6 +20,10 @@ export type MessageRole = 'user' | 'assistant' | 'system' | 'tool'
 export type MessageStatus = 'pending' | 'streaming' | 'completed' | 'error' | 'interrupted'
 
 /** 模型类型 - 精简为 DeepSeek V4 + Kimi K2.5 */
+/**
+ * ModelType 类型别名
+ *
+ */
 export type ModelType =
   // DeepSeek V4 模型
   | 'deepseek-v4-pro'
@@ -23,6 +32,10 @@ export type ModelType =
   | 'kimi-k2.5'
 
 /** 深度思考内容 */
+/**
+ * ReasoningContent 接口定义
+ *
+ */
 export interface ReasoningContent {
   content: string
   isVisible: boolean
@@ -33,9 +46,17 @@ export interface ReasoningContent {
 // ═══════════════════════════════════════════════════════════════
 
 /** 消息附件类型 */
+/**
+ * AttachmentType 类型别名
+ *
+ */
 export type AttachmentType = 'file' | 'image' | 'video' | 'audio' | 'link'
 
 /** 消息附件 */
+/**
+ * MessageAttachment 接口定义
+ *
+ */
 export interface MessageAttachment {
   /** 附件唯一标识 */
   id?: string
@@ -63,11 +84,15 @@ export interface MessageAttachment {
   progress?: number
   /** 错误信息 */
   error?: string
-  /** OCR 提取的文字（仅图片，由后端提取后注入，不展示给用户） */
+  /** OCR 提取的文字(仅图片,由后端提取后注入,不展示给用户) */
   ocrText?: string
 }
 
 /** Token 使用统计 */
+/**
+ * TokenUsage 接口定义
+ *
+ */
 export interface TokenUsage {
   prompt: number
   completion: number
@@ -117,6 +142,10 @@ export interface MessageVersion {
 }
 
 /** 消息对象 */
+/**
+ * ChatMessage 接口定义
+ *
+ */
 export interface ChatMessage {
   id: string
   sessionId: string
@@ -137,6 +166,10 @@ export interface ChatMessage {
 }
 
 /** 消息组(一个用户查询 + 多个 AI 响应版本) */
+/**
+ * MessageGroup 接口定义
+ *
+ */
 export interface MessageGroup {
   /** 用户消息 */
   userMessage: ChatMessage
@@ -146,7 +179,7 @@ export interface MessageGroup {
   currentVersionIndex: number
   /** 
    * 系统注入的消息(如 loadSkill 加载的 skill 内容)
-   * 这些消息会包含在对话历史中，但不会显示为独立的消息组
+   * 这些消息会包含在对话历史中,但不会显示为独立的消息组
    */
   injectedMessages?: ChatMessage[]
 }
@@ -156,6 +189,10 @@ export interface MessageGroup {
 // ═══════════════════════════════════════════════════════════════
 
 /** 会话配置 */
+/**
+ * SessionConfig 接口定义
+ *
+ */
 export interface SessionConfig {
   model: ModelType
   temperature: number
@@ -167,7 +204,7 @@ export interface SessionConfig {
   streaming: boolean
   /** 内部使用：标记 systemPrompt 是否已自定义 */
   _customSystemPrompt?: boolean
-  /** Agent ID，用于工具权限校验 */
+  /** Agent ID,用于工具权限校验 */
   agentId?: string
   /** 可用的 Skill IDs */
   availableSkills?: string[]
@@ -178,12 +215,20 @@ export interface SessionConfig {
 }
 
 /** 会话统计 */
+/**
+ * SessionStats 接口定义
+ *
+ */
 export interface SessionStats {
   messageCount: number
   totalTokens: number
 }
 
 /** 会话对象 */
+/**
+ * ChatSession 接口定义
+ *
+ */
 export interface ChatSession {
   id: string
   title: string
@@ -194,6 +239,10 @@ export interface ChatSession {
 }
 
 /** 会话分组 */
+/**
+ * GroupedSessions 接口定义
+ *
+ */
 export interface GroupedSessions {
   today: ChatSession[]
   yesterday: ChatSession[]
@@ -206,6 +255,10 @@ export interface GroupedSessions {
 // ═══════════════════════════════════════════════════════════════
 
 /** DeepSeek API 请求 */
+/**
+ * DeepSeekRequest 接口定义
+ *
+ */
 export interface DeepSeekRequest {
   model: string
   messages: Array<{ role: MessageRole; content: string }>
@@ -215,6 +268,10 @@ export interface DeepSeekRequest {
 }
 
 /** DeepSeek 流式响应 Chunk */
+/**
+ * DeepSeekStreamChunk 接口定义
+ *
+ */
 export interface DeepSeekStreamChunk {
   id: string
   object: string
@@ -232,6 +289,10 @@ export interface DeepSeekStreamChunk {
 }
 
 /** 流式回调 */
+/**
+ * StreamCallbacks 接口定义
+ *
+ */
 export interface StreamCallbacks {
   onContent: (content: string) => void
   onReasoning: (reasoning: string) => void
@@ -244,6 +305,10 @@ export interface StreamCallbacks {
 // ═══════════════════════════════════════════════════════════════
 
 /** Chat 全局状态 */
+/**
+ * ChatState 接口定义
+ *
+ */
 export interface ChatState {
   sessions: ChatSession[]
   currentSessionId: string | null
@@ -253,6 +318,10 @@ export interface ChatState {
 }
 
 /** 持久化数据结构 */
+/**
+ * PersistedData 接口定义
+ *
+ */
 export interface PersistedData {
   sessions: ChatSession[]
   messages: Record<string, ChatMessage[]>
@@ -261,6 +330,10 @@ export interface PersistedData {
 }
 
 /** 消息版本化的持久化数据结构(v2) */
+/**
+ * PersistedDataV2 接口定义
+ *
+ */
 export interface PersistedDataV2 {
   sessions: ChatSession[]
   /** 按会话存储的消息组 */
@@ -280,8 +353,16 @@ export interface StreamState {
 // 日志类型
 // ═══════════════════════════════════════════════════════════════
 
+/**
+ * LogLevel 类型别名
+ *
+ */
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
+/**
+ * LogEntry 接口定义
+ *
+ */
 export interface LogEntry {
   level: LogLevel
   module: string

@@ -1,7 +1,22 @@
+/**
+ * ============================================================================
+ * 内部业务路由 - sessions
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/internal
+ */
+
+
 import fs from "fs";
 import path from "path";
 import type { ViteDevServer } from "vite";
 
+/**
+ * RouteContext 接口定义
+ *
+ */
 export interface RouteContext {
   system: any;
   structuredLog: any;
@@ -9,6 +24,20 @@ export interface RouteContext {
   triggerReload: () => void;
 }
 
+/**
+ * 注册会话管理路由
+ *
+ * 挂载以下端点：
+ * - /api/sessions —— 会话列表(GET)和创建(POST)
+ * - /api/sessions/:id —— 单会话读取、更新、删除
+ * - /api/sessions/:id/messages —— 消息追加和批量保存
+ * - /api/agent-chat/sessions —— Agent 专用会话存储
+ *
+ * 数据持久化：会话存储在 .data/sessions.json,消息存储在 .data/session-messages.json. 
+ *
+ * @param server - Vite 开发服务器实例
+ * @param ctx    - 路由上下文
+ */
 export function registerSessionsRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
   // ============================================

@@ -12,7 +12,7 @@
           <span class="title-accent">库</span>
         </h1>
         <p class="sr-subtitle hero-desc">
-          系统化的知识整理，从理论到实践，构建完整的学习路径
+          系统化的知识整理,从理论到实践,构建完整的学习路径
         </p>
 
         <!-- Stats -->
@@ -40,7 +40,7 @@
         <div class="section-header">
           <span class="sr-label">⭐ 核心专题</span>
           <h2 class="section-title">强化学习数学原理</h2>
-          <p class="section-desc sr-body">从测度论、概率论的角度深入理解强化学习，建立严格的数学框架</p>
+          <p class="section-desc sr-body">从测度论、概率论的角度深入理解强化学习,建立严格的数学框架</p>
         </div>
         
         <a href="./rl-math-principle/" class="featured-card glass-card glass-card-hover tilt-card magnetic-btn">
@@ -49,7 +49,7 @@
           </div>
           <div class="featured-content">
             <h3>进入专题学习</h3>
-            <p>包含理论推导、代码实现、理论实践联系等完整内容，帮助你建立扎实的理论基础</p>
+            <p>包含理论推导、代码实现、理论实践联系等完整内容,帮助你建立扎实的理论基础</p>
             <div class="featured-meta">
               <span class="meta-item">
                 <span class="meta-icon">📚</span>
@@ -214,8 +214,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, nextTick, computed } from 'vue'
 import { useData } from 'vitepress'
+import { computed, nextTick, onMounted } from 'vue'
 
 interface Topic {
   icon: string
@@ -251,7 +251,7 @@ const dynamicTopics = computed<Topic[]>(() => {
     // node 是 toSidebarFormat 返回的对象
     const itemsCount = node.items ? node.items.length : 0
     let link = node.link || '#'
-    // 如果顶级节点没有 link 但有子节点，取第一个子节点的 link
+    // 如果顶级节点没有 link 但有子节点,取第一个子节点的 link
     if ((!link || link === '#') && node.items && node.items.length > 0) {
       link = node.items[0].link
     }
@@ -271,7 +271,7 @@ const articles: Article[] = [
     title: '测度论与概率空间基础',
     tag: '理论推导',
     badgeClass: 'theory',
-    excerpt: '建立严格的数学框架来描述随机性，深入理解概率的严格定义与性质',
+    excerpt: '建立严格的数学框架来描述随机性,深入理解概率的严格定义与性质',
     link: './rl-math-principle/00_Foundations/01_Theory_Derivation',
     path: '00_Foundations / 01_Theory_Derivation'
   },
@@ -279,7 +279,7 @@ const articles: Article[] = [
     title: 'Python 实现代码',
     tag: '代码实现',
     badgeClass: 'code',
-    excerpt: '理论推导对应的 Python 代码实现，包含完整的实验和可视化',
+    excerpt: '理论推导对应的 Python 代码实现,包含完整的实验和可视化',
     link: './rl-math-principle/00_Foundations/02_Implementation.py',
     path: '00_Foundations / 02_Implementation.py'
   },
@@ -287,7 +287,7 @@ const articles: Article[] = [
     title: '理论与实践联系',
     tag: '实践联系',
     badgeClass: 'practice',
-    excerpt: '将理论推导与代码实现联系起来，深入理解每个公式的实际意义',
+    excerpt: '将理论推导与代码实现联系起来,深入理解每个公式的实际意义',
     link: './rl-math-principle/00_Foundations/03_Theory_Practise_Link',
     path: '00_Foundations / 03_Theory_Practise_Link'
   },
@@ -295,7 +295,7 @@ const articles: Article[] = [
     title: '贝尔曼方程理论推导',
     tag: '理论推导',
     badgeClass: 'theory',
-    excerpt: '贝尔曼最优性方程的严格数学推导过程，理解动态规划的核心思想',
+    excerpt: '贝尔曼最优性方程的严格数学推导过程,理解动态规划的核心思想',
     link: './rl-math-principle/01_Bellman_Equation/01_Theory_Derivation',
     path: '01_Bellman_Equation / 01_Theory_Derivation'
   }
@@ -305,13 +305,13 @@ const articles: Article[] = [
 const learningPath = [
   {
     title: '测度论基础',
-    desc: '从集合论出发，建立严格的测度与积分理论，为概率论和随机过程奠定基础',
+    desc: '从集合论出发,建立严格的测度与积分理论,为概率论和随机过程奠定基础',
     tags: ['测度论', '概率论', '数学基础'],
     link: './rl-math-principle/00_Foundations/01_Theory_Derivation'
   },
   {
     title: '概率与随机过程',
-    desc: '掌握条件期望、鞅论等核心概念，理解随机过程的演化规律',
+    desc: '掌握条件期望、鞅论等核心概念,理解随机过程的演化规律',
     tags: ['随机过程', '鞅论', '条件期望'],
     link: './rl-math-principle/00_Foundations/02_Implementation.py'
   },
@@ -323,7 +323,7 @@ const learningPath = [
   },
   {
     title: '策略梯度方法',
-    desc: '从 REINFORCE 到 PPO，掌握策略优化的核心算法与数学推导',
+    desc: '从 REINFORCE 到 PPO,掌握策略优化的核心算法与数学推导',
     tags: ['策略梯度', 'PPO', 'TRPO'],
     link: './rl-math-principle/02_Policy_Gradient/01_Theory_Derivation'
   }

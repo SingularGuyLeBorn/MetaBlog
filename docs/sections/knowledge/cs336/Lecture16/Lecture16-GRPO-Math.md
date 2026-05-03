@@ -1,6 +1,6 @@
 # 深入探讨: GRPO数学细节
 
-本文是Lecture 16的精英补充笔记，分析GRPO算法的数学细节，包括标准差归一化的潜在问题和Dr. GRPO论文的改进建议。
+本文是Lecture 16的精英补充笔记,分析GRPO算法的数学细节,包括标准差归一化的潜在问题和Dr. GRPO论文的改进建议. 
 
 ---
 
@@ -12,7 +12,7 @@ GRPO的优势估计:
 
 $$A_i = \frac{R_i - \text{mean}(R_1, ..., R_G)}{\text{std}(R_1, ..., R_G) + \epsilon}$$
 
-其中 $G$ 是每个prompt生成的response数量。
+其中 $G$ 是每个prompt生成的response数量. 
 
 ### 1.2 与PPO的关系
 
@@ -32,13 +32,13 @@ $$A_i = \frac{R_i - \text{mean}(R_1, ..., R_G)}{\text{std}(R_1, ..., R_G) + \eps
 
 $$\nabla J = \mathbb{E}[\nabla \log \pi(a|s) \cdot (R - b(s))]$$
 
-**关键**: 只有**减法**是理论保证的，**除法**不在定理范围内。
+**关键**: 只有**减法**是理论保证的,**除法**不在定理范围内. 
 
 ### 2.2 除法带来的问题
 
 设两个prompt:
-- Prompt A：简单，所有response都接近正确，$\text{std}(R) \approx 0.01$
-- Prompt B：困难，response质量差异大，$\text{std}(R) \approx 1.0$
+- Prompt A：简单,所有response都接近正确,$\text{std}(R) \approx 0.01$
+- Prompt B：困难,response质量差异大,$\text{std}(R) \approx 1.0$
 
 归一化后:
 - Prompt A的梯度被**放大100倍**
@@ -48,15 +48,15 @@ $$\nabla J = \mathbb{E}[\nabla \log \pi(a|s) \cdot (R - b(s))]$$
 
 ### 2.3 数学分析
 
-设 $\delta = R - \bar{R}$，GRPO使用 $\tilde{\delta} = \delta / (\sigma + \epsilon)$。
+设 $\delta = R - \bar{R}$,GRPO使用 $\tilde{\delta} = \delta / (\sigma + \epsilon)$. 
 
 **问题1**: $\sigma$ 接近0时
-$$\tilde{\delta} \approx \frac{\delta}{\epsilon} \quad \text{(被}\epsilon\text{限制，但仍可能很大)}$$
+$$\tilde{\delta} \approx \frac{\delta}{\epsilon} \quad \text{(被}\epsilon\text{限制,但仍可能很大)}$$
 
 **问题2**: 不满足策略梯度定理
 $$\mathbb{E}[\nabla \log \pi \cdot \tilde{\delta}] \neq \mathbb{E}[\nabla \log \pi \cdot \delta] / \text{constant}$$
 
-因为 $\sigma$ 本身依赖于采样的actions。
+因为 $\sigma$ 本身依赖于采样的actions. 
 
 ### 2.4 实验证据
 
@@ -66,13 +66,13 @@ Dr. GRPO论文的实验:
 设置: 简单排序任务
 比较: 
   - GRPO (带std归一化)
-  - GRPO-centered (只减均值，不除std)
+  - GRPO-centered (只减均值,不除std)
   - GRPO-raw (直接使用reward)
 
 结果:
   - GRPO-centered 收敛更稳定
   - GRPO 在某些情况下振荡
-  - 对于二元reward (0/1)，差别最明显
+  - 对于二元reward (0/1),差别最明显
 ```
 
 ---
@@ -104,7 +104,7 @@ $$L = -\frac{1}{|y|} \sum_{t=1}^{|y|} \log \pi(y_t | y_{<t}, x) \cdot A$$
 
 R1-Zero实验中观察到:
 - 思维链长度持续增长
-- 可能不是"深度思考"，而是长度偏差
+- 可能不是"深度思考",而是长度偏差
 
 ---
 
@@ -133,7 +133,7 @@ $$L = -\sum_{t=1}^{|y|} \log \pi(y_t | y_{<t}, x) \cdot A_t$$
 
 ### 4.3 建议3: 显式长度奖励
 
-如果需要控制长度，使用显式奖励而非隐式归一化:
+如果需要控制长度,使用显式奖励而非隐式归一化:
 
 ```python
 def compute_reward(response, ground_truth):
@@ -151,7 +151,7 @@ def compute_reward(response, ground_truth):
 
 ### 5.1 基线的本质
 
-基线的目的是**减少方差**，不改变期望:
+基线的目的是**减少方差**,不改变期望:
 
 $$\text{Var}[\nabla \log \pi \cdot (R - b)] < \text{Var}[\nabla \log \pi \cdot R]$$
 
@@ -164,7 +164,7 @@ GRPO的组内均值是对 $V(s)$ 的**无偏估计**:
 
 $$\bar{R} = \frac{1}{G} \sum_{i=1}^G R_i \approx \mathbb{E}[R | s]$$
 
-当 $G$ 足够大时，这个估计很准确。
+当 $G$ 足够大时,这个估计很准确. 
 
 ### 5.3 为何不需要价值函数
 
@@ -261,7 +261,7 @@ def grpo_loss_dr(log_probs, rewards, group_size):
     rewards = rewards.view(num_groups, group_size)
     log_probs = log_probs.view(num_groups, group_size, -1)
     
-    # 只减均值，不除std
+    # 只减均值,不除std
     mean_rewards = rewards.mean(dim=1, keepdim=True)
     advantages = rewards - mean_rewards
     
@@ -291,10 +291,10 @@ def grpo_loss_with_length_penalty(log_probs, rewards, lengths,
 
 ### 关键结论
 
-1. **标准差归一化不是理论保证的**，在某些情况下可能有害
+1. **标准差归一化不是理论保证的**,在某些情况下可能有害
 2. **长度归一化会导致反向激励**(长错误、短正确)
 3. **简单的centered rewards往往效果更好**
-4. **如需长度控制，使用显式奖励**
+4. **如需长度控制,使用显式奖励**
 
 ### 实践checklist
 

@@ -1,12 +1,12 @@
 # 架构设计
 
-本文档介绍 MetaBlog 的系统架构、核心模块和数据流。
+本文档介绍 MetaBlog 的系统架构、核心模块和数据流. 
 
 ---
 
 ## 🏛️ 整体架构
 
-MetaBlog 采用 **VitePress 前端 + Express BFF 后端** 的混合架构。VitePress 负责博客页面渲染，同时通过 Vite 插件内嵌 Express 服务器提供 BFF API。
+MetaBlog 采用 **VitePress 前端 + Express BFF 后端** 的混合架构. VitePress 负责博客页面渲染,同时通过 Vite 插件内嵌 Express 服务器提供 BFF API. 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -50,7 +50,7 @@ MetaBlog 采用 **VitePress 前端 + Express BFF 后端** 的混合架构。Vite
 
 ### VitePress 集成
 
-VitePress 作为静态站点生成器，同时承载博客内容和 AI 应用：
+VitePress 作为静态站点生成器,同时承载博客内容和 AI 应用：
 
 ```
 vitepress/
@@ -199,19 +199,19 @@ gitCommit() → 自动 Git 提交
 1. **路径遍历防护**：禁止 `..` 路径
 2. **板块边界校验**：AI 只能操作 `posts`、`knowledge`、`resources` 板块
 3. **路径范围限制**：文件操作被限制在 `docs/` 目录内
-4. **软删除机制**：删除的文件进入 `.trash/` 回收站，保留 30 天
+4. **软删除机制**：删除的文件进入 `.trash/` 回收站,保留 30 天
 
 ### API Key 安全
 
-1. **服务端代理**：所有 AI API 调用通过后端路由代理，前端不直接暴露 Key
-2. **环境变量隔离**：使用 `LLM_` 前缀的变量，不暴露给前端
+1. **服务端代理**：所有 AI API 调用通过后端路由代理,前端不直接暴露 Key
+2. **环境变量隔离**：使用 `LLM_` 前缀的变量,不暴露给前端
 3. **Vite `envPrefix`**：仅暴露 `VITE_` 和 `LLM_` 前缀变量
 
 ### 代码沙箱安全
 
 | 语言 | 隔离机制 | 限制 |
 |------|---------|------|
-| Python | Monty 解释器(无文件/网络访问) | 30s 超时，1MB 输出 |
+| Python | Monty 解释器(无文件/网络访问) | 30s 超时,1MB 输出 |
 | JavaScript | vm.runInNewContext + 独立子进程 | 同上 |
 | Bash | 白名单命令过滤 | 同上 |
 

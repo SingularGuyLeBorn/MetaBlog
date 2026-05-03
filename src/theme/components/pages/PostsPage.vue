@@ -12,7 +12,7 @@
           <span class="title-accent">列表</span>
         </h1>
         <p class="sr-subtitle hero-desc">
-          深入的技术文章与学习思考，探索编程与人工智能的无限可能
+          深入的技术文章与学习思考,探索编程与人工智能的无限可能
         </p>
 
         <!-- Stats — Glass Cards -->
@@ -94,7 +94,7 @@
           <span class="title-icon">📚</span>
           文章集合
         </h2>
-        <p class="collections-desc">按主题整理的系列文章，便于系统学习</p>
+        <p class="collections-desc">按主题整理的系列文章,便于系统学习</p>
       </div>
       
       <div class="collections-grid">
@@ -153,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { computed, nextTick, onMounted } from 'vue'
 
 interface Post {
   title: string
@@ -170,7 +170,7 @@ const posts: Post[] = [
     tag: 'AI',
     tagColor: 'purple',
     date: '2024-12-01',
-    excerpt: '精选2024年人工智能领域的重要论文，深入解读核心思想与创新点，涵盖大语言模型、多模态学习等前沿方向...',
+    excerpt: '精选2024年人工智能领域的重要论文,深入解读核心思想与创新点,涵盖大语言模型、多模态学习等前沿方向...',
     link: '/sections/posts/ai-paper-reading-2024/'
   },
   {
@@ -178,7 +178,7 @@ const posts: Post[] = [
     tag: '强化学习',
     tagColor: 'blue',
     date: '2024-11-15',
-    excerpt: '探讨强化学习技术在游戏、机器人、推荐系统等领域的应用，以及从虚拟环境到真实世界的迁移挑战...',
+    excerpt: '探讨强化学习技术在游戏、机器人、推荐系统等领域的应用,以及从虚拟环境到真实世界的迁移挑战...',
     link: '/sections/posts/rl-from-game-to-reality/'
   },
   {
@@ -186,7 +186,7 @@ const posts: Post[] = [
     tag: '系列',
     tagColor: 'green',
     date: '2024-10-01',
-    excerpt: 'Node L1 系列文章，包含多级目录结构下的内容组织示例，展示如何构建层次化的知识体系...',
+    excerpt: 'Node L1 系列文章,包含多级目录结构下的内容组织示例,展示如何构建层次化的知识体系...',
     link: '/sections/posts/node-L1/'
   },
   {
@@ -194,7 +194,7 @@ const posts: Post[] = [
     tag: '测试',
     tagColor: 'pink',
     date: '2024-09-15',
-    excerpt: '这是一篇测试文章，用于展示文章列表的样式和布局效果，包含基本的文本排版和样式设置...',
+    excerpt: '这是一篇测试文章,用于展示文章列表的样式和布局效果,包含基本的文本排版和样式设置...',
     link: '/sections/posts/leaf-1-1/'
   },
   {
@@ -202,7 +202,7 @@ const posts: Post[] = [
     tag: '测试',
     tagColor: 'pink',
     date: '2024-09-01',
-    excerpt: '另一篇测试文章，展示多级目录结构下的文章展示效果，探索内容组织的最佳实践...',
+    excerpt: '另一篇测试文章,展示多级目录结构下的文章展示效果,探索内容组织的最佳实践...',
     link: '/sections/posts/leaf-1-2/'
   }
 ]
@@ -225,7 +225,7 @@ const collections = [
     title: 'Docker 实践指南',
     emoji: '🐳',
     count: 2,
-    desc: '容器化部署的完整指南，从入门到生产实践',
+    desc: '容器化部署的完整指南,从入门到生产实践',
     gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
     link: '/sections/posts/docker.html'
   },

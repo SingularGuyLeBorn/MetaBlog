@@ -1,10 +1,16 @@
 /**
- * MetaAgent
- * 高级编排和调度 Agent (Browser-compatible version)
+ * ============================================================================
+ * 组件逻辑 - MetaAgent
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/components
  */
 
-import { ContentAgent, ContentTask, ContentResult } from '@/theme/components/agent/agents/ContentAgent'
-import { StorageAgent, StorageTask, StorageResult } from '@/theme/components/agent/agents/StorageAgent'
+
+import { ContentAgent, ContentResult } from '@/theme/components/agent/agents/ContentAgent'
+import { StorageAgent, StorageResult } from '@/theme/components/agent/agents/StorageAgent'
 
 // Simple in-browser scheduler (replaces server-side scheduler)
 interface ScheduledTask {
@@ -16,12 +22,12 @@ interface ScheduledTask {
 
 class SimpleScheduler {
   private tasks: Map<string, ScheduledTask> = new Map()
-  
+
   schedule(task: ScheduledTask): void {
     this.tasks.set(task.id, task)
     console.log(`[Scheduler] Task scheduled: ${task.id} (${task.cron})`)
   }
-  
+
   stop(taskId: string): void {
     const task = this.tasks.get(taskId)
     if (task) {
@@ -29,16 +35,16 @@ class SimpleScheduler {
       this.tasks.set(taskId, task)
     }
   }
-  
+
   startAll(): void {
     console.log(`[Scheduler] Starting ${this.tasks.size} tasks`)
   }
-  
+
   stopAll(): void {
     console.log(`[Scheduler] Stopping all tasks`)
     this.tasks.forEach(task => task.enabled = false)
   }
-  
+
   listTasks(): ScheduledTask[] {
     return Array.from(this.tasks.values())
   }
@@ -54,6 +60,10 @@ export const CronPresets = {
 
 const scheduler = new SimpleScheduler()
 
+/**
+ * MetaAgentConfig 接口定义
+ *
+ */
 export interface MetaAgentConfig {
   contentAgent: ContentAgent
   storageAgent: StorageAgent
@@ -61,6 +71,10 @@ export interface MetaAgentConfig {
   defaultSchedule?: string
 }
 
+/**
+ * ContentWorkflow 接口定义
+ *
+ */
 export interface ContentWorkflow {
   id: string
   name: string
@@ -85,6 +99,10 @@ export interface ContentWorkflow {
   }
 }
 
+/**
+ * WorkflowResult 接口定义
+ *
+ */
 export interface WorkflowResult {
   workflowId: string
   executedAt: string
@@ -99,10 +117,14 @@ export interface WorkflowResult {
   }
 }
 
+/**
+ * MetaAgent 类
+ *
+ */
 export class MetaAgent {
   name = 'MetaAgent'
   description = '编排调度 Agent'
-  
+
   private contentAgent: ContentAgent
   private storageAgent: StorageAgent
   private config: Required<MetaAgentConfig>
@@ -115,7 +137,7 @@ export class MetaAgent {
       defaultSchedule: CronPresets.EVERY_DAY_AT_9AM,
       ...config,
     }
-    
+
     this.contentAgent = config.contentAgent
     this.storageAgent = config.storageAgent
   }
@@ -123,18 +145,18 @@ export class MetaAgent {
   // 创建内容工作流
   createWorkflow(workflow: Omit<ContentWorkflow, 'id'>): string {
     const id = `workflow_${Date.now()}_${Math.random().toString(36).slice(2)}`
-    
+
     const fullWorkflow: ContentWorkflow = {
       ...workflow,
       id,
     }
-    
+
     this.workflows.set(id, fullWorkflow)
-    
+
     if (workflow.schedule?.enabled && workflow.schedule.cron) {
       this.scheduleWorkflow(id, workflow.schedule.cron)
     }
-    
+
     return id
   }
 
@@ -169,7 +191,7 @@ export class MetaAgent {
       for (const url of urls) {
         const contentResult = await this.contentAgent.fetch(url)
         result.tasks.content.push(contentResult)
-        
+
         if (contentResult.success && contentResult.content) {
           // Store content
           const storageResult = await this.storageAgent.store({
@@ -180,9 +202,9 @@ export class MetaAgent {
               autoCommit: workflow.target.autoPublish,
             },
           })
-          
+
           result.tasks.storage.push(storageResult)
-          
+
           if (storageResult.success) {
             result.summary.success++
           } else {
@@ -198,9 +220,9 @@ export class MetaAgent {
     }
 
     this.results.set(workflowId, result)
-    
+
     console.log(`[MetaAgent] Workflow completed: ${workflow.name}`, result.summary)
-    
+
     return result
   }
 
@@ -243,7 +265,7 @@ export class MetaAgent {
       },
       enabled: true,
     })
-    
+
     console.log(`[MetaAgent] Workflow scheduled: ${workflowId} (${cron})`)
   }
 
@@ -252,15 +274,15 @@ export class MetaAgent {
     switch (source.type) {
       case 'url':
         return source.urls || []
-      
+
       case 'search':
         console.log('[MetaAgent] Search source not implemented yet')
         return []
-      
+
       case 'rss':
         console.log('[MetaAgent] RSS source not implemented yet')
         return []
-      
+
       default:
         return []
     }
@@ -320,4 +342,10 @@ export class MetaAgent {
   }
 }
 
+/**
+ * 创建MetaAgent
+ *
+ * @param config - 参数(MetaAgentConfig)
+ * @returns 返回值
+ */
 export const createMetaAgent = (config: MetaAgentConfig) => new MetaAgent(config)

@@ -2,7 +2,7 @@
 
 > **编辑蓝图 (Editorial Blueprint)**
 > 
-> **核心主题**: 本讲座是CS336课程RL系列的收官之作，提供了**GRPO算法的完整代码实现**。从策略梯度的数学推导，到基线的直观理解，再到完整的训练循环，配合一个简单的排序任务进行演示。
+> **核心主题**: 本讲座是CS336课程RL系列的收官之作,提供了**GRPO算法的完整代码实现**. 从策略梯度的数学推导,到基线的直观理解,再到完整的训练循环,配合一个简单的排序任务进行演示. 
 > 
 > **知识结构**: 
 > - 第一部分：RL在语言模型中的设定(状态、动作、奖励)
@@ -48,9 +48,9 @@ Reward Function: Extract "14", compare to ground truth → R = 1
 
 这意味着：
 - 可以进行**规划/测试时计算**(机器人做不到)
-- 状态是"虚构的"(token序列，而非物理状态)
+- 状态是"虚构的"(token序列,而非物理状态)
 - 任何状态都可达(只要写出tokens)
-- 挑战不是"到达"状态，而是"正确"状态
+- 挑战不是"到达"状态,而是"正确"状态
 
 ### 1.4 目标
 
@@ -64,9 +64,9 @@ $$J(\theta) = \mathbb{E}_{s \sim p(s), a \sim \pi_\theta(a|s)}[R(s, a)]$$
 
 ### 2.1 符号简化
 
-为了简化，令 $a$ 表示**整个response**(而非单个token)。
+为了简化,令 $a$ 表示**整个response**(而非单个token). 
 
-在结果奖励设定下，这是合理的——可以认为一次性生成整个回复。
+在结果奖励设定下,这是合理的——可以认为一次性生成整个回复. 
 
 ### 2.2 梯度推导
 
@@ -115,12 +115,12 @@ $$\nabla J \propto R \cdot \nabla \log \pi_\theta(y|x)$$
 
 考虑二元奖励 $R \in \{0, 1\}$：
 
-**问题**: 如果策略很差，大部分response都得到 $R=0$
+**问题**: 如果策略很差,大部分response都得到 $R=0$
 - 梯度大多为零
 - 几乎没有学习信号
 - 模型"卡住"
 
-**对比RLHF**: 奖励模型给出连续分数，信号更丰富
+**对比RLHF**: 奖励模型给出连续分数,信号更丰富
 
 ---
 
@@ -159,7 +159,7 @@ $$\nabla J = \mathbb{E}[\nabla \log \pi_\theta(a|s) \cdot (R - b(s))]$$
 
 ### 3.3 方差减少效果
 
-回到例子，设 $b(s_1)=10, b(s_2)=1$：
+回到例子,设 $b(s_1)=10, b(s_2)=1$：
 
 | 状态 | 动作 | 原奖励 | 基线后奖励 |
 |------|------|--------|-----------|
@@ -187,7 +187,7 @@ print(f"方差减少: {raw_variance:.1f} → {baseline_variance:.1f}")
 理论上最优的基线：
 $$b^*(s) = \frac{\mathbb{E}[(\nabla \log \pi)^2 \cdot R | s]}{\mathbb{E}[(\nabla \log \pi)^2 | s]}$$
 
-实际中难以计算，常用**启发式**:
+实际中难以计算,常用**启发式**:
 $$b(s) \approx \mathbb{E}[R|s] = V(s)$$
 
 这就是**价值函数**的来源！
@@ -219,7 +219,7 @@ responses_per_prompt = [
 ]
 ```
 
-这些responses形成一个**组**，可以用组内均值作为基线！
+这些responses形成一个**组**,可以用组内均值作为基线！
 
 ### 4.2 GRPO优势计算
 
@@ -247,7 +247,7 @@ def compute_deltas(rewards: torch.Tensor, mode: str) -> torch.Tensor:
         return rewards - mean_rewards
     
     if mode == "normalized_rewards":
-        # 减去均值，除以标准差
+        # 减去均值,除以标准差
         mean_rewards = rewards.mean(dim=-1, keepdim=True)
         std_rewards = rewards.std(dim=-1, keepdim=True)
         centered = rewards - mean_rewards
@@ -518,7 +518,7 @@ def run_policy_gradient(num_epochs: int = 100,
 - 仍然会做更新(不应该！)
 
 **中心化奖励解决方案**:
-- 减去均值后，相同奖励 → delta = 0 → 不更新
+- 减去均值后,相同奖励 → delta = 0 → 不更新
 - 只在有差异时才学习
 
 ```python
@@ -550,7 +550,7 @@ deltas_centered = rewards - rewards.mean()  # [0, 0, 0, 0] → 不更新
 - 计算新的奖励和delta
 - 损失是针对*新*数据计算的
 
-⟹ 损失不是在同一分布上计算的，不能直接比较
+⟹ 损失不是在同一分布上计算的,不能直接比较
 ```
 
 **应该看**: 平均奖励(而非损失)
@@ -600,7 +600,7 @@ GRPO需要管理多个模型状态：
 | $\pi_{old}$ | 重要性采样 | 每epoch更新 |
 | $\pi_{ref}$ | KL正则化 | 每N epoch更新 |
 
-**技巧**: $\pi_{old}$ 不需要存储模型，只需存储log_probs
+**技巧**: $\pi_{old}$ 不需要存储模型,只需存储log_probs
 
 ### 6.3 系统复杂性
 
@@ -628,7 +628,7 @@ $$\nabla J = \mathbb{E}\left[\nabla \log \pi_\theta(a|s) \cdot \underbrace{(R - 
 ### 实践建议
 
 - **总是使用基线**: 减少方差
-- **监控奖励，不只是损失**: 损失不可比
+- **监控奖励,不只是损失**: 损失不可比
 - **注意局部最优**: RL容易陷入
 - **奖励设计是关键**: 比算法更重要
 
@@ -636,7 +636,7 @@ $$\nabla J = \mathbb{E}\left[\nabla \log \pi_\theta(a|s) \cdot \underbrace{(R - 
 
 > "If you can measure it, you can optimize it."
 > 
-> 如果你能衡量它，你就能优化它。
+> 如果你能衡量它,你就能优化它. 
 
 但关键是：
 1. 衡量标准是否可靠？(RLHF的挑战)

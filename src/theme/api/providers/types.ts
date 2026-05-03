@@ -1,11 +1,21 @@
 /**
- * Provider 类型定义
- * 统一的模型厂商接口规范
+ * ============================================================================
+ * API 服务 - types
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/api
  */
+
 
 import type { ChatMessage, SessionConfig } from '@/theme/types'
 
 /** 模型能力标识 */
+/**
+ * ModelCapabilities 接口定义
+ *
+ */
 export interface ModelCapabilities {
   /** 支持视觉/图片理解 */
   vision: boolean
@@ -28,6 +38,10 @@ export interface ModelPricing {
 }
 
 /** 模型信息 */
+/**
+ * ModelInfo 接口定义
+ *
+ */
 export interface ModelInfo {
   /** 模型唯一ID */
   id: string
@@ -78,6 +92,10 @@ export interface ProviderInfo {
 }
 
 /** 流式回调 */
+/**
+ * StreamCallbacks 接口定义
+ *
+ */
 export interface StreamCallbacks {
   /** 收到内容片段 */
   onContent: (text: string) => void
@@ -99,6 +117,10 @@ export interface ToolCall {
 }
 
 /** 工具定义 */
+/**
+ * ToolDefinition 接口定义
+ *
+ */
 export interface ToolDefinition {
   name: string
   description: string
@@ -110,6 +132,10 @@ export interface ToolDefinition {
 }
 
 /** 聊天选项 */
+/**
+ * ChatOptions 接口定义
+ *
+ */
 export interface ChatOptions {
   /** 消息历史 */
   messages: ChatMessage[]
@@ -122,6 +148,10 @@ export interface ChatOptions {
 }
 
 /** 工具调用结果 */
+/**
+ * ToolResult 接口定义
+ *
+ */
 export interface ToolResult {
   toolCallId: string
   name: string
@@ -130,6 +160,10 @@ export interface ToolResult {
 }
 
 /** Provider 接口 - 所有模型厂商必须实现 */
+/**
+ * IProvider 接口定义
+ *
+ */
 export interface IProvider {
   /** 厂商信息 */
   readonly info: ProviderInfo
@@ -145,7 +179,7 @@ export interface IProvider {
 
   /** 
    * 流式对话
-   * 统一的聊天接口，内部处理厂商差异
+   * 统一的聊天接口,内部处理厂商差异
    */
   chatStream(options: ChatOptions, callbacks: StreamCallbacks): Promise<void>
 
@@ -161,6 +195,10 @@ export interface IProvider {
 }
 
 /** 标准化消息格式(内部使用) */
+/**
+ * StandardMessage 接口定义
+ *
+ */
 export interface StandardMessage {
   role: 'system' | 'user' | 'assistant' | 'tool'
   content: string | ContentPart[]

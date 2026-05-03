@@ -4,15 +4,15 @@
  * 覆盖：参数校验、成功响应、错误处理
  */
 
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { registerLarkRoutes } from '../../server/routes/external/lark'
-import { createMockServer, createMockCtx, mockFetch } from './test-utils'
+import { createMockCtx, createMockServer, mockFetch } from './test-utils'
 
 describe('Lark Routes', () => {
   let restoreFetch: () => void
 
   beforeAll(() => {
-    // 设置 mock 环境变量，避免认证函数抛错
+    // 设置 mock 环境变量,避免认证函数抛错
     process.env.FEISHU_APP_ID = 'mock_app_id'
     process.env.FEISHU_APP_SECRET = 'mock_app_secret'
     process.env.FEISHU_USER_ACCESS_TOKEN = 'mock_user_token'

@@ -1,11 +1,20 @@
 /**
- * useVirtualScroll - 虚拟滚动组合式函数
- * 
- * 用于处理大量消息的渲染性能
- * 只渲染可视区域的消息
+ * ============================================================================
+ * Vue Composable - useVirtualScroll
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/composables
  */
+
+
 import { computed, nextTick, ref, watch, type Ref } from 'vue'
 
+/**
+ * VirtualScrollOptions 接口定义
+ *
+ */
 export interface VirtualScrollOptions {
   /** 每项高度(估计值) */
   itemHeight: number
@@ -15,6 +24,10 @@ export interface VirtualScrollOptions {
   containerHeight: Ref<number>
 }
 
+/**
+ * VirtualItem 接口定义
+ *
+ */
 export interface VirtualItem<T> {
   item: T
   index: number
@@ -167,7 +180,7 @@ export function useVirtualScroll<T>(
   // 监听
   // ═══════════════════════════════════════════════════════════════
 
-  // 项目数量变化时，如果在底部，保持滚动到底部
+  // 项目数量变化时,如果在底部,保持滚动到底部
   watch(() => items.value.length, (newLength, oldLength) => {
     if (newLength > oldLength) {
       // 添加了新项目
@@ -226,7 +239,7 @@ export function useAutoScroll(containerRef: Ref<HTMLElement | undefined>) {
    */
   function onScroll() {
     isAtBottom.value = checkIsAtBottom()
-    // 用户向上滚动时，禁用自动滚动
+    // 用户向上滚动时,禁用自动滚动
     if (!isAtBottom.value) {
       isAutoScrollEnabled.value = false
     }

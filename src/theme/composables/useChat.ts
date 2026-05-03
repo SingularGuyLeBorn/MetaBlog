@@ -3,7 +3,7 @@
  * Vue Composable - useChat
  * ============================================================================
  *
- * 本文件属于 MetaBlog 项目，遵循项目注释规范。
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
  *
  * @module src/theme/composables
  */
@@ -31,12 +31,12 @@ export interface UseChatOptions {
  *
  * 职责：
  * 1. 消息管理：发送、追加、更新、删除消息
- * 2. 会话管理：创建、切换、删除会话，自动保存到本地存储
- * 3. 流式处理：接收 SSE 流并逐字渲染，支持 reasoning_content 分离显示
- * 4. 工具调用：解析并执行 tool_calls，将结果回传给模型
+ * 2. 会话管理：创建、切换、删除会话,自动保存到本地存储
+ * 3. 流式处理：接收 SSE 流并逐字渲染,支持 reasoning_content 分离显示
+ * 4. 工具调用：解析并执行 tool_calls,将结果回传给模型
  * 5. 状态管理：loading、streaming、error 等状态的响应式管理
  *
- * @param options - 配置项（自动滚动、消息更新/状态变化回调）
+ * @param options - 配置项(自动滚动、消息更新/状态变化回调)
  * @returns 聊天状态和方法集合
  */
 export function useChat(options: UseChatOptions = {}) {
@@ -99,7 +99,7 @@ export function useChat(options: UseChatOptions = {}) {
     })
   }
 
-  // 监听消息变化，自动滚动
+  // 监听消息变化,自动滚动
   if (autoScroll) {
     watch(() => messages.value.length, () => {
       nextTick(() => {
@@ -235,7 +235,7 @@ export function useChatInput() {
    * 处理键盘事件
    */
   function handleKeydown(e: KeyboardEvent, onSend: () => void) {
-    // Enter 发送，Shift+Enter 换行
+    // Enter 发送,Shift+Enter 换行
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       if (inputContent.value.trim()) {

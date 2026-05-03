@@ -3,12 +3,12 @@
  * Markdown → 飞书 Docx Blocks 转换器
  * ============================================================================
  *
- * 将 Markdown 文本解析为飞书 docx API 所需的 block 结构数组。
+ * 将 Markdown 文本解析为飞书 docx API 所需的 block 结构数组. 
  * 支持块级元素(标题、列表、代码块、引用、表格、分割线)和行内格式
- * (粗体、斜体、删除线、行内代码、链接、公式)。
+ * (粗体、斜体、删除线、行内代码、链接、公式). 
  *
- * 核心设计：递归下降解析行内格式，支持嵌套；块级解析失败时降级为普通段落，
- * 避免单点错误导致整个文档无法写入。
+ * 核心设计：递归下降解析行内格式,支持嵌套;块级解析失败时降级为普通段落,
+ * 避免单点错误导致整个文档无法写入. 
  *
  * @module src/theme/tools/lark/markdown-to-blocks
  */
@@ -16,7 +16,7 @@
 /**
  * 飞书文本元素接口
  *
- * 统一表示 text_run(普通文本)和 equation(公式)两种元素。
+ * 统一表示 text_run(普通文本)和 equation(公式)两种元素. 
  */
 export interface TextElement {
   text_run?: {
@@ -40,10 +40,10 @@ export interface TextElement {
 // 公共常量
 // ============================================================
 
-/** 零宽字符正则：去除 BOM、零宽空格等不可见字符，避免解析异常 */
+/** 零宽字符正则：去除 BOM、零宽空格等不可见字符,避免解析异常 */
 const ZERO_WIDTH_CHARS = /[\u200B-\u200D\uFEFF\u2060]/g
 
-/** 标题正则：# 后必须有空格，支持尾部 # */
+/** 标题正则：# 后必须有空格,支持尾部 # */
 const HEADING_RE = /^(#{1,9})\s+(.+?)(?:\s+#*)?$/
 
 /** 无序列表 */
@@ -68,8 +68,8 @@ const CODE_FENCE_RE = /^```(.*)$/
 /**
  * 将 Markdown 字符串转换为飞书 block 数组
  *
- * 执行流程：输入清洗 → 块级解析 → 合并相邻纯文本碎片。
- * 合并步骤可减少飞书 API 接收的 element 数量，提升写入效率。
+ * 执行流程：输入清洗 → 块级解析 → 合并相邻纯文本碎片. 
+ * 合并步骤可减少飞书 API 接收的 element 数量,提升写入效率. 
  *
  * @param markdown - 原始 Markdown 文本
  * @returns 飞书 block 结构数组
@@ -83,10 +83,10 @@ export function markdownToBlocks(markdown: string): any[] {
 }
 
 /**
- * 判断 block 是否为空（无有效内容）
+ * 判断 block 是否为空(无有效内容)
  *
- * 飞书 API 拒绝包含空 elements 数组或空 text_run.content 的 block，
- * 此类 block 会导致 1770032 错误。过滤空 block 可避免整批写入失败。
+ * 飞书 API 拒绝包含空 elements 数组或空 text_run.content 的 block,
+ * 此类 block 会导致 1770032 错误. 过滤空 block 可避免整批写入失败. 
  *
  * @param block - 飞书 block 对象
  * @returns 是否为空 block
@@ -118,9 +118,9 @@ function isEmptyBlock(block: any): boolean {
 // ============================================================
 
 /**
- * 清洗输入文本，去除不可见字符并统一换行符
+ * 清洗输入文本,去除不可见字符并统一换行符
  *
- * 为什么需要：BOM 和零宽字符会导致正则匹配失败，\r\n 会导致行分割异常。
+ * 为什么需要：BOM 和零宽字符会导致正则匹配失败,\r\n 会导致行分割异常. 
  *
  * @param text - 原始输入文本
  * @returns 清洗后的文本
@@ -140,8 +140,8 @@ function cleanInput(text: string): string {
 /**
  * 将 Markdown 文本解析为块级元素数组
  *
- * 逐行扫描，遇到块级元素开头时调用 parseBlock 解析，
- * 解析失败时降级为普通段落(不抛异常，保证鲁棒性)。
+ * 逐行扫描,遇到块级元素开头时调用 parseBlock 解析,
+ * 解析失败时降级为普通段落(不抛异常,保证鲁棒性). 
  *
  * @param markdown - 清洗后的 Markdown 文本
  * @returns 块级元素数组
@@ -165,7 +165,7 @@ function parseBlocks(markdown: string): any[] {
       blocks.push(result.block)
       i = result.nextIndex
     } catch {
-      // 容错：解析失败降级为普通段落，避免单点错误阻断整个流程
+      // 容错：解析失败降级为普通段落,避免单点错误阻断整个流程
       const paraLines = [line]
       i++
       while (i < lines.length && lines[i].trim() !== '' && !isBlockStart(lines[i])) {
@@ -186,11 +186,11 @@ function parseBlocks(markdown: string): any[] {
  * 解析单行/多行块级元素
  *
  * 按优先级依次匹配：块级公式 > 代码块 > 标题 > 任务列表 > 无序列表 >
- * 有序列表 > 引用块 > 分割线 > 表格 > 普通段落。
+ * 有序列表 > 引用块 > 分割线 > 表格 > 普通段落. 
  *
  * @param lines - 全文行数组
  * @param i - 当前行索引
- * @returns 解析结果，包含 block 和下一行索引
+ * @returns 解析结果,包含 block 和下一行索引
  */
 function parseBlock(lines: string[], i: number): { block: any; nextIndex: number } {
   const line = lines[i]
@@ -304,7 +304,7 @@ function parseBlock(lines: string[], i: number): { block: any; nextIndex: number
   if (line.startsWith('>')) {
     const quoteLines: string[] = []
     while (i < lines.length && lines[i].startsWith('>')) {
-      // 去除引用标记，保留嵌套层级用于缩进感知(简单实现：只去一层)
+      // 去除引用标记,保留嵌套层级用于缩进感知(简单实现：只去一层)
       const stripped = lines[i].replace(/^>\s?/, '')
       quoteLines.push(stripped)
       i++
@@ -364,7 +364,7 @@ function parseBlock(lines: string[], i: number): { block: any; nextIndex: number
 /**
  * 判断一行是否是块级元素的开头
  *
- * 用于普通段落解析时判断是否继续吸收后续行。
+ * 用于普通段落解析时判断是否继续吸收后续行. 
  *
  * @param line - 待判断的行文本
  * @returns 是否是块级元素开头
@@ -387,7 +387,7 @@ function isBlockStart(line: string): boolean {
 /**
  * 判断一行是否是表格行
  *
- * 以 | 开头或结尾的行视为表格行。
+ * 以 | 开头或结尾的行视为表格行. 
  *
  * @param line - 待判断的行文本
  * @returns 是否是表格行
@@ -399,7 +399,7 @@ function isTableLine(line: string): boolean {
 /**
  * 判断一行是否是表格分隔行
  *
- * 格式如 |---|---| 的分隔行。
+ * 格式如 |---|---| 的分隔行. 
  *
  * @param line - 待判断的行文本
  * @returns 是否是表格分隔行
@@ -409,13 +409,13 @@ function isTableDivider(line: string): boolean {
 }
 
 /**
- * 清理表格单元格中的 equation 元素，处理飞书 table cell 渲染兼容性问题
+ * 清理表格单元格中的 equation 元素,处理飞书 table cell 渲染兼容性问题
  *
- * 问题：飞书 table cell 中的 equation 元素会将 `\\` 解释为 LaTeX 换行符，
- * 导致公式被强制换行显示，且可能破坏单元格布局。
+ * 问题：飞书 table cell 中的 equation 元素会将 `\\` 解释为 LaTeX 换行符,
+ * 导致公式被强制换行显示,且可能破坏单元格布局. 
  *
- * 降级策略：包含 `\\` 的 equation 降级为普通 text_run（用 \( ... \) 包裹），
- * 同时去掉末尾的 `\\` 并将内部的 `\\` 替换为空格。
+ * 降级策略：包含 `\\` 的 equation 降级为普通 text_run(用 \( ... \) 包裹),
+ * 同时去掉末尾的 `\\` 并将内部的 `\\` 替换为空格. 
  *
  * @param elements - 单元格内的 TextElement 数组
  * @returns 清理后的 TextElement 数组
@@ -426,7 +426,7 @@ function sanitizeTableCellEquations(elements: TextElement[]): TextElement[] {
       let content = el.equation.content
       // 去掉末尾的一个或多个 \\
       content = content.replace(/\\\\+\s*$/, '')
-      // 将内部的 \\\\ 替换为空格（避免 LaTeX 换行）
+      // 将内部的 \\\\ 替换为空格(避免 LaTeX 换行)
       content = content.replace(/\\\\/g, ' ')
       return { text_run: { content: `\\\\(${content}\\\\)` } }
     }
@@ -435,13 +435,13 @@ function sanitizeTableCellEquations(elements: TextElement[]): TextElement[] {
 }
 
 /**
- * 估算文本在飞书文档中的渲染宽度（像素）
+ * 估算文本在飞书文档中的渲染宽度(像素)
  *
- * 中文字符/全角符号按 14px 估算，英文/数字/半角符号按 8px 估算，
- * 加上单元格左右 padding（32px）。
+ * 中文字符/全角符号按 14px 估算,英文/数字/半角符号按 8px 估算,
+ * 加上单元格左右 padding(32px). 
  *
  * @param text - 纯文本内容
- * @returns 估算宽度（px）
+ * @returns 估算宽度(px)
  */
 function estimateTextWidth(text: string): number {
   let width = 0
@@ -459,12 +459,12 @@ function estimateTextWidth(text: string): number {
 /**
  * 根据表格内容计算每列的推荐宽度
  *
- * 取每列所有单元格（含表头）的最大估算宽度，
- * 限制在 [60, 500] px 范围内。
+ * 取每列所有单元格(含表头)的最大估算宽度,
+ * 限制在 [60, 500] px 范围内. 
  *
  * @param lines - 表格的所有行(含表头和分隔行)
  * @param colCount - 列数
- * @returns 每列宽度数组（px）
+ * @returns 每列宽度数组(px)
  */
 function estimateColumnWidths(lines: string[], colCount: number): number[] {
   const widths = new Array(colCount).fill(0)
@@ -475,7 +475,7 @@ function estimateColumnWidths(lines: string[], colCount: number): number[] {
     const cells = splitTableCells(lines[r])
     for (let c = 0; c < colCount; c++) {
       const raw = cells[c] || ''
-      // 去掉 Markdown 行内格式标记（**、*、` 等）得到纯文本长度
+      // 去掉 Markdown 行内格式标记(**、*、` 等)得到纯文本长度
       const plain = raw
         .replace(/\*\*/g, '')
         .replace(/\*/g, '')
@@ -497,8 +497,8 @@ function estimateColumnWidths(lines: string[], colCount: number): number[] {
 /**
  * 解析 Markdown 表格为飞书 table block
  *
- * 返回结构包含 _cell_contents(TextElement[][]，行优先)，
- * 由后端拆分为：创建 table + POST text children 到每个 cell。
+ * 返回结构包含 _cell_contents(TextElement[][],行优先),
+ * 由后端拆分为：创建 table + POST text children 到每个 cell. 
  *
  * @param lines - 表格的所有行(含表头和分隔行)
  * @returns 飞书 table block 或 null(解析失败)
@@ -546,11 +546,11 @@ function parseMarkdownTable(lines: string[]): any | null {
 }
 
 /**
- * 按 | 分割表格行，去除首尾空格
+ * 按 | 分割表格行,去除首尾空格
  *
  * 关键修正：
- * 1. 识别并保护 $...$ / $$...$$ 公式内的 |，防止公式被拆分到不同单元格
- * 2. 支持 Markdown 标准转义序列 \|，将其还原为普通 |
+ * 1. 识别并保护 $...$ / $$...$$ 公式内的 |,防止公式被拆分到不同单元格
+ * 2. 支持 Markdown 标准转义序列 \|,将其还原为普通 |
  *
  * @param line - 表格行文本
  * @returns 单元格内容数组
@@ -574,7 +574,7 @@ function splitTableCells(line: string): string[] {
       continue
     }
 
-    // 保护公式中的 |：遇到 $ 进入公式模式，直到找到匹配的 $ 退出
+    // 保护公式中的 |：遇到 $ 进入公式模式,直到找到匹配的 $ 退出
     if (ch === '$') {
       const isBlockFormula = content[i + 1] === '$'
       const endMarker = isBlockFormula ? '$$' : '$'
@@ -582,7 +582,7 @@ function splitTableCells(line: string): string[] {
       if (isBlockFormula) current += '$'
       i += isBlockFormula ? 2 : 1
 
-      // 查找公式结束标记（注意：不支持嵌套公式）
+      // 查找公式结束标记(注意：不支持嵌套公式)
       while (i < content.length) {
         if (content.substring(i, i + endMarker.length) === endMarker) {
           current += endMarker
@@ -595,7 +595,7 @@ function splitTableCells(line: string): string[] {
       continue
     }
 
-    // 列分隔符（公式外的 |）
+    // 列分隔符(公式外的 |)
     if (ch === '|') {
       cells.push(current.trim())
       current = ''
@@ -615,7 +615,7 @@ function splitTableCells(line: string): string[] {
 }
 
 // ============================================================
-// 行内解析(递归下降，支持嵌套)
+// 行内解析(递归下降,支持嵌套)
 // ============================================================
 
 /**
@@ -631,8 +631,8 @@ function parseInlineElements(text: string): TextElement[] {
 /**
  * 递归下降解析行内格式
  *
- * 优先级：Link > Code > Bold > Italic > Strikethrough > PlainText。
- * 高优先级先匹配，避免低优先级格式错误截断高优先级内容。
+ * 优先级：Link > Code > Bold > Italic > Strikethrough > PlainText. 
+ * 高优先级先匹配,避免低优先级格式错误截断高优先级内容. 
  *
  * @param text - 待解析文本
  * @param start - 起始解析位置
@@ -710,7 +710,7 @@ function parseInline(text: string, start: number): TextElement[] {
         text_run: { content: text.slice(plainStart, i) },
       })
     } else {
-      // 当前位置是标记开头但没匹配成功，当作普通字符
+      // 当前位置是标记开头但没匹配成功,当作普通字符
       elements.push({ text_run: { content: text[i] } })
       i++
     }
@@ -743,7 +743,7 @@ function isInlineMarkerStart(text: string, i: number): boolean {
 /**
  * 尝试解析链接 [text](url)
  *
- * 支持嵌套方括号，如 [[nested]](url)。
+ * 支持嵌套方括号,如 [[nested]](url). 
  *
  * @param text - 完整文本
  * @param i - 当前位置
@@ -818,7 +818,7 @@ function tryParseBold(text: string, i: number): { innerText: string; endPos: num
 /**
  * 尝试解析斜体 *text*
  *
- * 注意避免匹配 ** 内部的单个 *。
+ * 注意避免匹配 ** 内部的单个 *. 
  *
  * @param text - 完整文本
  * @param i - 当前位置
@@ -848,7 +848,7 @@ function tryParseStrikethrough(text: string, i: number): { innerText: string; en
 /**
  * 尝试解析行内公式 $...$
  *
- * 优先匹配 $$...$$(常见于列表项/段落中的块级公式写法)。
+ * 优先匹配 $$...$$(常见于列表项/段落中的块级公式写法). 
  *
  * @param text - 完整文本
  * @param i - 当前位置
@@ -877,7 +877,7 @@ function tryParseEquation(text: string, i: number): { content: string; endPos: n
 /**
  * 为 TextElement 数组应用指定样式
  *
- * equation 元素不应用任何样式，保持原样。
+ * equation 元素不应用任何样式,保持原样. 
  *
  * @param elements - 待应用样式的元素数组
  * @param type - 样式类型(bold/italic/strikethrough/link)
@@ -911,9 +911,9 @@ function applyStyle(elements: TextElement[], type: string, url?: string): TextEl
 }
 
 /**
- * 合并相邻的普通文本元素，减少碎片
+ * 合并相邻的普通文本元素,减少碎片
  *
- * 只有无样式的纯 text_run 才参与合并，有样式的元素保持独立。
+ * 只有无样式的纯 text_run 才参与合并,有样式的元素保持独立. 
  *
  * @param elements - TextElement 数组
  * @returns 合并后的数组
@@ -974,8 +974,8 @@ function mergeBlockTextElements(block: any): any {
 /**
  * 将代码语言字符串映射为飞书 API 对应的数字编码
  *
- * 飞书使用数字标识代码语言，而非字符串。
- * 未知语言默认返回 1(plaintext)。
+ * 飞书使用数字标识代码语言,而非字符串. 
+ * 未知语言默认返回 1(plaintext). 
  *
  * @param lang - 代码语言字符串(如 "typescript", "python")
  * @returns 飞书语言编码数字

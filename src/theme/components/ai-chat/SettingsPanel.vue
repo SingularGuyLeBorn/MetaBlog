@@ -64,7 +64,7 @@
           </template>
           <template v-else>
             <span class="hint-icon">⚠️</span>
-            <span class="hint-text">当前模型不支持直接识图，上传的图片将通过 OCR 提取文字后发送</span>
+            <span class="hint-text">当前模型不支持直接识图,上传的图片将通过 OCR 提取文字后发送</span>
           </template>
         </div>
       </div>
@@ -96,7 +96,7 @@
         <p class="section-desc-3d">
           {{ currentModelConfig?.reasoningRequired 
             ? '该模型始终显示推理过程' 
-            : '显示 AI 的推理过程，适合复杂问题' 
+            : '显示 AI 的推理过程,适合复杂问题' 
           }}
         </p>
         <!-- DeepSeek 推理强度选择 -->
@@ -140,7 +140,7 @@
           >
           <span class="slider-label">创意</span>
         </div>
-        <p class="section-desc-3d">较低值使回答更精确，较高值使回答更有创意</p>
+        <p class="section-desc-3d">较低值使回答更精确,较高值使回答更有创意</p>
       </div>
 
       <!-- 最大 Token -->
@@ -201,8 +201,8 @@
         <div class="prompt-info">
           <p class="section-desc-3d">
             {{ isSystemPromptCustomized 
-              ? '当前会话已自定义系统提示词，不再跟随 Agent 配置' 
-              : '使用 Agent 默认的系统提示词，修改后将仅影响当前会话' 
+              ? '当前会话已自定义系统提示词,不再跟随 Agent 配置' 
+              : '使用 Agent 默认的系统提示词,修改后将仅影响当前会话' 
             }}
           </p>
         </div>
@@ -278,7 +278,7 @@ interface ModelConfig {
   recommended?: boolean
   supportsReasoning: boolean
   reasoningRequired?: boolean
-  /** 是否支持 reasoningEffort 调节（仅 DeepSeek V4） */
+  /** 是否支持 reasoningEffort 调节(仅 DeepSeek V4) */
   supportsReasoningEffort?: boolean
   /** 是否原生多模态 */
   isMultimodal: boolean
@@ -293,7 +293,7 @@ const modelConfigs: ModelConfig[] = [
   {
     id: 'deepseek-v4-pro',
     name: 'DeepSeek V4 Pro',
-    description: '最强推理，适合深度分析与复杂任务',
+    description: '最强推理,适合深度分析与复杂任务',
     recommended: true,
     supportsReasoning: true,
     reasoningRequired: true,
@@ -305,7 +305,7 @@ const modelConfigs: ModelConfig[] = [
   {
     id: 'deepseek-v4-flash',
     name: 'DeepSeek V4 Flash',
-    description: '快速响应，性价比高，支持思考模式',
+    description: '快速响应,性价比高,支持思考模式',
     supportsReasoning: true,
     supportsReasoningEffort: true,
     isMultimodal: false,
@@ -314,12 +314,12 @@ const modelConfigs: ModelConfig[] = [
   },
 
   // ═══════════════════════════════════════════════════════════════
-  // Kimi K2.5 - 原生多模态（图片+视频）
+  // Kimi K2.5 - 原生多模态(图片+视频)
   // ═══════════════════════════════════════════════════════════════
   {
     id: 'kimi-k2.5',
     name: 'Kimi K2.5',
-    description: '原生多模态，支持图片/视频理解',
+    description: '原生多模态,支持图片/视频理解',
     recommended: true,
     supportsReasoning: true,
     isMultimodal: true,
@@ -402,7 +402,7 @@ function resetSettings() {
 const showPromptModal = ref(false)
 const editingPrompt = ref('')
 
-// 监听配置变化，同步编辑内容
+// 监听配置变化,同步编辑内容
 watch(() => props.config.systemPrompt, (newVal) => {
   if (!showPromptModal.value) {
     editingPrompt.value = newVal || ''
@@ -428,7 +428,7 @@ function resetInModal() {
 }
 
 function onSystemPromptInput() {
-  // 当用户手动输入时，标记为已自定义
+  // 当用户手动输入时,标记为已自定义
   // 通过比较当前值与 Agent 默认值来判断是否自定义
   if (!props.isSystemPromptCustomized && props.config.systemPrompt !== props.agentSystemPrompt) {
     emit('update:config', { systemPrompt: props.config.systemPrompt })

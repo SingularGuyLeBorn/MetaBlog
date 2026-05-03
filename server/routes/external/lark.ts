@@ -1,12 +1,29 @@
+/**
+ * ============================================================================
+ * 外部 API BFF 路由 - lark
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/external
+ */
+
+
 import type { ViteDevServer } from "vite";
 import { lark as larkEnv } from "../../config/env";
 import { rateLimitExternal } from "../../middleware/rate-limit";
 import { translateLarkError } from "../../utils/lark-error-translator";
+import {
+  getUserAccessToken,
+  getTokenStatus,
+  refreshTokenManually,
+  RefreshTokenExpiredError,
+} from "../../services/lark-token-manager";
 import type { RouteContext } from "./proxy";
 
 /**
  * 飞书 Open API 直连路由
- * 使用 App ID + App Secret 获取 tenant_access_token，直接调用飞书 REST API
+ * 使用 App ID + App Secret 获取 tenant_access_token,直接调用飞书 REST API
  * 无需 lark-cli OAuth 登录
  */
 
@@ -26,7 +43,7 @@ async function getTenantAccessToken(): Promise<string> {
 
   if (!appId || !appSecret) {
     throw new Error(
-      "FEISHU_APP_ID / LARK_APP_ID 或 FEISHU_APP_SECRET / LARK_APP_SECRET 未配置。请在 .env 中设置: FEISHU_APP_ID=cli_xxx FEISHU_APP_SECRET=xxx"
+      "FEISHU_APP_ID / LARK_APP_ID 或 FEISHU_APP_SECRET / LARK_APP_SECRET 未配置. 请在 .env 中设置: FEISHU_APP_ID=cli_xxx FEISHU_APP_SECRET=xxx"
     );
   }
 
@@ -49,18 +66,21 @@ async function getTenantAccessToken(): Promise<string> {
   return tokenCache.token;
 }
 
-/** 获取 user_access_token(从环境变量读取) */
-function getUserAccessToken(): string {
-  const token = larkEnv.userAccessToken;
-  if (!token) {
-    throw new Error(
-      "FEISHU_USER_ACCESS_TOKEN 未配置。\n" +
-      "该 API 必须使用 user_access_token(不支持 tenant_access_token)。\n" +
-      "获取方式：登录飞书开放平台 → 你的应用 → API 调试台 → 获取 Token\n" +
-      "然后在 .env 中添加：FEISHU_USER_ACCESS_TOKEN=u-xxxxxxxx"
-    );
+/** 获取 user_access_token(从 TokenManager 读取,支持热更新和自动刷新) */
+async function getUserAccessTokenFromManager(): Promise<string> {
+  try {
+    return await getUserAccessToken();
+  } catch (e: any) {
+    if (e.name === "RefreshTokenExpiredError") {
+      throw new Error(
+        "user_access_token 已过期且 refresh_token 也已失效. \n" +
+        "原因：用户授权已满 365 天,或 refresh_token 已被使用. \n" +
+        "解决：需要重新走 OAuth 授权流程. \n" +
+        "步骤：1) 运行 notebook 生成授权链接 → 2) 浏览器扫码 → 3) 复制 code → 4) 换 token"
+      );
+    }
+    throw e;
   }
-  return token;
 }
 
 /** 通用飞书 API 调用
@@ -77,8 +97,9 @@ async function feishuApi(
   useUserToken: boolean = false
 ): Promise<any> {
   // 自动判断：Wiki 路径优先使用 user token(避免 131006 permission denied)
-  const shouldUseUserToken = useUserToken || (path.startsWith('/wiki/') && !!larkEnv.userAccessToken);
-  const token = shouldUseUserToken ? getUserAccessToken() : await getTenantAccessToken();
+  const hasUserTokenCache = !!getTokenStatus().exists;
+  const shouldUseUserToken = useUserToken || (path.startsWith('/wiki/') && hasUserTokenCache);
+  const token = shouldUseUserToken ? await getUserAccessTokenFromManager() : await getTenantAccessToken();
 
   let url = `${FEISHU_BASE}${path}`;
   if (query) {
@@ -171,8 +192,9 @@ async function feishuApiMultipart(
   formData: FormData,
   useUserToken: boolean = false
 ): Promise<any> {
-  const shouldUseUserToken = useUserToken || (path.startsWith('/wiki/') && !!larkEnv.userAccessToken);
-  const token = shouldUseUserToken ? getUserAccessToken() : await getTenantAccessToken();
+  const hasUserTokenCache = !!getTokenStatus().exists;
+  const shouldUseUserToken = useUserToken || (path.startsWith('/wiki/') && hasUserTokenCache);
+  const token = shouldUseUserToken ? await getUserAccessTokenFromManager() : await getTenantAccessToken();
 
   const res = await fetch(`${FEISHU_BASE}${path}`, {
     method: "POST",
@@ -186,6 +208,23 @@ async function feishuApiMultipart(
   return data;
 }
 
+/**
+ * 注册飞书(Lark)Open API BFF 路由
+ *
+ * 挂载 /api/lark/* 全量端点,覆盖：
+ * - 文档生命周期：创建、读取、更新、删除、搜索、分享
+ * - 块操作：插入、更新、删除、批量替换(支持 Markdown 批量转 Block)
+ * - 表格：创建、填充、格式设置
+ * - 图片：上传并内嵌到文档
+ * - 消息：发送文本/富文本/卡片到群聊
+ *
+ * 双 Token 策略：
+ * - tenant_access_token(应用级)：用于文档、块、表格等通用操作
+ * - user_access_token(用户级)：仅用于 Wiki 知识库操作
+ *
+ * @param server - Vite 开发服务器实例
+ * @param ctx    - 路由上下文(含 structuredLog)
+ */
 export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   server.middlewares.use("/api/lark", rateLimitExternal);
   const { structuredLog } = ctx;
@@ -252,12 +291,12 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
                 }
               }
             } catch (e) {
-              structuredLog.warn("lark.doc.permission", "身份识别失败，跳过权限下放", e);
+              structuredLog.warn("lark.doc.permission", "身份识别失败,跳过权限下放", e);
             }
           }
 
           // 方式2: tenant token 创建且未显式指定 owner → 自动分享给当前 user token 用户
-          if (!shared && !useUserToken && larkEnv.userAccessToken) {
+          if (!shared && !useUserToken && getTokenStatus().exists) {
             try {
               const meRes = await feishuApi("GET", "/contact/v3/users/me", undefined, undefined, true);
               const myOpenId = meRes.data?.user?.user_id;
@@ -292,6 +331,9 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   // 文档: 读取纯文本
   // GET /api/lark/doc/read?document_id=xxx
   // ============================================
+  // 社区标准做法：raw_content 获取纯文本 + blocks 获取公式/富文本结构
+  // 合并返回,确保不遗漏任何内容
+  // ============================================
   server.middlewares.use("/api/lark/doc/read", async (req, res, next) => {
     if (req.method !== "GET") {
       next();
@@ -307,13 +349,93 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
 
       structuredLog.info("lark.doc.read", "读取飞书文档", { document_id: documentId });
       const useUserToken = normalizeBoolean(url.searchParams.get("use_user_token"));
-      const result = await feishuApi("GET", `/docx/v1/documents/${documentId}/raw_content`, undefined, undefined, useUserToken);
-      sendLarkResult(res, result);
+
+      // 1. raw_content 获取纯文本(速度快,含表格文本但格式扁平)
+      const rawResult = await feishuApi("GET", `/docx/v1/documents/${documentId}/raw_content`, undefined, undefined, useUserToken);
+      if (rawResult.code !== 0) {
+        sendLarkResult(res, rawResult);
+        return;
+      }
+      const rawText = rawResult.data?.content || "";
+
+      // 2. blocks 获取富文本结构(提取公式、图片标记)
+      const blocksResult = await feishuApi("GET", `/docx/v1/documents/${documentId}/blocks`, undefined, { page_size: "500" }, useUserToken);
+      let formulas: string[] = [];
+      let images: string[] = [];
+
+      if (blocksResult.code === 0) {
+        const items = blocksResult.data?.items || [];
+        for (const block of items) {
+          // 提取所有 elements 里的 equation 和 image
+          const elements = extractBlockElements(block);
+          for (const el of elements) {
+            if (el.equation?.content) {
+              formulas.push(el.equation.content);
+            }
+            if (el.image?.token) {
+              images.push(el.image.token);
+            }
+          }
+        }
+      }
+
+      // 3. 合并：raw_content 文本 + 公式列表 + 图片标记
+      const parts: string[] = [rawText];
+      if (formulas.length > 0) {
+        parts.push("\n\n【文档中的数学公式】");
+        formulas.forEach((f, i) => parts.push(`${i + 1}. $$${f}$$`));
+      }
+      if (images.length > 0) {
+        parts.push(`\n\n【文档中包含 ${images.length} 张图片,图片 token: ${images.join(", ")}】`);
+      }
+
+      sendJson(res, 200, {
+        code: 0,
+        msg: "success",
+        data: {
+          content: parts.join("\n"),
+          raw_content: rawText,
+          formulas,
+          images,
+          document_id: documentId,
+        },
+      });
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
     }
   });
+
+  /** 从 block 中提取所有 elements(递归处理常见字段) */
+  function extractBlockElements(block: any): any[] {
+    if (!block) return [];
+    const elements: any[] = [];
+
+    // 常见包含 elements 的字段
+    const fields = [
+      "text", "heading1", "heading2", "heading3", "heading4",
+      "heading5", "heading6", "heading7", "heading8", "heading9",
+      "bullet", "ordered", "code", "quote", "todo",
+    ];
+    for (const f of fields) {
+      if (block[f]?.elements) {
+        elements.push(...block[f].elements);
+      }
+    }
+
+    // 图片块
+    if (block.image) {
+      elements.push({ image: block.image });
+    }
+
+    // 表格块的 children 是 cell blocks,需要递归
+    if (block.block_type === 31 && block.children) {
+      // table 的 children 只是 ID 列表,不在这里递归(避免大量 API 调用)
+      // 公式通常不在 table cell 里,或者 raw_content 已经包含了表格文本
+    }
+
+    return elements;
+  }
 
   // ============================================
   // 文档: 读取元数据(标题、所有者等)
@@ -407,8 +529,8 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   // POST /api/lark/doc/append
   // Body: { document_id, blocks: [{ block_type, content? }] }
   //
-  // 特殊处理：table block (block_type: 31) 不支持嵌套 children，
-  // 需要先创建 table，再创建 cell blocks，最后更新 table.cells
+  // 特殊处理：table block (block_type: 31) 不支持嵌套 children,
+  // 需要先创建 table,再创建 cell blocks,最后更新 table.cells
   // ============================================
   server.middlewares.use("/api/lark/doc/append", async (req, res, next) => {
     if (req.method !== "POST") {
@@ -429,7 +551,12 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         document_id: documentId,
         block_count: blocks.length,
       });
-      const useUserToken = normalizeBoolean(body.use_user_token);
+      // 如果前端未显式指定 use_user_token,且本地有 user token 缓存,默认使用 user token
+      // 原因：Wiki 节点创建的文档必须用 user token 写入,而大模型经常遗漏该参数
+      let useUserToken = normalizeBoolean(body.use_user_token);
+      if (body.use_user_token === undefined && getTokenStatus().exists) {
+        useUserToken = true;
+      }
 
       const results: any[] = [];
       let normalBatch: any[] = [];
@@ -470,7 +597,9 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         const r = await feishuApi(
           "POST",
           `/docx/v1/documents/${documentId}/blocks/${documentId}/children`,
-          { children: normalBatch }
+          { children: normalBatch },
+          undefined,
+          useUserToken
         );
         results.push(r);
         if (r.code !== 0) {
@@ -491,13 +620,13 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   });
 
   /** 创建 table block(两步：创建空 table → GET cell → PATCH auto-generated text child)
-   *  用 PATCH update_text_elements 更新飞书自动生成的空 text child，消除空 child 副作用。
+   *  用 PATCH update_text_elements 更新飞书自动生成的空 text child,消除空 child 副作用. 
    */
   async function createTableBlock(documentId: string, tableBlock: any, useUserToken: boolean = false): Promise<any> {
     const cellContents: any[][] = tableBlock._cell_contents || [];
     const { _cell_contents: _, ...tableData } = tableBlock;
 
-    // 1. 创建 table block(只含 property，不含 _cell_contents)
+    // 1. 创建 table block(只含 property,不含 _cell_contents)
     const tableResult = await feishuApi(
       "POST",
       `/docx/v1/documents/${documentId}/blocks/${documentId}/children`,
@@ -600,7 +729,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
 
     for (const field of blockTypeFields) {
       if (updateData[field] && Array.isArray(updateData[field].elements)) {
-        // 对 elements 进行深度修复，转换数学公式节点
+        // 对 elements 进行深度修复,转换数学公式节点
         const elements = updateData[field].elements.map((el: any) => {
           // 如果是一个特殊的数学公式标记块
           if (el.equation && typeof el.equation === 'string') {
@@ -615,7 +744,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
           return el;
         });
 
-        // 如果是代码块，需要确保 language 被正确映射
+        // 如果是代码块,需要确保 language 被正确映射
         if (field === "code" && updateData.code.style) {
           return {
             update_code: {
@@ -643,7 +772,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
     }
     try {
       const body = await parseBody(req);
-      // 过滤 block_type，飞书 PATCH /blocks/{id} 不需要此字段
+      // 过滤 block_type,飞书 PATCH /blocks/{id} 不需要此字段
       const { document_id, block_id, block_type, ...updateData } = body;
 
       if (!document_id || !block_id) {
@@ -653,7 +782,10 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
 
       structuredLog.info("lark.doc.update_block", "更新文档块", { document_id, block_id });
       const patchBody = convertPatchBody(updateData);
-      const useUserToken = normalizeBoolean(body.use_user_token);
+      let useUserToken = normalizeBoolean(body.use_user_token);
+      if (body.use_user_token === undefined && getTokenStatus().exists) {
+        useUserToken = true;
+      }
       const result = await feishuApi(
         "PATCH",
         `/docx/v1/documents/${document_id}/blocks/${block_id}`,
@@ -690,9 +822,12 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       }
 
       structuredLog.info("lark.doc.delete_block", "删除文档块", { document_id: documentId, block_id: blockId });
-      const useUserTokenDel = normalizeBoolean(body.use_user_token);
+      let useUserTokenDel = normalizeBoolean(body.use_user_token);
+      if (body.use_user_token === undefined && getTokenStatus().exists) {
+        useUserTokenDel = true;
+      }
 
-      // 1. 获取父块(文档根 Page)的所有子块，查找目标索引
+      // 1. 获取父块(文档根 Page)的所有子块,查找目标索引
       const listResult = await feishuApi(
         "GET",
         `/docx/v1/documents/${documentId}/blocks/${documentId}/children`,
@@ -721,6 +856,79 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         useUserTokenDel
       );
       sendLarkResult(res, result);
+    } catch (e: any) {
+      const translated = translateLarkError(e.message);
+      sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
+    }
+  });
+
+  // ============================================
+  // 文档: 清空所有内容
+  // POST /api/lark/doc/clear
+  // Body: { document_id }
+  // 保留文档本身(page 块),删除所有子块
+  // ⚠️ 危险操作,删除后无法恢复
+  // ============================================
+  server.middlewares.use("/api/lark/doc/clear", async (req, res, next) => {
+    if (req.method !== "POST") {
+      next();
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      const documentId = body.document_id;
+      let useUserTokenClear = normalizeBoolean(body.use_user_token);
+      if (body.use_user_token === undefined && getTokenStatus().exists) {
+        useUserTokenClear = true;
+      }
+
+      if (!documentId) {
+        sendJson(res, 400, { code: -1, msg: "缺少 document_id 参数" });
+        return;
+      }
+
+      structuredLog.info("lark.doc.clear", "清空文档", { document_id: documentId });
+
+      // 1. 获取文档根 Page 的所有子块
+      const listResult = await feishuApi(
+        "GET",
+        `/docx/v1/documents/${documentId}/blocks/${documentId}/children`,
+        undefined,
+        { page_size: "500" },
+        useUserTokenClear
+      );
+      if (listResult.code !== 0) {
+        sendLarkResult(res, listResult);
+        return;
+      }
+
+      const items = listResult.data?.items || [];
+      if (items.length === 0) {
+        sendJson(res, 200, { code: 0, data: { deleted: 0, message: "文档已经是空的" } });
+        return;
+      }
+
+      // 2. 批量删除所有子块(start_index=0, end_index=items.length)
+      const result = await feishuApi(
+        "DELETE",
+        `/docx/v1/documents/${documentId}/blocks/${documentId}/children/batch_delete`,
+        { start_index: 0, end_index: items.length },
+        undefined,
+        useUserTokenClear
+      );
+
+      if (result.code === 0) {
+        sendJson(res, 200, {
+          code: 0,
+          data: {
+            deleted: items.length,
+            document_id: documentId,
+            message: `已清空文档,共删除 ${items.length} 个内容块`
+          }
+        });
+      } else {
+        sendLarkResult(res, result);
+      }
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -893,7 +1101,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         if (idResult.code !== 0) {
           sendJson(res, 400, {
             code: idResult.code,
-            msg: `手机号转 open_id 失败: ${idResult.msg}。请确认应用有 contact:user.id:readonly 权限，或改用邮箱分享。`,
+            msg: `手机号转 open_id 失败: ${idResult.msg}. 请确认应用有 contact:user.id:readonly 权限,或改用邮箱分享. `,
           });
           return;
         }
@@ -901,7 +1109,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         if (!openId) {
           sendJson(res, 400, {
             code: -1,
-            msg: `未找到手机号 ${member_id} 对应的用户。请确认手机号正确且已加入企业通讯录。`,
+            msg: `未找到手机号 ${member_id} 对应的用户. 请确认手机号正确且已加入企业通讯录. `,
           });
           return;
         }
@@ -973,7 +1181,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         if (idResult.code !== 0) {
           sendJson(res, 400, {
             code: idResult.code,
-            msg: `手机号转 open_id 失败: ${idResult.msg}。请确认应用有 contact:user.id:readonly 权限，或改用邮箱。`,
+            msg: `手机号转 open_id 失败: ${idResult.msg}. 请确认应用有 contact:user.id:readonly 权限,或改用邮箱. `,
           });
           return;
         }
@@ -981,7 +1189,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
         if (!openId) {
           sendJson(res, 400, {
             code: -1,
-            msg: `未找到手机号 ${member_id} 对应的用户。`,
+            msg: `未找到手机号 ${member_id} 对应的用户. `,
           });
           return;
         }
@@ -1104,7 +1312,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       });
       // 权限错误时给 Agent 更清晰的提示
       if (result.code !== 0 && result.code === 99991672) {
-        result.msg = `${result.msg} | 提示：搜索姓名/部门需要 contact:contact.base:readonly 权限。如果只有 contact:user.id:readonly 权限，请使用 type="phone" 或 type="email" 精确查找。`;
+        result.msg = `${result.msg} | 提示：搜索姓名/部门需要 contact:contact.base:readonly 权限. 如果只有 contact:user.id:readonly 权限,请使用 type="phone" 或 type="email" 精确查找. `;
       }
       sendLarkResult(res, result);
     } catch (e: any) {
@@ -1125,6 +1333,9 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       if (body.description) payload.description = String(body.description);
       structuredLog.info("lark.wiki.space.create", "创建飞书知识库", { name: body.name });
       const result = await feishuApi("POST", "/wiki/v2/spaces", payload, undefined, true);
+      if (result.code === 0 && result.data?.space?.space_id) {
+        result.data.space.space_url = `https://feishu.cn/wiki/space/${result.data.space.space_id}`;
+      }
       sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
@@ -1261,6 +1472,11 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       if (body.parent_node_token) payload.parent_node_token = String(body.parent_node_token);
       structuredLog.info("lark.wiki.node.create", "创建飞书知识库节点", { space_id, title: body.title });
       const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/nodes`, payload);
+      if (result.code === 0 && result.data?.node) {
+        const node = result.data.node;
+        if (node.node_token) node.node_url = `https://feishu.cn/wiki/${node.node_token}`;
+        if (node.obj_token) node.doc_url = `https://feishu.cn/docx/${node.obj_token}`;
+      }
       sendLarkResult(res, result);
     } catch (e: any) {
       const translated = translateLarkError(e.message);
@@ -1338,26 +1554,65 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
   });
 
   // ============================================
-  // Wiki 知识库: 将外部文档迁入
+  // Wiki 知识库: 将外部文档迁入(自动轮询异步任务)
   // POST /api/lark/wiki/move_doc
-  // Body: { space_id, doc_token, parent_node_token?, title? }
+  // Body: { space_id, obj_token, parent_wiki_token?, title? }
   // ============================================
   server.middlewares.use("/api/lark/wiki/move_doc", async (req, res, next) => {
     if (req.method !== "POST") { next(); return; }
     try {
       const body = await parseBody(req);
       const space_id = body.space_id;
-      const doc_token = body.doc_token;
-      if (!space_id || !doc_token) {
-        sendJson(res, 400, { code: -1, msg: "缺少 space_id 或 doc_token 参数" });
+      const obj_token = body.obj_token;
+      if (!space_id || !obj_token) {
+        sendJson(res, 400, { code: -1, msg: "缺少 space_id 或 obj_token 参数" });
         return;
       }
-      const payload: any = { obj_token: doc_token, obj_type: "docx" };
-      if (body.parent_node_token) payload.parent_node_token = String(body.parent_node_token);
+      const payload: any = { obj_token, obj_type: "docx" };
+      if (body.parent_wiki_token) payload.parent_wiki_token = String(body.parent_wiki_token);
       if (body.title) payload.title = String(body.title);
-      structuredLog.info("lark.wiki.move_doc", "将文档迁入 Wiki", { space_id, doc_token });
-      const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/nodes/move_docs_to_wiki`, payload, undefined, true);
-      sendLarkResult(res, result);
+      structuredLog.info("lark.wiki.move_doc", "将文档迁入 Wiki", { space_id, obj_token });
+
+      // 1. 提交迁入任务(异步)
+      const submitResult = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/nodes/move_docs_to_wiki`, payload, undefined, true);
+      if (submitResult.code !== 0) {
+        sendLarkResult(res, submitResult);
+        return;
+      }
+
+      // 2. 获取 task_id 并轮询
+      const task_id = submitResult.data?.task_id;
+      if (!task_id) {
+        // 如果直接返回了 wiki_token(极少数情况同步完成)
+        sendJson(res, 200, { code: 0, msg: "success", data: submitResult.data });
+        return;
+      }
+
+      // 轮询 task 状态(最多 15 秒)
+      let finalResult: any = null;
+      for (let i = 0; i < 15; i++) {
+        await new Promise(r => setTimeout(r, 1000));
+        const taskResult = await feishuApi("GET", `/wiki/v2/tasks/${task_id}`, { task_type: "move" }, undefined, true);
+        if (taskResult.code !== 0) continue;
+        const moveResult = taskResult.data?.task?.move_result?.[0];
+        if (!moveResult) continue;
+        if (moveResult.status === 0) {
+          finalResult = moveResult;
+          break;
+        }
+        if (moveResult.status === -1) {
+          sendJson(res, 400, { code: -1, msg: `迁入失败: ${moveResult.status_msg || "未知错误"}` });
+          return;
+        }
+        // status === 1: 处理中,继续轮询
+      }
+
+      if (!finalResult) {
+        sendJson(res, 400, { code: -1, msg: "迁入任务超时,请稍后手动确认" });
+        return;
+      }
+
+      sendJson(res, 200, { code: 0, msg: "success", data: { node: finalResult.node } });
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
@@ -1398,7 +1653,7 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
       const node_token = body.node_token;
       if (!requireParams(res, body, 'space_id', 'node_token')) return;
       const payload: any = {};
-      if (body.parent_node_token) payload.parent_node_token = String(body.parent_node_token);
+      if (body.parent_node_token) payload.target_parent_token = String(body.parent_node_token);
       structuredLog.info("lark.wiki.node.move", "移动飞书知识库节点", { space_id, node_token });
       const result = await feishuApi("POST", `/wiki/v2/spaces/${space_id}/nodes/${node_token}/move`, payload, undefined, true);
       sendLarkResult(res, result);
@@ -1473,6 +1728,57 @@ export function registerLarkRoutes(server: ViteDevServer, ctx: RouteContext) {
     } catch (e: any) {
       const translated = translateLarkError(e.message);
       sendJson(res, 500, { code: -1, msg: translated.message, suggestion: translated.suggestion });
+    }
+  });
+
+  // ============================================
+  // Token 管理: 刷新
+  // POST /api/lark/token/refresh
+  // ============================================
+  server.middlewares.use("/api/lark/token/refresh", async (req, res, next) => {
+    if (req.method !== "POST") {
+      next();
+      return;
+    }
+    try {
+      structuredLog.info("lark.token.refresh", "手动刷新 user_access_token");
+      const result = await refreshTokenManually();
+      if (result.success) {
+        sendJson(res, 200, {
+          code: 0,
+          msg: "刷新成功",
+          data: {
+            access_token: result.access_token,
+            refresh_token: result.refresh_token,
+            expires_in: result.expires_in,
+          },
+        });
+      } else {
+        sendJson(res, 400, { code: -1, msg: result.error });
+      }
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
+    }
+  });
+
+  // ============================================
+  // Token 管理: 状态查询
+  // GET /api/lark/token/status
+  // ============================================
+  server.middlewares.use("/api/lark/token/status", async (req, res, next) => {
+    if (req.method !== "GET") {
+      next();
+      return;
+    }
+    try {
+      const status = getTokenStatus();
+      sendJson(res, 200, {
+        code: 0,
+        msg: "查询成功",
+        data: status,
+      });
+    } catch (e: any) {
+      sendJson(res, 500, { code: -1, msg: e.message });
     }
   });
 

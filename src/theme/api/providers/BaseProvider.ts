@@ -1,7 +1,13 @@
 /**
- * Provider 基类
- * 封装通用逻辑，具体厂商只需实现差异部分
+ * ============================================================================
+ * API 服务 - BaseProvider
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/api
  */
+
 
 import type { ChatMessage, MessageAttachment } from '@/theme/types'
 import { getModelById } from './models'
@@ -17,6 +23,10 @@ import type {
 } from './types'
 
 /** API 配置 */
+/**
+ * ApiConfig 接口定义
+ *
+ */
 export interface ApiConfig {
   baseURL: string
   apiKey: string
@@ -24,6 +34,10 @@ export interface ApiConfig {
 }
 
 /** Provider 配置选项 */
+/**
+ * ProviderOptions 接口定义
+ *
+ */
 export interface ProviderOptions {
   /** API 基础配置 */
   apiConfig: ApiConfig
@@ -79,7 +93,7 @@ export abstract class BaseProvider implements IProvider {
   }
 
   /** 
-   * 子类可覆盖，用于筛选厂商特定模型
+   * 子类可覆盖,用于筛选厂商特定模型
    * 默认从全局模型配置中筛选
    */
   protected getModelList(): ModelInfo[] {
@@ -92,7 +106,7 @@ export abstract class BaseProvider implements IProvider {
 
   /**
    * 流式对话
-   * 核心方法，处理与厂商 API 的流式通信
+   * 核心方法,处理与厂商 API 的流式通信
    */
   abstract chatStream(options: ChatOptions, callbacks: StreamCallbacks): Promise<void>
 
@@ -214,7 +228,7 @@ export abstract class BaseProvider implements IProvider {
    * 本地 blob 转为 base64
    */
   protected async attachmentToUrl(attachment: MessageAttachment): Promise<string> {
-    // 如果已经是 data URL 或 http URL，直接使用
+    // 如果已经是 data URL 或 http URL,直接使用
     if (attachment.url.startsWith('data:') || attachment.url.startsWith('http')) {
       return attachment.url
     }

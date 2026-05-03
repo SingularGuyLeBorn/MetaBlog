@@ -1,22 +1,30 @@
 /**
- * 结构化日志系统(服务端存储版)
- * 
- * 功能：
- * 1. 组件生命周期日志(挂载、更新、卸载)
- * 2. 对话完整链路追踪
- * 3. 工具调用记录
- * 4. 支持搜索和筛选
- * 5. 日志存储到服务端文件系统
+ * ============================================================================
+ * 后端服务 - logger
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/services
  */
+
 
 import { computed, ref, type Ref } from 'vue'
 
 // ==================== 类型定义 ====================
 
 /** 日志级别 */
+/**
+ * LogLevel 类型别名
+ *
+ */
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 /** 日志类别 */
+/**
+ * LogCategory 类型别名
+ *
+ */
 export type LogCategory =
   | 'lifecycle'    // 组件生命周期
   | 'chat'         // 对话相关
@@ -27,6 +35,10 @@ export type LogCategory =
   | 'media'        // 多媒体/文件上传
 
 /** 组件生命周期事件 */
+/**
+ * LifecycleEvent 类型别名
+ *
+ */
 export type LifecycleEvent =
   | 'created'
   | 'mounted'
@@ -36,6 +48,10 @@ export type LifecycleEvent =
   | 'deactivated'
 
 /** 对话事件 */
+/**
+ * ChatEvent 类型别名
+ *
+ */
 export type ChatEvent =
   | 'message_start'
   | 'message_stream'
@@ -47,6 +63,10 @@ export type ChatEvent =
   | 'session_create'
 
 /** 日志条目 */
+/**
+ * LogEntry 接口定义
+ *
+ */
 export interface LogEntry {
   id: string
   timestamp: number
@@ -63,6 +83,10 @@ export interface LogEntry {
 }
 
 /** 工具调用记录 */
+/**
+ * ToolCallRecord 接口定义
+ *
+ */
 export interface ToolCallRecord {
   id: string
   name: string
@@ -77,6 +101,10 @@ export interface ToolCallRecord {
 }
 
 /** 日志统计 */
+/**
+ * LogStats 接口定义
+ *
+ */
 export interface LogStats {
   totalLogs: number
   todayLogs: number
@@ -85,6 +113,10 @@ export interface LogStats {
 }
 
 /** 日志筛选 */
+/**
+ * LogFilter 接口定义
+ *
+ */
 export interface LogFilter {
   level?: LogLevel
   category?: LogCategory
@@ -135,7 +167,7 @@ async function flushLogs() {
       console.error('[Logger] Failed to flush logs:', await response.text())
     }
   } catch (error) {
-    // 静默处理网络错误，避免影响用户体验
+    // 静默处理网络错误,避免影响用户体验
     console.debug('[Logger] Flush error (non-critical):', error)
   }
 }
@@ -180,6 +212,12 @@ export function addLog(entry: Omit<LogEntry, 'id' | 'timestamp'>): LogEntry | nu
 }
 
 /** 从服务端加载日志 */
+/**
+ * loadLogs 函数
+ *
+ * @param filter - 参数(LogFilter = {})
+ * @returns 返回值(Promise<LogEntry[]>)
+ */
 export async function loadLogs(filter: LogFilter = {}): Promise<LogEntry[]> {
   try {
     const params = new URLSearchParams()
@@ -194,7 +232,7 @@ export async function loadLogs(filter: LogFilter = {}): Promise<LogEntry[]> {
 
     const response = await fetch(`/api/logs/query?${params}`)
 
-    // 检查 Content-Type，避免解析 HTML 错误页面
+    // 检查 Content-Type,避免解析 HTML 错误页面
     const contentType = response.headers.get('content-type')
     if (!contentType || !contentType.includes('application/json')) {
       console.warn('[Logger] Server returned non-JSON response, skipping log load')
@@ -215,11 +253,16 @@ export async function loadLogs(filter: LogFilter = {}): Promise<LogEntry[]> {
 }
 
 /** 加载统计信息 */
+/**
+ * loadStats 函数
+ *
+ * @returns 返回值(Promise<LogStats | null>)
+ */
 export async function loadStats(): Promise<LogStats | null> {
   try {
     const response = await fetch('/api/logs/stats')
 
-    // 检查 Content-Type，避免解析 HTML 错误页面
+    // 检查 Content-Type,避免解析 HTML 错误页面
     const contentType = response.headers.get('content-type')
     if (!contentType || !contentType.includes('application/json')) {
       console.warn('[Logger] Server returned non-JSON response, skipping stats load')
@@ -240,6 +283,12 @@ export async function loadStats(): Promise<LogStats | null> {
 }
 
 /** 清空日志 */
+/**
+ * clearLogs 函数
+ *
+ * @param days - 参数
+ * @returns 返回值(Promise<boolean>)
+ */
 export async function clearLogs(days?: number): Promise<boolean> {
   try {
     const response = await fetch('/api/logs/cleanup', {
@@ -268,6 +317,13 @@ export async function clearLogs(days?: number): Promise<boolean> {
 }
 
 /** 导出日志 */
+/**
+ * exportLogs 函数
+ *
+ * @param startDate - 参数
+ * @param endDate - 参数
+ * @returns 返回值
+ */
 export function exportLogs(startDate?: string, endDate?: string) {
   const params = new URLSearchParams()
   if (startDate) params.append('startDate', startDate)
@@ -281,11 +337,23 @@ export function exportLogs(startDate?: string, endDate?: string) {
 }
 
 /** 搜索日志 */
+/**
+ * 搜索Logs
+ *
+ * @param filter - 参数(LogFilter)
+ * @returns 返回值(Promise<LogEntry[]>)
+ */
 export async function searchLogs(filter: LogFilter): Promise<LogEntry[]> {
   return loadLogs(filter)
 }
 
 /** 获取组件相关日志 */
+/**
+ * 获取ComponentLogs
+ *
+ * @param componentName - 参数(string)
+ * @returns 返回值(Promise<LogEntry[]>)
+ */
 export async function getComponentLogs(componentName: string): Promise<LogEntry[]> {
   return loadLogs({ component: componentName })
 }

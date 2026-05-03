@@ -177,12 +177,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { Icon, LiquidGlass } from '@/theme/components/common'
 import { useAgentConfig } from '@/theme/stores/agentStore'
 import type { Skill, SkillCategory } from '@/theme/types/agent'
+import { computed, ref } from 'vue'
 import SkillDetailModal from './SkillDetailModal.vue'
-import { Icon } from '@/theme/components/common'
-import { LiquidGlass } from '@/theme/components/common'
 
 const { skills, createSkill, updateSkill: updateSkillApi, deleteSkill: deleteSkillApi } = useAgentConfig()
 
@@ -217,7 +216,7 @@ const filteredSkills = computed(() => {
   return result
 })
 
-// 显式声明 form 类型，避免使用 as 断言
+// 显式声明 form 类型,避免使用 as 断言
 interface SkillForm {
   name: string
   icon: string

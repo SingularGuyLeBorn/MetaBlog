@@ -1,16 +1,13 @@
 /**
- * Agent 系统 - 统一类型定义
- * 
- * 架构设计(参考 Claude Code Skills)：
- * - Agent Identity: "你是谁"(baseRole 定义)
- * - Skills: "你能做什么"(按需加载的能力模块)
- * - Tools: "你有什么工具"(可执行函数)
- * 
- * Skill 设计原则：
- * - Skill 不是身份定义，而是能力扩展
- * - Skill 详细内容在调用时注入对话上下文
- * - 系统提示词只包含 Skills 列表(name + description)
+ * ============================================================================
+ * 类型定义 - agent
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/types
  */
+
 
 import type { ToolDefinition } from '@/theme/tools/types'
 
@@ -27,11 +24,15 @@ export type {
 // ═══════════════════════════════════════════════════════════════
 
 /** 能力类型 */
+/**
+ * CapabilityType 类型别名
+ *
+ */
 export type CapabilityType = 'skill' | 'tool'
 
 /** 
  * Agent 配置模式(Claude Code 模式)
- * Agent 定义 availableSkills，AI 自行判断调用
+ * Agent 定义 availableSkills,AI 自行判断调用
  */
 export type AgentConfigMode = 'claude-code'
 
@@ -39,6 +40,10 @@ export type AgentConfigMode = 'claude-code'
 // Skill 创建参数(扩展 skills 系统的 Skill)
 // ═══════════════════════════════════════════════════════════════
 
+/**
+ * SkillCreateParams 接口定义
+ *
+ */
 export interface SkillCreateParams {
   name: string
   icon?: string
@@ -55,6 +60,10 @@ export interface SkillCreateParams {
 // ═══════════════════════════════════════════════════════════════
 
 /** 工具定义 - 来自 definitions.ts */
+/**
+ * Tool 接口定义
+ *
+ */
 export interface Tool {
   name: string
   description: string
@@ -68,12 +77,24 @@ export interface Tool {
 // ═══════════════════════════════════════════════════════════════
 
 /** Agent 等级 */
+/**
+ * AgentLevel 类型别名
+ *
+ */
 export type AgentLevel = 'meta' | 'core' | 'fixed' | 'custom' | 'temp'
 
 /** Agent 状态 */
+/**
+ * AgentStatus 类型别名
+ *
+ */
 export type AgentStatus = 'online' | 'offline' | 'busy' | 'idle'
 
 /** Agent 权限 */
+/**
+ * AgentPermission 接口定义
+ *
+ */
 export interface AgentPermission {
   id: string
   name: string
@@ -82,6 +103,10 @@ export interface AgentPermission {
 }
 
 /** Agent 记忆配置 */
+/**
+ * AgentMemory 接口定义
+ *
+ */
 export interface AgentMemory {
   enabled: boolean
   content: string
@@ -104,6 +129,10 @@ export interface AgentCapabilities {
 }
 
 /** Agent 触发器 */
+/**
+ * AgentTrigger 接口定义
+ *
+ */
 export interface AgentTrigger {
   id: string
   type: 'manual' | 'scheduled' | 'event' | 'webhook' | 'mention'
@@ -123,6 +152,10 @@ export interface AgentTrigger {
 }
 
 /** Agent 运行时配置 */
+/**
+ * AgentRuntime 接口定义
+ *
+ */
 export interface AgentRuntime {
   model?: string
   temperature?: number
@@ -176,6 +209,10 @@ export interface Agent {
 }
 
 /** Agent 创建参数 - 与后端完全一致 */
+/**
+ * AgentCreateParams 接口定义
+ *
+ */
 export interface AgentCreateParams {
   name: string
   avatar?: string
@@ -192,6 +229,10 @@ export interface AgentCreateParams {
 }
 
 /** Agent 更新参数 - 与后端完全一致 */
+/**
+ * AgentUpdateParams 接口定义
+ *
+ */
 export interface AgentUpdateParams {
   name?: string
   avatar?: string
@@ -212,6 +253,10 @@ export interface AgentUpdateParams {
 // ═══════════════════════════════════════════════════════════════
 
 /** 能力节点 */
+/**
+ * CapabilityNode 接口定义
+ *
+ */
 export interface CapabilityNode {
   id: string
   type: 'root' | 'skill' | 'tool'
@@ -226,6 +271,10 @@ export interface CapabilityNode {
 }
 
 /** 能力边 */
+/**
+ * CapabilityEdge 接口定义
+ *
+ */
 export interface CapabilityEdge {
   from: string
   to: string
@@ -233,6 +282,10 @@ export interface CapabilityEdge {
 }
 
 /** 能力图谱 */
+/**
+ * CapabilityGraph 接口定义
+ *
+ */
 export interface CapabilityGraph {
   nodes: CapabilityNode[]
   edges: CapabilityEdge[]
@@ -246,7 +299,7 @@ import type { Skill } from '@/theme/skills/types'
 
 /** 
  * Skill 调用上下文
- * 当 Agent 决定调用 Skill 时，将 Skill 内容注入到对话中
+ * 当 Agent 决定调用 Skill 时,将 Skill 内容注入到对话中
  */
 export interface SkillInvocation {
   skillId: string
@@ -273,6 +326,10 @@ export interface SystemPromptContext {
 // ═══════════════════════════════════════════════════════════════
 
 /** 获取的内容基础接口 */
+/**
+ * FetchedContent 接口定义
+ *
+ */
 export interface FetchedContent {
   title: string
   content: string
@@ -284,6 +341,10 @@ export interface FetchedContent {
 }
 
 /** 社交媒体内容 */
+/**
+ * SocialMediaContent 接口定义
+ *
+ */
 export interface SocialMediaContent extends FetchedContent {
   platform: string
   originalUrl: string
@@ -293,6 +354,10 @@ export interface SocialMediaContent extends FetchedContent {
 }
 
 /** 文章内容 */
+/**
+ * ArticleContent 接口定义
+ *
+ */
 export interface ArticleContent {
   title: string
   content: string

@@ -1,37 +1,32 @@
 /**
- * Skill Loader - Claude Code 风格的 Skills + Tools 整合
- * 
- * 核心功能:
- * 1. 加载和解析 .skills/ 目录下的 Skill 文件
- * 2. 基于用户输入匹配相关 Skills
- * 3. 构建渐进式披露的 System Prompt
- * 4. 管理 Skill 激活状态
- * 
- * 渐进式披露层级:
- * - LOD-0: 所有 Skill 元数据 (始终包含)
- * - LOD-1: 工具定义 (通过 Function Calling 提供)
- * - LOD-2: 激活 Skill 的完整内容 (动态注入)
+ * ============================================================================
+ * Skill 系统 - skillLoader
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/skills
  */
 
-import { ref, computed, type Ref, type ComputedRef } from 'vue'
-import type { 
-  Skill, 
-  SkillMetadata, 
+
+import { computed, ref, type ComputedRef, type Ref } from 'vue'
+import { buildSystemPrompt, estimateTokens } from './promptBuilder'
+import { matchSkillsWithContext, quickMatchSkills } from './skillMatcher'
+import {
+  buildSkillFromContent,
+  BUILTIN_SKILL_IDS
+} from './skillParser'
+import type {
   ActiveSkill,
-  SkillMatchResult,
-  SkillMatchOptions,
   PromptBuildContext,
   PromptBuildOptions,
+  Skill,
+  SkillMatchOptions,
+  SkillMatchResult,
+  SkillMetadata,
   SkillRuntimeState,
   ToolDefinition
 } from './types'
-import { 
-  parseSkillFile, 
-  buildSkillFromContent,
-  BUILTIN_SKILL_IDS 
-} from './skillParser'
-import { matchSkills, matchSkillsWithContext, quickMatchSkills } from './skillMatcher'
-import { buildSystemPrompt, buildFullPrompt, estimateTokens } from './promptBuilder'
 
 // ═══════════════════════════════════════════════════════════════
 // Skill 加载
@@ -40,37 +35,37 @@ import { buildSystemPrompt, buildFullPrompt, estimateTokens } from './promptBuil
 /**
  * 从项目 .skills/ 目录加载所有内置 Skills
  * 
- * 注意: 在浏览器环境中运行，使用相对路径 fetch
+ * 注意: 在浏览器环境中运行,使用相对路径 fetch
  */
 export async function loadBuiltinSkills(): Promise<Skill[]> {
   const skills: Skill[] = []
   const basePath = '/.skills'
-  
+
   for (const id of BUILTIN_SKILL_IDS) {
     try {
       const response = await fetch(`${basePath}/${id}/SKILL.md`)
-      
+
       if (!response.ok) {
         console.warn(`[SkillLoader] Failed to load skill "${id}": ${response.status}`)
         continue
       }
-      
+
       const content = await response.text()
-      
+
       // 检查内容是否为空或 404 页面
       if (!content || content.includes('<!DOCTYPE html>') || content.length < 100) {
         console.warn(`[SkillLoader] Invalid content for skill "${id}"`)
         continue
       }
-      
+
       const skill = buildSkillFromContent(content, `${basePath}/${id}/SKILL.md`)
       skills.push(skill)
-      
+
     } catch (error) {
       console.error(`[SkillLoader] Error loading skill "${id}":`, error)
     }
   }
-  
+
   console.log(`[SkillLoader] Loaded ${skills.length} builtin skills`)
   return skills
 }
@@ -90,17 +85,21 @@ export function createSkillFromContent(content: string, id?: string): Skill {
 // Skill 运行时管理 (Vue Composition API)
 // ═══════════════════════════════════════════════════════════════
 
+/**
+ * SkillLoaderAPI 接口定义
+ *
+ */
 export interface SkillLoaderAPI {
   // 状态
   availableSkills: Ref<SkillMetadata[]>
   activeSkills: Ref<ActiveSkill[]>
   isLoading: Ref<boolean>
   error: Ref<string | null>
-  
+
   // 计算属性
   activeSkillIds: ComputedRef<Set<string>>
   activeTools: ComputedRef<string[]>
-  
+
   // 方法
   loadSkills: () => Promise<void>
   matchSkills: (userInput: string, options?: SkillMatchOptions) => SkillMatchResult[]
@@ -110,7 +109,7 @@ export interface SkillLoaderAPI {
   clearActiveSkills: () => void
   buildSystemPrompt: (baseRole: string, userInput: string, availableTools?: ToolDefinition[], options?: PromptBuildOptions) => string
   getPromptTokenEstimate: (baseRole: string, userInput: string, availableTools?: ToolDefinition[]) => { total: number; breakdown: Record<string, number> }
-  
+
   // 调试
   getDebugInfo: () => SkillRuntimeState
 }
@@ -135,21 +134,21 @@ export function useSkillLoader(): SkillLoaderAPI {
   // ═══════════════════════════════════════════════════════════════
   // 响应式状态
   // ═══════════════════════════════════════════════════════════════
-  
+
   const availableSkills = ref<SkillMetadata[]>([])
   const activeSkills = ref<ActiveSkill[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const matchHistory = ref<SkillRuntimeState['matchHistory']>([])
-  
+
   // ═══════════════════════════════════════════════════════════════
   // 计算属性
   // ═══════════════════════════════════════════════════════════════
-  
-  const activeSkillIds = computed(() => 
+
+  const activeSkillIds = computed(() =>
     new Set(activeSkills.value.map(s => s.id))
   )
-  
+
   // 收集所有激活 Skill 声明的工具
   const activeTools = computed(() => {
     const toolSet = new Set<string>()
@@ -160,18 +159,18 @@ export function useSkillLoader(): SkillLoaderAPI {
     }
     return Array.from(toolSet)
   })
-  
+
   // ═══════════════════════════════════════════════════════════════
   // 方法
   // ═══════════════════════════════════════════════════════════════
-  
+
   /**
    * 加载所有 Skills
    */
   async function loadSkills(): Promise<void> {
     isLoading.value = true
     error.value = null
-    
+
     try {
       const skills = await loadBuiltinSkills()
       availableSkills.value = skills.map(s => ({
@@ -195,7 +194,7 @@ export function useSkillLoader(): SkillLoaderAPI {
       isLoading.value = false
     }
   }
-  
+
   /**
    * 匹配 Skills
    */
@@ -206,7 +205,7 @@ export function useSkillLoader(): SkillLoaderAPI {
       const active = activeSkills.value.find(a => a.id === s.id)
       return active || s
     })
-    
+
     return matchSkillsWithContext(
       userInput,
       availableSkills.value,
@@ -214,12 +213,12 @@ export function useSkillLoader(): SkillLoaderAPI {
       options
     )
   }
-  
+
   /**
    * 激活一个 Skill
    */
   function activateSkill(
-    skillId: string, 
+    skillId: string,
     source: 'auto' | 'manual' | 'ai_request' = 'manual',
     score?: number
   ): boolean {
@@ -227,14 +226,14 @@ export function useSkillLoader(): SkillLoaderAPI {
     if (activeSkillIds.value.has(skillId)) {
       return true
     }
-    
+
     // 查找 Skill 定义
     const metadata = availableSkills.value.find(s => s.id === skillId)
     if (!metadata) {
       console.error(`[SkillLoader] Skill not found: ${skillId}`)
       return false
     }
-    
+
     // 异步加载完整内容
     loadSkillFullContent(skillId).then(fullSkill => {
       const activeSkill: ActiveSkill = {
@@ -243,9 +242,9 @@ export function useSkillLoader(): SkillLoaderAPI {
         activationSource: source,
         matchScore: score
       }
-      
+
       activeSkills.value.push(activeSkill)
-      
+
       // 记录匹配历史
       matchHistory.value.push({
         timestamp: Date.now(),
@@ -253,28 +252,28 @@ export function useSkillLoader(): SkillLoaderAPI {
         matchedSkills: [skillId],
         activationSource: source
       })
-      
+
       console.log(`[SkillLoader] Activated skill: ${skillId} (${source})`)
     })
-    
+
     return true
   }
-  
+
   /**
    * 异步加载 Skill 完整内容
    */
   async function loadSkillFullContent(skillId: string): Promise<Skill> {
     const basePath = '/.skills'
     const response = await fetch(`${basePath}/${skillId}/SKILL.md`)
-    
+
     if (!response.ok) {
       throw new Error(`Failed to load skill content: ${response.status}`)
     }
-    
+
     const content = await response.text()
     return buildSkillFromContent(content)
   }
-  
+
   /**
    * 停用 Skill
    */
@@ -285,7 +284,7 @@ export function useSkillLoader(): SkillLoaderAPI {
       console.log(`[SkillLoader] Deactivated skill: ${skillId}`)
     }
   }
-  
+
   /**
    * 切换 Skill 激活状态
    */
@@ -297,7 +296,7 @@ export function useSkillLoader(): SkillLoaderAPI {
       return activateSkill(skillId, 'manual')
     }
   }
-  
+
   /**
    * 清空所有激活的 Skills
    */
@@ -305,7 +304,7 @@ export function useSkillLoader(): SkillLoaderAPI {
     activeSkills.value = []
     console.log('[SkillLoader] Cleared all active skills')
   }
-  
+
   /**
    * 构建 System Prompt
    */
@@ -322,10 +321,10 @@ export function useSkillLoader(): SkillLoaderAPI {
       activeSkills: activeSkills.value,
       availableTools
     }
-    
+
     return buildSystemPrompt(context, options)
   }
-  
+
   /**
    * 获取 Prompt Token 估算
    */
@@ -338,17 +337,17 @@ export function useSkillLoader(): SkillLoaderAPI {
     const lod0Tokens = estimateTokens(buildSystemPrompt({
       baseRole, userInput, availableSkills: availableSkills.value, activeSkills: []
     }, { includeLOD0: true, includeLOD1: false, includeLOD2: false }))
-    
-    const lod1Tokens = availableTools 
+
+    const lod1Tokens = availableTools
       ? estimateTokens(buildSystemPrompt({
-          baseRole, userInput, availableSkills: [], activeSkills: [], availableTools
-        }, { includeLOD0: false, includeLOD1: true, includeLOD2: false }))
+        baseRole, userInput, availableSkills: [], activeSkills: [], availableTools
+      }, { includeLOD0: false, includeLOD1: true, includeLOD2: false }))
       : 0
-    
+
     const lod2Tokens = estimateTokens(buildSystemPrompt({
       baseRole, userInput, availableSkills: [], activeSkills: activeSkills.value
     }, { includeLOD0: false, includeLOD1: false, includeLOD2: true }))
-    
+
     return {
       total: estimateTokens(prompt),
       breakdown: {
@@ -359,7 +358,7 @@ export function useSkillLoader(): SkillLoaderAPI {
       }
     }
   }
-  
+
   /**
    * 获取调试信息
    */
@@ -371,22 +370,22 @@ export function useSkillLoader(): SkillLoaderAPI {
       lastUpdated: Date.now()
     }
   }
-  
+
   // ═══════════════════════════════════════════════════════════════
   // 返回 API
   // ═══════════════════════════════════════════════════════════════
-  
+
   return {
     // 状态
     availableSkills,
     activeSkills,
     isLoading,
     error,
-    
+
     // 计算属性
     activeSkillIds,
     activeTools,
-    
+
     // 方法
     loadSkills,
     matchSkills: _matchSkills,
@@ -407,22 +406,50 @@ export function useSkillLoader(): SkillLoaderAPI {
 let globalSkills: SkillMetadata[] = []
 let globalActiveSkills: ActiveSkill[] = []
 
+/**
+ * 设置GlobalSkills
+ *
+ * @param skills - 参数(SkillMetadata[])
+ * @returns 返回值
+ */
 export function setGlobalSkills(skills: SkillMetadata[]): void {
   globalSkills = skills
 }
 
+/**
+ * 获取GlobalSkills
+ *
+ * @returns 返回值(SkillMetadata[])
+ */
 export function getGlobalSkills(): SkillMetadata[] {
   return globalSkills
 }
 
+/**
+ * 设置GlobalActiveSkills
+ *
+ * @param skills - 参数(ActiveSkill[])
+ * @returns 返回值
+ */
 export function setGlobalActiveSkills(skills: ActiveSkill[]): void {
   globalActiveSkills = skills
 }
 
+/**
+ * 获取GlobalActiveSkills
+ *
+ * @returns 返回值(ActiveSkill[])
+ */
 export function getGlobalActiveSkills(): ActiveSkill[] {
   return globalActiveSkills
 }
 
+/**
+ * addGlobalActiveSkill 函数
+ *
+ * @param skill - 参数(ActiveSkill)
+ * @returns 返回值
+ */
 export function addGlobalActiveSkill(skill: ActiveSkill): void {
   if (!globalActiveSkills.find(s => s.id === skill.id)) {
     globalActiveSkills.push(skill)
@@ -447,17 +474,17 @@ export function autoActivateSkills(
   availableSkills: SkillMetadata[],
   currentActiveSkills: ActiveSkill[],
   onActivate?: (skillId: string, score: number) => void
-): { 
+): {
   matches: SkillMatchResult[]
   activated: string[]
-  promptContext: string 
+  promptContext: string
 } {
   // 匹配 Skills
   const matches = matchSkillsWithContext(userInput, availableSkills, currentActiveSkills, {
     threshold: 0.2,
     maxMatches: 3
   })
-  
+
   // 自动激活高匹配的 (score > 0.5)
   const activated: string[] = []
   for (const match of matches) {
@@ -466,14 +493,14 @@ export function autoActivateSkills(
       onActivate?.(match.skill.id, match.score)
     }
   }
-  
+
   // 构建 Prompt 上下文说明
   const promptContext = matches.length > 0
-    ? `\n[系统] 根据输入自动匹配到以下技能: ${matches.map(m => 
-        `${m.skill.name}(${(m.score * 100).toFixed(0)}%)`
-      ).join(', ')}`
+    ? `\n[系统] 根据输入自动匹配到以下技能: ${matches.map(m =>
+      `${m.skill.name}(${(m.score * 100).toFixed(0)}%)`
+    ).join(', ')}`
     : ''
-  
+
   return { matches, activated, promptContext }
 }
 
@@ -487,6 +514,6 @@ export function suggestSkills(
   if (!partialInput || partialInput.length < 2) {
     return []
   }
-  
+
   return quickMatchSkills(partialInput, availableSkills, 3)
 }

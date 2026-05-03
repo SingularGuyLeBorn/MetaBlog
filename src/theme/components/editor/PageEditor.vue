@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useData, useRoute } from 'vitepress'
-import Vditor from 'vditor'
-import 'vditor/dist/index.css'
+import Vditor from 'vditor';
+import 'vditor/dist/index.css';
+import { useData, useRoute } from 'vitepress';
+import { onBeforeUnmount, ref, watch } from 'vue';
 
 const props = defineProps<{
   modelValue: boolean // 控制编辑器显示/隐藏
@@ -102,7 +102,7 @@ const initVditor = () => {
     height: '100%',
     width: '100%',
     value: content.value,
-    mode: 'ir', // 即时渲染模式，类似语雀
+    mode: 'ir', // 即时渲染模式,类似语雀
     toolbar: [
       'headings', 'bold', 'italic', 'strike', '|',
       'line', 'quote', 'list', 'ordered-list', 'check', '|',
@@ -152,7 +152,7 @@ watch(() => props.modelValue, (isOpen) => {
   }
 })
 
-// 监听路由变化，关闭编辑器
+// 监听路由变化,关闭编辑器
 watch(() => route.path, () => {
   closeEditor()
 })

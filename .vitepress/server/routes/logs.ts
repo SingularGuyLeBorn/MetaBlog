@@ -2,7 +2,7 @@
  * Logs API Routes
  * 提供日志查询和统计接口
  * 
- * v7 修复：改用 StructuredLogger.server，消除跨边界 import
+ * v7 修复：改用 StructuredLogger.server,消除跨边界 import
  */
 import { promises as fs } from 'fs';
 import { join } from 'path';

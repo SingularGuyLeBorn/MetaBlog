@@ -197,7 +197,7 @@ describe('GitHub BFF Routes', () => {
     const fetchCallsAfterFirst = (global.fetch as any).mock?.calls?.length || 0
     expect(fetchCallsAfterFirst).toBeGreaterThan(0)
 
-    // 第二次相同请求：命中缓存，不再调用 fetch
+    // 第二次相同请求：命中缓存,不再调用 fetch
     const res2 = await invoke('/api/github/repos/facebook/react', 'GET')
     expect(res2.statusCode).toBe(200)
     expect(res2.data).toMatchObject({ id: 123 })
@@ -218,7 +218,7 @@ describe('GitHub BFF Routes', () => {
 
     const fetchCallsAfterFirst = (global.fetch as any).mock?.calls?.length || 0
 
-    // 第二次相同 POST：不缓存，再次转发
+    // 第二次相同 POST：不缓存,再次转发
     const res2 = await invoke('/api/github/repos/owner/repo/issues', 'POST', { body })
     expect(res2.statusCode).toBe(200)
 
@@ -244,7 +244,7 @@ describe('GitHub BFF Routes', () => {
     const fetchCallsAfterFirst = (global.fetch as any).mock?.calls?.length || 0
     expect(fetchCallsAfterFirst).toBe(1)
 
-    // 第二次相同请求：不命中缓存，再次转发
+    // 第二次相同请求：不命中缓存,再次转发
     const res2 = await invoke('/api/github/repos/nonexistent/repo', 'GET')
     expect(res2.statusCode).toBe(404)
 

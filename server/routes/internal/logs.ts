@@ -1,7 +1,22 @@
+/**
+ * ============================================================================
+ * 内部业务路由 - logs
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/internal
+ */
+
+
 import fs from "fs";
 import path from "path";
 import type { ViteDevServer } from "vite";
 
+/**
+ * RouteContext 接口定义
+ *
+ */
 export interface RouteContext {
   system: any;
   structuredLog: any;
@@ -9,6 +24,20 @@ export interface RouteContext {
   triggerReload: () => void;
 }
 
+/**
+ * 注册日志系统路由
+ *
+ * 挂载 /api/logs/* 端点,支持：
+ * - /api/logs/read —— 按标签、时间范围、关键词过滤读取日志
+ * - /api/logs/write —— 写入结构化日志
+ * - /api/logs/stream —— SSE 实时日志流(用于前端日志面板)
+ * - /api/logs/sessions —— 会话日志查询
+ *
+ * 日志存储在 .logs/ 目录下,按日期分文件(YYYY-MM-DD.jsonl). 
+ *
+ * @param server - Vite 开发服务器实例
+ * @param ctx    - 路由上下文
+ */
 export function registerLogsRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
   // ============================================
@@ -227,7 +256,7 @@ export function registerLogsRoutes(server: ViteDevServer, ctx: RouteContext) {
           req.on("end", async () => {
             try {
               const body = JSON.parse(Buffer.concat(chunks).toString());
-              const days = body.days ?? 7; // 默认保留7天，days=0表示清空所有
+              const days = body.days ?? 7; // 默认保留7天,days=0表示清空所有
 
               // 获取日志目录
               const LOGS_DIR = path.join(process.cwd(), ".logs");
@@ -257,7 +286,7 @@ export function registerLogsRoutes(server: ViteDevServer, ctx: RouteContext) {
                 const filePath = path.join(LOGS_DIR, file);
                 const stats = fs.statSync(filePath);
 
-                // 如果 days=0 或文件修改时间早于 cutoffTime，则删除
+                // 如果 days=0 或文件修改时间早于 cutoffTime,则删除
                 if (days === 0 || stats.mtime.getTime() < cutoffTime) {
                   fs.unlinkSync(filePath);
                   deletedCount++;

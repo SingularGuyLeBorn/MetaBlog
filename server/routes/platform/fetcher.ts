@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * 平台解析路由 - fetcher
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/platform
+ */
+
+
 import type { ContentFetcher, FetchedContent } from "./types";
 
 // ============================================
@@ -31,9 +42,16 @@ async function fetchHtml(url: string, headers?: Record<string, string>, timeoutM
 }
 
 // ============================================
-// Playwright 渲染器（复用）
+// Playwright 渲染器(复用)
 // ============================================
 
+/**
+ * 获取WithPlaywright数据
+ *
+ * @param url - 参数(string)
+ * @param opts - 参数({ isZhihu?: boolean; timeout?: number } = {})
+ * @returns 返回值(Promise<string>)
+ */
 export async function fetchWithPlaywright(url: string, opts: { isZhihu?: boolean; timeout?: number } = {}): Promise<string> {
   const { chromium } = await import("playwright");
   const fs = await import("fs");
@@ -91,7 +109,7 @@ export async function fetchWithPlaywright(url: string, opts: { isZhihu?: boolean
 // 平台专用获取器
 // ============================================
 
-/** 知乎：必须用 Playwright + stealth，反爬极强 */
+/** 知乎：必须用 Playwright + stealth,反爬极强 */
 class ZhihuFetcher implements ContentFetcher {
   name = "zhihu";
   async fetch(url: string, timeout?: number): Promise<string> {
@@ -99,18 +117,18 @@ class ZhihuFetcher implements ContentFetcher {
   }
 }
 
-/** 微信：反爬强，Playwright 模拟浏览器 */
+/** 微信：反爬强,Playwright 模拟浏览器 */
 class WechatFetcher implements ContentFetcher {
   name = "wechat";
   async fetch(url: string, timeout?: number): Promise<string> {
-    // 先尝试 HTTP（快），失败再用 Playwright（稳）
+    // 先尝试 HTTP(快),失败再用 Playwright(稳)
     try {
       const html = await fetchHtml(url, undefined, timeout);
-      // 快速校验：如果 HTML 中没有正文特征，说明可能触发了反爬
+      // 快速校验：如果 HTML 中没有正文特征,说明可能触发了反爬
       if (html.includes("id=\"js_content\"") && html.includes("rich_media")) {
         return html;
       }
-      // 有 js_content 但内容明显是验证码/提示页，也走 Playwright
+      // 有 js_content 但内容明显是验证码/提示页,也走 Playwright
       if (html.includes("环境异常") || html.includes("完成验证")) {
         throw new Error("wechat anti-bot detected");
       }
@@ -122,7 +140,7 @@ class WechatFetcher implements ContentFetcher {
   }
 }
 
-/** 小红书：反爬强，需要 Playwright */
+/** 小红书：反爬强,需要 Playwright */
 class XiaohongshuFetcher implements ContentFetcher {
   name = "xiaohongshu";
   async fetch(url: string, timeout?: number): Promise<string> {
@@ -130,7 +148,7 @@ class XiaohongshuFetcher implements ContentFetcher {
   }
 }
 
-/** 抖音：反爬强，需要 Playwright */
+/** 抖音：反爬强,需要 Playwright */
 class DouyinFetcher implements ContentFetcher {
   name = "douyin";
   async fetch(url: string, timeout?: number): Promise<string> {
@@ -138,7 +156,7 @@ class DouyinFetcher implements ContentFetcher {
   }
 }
 
-/** B站：服务端渲染，普通 HTTP 即可 */
+/** B站：服务端渲染,普通 HTTP 即可 */
 class BilibiliFetcher implements ContentFetcher {
   name = "bilibili";
   async fetch(url: string, timeout?: number): Promise<string> {
@@ -146,7 +164,7 @@ class BilibiliFetcher implements ContentFetcher {
   }
 }
 
-/** 微博：服务端渲染，普通 HTTP 即可 */
+/** 微博：服务端渲染,普通 HTTP 即可 */
 class WeiboFetcher implements ContentFetcher {
   name = "weibo";
   async fetch(url: string, timeout?: number): Promise<string> {
@@ -163,7 +181,7 @@ class GenericFetcher implements ContentFetcher {
 
   async fetch(url: string, timeout?: number): Promise<string> {
     const effectiveTimeout = timeout ?? 10000;
-    // L1: HTTP fetch（最快）
+    // L1: HTTP fetch(最快)
     try {
       const html = await fetchHtml(url, undefined, effectiveTimeout);
       return html;
@@ -171,7 +189,7 @@ class GenericFetcher implements ContentFetcher {
       // continue
     }
 
-    // L2: Jina Reader（云端渲染）
+    // L2: Jina Reader(云端渲染)
     try {
       const jinaUrl = `https://r.jina.ai/http://${url}`;
       const res = await fetchWithTimeout(jinaUrl, effectiveTimeout);
@@ -183,13 +201,13 @@ class GenericFetcher implements ContentFetcher {
       // continue
     }
 
-    // L3: Playwright 兜底（本地浏览器）
+    // L3: Playwright 兜底(本地浏览器)
     return fetchWithPlaywright(url, { timeout });
   }
 }
 
 // ============================================
-// 获取器注册表（按 platform 映射）
+// 获取器注册表(按 platform 映射)
 // ============================================
 
 const FETCHER_MAP: Record<string, ContentFetcher> = {
@@ -202,6 +220,12 @@ const FETCHER_MAP: Record<string, ContentFetcher> = {
 };
 
 /** 根据 URL 解析 hostname */
+/**
+ * detectPlatform 函数
+ *
+ * @param hostname - 参数(string)
+ * @returns 返回值(string)
+ */
 export function detectPlatform(hostname: string): string {
   if (hostname.includes("zhihu.com")) return "zhihu";
   if (hostname.includes("mp.weixin.qq.com")) return "wechat";

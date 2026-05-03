@@ -1,13 +1,13 @@
 /**
- * Agent Storage Service - 后端API数据源
- * 
- * 数据源：后端API(唯一数据源)
- * 原则：
- * - 不包含任何硬编码数据
- * - 内存只做临时缓存
- * - 所有操作通过API持久化到后端
- * - 空状态由UI处理
+ * ============================================================================
+ * 后端服务 - agentStorage
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/services
  */
+
 
 import { API_CONFIG, API_ENDPOINTS } from '@/theme/api/config'
 import { BUILTIN_SKILLS } from '@/theme/stores/skillStore'
@@ -21,7 +21,7 @@ interface ApiResponse<T> {
   id?: string
 }
 
-// 内存缓存(临时存储，页面刷新后重置)
+// 内存缓存(临时存储,页面刷新后重置)
 const cache = {
   agents: null as Agent[] | null,
   skills: null as Skill[] | null,
@@ -33,7 +33,7 @@ const DEFAULT_AGENT: Agent = {
   id: 'default-assistant',
   name: 'Meta 助手',
   avatar: '✨',
-  description: '你的全能数字孪生，掌握博客内容创作、学术搜索与系统管理，是 MetaBlog 的灵魂核心。',
+  description: '你的全能数字孪生,掌握博客内容创作、学术搜索与系统管理,是 MetaBlog 的灵魂核心. ',
   level: 'core',
   status: 'online',
   seat: 1,
@@ -42,29 +42,29 @@ const DEFAULT_AGENT: Agent = {
     mode: 'raw',
     skillIds: [],
     toolIds: [],
-    customSystemPrompt: `你是一个部署在 MetaBlog (VitePress 驱动的学术博客系统) 中的高级 AI 助手。
-你是邵承源的数字分身，名字叫 Gemini (基于 Antigravity 框架)。
+    customSystemPrompt: `你是一个部署在 MetaBlog (VitePress 驱动的学术博客系统) 中的高级 AI 助手. 
+你是邵承源的数字分身,名字叫 Gemini (基于 Antigravity 框架). 
 
 ## 核心身份
-- **内容主理人**：你有权通过后端 API 对 \`/sections/\` 目录(包含 posts, knowledge, resources 等)下的文章进行 CRUD 操作。
-- **科研加速者**：你可以直接检索 ArXiv, OpenReview 和 Hugging Face 上的前沿论文与模型。
+- **内容主理人**：你有权通过后端 API 对 \`/sections/\` 目录(包含 posts, knowledge, resources 等)下的文章进行 CRUD 操作. 
+- **科研加速者**：你可以直接检索 ArXiv, OpenReview 和 Hugging Face 上的前沿论文与模型. 
 
 ## 关键任务与交互准则
 
 ### 1. 文章管理 (VitePress CMS)
-- **路径敏感**：所有文章操作必须基于路径(path)。路径通常为 \`posts/xxx.md\` 或 \`knowledge/xxx.md\`。
-- **搜索优先**：若用户提到一篇文章，优先用 \`searchArticles\` 找路径，再用 \`getArticleContent\` 读取。
-- **创作规范**：创建新文章时(\`createArticle\`)，必须包含规范的 Markdown 语法和 H1 标题、Frontmatter。
+- **路径敏感**：所有文章操作必须基于路径(path). 路径通常为 \`posts/xxx.md\` 或 \`knowledge/xxx.md\`. 
+- **搜索优先**：若用户提到一篇文章,优先用 \`searchArticles\` 找路径,再用 \`getArticleContent\` 读取. 
+- **创作规范**：创建新文章时(\`createArticle\`),必须包含规范的 Markdown 语法和 H1 标题、Frontmatter. 
 
 ### 2. 学术研究 (Academic Research)
-- 遇到技术难点时，主动提出搜索最新论文(searchArxiv)。
-- 对于 AI 模型，查阅 Hugging Face 的最新权重信息。
+- 遇到技术难点时,主动提出搜索最新论文(searchArxiv). 
+- 对于 AI 模型,查阅 Hugging Face 的最新权重信息. 
 
 ### 3. 文本文档
-- 使用中文回复。
-- 代码块需标注语言。
+- 使用中文回复. 
+- 代码块需标注语言. 
 
-愿你的代码如电路般精确，如诗歌般优雅。`
+愿你的代码如电路般精确,如诗歌般优雅. `
   },
   memory: {
     enabled: true,
@@ -175,22 +175,37 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
   }
 }
 
+/**
+ * 判断是否为ApiAvailable
+ *
+ * @returns 返回值(boolean)
+ */
 export function isApiAvailable(): boolean {
   return apiAvailable
 }
 
+/**
+ * resetApiStatus 函数
+ *
+ * @returns 返回值
+ */
 export function resetApiStatus(): void {
   apiAvailable = true
 }
 
 // ==================== Agent API ====================
 
+/**
+ * 获取Agents
+ *
+ * @returns 返回值(Promise<Agent[]>)
+ */
 export async function getAgents(): Promise<Agent[]> {
   if (cache.agents) return cache.agents
 
   try {
     const agents = await apiRequest<Agent[]>(API_ENDPOINTS.AGENTS)
-    // 如果后端没有数据，使用默认 Agent
+    // 如果后端没有数据,使用默认 Agent
     if (!agents || agents.length === 0) {
       cache.agents = [DEFAULT_AGENT]
       return cache.agents
@@ -204,6 +219,12 @@ export async function getAgents(): Promise<Agent[]> {
   }
 }
 
+/**
+ * 获取Agent
+ *
+ * @param id - 参数(string)
+ * @returns 返回值(Promise<Agent | null>)
+ */
 export async function getAgent(id: string): Promise<Agent | null> {
   try {
     return await apiRequest<Agent>(API_ENDPOINTS.AGENT_DETAIL(id))
@@ -213,6 +234,12 @@ export async function getAgent(id: string): Promise<Agent | null> {
   }
 }
 
+/**
+ * 创建Agent
+ *
+ * @param params - 参数(AgentCreateParams)
+ * @returns 返回值(Promise<Agent | null>)
+ */
 export async function createAgent(params: AgentCreateParams): Promise<Agent | null> {
   try {
     // 转换前端字段为后端期望格式
@@ -269,6 +296,13 @@ export async function createAgent(params: AgentCreateParams): Promise<Agent | nu
   }
 }
 
+/**
+ * 更新Agent
+ *
+ * @param id - 参数(string)
+ * @param updates - 参数(AgentUpdateParams)
+ * @returns 返回值(Promise<Agent | null>)
+ */
 export async function updateAgent(id: string, updates: AgentUpdateParams): Promise<Agent | null> {
   try {
     // 转换前端字段为后端期望格式(与 createAgent 一致)
@@ -336,6 +370,12 @@ export async function updateAgent(id: string, updates: AgentUpdateParams): Promi
   }
 }
 
+/**
+ * 删除Agent
+ *
+ * @param id - 参数(string)
+ * @returns 返回值(Promise<boolean>)
+ */
 export async function deleteAgent(id: string): Promise<boolean> {
   try {
     await apiRequest(API_ENDPOINTS.AGENT_DELETE, {
@@ -354,6 +394,11 @@ export async function deleteAgent(id: string): Promise<boolean> {
 
 // ==================== Active Agent API ====================
 
+/**
+ * 获取ActiveAgentId
+ *
+ * @returns 返回值(Promise<string | null>)
+ */
 export async function getActiveAgentId(): Promise<string | null> {
   if (cache.activeAgentId) return cache.activeAgentId
 
@@ -362,12 +407,18 @@ export async function getActiveAgentId(): Promise<string | null> {
     cache.activeAgentId = result.id
     return result.id
   } catch (e) {
-    // 如果API不可用，返回第一个agent的ID
+    // 如果API不可用,返回第一个agent的ID
     const agents = await getAgents()
     return agents[0]?.id || null
   }
 }
 
+/**
+ * 设置ActiveAgentId
+ *
+ * @param id - 参数(string)
+ * @returns 返回值
+ */
 export async function setActiveAgentId(id: string): Promise<void> {
   try {
     await apiRequest(API_ENDPOINTS.ACTIVE_AGENT, {
@@ -382,15 +433,20 @@ export async function setActiveAgentId(id: string): Promise<void> {
 
 // ==================== Skill API ====================
 
+/**
+ * 获取Skills
+ *
+ * @returns 返回值(Promise<Skill[]>)
+ */
 export async function getSkills(): Promise<Skill[]> {
   if (cache.skills) return cache.skills
 
   try {
     const skills = await apiRequest<Skill[]>(API_ENDPOINTS.SKILLS)
-    // 合并内置技能和自定义技能
+    // 合并内置技能和API返回的技能(去重,API优先)
     const apiSkillIds = new Set(skills.map(s => s.id))
-    const customSkills = skills.filter(s => !apiSkillIds.has(s.id))
-    cache.skills = [...BUILTIN_SKILLS, ...customSkills]
+    const mergedBuiltIn = BUILTIN_SKILLS.filter(s => !apiSkillIds.has(s.id))
+    cache.skills = [...mergedBuiltIn, ...skills]
     return cache.skills
   } catch (e) {
     console.warn('[AgentStorage] API failed, using built-in skills')
@@ -399,6 +455,12 @@ export async function getSkills(): Promise<Skill[]> {
   }
 }
 
+/**
+ * 获取Skill
+ *
+ * @param id - 参数(string)
+ * @returns 返回值(Promise<Skill | null>)
+ */
 export async function getSkill(id: string): Promise<Skill | null> {
   try {
     return await apiRequest<Skill>(API_ENDPOINTS.SKILL_DETAIL(id))
@@ -408,6 +470,12 @@ export async function getSkill(id: string): Promise<Skill | null> {
   }
 }
 
+/**
+ * 创建Skill
+ *
+ * @param skillData - 参数(Omit<Skill, 'id' | 'createdAt' | 'updatedAt' | 'isBuiltIn'>)
+ * @returns 返回值(Promise<Skill | null>)
+ */
 export async function createSkill(skillData: Omit<Skill, 'id' | 'createdAt' | 'updatedAt' | 'isBuiltIn'>): Promise<Skill | null> {
   try {
     const skill = await apiRequest<Skill>(API_ENDPOINTS.SKILLS, {
@@ -424,6 +492,13 @@ export async function createSkill(skillData: Omit<Skill, 'id' | 'createdAt' | 'u
   }
 }
 
+/**
+ * 更新Skill
+ *
+ * @param id - 参数(string)
+ * @param updates - 参数(Partial<Skill>)
+ * @returns 返回值(Promise<Skill | null>)
+ */
 export async function updateSkill(id: string, updates: Partial<Skill>): Promise<Skill | null> {
   try {
     const skill = await apiRequest<Skill>(API_ENDPOINTS.SKILL_UPDATE, {
@@ -440,6 +515,12 @@ export async function updateSkill(id: string, updates: Partial<Skill>): Promise<
   }
 }
 
+/**
+ * 删除Skill
+ *
+ * @param id - 参数(string)
+ * @returns 返回值(Promise<boolean>)
+ */
 export async function deleteSkill(id: string): Promise<boolean> {
   try {
     await apiRequest(API_ENDPOINTS.SKILL_DELETE, {
@@ -458,23 +539,43 @@ export async function deleteSkill(id: string): Promise<boolean> {
 
 // ==================== 缓存管理 ====================
 
+/**
+ * clearCache 函数
+ *
+ * @returns 返回值
+ */
 export function clearCache(): void {
   cache.agents = null
   cache.skills = null
   cache.activeAgentId = null
 }
 
+/**
+ * invalidateAgentsCache 函数
+ *
+ * @returns 返回值
+ */
 export function invalidateAgentsCache(): void {
   cache.agents = null
 }
 
+/**
+ * invalidateSkillsCache 函数
+ *
+ * @returns 返回值
+ */
 export function invalidateSkillsCache(): void {
   cache.skills = null
 }
 
 // ==================== 初始化 ====================
 
+/**
+ * initializeStorage 函数
+ *
+ * @returns 返回值
+ */
 export function initializeStorage(): void {
-  // 不再创建任何默认数据，所有数据从后端加载
+  // 不再创建任何默认数据,所有数据从后端加载
   clearCache()
 }

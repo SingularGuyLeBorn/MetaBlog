@@ -28,7 +28,7 @@ After:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**操作**: 每个文件夹合并为单个文件，依赖关系简单，IDE 可以自动处理
+**操作**: 每个文件夹合并为单个文件,依赖关系简单,IDE 可以自动处理
 
 ---
 
@@ -86,7 +86,7 @@ After:
 1. 打开 `chatStore.ts`
 2. 把 `chatStorage.ts` 的函数复制粘贴到 `chatStore.ts`
 3. 删除 `chatStorage.ts` 文件
-4. IDE 会提示更新 import，选择 "Yes"
+4. IDE 会提示更新 import,选择 "Yes"
 
 ---
 
@@ -313,18 +313,18 @@ Day 5: 全面测试
 
 ### 问题 1: IDE 没有更新某些 import
 
-**现象**: 移动文件后，有些文件的 import 还是旧路径
+**现象**: 移动文件后,有些文件的 import 还是旧路径
 
 **解决**:
 ```bash
-# 全局搜索旧路径，手动修复
+# 全局搜索旧路径,手动修复
 grep -r "from.*tools/article/index" .vitepress/theme
 grep -r "from.*services/chatStorage" .vitepress/theme
 ```
 
 ### 问题 2: 循环依赖
 
-**现象**: `A.ts` import `B.ts`，`B.ts` 又 import `A.ts`
+**现象**: `A.ts` import `B.ts`,`B.ts` 又 import `A.ts`
 
 **解决**:
 - 把共享的类型定义提取到单独文件

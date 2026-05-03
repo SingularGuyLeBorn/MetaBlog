@@ -1,6 +1,6 @@
 # 深入探讨: DPO数学推导
 
-本文是Lecture 15的精英补充笔记，完整推导DPO (Direct Preference Optimization) 的数学原理，解释为何可以绕过显式奖励模型直接从偏好数据优化策略。
+本文是Lecture 15的精英补充笔记,完整推导DPO (Direct Preference Optimization) 的数学原理,解释为何可以绕过显式奖励模型直接从偏好数据优化策略. 
 
 ---
 
@@ -8,7 +8,7 @@
 
 ### 1.1 目标函数
 
-在RLHF中，我们希望找到策略 $\pi_\theta$ 最大化:
+在RLHF中,我们希望找到策略 $\pi_\theta$ 最大化:
 
 $$J(\theta) = \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta(\cdot|x)} \left[ r(x, y) \right] - \beta D_{KL}(\pi_\theta(\cdot|x) || \pi_{ref}(\cdot|x))$$
 
@@ -23,14 +23,14 @@ $$J(\theta) = \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta(\cdot|x)} \left[
 
 $$P(y_1 \succ y_2 | x) = \sigma(r(x, y_1) - r(x, y_2))$$
 
-其中 $\sigma(z) = \frac{1}{1 + e^{-z}}$ 是sigmoid函数。
+其中 $\sigma(z) = \frac{1}{1 + e^{-z}}$ 是sigmoid函数. 
 
 ### 1.3 标准RLHF流程
 
 1. 从偏好数据训练奖励模型 $r_\phi$
 2. 使用PPO最大化 $J(\theta)$
 
-**DPO的问题**: 能否跳过步骤1，直接从偏好数据训练策略？
+**DPO的问题**: 能否跳过步骤1,直接从偏好数据训练策略？
 
 ---
 
@@ -38,17 +38,17 @@ $$P(y_1 \succ y_2 | x) = \sigma(r(x, y_1) - r(x, y_2))$$
 
 ### 2.1 非参数最优策略
 
-**关键洞察**: 对于固定的奖励 $r$，我们可以写出最优策略的**解析形式**。
+**关键洞察**: 对于固定的奖励 $r$,我们可以写出最优策略的**解析形式**. 
 
 将目标函数写成积分形式:
 
 $$J(\theta) = \int p(x) \left[ \int \pi_\theta(y|x) \left( r(x,y) - \beta \log \frac{\pi_\theta(y|x)}{\pi_{ref}(y|x)} \right) dy \right] dx$$
 
-对于每个 $x$，内部优化是关于分布 $\pi_\theta(\cdot|x)$ 的优化。
+对于每个 $x$,内部优化是关于分布 $\pi_\theta(\cdot|x)$ 的优化. 
 
 ### 2.2 变分推导
 
-固定 $x$，对 $\pi = \pi_\theta(\cdot|x)$ 求极值:
+固定 $x$,对 $\pi = \pi_\theta(\cdot|x)$ 求极值:
 
 $$\max_\pi \mathbb{E}_{y \sim \pi} \left[ r(x,y) - \beta \log \frac{\pi(y)}{\pi_{ref}(y|x)} \right]$$
 
@@ -56,11 +56,11 @@ $$\max_\pi \mathbb{E}_{y \sim \pi} \left[ r(x,y) - \beta \log \frac{\pi(y)}{\pi_
 
 $$\max_\pi \mathbb{E}_{y \sim \pi} \left[ r(x,y) \right] - \beta D_{KL}(\pi || \pi_{ref})$$
 
-这是一个 **带KL正则化的最大化问题**。
+这是一个 **带KL正则化的最大化问题**. 
 
 ### 2.3 最优解
 
-通过变分法或拉格朗日乘子法，可以证明最优分布为:
+通过变分法或拉格朗日乘子法,可以证明最优分布为:
 
 $$\pi^*(y|x) = \frac{1}{Z(x)} \pi_{ref}(y|x) \exp\left( \frac{1}{\beta} r(x, y) \right)$$
 
@@ -82,7 +82,7 @@ $$\frac{\partial \mathcal{L}}{\partial \pi(y)} = r(x,y) - \beta \log \frac{\pi(y
 
 $$\pi(y) = \pi_{ref}(y|x) \exp\left( \frac{r(x,y) - \lambda - \beta}{\beta} \right)$$
 
-归一化后得到上述最优解形式。
+归一化后得到上述最优解形式. 
 
 ---
 
@@ -102,11 +102,11 @@ $$r(x, y) = \beta \log \frac{\pi^*(y|x)}{\pi_{ref}(y|x)} + \beta \log Z(x)$$
 
 ### 3.2 奖励的重参数化
 
-**核心发现**: 奖励可以用策略的对数比率表示(加上一个只依赖于 $x$ 的项)。
+**核心发现**: 奖励可以用策略的对数比率表示(加上一个只依赖于 $x$ 的项). 
 
 $$r(x, y) = \beta \log \frac{\pi(y|x)}{\pi_{ref}(y|x)} + \beta \log Z(x)$$
 
-对于最优策略 $\pi = \pi^*$，这个等式成立。
+对于最优策略 $\pi = \pi^*$,这个等式成立. 
 
 ---
 
@@ -128,7 +128,7 @@ $$P(y_1 \succ y_2 | x) = \sigma\left( \beta \log \frac{\pi(y_1|x)}{\pi_{ref}(y_1
 
 $$P(y_1 \succ y_2 | x) = \sigma\left( \beta \log \frac{\pi(y_1|x)}{\pi_{ref}(y_1|x)} - \beta \log \frac{\pi(y_2|x)}{\pi_{ref}(y_2|x)} \right)$$
 
-**这意味着**: 偏好概率完全由策略与参考策略的比率决定，不需要配分函数！
+**这意味着**: 偏好概率完全由策略与参考策略的比率决定,不需要配分函数！
 
 ---
 
@@ -136,7 +136,7 @@ $$P(y_1 \succ y_2 | x) = \sigma\left( \beta \log \frac{\pi(y_1|x)}{\pi_{ref}(y_1
 
 ### 5.1 最大似然估计
 
-给定偏好数据集 $\mathcal{D} = \{(x, y_w, y_l)\}$($y_w$是偏好的response)，最大化似然:
+给定偏好数据集 $\mathcal{D} = \{(x, y_w, y_l)\}$($y_w$是偏好的response),最大化似然:
 
 $$\max_\theta \mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log P_\theta(y_w \succ y_l | x) \right]$$
 
@@ -172,11 +172,11 @@ $$\nabla_\theta \mathcal{L}_{DPO} = -\mathbb{E} \left[ \sigma(\hat{r}_\theta(y_l
 
 $$\nabla_\theta \mathcal{L}_{DPO} \propto -\underbrace{w(\theta)}_{\text{自适应权重}} \cdot \left( \underbrace{\nabla \log \pi_\theta(y_w)}_{\text{提高 } y_w} - \underbrace{\nabla \log \pi_\theta(y_l)}_{\text{降低 } y_l} \right)$$
 
-其中 $w(\theta) = \sigma(\hat{r}_\theta(y_l) - \hat{r}_\theta(y_w))$。
+其中 $w(\theta) = \sigma(\hat{r}_\theta(y_l) - \hat{r}_\theta(y_w))$. 
 
 **权重的含义**:
-- 当 $\hat{r}_\theta(y_l) > \hat{r}_\theta(y_w)$(模型认为 $y_l$ 更好)时，$w$ 较大
-- 此时梯度更强，更积极地纠正错误判断
+- 当 $\hat{r}_\theta(y_l) > \hat{r}_\theta(y_w)$(模型认为 $y_l$ 更好)时,$w$ 较大
+- 此时梯度更强,更积极地纠正错误判断
 - 这是一种**隐式的困难样本挖掘**
 
 ### 6.3 与策略梯度的联系
@@ -201,7 +201,7 @@ DPO梯度可以看作一种**对比策略梯度**:
 
 ### 7.2 理论等价性
 
-在以下假设下，DPO与RLHF等价:
+在以下假设下,DPO与RLHF等价:
 1. Bradley-Terry偏好模型成立
 2. 策略类足够灵活(非参数假设)
 3. 配分函数可以被吸收
@@ -235,13 +235,13 @@ $$\mathcal{L}_{IPO} = \mathbb{E}\left[ \left( \hat{r}_\theta(y_w) - \hat{r}_\the
 
 ### 8.3 SimPO
 
-去除参考模型，添加长度归一化:
+去除参考模型,添加长度归一化:
 
 $$\mathcal{L}_{SimPO} = -\log \sigma\left( \frac{\beta}{|y_w|} \log \pi_\theta(y_w) - \frac{\beta}{|y_l|} \log \pi_\theta(y_l) - \gamma \right)$$
 
 ### 8.4 KTO (Kahneman-Tversky Optimization)
 
-只需要单个回复的好/坏标签，不需要成对比较:
+只需要单个回复的好/坏标签,不需要成对比较:
 
 $$\mathcal{L}_{KTO} = \mathbb{E}_{y_w}[1 - \sigma(\hat{r}_\theta(y_w))] + \mathbb{E}_{y_l}[\sigma(\hat{r}_\theta(y_l))]$$
 

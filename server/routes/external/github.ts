@@ -1,5 +1,16 @@
 /**
  * ============================================================================
+ * 外部 API BFF 路由 - github
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/external
+ */
+
+
+/**
+ * ============================================================================
  * GitHub BFF 路由
  * ============================================================================
  *
@@ -11,7 +22,7 @@
  *    - 直接透传到 https://api.github.com/*
  *    - 用于未被显式路由覆盖的端点
  *
- * 安全：GITHUB_TOKEN 仅从服务端环境变量读取，不暴露到前端构建产物。
+ * 安全：GITHUB_TOKEN 仅从服务端环境变量读取,不暴露到前端构建产物. 
  */
 
 import type { ViteDevServer } from "vite";
@@ -60,11 +71,11 @@ async function validateGitHubToken(token: string): Promise<void> {
     if (resp.ok) {
       const user = await resp.json();
       console.log(
-        `[GitHub BFF] Token 验证通过，用户: ${user.login || "unknown"}`
+        `[GitHub BFF] Token 验证通过,用户: ${user.login || "unknown"}`
       );
     } else {
       console.error(
-        `[GitHub BFF] Token 验证失败，HTTP ${resp.status}。请检查 GITHUB_TOKEN 是否有效或已过期。`
+        `[GitHub BFF] Token 验证失败,HTTP ${resp.status}. 请检查 GITHUB_TOKEN 是否有效或已过期. `
       );
     }
   } catch (e: any) {
@@ -80,10 +91,10 @@ export function registerGitHubRoutes(server: ViteDevServer): void {
 
   if (!token) {
     console.warn(
-      "[GitHub BFF] GITHUB_TOKEN(或 VITE_GITHUB_TOKEN)环境变量未配置，GitHub API 请求将以匿名身份发送(受严格速率限制)"
+      "[GitHub BFF] GITHUB_TOKEN(或 VITE_GITHUB_TOKEN)环境变量未配置,GitHub API 请求将以匿名身份发送(受严格速率限制)"
     );
   } else {
-    // 异步验证 Token(延迟到下一个事件循环，避免干扰单元测试)
+    // 异步验证 Token(延迟到下一个事件循环,避免干扰单元测试)
     setTimeout(() => validateGitHubToken(token), 0);
   }
 

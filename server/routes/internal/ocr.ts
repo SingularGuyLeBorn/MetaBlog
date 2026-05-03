@@ -1,15 +1,13 @@
 /**
- * OCR 路由
+ * ============================================================================
+ * 内部业务路由 - ocr
+ * ============================================================================
  *
- * 提供图片 OCR 提取接口，支持两种调用方式：
- * 1. POST multipart/form-data — 上传图片文件（前端 blob 用）
- * 2. POST application/json — 传入远程图片 URL，后端自动下载并 OCR
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
  *
- * 引擎优先级: PaddleOCR → Tesseract → OCR.space（自动降级）
- *
- * GET /api/ocr/status
- *   - 查看各 OCR 引擎的可用性状态
+ * @module server/routes/internal
  */
+
 
 import type { ViteDevServer } from "vite";
 import fs from "fs";
@@ -20,7 +18,7 @@ interface ServerContext {
   system: any;
 }
 
-// 上传文件临时目录（multipart 文件上传用）
+// 上传文件临时目录(multipart 文件上传用)
 const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads", "ocr");
 
 function ensureUploadDir(): void {
@@ -30,7 +28,7 @@ function ensureUploadDir(): void {
 }
 
 /**
- * 解析 multipart/form-data（简化版，用于图片上传）
+ * 解析 multipart/form-data(简化版,用于图片上传)
  */
 function parseMultipart(req: any): Promise<{ fields: Record<string, string>; file?: { filename: string; data: Buffer; mimetype: string } }> {
   return new Promise((resolve, reject) => {
@@ -73,7 +71,7 @@ function parseMultipart(req: any): Promise<{ fields: Record<string, string>; fil
           if (filenameMatch && nameMatch) {
             // 文件字段
             const filename = filenameMatch[1];
-            // 从原始 binary 数据中提取文件内容（避免 toString 编码问题）
+            // 从原始 binary 数据中提取文件内容(避免 toString 编码问题)
             const bodyStart = data.indexOf(Buffer.from(`\r\n\r\n`, "binary"), data.indexOf(Buffer.from(`filename="${filename}"`, "binary")));
             if (bodyStart !== -1) {
               // 重新精确定位这个 part 在原始 buffer 中的位置
@@ -106,8 +104,21 @@ function parseMultipart(req: any): Promise<{ fields: Record<string, string>; fil
   });
 }
 
+/**
+ * 注册 OCR 服务路由
+ *
+ * POST /api/ocr —— 上传图片进行文字识别,支持两种模式：
+ * 1. 本地文件模式：前端上传图片文件,后端直接识别
+ * 2. URL 模式：提供图片 URL,后端下载后识别
+ *
+ * 三引擎自动降级：PaddleOCR → Tesseract → OCR.space,
+ * 任一引擎失败时自动尝试下一个,确保最大可用性. 
+ *
+ * @param server - Vite 开发服务器实例
+ * @param _ctx   - 路由上下文(预留)
+ */
 export function registerOCRRoutes(server: ViteDevServer, _ctx: ServerContext) {
-  // POST /api/ocr — 上传图片进行 OCR（支持两种模式）
+  // POST /api/ocr — 上传图片进行 OCR(支持两种模式)
   server.middlewares.use("/api/ocr", async (req, res, next) => {
     if (req.method !== "POST") {
       next();
@@ -140,7 +151,7 @@ export function registerOCRRoutes(server: ViteDevServer, _ctx: ServerContext) {
           return;
         }
 
-        // 后端下载远程图片并 OCR（不受浏览器 CORS 限制，可设置 Referer 绕过防盗链）
+        // 后端下载远程图片并 OCR(不受浏览器 CORS 限制,可设置 Referer 绕过防盗链)
         const ocrResult = await ocrRemoteImage(imageUrl, language);
         res.setHeader("Content-Type", "application/json");
         res.end(JSON.stringify({
@@ -153,7 +164,7 @@ export function registerOCRRoutes(server: ViteDevServer, _ctx: ServerContext) {
         }));
         return;
       } else {
-        // 模式 1: multipart/form-data 文件上传（前端 blob 用）
+        // 模式 1: multipart/form-data 文件上传(前端 blob 用)
         const parsed = await parseMultipart(req);
 
         if (!parsed.file) {
@@ -170,7 +181,7 @@ export function registerOCRRoutes(server: ViteDevServer, _ctx: ServerContext) {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({
             success: false,
-            error: `不支持的文件类型: ${parsed.file.mimetype}。仅支持: ${allowedTypes.join(", ")}`,
+            error: `不支持的文件类型: ${parsed.file.mimetype}. 仅支持: ${allowedTypes.join(", ")}`,
           }));
           return;
         }
@@ -186,7 +197,7 @@ export function registerOCRRoutes(server: ViteDevServer, _ctx: ServerContext) {
       // 调用 OCR 服务
       const result = await performOCR({ imagePath: tempPath, language });
 
-      // 清理临时文件（异步，不阻塞响应）
+      // 清理临时文件(异步,不阻塞响应)
       fs.unlink(tempPath, (err) => {
         if (err) console.error("[OCR] 清理临时文件失败:", err.message);
       });

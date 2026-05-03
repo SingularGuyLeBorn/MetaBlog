@@ -1,9 +1,20 @@
 /**
- * 打字机效果 composable
- * 用于模拟流式输出的视觉效果
+ * ============================================================================
+ * Vue Composable - useTypewriter
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/composables
  */
+
+
 import { computed, ref, watch } from 'vue'
 
+/**
+ * TypewriterOptions 接口定义
+ *
+ */
 export interface TypewriterOptions {
   /** 打字速度(毫秒/字符) */
   speed?: number
@@ -17,6 +28,12 @@ export interface TypewriterOptions {
   punctuationDelay?: number
 }
 
+/**
+ * useTypewriter 函数
+ *
+ * @param options - 参数(TypewriterOptions = {})
+ * @returns 返回值
+ */
 export function useTypewriter(options: TypewriterOptions = {}) {
   const {
     speed = 30,
@@ -43,10 +60,10 @@ export function useTypewriter(options: TypewriterOptions = {}) {
   // 获取下一个字符的延迟时间
   function getDelayForChar(char: string): number {
     // 标点符号增加延迟
-    if (/[。！？.!?]/.test(char)) {
+    if (/[. ！？.!?]/.test(char)) {
       return Math.max(punctuationDelay, speed * 3)
     }
-    if (/[，,；;]/.test(char)) {
+    if (/[,,;;]/.test(char)) {
       return Math.max(punctuationDelay * 0.6, speed * 1.5)
     }
     // 代码块或长段落加速
@@ -94,7 +111,7 @@ export function useTypewriter(options: TypewriterOptions = {}) {
       return
     }
 
-    // 短文本直接显示，不打字
+    // 短文本直接显示,不打字
     if (text.length < 10) {
       displayedText.value = text
       currentIndex.value = text.length

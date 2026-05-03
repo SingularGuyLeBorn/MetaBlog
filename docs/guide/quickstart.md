@@ -1,6 +1,6 @@
 # 快速开始
 
-本文档帮助你从零开始运行 MetaBlog，并在 5 分钟内完成第一次 AI 对话。
+本文档帮助你从零开始运行 MetaBlog,并在 5 分钟内完成第一次 AI 对话. 
 
 ---
 
@@ -37,15 +37,15 @@ pnpm install
 ### 3. 配置环境变量
 
 ```bash
-# 如果项目已有 .env 文件，直接编辑
-# 如果没有，从示例复制(如果存在 .env.example)
+# 如果项目已有 .env 文件,直接编辑
+# 如果没有,从示例复制(如果存在 .env.example)
 cp .env.example .env  # 可选
 ```
 
-编辑 `.env`，至少添加一个 AI Provider：
+编辑 `.env`,至少添加一个 AI Provider：
 
 ```env
-# DeepSeek(推荐，国内可用)
+# DeepSeek(推荐,国内可用)
 LLM_DEEPSEEK_API_KEY=sk-your-key-here
 LLM_DEEPSEEK_MODEL=deepseek-v4-pro
 LLM_DEFAULT_PROVIDER=deepseek
@@ -53,7 +53,7 @@ LLM_DEFAULT_PROVIDER=deepseek
 
 获取 DeepSeek API Key：[https://platform.deepseek.com/](https://platform.deepseek.com/)
 
-> 如需配置其他 Provider 或飞书/语雀集成，参考 [环境变量配置](./environment.md)。
+> 如需配置其他 Provider 或飞书/语雀集成,参考 [环境变量配置](./environment.md). 
 
 ### 4. 启动开发服务器
 
@@ -80,7 +80,7 @@ pnpm docs:dev
 ## 💬 第一次 AI 对话
 
 1. 打开 `http://localhost:5173/chat`
-2. 在输入框中输入：`你好，请介绍一下自己`
+2. 在输入框中输入：`你好,请介绍一下自己`
 3. 你应该能看到 AI 的流式回复
 
 ### 测试工具调用
@@ -91,7 +91,7 @@ pnpm docs:dev
 请帮我搜索一下最近关于 Transformer 的论文
 ```
 
-AI 会自动调用 `searchArxiv` 工具并展示结果。
+AI 会自动调用 `searchArxiv` 工具并展示结果. 
 
 ### 测试代码执行
 
@@ -99,7 +99,7 @@ AI 会自动调用 `searchArxiv` 工具并展示结果。
 请计算 2 的 100 次方是多少
 ```
 
-AI 会调用 `executeCode` 工具在沙箱中执行 Python 代码。
+AI 会调用 `executeCode` 工具在沙箱中执行 Python 代码. 
 
 ---
 
@@ -148,7 +148,7 @@ MetaBlog/
 
 ### Q: 启动后访问 `/chat` 页面报错
 
-**A**: 检查 `.env` 中是否配置了至少一个 AI Provider 的 API Key。控制台会输出 `[LLM] Providers config: [...]` 显示已加载的 Provider。
+**A**: 检查 `.env` 中是否配置了至少一个 AI Provider 的 API Key. 控制台会输出 `[LLM] Providers config: [...]` 显示已加载的 Provider. 
 
 ### Q: AI 回复 "API Key 无效"
 
@@ -161,7 +161,7 @@ MetaBlog/
 
 **A**: 
 1. 检查对应的环境变量是否配置(如 `FEISHU_APP_ID`)
-2. 查看浏览器控制台 Network 面板，查看 `/api/*` 端点的响应
+2. 查看浏览器控制台 Network 面板,查看 `/api/*` 端点的响应
 3. 检查后端控制台是否有错误日志
 
 ### Q: 代码沙箱执行失败
@@ -173,11 +173,11 @@ MetaBlog/
 
 ### Q: 如何添加新的 AI Provider？
 
-**A**: 在 `.env` 中添加对应的环境变量即可，系统会自动识别。支持的 Provider 列表见 [环境变量配置](./environment.md)。
+**A**: 在 `.env` 中添加对应的环境变量即可,系统会自动识别. 支持的 Provider 列表见 [环境变量配置](./environment.md). 
 
 ### Q: 修改文章后没有自动刷新
 
-**A**: 文章保存后会自动触发 Git 提交，但热更新已禁用(避免聊天页面被刷新)。手动刷新博客页面即可看到更新。
+**A**: 文章保存后会自动触发 Git 提交,但热更新已禁用(避免聊天页面被刷新). 手动刷新博客页面即可看到更新. 
 
 ---
 

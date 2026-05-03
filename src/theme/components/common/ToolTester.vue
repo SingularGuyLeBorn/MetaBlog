@@ -137,7 +137,7 @@
                   <textarea
                     v-else-if="param.type === 'array'"
                     v-model="arrayParams[key]"
-                    :placeholder="'每行一个项目，或输入 JSON 数组'"
+                    :placeholder="'每行一个项目,或输入 JSON 数组'"
                     class="param-textarea"
                     rows="3"
                   ></textarea>
@@ -307,28 +307,28 @@ const toolCategories = [
     tools: [
       {
         name: 'listArticles',
-        description: '列出知识库中的文章目录，支持分类筛选和层级浏览',
+        description: '列出知识库中的文章目录,支持分类筛选和层级浏览',
         status: 'available',
         parameters: {
           type: 'object',
           properties: {
             section: { 
               type: 'string', 
-              description: '按分类筛选，例如 "knowledge"、"posts"',
+              description: '按分类筛选,例如 "knowledge"、"posts"',
               enum: ['knowledge', 'posts', '']
             },
             folder_path: {
               type: 'string',
-              description: '指定文件夹路径，例如 "/sections/knowledge/ml/"'
+              description: '指定文件夹路径,例如 "/sections/knowledge/ml/"'
             },
             limit: { 
               type: 'integer', 
-              description: '返回结果数量限制，默认20',
+              description: '返回结果数量限制,默认20',
               default: 20
             },
             recursive: {
               type: 'boolean',
-              description: '是否递归列出子文件夹内容，默认false'
+              description: '是否递归列出子文件夹内容,默认false'
             },
             sort_by: {
               type: 'string',
@@ -341,14 +341,14 @@ const toolCategories = [
       },
       {
         name: 'getArticleContent',
-        description: '获取指定文章的完整内容，支持行号范围和元数据',
+        description: '获取指定文章的完整内容,支持行号范围和元数据',
         status: 'available',
         parameters: {
           type: 'object',
           properties: {
             path: { 
               type: 'string', 
-              description: '文章路径，支持 "/sections/posts/article" 或 "sections/posts/article.md"'
+              description: '文章路径,支持 "/sections/posts/article" 或 "sections/posts/article.md"'
             },
             start_line: {
               type: 'integer',
@@ -360,7 +360,7 @@ const toolCategories = [
             },
             max_length: {
               type: 'integer',
-              description: '最大返回字符数，默认8000'
+              description: '最大返回字符数,默认8000'
             },
             include_metadata: {
               type: 'boolean',
@@ -372,7 +372,7 @@ const toolCategories = [
       },
       {
         name: 'searchArticles',
-        description: '根据关键词搜索文章，支持全文检索',
+        description: '根据关键词搜索文章,支持全文检索',
         status: 'available',
         parameters: {
           type: 'object',
@@ -387,7 +387,7 @@ const toolCategories = [
             },
             limit: { 
               type: 'integer', 
-              description: '返回结果数量限制，默认5条'
+              description: '返回结果数量限制,默认5条'
             },
             include_folders: {
               type: 'boolean',
@@ -399,7 +399,7 @@ const toolCategories = [
       },
       {
         name: 'createArticle',
-        description: '创建新文章，自动创建父文件夹，支持 frontmatter',
+        description: '创建新文章,自动创建父文件夹,支持 frontmatter',
         status: 'available',
         parameters: {
           type: 'object',
@@ -410,7 +410,7 @@ const toolCategories = [
             },
             path: { 
               type: 'string', 
-              description: '文章路径，例如 "knowledge/transformer.md"'
+              description: '文章路径,例如 "knowledge/transformer.md"'
             },
             content: { 
               type: 'string', 
@@ -434,7 +434,7 @@ const toolCategories = [
       },
       {
         name: 'updateArticle',
-        description: '更新文章内容，支持多种更新模式',
+        description: '更新文章内容,支持多种更新模式',
         status: 'available',
         parameters: {
           type: 'object',
@@ -470,7 +470,7 @@ const toolCategories = [
       },
       {
         name: 'deleteArticle',
-        description: '删除文章或文件夹，支持备份选项',
+        description: '删除文章或文件夹,支持备份选项',
         status: 'available',
         parameters: {
           type: 'object',
@@ -501,14 +501,14 @@ const toolCategories = [
 
       {
         name: 'fetchArxiv',
-        description: '抓取 ArXiv 论文信息，支持摘要、作者、PDF链接',
+        description: '抓取 ArXiv 论文信息,支持摘要、作者、PDF链接',
         status: 'available',
         parameters: {
           type: 'object',
           properties: {
             paper_id: { 
               type: 'string', 
-              description: 'ArXiv 论文 ID，例如 "2401.12345"'
+              description: 'ArXiv 论文 ID,例如 "2401.12345"'
             },
             include_abstract: {
               type: 'boolean',
@@ -528,7 +528,7 @@ const toolCategories = [
       },
       {
         name: 'github_get_repo',
-        description: '获取 GitHub 项目信息，包括 stars、forks、语言等',
+        description: '获取 GitHub 项目信息,包括 stars、forks、语言等',
         status: 'available',
         parameters: {
           type: 'object',
@@ -597,7 +597,7 @@ const toolCategories = [
           properties: {
             owner: { type: 'string', description: '仓库所有者' },
             repo: { type: 'string', description: '仓库名称' },
-            path: { type: 'string', description: '目录路径，默认为根目录' },
+            path: { type: 'string', description: '目录路径,默认为根目录' },
             ref: { type: 'string', description: '分支、标签或 commit SHA' }
           },
           required: ['owner', 'repo']
@@ -755,7 +755,7 @@ function applyJsonParams() {
   }
 }
 
-// 监听参数变化，同步 JSON
+// 监听参数变化,同步 JSON
 watch([params, arrayParams], () => {
   if (!isJsonMode.value) {
     updateJsonFromParams()
@@ -894,7 +894,7 @@ function generateTestParams(tool) {
   const required = tool.parameters?.required || []
   
   for (const [key, prop] of Object.entries(properties)) {
-    // 如果有默认值，使用默认值
+    // 如果有默认值,使用默认值
     if (prop.default !== undefined) {
       params[key] = prop.default
       continue
@@ -968,9 +968,9 @@ function generateTestParams(tool) {
         params[key] = null
     }
     
-    // 如果不是必填参数且没有默认值，可能不需要包含
+    // 如果不是必填参数且没有默认值,可能不需要包含
     if (!required.includes(key) && prop.default === undefined) {
-      // 保留生成的值，让测试更完整
+      // 保留生成的值,让测试更完整
     }
   }
   
@@ -1038,7 +1038,7 @@ async function runAllTests() {
     
     batchTestProgress.value.completed = i + 1
     
-    // 添加小延迟，避免请求过快
+    // 添加小延迟,避免请求过快
     if (i < availableTools.length - 1) {
       await new Promise(resolve => setTimeout(resolve, 200))
     }

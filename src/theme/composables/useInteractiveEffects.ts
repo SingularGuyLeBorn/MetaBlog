@@ -1,4 +1,15 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+/**
+ * ============================================================================
+ * Vue Composable - useInteractiveEffects
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/composables
+ */
+
+
+import { onMounted, onUnmounted, ref } from 'vue'
 
 /**
  * 数字递增动画
@@ -15,7 +26,7 @@ export function useCountUp(
   const animate = (timestamp: number) => {
     if (!startTime) startTime = timestamp
     const progress = Math.min((timestamp - startTime) / duration, 1)
-    
+
     // 使用 easeOutQuart 缓动函数
     const easeOutQuart = 1 - Math.pow(1 - progress, 4)
     currentValue.value = Math.floor(easeOutQuart * targetValue)
@@ -61,10 +72,10 @@ export function useCountUp(
 export function useTiltEffect(selector: string) {
   onMounted(() => {
     const cards = document.querySelectorAll(selector)
-    
+
     cards.forEach(card => {
       const htmlCard = card as HTMLElement
-      
+
       const handleMouseMove = (e: MouseEvent) => {
         const rect = htmlCard.getBoundingClientRect()
         const x = e.clientX - rect.left
@@ -73,14 +84,14 @@ export function useTiltEffect(selector: string) {
         const centerY = rect.height / 2
         const rotateX = (y - centerY) / centerY * -8
         const rotateY = (x - centerX) / centerX * 8
-        
+
         htmlCard.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`
       }
-      
+
       const handleMouseLeave = () => {
         htmlCard.style.transform = ''
       }
-      
+
       htmlCard.addEventListener('mousemove', handleMouseMove)
       htmlCard.addEventListener('mouseleave', handleMouseLeave)
     })

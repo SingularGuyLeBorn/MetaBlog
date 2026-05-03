@@ -1,6 +1,6 @@
 # 深入探讨: KenLM与N-gram语言模型
 
-本文是Lecture 14的精英补充笔记，深入讲解N-gram语言模型的数学原理、Kneser-Ney平滑技术，以及KenLM的高效实现。
+本文是Lecture 14的精英补充笔记,深入讲解N-gram语言模型的数学原理、Kneser-Ney平滑技术,以及KenLM的高效实现. 
 
 ---
 
@@ -8,12 +8,12 @@
 
 ### 1.1 语言模型的目标
 
-语言模型的目标是估计**序列概率** $P(w_1, w_2, ..., w_n)$。
+语言模型的目标是估计**序列概率** $P(w_1, w_2, ..., w_n)$. 
 
 根据链式法则:
 $$P(w_1, ..., w_n) = \prod_{i=1}^{n} P(w_i | w_1, ..., w_{i-1})$$
 
-**问题**: 历史 $w_1, ..., w_{i-1}$ 可能非常长，无法直接估计。
+**问题**: 历史 $w_1, ..., w_{i-1}$ 可能非常长,无法直接估计. 
 
 **解决方案**: **马尔可夫假设** - 只考虑前 $n-1$ 个词
 
@@ -26,14 +26,14 @@ $$P(w_i | w_1, ..., w_{i-1}) \approx P(w_i | w_{i-n+1}, ..., w_{i-1})$$
 | n=1 | Unigram | $P(w_i)$ | 简单但忽略上下文 |
 | n=2 | Bigram | $P(w_i \| w_{i-1})$ | 捕捉局部依赖 |
 | n=3 | Trigram | $P(w_i \| w_{i-2}, w_{i-1})$ | 更丰富的上下文 |
-| n=5 | 5-gram | $P(w_i \| w_{i-4:i-1})$ | KenLM默认，平衡性能和泛化 |
+| n=5 | 5-gram | $P(w_i \| w_{i-4:i-1})$ | KenLM默认,平衡性能和泛化 |
 
 ### 1.3 最大似然估计
 
 对于Bigram:
 $$P_{MLE}(w_i | w_{i-1}) = \frac{C(w_{i-1}, w_i)}{C(w_{i-1})}$$
 
-其中 $C(\cdot)$ 是计数函数。
+其中 $C(\cdot)$ 是计数函数. 
 
 **问题**: 未见过的n-gram概率为0！
 
@@ -43,7 +43,7 @@ $$P_{MLE}(w_i | w_{i-1}) = \frac{C(w_{i-1}, w_i)}{C(w_{i-1})}$$
 
 ### 2.1 为什么需要平滑？
 
-语料库是有限的，必然有大量未见过的n-gram。
+语料库是有限的,必然有大量未见过的n-gram. 
 
 **Zipf's Law**: 词频分布极不均匀
 - 少数词出现非常频繁
@@ -55,7 +55,7 @@ $$P_{MLE}(w_i | w_{i-1}) = \frac{C(w_{i-1}, w_i)}{C(w_{i-1})}$$
 最简单的方法:
 $$P_{add-1}(w_i | w_{i-1}) = \frac{C(w_{i-1}, w_i) + 1}{C(w_{i-1}) + V}$$
 
-其中 $V$ 是词表大小。
+其中 $V$ 是词表大小. 
 
 **问题**: 给未见n-gram分配了太多概率质量！
 
@@ -64,34 +64,34 @@ $$P_{add-1}(w_i | w_{i-1}) = \frac{C(w_{i-1}, w_i) + 1}{C(w_{i-1}) + V}$$
 改进版:
 $$P_{add-k}(w_i | w_{i-1}) = \frac{C(w_{i-1}, w_i) + k}{C(w_{i-1}) + kV}$$
 
-$k < 1$ 可以减少对未见n-gram的过度分配。
+$k < 1$ 可以减少对未见n-gram的过度分配. 
 
 ### 2.4 Kneser-Ney平滑
 
-**核心思想**: 不只看频率，还要看**上下文多样性**。
+**核心思想**: 不只看频率,还要看**上下文多样性**. 
 
 #### 绝对折扣 (Absolute Discounting)
 
-首先，从每个计数中减去固定值 $d$:
+首先,从每个计数中减去固定值 $d$:
 $$P_{abs}(w_i | w_{i-1}) = \frac{\max(C(w_{i-1}, w_i) - d, 0)}{C(w_{i-1})} + \lambda(w_{i-1}) P_{lower}(w_i)$$
 
-其中 $\lambda(w_{i-1})$ 是归一化因子。
+其中 $\lambda(w_{i-1})$ 是归一化因子. 
 
 #### Continuation概率
 
-Kneser-Ney的创新：对于低阶分布，使用**continuation概率**而非频率:
+Kneser-Ney的创新：对于低阶分布,使用**continuation概率**而非频率:
 
 $$P_{KN}(w) = \frac{|\{w' : C(w', w) > 0\}|}{|\{(w', w'') : C(w', w'') > 0\}|}$$
 
-**直觉**: 一个词的概率不取决于它出现多少次，而是它能跟多少不同的前缀搭配。
+**直觉**: 一个词的概率不取决于它出现多少次,而是它能跟多少不同的前缀搭配. 
 
 **例子**: "Francisco" 几乎只跟 "San" 搭配
-- 高频率，但低continuation概率
-- 作为回退，不应该得到高概率
+- 高频率,但低continuation概率
+- 作为回退,不应该得到高概率
 
 #### Modified Kneser-Ney
 
-使用多个折扣值 $d_1, d_2, d_{3+}$，根据原始计数选择:
+使用多个折扣值 $d_1, d_2, d_{3+}$,根据原始计数选择:
 
 $$d = \begin{cases}
 0 & \text{if } C = 0 \\
@@ -106,7 +106,7 @@ d_{3+} & \text{if } C \geq 3
 
 ### 3.1 Katz回退
 
-当高阶n-gram未见过时，回退到低阶:
+当高阶n-gram未见过时,回退到低阶:
 
 $$P_{BO}(w_i | w_{i-n+1:i-1}) = \begin{cases}
 P^*(w_i | w_{i-n+1:i-1}) & \text{if } C(w_{i-n+1:i}) > k \\
@@ -115,7 +115,7 @@ P^*(w_i | w_{i-n+1:i-1}) & \text{if } C(w_{i-n+1:i}) > k \\
 
 其中:
 - $P^*$ 是折扣后的概率
-- $\alpha$ 是回退权重，确保概率归一化
+- $\alpha$ 是回退权重,确保概率归一化
 
 ### 3.2 插值 (Interpolation)
 
@@ -123,7 +123,7 @@ P^*(w_i | w_{i-n+1:i-1}) & \text{if } C(w_{i-n+1:i}) > k \\
 
 $$P_{interp}(w_i | w_{i-n+1:i-1}) = \lambda_n P_n + \lambda_{n-1} P_{n-1} + ... + \lambda_1 P_1$$
 
-其中 $\sum \lambda_i = 1$。
+其中 $\sum \lambda_i = 1$. 
 
 ### 3.3 Kneser-Ney的完整公式
 
@@ -131,7 +131,7 @@ $$P_{interp}(w_i | w_{i-n+1:i-1}) = \lambda_n P_n + \lambda_{n-1} P_{n-1} + ... 
 
 $$P_{KN}(w_i | w_{i-n+1:i-1}) = \frac{\max(C(w_{i-n+1:i}) - d, 0)}{C(w_{i-n+1:i-1})} + \gamma(w_{i-n+1:i-1}) P_{KN}(w_i | w_{i-n+2:i-1})$$
 
-其中低阶 $P_{KN}$ 使用continuation计数。
+其中低阶 $P_{KN}$ 使用continuation计数. 
 
 ---
 
@@ -158,7 +158,7 @@ KenLM使用**压缩Trie**存储n-gram:
 
 ### 4.2 量化 (Quantization)
 
-为了节省空间，KenLM对概率和回退权重进行量化:
+为了节省空间,KenLM对概率和回退权重进行量化:
 
 ```python
 # 伪代码
@@ -169,7 +169,7 @@ def quantize(value, bits=8):
     return level
 ```
 
-8-bit量化可以将存储减少4倍，精度损失可忽略。
+8-bit量化可以将存储减少4倍,精度损失可忽略. 
 
 ### 4.3 查询流程
 
@@ -199,7 +199,7 @@ def model.score(state, token):
             new_state = update_state(context, token)
             return prob, new_state
         else:
-            # 回退：乘以回退权重，尝试低阶
+            # 回退：乘以回退权重,尝试低阶
             backoff = trie[context[-(order-1):]].backoff
             prob += backoff
             context = context[1:]  # 缩短上下文
@@ -260,7 +260,7 @@ def perplexity_filter(text, threshold=500):
 
 ### 5.2 DSIR中的应用
 
-在DSIR中，使用两个KenLM模型计算重要性权重:
+在DSIR中,使用两个KenLM模型计算重要性权重:
 
 ```python
 target_model = kenlm.Model("high_quality.binary")  # 如Wikipedia

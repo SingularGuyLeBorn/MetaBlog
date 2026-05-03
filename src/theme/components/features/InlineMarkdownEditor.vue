@@ -78,7 +78,7 @@ async function loadContent(): Promise<string> {
     // 尝试原始路径
     let res = await fetch(`/api/files/read?path=${encodeURIComponent(filePath)}`)
     
-    // FIX: 如果是 folder-note 模式(如 article/index.md)，尝试 article/article.md
+    // FIX: 如果是 folder-note 模式(如 article/index.md),尝试 article/article.md
     if (!res.ok && filePath.endsWith('/index.md')) {
       const folderPath = filePath.replace(/\/index\.md$/, '').replace(/\\/g, '/')
       const folderName = folderPath.split('/').pop() || ''
@@ -149,7 +149,7 @@ async function initEditor() {
         enable: false // Disable cache to prevent stale content
       },
       outline: {
-        enable: false,  // 禁用内置大纲，使用页面自带的 TocSidebar
+        enable: false,  // 禁用内置大纲,使用页面自带的 TocSidebar
         position: 'right'
       } as any,
       preview: {

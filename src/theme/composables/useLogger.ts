@@ -1,7 +1,26 @@
+/**
+ * ============================================================================
+ * Vue Composable - useLogger
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/composables
+ */
+
+
 import { ref } from 'vue'
 
+/**
+ * LogLevel 类型别名
+ *
+ */
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
+/**
+ * LogEntry 接口定义
+ *
+ */
 export interface LogEntry {
   id: string
   timestamp: number
@@ -13,6 +32,11 @@ export interface LogEntry {
 const logs = ref<LogEntry[]>([])
 const maxLogs = 1000
 
+/**
+ * useLogger 函数
+ *
+ * @returns 返回值
+ */
 export function useLogger() {
   const addLog = (level: LogLevel, message: string, context?: Record<string, any>) => {
     const entry: LogEntry = {
@@ -22,18 +46,18 @@ export function useLogger() {
       message,
       context
     }
-    
+
     logs.value.push(entry)
-    
+
     // 限制日志数量
     if (logs.value.length > maxLogs) {
       logs.value.shift()
     }
-    
+
     // 控制台输出
-    const consoleMethod = level === 'error' ? console.error : 
-                          level === 'warn' ? console.warn : 
-                          level === 'debug' ? console.debug : console.log
+    const consoleMethod = level === 'error' ? console.error :
+      level === 'warn' ? console.warn :
+        level === 'debug' ? console.debug : console.log
     consoleMethod(`[${level.toUpperCase()}] ${message}`, context || '')
   }
 

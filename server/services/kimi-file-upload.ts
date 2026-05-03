@@ -1,12 +1,13 @@
 /**
- * Kimi 文件上传服务
+ * ============================================================================
+ * 后端服务 - kimi-file-upload
+ * ============================================================================
  *
- * 将本地文件上传到 Kimi API，获取 file_id，供 vision 模型通过 ms:// 协议引用。
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
  *
- * 用途：
- * - 文章内联图片下载后上传 Kimi，让 vision 模型能"看"到原图
- * - 绕过 100MB 请求体限制（file_id 只是字符串引用）
+ * @module server/services
  */
+
 
 import fs from "fs";
 import https from "https";
@@ -49,7 +50,7 @@ export async function uploadFileToKimi(
 ): Promise<{ fileId: string; filename: string; bytes: number }> {
   const config = getKimiConfig();
   if (!config) {
-    throw new Error("Kimi API Key 未配置，无法上传文件。请在 .env 中设置 LLM_KIMI_API_KEY 或 KIMI_API_KEY");
+    throw new Error("Kimi API Key 未配置,无法上传文件. 请在 .env 中设置 LLM_KIMI_API_KEY 或 KIMI_API_KEY");
   }
 
   if (!fs.existsSync(filePath)) {
@@ -64,7 +65,7 @@ export async function uploadFileToKimi(
   // Kimi 单文件大小限制：100MB
   const MAX_SIZE = 100 * 1024 * 1024;
   if (stats.size > MAX_SIZE) {
-    throw new Error(`文件过大 (${(stats.size / 1024 / 1024).toFixed(1)}MB)，Kimi 最大支持 100MB`);
+    throw new Error(`文件过大 (${(stats.size / 1024 / 1024).toFixed(1)}MB),Kimi 最大支持 100MB`);
   }
 
   const baseURL = config.baseURL.replace(/\/$/, "");
@@ -83,7 +84,7 @@ export async function uploadFileToKimi(
           Authorization: `Bearer ${config.apiKey}`,
           ...form.getHeaders(),
         },
-        timeout: 60000, // 上传可能较慢，给 60 秒
+        timeout: 60000, // 上传可能较慢,给 60 秒
       },
       (res) => {
         let data = "";
@@ -115,7 +116,7 @@ export async function uploadFileToKimi(
     req.on("error", (err) => reject(new Error(`Kimi 文件上传请求失败: ${err.message}`)));
     req.on("timeout", () => {
       req.destroy();
-      reject(new Error("Kimi 文件上传超时（60秒）"));
+      reject(new Error("Kimi 文件上传超时(60秒)"));
     });
 
     form.pipe(req);
@@ -123,11 +124,11 @@ export async function uploadFileToKimi(
 }
 
 /**
- * 批量上传图片到 Kimi，获取 file_id 列表
+ * 批量上传图片到 Kimi,获取 file_id 列表
  *
  * @param filePaths 本地图片路径数组
  * @param maxConcurrent 最大并发数
- * @returns 上传结果列表（失败的会记录 error 但不中断整体流程）
+ * @returns 上传结果列表(失败的会记录 error 但不中断整体流程)
  */
 export async function uploadImagesToKimi(
   filePaths: string[],

@@ -171,7 +171,7 @@ const close = () => {
   emit('update:visible', false)
 }
 
-// 监听 visible 变化，当弹窗打开时加载数据
+// 监听 visible 变化,当弹窗打开时加载数据
 watch(() => props.visible, (newVisible) => {
   if (newVisible) {
     selectedPaths.value.clear()

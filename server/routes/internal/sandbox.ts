@@ -1,17 +1,13 @@
 /**
- * 代码沙箱执行路由
+ * ============================================================================
+ * 内部业务路由 - sandbox
+ * ============================================================================
  *
- * 提供安全的代码执行能力，支持：
- * - Python(通过 Monty 解释器，硬件级隔离)
- * - JavaScript(通过独立子进程 + vm.runInNewContext)
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
  *
- * 安全原则：
- * 1. 所有代码在独立进程中执行，崩溃不影响主服务
- * 2. Python 通过 Monty 解释器运行，无文件系统/网络/环境变量访问
- * 3. JS 通过白名单全局上下文运行，无 Node 模块访问
- * 4. 强制超时(默认 30s)
- * 5. 输出大小限制(默认 1MB)
+ * @module server/routes/internal
  */
+
 
 import { spawn } from "child_process";
 import type { Request, Response } from "express";
@@ -114,7 +110,7 @@ function handleStatus(_req: Request, res: Response) {
     nodejs: true, // 自身就是 Node.js
   };
 
-  // Python 可用性检查(异步但同步返回，简化处理)
+  // Python 可用性检查(异步但同步返回,简化处理)
   const pythonCheck = spawn("python", ["-c", "import pydantic_monty; print('ok')"], {
     timeout: 5000,
   });

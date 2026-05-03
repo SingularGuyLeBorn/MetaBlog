@@ -213,14 +213,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import type { Agent, Skill } from '@/theme/types/agent'
 import { useAgentConfig } from '@/theme/stores/agentStore'
+import type { Agent, Skill } from '@/theme/types/agent'
+import { computed, onMounted, ref, watch } from 'vue'
 import SkillDetailModal from './SkillDetailModal.vue'
 import TriggerPanel from './TriggerPanel.vue'
 // import ModelPanel from './ModelPanel.vue'
-import { Icon } from '@/theme/components/common'
-import { LiquidGlass } from '@/theme/components/common'
+import { Icon, LiquidGlass } from '@/theme/components/common'
 
 const props = defineProps<{ agent: Agent }>()
 const emit = defineEmits<{
@@ -276,12 +275,12 @@ const previewSystemPrompt = computed(() => {
 })
 
 const baseRoleTemplates = [
-  { id: 'default', name: '通用助手', prompt: '你是 Kimi，一个有帮助的 AI 助手。' },
-  { id: 'expert', name: '领域专家', prompt: '你是该领域的资深专家，注重细节。' },
-  { id: 'teacher', name: '耐心导师', prompt: '你是一位耐心的导师，善于解释复杂概念。' },
-  { id: 'creative', name: '创意伙伴', prompt: '你富有创意，善于头脑风暴。' },
-  { id: 'analyst', name: '分析师', prompt: '你是数据分析师，逻辑清晰。' },
-  { id: 'writer', name: '写作专家', prompt: '你是专业的写作专家，对语言敏感。' }
+  { id: 'default', name: '通用助手', prompt: '你是 Kimi,一个有帮助的 AI 助手. ' },
+  { id: 'expert', name: '领域专家', prompt: '你是该领域的资深专家,注重细节. ' },
+  { id: 'teacher', name: '耐心导师', prompt: '你是一位耐心的导师,善于解释复杂概念. ' },
+  { id: 'creative', name: '创意伙伴', prompt: '你富有创意,善于头脑风暴. ' },
+  { id: 'analyst', name: '分析师', prompt: '你是数据分析师,逻辑清晰. ' },
+  { id: 'writer', name: '写作专家', prompt: '你是专业的写作专家,对语言敏感. ' }
 ]
 
 async function persistConfig() {
@@ -317,7 +316,7 @@ function showSkillDetail(s: Skill) { viewingSkill.value = s }
 
 function onTriggerSave(data: { type: string; config: any }) {
   const names: Record<string, string> = { manual: '手动', scheduled: '定时', event: '事件', webhook: 'Webhook' }
-  // triggers 不在 AgentUpdateParams 中，需要类型断言
+  // triggers 不在 AgentUpdateParams 中,需要类型断言
   const updates: any = {
     triggers: [{ id: `trigger-${Date.now()}`, type: data.type as any, name: names[data.type], enabled: true, config: data.config }]
   }
@@ -326,7 +325,7 @@ function onTriggerSave(data: { type: string; config: any }) {
 }
 
 function onModelChange(id: string, p: any) {
-  // runtime 不在 AgentUpdateParams 中，需要类型断言
+  // runtime 不在 AgentUpdateParams 中,需要类型断言
   const updates: any = {
     runtime: { model: id, temperature: p.temperature, maxTokens: p.maxTokens, topP: p.topP, frequencyPenalty: p.frequencyPenalty, enableReasoning: p.enableReasoning, timeout: 60, retryCount: 3, retryDelay: 1 }
   }

@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * 组件逻辑 - index
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/components
+ */
+
+
 // Common UI Components
 export { default as AboutProfile } from './AboutProfile.vue'
 export { default as AIAvatar } from './AIAvatar.vue'
@@ -25,3 +36,4 @@ export { default as ToolTester } from './ToolTester.vue'
 export { default as TreeNode } from './TreeNode.vue'
 export { default as TreeNodeSelect } from './TreeNodeSelect.vue'
 export { default as TypewriterText } from './TypewriterText.vue'
+

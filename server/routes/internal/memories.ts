@@ -1,7 +1,22 @@
+/**
+ * ============================================================================
+ * 内部业务路由 - memories
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/internal
+ */
+
+
 import type { ViteDevServer } from "vite";
 import path from "path";
 import fs from "fs";
 
+/**
+ * RouteContext 接口定义
+ *
+ */
 export interface RouteContext {
   system: any;
   structuredLog: any;
@@ -9,6 +24,19 @@ export interface RouteContext {
   triggerReload: () => void;
 }
 
+/**
+ * 注册记忆管理路由
+ *
+ * 挂载 /api/memories/* 端点,支持：
+ * - /api/memories —— 记忆列表和创建
+ * - /api/memories/:id —— 单条记忆读取、更新、删除
+ * - /api/memories/search —— 记忆全文搜索
+ *
+ * 记忆数据持久化到 .data/memory/ 目录. 
+ *
+ * @param server - Vite 开发服务器实例
+ * @param ctx    - 路由上下文
+ */
 export function registerMemoriesRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
   // ============================================
@@ -94,7 +122,7 @@ export function registerMemoriesRoutes(server: ViteDevServer, ctx: RouteContext)
   server.middlewares.use("/api/memories/", (req, res, next) => {
     const url = req.url || "";
     const parts = url.split("/").filter(Boolean);
-    // 只处理单个 ID 的情况，排除 update/delete/search/stats/clear 等子路径
+    // 只处理单个 ID 的情况,排除 update/delete/search/stats/clear 等子路径
     const reservedPaths = [
       "update",
       "delete",

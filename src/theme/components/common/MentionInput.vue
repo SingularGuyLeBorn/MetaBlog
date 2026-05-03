@@ -10,22 +10,24 @@
           <span class="dropdown-title">选择技能</span>
           <span class="dropdown-hint">{{ skillIndex + 1 }} / {{ filteredSkills.length }}</span>
         </div>
-        <div 
-          v-for="(skill, index) in filteredSkills" 
-          :key="skill.id"
-          class="dropdown-item"
-          :class="{ active: index === skillIndex }"
-          @click="selectSkill(skill)"
-          @mouseenter="skillIndex = index"
-        >
-          <span class="item-icon">{{ skill.icon }}</span>
-          <div class="item-content">
-            <div class="item-title">{{ skill.name }}</div>
-            <div class="item-desc">{{ skill.description }}</div>
+        <div class="dropdown-list skill-list">
+          <div 
+            v-for="(skill, index) in filteredSkills" 
+            :key="skill.id"
+            class="dropdown-item"
+            :class="{ active: index === skillIndex }"
+            @click="selectSkill(skill)"
+            @mouseenter="skillIndex = index"
+          >
+            <span class="item-icon">{{ skill.icon }}</span>
+            <div class="item-content">
+              <div class="item-title">{{ skill.name }}</div>
+              <div class="item-desc">{{ skill.description }}</div>
+            </div>
           </div>
-        </div>
-        <div v-if="filteredSkills.length === 0" class="dropdown-empty">
-          没有找到匹配的技能
+          <div v-if="filteredSkills.length === 0" class="dropdown-empty">
+            没有找到匹配的技能
+          </div>
         </div>
       </div>
     </Transition>
@@ -41,32 +43,35 @@
           <input 
             v-model="articleSearchQuery" 
             type="text" 
-            placeholder="搜索标题或内容..."
+            placeholder="搜索标题或路径..."
             class="search-input"
             @keydown.stop
           />
         </div>
         <div class="dropdown-list mention-list">
-          <div 
-            v-for="(article, index) in filteredArticles" 
-            :key="article.path"
-            class="dropdown-item mention-item"
-            :class="{ active: index === mentionIndex }"
-            @click="selectMention(article)"
-            @mouseenter="mentionIndex = index"
-          >
-            <span class="item-icon mention-icon">📄</span>
-            <div class="item-content mention-content">
-              <div class="item-title">{{ article.title }}</div>
-              <div class="item-meta">
-                <span v-if="article.section" class="section-tag">{{ article.section }}</span>
-                <span class="item-path">{{ article.path }}</span>
+          <template v-for="(group, gIndex) in groupedArticles" :key="group.section">
+            <div class="section-header">{{ group.label }} ({{ group.items.length }})</div>
+            <div
+              v-for="(article, index) in group.items"
+              :key="article.path"
+              class="dropdown-item mention-item"
+              :class="{ active: getGlobalMentionIndex(gIndex, index) === mentionIndex }"
+              @click="selectMention(article)"
+              @mouseenter="mentionIndex = getGlobalMentionIndex(gIndex, index)"
+            >
+              <span class="item-icon mention-icon">📄</span>
+              <div class="item-content mention-content">
+                <div class="item-title">{{ article.title }}</div>
+                <div class="item-meta">
+                  <span v-if="article.section" class="section-tag">{{ article.section }}</span>
+                  <span class="item-path">{{ article.path }}</span>
+                </div>
               </div>
             </div>
-          </div>
+          </template>
         </div>
         <div v-if="filteredArticles.length === 0" class="dropdown-empty">
-          没有找到匹配的文章
+          没有找到匹配的文章（可搜索标题或路径）
         </div>
       </div>
     </Transition>
@@ -82,7 +87,7 @@
         @keydown="handleKeydown"
         @input="handleInput"
         @focus="isFocused = true"
-        @blur="handleBlur"
+
       />
       
       <!-- 已选择的技能标签 -->
@@ -106,7 +111,7 @@
 
 <script setup lang="ts">
 import type { Skill } from '@/theme/types/agent'
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 export interface Mention {
   title: string
@@ -182,7 +187,7 @@ const filteredSkills = computed(() => {
 // 过滤后的文章
 const filteredArticles = computed(() => {
   let list = articles.value
-  
+
   // 先按 mentionQuery 过滤(@ 后面的内容)
   if (mentionQuery.value) {
     const query = mentionQuery.value.toLowerCase()
@@ -191,7 +196,7 @@ const filteredArticles = computed(() => {
       a.path.toLowerCase().includes(query)
     )
   }
-  
+
   // 再按搜索框过滤
   if (articleSearchQuery.value) {
     const query = articleSearchQuery.value.toLowerCase()
@@ -200,12 +205,36 @@ const filteredArticles = computed(() => {
       a.path.toLowerCase().includes(query)
     )
   }
-  
+
   // 排除已引用的
   const mentionedPaths = new Set(mentions.value.map(m => m.path))
   list = list.filter(a => !mentionedPaths.has(a.path))
-  
-  return list.slice(0, 20) // 最多显示20条
+
+  return list
+})
+
+// 按 section 分组的文章列表
+const groupedArticles = computed(() => {
+  const groups: Record<string, Article[]> = {}
+  for (const article of filteredArticles.value) {
+    const section = article.section || 'other'
+    if (!groups[section]) groups[section] = []
+    groups[section].push(article)
+  }
+  // 固定 section 顺序: posts, knowledge, resources, other
+  const order = ['posts', 'knowledge', 'resources']
+  const sorted: { section: string; label: string; items: Article[] }[] = []
+  for (const sec of order) {
+    if (groups[sec]) {
+      sorted.push({ section: sec, label: sec.toUpperCase(), items: groups[sec] })
+      delete groups[sec]
+    }
+  }
+  // 其他 section 按字母排序
+  for (const sec of Object.keys(groups).sort()) {
+    sorted.push({ section: sec, label: sec.toUpperCase(), items: groups[sec] })
+  }
+  return sorted
 })
 
 // 监听外部值变化
@@ -215,6 +244,11 @@ watch(() => props.modelValue, (val) => {
 
 watch(text, (val) => {
   emit('update:modelValue', val)
+})
+
+// 过滤结果变化时重置选中索引
+watch(filteredArticles, () => {
+  mentionIndex.value = 0
 })
 
 // 监听技能变化
@@ -234,14 +268,29 @@ async function loadArticles() {
         path: a.path,
         section: a.section
       }))
+      console.log('[MentionInput] Loaded articles:', articles.value.length, 'Sections:', [...new Set(articles.value.map(a => a.section))])
     }
   } catch (e) {
     console.error('[MentionInput] Failed to load articles:', e)
   }
 }
 
+// 计算全局 mention 索引(跨分组)
+function getGlobalMentionIndex(groupIndex: number, itemIndex: number): number {
+  let count = 0
+  for (let i = 0; i < groupIndex; i++) {
+    count += groupedArticles.value[i]?.items.length || 0
+  }
+  return count + itemIndex
+}
+
 onMounted(() => {
   loadArticles()
+  document.addEventListener('mousedown', handleDocumentMousedown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('mousedown', handleDocumentMousedown)
 })
 
 // 键盘处理
@@ -372,13 +421,13 @@ function removeMention(mention: Mention) {
   emit('mentionsChange', mentions.value)
 }
 
-// 处理失焦
-function handleBlur() {
-  // 延迟关闭,让点击事件先处理
-  setTimeout(() => {
+// 点击外部关闭下拉框
+function handleDocumentMousedown(e: MouseEvent) {
+  const target = e.target as Node
+  if (containerRef.value && !containerRef.value.contains(target)) {
     showSkillDropdown.value = false
     showMentionDropdown.value = false
-  }, 200)
+  }
 }
 
 // 暴露方法
@@ -481,11 +530,31 @@ defineExpose({
 
 .dropdown-list {
   overflow-y: auto;
-  max-height: 200px;
+  flex: 1;
+  min-height: 0;
+}
+
+.skill-list {
+  max-height: 260px;
 }
 
 .mention-list {
   max-height: 260px;
+}
+
+.mention-list {
+  max-height: 320px;
+}
+
+.section-header {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .mention-item {

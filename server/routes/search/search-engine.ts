@@ -1,19 +1,27 @@
 /**
- * 免费搜索引擎封装
- * 使用 DuckDuckGo Lite（无需 API Key，无需登录）
+ * ============================================================================
+ * 搜索路由 - search-engine
+ * ============================================================================
  *
- * 代理支持：读取环境变量 HTTPS_PROXY / HTTP_PROXY，自动走代理
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/search
  */
+
 
 import { HttpsProxyAgent } from "https-proxy-agent";
 
-/** 获取代理 Agent（如果配置了环境变量） */
+/** 获取代理 Agent(如果配置了环境变量) */
 function getProxyAgent(): any | undefined {
   const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || process.env.https_proxy || process.env.http_proxy;
   if (!proxyUrl) return undefined;
   return new HttpsProxyAgent(proxyUrl);
 }
 
+/**
+ * SearchResult 接口定义
+ *
+ */
 export interface SearchResult {
   title: string;
   url: string;
@@ -21,6 +29,10 @@ export interface SearchResult {
   source: string;
 }
 
+/**
+ * SearchResponse 接口定义
+ *
+ */
 export interface SearchResponse {
   query: string;
   results: SearchResult[];
@@ -29,7 +41,7 @@ export interface SearchResponse {
 /**
  * 通过 DuckDuckGo Lite 搜索
  * URL: https://html.duckduckgo.com/html/?q=关键词
- * 完全免费，无需 API Key
+ * 完全免费,无需 API Key
  */
 export async function searchDuckDuckGo(query: string, limit = 10): Promise<SearchResponse> {
   const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;

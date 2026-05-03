@@ -1,12 +1,13 @@
 /**
- * Meta-Agent Manager - Meta-Agent 管理系统
- * 
- * 功能：
- * 1. Worker Agent 注册和管理
- * 2. 任务分配和负载均衡
- * 3. 故障检测和恢复
- * 4. 资源调度
+ * ============================================================================
+ * MCP 工具模块 - meta-agent-manager
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/mcp-tools
  */
+
 
 import type {
   WorkerRegistration,
@@ -363,7 +364,7 @@ class MetaAgentManager {
           reason: 'No available workers'
         })
 
-        // 如果是原子操作，回滚已分配的任务
+        // 如果是原子操作,回滚已分配的任务
         if (request.options?.atomic) {
           for (const a of assignments) {
             this.assignments.delete(a.taskId)
@@ -433,7 +434,7 @@ class MetaAgentManager {
     // 应用策略排序
     switch (strategy) {
       case 'round-robin':
-        // 简单的轮询，按注册时间排序
+        // 简单的轮询,按注册时间排序
         candidates.sort((a, b) => a.registeredAt - b.registeredAt)
         break
 
@@ -754,6 +755,11 @@ class MetaAgentManager {
 // 单例实例
 let manager: MetaAgentManager | null = null
 
+/**
+ * 获取MetaAgentManager
+ *
+ * @returns 返回值(MetaAgentManager)
+ */
 export function getMetaAgentManager(): MetaAgentManager {
   if (!manager) {
     manager = new MetaAgentManager()

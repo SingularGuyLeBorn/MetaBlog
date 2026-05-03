@@ -69,7 +69,7 @@
       </div>
       
       <div v-if="workflows.length === 0" class="empty-state">
-        暂无工作流，点击"+ 新建"创建
+        暂无工作流,点击"+ 新建"创建
       </div>
       
       <div v-else class="workflow-list">
@@ -165,8 +165,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { createAgentSystem, AgentSystem } from '@/theme/components/agent/index'
+import { AgentSystem, createAgentSystem } from '@/theme/components/agent/index'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 // 状态
 const agentSystem = ref<AgentSystem | null>(null)

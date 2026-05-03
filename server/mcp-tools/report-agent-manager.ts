@@ -1,12 +1,13 @@
 /**
- * Report Agent Manager - 报告 Agent 管理系统
- * 
- * 功能：
- * 1. 收集各 Agent 状态
- * 2. 生成报告
- * 3. 邮件/消息推送
- * 4. 异常告警
+ * ============================================================================
+ * MCP 工具模块 - report-agent-manager
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/mcp-tools
  */
+
 
 import type {
   ReportConfig,
@@ -652,6 +653,11 @@ ${JSON.stringify(content, null, 2)}
 // 单例实例
 let manager: ReportAgentManager | null = null
 
+/**
+ * 获取ReportAgentManager
+ *
+ * @returns 返回值(ReportAgentManager)
+ */
 export function getReportAgentManager(): ReportAgentManager {
   if (!manager) {
     manager = new ReportAgentManager()

@@ -1,49 +1,36 @@
 /**
- * GitHub 工具集
- * 包含：仓库查询、代码搜索、提交历史、Issue、PR、文件操作、分支、工作流等功能
+ * ============================================================================
+ * GitHub 工具集入口
+ * ============================================================================
+ *
+ * 聚合 GitHub 仓库查询、代码搜索、提交历史、Issue、PR、
+ * 文件操作、分支、工作流等全部功能的导出. 
+ *
+ * @module src/theme/tools/github
  */
 
 // repo.ts
 export {
-  githubGetRepo,
-  githubListRepoContents,
-  githubGetFileContent,
-  githubSearchCode,
-  githubGetCommitHistory,
-  githubGetReadme,
-  githubCompareCommits,
-  githubGetRateLimit,
-  githubSearchRepos,
-  githubCreateRepo,
-  githubUpdateRepo,
-  githubDeleteRepo,
-  githubCreateRelease,
+  githubCompareCommits, githubCreateRelease, githubCreateRepo, githubDeleteRepo, githubGetCommitHistory, githubGetFileContent, githubGetRateLimit, githubGetReadme, githubGetRepo,
+  githubListRepoContents, githubSearchCode, githubSearchRepos, githubUpdateRepo
 } from './repo'
 
 // issue.ts
 export {
-  githubGetIssues,
   githubCreateIssue,
-  githubCreateIssueComment,
-  githubUpdateIssue,
-  githubListIssueComments,
-  githubSearchIssues,
+  githubCreateIssueComment, githubGetIssues, githubListIssueComments,
+  githubSearchIssues, githubUpdateIssue
 } from './issue'
 
 // pull-request.ts
 export {
-  githubListPulls,
-  githubGetPull,
-  githubCreatePullRequest,
-  githubMergePullRequest,
-  githubGetPullRequestFiles,
-  githubCreatePullRequestReview,
+  githubCreatePullRequest, githubCreatePullRequestReview, githubGetPull, githubGetPullRequestFiles, githubListPulls, githubMergePullRequest
 } from './pull-request'
 
 // file.ts
 export {
   githubCreateOrUpdateFile,
-  githubDeleteFile,
+  githubDeleteFile
 } from './file'
 
 // branch.ts
@@ -51,57 +38,35 @@ export {
   githubCreateBranch,
   githubDeleteBranch,
   githubForkRepo,
-  githubListBranches,
+  githubListBranches
 } from './branch'
 
 // workflow.ts
 export {
-  githubListWorkflows,
-  githubListWorkflowRuns,
-  githubTriggerWorkflow,
+  githubListWorkflowRuns, githubListWorkflows, githubTriggerWorkflow
 } from './workflow'
 
 // repo.ts definitions
 export {
-  githubGetRepoDef,
-  githubListRepoContentsDef,
-  githubGetFileContentDef,
-  githubSearchCodeDef,
-  githubGetCommitHistoryDef,
-  githubGetReadmeDef,
-  githubCompareCommitsDef,
-  githubGetRateLimitDef,
-  githubSearchReposDef,
-  githubCreateRepoDef,
-  githubUpdateRepoDef,
-  githubDeleteRepoDef,
-  githubCreateReleaseDef,
+  githubCompareCommitsDef, githubCreateReleaseDef, githubCreateRepoDef, githubDeleteRepoDef, githubGetCommitHistoryDef, githubGetFileContentDef, githubGetRateLimitDef, githubGetReadmeDef, githubGetRepoDef,
+  githubListRepoContentsDef, githubSearchCodeDef, githubSearchReposDef, githubUpdateRepoDef
 } from './repo'
 
 // issue.ts definitions
 export {
-  githubGetIssuesDef,
-  githubCreateIssueDef,
-  githubCreateIssueCommentDef,
-  githubUpdateIssueDef,
-  githubListIssueCommentsDef,
-  githubSearchIssuesDef,
+  githubCreateIssueCommentDef, githubCreateIssueDef, githubGetIssuesDef, githubListIssueCommentsDef,
+  githubSearchIssuesDef, githubUpdateIssueDef
 } from './issue'
 
 // pull-request.ts definitions
 export {
-  githubListPullsDef,
-  githubGetPullDef,
-  githubCreatePullRequestDef,
-  githubMergePullRequestDef,
-  githubGetPullRequestFilesDef,
-  githubCreatePullRequestReviewDef,
+  githubCreatePullRequestDef, githubCreatePullRequestReviewDef, githubGetPullDef, githubGetPullRequestFilesDef, githubListPullsDef, githubMergePullRequestDef
 } from './pull-request'
 
 // file.ts definitions
 export {
   githubCreateOrUpdateFileDef,
-  githubDeleteFileDef,
+  githubDeleteFileDef
 } from './file'
 
 // branch.ts definitions
@@ -109,12 +74,11 @@ export {
   githubCreateBranchDef,
   githubDeleteBranchDef,
   githubForkRepoDef,
-  githubListBranchesDef,
+  githubListBranchesDef
 } from './branch'
 
 // workflow.ts definitions
 export {
-  githubListWorkflowsDef,
-  githubListWorkflowRunsDef,
-  githubTriggerWorkflowDef,
+  githubListWorkflowRunsDef, githubListWorkflowsDef, githubTriggerWorkflowDef
 } from './workflow'
+

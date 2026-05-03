@@ -1,64 +1,57 @@
 /**
- * 语雀 (Yuque) Open API 工具模块
- * 直接调用语雀 REST API
+ * ============================================================================
+ * 语雀(Yuque)工具模块统一导出
+ * ============================================================================
+ *
+ * 聚合语雀知识库管理、文档操作、目录获取、图片上传和搜索等
+ * 所有工具的 Definition 和 Executor,供注册表统一注册. 
+ *
+ * @module src/theme/tools/yuque
  */
 
 export {
-  yuqueRepoList,
-  yuqueRepoCreate,
-  yuqueRepoUpdate,
-  yuqueRepoDelete,
-  yuqueRepoGet,
-  yuqueRepoSettingGet,
-  yuqueRepoSettingUpdate,
+  yuqueRepoCreate, yuqueRepoDelete,
+  yuqueRepoGet, yuqueRepoList, yuqueRepoSettingGet,
+  yuqueRepoSettingUpdate, yuqueRepoUpdate
 } from './repo'
 
 export {
-  yuqueDocList,
-  yuqueDocRead,
-  yuqueDocCreate,
-  yuqueDocUpdate,
-  yuqueDocDelete,
+  yuqueDocCreate, yuqueDocDelete, yuqueDocList,
+  yuqueDocRead, yuqueDocUpdate
 } from './doc'
 
 export {
-  yuqueImageUpload,
+  yuqueImageUpload
 } from './image'
 
 export {
-  yuqueSearch,
+  yuqueSearch
 } from './search'
 
 export {
-  yuqueTocGet,
+  yuqueTocGet
 } from './toc'
 
 export {
-  yuqueRepoListDef,
-  yuqueRepoCreateDef,
-  yuqueRepoUpdateDef,
-  yuqueRepoDeleteDef,
-  yuqueRepoGetDef,
-  yuqueRepoSettingGetDef,
-  yuqueRepoSettingUpdateDef,
+  yuqueRepoCreateDef, yuqueRepoDeleteDef,
+  yuqueRepoGetDef, yuqueRepoListDef, yuqueRepoSettingGetDef,
+  yuqueRepoSettingUpdateDef, yuqueRepoUpdateDef
 } from './repo'
 
 export {
-  yuqueDocListDef,
-  yuqueDocReadDef,
-  yuqueDocCreateDef,
-  yuqueDocUpdateDef,
-  yuqueDocDeleteDef,
+  yuqueDocCreateDef, yuqueDocDeleteDef, yuqueDocListDef,
+  yuqueDocReadDef, yuqueDocUpdateDef
 } from './doc'
 
 export {
-  yuqueImageUploadDef,
+  yuqueImageUploadDef
 } from './image'
 
 export {
-  yuqueSearchDef,
+  yuqueSearchDef
 } from './search'
 
 export {
-  yuqueTocGetDef,
+  yuqueTocGetDef
 } from './toc'
+

@@ -33,15 +33,15 @@
 
     <!-- Intro Section -->
     <section class="intro-section fade-up">
-      <h2 class="section-heading">👋 你好，我是 MetaUniverse</h2>
+      <h2 class="section-heading">👋 你好,我是 MetaUniverse</h2>
       <p class="intro-text">
-        一名热爱技术的 AI 研究员和全栈开发者。我相信<strong>知识的力量</strong>，也相信<strong>分享的快乐</strong>。
-        这个博客是我构建的<strong>数字孪生级知识管理系统</strong>，用来记录学习、整理思考、分享见解。
+        一名热爱技术的 AI 研究员和全栈开发者. 我相信<strong>知识的力量</strong>,也相信<strong>分享的快乐</strong>. 
+        这个博客是我构建的<strong>数字孪生级知识管理系统</strong>,用来记录学习、整理思考、分享见解. 
       </p>
       
       <div class="quote-box glass-card tilt-card scanline-effect">
         <span class="quote-mark">"</span>
-        <blockquote>构建第二大脑，让知识流动起来。</blockquote>
+        <blockquote>构建第二大脑,让知识流动起来. </blockquote>
         <span class="quote-mark">"</span>
       </div>
     </section>
@@ -83,7 +83,7 @@
     <!-- Contact Section -->
     <section class="contact-section fade-up">
       <h2 class="section-heading">📮 联系我</h2>
-      <p class="contact-desc">如果你有任何问题、建议，或者只是想聊聊技术，欢迎随时联系我！</p>
+      <p class="contact-desc">如果你有任何问题、建议,或者只是想聊聊技术,欢迎随时联系我！</p>
       
       <div class="contact-grid">
         <a 
@@ -167,18 +167,17 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, nextTick } from 'vue'
-import { useCountUp } from '@/theme/composables/useInteractiveEffects'
+import { nextTick, onMounted } from 'vue'
 
 const skills = ['PyTorch', 'Transformers', 'LLM', 'RLHF', 'Vue 3', 'React', 'TypeScript', 'Tailwind', 'Python', 'Node.js', 'PostgreSQL', 'Redis', 'Docker']
 
 const tagColors = ['sr-tag-morandi-purple', 'sr-tag-morandi-blue', 'sr-tag-morandi-green', 'sr-tag-morandi-pink']
 
 const timeline = [
-  { icon: '🚀', date: '2024 - 至今', title: '深入研究大模型与强化学习', desc: '专注于 LLM、RLHF、DPO、GRPO 等方向的研究，构建了这个知识管理系统。' },
-  { icon: '💼', date: '2022 - 2024', title: '全栈开发者', desc: '在科技公司担任全栈工程师，负责 AI 产品的研发和部署。' },
-  { icon: '🎓', date: '2018 - 2022', title: '计算机科学学位', desc: '系统学习计算机科学基础，对人工智能产生浓厚兴趣。' },
-  { icon: '💻', date: '2015 - 至今', title: '编程之旅', desc: '写下第一行 "Hello World"，从此踏上编程的不归路。' }
+  { icon: '🚀', date: '2024 - 至今', title: '深入研究大模型与强化学习', desc: '专注于 LLM、RLHF、DPO、GRPO 等方向的研究,构建了这个知识管理系统. ' },
+  { icon: '💼', date: '2022 - 2024', title: '全栈开发者', desc: '在科技公司担任全栈工程师,负责 AI 产品的研发和部署. ' },
+  { icon: '🎓', date: '2018 - 2022', title: '计算机科学学位', desc: '系统学习计算机科学基础,对人工智能产生浓厚兴趣. ' },
+  { icon: '💻', date: '2015 - 至今', title: '编程之旅', desc: '写下第一行 "Hello World",从此踏上编程的不归路. ' }
 ]
 
 const contacts = [
@@ -192,7 +191,7 @@ const myProjects = [
   {
     icon: '🧠',
     title: 'MetaBlog',
-    desc: 'AI 驱动的智能博客系统，支持知识图谱、RAG 检索',
+    desc: 'AI 驱动的智能博客系统,支持知识图谱、RAG 检索',
     tech: ['Vue 3', 'VitePress', 'AI'],
     link: '/'
   },
@@ -206,7 +205,7 @@ const myProjects = [
   {
     icon: '🤖',
     title: 'LLM-Toolkit',
-    desc: '大语言模型工具包，支持多模型接入',
+    desc: '大语言模型工具包,支持多模型接入',
     tech: ['Python', 'CLI', 'LLM'],
     link: '/chat'
   }

@@ -1,7 +1,22 @@
+/**
+ * ============================================================================
+ * 路由模块 - init
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes
+ */
+
+
 import fs from "fs";
 import path from "path";
 import type { ViteDevServer } from "vite";
 
+/**
+ * RouteContext 接口定义
+ *
+ */
 export interface RouteContext {
   system: any;
   structuredLog: any;
@@ -9,6 +24,24 @@ export interface RouteContext {
   triggerReload: () => void;
 }
 
+/**
+ * 注册 BFF 初始化路由
+ *
+ * 挂载以下 API 组：
+ * 1. 安全边界 —— /api/safe-sections, /api/check-sections-boundary
+ * 2. 文件 CRUD —— /api/files/read, /api/files/save, /api/files/rename, /api/files/move, /api/files/delete
+ * 3. 回收站 —— /api/files/trash, /api/files/trash/list, /api/files/trash/clear, /api/files/trash/restore
+ * 4. 批量导出 —— /api/files/export
+ * 5. 会话/消息 —— /api/sessions, /api/sessions/:id/messages
+ *
+ * 安全设计：
+ * - AI 只允许操作 ALLOWED_SECTIONS 中的板块(posts, knowledge, resources)
+ * - 路径中禁止 "..",防止目录穿越
+ * - 所有写操作自动触发 Git commit
+ *
+ * @param server - Vite 开发服务器实例
+ * @param ctx    - 路由上下文(含 system, structuredLog, gitCommit, triggerReload)
+ */
 export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
 
@@ -21,12 +54,12 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
     if (BLOCKED_SECTIONS.includes(section)) {
       return {
         valid: false,
-        error: `板块 "${section}" 不允许AI操作。可用板块：${ALLOWED_SECTIONS.join("。")}`,
+        error: `板块 "${section}" 不允许AI操作. 可用板块：${ALLOWED_SECTIONS.join(". ")}`,
       };
     }
     return {
       valid: false,
-      error: `板块 "${section}" 不存在。可用板块：${ALLOWED_SECTIONS.join("。")}`,
+      error: `板块 "${section}" 不存在. 可用板块：${ALLOWED_SECTIONS.join(". ")}`,
     };
   }
 
@@ -64,7 +97,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
   // 初始化 LLM Manager (简化版)
   const llmManager = null;
   try {
-    // 旧版 agent 模块已移除，使用 ai-chat 模块的简化实现
+    // 旧版 agent 模块已移除,使用 ai-chat 模块的简化实现
     console.log("[INFO] LLM Manager 初始化跳过(使用 ai-chat 模块)");
     const defaultProvider =
       process.env.LLM_DEFAULT_PROVIDER || "deepseek";
@@ -76,7 +109,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
     const clean = (v: string | undefined) =>
       v?.trim().replace(/^["']|["']$/g, "");
 
-    // 辅助函数：按优先级读取环境变量(LLM_ 优先，兼容 VITE_ 回退)
+    // 辅助函数：按优先级读取环境变量(LLM_ 优先,兼容 VITE_ 回退)
     const env = (key: string): string | undefined => {
       const llmKey = `LLM_${key}`;
       const viteKey = `VITE_${key}`;
@@ -169,7 +202,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
 
       system.info(
         "server.llm",
-        `LLM Manager 初始化完成，Provider: ${Object.keys(providers).join(", ")}, 默认: ${defaultProvider}`,
+        `LLM Manager 初始化完成,Provider: ${Object.keys(providers).join(", ")}, 默认: ${defaultProvider}`,
       );
     }
   } catch (e) {
@@ -355,7 +388,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ success: true, message: "Saved" }));
 
-          // 触发热更新 (已禁用，避免聊天页面被刷新)
+          // 触发热更新 (已禁用,避免聊天页面被刷新)
           // triggerReload();
         } catch (error) {
           console.error("[API] Save file error:", error);
@@ -475,7 +508,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
             }),
           );
 
-          // 触发热更新 (已禁用，避免聊天页面被刷新)
+          // 触发热更新 (已禁用,避免聊天页面被刷新)
           // triggerReload();
         } catch (e) {
           res.statusCode = 500;
@@ -520,7 +553,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ success: true, data: { toPath } }));
 
-          // 触发热更新 (已禁用，避免聊天页面被刷新)
+          // 触发热更新 (已禁用,避免聊天页面被刷新)
           // triggerReload();
         } catch (e) {
           res.statusCode = 500;
@@ -637,7 +670,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ success: true }));
 
-          // 触发热更新 (已禁用，避免聊天页面被刷新)
+          // 触发热更新 (已禁用,避免聊天页面被刷新)
           // triggerReload();
         } catch (e) {
           console.error("[API] Delete error:", e);
@@ -735,7 +768,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
             } catch (e) { }
           }
 
-          // 如果没有元数据，尝试从文件名解析
+          // 如果没有元数据,尝试从文件名解析
           if (!originalPath) {
             originalPath = trashId.replace(
               /\.\d{4}-\d{2}-\d{2}T.*\.trash$/,
@@ -773,7 +806,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
             }),
           );
 
-          // 触发热更新 (已禁用，避免聊天页面被刷新)
+          // 触发热更新 (已禁用,避免聊天页面被刷新)
           // triggerReload();
         } catch (e) {
           console.error("[API] Restore error:", e);

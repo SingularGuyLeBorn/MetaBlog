@@ -1,7 +1,13 @@
 /**
- * MCP Tool: Scheduler
- * 定时任务调度
+ * ============================================================================
+ * MCP 工具模块 - scheduler
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/mcp-tools
  */
+
 
 export interface ScheduledTask {
   id: string
@@ -14,6 +20,10 @@ export interface ScheduledTask {
   runCount: number
 }
 
+/**
+ * TaskConfig 接口定义
+ *
+ */
 export interface TaskConfig {
   id?: string
   name: string
@@ -22,6 +32,10 @@ export interface TaskConfig {
   enabled?: boolean
 }
 
+/**
+ * SchedulerTool 类
+ *
+ */
 export class SchedulerTool {
   name = 'scheduler'
   description = '定时任务调度器'
@@ -103,7 +117,7 @@ export class SchedulerTool {
     return this.tasks.get(taskId)
   }
 
-  // 解析 Cron 表达式(简化版，只支持特定格式)
+  // 解析 Cron 表达式(简化版,只支持特定格式)
   private parseCron(cron: string): number {
     // 支持的格式:
     // "*/5 * * * *" - 每5分钟

@@ -1,9 +1,13 @@
 /**
- * Storage Service - 后端API数据源(支持消息版本 v2)
- * 
- * 数据格式：v2 - 消息组版本化管理
- * 数据源：后端API(唯一数据源)
+ * ============================================================================
+ * 后端服务 - storage
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/services
  */
+
 
 import type { ChatMessage, ChatSession, MessageGroup } from '@/theme/types'
 import * as chatStorage from './chatStorage'
@@ -78,12 +82,12 @@ export function convertGroupsToMessages(groups: MessageGroup[]): ChatMessage[] {
   return messages
 }
 
-// 已知存在的会话 ID 集合(避免 GET 检查的 404，也避免 POST 造成重复)
+// 已知存在的会话 ID 集合(避免 GET 检查的 404,也避免 POST 造成重复)
 const knownSessionIds = new Set<string>()
 
 export const storage = {
   /** 
-   * 保存完整数据 - 不再使用，保留兼容
+   * 保存完整数据 - 不再使用,保留兼容
    * @deprecated 使用各个 save 方法替代
    */
   async save(data: { sessions: ChatSession[]; messageGroups: Record<string, MessageGroup[]> }): Promise<boolean> {
@@ -160,7 +164,7 @@ export const storage = {
       return true
     }
 
-    // 创建失败(罕见)，尝试更新
+    // 创建失败(罕见),尝试更新
     const updated = await chatStorage.updateSession(session.id, session)
     return !!updated
   },
@@ -182,7 +186,7 @@ export const storage = {
 
   /** 保存最后活跃的会话 - 不再使用 localStorage */
   saveLastSession(sessionId: string | null): boolean {
-    // 后端自动管理，无需手动保存
+    // 后端自动管理,无需手动保存
     return true
   },
 
@@ -201,7 +205,7 @@ export const storage = {
       group.aiVersions.push(aiMessage)
       group.currentVersionIndex = group.aiVersions.length - 1
     } else {
-      // 如果没有找到组，创建新组(异常情况)
+      // 如果没有找到组,创建新组(异常情况)
       groups.push({
         userMessage: { id: userMessageId } as ChatMessage,
         aiVersions: [{ ...aiMessage, isActiveVersion: true, parentMessageId: userMessageId }],
@@ -240,7 +244,7 @@ export const storage = {
 
         // 调整当前索引
         if (group.aiVersions.length === 0) {
-          // 如果没有版本了，删除整个组
+          // 如果没有版本了,删除整个组
           const groupIndex = groups.findIndex(g => g.userMessage.id === userMessageId)
           groups.splice(groupIndex, 1)
         } else {

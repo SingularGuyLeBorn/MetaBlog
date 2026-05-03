@@ -1,6 +1,6 @@
 # 重构执行清单
 
-> 复制到 Todo 工具，逐步执行
+> 复制到 Todo 工具,逐步执行
 
 ---
 
@@ -14,7 +14,7 @@
 ### 1.2 合并每个 tool 分类 (重复 11 次)
 
 **article**
-- [ ] 创建 `tools/article.ts`，复制 definitions + executors 内容
+- [ ] 创建 `tools/article.ts`,复制 definitions + executors 内容
 - [ ] IDE 删除 `tools/article/` 文件夹
 - [ ] 验证 import 路径更新
 

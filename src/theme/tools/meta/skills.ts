@@ -1,25 +1,30 @@
 /**
- * Meta 工具定义 — getAllSkills
+ * ============================================================================
+ * 元信息工具 — 获取所有 Skills
+ * ============================================================================
  *
- * 用于查询系统级别的元信息：获取所有可用 Skills 的完整列表
+ * 用于查询系统级别的元信息：获取所有可用 Skills 的完整列表. 
+ * 支持摘要模式和详细模式两种展示方式. 
+ *
+ * @module src/theme/tools/meta/skills
  */
 
 import type { ToolDefinition, ToolResult } from '../types'
 
+/**
+ * 获取所有 Skills 的工具定义
+ */
 export const getAllSkillsDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'getAllSkills',
-    description: `获取当前系统中所有可用 Skills 的列表。
-
-当你不确定有哪些 Skills 可用，或用户要求查看系统能力领域时，调用此工具。
-返回所有 Skills 的完整列表和描述，方便 AI 全面理解系统能力。`,
+    description: `元信息工具：获取当前系统中所有可用 Skills 的完整清单. \n\n【什么时候调用】\n- 用户问"你能做什么"、"系统有哪些能力"、"有什么 Skills"\n- 你需要全面了解系统具备哪些专业领域能力\n- 想确认某个 Skill 是否存在,再决定是否需要加载\n- 作为 searchCapabilities 的替代方案,一次性浏览全部 Skills\n\n【不调用的情况】\n- 已经知道具体 Skill ID,直接调用 loadSkill 加载即可\n- 只想搜索某个特定领域的 Skill,用 searchCapabilities 更高效\n\n【示例用法】\n- getAllSkills() → 摘要模式,快速浏览所有 Skills\n- getAllSkills(detail=true) → 详细模式,查看每个 Skill 的关联工具和适用场景\n\n【注意事项】\n- 本工具返回的是系统中已注册的所有 Skills 元信息,不加载 Skill 内容\n- 如需使用某个 Skill 的能力,还需调用 loadSkill(skill_id="xxx") 加载其完整工作流`,
     parameters: {
       type: 'object',
       properties: {
         detail: {
           type: 'boolean',
-          description: '是否返回每个 Skill 的完整信息。默认为 false(摘要模式)',
+          description: '是否返回详细模式. false=摘要模式(默认),只显示 Skill 名称、ID 和描述;true=详细模式,额外显示关联工具列表和适用场景. 默认 false. ',
           default: false
         }
       },
@@ -29,9 +34,14 @@ export const getAllSkillsDef: ToolDefinition = {
 }
 
 /**
- * 获取所有 Skills 的列表(支持摘要/详细模式)
+ * 获取所有 Skills 的列表
  *
- * 返回所有 Skills 的完整列表和描述。
+ * 支持摘要/详细两种模式：
+ * - 摘要模式：一行一个 Skill,显示名称、ID 和描述
+ * - 详细模式：显示关联工具列表和适用场景
+ *
+ * @param args - 包含 detail 参数(可选)
+ * @returns Skills 列表及统计信息
  */
 export async function executeGetAllSkills(args?: { detail?: boolean }): Promise<ToolResult> {
   try {
@@ -69,12 +79,12 @@ export async function executeGetAllSkills(args?: { detail?: boolean }): Promise<
         lines.push(`  关联工具(${toolCount}): ${toolNames}`)
         lines.push(`  适用场景: ${scenarios}`)
       } else {
-        // 摘要模式：一行一个 Skill，描述不截断
+        // 摘要模式：一行一个 Skill,描述不截断
         lines.push(`- ${skill.icon || ''} ${skill.name} [${skill.id}]: ${skill.description}`)
       }
     })
 
-    const hint = '\n\n💡 提示：如需查找特定 Skill，请使用 searchCapabilities 关键词搜索。'
+    const hint = '\n\n💡 提示：如需查找特定 Skill,请使用 searchCapabilities 关键词搜索. '
 
     return {
       success: true,

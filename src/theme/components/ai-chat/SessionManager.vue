@@ -207,7 +207,7 @@
             <div class="confirm-modal">
               <div class="confirm-icon">⚠️</div>
               <h4>{{ isBatchDelete ? `确认删除 ${sessionsToDelete.length} 个会话?` : '确认删除会话?' }}</h4>
-              <p>删除后无法恢复，会话中的所有消息都将被清除</p>
+              <p>删除后无法恢复,会话中的所有消息都将被清除</p>
               <div class="confirm-actions">
                 <button class="btn-cancel" @click="cancelDelete">取消</button>
                 <button class="btn-confirm" @click="executeDelete">确认删除</button>

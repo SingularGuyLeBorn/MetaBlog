@@ -1,8 +1,19 @@
 /**
+ * ============================================================================
+ * Vue Composable - useAnimations
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/composables
+ */
+
+
+/**
  * 动画 Composable - 管理滚动触发动画和页面过渡
  */
 
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 // ========== 滚动触发动画 ==========
 
@@ -54,6 +65,11 @@ export function useScrollAnimation(
 
 // ========== 页面过渡动画 ==========
 
+/**
+ * usePageTransition 函数
+ *
+ * @returns 返回值
+ */
 export function usePageTransition() {
   const isTransitioning = ref(false)
 
@@ -84,6 +100,12 @@ export function usePageTransition() {
 
 // ========== 列表交错动画 ==========
 
+/**
+ * useStaggerAnimation 函数
+ *
+ * @param baseDelay - 参数(number = 50)
+ * @returns 返回值
+ */
 export function useStaggerAnimation(baseDelay: number = 50) {
   const getDelay = (index: number): string => {
     return `${index * baseDelay}ms`
@@ -92,7 +114,7 @@ export function useStaggerAnimation(baseDelay: number = 50) {
   const applyStagger = (container: HTMLElement) => {
     const children = container.children
     Array.from(children).forEach((child, index) => {
-      ;(child as HTMLElement).style.animationDelay = getDelay(index)
+      ; (child as HTMLElement).style.animationDelay = getDelay(index)
     })
   }
 
@@ -101,6 +123,12 @@ export function useStaggerAnimation(baseDelay: number = 50) {
 
 // ========== 鼠标跟随效果 ==========
 
+/**
+ * useMouseFollow 函数
+ *
+ * @param speed - 参数(number = 0.1)
+ * @returns 返回值
+ */
 export function useMouseFollow(speed: number = 0.1) {
   const mouseX = ref(0)
   const mouseY = ref(0)
@@ -148,6 +176,12 @@ export function useBreathing(
 
 // ========== 脉冲效果 ==========
 
+/**
+ * usePulse 函数
+ *
+ * @param duration - 参数(number = 2000)
+ * @returns 返回值
+ */
 export function usePulse(duration: number = 2000) {
   const style = ref({
     animation: `pulse ${duration}ms cubic-bezier(0.4, 0, 0.6, 1) infinite`,
@@ -171,6 +205,11 @@ export function useFloat(
 
 // ========== 震动效果 ==========
 
+/**
+ * useShake 函数
+ *
+ * @returns 返回值
+ */
 export function useShake() {
   const isShaking = ref(false)
 
@@ -213,6 +252,12 @@ export function useGradientBorder(
 
 // ========== 视差滚动 ==========
 
+/**
+ * useParallax 函数
+ *
+ * @param speed - 参数(number = 0.5)
+ * @returns 返回值
+ */
 export function useParallax(speed: number = 0.5) {
   const offset = ref(0)
   let rafId: number | null = null

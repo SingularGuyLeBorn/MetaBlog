@@ -186,7 +186,7 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
       targetPath = targetPath.slice(1)
     }
     
-    // 如果以 / 结尾(folder-note 目录)，尝试两种可能的文件路径
+    // 如果以 / 结尾(folder-note 目录),尝试两种可能的文件路径
     if (targetPath.endsWith('/')) {
       const folderName = targetPath.slice(0, -1).split('/').pop() || 'index'
       // 尝试 folder-name/folder-name.md 模式
@@ -199,7 +199,7 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
       let lastError = null
       for (const path of possiblePaths) {
         try {
-          // FIX: 使用 encodeURI 而不是 encodeURIComponent，保留路径结构
+          // FIX: 使用 encodeURI 而不是 encodeURIComponent,保留路径结构
           const encodedPath = encodeURI(path)
           const response = await fetch(`/api/files/read?path=${encodedPath}`)
           if (response.ok) {
@@ -213,14 +213,14 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
       }
       
       if (!content) {
-        throw new Error('无法找到文件内容，尝试路径: ' + possiblePaths.join(', '))
+        throw new Error('无法找到文件内容,尝试路径: ' + possiblePaths.join(', '))
       }
       
       // 处理内容并导出
       await processAndExportContent(content, format)
     } else {
       // 普通文件路径
-      // FIX: 使用 encodeURI 而不是 encodeURIComponent，保留路径结构
+      // FIX: 使用 encodeURI 而不是 encodeURIComponent,保留路径结构
       const encodedPath = encodeURI(targetPath)
       const response = await fetch(`/api/files/read?path=${encodedPath}`)
       if (!response.ok) {

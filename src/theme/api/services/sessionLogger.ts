@@ -1,8 +1,13 @@
 /**
- * Session Logger - 会话运行日志
- * 
- * 记录完整的对话过程，包括用户输入、AI思考、工具调用等
+ * ============================================================================
+ * 后端服务 - sessionLogger
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/services
  */
+
 
 export interface LogEntry {
   timestamp: number
@@ -11,6 +16,10 @@ export interface LogEntry {
   metadata?: Record<string, any>
 }
 
+/**
+ * SessionLog 接口定义
+ *
+ */
 export interface SessionLog {
   sessionId: string
   startTime: number
@@ -21,6 +30,13 @@ export interface SessionLog {
 const sessionLogs = new Map<string, SessionLog>()
 let currentSessionId: string | null = null
 
+/**
+ * startSessionLog 函数
+ *
+ * @param sessionId - 参数(string)
+ * @param config - 参数
+ * @returns 返回值(SessionLog)
+ */
 export function startSessionLog(sessionId: string, config?: Record<string, any>): SessionLog {
   const log: SessionLog = {
     sessionId,
@@ -33,6 +49,13 @@ export function startSessionLog(sessionId: string, config?: Record<string, any>)
   return log
 }
 
+/**
+ * addLogEntry 函数
+ *
+ * @param sessionId - 参数(string)
+ * @param entry - 参数(Omit<LogEntry, 'timestamp'>)
+ * @returns 返回值
+ */
 export function addLogEntry(sessionId: string, entry: Omit<LogEntry, 'timestamp'>) {
   const log = sessionLogs.get(sessionId)
   if (log) {
@@ -43,11 +66,25 @@ export function addLogEntry(sessionId: string, entry: Omit<LogEntry, 'timestamp'
   }
 }
 
+/**
+ * logUserInput 函数
+ *
+ * @param content - 参数(string)
+ * @param metadata - 参数
+ * @returns 返回值
+ */
 export function logUserInput(content: string, metadata?: Record<string, any>) {
   if (!currentSessionId) return
   addLogEntry(currentSessionId, { type: 'user', content, metadata })
 }
 
+/**
+ * logAIRequest 函数
+ *
+ * @param endpoint - 参数(string)
+ * @param request - 参数
+ * @returns 返回值
+ */
 export function logAIRequest(endpoint: string, request: any) {
   if (!currentSessionId) return
   addLogEntry(currentSessionId, {
@@ -57,6 +94,13 @@ export function logAIRequest(endpoint: string, request: any) {
   })
 }
 
+/**
+ * logAIContent 函数
+ *
+ * @param content - 参数(string)
+ * @param metadata - 参数
+ * @returns 返回值
+ */
 export function logAIContent(content: string, metadata?: any) {
   if (!currentSessionId) return
   addLogEntry(currentSessionId, {
@@ -66,6 +110,15 @@ export function logAIContent(content: string, metadata?: any) {
   })
 }
 
+/**
+ * logThinkingStep 函数
+ *
+ * @param round - 参数(number)
+ * @param type - 参数(string)
+ * @param content - 参数(string)
+ * @param metadata - 参数
+ * @returns 返回值
+ */
 export function logThinkingStep(round: number, type: string, content: string, metadata?: any) {
   if (!currentSessionId) return
   addLogEntry(currentSessionId, {
@@ -75,6 +128,13 @@ export function logThinkingStep(round: number, type: string, content: string, me
   })
 }
 
+/**
+ * logToolResult 函数
+ *
+ * @param toolName - 参数(string)
+ * @param result - 参数
+ * @returns 返回值
+ */
 export function logToolResult(toolName: string, result: any) {
   if (!currentSessionId) return
   addLogEntry(currentSessionId, {
@@ -84,6 +144,12 @@ export function logToolResult(toolName: string, result: any) {
   })
 }
 
+/**
+ * logHumanNote 函数
+ *
+ * @param note - 参数(string)
+ * @returns 返回值
+ */
 export function logHumanNote(note: string) {
   if (!currentSessionId) return
   addLogEntry(currentSessionId, {
@@ -92,11 +158,24 @@ export function logHumanNote(note: string) {
   })
 }
 
+/**
+ * logAIResponse 函数
+ *
+ * @param content - 参数(string)
+ * @returns 返回值
+ */
 export function logAIResponse(content: string) {
   if (!currentSessionId) return
   addLogEntry(currentSessionId, { type: 'ai', content })
 }
 
+/**
+ * logToolCall 函数
+ *
+ * @param toolName - 参数(string)
+ * @param params - 参数
+ * @returns 返回值
+ */
 export function logToolCall(toolName: string, params: any) {
   if (!currentSessionId) return
   addLogEntry(currentSessionId, {
@@ -106,6 +185,13 @@ export function logToolCall(toolName: string, params: any) {
   })
 }
 
+/**
+ * logError 函数
+ *
+ * @param error - 参数(Error | string)
+ * @param note - 参数
+ * @returns 返回值
+ */
 export function logError(error: Error | string, note?: string) {
   if (!currentSessionId) return
   const message = error instanceof Error ? error.message : error
@@ -117,10 +203,22 @@ export function logError(error: Error | string, note?: string) {
   })
 }
 
+/**
+ * 获取SessionLog
+ *
+ * @param sessionId - 参数(string)
+ * @returns 返回值(SessionLog | undefined)
+ */
 export function getSessionLog(sessionId: string): SessionLog | undefined {
   return sessionLogs.get(sessionId)
 }
 
+/**
+ * endSessionLog 函数
+ *
+ * @param sessionId - 参数
+ * @returns 返回值
+ */
 export function endSessionLog(sessionId?: string) {
   const id = sessionId || currentSessionId
   if (!id) return undefined

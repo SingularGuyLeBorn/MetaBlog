@@ -1,6 +1,13 @@
 /**
- * ArXiv 学术工具
+ * ============================================================================
+ * arxiv 模块
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/tools/academic
  */
+
 
 import type { ToolDefinition, ToolExecutor, ToolResult } from '@/theme/tools/types'
 import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
@@ -8,17 +15,37 @@ import { proxyFetch } from './other'
 
 // ==================== ArXiv 类型与辅助函数 ====================
 
+/**
+ * ArXiv 论文数据结构
+ */
 export interface ArxivPaper {
+  /** ArXiv 论文 ID(如 2401.12345) */
   id: string
+  /** 论文标题 */
   title: string
+  /** 作者列表 */
   authors: string[]
+  /** 论文摘要 */
   summary: string
+  /** 发布日期(ISO 格式) */
   published: string
+  /** PDF 下载链接 */
   pdfUrl: string
+  /** 论文摘要页面链接 */
   absUrl: string
+  /** 主分类(如 cs.AI) */
   primaryCategory: string
 }
 
+/**
+ * 清理 XML 文本中的 HTML 实体和多余空白
+ *
+ * ArXiv API 返回的 XML 中包含 HTML 实体(如 &lt;)和多余空白,
+ * 需要清理后才能正确显示. 
+ *
+ * @param text - 原始 XML 文本
+ * @returns 清理后的纯文本
+ */
 function cleanXmlText(text: string): string {
   return text
     .replace(/<[^>]+>/g, '')
@@ -31,6 +58,12 @@ function cleanXmlText(text: string): string {
     .trim()
 }
 
+/**
+ * 将 ISO 日期字符串格式化为中文友好格式
+ *
+ * @param dateStr - ISO 日期字符串
+ * @returns 格式化后的日期(如 2024年1月15日)
+ */
 function formatDate(dateStr: string): string {
   try {
     return new Date(dateStr).toLocaleDateString('zh-CN', {
@@ -39,6 +72,15 @@ function formatDate(dateStr: string): string {
   } catch { return dateStr }
 }
 
+/**
+ * 解析 ArXiv API 返回的 Atom XML
+ *
+ * 使用正则表达式而非 XML 解析器,因为 ArXiv 返回的是格式良好的 Atom XML,
+ * 但前端不需要引入完整的 XML 解析库,正则提取足够可靠且体积更小. 
+ *
+ * @param xml - ArXiv API 返回的 XML 字符串
+ * @returns 解析后的论文列表
+ */
 function parseArxivXml(xml: string): ArxivPaper[] {
   const papers: ArxivPaper[] = []
   const entryRegex = /<entry>([\s\S]*?)<\/entry>/g
@@ -65,6 +107,7 @@ function parseArxivXml(xml: string): ArxivPaper[] {
       categories.push(catMatch[1])
     }
 
+    // 从 ID URL 中提取纯 ArXiv ID,去掉版本号后缀
     const arxivId = idMatch ? idMatch[1].split('/').pop()?.replace('abs/', '').replace(/v\d+$/, '') || '' : ''
 
     if (arxivId && titleMatch) {
@@ -86,16 +129,19 @@ function parseArxivXml(xml: string): ArxivPaper[] {
 
 // ==================== 工具定义 ====================
 
+/**
+ * 搜索 ArXiv 论文的工具定义
+ */
 export const searchArxivDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'searchArxiv',
-    description: '搜索 ArXiv 学术论文。支持关键词、分类过滤。常用分类：cs.AI(AI), cs.CL(NLP), cs.CV(计算机视觉), cs.LG(机器学习)。注意：ArXiv 免费 API 有速率限制(约每 3 秒 1 次)，请尽量把相关主题用 OR 合并到一次查询中，避免连续发起多次搜索。',
+    description: '搜索 ArXiv 学术论文. 支持关键词、分类过滤. 常用分类：cs.AI(AI), cs.CL(NLP), cs.CV(计算机视觉), cs.LG(机器学习). 注意：ArXiv 免费 API 有速率限制(约每 3 秒 1 次),请尽量把相关主题用 OR 合并到一次查询中,避免连续发起多次搜索. ',
     parameters: {
       type: 'object',
       properties: {
-        query: { type: 'string', description: '搜索关键词，可用 OR 合并多个主题，如 "transformer OR attention"' },
-        category: { type: 'string', description: '分类过滤，如 cs.AI', default: '' },
+        query: { type: 'string', description: '搜索关键词,可用 OR 合并多个主题,如 "transformer OR attention"' },
+        category: { type: 'string', description: '分类过滤,如 cs.AI', default: '' },
         max_results: { type: 'number', description: '返回数量(1-50)', default: 5 },
         sort_by: { type: 'string', enum: ['relevance', 'lastUpdatedDate', 'submittedDate'], default: 'relevance' }
       },
@@ -104,16 +150,19 @@ export const searchArxivDef: ToolDefinition = {
   }
 }
 
+/**
+ * 获取 ArXiv 论文详情的工具定义
+ */
 export const fetchArxivDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'fetchArxiv',
-    description: '获取 ArXiv 论文详情，包括完整摘要、作者、PDF链接。支持一次获取多篇论文以减少 API 调用次数。',
+    description: '获取 ArXiv 论文详情,包括完整摘要、作者、PDF链接. 支持一次获取多篇论文以减少 API 调用次数. ',
     parameters: {
       type: 'object',
       properties: {
-        paper_id: { type: 'string', description: 'ArXiv 论文 ID，如 2401.12345。与 paper_ids 二选一或同时使用。' },
-        paper_ids: { type: 'array', items: { type: 'string' }, description: '多个 ArXiv 论文 ID 数组，如 ["2401.12345","2402.67890"]' }
+        paper_id: { type: 'string', description: 'ArXiv 论文 ID,如 2401.12345. 与 paper_ids 二选一或同时使用. ' },
+        paper_ids: { type: 'array', items: { type: 'string' }, description: '多个 ArXiv 论文 ID 数组,如 ["2401.12345","2402.67890"]' }
       },
       anyOf: [
         { required: ['paper_id'] },
@@ -125,6 +174,19 @@ export const fetchArxivDef: ToolDefinition = {
 
 // ==================== 执行器 ====================
 
+/**
+ * 搜索 ArXiv 论文
+ *
+ * 通过 ArXiv API 搜索学术论文,支持关键词、分类过滤和排序. 
+ * 返回格式化的论文列表供人类/AI 阅读. 
+ *
+ * @param args - 工具参数
+ * @param args.query - 搜索关键词
+ * @param args.category - 分类过滤(可选)
+ * @param args.max_results - 返回数量上限(默认 5)
+ * @param args.sort_by - 排序方式(默认 relevance)
+ * @returns 搜索结果或错误信息
+ */
 export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
   const { query, category = '', max_results = 5, sort_by = 'relevance' } = args
 
@@ -176,7 +238,7 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
       formattedResult += `   🔗 fetchArxiv(paper_id="${p.id}")\n\n`
     })
 
-    // 精简 data，去掉长摘要，避免 JSON.stringify 后体积过大导致 UI 卡顿
+    // 精简 data,去掉长摘要,避免 JSON.stringify 后体积过大导致 UI 卡顿
     const slimPapers = papers.map(p => ({
       id: p.id,
       title: p.title,
@@ -199,7 +261,7 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
       return createErrorResult(
         'Request timeout',
         '请求超时',
-        'ArXiv 服务响应较慢，请稍后重试'
+        'ArXiv 服务响应较慢,请稍后重试'
       )
     }
     return createErrorResult(
@@ -210,6 +272,17 @@ export const searchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
   }
 }
 
+/**
+ * 获取 ArXiv 论文详情
+ *
+ * 通过 ArXiv API 获取单篇或多篇论文的完整详情,包括摘要、作者、PDF 链接等. 
+ * 支持通过 id_list 批量查询,一次请求获取多篇论文以减少 API 调用. 
+ *
+ * @param args - 工具参数
+ * @param args.paper_id - 单篇论文 ID(与 paper_ids 二选一)
+ * @param args.paper_ids - 多篇论文 ID 数组(与 paper_id 二选一)
+ * @returns 论文详情或错误信息
+ */
 export const fetchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
   const rawIds: string[] = []
   if (args.paper_ids && Array.isArray(args.paper_ids) && args.paper_ids.length > 0) {
@@ -226,12 +299,13 @@ export const fetchArxiv: ToolExecutor = async (args): Promise<ToolResult> => {
     )
   }
 
+  // 统一清理 ID：去除空白、转小写、去掉版本号后缀(如 v2)
   const cleanIds = rawIds
     .map(id => id.toString().trim().toLowerCase().replace(/v\d+$/, ''))
     .filter(Boolean)
 
   try {
-    // 使用 id_list 批量查询，一次请求获取多篇论文
+    // 使用 id_list 批量查询,一次请求获取多篇论文
     const idList = cleanIds.join(',')
     const url = `https://export.arxiv.org/api/query?id_list=${idList}&start=0&max_results=${cleanIds.length}`
 

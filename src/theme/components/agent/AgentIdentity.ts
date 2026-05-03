@@ -1,16 +1,20 @@
 /**
- * Agent Identity 系统
- * 参考: agent-id.dev
- * 
- * 每个 Agent 拥有独立的身份标识，包括：
- * - 基础信息(ID、名称、头像)
- * - 联系方式(邮箱、手机号)
- * - Web3 身份(钱包地址)
- * - 平台账号(各社交媒体登录态)
+ * ============================================================================
+ * 组件逻辑 - AgentIdentity
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/components
  */
+
 
 export type ChainType = 'ethereum' | 'solana' | 'bitcoin' | 'polygon'
 
+/**
+ * Wallet 接口定义
+ *
+ */
 export interface Wallet {
   address: string
   chain: ChainType
@@ -18,6 +22,10 @@ export interface Wallet {
   isDefault?: boolean
 }
 
+/**
+ * PlatformAccount 接口定义
+ *
+ */
 export interface PlatformAccount {
   platform: string           // xiaohongshu, bilibili, twitter, etc.
   username: string
@@ -29,6 +37,10 @@ export interface PlatformAccount {
   expiresAt?: string         // Cookie 过期时间
 }
 
+/**
+ * AgentPermissions 接口定义
+ *
+ */
 export interface AgentPermissions {
   canRead: boolean
   canWrite: boolean
@@ -39,6 +51,10 @@ export interface AgentPermissions {
   allowedPlatforms: string[]
 }
 
+/**
+ * AgentPreferences 接口定义
+ *
+ */
 export interface AgentPreferences {
   contentTypes: ('article' | 'video' | 'image' | 'thread')[]
   keywords: string[]         // 关注的关键词
@@ -48,6 +64,10 @@ export interface AgentPreferences {
   language: string[]         // 偏好语言
 }
 
+/**
+ * AgentIdentity 接口定义
+ *
+ */
 export interface AgentIdentity {
   id: string
   name: string
@@ -77,6 +97,10 @@ export interface AgentIdentity {
   metadata?: Record<string, any>
 }
 
+/**
+ * IdentityCreateInput 接口定义
+ *
+ */
 export interface IdentityCreateInput {
   name: string
   description?: string
@@ -214,7 +238,7 @@ export class AgentIdentityManager {
       isLoggedIn: !!account.cookie
     }
 
-    // 检查是否已存在，存在则更新
+    // 检查是否已存在,存在则更新
     const existingIndex = identity.accounts.findIndex(
       a => a.platform === account.platform
     )
@@ -261,7 +285,7 @@ export class AgentIdentityManager {
       throw new Error('Wallet address already exists')
     }
 
-    // 如果是第一个钱包，设为默认
+    // 如果是第一个钱包,设为默认
     if (identity.wallets.length === 0) {
       wallet.isDefault = true
       identity.defaultWallet = wallet.address
@@ -394,6 +418,12 @@ export class AgentIdentityManager {
 export const identityManager = new AgentIdentityManager()
 
 // 默认 Agent 创建函数
+/**
+ * 创建DefaultAgent
+ *
+ * @param name - 参数(string = 'Content Collector')
+ * @returns 返回值(AgentIdentity)
+ */
 export function createDefaultAgent(name: string = 'Content Collector'): AgentIdentity {
   return identityManager.create({
     name,

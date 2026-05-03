@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * 工具函数 - global-sidebar
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/utils
+ */
+
+
 import { existsSync, readdirSync, readFileSync } from 'fs'
 import { dirname, join, relative, resolve } from 'path'
 
@@ -12,7 +23,7 @@ interface SidebarNode {
 
 const manifestCache = new Map<string, Record<string, any>>()
 const sidebarCache = new Map<string, { data: any[], timestamp: number }>()
-const CACHE_TTL = 5000 // 5秒缓存，开发模式下短缓存确保实时性
+const CACHE_TTL = 5000 // 5秒缓存,开发模式下短缓存确保实时性
 
 function getManifest(dir: string): Record<string, any> {
   const manifestPath = join(dir, 'manifest.json')
@@ -34,6 +45,12 @@ function getManifest(dir: string): Record<string, any> {
 }
 
 // 清除 sidebar 缓存(文件变动时调用)
+/**
+ * clearSidebarCache 函数
+ *
+ * @param section - 参数
+ * @returns 返回值
+ */
 export function clearSidebarCache(section?: string) {
   if (section) {
     sidebarCache.delete(section)
@@ -45,6 +62,14 @@ export function clearSidebarCache(section?: string) {
   }
 }
 
+/**
+ * 生成SectionSidebar
+ *
+ * @param sectionsPath - 参数(string)
+ * @param sectionName - 参数(string)
+ * @param useCache - 参数(boolean = false)
+ * @returns 返回值(SidebarNode[])
+ */
 export function generateSectionSidebar(sectionsPath: string, sectionName: string, useCache: boolean = false): SidebarNode[] {
   // 检查缓存(仅在非开发模式或明确指定使用缓存时)
   if (useCache && process.env.NODE_ENV !== 'development') {

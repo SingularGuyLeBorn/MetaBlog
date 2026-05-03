@@ -1,15 +1,13 @@
 /**
- * 数据源统一配置
- * 
- * 原则：
- * 1. 整个项目只允许一个数据源：后端API
- * 2. 不允许任何硬编码的mock数据
- * 3. 内存只做临时存储，所有数据持久化到后端
- * 4. 空状态由UI处理，不从本地创建默认数据
- * 
- * 注意：此文件中的端点必须与 .vitepress/config.ts 中的 BFF API 定义保持一致
- * 最后验证时间: 2026-03-07
+ * ============================================================================
+ * API 服务 - config
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/api
  */
+
 
 // 唯一数据源：后端API
 export const DATA_SOURCE = 'api' as const
@@ -29,7 +27,7 @@ export const API_ENDPOINTS = {
   AGENT_DELETE: '/api/agents/delete',                       // POST {id}
   AGENT_TRIGGER: '/api/agents/trigger',                     // POST {agentId, triggerId}
   ACTIVE_AGENT: '/api/agents/active',                       // GET (获取) / POST (设置)
-  
+
   // ============================================
   // Skills - 完全实现 ✅ (5个端点)
   // 后端实现: .vitepress/config.ts line 4403-4545
@@ -38,7 +36,7 @@ export const API_ENDPOINTS = {
   SKILL_DETAIL: (id: string) => `/api/skills/${id}`,        // GET (单个详情)
   SKILL_UPDATE: '/api/skills/update',                       // POST {id, ...updates}
   SKILL_DELETE: '/api/skills/delete',                       // POST {id}
-  
+
   // ============================================
   // MCP Servers - 完全实现 ✅ (9个端点)
   // 后端实现: .vitepress/config.ts line 4804-5069
@@ -51,18 +49,18 @@ export const API_ENDPOINTS = {
   MCP_SERVER_DISCONNECT: (id: string) => `/api/mcp/servers/${id}/disconnect`, // POST
   MCP_SERVER_TOOLS: (id: string) => `/api/mcp/servers/${id}/tools`,         // GET
   MCP_SERVER_EXECUTE: (id: string, tool: string) => `/api/mcp/servers/${id}/tools/${tool}/execute`, // POST
-  // Note: import/export 功能后端已实现基础 CRUD，但没有专门的 import/export 端点
-  // 以下端点在后端不存在，标记为 TODO
+  // Note: import/export 功能后端已实现基础 CRUD,但没有专门的 import/export 端点
+  // 以下端点在后端不存在,标记为 TODO
   // MCP_SERVER_IMPORT: '/api/mcp/servers/import',          // TODO: 后端未实现
   // MCP_SERVER_EXPORT: '/api/mcp/servers/export',          // TODO: 后端未实现
-  
+
   // ============================================
   // MCP Tools - 完全实现 ✅ (2个端点)
   // 后端实现: .vitepress/config.ts line 3152-3195
   // ============================================
   MCP_TOOLS: '/api/mcp/tools',                              // GET (列出所有工具)
   MCP_EXECUTE: '/api/mcp/execute',                          // POST {serverId, toolName, args}
-  
+
   // ============================================
   // Memory - 完全实现 ✅ (8个端点)
   // 后端实现: .vitepress/config.ts line 4574-4775
@@ -74,7 +72,7 @@ export const API_ENDPOINTS = {
   MEMORY_SEARCH: '/api/memories/search',                    // POST { query, category, minImportance, limit }
   MEMORY_STATS: '/api/memories/stats',                      // GET
   MEMORY_CLEAR: '/api/memories/clear',                      // POST
-  
+
   // ============================================
   // Files - 完全实现 ✅ (10个端点)
   // 后端实现: .vitepress/config.ts line 936-1632
@@ -89,7 +87,7 @@ export const API_ENDPOINTS = {
   FILES_LIST: '/api/files/list',                            // GET ?path=
   FILES_MKDIR: '/api/files/mkdir',                          // POST {path}
   FILES_CONTENT: '/api/files/content',                      // GET ?path=
-  
+
   // ============================================
   // Articles - 完全实现 ✅ (10个端点)
   // 后端实现: .vitepress/config.ts line 2114-2644
@@ -104,9 +102,9 @@ export const API_ENDPOINTS = {
   ARTICLES_MOVE: '/api/articles/move',                      // POST {from, to}
   ARTICLES_PUBLISH: '/api/articles/publish',                // POST {path}
   ARTICLES_BATCH_EXPORT: '/api/articles/batch-export',      // POST {paths, format}
-  // Note: 后端没有 /api/articles/directory-tree，使用 /api/directory-tree 代替
+  // Note: 后端没有 /api/articles/directory-tree,使用 /api/directory-tree 代替
   ARTICLES_DIRECTORY_TREE: '/api/directory-tree',           // GET ?section=
-  
+
   // ============================================
   // Logs - 完全实现 ✅ (9个端点)
   // 后端实现: .vitepress/config.ts line 2651-3029
@@ -120,7 +118,7 @@ export const API_ENDPOINTS = {
   LOGS_API_DEBUG: '/api/logs/api-debug',                    // POST {sessionId, entries, ...}
   LOGS_API_DEBUG_LIST: '/api/logs/api-debug/list',          // GET
   LOGS_SESSION: '/api/logs/session',                        // POST {sessionId, logs, filename}
-  
+
   // ============================================
   // Git - 部分实现 ⚠️ (2个端点)
   // 后端实现: .vitepress/config.ts line 1795-1876
@@ -131,7 +129,7 @@ export const API_ENDPOINTS = {
   // GIT_STATUS: '/api/git/status',                         // TODO: 后端未实现
   // GIT_DIFF: '/api/git/diff',                             // TODO: 后端未实现
   // GIT_BRANCHES: '/api/git/branches',                     // TODO: 后端未实现
-  
+
   // ============================================
   // Sessions - 完全实现 ✅ (4个端点)
   // 后端实现: .vitepress/config.ts line 5118-5326
@@ -140,7 +138,7 @@ export const API_ENDPOINTS = {
   SESSION_DETAIL: (id: string) => `/api/sessions/${id}`,    // GET / PUT / DELETE
   MESSAGES: (id: string) => `/api/sessions/${id}/messages`, // GET (获取) / POST (追加)
   MESSAGES_BATCH: (id: string) => `/api/sessions/${id}/messages/batch`, // POST (批量保存)
-  
+
   // ============================================
   // Agent Chat Sessions - 完全实现 ✅ (3个端点)
   // 后端实现: .vitepress/config.ts line 5354-5439
@@ -148,7 +146,7 @@ export const API_ENDPOINTS = {
   AGENT_CHAT_SESSIONS: '/api/agent-chat/sessions',                      // GET (列表)
   AGENT_CHAT_MESSAGES: (agentId: string) => `/api/agent-chat/sessions/${agentId}/messages`, // GET / POST
   AGENT_CHAT_SESSION: (agentId: string) => `/api/agent-chat/sessions/${agentId}`, // DELETE
-  
+
   // ============================================
   // Tasks - 完全实现 ✅ (8个端点)
   // 后端实现: .vitepress/config.ts line 3359-3693
@@ -161,7 +159,7 @@ export const API_ENDPOINTS = {
   TASKS_CANCEL: '/api/agent/tasks/cancel',                  // POST {taskId}
   TASKS_RETRY: '/api/agent/tasks/retry',                    // POST {taskId}
   TASKS_DELETE: '/api/agent/tasks/delete',                  // POST {taskId}
-  
+
   // ============================================
   // Agent Task (Agent任务提交) - 完全实现 ✅ (2个端点)
   // 后端实现: .vitepress/config.ts line 1639-1763
@@ -169,29 +167,29 @@ export const API_ENDPOINTS = {
   AGENT_TASK: '/api/agent/task',                            // POST {taskId, content, path, metadata}
   AGENT_TASK_STATUS: '/api/agent/task/status',              // GET ?id=
   AGENT_CONTEXT_INIT: '/api/agent/context/init',            // POST {path}
-  
+
   // ============================================
   // Health & System - 完全实现 ✅ (2个端点)
   // 后端实现: .vitepress/config.ts line 3829-3861
   // ============================================
   HEALTH: '/api/health',                                     // GET
-  HEALTH_PING: '/api/health/ping',                          // GET - 后端未明确实现，但 health 可用
+  HEALTH_PING: '/api/health/ping',                          // GET - 后端未明确实现,但 health 可用
   HEALTH_RESOURCES: '/api/system/resources',                // GET
   // Note: /api/health/services/:service 后端未实现
   // HEALTH_SERVICES: (service: string) => `/api/health/services/${service}`, // TODO: 后端未实现
-  
+
   // ============================================
   // Chat - 完全实现 ✅ (1个端点)
   // 后端实现: .vitepress/config.ts line 3698-3824
   // ============================================
   CHAT: '/api/chat',                                        // POST {messages, model, temperature, maxTokens, stream}
-  
+
   // ============================================
   // Proxy - 完全实现 ✅ (1个端点)
   // 后端实现: .vitepress/config.ts line 3035-3145
   // ============================================
   PROXY_FETCH: '/api/proxy/fetch',                          // POST {url, timeout}
-  
+
   // ============================================
   // GitHub API 代理 - 完全实现 ✅ (3个端点)
   // 后端实现: .vitepress/config.ts line 3203-3353
@@ -199,27 +197,27 @@ export const API_ENDPOINTS = {
   GITHUB_REPO: (owner: string, repo: string) => `/api/github/repo/${owner}/${repo}`,           // GET
   GITHUB_FILE: (owner: string, repo: string, ref: string, filePath: string) => `/api/github/file/${owner}/${repo}/${ref}/${filePath}`, // GET
   GITHUB_COMMITS: (owner: string, repo: string, ref?: string) => `/api/github/commits/${owner}/${repo}${ref ? `/${ref}` : ''}`, // GET
-  
+
   // ============================================
   // Sidebar & Directory - 完全实现 ✅ (2个端点)
   // 后端实现: .vitepress/config.ts line 1883-1956
   // ============================================
   SIDEBAR: '/api/sidebar',                                  // GET ?section=
   DIRECTORY_TREE: '/api/directory-tree',                    // GET ?section=
-  
+
   // ============================================
   // Utils - 完全实现 ✅ (1个端点)
   // 后端实现: .vitepress/config.ts line 1815-1847
   // ============================================
   UTILS_SLUGIFY: '/api/utils/slugify',                      // POST {text}
-  
+
   // ============================================
   // Upload - 标记为 TODO ⚠️
   // 后端实现: 未找到对应实现
   // ============================================
   // UPLOAD: '/api/upload',                                  // TODO: 后端未实现
   // UPLOAD_FILE: (filename: string) => `/api/upload/${filename}`, // TODO: 后端未实现
-  
+
 } as const
 
 // 请求配置
@@ -277,12 +275,12 @@ export const DEBUG_API = false
 
 HTTP 方法映射:
 - GET: 获取数据
-- POST: 创建/提交数据 (大部分更新/删除操作也使用 POST，因为 BFF API 使用 middleware 模式)
+- POST: 创建/提交数据 (大部分更新/删除操作也使用 POST,因为 BFF API 使用 middleware 模式)
 - PUT: 更新数据 (Articles Update 使用 PUT)
 - DELETE: 删除数据 (Sessions Detail 使用 DELETE)
 
 注意:
-- 后端 BFF API 主要使用 POST 方法处理写操作，即使语义上是更新/删除
+- 后端 BFF API 主要使用 POST 方法处理写操作,即使语义上是更新/删除
 - 路径参数通过函数生成 (如 AGENT_DETAIL(id))
 - 查询参数通过 URL 传递 (如 ARTICLES_SEARCH + '?q=keyword')
 */

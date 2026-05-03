@@ -1,7 +1,7 @@
 /**
  * 后端路由测试辅助函数
  *
- * 模拟 ViteDevServer 的 middleware 系统，用于测试 registerLarkRoutes / registerYuqueRoutes。
+ * 模拟 ViteDevServer 的 middleware 系统,用于测试 registerLarkRoutes / registerYuqueRoutes. 
  */
 
 import type { ViteDevServer } from 'vite'
@@ -20,7 +20,7 @@ export interface MockServer {
 }
 
 /**
- * 创建模拟的 ViteDevServer，收集通过 middlewares.use 注册的路由
+ * 创建模拟的 ViteDevServer,收集通过 middlewares.use 注册的路由
  */
 export function createMockServer(): MockServer {
   const middlewares: Array<{ path: string; handler: Function }> = []
@@ -80,7 +80,7 @@ export function createMockCtx() {
 }
 
 /**
- * Mock global.fetch，用于拦截飞书/语雀 API 调用
+ * Mock global.fetch,用于拦截飞书/语雀 API 调用
  */
 export function mockFetch(responseFn: (url: string, options: any) => { code: number; data?: any; msg?: string; status?: number }) {
   const originalFetch = global.fetch

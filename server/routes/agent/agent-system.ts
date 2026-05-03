@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * Agent 路由 - agent-system
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/agent
+ */
+
+
 import fs from "fs";
 import path from "path";
 import type { ViteDevServer } from "vite";
@@ -6,6 +17,10 @@ import { getAgentRuntimeManager } from "../../mcp-tools/agent-runtime-manager";
 import { getMetaAgentManager } from "../../mcp-tools/meta-agent-manager";
 import { getReportAgentManager } from "../../mcp-tools/report-agent-manager";
 import { getTaskManager } from "../../mcp-tools/task-manager";
+/**
+ * RouteContext 接口定义
+ *
+ */
 export interface RouteContext {
   system: any;
   structuredLog: any;
@@ -13,6 +28,21 @@ export interface RouteContext {
   triggerReload: () => void;
 }
 
+/**
+ * 注册 Agent 系统管理路由
+ *
+ * 挂载以下 API 组：
+ * 1. 任务管理 —— /api/agent/tasks/*(CRUD + 状态流转)
+ * 2. 运行时管理 —— /api/agent/runtime/*(Agent 生命周期)
+ * 3. 元 Agent —— /api/agent/meta/*(Meta-Agent 调度)
+ * 4. 报告 Agent —— /api/agent/report/*(报告生成与导出)
+ * 5. Agent CRUD —— /api/agents/*(持久化到 .data/agents.json)
+ *
+ * 初始化时会自动创建默认 Agent(当 agents.json 为空时). 
+ *
+ * @param server - Vite 开发服务器实例
+ * @param ctx    - 路由上下文
+ */
 export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
   // ============================================
@@ -706,7 +736,7 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
             mode: "raw",
             skillIds: [],
             toolIds: [],
-            customSystemPrompt: "你是一个 helpful 的 AI 助手。",
+            customSystemPrompt: "你是一个 helpful 的 AI 助手. ",
           },
           memory: agent.memory || {
             enabled: true,
@@ -750,7 +780,7 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
         name: "Meta 助手",
         avatar: "🤖",
         description:
-          "基于 DeepSeek 大模型的通用 AI 助手，为您提供专业智能对话体验",
+          "基于 DeepSeek 大模型的通用 AI 助手,为您提供专业智能对话体验",
         level: "meta",
         status: "online",
         seat: 1,
@@ -759,7 +789,7 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
           skillIds: [],
           toolIds: [],
           customSystemPrompt:
-            "你是一个 helpful 的 AI 助手，擅长回答问题、提供建议和协助完成各种任务。",
+            "你是一个 helpful 的 AI 助手,擅长回答问题、提供建议和协助完成各种任务. ",
         },
         memory: {
           enabled: true,
@@ -783,7 +813,7 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
   initializeDefaultAgent();
 
   // GET /api/agents - 获取所有 Agents
-  // POST /api/agents - 创建 Agent(只处理精确路径，不包括子路径)
+  // POST /api/agents - 创建 Agent(只处理精确路径,不包括子路径)
   server.middlewares.use("/api/agents", (req, res, next) => {
     const url = req.url || "";
     // 只处理精确路径 /api/agents 或 /api/agents/(不包括 /api/agents/update 等子路径)
@@ -816,7 +846,7 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
               mode: "raw",
               skillIds: [],
               toolIds: [],
-              customSystemPrompt: "你是一个 helpful 的 AI 助手。",
+              customSystemPrompt: "你是一个 helpful 的 AI 助手. ",
             },
             memory: body.memory || {
               enabled: true,
@@ -974,7 +1004,7 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
   server.middlewares.use("/api/agents/", (req, res, next) => {
     const url = req.url || "";
     const parts = url.split("/").filter(Boolean);
-    // 只处理 /api/agents/:id 格式，排除其他子路径如 /active
+    // 只处理 /api/agents/:id 格式,排除其他子路径如 /active
     if (
       parts.length !== 1 ||
       parts[0] === "active" ||
@@ -1022,7 +1052,7 @@ export function registerAgentSystemRoutes(server: ViteDevServer, ctx: RouteConte
           );
           activeId = data.id;
         }
-        // 如果没有设置，返回第一个 agent
+        // 如果没有设置,返回第一个 agent
         if (!activeId) {
           const agents = readAgents();
           activeId = agents[0]?.id || null;

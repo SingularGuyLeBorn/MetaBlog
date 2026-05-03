@@ -13,8 +13,8 @@
       </div>
       
       <h2>MetaBlog 作者</h2>
-      <p class="bio">探索 AI 与 硬件系统的边界。</p>
-      <p class="desc">热衷于大模型微调、端侧部署与高性能计算。</p>
+      <p class="bio">探索 AI 与 硬件系统的边界. </p>
+      <p class="desc">热衷于大模型微调、端侧部署与高性能计算. </p>
 
       <div class="tags">
          <span class="tag">PyTorch</span>

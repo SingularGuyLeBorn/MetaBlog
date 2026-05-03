@@ -16,21 +16,21 @@
 
 ## 🎯 项目简介
 
-MetaBlog 是一个将**静态博客**、**AI 对话**和**自主 Agent**融为一体的知识管理平台。它基于 VitePress 构建博客前端，内嵌完整的 AI 聊天系统和工具调用框架，让 AI 不仅能回答问题，还能直接操作博客内容、管理代码、集成外部平台。
+MetaBlog 是一个将**静态博客**、**AI 对话**和**自主 Agent**融为一体的知识管理平台. 它基于 VitePress 构建博客前端,内嵌完整的 AI 聊天系统和工具调用框架,让 AI 不仅能回答问题,还能直接操作博客内容、管理代码、集成外部平台. 
 
 ### 核心能力
 
 | 能力 | 说明 |
 |------|------|
-| 📝 **智能博客** | VitePress 驱动的 Markdown 博客，支持数学公式、代码高亮、Wiki 链接 |
-| 🤖 **AI 对话** | 多模型支持(DeepSeek/Kimi/Zhipu/OpenAI 等)，流式响应，思考过程展示 |
-| 🛠️ **工具调用** | 119+ 内置工具 + MCP 外部扩展，AI 可直接操作文件、GitHub、飞书、语雀等 |
-| 🔍 **智能采集** | 多层内容获取(HTTP → Jina Reader → Playwright 渲染)，支持知乎/小红书/微信等反爬平台 |
-| 🖼️ **OCR 识别** | 三引擎自动降级(PaddleOCR → Tesseract → OCR.space)，图片转文字供非多模态模型使用 |
-| 🧪 **代码沙箱** | 后端安全执行 Python/JavaScript/Bash，支持数学计算和代码验证 |
+| 📝 **智能博客** | VitePress 驱动的 Markdown 博客,支持数学公式、代码高亮、Wiki 链接 |
+| 🤖 **AI 对话** | 多模型支持(DeepSeek/Kimi/Zhipu/OpenAI 等),流式响应,思考过程展示 |
+| 🛠️ **工具调用** | 119+ 内置工具 + MCP 外部扩展,AI 可直接操作文件、GitHub、飞书、语雀等 |
+| 🔍 **智能采集** | 多层内容获取(HTTP → Jina Reader → Playwright 渲染),支持知乎/小红书/微信等反爬平台 |
+| 🖼️ **OCR 识别** | 三引擎自动降级(PaddleOCR → Tesseract → OCR.space),图片转文字供非多模态模型使用 |
+| 🧪 **代码沙箱** | 后端安全执行 Python/JavaScript/Bash,支持数学计算和代码验证 |
 | 👤 **Agent 系统** | 多 Agent 管理、Skill 技能组合、独立会话、工具权限控制 |
-| 🎯 **渐进披露** | 动态工具上下文，从 119 个工具智能降噪到 7~15 个，提升调用准确率 |
-| 🛡️ **错误翻译** | 飞书/语雀/GitHub API 错误码自动转中文，降低 AI 和用户理解成本 |
+| 🎯 **渐进披露** | 动态工具上下文,从 119 个工具智能降噪到 7~15 个,提升调用准确率 |
+| 🛡️ **错误翻译** | 飞书/语雀/GitHub API 错误码自动转中文,降低 AI 和用户理解成本 |
 
 ---
 
@@ -59,7 +59,7 @@ pnpm install
 cp .env.example .env
 ```
 
-编辑 `.env`，至少配置以下项：
+编辑 `.env`,至少配置以下项：
 
 ```env
 # AI 模型(必填一项)
@@ -138,7 +138,7 @@ pnpm docs:preview
 
 ## 🛠️ 工具系统
 
-内置 **100+** 工具，覆盖 15+ 个类别：
+内置 **100+** 工具,覆盖 15+ 个类别：
 
 | 类别 | 代表工具 | 数量 |
 |------|---------|------|
@@ -156,7 +156,7 @@ pnpm docs:preview
 | 网络 | `webSearch`, `fetchUrl` | 2 |
 | 系统 | `getCurrentTime`, `getWeather`, `calculate` | 4 |
 
-**MCP 扩展**：通过 MCP (Model Context Protocol) 接入外部工具，支持 GitHub、Slack、Notion、数据库等 20+ 预设配置。
+**MCP 扩展**：通过 MCP (Model Context Protocol) 接入外部工具,支持 GitHub、Slack、Notion、数据库等 20+ 预设配置. 
 
 > 完整工具文档见 [docs/guide/tools.md](./docs/guide/tools.md)
 
@@ -176,15 +176,15 @@ pnpm docs:preview
 
 ## 💻 代码沙箱
 
-后端安全执行环境，支持三种语言：
+后端安全执行环境,支持三种语言：
 
 | 语言 | 执行方式 | 安全特性 |
 |------|---------|---------|
-| Python | Monty 解释器 | 无文件/网络访问，纯计算环境 |
-| JavaScript | vm.runInNewContext | 独立上下文，无全局污染 |
+| Python | Monty 解释器 | 无文件/网络访问,纯计算环境 |
+| JavaScript | vm.runInNewContext | 独立上下文,无全局污染 |
 | Bash | 白名单命令过滤 | 仅允许安全命令 |
 
-限制：30 秒超时、1MB 输出上限、50KB 代码长度限制。
+限制：30 秒超时、1MB 输出上限、50KB 代码长度限制. 
 
 ---
 
@@ -225,5 +225,5 @@ MIT License
 ---
 
 <p align="center">
-  <em>让 AI 成为博客的共创者，而不只是对话者</em>
+  <em>让 AI 成为博客的共创者,而不只是对话者</em>
 </p>

@@ -1,11 +1,16 @@
 /**
- * Utils - 工具函数
+ * ============================================================================
+ * 工具函数 - index
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/utils
  */
 
+
 export {
-  generateUUID,
-  generateShortUUID,
   generateReadableFilename,
-  generateSessionId,
-  isValidSessionId
-} from './uuid'
+  generateSessionId, generateShortUUID, generateUUID, isValidSessionId
+} from './uuid';
+

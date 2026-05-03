@@ -1,21 +1,25 @@
 /**
- * searchCapabilities 工具定义 + 执行器
+ * ============================================================================
+ * 工具与 Skill 搜索工具
+ * ============================================================================
  *
- * 让 Agent 通过关键词主动搜索自己拥有的工具和 Skills，
- * 解决"工具太多不知道用哪个"的问题。
+ * 让 Agent 通过关键词主动搜索自己拥有的工具和 Skills,
+ * 解决"工具太多不知道用哪个"的问题. 
  *
  * 【渐进式披露架构的核心入口工具】
  *
- * 当 Agent 不确定某个领域有哪些工具可用时，调用此工具进行搜索。
+ * 当 Agent 不确定某个领域有哪些工具可用时,调用此工具进行搜索. 
  * 搜索范围覆盖：
  * - 所有已注册的工具(通过 getToolDefinitions() 获取)
  * - 所有已加载的 Skills(通过 getGlobalSkills() 获取)
  *
  * 关键特性：
  * 1. 多维度匹配：名称、ID、描述、标签、使用场景同时参与评分
- * 2. 分数归一化：最高分 3.0，多关键词命中有加成
+ * 2. 分数归一化：最高分 3.0,多关键词命中有加成
  * 3. 结果排序：按匹配分数降序排列
  * 4. 动态激活：返回的 activateTools 字段会将匹配工具加入下轮可用列表
+ *
+ * @module src/theme/tools/search_capabilities/search-capabilities
  */
 
 import { getGlobalSkills } from '@/theme/skills/skillLoader'
@@ -27,41 +31,30 @@ import { createErrorResult, createSuccessResult } from '../types'
 /*                                 工具定义                                    */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * 搜索工具和 Skills 的工具定义
+ */
 export const searchCapabilitiesDef: ToolDefinition = {
   type: 'function',
   function: {
     name: 'searchCapabilities',
-    description: `通过关键词搜索系统中可用的工具和 Skills，找到最适合当前任务的能力。
-
-【什么时候用】
-- 用户提出需求后，你完全不知道有哪些工具可以帮上忙
-- 用户问"你能做什么"时，提供精准回答
-
-【什么时候不用】
-- 如果你已经知道工具的名字（如 readArticle、ocrImage、webSearch），直接调用即可，不要用 searchCapabilities 搜索确认
-- 不要每次调用工具前都先 searchCapabilities，这是浪费
-
-示例：
-- 搜索 GitHub 相关：keyword="github"
-- 搜索文档处理：keyword="文档"
-- 搜索代码分析：keyword="code analyze"
-- 搜索平台解析：keyword="知乎 小红书"`,
+    description: `通过关键词搜索系统中可用的工具和 Skills,找到最适合当前任务的能力. \n\n【什么时候调用】\n- 用户提出需求后,你完全不知道有哪些工具/Skill 可以帮上忙\n- 用户问"你能做什么"、"有哪些功能"时,提供精准回答\n- 面对一个陌生领域的任务,需要发现系统是否具备相关能力\n\n【什么时候不调用】\n- 如果你已经知道具体工具名称(如 readArticle、ocrImage),直接调用即可\n- 不要每次调用工具前都先 searchCapabilities,这是浪费\n\n【示例用法】\n- searchCapabilities(keyword="github") → 查找 GitHub 相关工具和 Skills\n- searchCapabilities(keyword="文档 排版", type="skills") → 仅搜索 Skills\n- searchCapabilities(keyword="知乎 小红书") → 搜索平台解析相关能力\n\n【注意事项】\n- 支持空格分隔多关键词,命中越多排序越靠前\n- 返回结果包含匹配分数和理由,优先使用分数高的\n- 匹配到的工具会自动激活,下轮可直接调用`,
     parameters: {
       type: 'object',
       properties: {
         keyword: {
           type: 'string',
-          description: '搜索关键词，支持中英文、空格分隔多个词'
+          description: '搜索关键词. 支持中英文,可用空格分隔多个词进行组合搜索. 示例："github"、"文档 排版"、"知乎 小红书"'
         },
         type: {
           type: 'string',
           enum: ['all', 'tools', 'skills'],
-          description: '搜索范围：all(工具和Skills)、tools(仅工具)、skills(仅Skills)',
+          description: '搜索范围. all=工具和Skills都搜索(默认);tools=仅搜索工具;skills=仅搜索Skills. 默认 "all". ',
           default: 'all'
         },
         limit: {
           type: 'number',
-          description: '返回结果数量上限，0 表示不限制(返回全部)',
+          description: '返回结果数量上限. 0 表示不限制,返回全部匹配结果(默认). 如需精简可设为 5 或 10. 默认 0. ',
           default: 0
         }
       },
@@ -77,7 +70,7 @@ export const searchCapabilitiesDef: ToolDefinition = {
 /**
  * 匹配项数据结构
  *
- * 统一 Tools 和 Skills 的匹配结果格式，方便后续排序和展示。
+ * 统一 Tools 和 Skills 的匹配结果格式,方便后续排序和展示. 
  */
 interface MatchItem {
   name: string
@@ -96,7 +89,7 @@ interface MatchItem {
 /**
  * 计算关键词与目标的匹配分数
  *
- * 评分算法(加权求和，最高分 3.0)：
+ * 评分算法(加权求和,最高分 3.0)：
  * ┌─────────────────┬────────┬─────────────────────────────────────┐
  * │ 匹配维度        │ 权重   │ 说明                                │
  * ├─────────────────┼────────┼─────────────────────────────────────┤
@@ -113,7 +106,7 @@ interface MatchItem {
  * - 多个关键词同时命中描述：额外 +0.2
  *
  * @param keyword - 用户输入的搜索关键词(支持空格分隔多关键词)
- * @param target  - 待匹配的目标对象(工具或 Skill)
+ * @param target - 待匹配的目标对象(工具或 Skill)
  * @returns 包含 score(匹配分数)和 reason(匹配理由说明)的对象
  */
 function calculateMatchScore(
@@ -182,7 +175,7 @@ function calculateMatchScore(
         const descMatchCount = kwChars.filter((c) => descLower.includes(c)).length
         if (descMatchCount >= kw.length * 0.5) {
           const ratio = descMatchCount / kw.length
-          score += 0.2 + ratio * 0.3 // 0.2~0.5，匹配比例越高分数越高
+          score += 0.2 + ratio * 0.3 // 0.2~0.5,匹配比例越高分数越高
           reasons.push(`描述字符匹配"${kw}"(${Math.round(ratio * 100)}%)`)
         }
       }
@@ -199,18 +192,23 @@ function calculateMatchScore(
 
   return {
     score: Math.min(score, 3.0),
-    reason: reasons.length > 0 ? reasons.join('；') : '无直接匹配'
+    reason: reasons.length > 0 ? reasons.join(';') : '无直接匹配'
   }
 }
 
 /**
- * 获取工具分类
+ * 根据工具名称推断所属分类
+ *
+ * 通过关键词匹配实现简单分类,用于搜索结果展示. 
+ *
+ * @param name - 工具名称
+ * @returns 分类名称
  */
 function getToolCategory(name: string): string {
   if (name.includes('article')) return '文章管理'
   if (name.includes('file')) return '文件管理'
   if (name.includes('web') || name.includes('fetch') || name.includes('url')) return '网络工具'
-  // github 必须在 code 之前判断，否则 github* 会被误判为代码工具
+  // github 必须在 code 之前判断,否则 github* 会被误判为代码工具
   if (name.includes('github')) return '🐙 GitHub'
   if (name.includes('code') || name.includes('execute') || name.includes('analyze')) return '代码工具'
   if (name.includes('text') || name.includes('summarize') || name.includes('format') || name.includes('translate'))
@@ -228,7 +226,13 @@ function getToolCategory(name: string): string {
 }
 
 /**
- * 搜索工具
+ * 搜索已注册的工具
+ *
+ * 遍历所有工具定义,使用 calculateMatchScore 计算匹配分数,
+ * 返回按分数降序排列的结果. 
+ *
+ * @param keyword - 搜索关键词
+ * @returns 按匹配分数降序排列的工具匹配项数组
  */
 function searchTools(keyword: string): MatchItem[] {
   const defs = getToolDefinitions()
@@ -258,10 +262,10 @@ function searchTools(keyword: string): MatchItem[] {
 /**
  * 搜索已加载的 Skills
  *
- * 遍历所有已加载且启用的 Skills，使用 calculateMatchScore 计算每个 Skill
- * 与关键词的匹配分数，返回排序后的匹配结果。
+ * 遍历所有已加载且启用的 Skills,使用 calculateMatchScore 计算每个 Skill
+ * 与关键词的匹配分数,返回排序后的匹配结果. 
  *
- * 过滤条件：只返回 score > 0.1 的 Skill(避免完全无关的结果干扰)。
+ * 过滤条件：只返回 score > 0.1 的 Skill(避免完全无关的结果干扰). 
  *
  * @param keyword - 搜索关键词
  * @returns 按匹配分数降序排列的 Skill 匹配项数组
@@ -271,7 +275,7 @@ function searchSkills(keyword: string): MatchItem[] {
   const results: MatchItem[] = []
 
   for (const skill of skills) {
-    // 跳过已禁用的 Skill，避免返回不可用项
+    // 跳过已禁用的 Skill,避免返回不可用项
     if (!skill.enabled) continue
 
     const { score, reason } = calculateMatchScore(keyword, {
@@ -313,19 +317,14 @@ function searchSkills(keyword: string): MatchItem[] {
  *    - 'tools'：仅搜索 Tools
  *    - 'skills'：仅搜索 Skills
  * 3. 合并结果后按匹配分数全局排序
- * 4. 截断到 limit 数量(默认 10，防止结果过多)
- * 5. 构建格式化文本(Markdown 格式，便于 Agent 阅读)
- * 6. 提取匹配工具名称到 activateTools，触发渐进式披露
+ * 4. 截断到 limit 数量(默认 10,防止结果过多)
+ * 5. 构建格式化文本(Markdown 格式,便于 Agent 阅读)
+ * 6. 提取匹配工具名称到 activateTools,触发渐进式披露
  *
- * 返回结构：
- * - message: 人类可读的 Markdown 格式搜索结果
- * - data: 结构化数据(keyword、count、tools[]、skills[]、results[])
- * - activateTools: 匹配的工具名称数组(用于动态暴露 schema)
- *
- * @param args.keyword - 搜索关键词，支持空格分隔多词
- * @param args.type    - 搜索类型：'all' | 'tools' | 'skills'，默认 'all'
- * @param args.limit   - 返回结果数量上限，默认 10
- * @returns ToolResult，包含搜索结果和 activateTools
+ * @param args.keyword - 搜索关键词,支持空格分隔多词
+ * @param args.type - 搜索类型：'all' | 'tools' | 'skills',默认 'all'
+ * @param args.limit - 返回结果数量上限,默认 10
+ * @returns ToolResult,包含搜索结果和 activateTools
  */
 export async function executeSearchCapabilities(args: Record<string, any>): Promise<ToolResult> {
   const { keyword, type = 'all', limit = 0 } = args
@@ -349,7 +348,7 @@ export async function executeSearchCapabilities(args: Record<string, any>): Prom
     }
 
     // 全局排序：Tools 和 Skills 混合按分数降序排列
-    // limit > 0 时截断，limit = 0 返回全部
+    // limit > 0 时截断,limit = 0 返回全部
     let sorted = allResults.sort((a, b) => b.score - a.score)
     if (limit > 0) {
       sorted = sorted.slice(0, limit)
@@ -365,11 +364,11 @@ export async function executeSearchCapabilities(args: Record<string, any>): Prom
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 构建返回文本(Markdown 格式，便于 Agent 阅读和理解)
+    // 构建返回文本(Markdown 格式,便于 Agent 阅读和理解)
     // ─────────────────────────────────────────────────────────────
     const lines: string[] = [`🔍 搜索 "${keyword}" 的结果(${sorted.length} 项)：\n`]
 
-    // 按类型分组展示：先工具，后 Skills
+    // 按类型分组展示：先工具,后 Skills
     const tools = sorted.filter((r) => r.type === 'tool')
     const skills = sorted.filter((r) => r.type === 'skill')
 
@@ -392,11 +391,11 @@ export async function executeSearchCapabilities(args: Record<string, any>): Prom
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 【渐进式披露】提取匹配工具名称，触发 schema 动态激活
+    // 【渐进式披露】提取匹配工具名称,触发 schema 动态激活
     // ─────────────────────────────────────────────────────────────
-    // searchCapabilities 的核心价值：不仅返回搜索结果文本，
-    // 还通过 activateTools 告诉系统将匹配工具的 schema 暴露给模型。
-    // 这样 Agent 在下一轮就可以调用这些工具，而不需要再次搜索。
+    // searchCapabilities 的核心价值：不仅返回搜索结果文本,
+    // 还通过 activateTools 告诉系统将匹配工具的 schema 暴露给模型. 
+    // 这样 Agent 在下一轮就可以调用这些工具,而不需要再次搜索. 
     const activateTools = tools.map((r) => r.name)
 
     return {

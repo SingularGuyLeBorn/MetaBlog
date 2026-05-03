@@ -1,6 +1,13 @@
 /**
- * 统一数据存储系统
+ * ============================================================================
+ * Pinia Store - dataStore
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/stores
  */
+
 
 // ==================== 类型 ====================
 export interface SystemConfig {
@@ -19,6 +26,10 @@ export interface SystemConfig {
   limits: { maxAgents: number; maxSessions: number; maxMessagesPerSession: number; maxFileSize: number; maxLogEntries: number }
 }
 
+/**
+ * StoredAgent 接口定义
+ *
+ */
 export interface StoredAgent {
   id: string
   name: string
@@ -35,6 +46,10 @@ export interface StoredAgent {
   createdBy: string
 }
 
+/**
+ * StoredSession 接口定义
+ *
+ */
 export interface StoredSession {
   id: string
   title: string
@@ -45,6 +60,10 @@ export interface StoredSession {
   messageCount: number
 }
 
+/**
+ * StoredMessage 接口定义
+ *
+ */
 export interface StoredMessage {
   id: string
   sessionId: string
@@ -54,6 +73,10 @@ export interface StoredMessage {
   tokens?: number
 }
 
+/**
+ * StoredMemory 接口定义
+ *
+ */
 export interface StoredMemory {
   id: string
   content: string
@@ -64,6 +87,10 @@ export interface StoredMemory {
   enabled: boolean
 }
 
+/**
+ * ArticleMetadata 接口定义
+ *
+ */
 export interface ArticleMetadata {
   id: string
   path: string
@@ -85,6 +112,10 @@ export interface ArticleMetadata {
   keywords?: string[]
 }
 
+/**
+ * StoredMCPServer 接口定义
+ *
+ */
 export interface StoredMCPServer {
   id: string
   name: string
@@ -94,6 +125,10 @@ export interface StoredMCPServer {
   lastConnectedAt?: number
 }
 
+/**
+ * LogEntry 接口定义
+ *
+ */
 export interface LogEntry {
   id: string
   timestamp: number
@@ -104,6 +139,10 @@ export interface LogEntry {
   metadata?: any
 }
 
+/**
+ * StoredTask 接口定义
+ *
+ */
 export interface StoredTask {
   id: string
   name: string
@@ -116,6 +155,10 @@ export interface StoredTask {
   error?: string
 }
 
+/**
+ * StoredSkill 接口定义
+ *
+ */
 export interface StoredSkill {
   id: string
   name: string
@@ -141,7 +184,7 @@ class ConfigManager {
         this.config = JSON.parse(await res.text())
         return this.config!
       }
-    } catch {}
+    } catch { }
     return this.getDefault()
   }
 
@@ -185,12 +228,16 @@ class ConfigManager {
 export const configManager = new ConfigManager()
 
 // ==================== 通用存储 ====================
+/**
+ * JsonStorage 类
+ *
+ */
 export class JsonStorage<T extends { id: string }> {
   private cache: T[] | null = null
   private cacheTime = 0
   private readonly TTL = 5000
 
-  constructor(private indexPath: string) {}
+  constructor(private indexPath: string) { }
 
   async getAll(): Promise<T[]> {
     if (this.cache && Date.now() - this.cacheTime < this.TTL) return this.cache
@@ -201,7 +248,7 @@ export class JsonStorage<T extends { id: string }> {
         this.cacheTime = Date.now()
         return this.cache!
       }
-    } catch {}
+    } catch { }
     return []
   }
 
@@ -249,12 +296,16 @@ export const skillStorage = new JsonStorage<StoredSkill>('.data/skills/index.jso
 export const articleStorage = new JsonStorage<ArticleMetadata>('.data/articles/index.json')
 
 // ==================== 消息存储 ====================
+/**
+ * MessageStorage 类
+ *
+ */
 export class MessageStorage {
   async getBySession(sessionId: string): Promise<StoredMessage[]> {
     try {
       const res = await fetch(`/api/files/read?path=${encodeURIComponent(`.data/messages/${sessionId}/index.json`)}`)
       if (res.ok) return JSON.parse(await res.text())
-    } catch {}
+    } catch { }
     return []
   }
 
@@ -275,6 +326,10 @@ export class MessageStorage {
 export const messageStorage = new MessageStorage()
 
 // ==================== 日志存储 ====================
+/**
+ * LogStorage 类
+ *
+ */
 export class LogStorage {
   private buffer: LogEntry[] = []
   private flushTimer: number | null = null
@@ -284,7 +339,7 @@ export class LogStorage {
     try {
       const res = await fetch(`/api/files/read?path=${encodeURIComponent(`.data/logs/${date}.json`)}`)
       if (res.ok) return JSON.parse(await res.text())
-    } catch {}
+    } catch { }
     return []
   }
 
@@ -352,45 +407,50 @@ interface OldMemory {
   source: string
 }
 
+/**
+ * migrateData 函数
+ *
+ * @returns 返回值(Promise<{ success: boolean; report: string[] }>)
+ */
 export async function migrateData(): Promise<{ success: boolean; report: string[] }> {
   const report: string[] = []
   report.push('=== 数据迁移开始 ===')
-  
+
   try {
     const agentsMigrated = await migrateAgents()
     report.push(`✓ Agents: ${agentsMigrated} 个已迁移`)
   } catch (e: any) {
     report.push(`✗ Agents迁移失败: ${e.message}`)
   }
-  
+
   try {
     const sessionsMigrated = await migrateSessions()
     report.push(`✓ Sessions: ${sessionsMigrated} 个已迁移`)
   } catch (e: any) {
     report.push(`✗ Sessions迁移失败: ${e.message}`)
   }
-  
+
   try {
     const memoriesMigrated = await migrateMemories()
     report.push(`✓ Memories: ${memoriesMigrated} 个已迁移`)
   } catch (e: any) {
     report.push(`✗ Memories迁移失败: ${e.message}`)
   }
-  
+
   try {
     const messagesMigrated = await migrateMessages()
     report.push(`✓ Messages: ${messagesMigrated} 条已迁移`)
   } catch (e: any) {
     report.push(`✗ Messages迁移失败: ${e.message}`)
   }
-  
+
   try {
     await configManager.load()
     report.push('✓ 配置已初始化')
   } catch (e: any) {
     report.push(`✗ 配置初始化失败: ${e.message}`)
   }
-  
+
   report.push('=== 数据迁移完成 ===')
   return { success: true, report }
 }
@@ -398,10 +458,10 @@ export async function migrateData(): Promise<{ success: boolean; report: string[
 async function migrateAgents(): Promise<number> {
   const res = await fetch('/api/files/read?path=.data/agents.json')
   if (!res.ok) return 0
-  
+
   const oldAgents: OldAgent[] = JSON.parse(await res.text())
   let count = 0
-  
+
   for (const old of oldAgents) {
     const agent: StoredAgent = {
       id: old.id,
@@ -432,10 +492,10 @@ async function migrateAgents(): Promise<number> {
 async function migrateSessions(): Promise<number> {
   const res = await fetch('/api/files/read?path=.data/sessions.json')
   if (!res.ok) return 0
-  
+
   const oldSessions: OldSession[] = JSON.parse(await res.text())
   let count = 0
-  
+
   for (const old of oldSessions) {
     const session: StoredSession = {
       id: old.id,
@@ -455,10 +515,10 @@ async function migrateSessions(): Promise<number> {
 async function migrateMemories(): Promise<number> {
   const res = await fetch('/api/files/read?path=.data/memories.json')
   if (!res.ok) return 0
-  
+
   const oldMemories: OldMemory[] = JSON.parse(await res.text())
   let count = 0
-  
+
   for (const old of oldMemories) {
     const memory: StoredMemory = {
       id: old.id,
@@ -478,10 +538,10 @@ async function migrateMemories(): Promise<number> {
 async function migrateMessages(): Promise<number> {
   const res = await fetch('/api/files/read?path=.data/session-messages.json')
   if (!res.ok) return 0
-  
+
   const oldData = JSON.parse(await res.text())
   let count = 0
-  
+
   for (const [sessionId, messages] of Object.entries(oldData)) {
     const msgs = messages as any[]
     for (const old of msgs) {

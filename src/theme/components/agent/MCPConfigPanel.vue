@@ -165,9 +165,8 @@
 </template>
 
 <script setup lang="ts">
+import { Icon, LiquidGlass } from '@/theme/components/common'
 import { ref } from 'vue'
-import { Icon } from '@/theme/components/common'
-import { LiquidGlass } from '@/theme/components/common'
 
 const showAddServer = ref(false)
 
@@ -175,7 +174,7 @@ const servers = ref([
   {
     id: '1',
     name: '文件系统',
-    description: '访问本地文件系统，读取和写入文件',
+    description: '访问本地文件系统,读取和写入文件',
     icon: 'folder',
     gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)',
     status: 'connected',

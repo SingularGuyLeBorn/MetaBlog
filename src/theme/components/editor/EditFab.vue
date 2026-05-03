@@ -102,7 +102,7 @@ const openEditor = () => {
   transform: translateY(0) scale(0.98);
 }
 
-/* 当右侧 TOC 显示时，调整按钮位置 */
+/* 当右侧 TOC 显示时,调整按钮位置 */
 @media (min-width: 1280px) {
   .edit-fab {
     right: 300px;

@@ -1,14 +1,13 @@
 /**
- * AI Chat - 智能对话系统
- * 
- * 新目录结构：
- * - api/        API 和服务
- * - components/ UI 组件
- * - stores/     状态管理
- * - tools/      工具系统
- * - types/      类型定义
- * - utils/      工具函数
+ * ============================================================================
+ * 组件逻辑 - index
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/components
  */
+
 
 // ===== API =====
 export { BaseProvider } from '@/theme/api/providers/BaseProvider'

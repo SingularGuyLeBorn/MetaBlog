@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * 平台解析路由 - parser
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/platform
+ */
+
+
 import type { ParseResult, PlatformExtractConfig, ParseOptions } from "./types";
 import { MAX_CONTENT_CHARS } from "./types";
 import { ocrRemoteImage, downloadImageToTemp } from "../../services/ocr";
@@ -8,12 +19,25 @@ import fs from "fs";
 // 基础工具
 // ============================================
 
+/**
+ * 提取Meta
+ *
+ * @param html - 参数(string)
+ * @param name - 参数(string)
+ * @returns 返回值(string)
+ */
 export function extractMeta(html: string, name: string): string {
   const re = new RegExp(`<meta[^>]*(?:property|name)="${name}"[^>]*content="([^"]*)"`, "i");
   const m = html.match(re);
   return m ? m[1].trim() : "";
 }
 
+/**
+ * cleanHtml 函数
+ *
+ * @param html - 参数(string)
+ * @returns 返回值(string)
+ */
 export function cleanHtml(html: string): string {
   return html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
@@ -26,7 +50,7 @@ export function cleanHtml(html: string): string {
     .trim();
 }
 
-/** 从对象按路径取值，支持 * 通配符（取第一个匹配） */
+/** 从对象按路径取值,支持 * 通配符(取第一个匹配) */
 function getByPath(obj: any, path: string): any {
   const parts = path.split(".");
   let current = obj;
@@ -60,9 +84,15 @@ function extractImagesFromHtml(html: string, attributes: string[] = ["src"]): st
 }
 
 // ============================================
-// HTML → Markdown（核心）
+// HTML → Markdown(核心)
 // ============================================
 
+/**
+ * htmlToMarkdown 函数
+ *
+ * @param html - 参数(string)
+ * @returns 返回值(string)
+ */
 export function htmlToMarkdown(html: string): string {
   try {
     const TurndownService = require("turndown");
@@ -108,7 +138,7 @@ export function htmlToMarkdown(html: string): string {
 }
 
 // ============================================
-// 平台预处理钩子（配置化，非独立解析器）
+// 平台预处理钩子(配置化,非独立解析器)
 // ============================================
 
 function preprocessZhihuHtml(html: string): string {
@@ -128,7 +158,7 @@ function preprocessWechatHtml(html: string): string {
 }
 
 // ============================================
-// 平台适配配置（不是"专用解析器"）
+// 平台适配配置(不是"专用解析器")
 // ============================================
 
 const PLATFORM_CONFIGS: Record<string, PlatformExtractConfig> = {
@@ -268,14 +298,14 @@ const OCR_TIMEOUT_MS = 20000;
 const MAX_OCR_TEXT_LENGTH = 500;
 
 /**
- * 对文章中的图片进行 OCR，并将结果嵌入 Markdown 对应位置。
- * 用于非 vision 模型场景，让 AI 能"看到"图片中的文字内容。
+ * 对文章中的图片进行 OCR,并将结果嵌入 Markdown 对应位置. 
+ * 用于非 vision 模型场景,让 AI 能"看到"图片中的文字内容. 
  */
 async function embedOcrIntoMarkdown(content: string, images: string[]): Promise<string> {
   const targetImages = images.slice(0, MAX_OCR_IMAGES);
   const results = new Map<string, string>();
 
-  // 分批并行 OCR，避免一次性触发太多请求
+  // 分批并行 OCR,避免一次性触发太多请求
   for (let i = 0; i < targetImages.length; i += OCR_CONCURRENCY) {
     const batch = targetImages.slice(i, i + OCR_CONCURRENCY);
     const batchResults = await Promise.all(
@@ -306,7 +336,7 @@ async function embedOcrIntoMarkdown(content: string, images: string[]): Promise<
   const replacedUrls = new Set<string>();
 
   for (const [url, text] of results) {
-    // 限制单张图片 OCR 结果长度，避免文章暴增
+    // 限制单张图片 OCR 结果长度,避免文章暴增
     const truncated =
       text.length > MAX_OCR_TEXT_LENGTH
         ? text.slice(0, MAX_OCR_TEXT_LENGTH) + "..."
@@ -325,7 +355,7 @@ async function embedOcrIntoMarkdown(content: string, images: string[]): Promise<
     });
   }
 
-  // 对于未能在正文中精确定位的图片，在文末追加
+  // 对于未能在正文中精确定位的图片,在文末追加
   const missedUrls = Array.from(results.keys()).filter((url) => !replacedUrls.has(url));
   if (missedUrls.length > 0) {
     const missedParts = missedUrls.map((url) => {
@@ -338,23 +368,23 @@ async function embedOcrIntoMarkdown(content: string, images: string[]): Promise<
       const formatted = lines.map((line) => `> ${line}`).join("\n");
       return `> **图片 [${url.slice(0, 60)}...]：**\n${formatted}`;
     });
-    result += `\n\n---\n\n> **以下图片 OCR 结果（未在正文中定位到精确位置）：**\n\n${missedParts.join("\n\n")}`;
+    result += `\n\n---\n\n> **以下图片 OCR 结果(未在正文中定位到精确位置)：**\n\n${missedParts.join("\n\n")}`;
   }
 
   return result;
 }
 
 // ============================================
-// Vision 图片上传辅助函数（Kimi file_id）
+// Vision 图片上传辅助函数(Kimi file_id)
 // ============================================
 
 const MAX_VISION_IMAGES = 10;
 const VISION_UPLOAD_CONCURRENCY = 3;
 
 /**
- * 下载文章中的图片并上传到 Kimi，获取 file_id。
- * 同时将 Markdown 中的图片 URL 替换为 ms://file_id，供消息层识别并转成 vision 输入。
- * Vision 模型通过 ms://file_id 协议引用原图，不受 100MB 请求体限制。
+ * 下载文章中的图片并上传到 Kimi,获取 file_id. 
+ * 同时将 Markdown 中的图片 URL 替换为 ms://file_id,供消息层识别并转成 vision 输入. 
+ * Vision 模型通过 ms://file_id 协议引用原图,不受 100MB 请求体限制. 
  */
 async function fetchImageFilesForVision(
   content: string,
@@ -388,7 +418,7 @@ async function fetchImageFilesForVision(
     }
   }
 
-  // 不再替换 content 中的图片 URL（前端通过 /api/image-proxy 代理加载）
+  // 不再替换 content 中的图片 URL(前端通过 /api/image-proxy 代理加载)
   // imageFiles 仅用于 vision 模型的 ms://file_id 引用
   return { content, imageFiles: results };
 }
@@ -442,7 +472,7 @@ export async function parseHtmlToMarkdown(
               for (let i = 0; i < max; i++) {
                 const ans = answerValues[i];
                 if (ans?.content) {
-                  parts.push(`<h3>回答 ${i + 1}${ans.author?.name ? `（${ans.author.name}）` : ""}</h3>`);
+                  parts.push(`<h3>回答 ${i + 1}${ans.author?.name ? `(${ans.author.name})` : ""}</h3>`);
                   parts.push(ans.content);
                   if (ans.author?.name) authors.push(ans.author.name);
                 }
@@ -452,7 +482,7 @@ export async function parseHtmlToMarkdown(
                 title = title || getByPath(data, pattern.titlePath || "") || "";
                 author = authors.join(", ") || getByPath(data, pattern.authorPath || "") || "";
                 method = `zhihu-${max}-answers`;
-                break; // 成功提取多个回答，跳出 pattern 循环
+                break; // 成功提取多个回答,跳出 pattern 循环
               }
             }
           }
@@ -495,7 +525,7 @@ export async function parseHtmlToMarkdown(
     }
   }
 
-  // ====== L3: Readability.js（通用最强去噪） ======
+  // ====== L3: Readability.js(通用最强去噪) ======
   if (!contentHtml) {
     try {
       const { JSDOM } = await import("jsdom");
@@ -515,8 +545,8 @@ export async function parseHtmlToMarkdown(
     }
   }
 
-  // ====== L4: DOM 选择器（平台适配配置） ======
-  // 优先用 jsdom 做真正的 DOM 查询（能正确处理嵌套标签），失败再回退到正则
+  // ====== L4: DOM 选择器(平台适配配置) ======
+  // 优先用 jsdom 做真正的 DOM 查询(能正确处理嵌套标签),失败再回退到正则
   if (config.contentSelectors && !contentHtml) {
     try {
       const { JSDOM } = await import("jsdom");
@@ -534,7 +564,7 @@ export async function parseHtmlToMarkdown(
       console.warn(`[Parser] jsdom querySelector failed for ${platform}: ${err.message}, falling back to regex`);
     }
 
-    // jsdom 失败或没匹配到，回退到正则
+    // jsdom 失败或没匹配到,回退到正则
     if (!contentHtml) {
       for (const selector of config.contentSelectors) {
         const className = selector.startsWith(".") ? selector.slice(1) : selector;
@@ -650,7 +680,7 @@ export async function parseHtmlToMarkdown(
     images.unshift(ogImage);
   }
 
-  // 视频（抖音）
+  // 视频(抖音)
   if (platform === "douyin") {
     const videoMatches = html.matchAll(/<video[^>]*src="([^"]+)"/g);
     videos = Array.from(videoMatches).map((m) => m[1]).filter(Boolean).slice(0, 5);
@@ -661,7 +691,7 @@ export async function parseHtmlToMarkdown(
     content = await embedOcrIntoMarkdown(content, images);
   }
 
-  // ====== 下载图片并上传 Kimi（vision 模型场景） ======
+  // ====== 下载图片并上传 Kimi(vision 模型场景) ======
   let imageFiles: Array<{ file_id: string; url: string }> | undefined;
   if (options?.fetchImageFiles && images.length > 0) {
     const visionResult = await fetchImageFilesForVision(content, images);
@@ -669,7 +699,7 @@ export async function parseHtmlToMarkdown(
     imageFiles = visionResult.imageFiles;
   }
 
-  // ====== 全文加行号（方便 AI 定位） ======
+  // ====== 全文加行号(方便 AI 定位) ======
   content = addLineNumbers(content);
 
   return {

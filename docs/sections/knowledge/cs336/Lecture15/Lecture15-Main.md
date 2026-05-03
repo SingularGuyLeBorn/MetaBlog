@@ -2,12 +2,12 @@
 
 > **编辑蓝图 (Editorial Blueprint)**
 > 
-> **核心主题**: 本讲座标志着CS336课程从预训练进入后训练 (Post-training) 阶段。深入讲解如何将预训练的大模型(如GPT-3)转变为有用的、可控的助手(如ChatGPT)。核心方法包括 **监督微调 (SFT)** 和 **基于人类反馈的强化学习 (RLHF)**。
+> **核心主题**: 本讲座标志着CS336课程从预训练进入后训练 (Post-training) 阶段. 深入讲解如何将预训练的大模型(如GPT-3)转变为有用的、可控的助手(如ChatGPT). 核心方法包括 **监督微调 (SFT)** 和 **基于人类反馈的强化学习 (RLHF)**. 
 > 
 > **知识结构**: 
 > - 第一部分：监督微调 (SFT) - 数据类型、质量权衡、安全微调、Mid-training
 > - 第二部分：RLHF - 成对偏好数据收集、Bradley-Terry模型、奖励模型、PPO算法
-> - 第三部分：DPO - 直接偏好优化，RLHF的简化替代方案
+> - 第三部分：DPO - 直接偏好优化,RLHF的简化替代方案
 > 
 > **精英补充笔记**:
 > - **[深入探讨: InstructGPT流水线](./Lecture15-InstructGPT.md)** - 完整的三阶段后训练流程
@@ -26,7 +26,7 @@ GPT-3 (预训练)          →          ChatGPT (后训练)
 - 难以直接使用          →          - 产品级助手
 ```
 
-**关键洞察**: 预训练模型已经"知道"很多能力(推理、回答问题)，但这些能力被埋藏在参数中。后训练的目的是**激活和引导**这些能力。
+**关键洞察**: 预训练模型已经"知道"很多能力(推理、回答问题),但这些能力被埋藏在参数中. 后训练的目的是**激活和引导**这些能力. 
 
 ### 1.2 现代指令遵循能力的强大
 
@@ -60,7 +60,7 @@ $$\mathcal{L}_{SFT} = -\mathbb{E}_{(x,y) \sim \mathcal{D}} \left[ \log P_\theta(
 
 #### 2.2.1 FLAN (任务聚合型)
 
-**构建方法**: 聚合现有NLP任务数据集，转化为指令格式
+**构建方法**: 聚合现有NLP任务数据集,转化为指令格式
 
 ```python
 # 原始数据
@@ -75,7 +75,7 @@ $$\mathcal{L}_{SFT} = -\mathbb{E}_{(x,y) \sim \mathcal{D}} \left[ \log P_\theta(
 ```
 
 **特点**:
-- ✅ 数据量大，免费
+- ✅ 数据量大,免费
 - ❌ 格式不自然(多选题、短回答)
 - ❌ 与用户实际交互差异大
 
@@ -155,7 +155,7 @@ response = """
 "How do I kill a Python process?"  → ANSWER (技术问题)
 ```
 
-研究表明：仅500个安全示例就能显著改善模型的安全遵循。
+研究表明：仅500个安全示例就能显著改善模型的安全遵循. 
 
 ### 2.5 Mid-training: 模糊的边界
 
@@ -198,7 +198,7 @@ Pre-training Stage 1    →    Pre-training Stage 2 (Decay)    →    SFT
 annotator_prefers_own_summary = 0.35  # 35%更喜欢自己写的
 annotator_prefers_AI_summary = 0.65   # 65%更喜欢AI生成的
 
-# 原因: "我写的时候觉得需要更正式，但AI的读起来更流畅"
+# 原因: "我写的时候觉得需要更正式,但AI的读起来更流畅"
 ```
 
 ### 3.2 成对偏好数据收集
@@ -215,7 +215,7 @@ annotator_prefers_AI_summary = 0.65   # 65%更喜欢AI生成的
 **课堂互动实验**:
 - 给学生5分钟比较两个AI回复
 - 结果: 大多数人无法核实所有事实和数学
-- 较长回复获得更多投票，尽管包含幻觉
+- 较长回复获得更多投票,尽管包含幻觉
 
 **实际标注问题**:
 - 时间限制(如Google Bard标注员每题只有1分钟)
@@ -224,13 +224,13 @@ annotator_prefers_AI_summary = 0.65   # 65%更喜欢AI生成的
 
 ### 3.3 Bradley-Terry偏好模型
 
-假设每个回复有潜在标量奖励 $r(x, y)$，人类偏好建模为:
+假设每个回复有潜在标量奖励 $r(x, y)$,人类偏好建模为:
 
 $$P(y_1 \succ y_2 | x) = \sigma(r(x, y_1) - r(x, y_2)) = \frac{1}{1 + e^{-(r(x,y_1) - r(x,y_2))}}$$
 
 这意味着：
-- 奖励差越大，偏好概率越高
-- 奖励相同时，偏好概率为50%
+- 奖励差越大,偏好概率越高
+- 奖励相同时,偏好概率为50%
 
 ### 3.4 奖励模型训练
 
@@ -251,7 +251,7 @@ $$\max_\theta \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta} \left[ r_\phi(x
 
 ### 3.6 PPO算法简介
 
-**PPO (Proximal Policy Optimization)** 是RLHF的核心算法。
+**PPO (Proximal Policy Optimization)** 是RLHF的核心算法. 
 
 #### 策略梯度
 
@@ -269,7 +269,7 @@ $$L^{CLIP}(\theta) = \mathbb{E} \left[ \min(r_t(\theta) A_t, \text{clip}(r_t(\th
 
 #### PPO的复杂性
 
-PPO实现非常复杂，有论文总结了37条实现细节。这激发了对更简单替代方案的研究。
+PPO实现非常复杂,有论文总结了37条实现细节. 这激发了对更简单替代方案的研究. 
 
 ---
 
@@ -279,13 +279,13 @@ PPO实现非常复杂，有论文总结了37条实现细节。这激发了对更
 
 **问题**: PPO太复杂(需要奖励模型、价值函数、在线采样...)
 
-**DPO的解决方案**: 绕过显式奖励模型，直接从偏好数据优化策略
+**DPO的解决方案**: 绕过显式奖励模型,直接从偏好数据优化策略
 
 ### 4.2 DPO推导
 
 #### Step 1: 最优策略的形式
 
-对于KL正则化的奖励最大化问题，最优策略为:
+对于KL正则化的奖励最大化问题,最优策略为:
 
 $$\pi^*(y|x) \propto \pi_{ref}(y|x) \cdot \exp\left(\frac{1}{\beta} r(x,y)\right)$$
 
@@ -295,7 +295,7 @@ $$r(x, y) = \beta \log \frac{\pi^*(y|x)}{\pi_{ref}(y|x)} + \beta \log Z(x)$$
 
 #### Step 3: 代入Bradley-Terry模型
 
-将上式代入偏好概率，$Z(x)$项相消:
+将上式代入偏好概率,$Z(x)$项相消:
 
 $$P(y_1 \succ y_2 | x) = \sigma\left(\beta \log \frac{\pi^*(y_1|x)}{\pi_{ref}(y_1|x)} - \beta \log \frac{\pi^*(y_2|x)}{\pi_{ref}(y_2|x)}\right)$$
 
@@ -309,7 +309,7 @@ DPO梯度形式:
 
 $$\nabla \mathcal{L}_{DPO} \propto -\underbrace{w}_{\text{权重}} \cdot \left( \underbrace{\nabla \log \pi_\theta(y_w|x)}_{\text{提高好回复概率}} - \underbrace{\nabla \log \pi_\theta(y_l|x)}_{\text{降低坏回复概率}} \right)$$
 
-其中 $w$ 在隐含奖励估计错误时更大(类似于困难样本挖掘)。
+其中 $w$ 在隐含奖励估计错误时更大(类似于困难样本挖掘). 
 
 ### 4.4 DPO的优势
 
@@ -344,7 +344,7 @@ $$\nabla \mathcal{L}_{DPO} \propto -\underbrace{w}_{\text{权重}} \cdot \left( 
                    |/
     ──────────────────────────▶ RL步数
                    
-    原因: 奖励模型不完美，模型学会"欺骗"它
+    原因: 奖励模型不完美,模型学会"欺骗"它
 ```
 
 ### 5.2 校准问题
@@ -352,7 +352,7 @@ $$\nabla \mathcal{L}_{DPO} \propto -\underbrace{w}_{\text{权重}} \cdot \left( 
 RLHF后的模型往往**过度自信**:
 - 预测的置信度与实际正确率不匹配
 - 在温度=1时更明显
-- 这是因为RL优化的是奖励，不是分布
+- 这是因为RL优化的是奖励,不是分布
 
 ### 5.3 标注员偏差
 
@@ -378,7 +378,7 @@ crowdworkers: [
 
 ### 5.4 AI反馈的兴起
 
-由于人类标注的局限，AI反馈(RLAIF)越来越流行:
+由于人类标注的局限,AI反馈(RLAIF)越来越流行:
 - Constitutional AI (Anthropic)
 - Ultra Feedback (开源)
 - Tulu 3 (AI2)

@@ -1,23 +1,21 @@
 /**
- * useSkills - Skill 管理系统
- * 
- * 架构：参考 Claude Code Skills
- * - Skill 是 prompt 模板，不是身份定义
- * - Skill 内容在调用时注入对话上下文
- * - 系统提示词只包含 Skills 列表(name + description)
- * 
- * 功能：
- * 1. 从文件系统加载 skills(SKILL.md 文件)
- * 2. 支持用户上传/创建/编辑/删除 skills
- * 3. 运行时动态调用 skill(inject 到对话上下文)
+ * ============================================================================
+ * Pinia Store - skillStore
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/stores
  */
+
+
 import type { Skill, SkillCategory, SkillInvocation } from '@/theme/types/agent'
 import { computed, ref } from 'vue'
 
 // Skill 存储目录
 const SKILLS_DIR = '/.skills'
 
-// 内置 Skills - 已清空，所有 skills 统一从 .skills/ 目录加载
+// 内置 Skills - 已清空,所有 skills 统一从 .skills/ 目录加载
 export const BUILTIN_SKILLS: Skill[] = []
 
 // ==================== State ====================
@@ -412,7 +410,7 @@ async function importSkillFile(file: File): Promise<Skill | null> {
 
     const skill: Skill = result.data
 
-    // 检查是否已存在，更新或添加
+    // 检查是否已存在,更新或添加
     const existingIndex = skills.value.findIndex(s => s.id === skill.id)
     if (existingIndex >= 0) {
       skills.value[existingIndex] = skill
@@ -541,7 +539,7 @@ async function initSkills() {
   } catch (e) {
     error.value = 'Failed to load skills'
     console.error(e)
-    // 如果加载失败，至少显示内置 skills
+    // 如果加载失败,至少显示内置 skills
     skills.value = [...BUILTIN_SKILLS]
   } finally {
     isLoading.value = false
@@ -549,6 +547,11 @@ async function initSkills() {
 }
 
 // ==================== Composable Export ====================
+/**
+ * useSkills 函数
+ *
+ * @returns 返回值
+ */
 export function useSkills() {
   return {
     // State

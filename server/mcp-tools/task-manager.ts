@@ -1,13 +1,13 @@
 /**
- * Task Manager - 任务调度管理器
- * 
- * 功能：
- * 1. 任务CRUD操作
- * 2. 任务状态管理
- * 3. 任务执行调度
- * 4. 任务重试机制
- * 5. 任务统计
+ * ============================================================================
+ * MCP 工具模块 - task-manager
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/mcp-tools
  */
+
 
 import type {
   Task,
@@ -313,7 +313,7 @@ class TaskManager {
       tasks = tasks.filter(t => t.stats.createdAt <= options.endTime!)
     }
 
-    // 排序：先按优先级，再按创建时间
+    // 排序：先按优先级,再按创建时间
     const priorityOrder = { critical: 0, high: 1, normal: 2, low: 3 }
     tasks.sort((a, b) => {
       const pDiff = priorityOrder[a.priority] - priorityOrder[b.priority]
@@ -365,7 +365,7 @@ class TaskManager {
     const task = this.tasks.get(id)
     if (!task) return false
 
-    // 如果任务正在运行，先取消
+    // 如果任务正在运行,先取消
     if (task.status === 'running') {
       this.cancelTask(id)
     }
@@ -471,7 +471,7 @@ class TaskManager {
       .slice(-limit)
   }
 
-  // 执行任务(简化版，实际应调用相应的处理器)
+  // 执行任务(简化版,实际应调用相应的处理器)
   async executeTask(id: string): Promise<Task | null> {
     const task = this.tasks.get(id)
     if (!task || task.status !== 'pending') return null
@@ -634,6 +634,11 @@ class TaskManager {
 // 单例实例
 let taskManager: TaskManager | null = null
 
+/**
+ * 获取TaskManager
+ *
+ * @returns 返回值(TaskManager)
+ */
 export function getTaskManager(): TaskManager {
   if (!taskManager) {
     taskManager = new TaskManager()

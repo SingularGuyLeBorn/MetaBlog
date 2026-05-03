@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * 工具函数 - types
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/utils
+ */
+
+
 export interface SidebarNode {
   text: string            // Was title
   path: string            // Physical path

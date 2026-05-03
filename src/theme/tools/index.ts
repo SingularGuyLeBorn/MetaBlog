@@ -1,5 +1,7 @@
 /**
+ * ============================================================================
  * 工具系统统一入口
+ * ============================================================================
  *
  * 按功能分类的工具集合：
  * - article: 文章管理
@@ -17,6 +19,8 @@
  * - system: 系统工具
  * - text: 文本处理
  * - yuque: 语雀平台
+ *
+ * @module src/theme/tools
  */
 
 // ==================== 类型导出 ====================
@@ -66,9 +70,7 @@ export {
 } from './note'
 
 // ==================== 文本工具 ====================
-export {
-
-} from './text'
+export { } from './text'
 
 // ==================== 代码工具 ====================
 export {
@@ -86,7 +88,7 @@ export {
 } from './system'
 
 // ==================== 飞书工具 ====================
-export { feishuDocAppend, feishuDocAppendDef, feishuDocBlocks, feishuDocBlocksDef, feishuDocCreate, feishuDocCreateDef, feishuDocDeleteBlock, feishuDocDeleteBlockDef, feishuDocInsertImage, feishuDocInsertImageDef, feishuDocMeta, feishuDocMetaDef, feishuDocRead, feishuDocReadDef, feishuDocSearch, feishuDocSearchDef, feishuDocShare, feishuDocShareDef, feishuDocUnshare, feishuDocUnshareDef, feishuDocUpdateBlock, feishuDocUpdateBlockDef, feishuImSend, feishuImSendDef, feishuUserSearch, feishuUserSearchDef, feishuWikiMemberAdd, feishuWikiMemberAddDef, feishuWikiMemberList, feishuWikiMemberListDef, feishuWikiMemberRemove, feishuWikiMemberRemoveDef, feishuWikiMoveDoc, feishuWikiMoveDocDef, feishuWikiNodeCreate, feishuWikiNodeCreateDef, feishuWikiNodeDelete, feishuWikiNodeDeleteDef, feishuWikiNodeList, feishuWikiNodeListDef, feishuWikiNodeMove, feishuWikiNodeMoveDef, feishuWikiSpaceCreate, feishuWikiSpaceCreateDef, feishuWikiSpaceDelete, feishuWikiSpaceDeleteDef, feishuWikiSpaceGet, feishuWikiSpaceGetDef, feishuWikiSpaceList, feishuWikiSpaceListDef, feishuWikiSpaceUpdate, feishuWikiSpaceUpdateDef } from './lark'
+export { feishuDocAppend, feishuDocAppendDef, feishuDocBlocks, feishuDocBlocksDef, feishuDocCreate, feishuDocCreateDef, feishuDocDeleteBlock, feishuDocDeleteBlockDef, feishuDocInsertImage, feishuDocInsertImageDef, feishuDocMeta, feishuDocMetaDef, feishuDocRead, feishuDocReadDef, feishuDocSearch, feishuDocSearchDef, feishuDocShare, feishuDocShareDef, feishuDocUnshare, feishuDocUnshareDef, feishuDocUpdateBlock, feishuDocUpdateBlockDef, feishuImSend, feishuImSendDef, feishuTokenRefresh, feishuTokenRefreshDef, feishuTokenStatus, feishuTokenStatusDef, feishuUserSearch, feishuUserSearchDef, feishuWikiMemberAdd, feishuWikiMemberAddDef, feishuWikiMemberList, feishuWikiMemberListDef, feishuWikiMemberRemove, feishuWikiMemberRemoveDef, feishuWikiMoveDoc, feishuWikiMoveDocDef, feishuWikiNodeCreate, feishuWikiNodeCreateDef, feishuWikiNodeDelete, feishuWikiNodeDeleteDef, feishuWikiNodeList, feishuWikiNodeListDef, feishuWikiNodeMove, feishuWikiNodeMoveDef, feishuWikiSpaceCreate, feishuWikiSpaceCreateDef, feishuWikiSpaceDelete, feishuWikiSpaceDeleteDef, feishuWikiSpaceGet, feishuWikiSpaceGetDef, feishuWikiSpaceList, feishuWikiSpaceListDef, feishuWikiSpaceUpdate, feishuWikiSpaceUpdateDef } from './lark'
 
 // ==================== 语雀工具 ====================
 export { yuqueDocCreate, yuqueDocCreateDef, yuqueDocDelete, yuqueDocDeleteDef, yuqueDocList, yuqueDocListDef, yuqueDocRead, yuqueDocReadDef, yuqueDocUpdate, yuqueDocUpdateDef, yuqueImageUpload, yuqueImageUploadDef, yuqueRepoCreate, yuqueRepoCreateDef, yuqueRepoDelete, yuqueRepoDeleteDef, yuqueRepoGet, yuqueRepoGetDef, yuqueRepoList, yuqueRepoListDef, yuqueRepoSettingGet, yuqueRepoSettingGetDef, yuqueRepoSettingUpdate, yuqueRepoSettingUpdateDef, yuqueRepoUpdate, yuqueRepoUpdateDef, yuqueSearch, yuqueSearchDef, yuqueTocGet, yuqueTocGetDef } from './yuque'
@@ -270,6 +272,10 @@ import {
     feishuDocUpdateBlockDef,
     feishuImSend,
     feishuImSendDef,
+    feishuTokenRefresh,
+    feishuTokenRefreshDef,
+    feishuTokenStatus,
+    feishuTokenStatusDef,
     feishuUserSearch,
     feishuUserSearchDef,
     feishuWikiMemberAdd,
@@ -350,12 +356,12 @@ import { executeSearchCapabilities, searchCapabilitiesDef } from './search_capab
  *
  * 渐进式披露设计：
  * - 核心工具(~7个)始终暴露
- * - 领域工具(~69个)默认隐藏，通过 searchCapabilities / loadSkill 动态激活 *
- * 参考：OpenAI 建议每轮对话不超过10-15 个工具，
- * MCP 专家建议不超过10-15 个，graph-tool-call 项目 248个 减少 79% token
+ * - 领域工具(~69个)默认隐藏,通过 searchCapabilities / loadSkill 动态激活 *
+ * 参考：OpenAI 建议每轮对话不超过10-15 个工具,
+ * MCP 专家建议不超过10-15 个,graph-tool-call 项目 248个 减少 79% token
  */
 export const CORE_TOOL_NAMES = [
-    'readArticle',          // 【核心】获取网页文章/帖子内容，看到链接直接调用
+    'readArticle',          // 【核心】获取网页文章/帖子内容,看到链接直接调用
     'ocrImage',             // 【核心】OCR 识别图片文字
     'searchCapabilities',   // 能力发现器- 搜索所有工具和 Skills
     'loadSkill',            // 工作流加载器 - 加载 Skill 工作流指南
@@ -373,13 +379,16 @@ let defaultToolsInitialized = false
 
 /**
  * 初始化所有默认工具
- * 在应用启动时调用，注册所有内置工具
+ *
+ * 在应用启动时调用,注册所有内置工具. 
+ * 通过 CORE_TOOL_NAMES 控制始终暴露的核心工具,
+ * 其他工具通过 searchCapabilities / loadSkill 动态激活. 
  */
 export function initializeDefaultTools(): void {
     if (defaultToolsInitialized) return
     defaultToolsInitialized = true
 
-    // 文章管理工具(个)
+    // 文章管理工具
     registerTools([
         { name: 'createArticle', definition: createArticleDef, executor: createArticle },
         { name: 'getArticleContent', definition: getArticleContentDef, executor: getArticleContent },
@@ -389,7 +398,7 @@ export function initializeDefaultTools(): void {
         { name: 'searchArticles', definition: searchArticlesDef, executor: searchArticles }
     ])
 
-    // 学术研究工具(个)
+    // 学术研究工具
     registerTools([
         { name: 'searchArxiv', definition: searchArxivDef, executor: searchArxiv },
         { name: 'fetchArxiv', definition: fetchArxivDef, executor: fetchArxiv },
@@ -401,7 +410,7 @@ export function initializeDefaultTools(): void {
         { name: 'searchSemanticScholar', definition: searchSemanticScholarDef, executor: searchSemanticScholar }
     ])
 
-    // 文件管理工具(个)
+    // 文件管理工具
     registerTools([
         { name: 'readFile', definition: readFileDef, executor: readFile },
         { name: 'writeFile', definition: writeFileDef, executor: writeFile },
@@ -414,7 +423,7 @@ export function initializeDefaultTools(): void {
         { name: 'ocrImage', definition: ocrImageDef, executor: ocrImage }
     ])
 
-    // GitHub 工具(4个)
+    // GitHub 工具
     registerTools([
         { name: 'githubGetRepo', definition: githubGetRepoDef, executor: githubGetRepo },
         { name: 'githubListRepoContents', definition: githubListRepoContentsDef, executor: githubListRepoContents },
@@ -452,38 +461,36 @@ export function initializeDefaultTools(): void {
         { name: 'githubGetRateLimit', definition: githubGetRateLimitDef, executor: githubGetRateLimit }
     ])
 
-    // 笔记工具(个)
+    // 笔记工具
     registerTools([
         { name: 'createNote', definition: createNoteDef, executor: createNote },
         { name: 'listNotes', definition: listNotesDef, executor: listNotes },
         { name: 'queryKnowledge', definition: queryKnowledgeDef, executor: queryKnowledge }
     ])
 
-    // 文本处理工具(个)
+    // 文本处理工具
     registerTools([
 
     ])
 
-    // 代码工具(个)
+    // 代码工具
     registerTools([
         { name: 'executeCode', definition: executeCodeDef, executor: executeCode },
         { name: 'analyzeCode', definition: analyzeCodeDef, executor: analyzeCode }
     ])
 
-    // 网络工具(1个)
+    // 网络工具
     registerTools([
         { name: 'webSearch', definition: webSearchDef, executor: webSearch }
     ])
 
-    // 系统工具(个)
+    // 系统工具
     registerTools([
         { name: 'getCurrentTime', definition: getCurrentTimeDef, executor: getCurrentTime },
-
         { name: 'calculate', definition: calculateDef, executor: calculate },
-
     ])
 
-    // 飞书文档工具(3个)
+    // 飞书文档工具
     registerTools([
         { name: 'feishuDocCreate', definition: feishuDocCreateDef, executor: feishuDocCreate },
         { name: 'feishuDocRead', definition: feishuDocReadDef, executor: feishuDocRead },
@@ -497,10 +504,12 @@ export function initializeDefaultTools(): void {
         { name: 'feishuDocShare', definition: feishuDocShareDef, executor: feishuDocShare },
         { name: 'feishuDocUnshare', definition: feishuDocUnshareDef, executor: feishuDocUnshare },
         { name: 'feishuImSend', definition: feishuImSendDef, executor: feishuImSend },
+        { name: 'feishuTokenRefresh', definition: feishuTokenRefreshDef, executor: feishuTokenRefresh },
+        { name: 'feishuTokenStatus', definition: feishuTokenStatusDef, executor: feishuTokenStatus },
         { name: 'feishuUserSearch', definition: feishuUserSearchDef, executor: feishuUserSearch }
     ])
 
-    // 飞书 Wiki 知识库工具(13个)
+    // 飞书 Wiki 知识库工具
     registerTools([
         { name: 'feishuWikiSpaceCreate', definition: feishuWikiSpaceCreateDef, executor: feishuWikiSpaceCreate },
         { name: 'feishuWikiSpaceList', definition: feishuWikiSpaceListDef, executor: feishuWikiSpaceList },
@@ -517,7 +526,7 @@ export function initializeDefaultTools(): void {
         { name: 'feishuWikiMemberRemove', definition: feishuWikiMemberRemoveDef, executor: feishuWikiMemberRemove },
     ])
 
-    // 语雀文档工具(个)
+    // 语雀文档工具
     registerTools([
         { name: 'yuqueRepoList', definition: yuqueRepoListDef, executor: yuqueRepoList },
         { name: 'yuqueTocGet', definition: yuqueTocGetDef, executor: yuqueTocGet },
@@ -530,7 +539,7 @@ export function initializeDefaultTools(): void {
         { name: 'yuqueSearch', definition: yuqueSearchDef, executor: yuqueSearch },
     ])
 
-    // 语雀知识库管理工具(6个)
+    // 语雀知识库管理工具
     registerTools([
         { name: 'yuqueRepoCreate', definition: yuqueRepoCreateDef, executor: yuqueRepoCreate },
         { name: 'yuqueRepoUpdate', definition: yuqueRepoUpdateDef, executor: yuqueRepoUpdate },
@@ -540,18 +549,18 @@ export function initializeDefaultTools(): void {
         { name: 'yuqueRepoSettingUpdate', definition: yuqueRepoSettingUpdateDef, executor: yuqueRepoSettingUpdate },
     ])
 
-    // Skill 加载工具(个)- 供 Agent 主动加载 Skill 内容
+    // Skill 加载工具- 供 Agent 主动加载 Skill 内容
     registerTools([
         { name: 'loadSkill', definition: loadSkillDef, executor: executeLoadSkill }
     ])
 
-    // Meta 查询工具(个)- 供 Agent 查询系统能力全貌
+    // Meta 查询工具- 供 Agent 查询系统能力全貌
     registerTools([
         { name: 'getAllTools', definition: getAllToolsDef, executor: executeGetAllTools },
         { name: 'getAllSkills', definition: getAllSkillsDef, executor: executeGetAllSkills }
     ])
 
-    // 能力搜索工具(个)- 供 Agent 通过关键词搜索工具和 Skills
+    // 能力搜索工具- 供 Agent 通过关键词搜索工具和 Skills
     registerTools([
         { name: 'searchCapabilities', definition: searchCapabilitiesDef, executor: executeSearchCapabilities }
     ])
@@ -563,4 +572,3 @@ export function initializeDefaultTools(): void {
 if (typeof window !== 'undefined') {
     initializeDefaultTools()
 }
-

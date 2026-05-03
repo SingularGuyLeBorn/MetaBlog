@@ -25,13 +25,13 @@ tags: [tools, reference, api]
 ## 📚 文章管理工具
 
 ### getArticleContent
-读取指定文章的完整内容，支持行号范围和元数据提取�?
+读取指定文章的完整内容,支持行号范围和元数据提取�?
 
 **参数�?*
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| path | string | �?| 文章路径，支�?URL 格式或文件路�?|
-| max_length | number | �?| 最大返回字符数，默�?8000 |
+| path | string | �?| 文章路径,支�?URL 格式或文件路�?|
+| max_length | number | �?| 最大返回字符数,默�?8000 |
 | start_line | number | �?| 起始行号(从 1 开始)|
 | end_line | number | �?| 结束行号 |
 | include_metadata | boolean | �?| 是否包含 frontmatter 元数�?|
@@ -51,14 +51,14 @@ getArticleContent({
 ---
 
 ### searchArticles
-根据关键词搜索文章，支持全文检索和分类筛选�?
+根据关键词搜索文章,支持全文检索和分类筛选�?
 
 **参数�?*
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | query | string | �?| 搜索关键�?|
 | section | string | �?| 限定搜索的分�?|
-| limit | number | �?| 返回结果数量限制，默�?5 |
+| limit | number | �?| 返回结果数量限制,默�?5 |
 | include_folders | boolean | �?| 是否包含文件夹结�?|
 
 **示例�?*
@@ -75,14 +75,14 @@ searchArticles({
 ---
 
 ### listArticles
-列出文章目录，支持分类筛选、文件夹浏览和递归展开�?
+列出文章目录,支持分类筛选、文件夹浏览和递归展开�?
 
 **参数�?*
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | section | string | �?| 按分类筛�?|
 | folder_path | string | �?| 指定文件夹路�?|
-| limit | number | �?| 返回数量限制，默�?20 |
+| limit | number | �?| 返回数量限制,默�?20 |
 | recursive | boolean | �?| 是否递归列出子文件夹 |
 | sort_by | string | �?| 排序方式：name/date/category |
 
@@ -91,7 +91,7 @@ searchArticles({
 ---
 
 ### createArticle
-创建新文章，自动创建父文件夹，支�?frontmatter�?
+创建新文章,自动创建父文件夹,支�?frontmatter�?
 
 **参数�?*
 | 参数 | 类型 | 必填 | 说明 |
@@ -108,7 +108,7 @@ searchArticles({
 ---
 
 ### updateArticle
-更新文章内容，支持多种更新模式(replace/append/prepend/insert)�?
+更新文章内容,支持多种更新模式(replace/append/prepend/insert)�?
 
 **参数�?*
 | 参数 | 类型 | 必填 | 说明 |
@@ -123,7 +123,7 @@ searchArticles({
 ---
 
 ### deleteArticle
-删除文章，支持备份到回收站�?
+删除文章,支持备份到回收站�?
 
 **参数�?*
 | 参数 | 类型 | 必填 | 说明 |
@@ -143,7 +143,7 @@ searchArticles({
 
 **参数�?* �?
 
-**返回�?* 知识库列表，包含名称、描述、文档数�?
+**返回�?* 知识库列表,包含名称、描述、文档数�?
 
 **状�?*: �?完整实现(内存存储)
 
@@ -184,9 +184,9 @@ searchArticles({
 |------|------|------|------|
 | knowledge_base_name | string | �?| 知识库名�?|
 | query | string | �?| 搜索关键�?|
-| limit | number | �?| 返回数量限制，默�?5 |
+| limit | number | �?| 返回数量限制,默�?5 |
 
-**状�?*: �?完整实现(关键词匹配，非向量搜索�?
+**状�?*: �?完整实现(关键词匹配,非向量搜索�?
 
 ---
 
@@ -240,7 +240,7 @@ searchArticles({
 |------|------|------|------|
 | owner | string | �?| 仓库所有�?|
 | repo | string | �?| 仓库名称 |
-| include_readme | boolean | �?| 是否包含 README 预览，默�?true |
+| include_readme | boolean | �?| 是否包含 README 预览,默�?true |
 
 **状�?*: �?完整实现
 
@@ -256,7 +256,7 @@ searchArticles({
 |------|------|------|------|
 | owner | string | �?| 仓库所有�?|
 | repo | string | �?| 仓库名称 |
-| path | string | �?| 目录路径，默认根目录 |
+| path | string | �?| 目录路径,默认根目录 |
 | ref | string | �?| 分支、标签或 commit SHA |
 
 **状�?*: �?完整实现
@@ -273,7 +273,7 @@ searchArticles({
 | repo | string | �?| 仓库名称 |
 | path | string | �?| 文件路径 |
 | ref | string | �?| 分支、标签或 commit SHA |
-| max_length | number | �?| 最大返回字符数，默�?10000 |
+| max_length | number | �?| 最大返回字符数,默�?10000 |
 
 **状�?*: �?完整实现
 
@@ -287,7 +287,7 @@ searchArticles({
 |------|------|------|------|
 | query | string | �?| 搜索关键�?|
 | language | string | �?| 限定编程语言 |
-| limit | number | �?| 返回数量限制，默�?5 |
+| limit | number | �?| 返回数量限制,默�?5 |
 
 **状�?*: �?完整实现
 
@@ -302,7 +302,7 @@ searchArticles({
 | owner | string | �?| 仓库所有�?|
 | repo | string | �?| 仓库名称 |
 | path | string | �?| 限定文件路径 |
-| per_page | number | �?| 返回数量，默�?10 |
+| per_page | number | �?| 返回数量,默�?10 |
 
 **状�?*: �?完整实现
 
@@ -316,8 +316,8 @@ searchArticles({
 |------|------|------|------|
 | owner | string | �?| 仓库所有�?|
 | repo | string | �?| 仓库名称 |
-| state | string | �?| Issue 状态：open/closed/all，默�?open |
-| per_page | number | �?| 返回数量，默�?10 |
+| state | string | �?| Issue 状态：open/closed/all,默�?open |
+| per_page | number | �?| 返回数量,默�?10 |
 
 **状�?*: �?完整实现
 
@@ -326,17 +326,17 @@ searchArticles({
 ## 🌍 网络工具
 
 ### fetchUrl
-通用 HTTP 请求工具，支持自定义 Method、Header、Body�?
+通用 HTTP 请求工具,支持自定义 Method、Header、Body�?
 
 **参数�?*
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | url | string | �?| 目标 URL |
-| method | string | �?| HTTP 方法：GET/POST/PUT/DELETE，默�?GET |
+| method | string | �?| HTTP 方法：GET/POST/PUT/DELETE,默�?GET |
 | headers | object | �?| HTTP 请求�?|
 | body | string | �?| 请求体(POST/PUT 时使用)|
-| timeout | number | �?| 超时时间(毫秒)，默�?10000 |
-| max_length | number | �?| 返回内容最大长度，默认 15000 |
+| timeout | number | �?| 超时时间(毫秒),默�?10000 |
+| max_length | number | �?| 返回内容最大长度,默认 15000 |
 
 **示例�?*
 ```javascript
@@ -360,7 +360,7 @@ fetchUrl({
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | query | string | �?| 搜索关键�?|
-| num_results | number | �?| 返回结果数量，默�?5 |
+| num_results | number | �?| 返回结果数量,默�?5 |
 
 **状�?*: �?Mock 数据(需接入真实搜索引擎 API�?
 
@@ -375,8 +375,8 @@ fetchUrl({
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | paper_id | string | �?| ArXiv 论文 ID(如 2401.12345)|
-| include_abstract | boolean | �?| 是否包含摘要，默�?true |
-| include_pdf | boolean | �?| 是否返回 PDF 链接，默�?true |
+| include_abstract | boolean | �?| 是否包含摘要,默�?true |
+| include_pdf | boolean | �?| 是否返回 PDF 链接,默�?true |
 
 **状�?*: �?完整实现
 
@@ -415,7 +415,7 @@ fetchUrl({
 **参数�?*
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| path | string | �?| 目录路径，默认当前目�?|
+| path | string | �?| 目录路径,默认当前目�?|
 | recursive | boolean | �?| 是否递归列出子目�?|
 
 **状�?*: �?完整实现
@@ -458,7 +458,7 @@ fetchUrl({
 |------|------|------|------|
 | text | string | �?| 要翻译的文本 |
 | target_language | string | �?| 目标语言代码(zh/en/ja/ko/fr/de)|
-| source_language | string | �?| 源语言代码(可选，自动检测)|
+| source_language | string | �?| 源语言代码(可选,自动检测)|
 
 **状�?*: ⚠️ 依赖 AI 自身翻译能力(建议接入翻�?API�?
 
@@ -477,7 +477,7 @@ fetchUrl({
 
 **状�?*: ⚠️ 仅在浏览器环境执行(建议后端沙箱执行�?
 
-**⚠️ 安全警告**: 当前实现有安全风险，不应执行不受信任的代�?
+**⚠️ 安全警告**: 当前实现有安全风险,不应执行不受信任的代�?
 
 ---
 
@@ -514,7 +514,7 @@ fetchUrl({
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | location | string | �?| 城市名称 |
-| days | number | �?| 预报天数，默�?3 |
+| days | number | �?| 预报天数,默�?3 |
 
 **状�?*: �?Mock 数据(需接入真实天气 API�?
 
@@ -535,13 +535,13 @@ fetchUrl({
 ---
 
 ### testEcho
-回声测试工具，用于验证工具系统是否正常工作�?
+回声测试工具,用于验证工具系统是否正常工作�?
 
 **参数�?*
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | message | string | �?| 要回显的消息 |
-| repeat_count | number | �?| 重复次数，默�?1 |
+| repeat_count | number | �?| 重复次数,默�?1 |
 
 **状�?*: �?完整实现
 
@@ -594,7 +594,7 @@ OCR 识别图片中的文字�?
 |------|------|------|------|
 | url | string | �?| 图片 URL |
 | base64 | string | �?| Base64 编码的图片数�?|
-| language | string | �?| 识别语言，默�?auto |
+| language | string | �?| 识别语言,默�?auto |
 
 **状�?*: �?Mock 数据(需接入 OCR 服务�?
 

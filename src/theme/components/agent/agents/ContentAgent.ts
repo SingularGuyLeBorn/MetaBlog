@@ -1,12 +1,20 @@
 /**
- * ContentAgent
- * 负责从各种来源提取内容 (Browser-compatible version)
- * 
- * Note: Content fetching is performed via API calls to server-side MCP tools
+ * ============================================================================
+ * 组件逻辑 - ContentAgent
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/components
  */
+
 
 import type { FetchedContent, SocialMediaContent } from '@/theme/types/agent'
 
+/**
+ * ContentTask 接口定义
+ *
+ */
 export interface ContentTask {
   id: string
   url: string
@@ -15,6 +23,10 @@ export interface ContentTask {
   callback?: (result: ContentResult) => void
 }
 
+/**
+ * ContentResult 接口定义
+ *
+ */
 export interface ContentResult {
   success: boolean
   taskId: string
@@ -24,6 +36,10 @@ export interface ContentResult {
   processedAt: string
 }
 
+/**
+ * ContentAgentConfig 接口定义
+ *
+ */
 export interface ContentAgentConfig {
   maxConcurrent?: number
   retryAttempts?: number
@@ -43,10 +59,14 @@ async function callContentAPI(action: string, data: any): Promise<any> {
   return response.json()
 }
 
+/**
+ * ContentAgent 类
+ *
+ */
 export class ContentAgent {
   name = 'ContentAgent'
   description = '内容获取 Agent'
-  
+
   private config: Required<ContentAgentConfig>
   private taskQueue: ContentTask[] = []
   private activeTasks = 0
@@ -68,7 +88,7 @@ export class ContentAgent {
       platform: options?.platform,
       priority: 'normal',
     }
-    
+
     return this.processTask(task)
   }
 
@@ -84,7 +104,7 @@ export class ContentAgent {
         url: task.url,
         platform: task.platform
       })
-      
+
       return {
         success: true,
         taskId: task.id,
@@ -120,4 +140,10 @@ export class ContentAgent {
   }
 }
 
+/**
+ * 创建ContentAgent
+ *
+ * @param config - 参数
+ * @returns 返回值
+ */
 export const createContentAgent = (config?: ContentAgentConfig) => new ContentAgent(config)

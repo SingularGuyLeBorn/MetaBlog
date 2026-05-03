@@ -16,7 +16,7 @@
         </h1>
         
         <p class="hero-desc sr-subtitle fade-up stagger-2" :class="{ 'visible': isLoaded }">
-          构建你的第二大脑，探索全息知识网络 <br/>
+          构建你的第二大脑,探索全息知识网络 <br/>
           大语言模型 · 星河平台 · 端侧部署
         </p>
         
@@ -87,7 +87,7 @@
         <div class="section-header fade-up" :class="{ 'visible': featuresVisible }">
           <span class="section-badge">✦ 核心模块</span>
           <h2 class="section-title-lg">探索知识宇宙</h2>
-          <p class="section-desc sr-body">四大核心模块，覆盖从学习到创作的完整工作流</p>
+          <p class="section-desc sr-body">四大核心模块,覆盖从学习到创作的完整工作流</p>
         </div>
         
         <div class="features-grid sr-grid sr-grid-2">
@@ -126,7 +126,7 @@
         <div class="community-header fade-up" :class="{ 'visible': communityVisible }">
           <span class="section-badge">◎ 社区探索</span>
           <h2 class="section-title-lg">倾听全球社区声音</h2>
-          <p class="section-desc sr-body">与全球数万名开发者共同探索人工智能与前沿技术知识。从强化学习的数学原理，到工程化的落地实践。</p>
+          <p class="section-desc sr-body">与全球数万名开发者共同探索人工智能与前沿技术知识. 从强化学习的数学原理,到工程化的落地实践. </p>
           <a href="/sections/about/" class="star-btn magnetic-btn" style="margin-top: 24px; display: inline-flex;">
             加入我们
           </a>
@@ -242,7 +242,7 @@
         <div class="section-header">
           <span class="section-badge">🚀 开源项目</span>
           <h2 class="section-title-lg">技术实践</h2>
-          <p class="section-desc sr-body">将理论知识转化为实际项目，探索技术的无限可能</p>
+          <p class="section-desc sr-body">将理论知识转化为实际项目,探索技术的无限可能</p>
         </div>
         
         <div class="projects-grid sr-grid sr-grid-2">
@@ -290,7 +290,7 @@
         <div class="section-header">
           <span class="section-badge">📚 扩展知识</span>
           <h2 class="section-title-lg">深度阅读</h2>
-          <p class="section-desc sr-body">精选的技术文章和教程，助你深入理解复杂概念</p>
+          <p class="section-desc sr-body">精选的技术文章和教程,助你深入理解复杂概念</p>
         </div>
         
         <div class="extended-list">
@@ -331,7 +331,7 @@
         </div>
         <div class="cta-content">
           <h3>准备好探索了吗？</h3>
-          <p class="sr-body">从强化学习数学原理开始，踏上系统化学习的旅程</p>
+          <p class="sr-body">从强化学习数学原理开始,踏上系统化学习的旅程</p>
         </div>
         <a href="/sections/knowledge/rl-math-principle/" class="star-btn star-btn-primary magnetic-btn">
           启程
@@ -356,16 +356,16 @@ const recentVisible = ref(false)
 
 // Voices Data for Dual Scroll
 const voicesLeft = [
-  { name: 'Alex Chen', role: 'AI Researcher', avatar: '👨‍🔬', text: '这个平台彻底改变了我阅读论文的方式，排版对数学公式的支持非常棒。' },
-  { name: 'Sarah J.', role: 'Frontend Lead', avatar: '👩‍💻', text: '极简的莫兰迪风格和玻璃拟态 UI 让人在阅读长篇技术文章时感到极度舒适。' },
-  { name: 'David W.', role: 'Data Scientist', avatar: '🧑‍💻', text: '终于找到了一个能把强化学习讲得既严谨又易懂的知识库。' },
-  { name: 'Dr. Emily', role: 'Professor', avatar: '👩‍🏫', text: '我建议我的学生在这里学习大模型的底层架构，系统的脉络非常清晰。' }
+  { name: 'Alex Chen', role: 'AI Researcher', avatar: '👨‍🔬', text: '这个平台彻底改变了我阅读论文的方式,排版对数学公式的支持非常棒. ' },
+  { name: 'Sarah J.', role: 'Frontend Lead', avatar: '👩‍💻', text: '极简的莫兰迪风格和玻璃拟态 UI 让人在阅读长篇技术文章时感到极度舒适. ' },
+  { name: 'David W.', role: 'Data Scientist', avatar: '🧑‍💻', text: '终于找到了一个能把强化学习讲得既严谨又易懂的知识库. ' },
+  { name: 'Dr. Emily', role: 'Professor', avatar: '👩‍🏫', text: '我建议我的学生在这里学习大模型的底层架构,系统的脉络非常清晰. ' }
 ]
 const voicesRight = [
-  { name: 'Kevin H.', role: 'Backend Engineer', avatar: '👨‍💻', text: '技术深度令人惊叹，这里的 Agentic Workflow 解析让我受益匪浅。' },
-  { name: 'Linda Y.', role: 'Product Manager', avatar: '👩‍💼', text: '把复杂的前沿 AI 概念讲得如此优雅，真的是不可多得的资源。' },
-  { name: 'Tom R.', role: 'Student', avatar: '🎓', text: '扩散模型和 PyTorch 的系列文章简直是我的毕业设计救星。' },
-  { name: 'Sophia L.', role: 'UI/UX Designer', avatar: '🎨', text: '从字体排版到弹性动画，每一处细节的处理都充满了高级质感。' }
+  { name: 'Kevin H.', role: 'Backend Engineer', avatar: '👨‍💻', text: '技术深度令人惊叹,这里的 Agentic Workflow 解析让我受益匪浅. ' },
+  { name: 'Linda Y.', role: 'Product Manager', avatar: '👩‍💼', text: '把复杂的前沿 AI 概念讲得如此优雅,真的是不可多得的资源. ' },
+  { name: 'Tom R.', role: 'Student', avatar: '🎓', text: '扩散模型和 PyTorch 的系列文章简直是我的毕业设计救星. ' },
+  { name: 'Sophia L.', role: 'UI/UX Designer', avatar: '🎨', text: '从字体排版到弹性动画,每一处细节的处理都充满了高级质感. ' }
 ]
 
 // Tech stack for marquee
@@ -397,7 +397,7 @@ const features = [
   {
     icon: '◈',
     title: '知识库',
-    desc: '强化学习数学原理、系统化知识体系，从测度论到策略梯度，深度剖析技术原理',
+    desc: '强化学习数学原理、系统化知识体系,从测度论到策略梯度,深度剖析技术原理',
     link: '/sections/knowledge/rl-math-principle/',
     linkText: '探索知识',
     tag: '核心',
@@ -406,7 +406,7 @@ const features = [
   {
     icon: '◎',
     title: '文章列表',
-    desc: 'AI 论文阅读、技术博客、学习笔记，记录从理论到工程的每一步思考',
+    desc: 'AI 论文阅读、技术博客、学习笔记,记录从理论到工程的每一步思考',
     link: '/sections/posts/ai-paper-reading-2024.html',
     linkText: '阅读文章',
     tag: '博客',
@@ -415,7 +415,7 @@ const features = [
   {
     icon: '◉',
     title: '公开资源',
-    desc: '精选开源项目与工具，提升开发效率，从框架到部署一应俱全',
+    desc: '精选开源项目与工具,提升开发效率,从框架到部署一应俱全',
     link: '/sections/resources/',
     linkText: '查看资源',
     tag: '资源',
@@ -424,7 +424,7 @@ const features = [
   {
     icon: '✦',
     title: '关于我',
-    desc: '全栈开发者 × AI 研究员，在电路与系统的边界探索大模型的星辰大海',
+    desc: '全栈开发者 × AI 研究员,在电路与系统的边界探索大模型的星辰大海',
     link: '/sections/about/',
     linkText: '了解更多',
     tag: '关于',
@@ -434,19 +434,19 @@ const features = [
 
 // Highlights data
 const highlights = [
-  { title: 'AI 驱动', desc: '内置 AI 助手，智能检索、自动化任务编排' },
-  { title: '数学严谨', desc: '从测度论出发，建立强化学习的严格数学框架' },
-  { title: '全栈覆盖', desc: 'PyTorch × Vue 3 × Docker，从训练到部署' },
-  { title: '知识图谱', desc: '关联式知识管理，构建可视化学习路径' },
-  { title: '持续迭代', desc: '每周更新内容，追踪前沿 AI 研究成果' },
-  { title: '开源精神', desc: '所有内容开放共享，共建技术社区' }
+  { title: 'AI 驱动', desc: '内置 AI 助手,智能检索、自动化任务编排' },
+  { title: '数学严谨', desc: '从测度论出发,建立强化学习的严格数学框架' },
+  { title: '全栈覆盖', desc: 'PyTorch × Vue 3 × Docker,从训练到部署' },
+  { title: '知识图谱', desc: '关联式知识管理,构建可视化学习路径' },
+  { title: '持续迭代', desc: '每周更新内容,追踪前沿 AI 研究成果' },
+  { title: '开源精神', desc: '所有内容开放共享,共建技术社区' }
 ]
 
 // Recent items data
 const recentItems = [
   {
     title: 'AI 论文阅读 2024',
-    desc: '精选2024年人工智能领域的重要论文，深入解读核心思想与创新点',
+    desc: '精选2024年人工智能领域的重要论文,深入解读核心思想与创新点',
     link: '/sections/posts/ai-paper-reading-2024/ai-paper-reading-2024.html',
     tag: 'AI',
     tagColor: 'purple',
@@ -462,7 +462,7 @@ const recentItems = [
   },
   {
     title: '测度论基础',
-    desc: '从测度论的角度理解强化学习，建立严格的数学框架',
+    desc: '从测度论的角度理解强化学习,建立严格的数学框架',
     link: '/sections/knowledge/rl-math-principle/00_Foundations/01_Theory_Derivation.html',
     tag: '数学',
     tagColor: 'green',
@@ -475,7 +475,7 @@ const projects = [
   {
     icon: '🧠',
     title: 'MetaBlog 知识系统',
-    desc: 'AI 驱动的智能博客系统，支持知识图谱、RAG 检索、Agent 工作流',
+    desc: 'AI 驱动的智能博客系统,支持知识图谱、RAG 检索、Agent 工作流',
     tags: ['Vue 3', 'VitePress', 'AI'],
     status: '持续开发',
     statusColor: '#10b981',
@@ -485,7 +485,7 @@ const projects = [
   {
     icon: '📊',
     title: 'RL-Notebooks',
-    desc: '强化学习算法实现集合，包含 DQN、PPO、SAC 等算法的 PyTorch 实现',
+    desc: '强化学习算法实现集合,包含 DQN、PPO、SAC 等算法的 PyTorch 实现',
     tags: ['PyTorch', 'RL', 'Jupyter'],
     status: '开源维护',
     statusColor: '#3b82f6',
@@ -495,7 +495,7 @@ const projects = [
   {
     icon: '🤖',
     title: 'LLM-Toolkit',
-    desc: '大语言模型工具包，支持多种模型接入、Prompt 管理、对话导出',
+    desc: '大语言模型工具包,支持多种模型接入、Prompt 管理、对话导出',
     tags: ['Python', 'LLM', 'CLI'],
     status: '版本迭代',
     statusColor: '#f59e0b',
@@ -505,7 +505,7 @@ const projects = [
   {
     icon: '🔍',
     title: 'PaperLens',
-    desc: 'AI 论文阅读助手，自动摘要、关键概念提取、相关论文推荐',
+    desc: 'AI 论文阅读助手,自动摘要、关键概念提取、相关论文推荐',
     tags: ['NLP', 'RAG', 'Streamlit'],
     status: '原型开发',
     statusColor: '#8b5cf6',
@@ -518,7 +518,7 @@ const projects = [
 const extendedArticles = [
   {
     title: 'DeepSeek-V3 核心技术解析：MoE 与 MLA 机制',
-    excerpt: '深入解析 DeepSeek-V3 中的混合专家模型(MoE)和多头潜在注意力机制(MLA)，理解其高效训练与推理的技术原理...',
+    excerpt: '深入解析 DeepSeek-V3 中的混合专家模型(MoE)和多头潜在注意力机制(MLA),理解其高效训练与推理的技术原理...',
     link: '/sections/posts/DeepSeek-V3中的MoE与MLA：混合专家与多头潜在注意力机制详解.html',
     type: 'paper',
     typeLabel: '论文解读',
@@ -527,7 +527,7 @@ const extendedArticles = [
   },
   {
     title: 'Transformer 架构详解',
-    excerpt: '从自注意力机制到多头注意力，从编码器到解码器，全面解析 Transformer 架构的设计原理与实现细节...',
+    excerpt: '从自注意力机制到多头注意力,从编码器到解码器,全面解析 Transformer 架构的设计原理与实现细节...',
     link: '/sections/posts/Transformer-详解.html',
     type: 'tutorial',
     typeLabel: '技术教程',
@@ -536,7 +536,7 @@ const extendedArticles = [
   },
   {
     title: 'Docker 容器化部署实战',
-    excerpt: '从 Dockerfile 编写到多容器编排，掌握 Docker Compose 和容器网络配置，实现应用的容器化部署...',
+    excerpt: '从 Dockerfile 编写到多容器编排,掌握 Docker Compose 和容器网络配置,实现应用的容器化部署...',
     link: '/sections/posts/docker.html',
     type: 'guide',
     typeLabel: '实践指南',
@@ -545,7 +545,7 @@ const extendedArticles = [
   },
   {
     title: '微服务架构设计模式',
-    excerpt: '探讨微服务架构的核心设计模式，包括服务发现、负载均衡、熔断降级、分布式追踪等关键概念...',
+    excerpt: '探讨微服务架构的核心设计模式,包括服务发现、负载均衡、熔断降级、分布式追踪等关键概念...',
     link: '/sections/posts/微服务架构设计模式详解.html',
     type: 'architecture',
     typeLabel: '架构设计',
@@ -554,7 +554,7 @@ const extendedArticles = [
   },
   {
     title: '李白生平解析：诗仙的传奇人生',
-    excerpt: '穿越千年时光，探寻李白的人生轨迹，解读其诗歌创作背后的历史背景与情感世界...',
+    excerpt: '穿越千年时光,探寻李白的人生轨迹,解读其诗歌创作背后的历史背景与情感世界...',
     link: '/sections/posts/李白生平解析：诗仙的传奇人生.html',
     type: 'culture',
     typeLabel: '人文历史',

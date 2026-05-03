@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * 内部业务路由 - content
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes/internal
+ */
+
+
 import fs from "fs";
 import path from "path";
 import type { ViteDevServer } from "vite";
@@ -5,6 +16,10 @@ import type { ViteDevServer } from "vite";
 import { scanDocStructure, toDirectoryTree, toSidebarFormat, type DocNode } from "../../../.vitepress/utils/doc-structure";
 import { clearSidebarCache } from "../../../.vitepress/utils/global-sidebar";
 import { createArticleInHarness } from "../../utils/article-creator";
+/**
+ * RouteContext 接口定义
+ *
+ */
 export interface RouteContext {
   system: any;
   structuredLog: any;
@@ -12,6 +27,20 @@ export interface RouteContext {
   triggerReload: () => void;
 }
 
+/**
+ * 注册内容管理路由
+ *
+ * 挂载以下端点：
+ * - /api/sidebar —— 动态侧边栏(按板块聚合文章)
+ * - /api/directory-tree —— 目录树结构(扁平化,供前端导航)
+ * - /api/articles —— 文章列表(仅扫描 ALLOWED_SECTIONS)
+ * - /api/articles/:slug —— 单篇文章 CRUD
+ * - /api/articles/:slug/publish —— 发布文章到外部平台
+ * - /api/search —— 本地文章全文搜索
+ *
+ * @param server - Vite 开发服务器实例
+ * @param ctx    - 路由上下文
+ */
 export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) {
   const { system, structuredLog, gitCommit, triggerReload } = ctx;
 
@@ -24,12 +53,12 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
     if (BLOCKED_SECTIONS.includes(section)) {
       return {
         valid: false,
-        error: `板块 "${section}" 不允许AI操作。可用板块：${ALLOWED_SECTIONS.join("。")}`,
+        error: `板块 "${section}" 不允许AI操作. 可用板块：${ALLOWED_SECTIONS.join(". ")}`,
       };
     }
     return {
       valid: false,
-      error: `板块 "${section}" 不存在。可用板块：${ALLOWED_SECTIONS.join("。")}`,
+      error: `板块 "${section}" 不存在. 可用板块：${ALLOWED_SECTIONS.join(". ")}`,
     };
   }
 
@@ -139,7 +168,7 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
   function generateSlug(title: string): string {
     if (!title || !title.trim()) return "untitled";
 
-    // 只替换不安全的文件系统字符，保留中文
+    // 只替换不安全的文件系统字符,保留中文
     // 替换: / \ : * ? " < > | 为 -
     let result = title
       .trim()
@@ -272,7 +301,7 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
                 frontmatterMatch[1].match(/^title:\s*(.+)$/m);
               if (titleMatch) title = titleMatch[1].trim();
             }
-            // 如果没有 frontmatter 标题，尝试从内容中提取
+            // 如果没有 frontmatter 标题,尝试从内容中提取
             if (!title || title === entry.name.replace(".md", "")) {
               const contentTitleMatch = content.match(/^#\s+(.+)$/m);
               if (contentTitleMatch)
@@ -300,7 +329,7 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
     async (req, res, next) => {
       if (req.method === "GET") {
         try {
-          // 扫描白名单内的 section，包含完整元数据
+          // 扫描白名单内的 section,包含完整元数据
           const allArticles: any[] = [];
 
           for (const section of ALLOWED_SECTIONS) {
@@ -336,7 +365,7 @@ export function registerContentRoutes(server: ViteDevServer, ctx: RouteContext) 
     },
   );
 
-  // 获取所有文章列表(用于 @ 引用，轻量级)
+  // 获取所有文章列表(用于 @ 引用,轻量级)
   server.middlewares.use(
     "/api/articles/list-all",
     async (req, res, next) => {

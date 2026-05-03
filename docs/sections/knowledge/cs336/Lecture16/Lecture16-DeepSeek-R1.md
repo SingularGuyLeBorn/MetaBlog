@@ -1,6 +1,6 @@
 # 深入探讨: DeepSeek R1技术报告
 
-本文是Lecture 16的精英补充笔记，详细分析DeepSeek R1的技术细节，包括R1-Zero实验、SFT初始化、语言一致性奖励等关键创新。
+本文是Lecture 16的精英补充笔记,详细分析DeepSeek R1的技术细节,包括R1-Zero实验、SFT初始化、语言一致性奖励等关键创新. 
 
 ---
 
@@ -8,12 +8,12 @@
 
 ### 1.1 实验设置
 
-**惊人假设**: 如果预训练模型足够强，能否**仅用RL**(无SFT)获得推理能力？
+**惊人假设**: 如果预训练模型足够强,能否**仅用RL**(无SFT)获得推理能力？
 
 **基础模型**: DeepSeek V3 Base
 - 通过预训练 + mid-training
 - 但**没有任何RLHF/SFT**
-- 已经具备基础能力，但不遵循指令
+- 已经具备基础能力,但不遵循指令
 
 **奖励信号**:
 ```python
@@ -34,7 +34,7 @@ def r1_zero_reward(response, ground_truth):
 
 ### 1.2 惊人发现
 
-1. **"aha moment"的涌现**: 模型自发学会"等一下，让我重新思考"
+1. **"aha moment"的涌现**: 模型自发学会"等一下,让我重新思考"
 2. **思维链长度自然增长**: 从几百token到上万token
 3. **自我验证**: 模型学会检查自己的答案
 4. **探索行为**: 尝试多种解法
@@ -124,12 +124,12 @@ def r1_reasoning_reward(prompt, response, ground_truth, ref_model):
 
 ### 3.1 问题背景
 
-在RL训练中，模型可能出现**语言混合**:
-- 中文问题，用英文思考
-- 英文问题，混入中文词汇
+在RL训练中,模型可能出现**语言混合**:
+- 中文问题,用英文思考
+- 英文问题,混入中文词汇
 - 思维链语言与回复语言不一致
 
-这降低了用户体验，且可能影响推理质量。
+这降低了用户体验,且可能影响推理质量. 
 
 ### 3.2 解决方案
 
@@ -170,7 +170,7 @@ def language_consistency_reward(prompt, response):
 
 ### 4.1 过程奖励模型 (PRM)
 
-**定义**: 对推理过程的每一步给予奖励，而非只看最终答案。
+**定义**: 对推理过程的每一步给予奖励,而非只看最终答案. 
 
 **理论优势**:
 - 更密集的学习信号
@@ -178,13 +178,13 @@ def language_consistency_reward(prompt, response):
 - 指导模型学习正确的推理路径
 
 **DeepSeek的发现** (与直觉相反):
-- 在R1设置下，PRM**不如**纯结果奖励
+- 在R1设置下,PRM**不如**纯结果奖励
 - 可能原因：PRM引入的噪声 > 提供的额外信号
 - 与DeepSeek Math的结论有所不同
 
 ### 4.2 蒙特卡洛树搜索 (MCTS)
 
-**背景**: AlphaGo的核心技术之一。
+**背景**: AlphaGo的核心技术之一. 
 
 **在LLM推理中的应用**:
 - 将推理过程建模为树
@@ -194,13 +194,13 @@ def language_consistency_reward(prompt, response):
 **DeepSeek的发现**:
 - MCTS在R1设置下**效果有限**
 - 简单的RL就够了
-- 可能是因为语言空间太大，搜索效率低
+- 可能是因为语言空间太大,搜索效率低
 
 ### 4.3 启示
 
 > "When you have a lot of data and compute, simple algorithms often win."
 
-这与其他AI领域的经验一致(如目标检测从复杂anchor到简单anchor-free)。
+这与其他AI领域的经验一致(如目标检测从复杂anchor到简单anchor-free). 
 
 ---
 
@@ -228,7 +228,7 @@ small_model.finetune(cot_data)
 
 ### 5.2 蒸馏数据规模
 
-DeepSeek公开了约100万条CoT数据用于蒸馏。
+DeepSeek公开了约100万条CoT数据用于蒸馏. 
 
 ### 5.3 蒸馏效果
 
@@ -309,14 +309,14 @@ DeepSeek公开了约100万条CoT数据用于蒸馏。
 
 ### 8.1 RL真的在学习"推理"吗？
 
-**一种观点**: RL只是在学习更好地利用预训练时已有的能力。
+**一种观点**: RL只是在学习更好地利用预训练时已有的能力. 
 
 **证据**:
 - R1-Zero需要V3这样极强的base model
 - 弱base model上RL效果有限
 - "aha moment"可能是表面模式
 
-**另一种观点**: RL确实在组合和强化推理能力。
+**另一种观点**: RL确实在组合和强化推理能力. 
 
 **证据**:
 - 能够解决预训练时可能没见过的问题

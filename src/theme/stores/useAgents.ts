@@ -1,13 +1,13 @@
 /**
- * useAgents - Agent 管理工具
- * 
- * 此文件导出：
- * - LEVEL_CONFIG: Agent 等级配置
- * - PERMISSION_TEMPLATES: 权限模板
- * - useAgentConfig: 从 agentStore 重新导出(完整功能)
- * 
- * 注意：useAgentConfig 是主要导出，包含完整的 Agent 管理功能
+ * ============================================================================
+ * Pinia Store - useAgents
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module src/theme/stores
  */
+
 
 import type { Agent, AgentCapabilities, AgentLevel, AgentPermission } from '@/theme/types/agent';
 import { computed, ref } from 'vue';
@@ -38,10 +38,15 @@ const DEFAULT_CAPABILITIES: AgentCapabilities = {
   customSystemPrompt: ''
 }
 
-// 为了向后兼容，保留一个简化版的 useAgents
+// 为了向后兼容,保留一个简化版的 useAgents
 const agents = ref<Agent[]>([])
 const activeAgentId = ref<string>('')
 
+/**
+ * useAgents 函数
+ *
+ * @returns 返回值
+ */
 export function useAgents() {
   const activeAgent = computed(() =>
     agents.value.find(a => a.id === activeAgentId.value)
