@@ -169,19 +169,13 @@ function sortNodes(a: SidebarNode, b: SidebarNode): number {
   return naturalSort(a.text || '', b.text || '')
 }
 
-/**
- * 自然排序：把字符串按数字和非数字分段比较
- * 示例：Lecture1 < Lecture2 < Lecture10
- */
 function naturalSort(a: string, b: string): number {
   const re = /(\d+)|(\D+)/g
   const aParts = a.match(re) || []
   const bParts = b.match(re) || []
-
   for (let i = 0; i < Math.min(aParts.length, bParts.length); i++) {
     const aNum = parseInt(aParts[i], 10)
     const bNum = parseInt(bParts[i], 10)
-
     if (!isNaN(aNum) && !isNaN(bNum)) {
       if (aNum !== bNum) return aNum - bNum
     } else {
@@ -189,7 +183,6 @@ function naturalSort(a: string, b: string): number {
       if (cmp !== 0) return cmp
     }
   }
-
   return aParts.length - bParts.length
 }
 
