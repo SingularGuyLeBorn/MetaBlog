@@ -191,9 +191,9 @@ const filteredGroups = computed(() => {
     }
   })
 
-  // 每组内按标题自然排序（和本地文件夹顺序一致：1, 2, ..., 10）
+  // 每组内按更新时间降序排列（最新的在最上面）
   groups.forEach(g => {
-    g.sessions.sort((a, b) => naturalSort(a.title, b.title))
+    g.sessions.sort((a, b) => b.updatedAt - a.updatedAt)
   })
 
   return groups.filter(g => g.sessions.length > 0)

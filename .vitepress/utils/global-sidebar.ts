@@ -12,7 +12,7 @@ interface SidebarNode {
 
 const manifestCache = new Map<string, Record<string, any>>()
 const sidebarCache = new Map<string, { data: any[], timestamp: number }>()
-const CACHE_TTL = 5000 // 5秒缓存，开发模式下短缓存确保实时性
+const CACHE_TTL = 5000 // 5秒缓存,开发模式下短缓存确保实时性
 
 function getManifest(dir: string): Record<string, any> {
   const manifestPath = join(dir, 'manifest.json')
@@ -166,30 +166,35 @@ function createLeafNode(filePath: string, fileName: string, rootDocPath: string,
 }
 
 function sortNodes(a: SidebarNode, b: SidebarNode): number {
-  const aText = a.text || ''
-  const bText = b.text || ''
+  return naturalSort(a.text || '', b.text || '')
+}
 
-  const aMatch = aText.match(/^(\d+)/)
-  const bMatch = bText.match(/^(\d+)/)
+/**
+ * 自然排序：把字符串按数字和非数字分段比较
+ * 示例：Lecture1 < Lecture2 < Lecture10
+ */
+function naturalSort(a: string, b: string): number {
+  const re = /(\d+)|(\D+)/g
+  const aParts = a.match(re) || []
+  const bParts = b.match(re) || []
 
-  if (aMatch && bMatch) {
-    const aNum = parseInt(aMatch[1], 10)
-    const bNum = parseInt(bMatch[1], 10)
-    if (aNum !== bNum) return aNum - bNum
+  for (let i = 0; i < Math.min(aParts.length, bParts.length); i++) {
+    const aNum = parseInt(aParts[i], 10)
+    const bNum = parseInt(bParts[i], 10)
+
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+      if (aNum !== bNum) return aNum - bNum
+    } else {
+      const cmp = aParts[i].localeCompare(bParts[i])
+      if (cmp !== 0) return cmp
+    }
   }
 
-  return aText.localeCompare(bText)
+  return aParts.length - bParts.length
 }
 
 function formatDisplayName(name: string): string {
-  let formatted = name.replace(/_/g, ' ')
-  formatted = formatted.replace(/^(\d+)([A-Za-z])/, '$1 $2')
-
-  return formatted.split(' ').map(word => {
-    if (!word) return ''
-    if (/^\d+$/.test(word)) return word
-    return word.charAt(0).toUpperCase() + word.slice(1)
-  }).join(' ')
+  return name
 }
 
 function extractTitle(mdPath: string): string {
