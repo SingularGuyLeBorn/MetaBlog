@@ -137,6 +137,7 @@
         ref="chatInputRef"
         v-model="inputText"
         :is-streaming="isStreaming"
+        :queue-count="currentQueueCount"
         :selected-skill="selectedSkill"
         :skills="allSkills"
         :supports-vision="currentModelSupportsVision"
@@ -255,6 +256,7 @@ const {
   messages,
   messageGroups,
   isStreaming,
+  pendingMessages,
   defaultConfig,
   createSession,
   switchSession,
@@ -268,6 +270,12 @@ const {
   updateSessionConfig,
   tokenUsage
 } = useAIChat()
+
+// 当前会话的队列数量
+const currentQueueCount = computed(() => {
+  if (!currentSessionId.value) return 0
+  return pendingMessages.value[currentSessionId.value]?.length || 0
+})
 
 const { activeAgent, agents: allAgents, skills: allSkills, setActive } = useAgentConfig()
 const { buildSystemPrompt } = useAgentConfig()
@@ -340,7 +348,7 @@ const currentAgentSystemPrompt = computed(() => {
 
 // 当前模型配置
 const currentModelConfig = computed(() => {
-  const model = currentSession.value?.config?.model || 'deepseek-v4-pro'
+  const model = currentSession.value?.config?.model || 'deepseek-v4-flash'
   const configs: Record<string, { supportsVision?: boolean; supportsVideo?: boolean; contextWindow: number }> = {
     'deepseek-v4-pro': { supportsVision: false, supportsVideo: false, contextWindow: 1000000 },
     'deepseek-v4-flash': { supportsVision: false, supportsVideo: false, contextWindow: 1000000 },
@@ -534,7 +542,7 @@ async function handleRegenerate() {
 
 async function handleSend(content: string, attachments: MessageAttachment[] = [], skillInfo?: Skill) {
   if (!content.trim() && attachments.length === 0) return
-  // isStreaming 时不再阻止发送，消息会进入队列
+  // AI 流式输出中发送的消息会自动加入队列（由 chatStore 处理）
 
   let finalContent = content.trim()
 

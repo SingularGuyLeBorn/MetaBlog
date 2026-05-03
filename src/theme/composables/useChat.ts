@@ -1,22 +1,22 @@
 /**
- * useChat - Chat 功能组合式函数
- * 
- * 提供简化的 Chat 功能访问，适用于只需要基本功能的组件
- * 
- * 使用示例：
- * ```typescript
- * const { 
- *   messages, 
- *   isLoading, 
- *   sendMessage, 
- *   interrupt 
- * } = useChat()
- * ```
+ * ============================================================================
+ * Vue Composable - useChat
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目，遵循项目注释规范。
+ *
+ * @module src/theme/composables
  */
+
+
 import { useAIChat } from '@/theme/stores/chatStore'
 import type { ChatMessage, ChatSession } from '@/theme/types'
 import { computed, nextTick, ref, watch } from 'vue'
 
+/**
+ * UseChatOptions 接口定义
+ *
+ */
 export interface UseChatOptions {
   /** 自动滚动到底部 */
   autoScroll?: boolean
@@ -26,6 +26,19 @@ export interface UseChatOptions {
   onStateChange?: (state: string) => void
 }
 
+/**
+ * 聊天组合式函数 —— 封装聊天页面完整的业务逻辑
+ *
+ * 职责：
+ * 1. 消息管理：发送、追加、更新、删除消息
+ * 2. 会话管理：创建、切换、删除会话，自动保存到本地存储
+ * 3. 流式处理：接收 SSE 流并逐字渲染，支持 reasoning_content 分离显示
+ * 4. 工具调用：解析并执行 tool_calls，将结果回传给模型
+ * 5. 状态管理：loading、streaming、error 等状态的响应式管理
+ *
+ * @param options - 配置项（自动滚动、消息更新/状态变化回调）
+ * @returns 聊天状态和方法集合
+ */
 export function useChat(options: UseChatOptions = {}) {
   const aiChat = useAIChat()
   const {
@@ -34,6 +47,7 @@ export function useChat(options: UseChatOptions = {}) {
     sessions,
     messageGroups,
     isStreaming,
+    pendingMessages,
     createSession,
     switchSession,
     deleteSession,
@@ -192,6 +206,7 @@ export function useChat(options: UseChatOptions = {}) {
     currentState,
     currentSession,
     sessions,
+    pendingMessages,
 
     // 方法
     sendMessage,

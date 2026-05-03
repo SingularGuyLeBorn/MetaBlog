@@ -1,11 +1,14 @@
 /**
- * useAIChat - AI Chat 核心 Composable (支持消息版本 v2)
- * 
- * 关键特性：
- * 1. 一个用户消息对应多个 AI 响应版本
- * 2. 重新生成时保留历史版本
- * 3. 支持版本切换、删除
+ * ============================================================================
+ * Pinia Store - chatStore
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目，遵循项目注释规范。
+ *
+ * @module src/theme/stores
  */
+
+
 import { aiService } from '@/theme/api/services/aiService'
 import { addLog } from '@/theme/api/services/logger'
 import { convertGroupsToMessages, storage } from '@/theme/api/services/storage'
@@ -16,7 +19,7 @@ import { calculateUsagePercent, estimateChatTokens, estimateTextTokens, formatTo
 import { computed, ref, watch } from 'vue'
 
 const DEFAULT_CONFIG: SessionConfig = {
-  model: 'deepseek-v4-pro',
+  model: 'deepseek-v4-flash',
   temperature: 0.7,
   maxTokens: 8192,
   systemPrompt: '',
@@ -75,6 +78,11 @@ function estimateSessionInputTokens(sessionId: string): number {
   return estimateChatTokens(messages)
 }
 
+/**
+ * useAIChat 函数
+ *
+ * @returns 返回值
+ */
 export function useAIChat() {
   // 获取 Agent 配置(用于工具权限校验)
   const { activeAgent, skills } = useAgentConfig()
@@ -1066,6 +1074,9 @@ export function useAIChat() {
 
     // 配置
     updateSessionConfig,
+
+    // 消息队列
+    pendingMessages,
 
     // Token 用量追踪
     tokenUsage: computed(() => getCurrentTokenUsage(currentSessionId.value)),

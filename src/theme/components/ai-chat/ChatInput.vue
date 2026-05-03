@@ -115,6 +115,7 @@
           :placeholder="getPlaceholder()"
           :selected-skill="effectiveSkill"
           :skills="skills"
+          :is-streaming="isStreaming"
           @skill-change="handleSkillChange"
           @mentions-change="handleMentionsChange"
           @send="handleSend"
@@ -143,14 +144,21 @@
     
     <!-- 输入提示 -->
     <div class="input-hint-3d">
-      <span class="hint-key">Enter</span>
-      <span>发送 ·</span>
-      <span class="hint-key">Shift+Enter</span>
-      <span>换行 ·</span>
-      <span class="hint-key">/</span>
-      <span>技能 ·</span>
-      <span class="hint-key">@</span>
-      <span>引用</span>
+      <template v-if="!isStreaming">
+        <span class="hint-key">Enter</span>
+        <span>发送 ·</span>
+        <span class="hint-key">Shift+Enter</span>
+        <span>换行 ·</span>
+        <span class="hint-key">/</span>
+        <span>技能 ·</span>
+        <span class="hint-key">@</span>
+        <span>引用</span>
+      </template>
+      <template v-else>
+        <span class="hint-key" style="color: #f59e0b;">处理中</span>
+        <span>Enter 加入队列 · 点击 ⏹ 停止</span>
+        <span v-if="queueCount && queueCount > 0" class="queue-badge">队列 {{ queueCount }} 条</span>
+      </template>
       <span v-if="attachments.length > 0" class="hint-separator">·</span>
       <span v-if="attachments.length > 0" class="hint-attachments">
         {{ attachments.length }}/{{ maxAttachments }} 附件
@@ -209,6 +217,7 @@ import { computed, ref, watch } from 'vue'
 const props = defineProps<{
   modelValue: string
   isStreaming: boolean
+  queueCount?: number
   selectedSkill?: Skill
   skills?: Skill[]
   supportsVision?: boolean
@@ -246,8 +255,8 @@ const effectiveSkill = computed(() => props.selectedSkill || currentSkill.value)
 const canSend = computed(() => {
   const hasText = inputValue.value.trim().length > 0
   const hasAttachments = attachments.value.length > 0
+  // AI 处理中仍可输入，消息会自动加入队列
   return hasText || hasAttachments
-  // 注意：isStreaming 时仍然允许发送，消息会进入队列
 })
 
 const inputTokenCount = computed(() => {
@@ -263,7 +272,10 @@ const inputTokenCount = computed(() => {
 // 方法
 function getPlaceholder(): string {
   if (props.isStreaming) {
-    return 'AI 思考中，可继续输入下一条...'
+    const queueHint = props.queueCount && props.queueCount > 0
+      ? ` · 队列中还有 ${props.queueCount} 条`
+      : ''
+    return `AI 处理中${queueHint}，Enter 加入队列...`
   }
   if (attachments.value.length > 0) {
     return '添加描述(可选)，按 Enter 发送...'
@@ -911,6 +923,19 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 .model-badge.video {
   background: linear-gradient(135deg, #fce7f3, #fae8ff);
   color: #db2777;
+}
+
+.queue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #d97706;
+  margin-left: 4px;
 }
 
 /* 链接功能已由 readArticle 工具覆盖 */
