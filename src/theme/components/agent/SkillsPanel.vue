@@ -150,14 +150,18 @@
                 </div>
                 <div class="form-group-3d">
                   <label>分类</label>
-                  <select v-model="form.category" class="form-select-3d">
-                    <option value="general">通用</option>
-                    <option value="writing">写作</option>
-                    <option value="coding">编程</option>
-                    <option value="analysis">分析</option>
-                    <option value="creative">创意</option>
-                    <option value="custom">自定义</option>
-                  </select>
+                  <DropdownSelect
+                    v-model="form.category"
+                    :options="[
+                      { value: 'general', label: '通用' },
+                      { value: 'writing', label: '写作' },
+                      { value: 'coding', label: '编程' },
+                      { value: 'analysis', label: '分析' },
+                      { value: 'creative', label: '创意' },
+                      { value: 'custom', label: '自定义' }
+                    ]"
+                    placeholder="选择分类"
+                  />
                 </div>
               </div>
 
@@ -194,6 +198,7 @@
 </template>
 
 <script setup lang="ts">
+import { DropdownSelect } from '@/theme/components/common'
 import { ref, computed } from 'vue'
 import { useAgentConfig } from '@/theme/stores/agentStore'
 import type { Skill, SkillCategory } from '@/theme/types'

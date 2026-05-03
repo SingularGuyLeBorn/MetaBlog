@@ -25,3 +25,6 @@ export { useSkills } from './skillStore'
 export * from './app'
 export * from './dataStore'
 
+// Batch result store
+export { useBatchResultStore } from './batchResultStore'
+

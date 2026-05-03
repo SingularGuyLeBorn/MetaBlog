@@ -13,7 +13,10 @@ const API_BASE = '/api/lark'
 
 async function larkApi(method: string, path: string): Promise<any> {
   const res = await fetch(`${API_BASE}${path}`, { method })
-  return res.json()
+  const data = await res.json()
+  // 后端 translateLarkError 已经把 details 精确拼接到 msg 中了，
+  // 前端不需要再追加，避免信息重复/冗长。
+  return data
 }
 
 // ============ 工具定义 ============

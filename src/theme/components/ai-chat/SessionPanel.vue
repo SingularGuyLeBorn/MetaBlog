@@ -200,9 +200,7 @@ function formatTime(timestamp: number) {
 
 // 处理会话点击
 function handleSessionClick(id: string) {
-  if (editingId.value !== id) {
-    emit('switch', id)
-  }
+  emit('switch', id)
 }
 
 // 开始重命名

@@ -45,12 +45,17 @@
             @keyup.enter="handleSearch"
           />
         </div>
-        <select v-model="filterSection" class="section-select" @change="handleSectionChange">
-          <option value="">全部板块</option>
-          <option value="posts">文章</option>
-          <option value="knowledge">知识库</option>
-          <option value="resources">资源</option>
-        </select>
+        <DropdownSelect
+          v-model="filterSection"
+          :options="[
+            { value: '', label: '全部板块' },
+            { value: 'posts', label: '文章' },
+            { value: 'knowledge', label: '知识库' },
+            { value: 'resources', label: '资源' }
+          ]"
+          placeholder="选择板块"
+          @change="handleSectionChange"
+        />
         <LiquidGlass glow-color="var(--sr-morandi-green, #a8b3a8)" :intensity="0.3">
           <button class="create-btn" @click="showCreateModal = true">
             <Icon name="plus" />
@@ -136,11 +141,15 @@
         </div>
         <div class="form-group">
           <label>板块</label>
-          <select v-model="form.section">
-            <option value="posts">文章</option>
-            <option value="knowledge">知识库</option>
-            <option value="resources">资源</option>
-          </select>
+          <DropdownSelect
+            v-model="form.section"
+            :options="[
+              { value: 'posts', label: '文章' },
+              { value: 'knowledge', label: '知识库' },
+              { value: 'resources', label: '资源' }
+            ]"
+            placeholder="选择板块"
+          />
         </div>
         <div class="form-group">
           <label>标签（用逗号分隔）</label>
@@ -167,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { Icon, LiquidGlass } from '@/theme/components/common'
+import { DropdownSelect, Icon, LiquidGlass } from '@/theme/components/common'
 import { computed, onMounted, ref } from 'vue'
 
 interface Article {

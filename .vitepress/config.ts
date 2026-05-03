@@ -118,12 +118,13 @@ export default withMermaid({
   ],
 
   themeConfig: {
+    appearance: false,
     nav: [
       { text: "首页", link: "/" },
       {
-        text: "AI 助手",
-        link: "/chat",
-        activeMatch: "/chat",
+        text: "Agents",
+        link: "/agents",
+        activeMatch: "/agents",
       },
       {
         text: "文章列表",
@@ -222,7 +223,7 @@ export default withMermaid({
     base: "/",
     envPrefix: ["VITE_", "LLM_"],
     optimizeDeps: {
-      force: true,
+      include: ["vue", "pinia", "@vueuse/core"],
     },
     resolve: {
       alias: [

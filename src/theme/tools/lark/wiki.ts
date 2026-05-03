@@ -49,6 +49,8 @@ async function larkApi(method: string, path: string, body?: any, query?: Record<
   }
   const data = await res.json()
   if (!data.code && !res.ok) data.code = res.status
+  // 后端 translateLarkError 已经把 details 精确拼接到 msg 中了，
+  // 前端不需要再追加，避免信息重复/冗长。
   return data
 }
 

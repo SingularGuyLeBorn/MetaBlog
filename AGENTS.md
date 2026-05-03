@@ -203,5 +203,6 @@ project/requirements/     # 需求管理(backlog + completed)
 
 如果用户对日志记录不满意,立即检查最近一次 `.dev-log/session-*.md` 是否遗漏了思考过程或失败尝试.
 
-
 不要用 poewershell的批量替换,这很容易造成乱码
+
+别用你那个垃圾plan模式了

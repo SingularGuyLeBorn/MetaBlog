@@ -126,13 +126,17 @@
                   </div>
                   <div class="form-group">
                     <label>分类</label>
-                    <select v-model="form.category" class="lg-input">
-                      <option value="通用">通用</option>
-                      <option value="写作">写作</option>
-                      <option value="编程">编程</option>
-                      <option value="分析">分析</option>
-                      <option value="搜索">搜索</option>
-                    </select>
+                    <DropdownSelect
+                      v-model="form.category"
+                      :options="[
+                        { value: '通用', label: '通用' },
+                        { value: '写作', label: '写作' },
+                        { value: '编程', label: '编程' },
+                        { value: '分析', label: '分析' },
+                        { value: '搜索', label: '搜索' }
+                      ]"
+                      placeholder="选择分类"
+                    />
                   </div>
                 </div>
 
@@ -150,17 +154,58 @@
                 </div>
 
                 <div class="form-group">
-                  <label>工具 (逗号分隔)</label>
-                  <input v-model="toolsInput" type="text" class="lg-input" placeholder="tool1, tool2, tool3" />
+                  <label>工具</label>
+                  <div class="tool-select">
+                    <!-- 已选工具标签 -->
+                    <div v-if="form.tools.length > 0" class="selected-tools">
+                      <span v-for="tool in form.tools" :key="tool" class="tool-tag">
+                        {{ tool }}
+                        <button class="tool-tag-remove" @click="removeTool(tool)">
+                          <Icon name="x" :size="10" />
+                        </button>
+                      </span>
+                    </div>
+                    <!-- 工具搜索与下拉 -->
+                    <div class="tool-dropdown-wrap">
+                      <input
+                        v-model="toolSearch"
+                        type="text"
+                        class="lg-input tool-search-input"
+                        placeholder="搜索工具..."
+                        @focus="showToolDropdown = true"
+                        @blur="hideToolDropdown()"
+                      />
+                      <Transition name="dropdown">
+                        <div v-if="showToolDropdown && filteredAvailableTools.length > 0" class="tool-dropdown">
+                          <div
+                            v-for="tool in filteredAvailableTools"
+                            :key="tool"
+                            class="tool-option"
+                            @mousedown.prevent="toggleTool(tool)"
+                          >
+                            <Icon name="plus" :size="12" />
+                            {{ tool }}
+                          </div>
+                        </div>
+                      </Transition>
+                      <div v-if="showToolDropdown && filteredAvailableTools.length === 0 && toolSearch" class="tool-dropdown-empty">
+                        无匹配工具
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div class="modal-footer">
                 <LiquidGlass glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.2">
-                  <button class="lg-btn" @click="closeModal">取消</button>
+                  <button class="lg-btn" @click="closeModal">
+                    <Icon name="x" :size="14" />
+                    取消
+                  </button>
                 </LiquidGlass>
                 <LiquidGlass glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.5">
                   <button class="lg-btn lg-btn-primary" @click="saveSkill">
+                    <Icon name="save" :size="14" />
                     {{ editingSkill ? '保存' : '创建' }}
                   </button>
                 </LiquidGlass>
@@ -177,8 +222,9 @@
 </template>
 
 <script setup lang="ts">
-import { Icon, LiquidGlass } from '@/theme/components/common'
+import { DropdownSelect, Icon, LiquidGlass } from '@/theme/components/common'
 import { useAgentConfig } from '@/theme/stores/agentStore'
+import { getRegisteredToolNames } from '@/theme/tools'
 import type { Skill, SkillCategory } from '@/theme/types/agent'
 import { computed, ref } from 'vue'
 import SkillDetailModal from './SkillDetailModal.vue'
@@ -234,7 +280,36 @@ const form = ref<SkillForm>({
   content: '',
   tools: []
 })
-const toolsInput = ref('')
+
+// 工具多选
+const availableTools = computed(() => getRegisteredToolNames().sort())
+const toolSearch = ref('')
+const showToolDropdown = ref(false)
+const filteredAvailableTools = computed(() => {
+  const selected = new Set(form.value.tools)
+  const q = toolSearch.value.toLowerCase()
+  return availableTools.value
+    .filter(t => !selected.has(t))
+    .filter(t => t.toLowerCase().includes(q))
+})
+
+function toggleTool(toolName: string) {
+  const idx = form.value.tools.indexOf(toolName)
+  if (idx > -1) {
+    form.value.tools.splice(idx, 1)
+  } else {
+    form.value.tools.push(toolName)
+  }
+}
+
+function removeTool(toolName: string) {
+  const idx = form.value.tools.indexOf(toolName)
+  if (idx > -1) form.value.tools.splice(idx, 1)
+}
+
+function hideToolDropdown() {
+  setTimeout(() => { showToolDropdown.value = false }, 200)
+}
 
 const gradients = [
   'linear-gradient(135deg, #ede9fe, #ddd6fe)',
@@ -263,7 +338,8 @@ function closeModal() {
 
 function resetForm() {
   form.value = { name: '', icon: '馃幆', category: 'general', description: '', content: '', tools: [] }
-  toolsInput.value = ''
+  toolSearch.value = ''
+  showToolDropdown.value = false
 }
 
 function editSkill(skill: Skill) {
@@ -278,7 +354,7 @@ function editSkill(skill: Skill) {
     content: skill.content ?? '',
     tools: [...(skill.tools ?? [])]
   }
-  toolsInput.value = skill.tools?.join(', ') || ''
+  form.value.tools = [...(skill.tools ?? [])]
 }
 
 function viewSkill(skill: Skill) {
@@ -288,7 +364,7 @@ function viewSkill(skill: Skill) {
 async function saveSkill() {
   const data = {
     ...form.value,
-    tools: toolsInput.value.split(',').map(t => t.trim()).filter(Boolean)
+    tools: form.value.tools
   }
 
   if (editingSkill.value) {
@@ -308,6 +384,106 @@ async function deleteSkill(skill: Skill) {
 
 <style scoped>
 /* Star River 风格 */
+
+/* 工具多选组件 */
+.tool-select {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.selected-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tool-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(184, 160, 144, 0.12);
+  border: 1px solid rgba(184, 160, 144, 0.25);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--sr-text-primary, #1a1a2e);
+}
+.tool-tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--sr-text-muted, #94a3b8);
+  transition: all 0.2s;
+}
+.tool-tag-remove:hover {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+.tool-dropdown-wrap {
+  position: relative;
+}
+.tool-search-input {
+  width: 100%;
+}
+.tool-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  padding: 4px;
+}
+.tool-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--sr-text-primary, #1a1a2e);
+}
+.tool-option:hover {
+  background: rgba(184, 160, 144, 0.1);
+}
+.tool-dropdown-empty {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  padding: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--sr-text-muted, #94a3b8);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  z-index: 100;
+}
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
 
 .skills-manager {
   max-width: 1200px;
@@ -449,7 +625,8 @@ async function deleteSkill(skill: Skill) {
 }
 
 .filter-chip.active {
-  color: white;
+  color: var(--sr-text-primary, #1a1a2e);
+  font-weight: 600;
 }
 
 /* Skills 网格 */

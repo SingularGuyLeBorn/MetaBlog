@@ -590,7 +590,8 @@ html {
 .sr-tag-morandi-purple { border-color: rgba(179, 168, 184, 0.4); color: #988898; }
 
 /* ===== lg-input（液态玻璃输入框，兼容旧组件） ===== */
-.lg-input {
+.lg-input,
+select.lg-input {
   width: 100%;
   padding: 0.75rem 1rem;
   background: var(--sr-glass-bg, rgba(255, 255, 255, 0.6));
@@ -604,11 +605,66 @@ html {
   resize: vertical;
 }
 
-.lg-input:hover {
+/* ===== 全局 select 基础样式（防止原生箭头泄漏） ===== */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+select::-ms-expand {
+  display: none;
+}
+
+select.lg-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat !important;
+  background-size: 16px;
+  background-position: right 12px center;
+  background-attachment: scroll;
+  padding-right: 2.5rem;
+  cursor: pointer;
+  resize: none;
+}
+
+/* ===== form-select-3d 统一箭头样式 ===== */
+select.form-select-3d {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat !important;
+  background-size: 16px;
+  background-position: right 12px center;
+  background-attachment: scroll;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+/* 彻底清空 option 的背景图，防止下拉面板中重复渲染 */
+select option,
+select.lg-input option,
+select.form-select-3d option {
+  background-image: none !important;
+  background-color: #fff;
+  color: var(--sr-text-primary, #1a1a2e);
+  padding: 8px;
+}
+
+.lg-input:hover,
+select.lg-input:hover {
   background: var(--sr-glass-bg-hover, rgba(255, 255, 255, 0.8));
 }
 
-.lg-input:focus {
+select.lg-input:hover {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b8a090' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}
+
+.lg-input:focus,
+select.lg-input:focus {
   outline: none;
   border-color: var(--sr-morandi-purple, #b8a090);
   box-shadow: 0 0 0 3px rgba(184, 160, 144, 0.15);

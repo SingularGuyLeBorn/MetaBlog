@@ -27,15 +27,9 @@
         :context-window="currentModelConfig.contextWindow"
         :left-collapsed="leftCollapsed"
         :right-collapsed="rightCollapsed"
-        :show-log-dashboard="showLogDashboard"
-        :show-agent-admin="showAgentAdmin"
         :session-id="currentSessionId"
         @toggle-left="leftCollapsed = !leftCollapsed"
         @toggle-right="rightCollapsed = !rightCollapsed"
-        @open-agent-admin="openAgentAdmin"
-        @go-home="goHome"
-        @toggle-log-dashboard="showLogDashboard = !showLogDashboard"
-        @clear-messages="clearMessages()"
       />
 
       <!-- 消息列表 -->
@@ -79,6 +73,19 @@
       @mouseenter="isHovering = true"
       @mouseleave="isHovering = false"
     >
+      <!-- 缩略模式：悬浮横条 -->
+      <div class="nav-bars">
+        <div
+          v-for="item in messageNavItems"
+          :key="item.id"
+          class="nav-bar"
+          :class="{ active: activeMessageId === item.id }"
+          :style="{ width: calculateBarWidth(item) }"
+          :title="item.summary"
+          @click="scrollToMessage(item.id)"
+        />
+      </div>
+      <!-- 展开模式：完整内容 -->
       <div class="nav-content">
         <div class="nav-header">
           <span class="nav-title">对话导航</span>
@@ -109,16 +116,11 @@
       :is-system-prompt-customized="isSystemPromptCustomized"
       @update:config="handleUpdateConfig"
       @toggle-collapse="rightCollapsed = !rightCollapsed"
-      @open-agent-center="showAgentAdmin = true"
+
       @reset-system-prompt="resetSystemPromptToAgent"
     />
 
-    <!-- Agent 管理中心 -->
-    <AgentAdmin
-      v-model:visible="showAgentAdmin"
-      @agent-change="handleAgentChange"
-      @start-chat="handleStartChatFromAdmin"
-    />
+
     
     <!-- Agent 简易聊天对话框 -->
     <AgentChatDialog
@@ -140,11 +142,13 @@
       @delete="handleBatchDelete"
     />
     
+    <!-- 批量结果抽屉 -->
+    <BatchResultDrawer />
+
     <!-- 工具结果侧面板 -->
     <ToolResultSidebar />
 
-    <!-- 日志监控面板 (组件暂缺) -->
-    <!-- <LogDashboard v-model:visible="showLogDashboard" /> -->
+
     
     <!-- 删除确认弹窗 - Star River 风格 -->
     <Teleport to="body">
@@ -173,13 +177,14 @@
 </template>
 
 <script setup lang="ts">
-import { AgentAdmin, AgentChatDialog } from '@/theme/components/agent'
+import { AgentChatDialog } from '@/theme/components/agent'
 import { Icon } from '@/theme/components/common'
 import { useAIChat, useAgentConfig } from '@/theme/stores'
 import type { Agent, MessageAttachment, SessionConfig, Skill } from '@/theme/types'
 import { Teleport, computed, nextTick, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
 import ChatHeader from './ChatHeader.vue'
 import ChatInput from './ChatInput.vue'
+import BatchResultDrawer from './BatchResultDrawer.vue'
 import ToolResultSidebar from './ToolResultSidebar.vue'
 import MessageList from './MessageList.vue'
 import SessionManager from './SessionManager.vue'
@@ -226,8 +231,6 @@ const rightCollapsed = ref(false)  // 默认打开右侧配置栏
 const inputText = ref('')
 const messageListRef = ref<InstanceType<typeof MessageList>>()
 const chatInputRef = ref<InstanceType<typeof ChatInput>>()
-const showAgentAdmin = ref(false)
-const showLogDashboard = ref(false)
 const selectedSkill = ref<Skill | undefined>(undefined)
 
 // 右侧对话导航栏状态
@@ -246,6 +249,18 @@ const messageNavItems = computed(() => {
       return { id: m.id, summary }
     })
 })
+
+// 计算导航条宽度：当前消息最长，其他按摘要长度比例
+const MAX_BAR_WIDTH = 28
+const MIN_BAR_WIDTH = 8
+function calculateBarWidth(item: { id: string; summary: string }): string {
+  if (activeMessageId.value === item.id) {
+    return `${MAX_BAR_WIDTH}px`
+  }
+  const ratio = Math.min(1, item.summary.length / 20)
+  const width = MIN_BAR_WIDTH + (MAX_BAR_WIDTH - MIN_BAR_WIDTH) * ratio
+  return `${width}px`
+}
 
 function handleActiveMessageChange(messageId: string) {
   activeMessageId.value = messageId
@@ -340,25 +355,11 @@ const isSystemPromptCustomized = computed((): boolean => {
   return !!(sessionPrompt && sessionPrompt !== agentPrompt)
 })
 
-// 键盘快捷键：Ctrl+L 打开日志面板
-function handleKeydown(e: KeyboardEvent) {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
-    e.preventDefault()
-    showLogDashboard.value = true
-  }
-}
-
 onMounted(() => {
-  window.addEventListener('keydown', handleKeydown)
-
   // 初始化：如果有活跃 Agent,选中它
   if (activeAgent.value) {
     selectedAgent.value = activeAgent.value
   }
-})
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
 })
 
 // 监听活跃 Agent 变化
@@ -476,15 +477,6 @@ async function createSessionForCurrentAgent() {
   }
 }
 
-// 打开 Agent 管理
-function openAgentAdmin() {
-  showAgentAdmin.value = true
-}
-
-// 返回首页
-function goHome() {
-  window.location.href = '/'
-}
 
 async function handleRegenerate() {
   if (!currentSessionId.value) return
@@ -679,7 +671,6 @@ function handleSelectSkill(skill: Skill | undefined) {
 // 从 AgentAdmin 切换 Agent(旧版方式,保留兼容)
 async function handleAgentChange(agent: Agent) {
   await selectAgent(agent)
-  showAgentAdmin.value = false
 }
 
 // 从 AgentAdmin 点击聊天按钮 - 打开简易对话框
@@ -864,14 +855,14 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 
 /* ========== 右侧对话导航栏 ========== */
 .chat-navigator {
-  width: 6px;
+  width: 32px;
   flex-shrink: 0;
   background: rgba(184, 160, 144, 0.08);
   border-left: 1px solid rgba(184, 160, 144, 0.15);
   transition: width 0.25s ease, background 0.25s ease;
   position: relative;
   overflow: hidden;
-  cursor: pointer;
+  cursor: default;
 }
 
 .chat-navigator:hover,
@@ -879,22 +870,54 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
   width: 180px;
   background: rgba(248, 250, 252, 0.6);
   border-left-color: var(--ai-border-light);
-  cursor: default;
 }
 
+/* 缩略模式：悬浮横条 */
+.nav-bars {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 16px 4px;
+  width: 100%;
+  height: 100%;
+}
+
+.nav-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(184, 160, 144, 0.35);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.nav-bar.active {
+  background: rgba(184, 160, 144, 0.85);
+  height: 5px;
+  border-radius: 3px;
+}
+
+.nav-bar:hover {
+  background: rgba(184, 160, 144, 0.65);
+}
+
+.chat-navigator:hover .nav-bars,
+.chat-navigator.expanded .nav-bars {
+  display: none;
+}
+
+/* 展开内容 */
 .nav-content {
   width: 180px;
   height: 100%;
-  display: flex;
+  display: none;
   flex-direction: column;
-  opacity: 0;
-  transition: opacity 0.15s ease;
 }
 
 .chat-navigator:hover .nav-content,
 .chat-navigator.expanded .nav-content {
-  opacity: 1;
-  transition: opacity 0.2s ease 0.08s;
+  display: flex;
 }
 
 .nav-header {

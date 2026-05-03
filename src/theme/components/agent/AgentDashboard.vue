@@ -42,13 +42,18 @@
           placeholder="粘贴链接 (小红书、B站、知乎、网页...)"
           @keyup.enter="handleUrlSubmit"
         />
-        <select v-model="targetSection">
-          <option value="posts">文章</option>
-          <option value="social">社交媒体</option>
-          <option value="videos">视频</option>
-          <option value="knowledge">知识库</option>
-          <option value="resources">资源</option>
-        </select>
+        <DropdownSelect
+          v-model="targetSection"
+          :options="[
+            { value: 'posts', label: '文章' },
+            { value: 'social', label: '社交媒体' },
+            { value: 'videos', label: '视频' },
+            { value: 'knowledge', label: '知识库' },
+            { value: 'resources', label: '资源' }
+          ]"
+          placeholder="选择栏目"
+          size="small"
+        />
         <button 
           :disabled="isProcessing || !urlInput"
           @click="handleUrlSubmit"
@@ -124,20 +129,28 @@
         </div>
         <div class="form-group">
           <label>来源类型</label>
-          <select v-model="newWorkflow.source.type">
-            <option value="url">URL 列表</option>
-            <option value="search">搜索</option>
-            <option value="rss">RSS</option>
-          </select>
+          <DropdownSelect
+            v-model="newWorkflow.source.type"
+            :options="[
+              { value: 'url', label: 'URL 列表' },
+              { value: 'search', label: '搜索' },
+              { value: 'rss', label: 'RSS' }
+            ]"
+            placeholder="选择来源类型"
+          />
         </div>
         <div class="form-group">
           <label>目标栏目</label>
-          <select v-model="newWorkflow.target.section">
-            <option value="posts">文章</option>
-            <option value="social">社交媒体</option>
-            <option value="videos">视频</option>
-            <option value="knowledge">知识库</option>
-          </select>
+          <DropdownSelect
+            v-model="newWorkflow.target.section"
+            :options="[
+              { value: 'posts', label: '文章' },
+              { value: 'social', label: '社交媒体' },
+              { value: 'videos', label: '视频' },
+              { value: 'knowledge', label: '知识库' }
+            ]"
+            placeholder="选择目标栏目"
+          />
         </div>
         <div class="form-group checkbox">
           <label>
@@ -165,6 +178,7 @@
 </template>
 
 <script setup lang="ts">
+import { DropdownSelect } from '@/theme/components/common'
 import { AgentSystem, createAgentSystem } from '@/theme/components/agent/index'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 

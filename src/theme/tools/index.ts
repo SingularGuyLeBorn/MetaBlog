@@ -55,6 +55,7 @@ export {
 
 // ==================== 平台解析工具 ====================
 export {
+    generateImage, generateImageDef,
     ocrImage, ocrImageDef, readArticle, readArticleDef
 } from './platform'
 
@@ -110,9 +111,13 @@ export {
 
 // ==================== 自我管理工具 ====================
 export {
+    manageAgent, manageAgentDef,
     manageMemory, manageMemoryDef,
     manageMcpServer, manageMcpServerDef,
-    manageSkill, manageSkillDef
+    manageSkill, manageSkillDef,
+    manageSource, manageSourceDef,
+    manageTask, manageTaskDef,
+    refreshSkillRegistry, refreshSkillRegistryDef
 } from './self'
 
 // ==================== 导入用于初始化====================
@@ -159,6 +164,8 @@ import { listFiles, listFilesDef, readFile, readFileDef, writeFile, writeFileDef
 
 // 平台解析工具
 import {
+    generateImage,
+    generateImageDef,
     ocrImage,
     ocrImageDef,
     readArticle,
@@ -358,12 +365,20 @@ import { executeSearchCapabilities, searchCapabilitiesDef } from './search_capab
 
 // 自我管理工具
 import {
+    manageAgent,
+    manageAgentDef,
     manageMemory,
     manageMemoryDef,
     manageMcpServer,
     manageMcpServerDef,
     manageSkill,
-    manageSkillDef
+    manageSkillDef,
+    manageSource,
+    manageSourceDef,
+    manageTask,
+    manageTaskDef,
+    refreshSkillRegistry,
+    refreshSkillRegistryDef
 } from './self'
 
 // ==================== 核心工具列表(始终暴露) ====================
@@ -390,7 +405,12 @@ export const CORE_TOOL_NAMES = [
     'createArticle',         // 内容创作核心 - 创建博客文章
     'manageMemory',          // 自我管理 - 记忆 CRUD
     'manageSkill',           // 自我管理 - Skill CRUD
-    'manageMcpServer'        // 自我管理 - MCP 服务器 CRUD
+    'manageSource',          // 自我管理 - 可靠信源 CRUD
+    'manageMcpServer',       // 自我管理 - MCP 服务器 CRUD
+    'manageAgent',           // 自我管理 - Agent 配置
+    'manageTask',            // 自我管理 - 任务管理
+    'refreshSkillRegistry',  // 自我管理 - 刷新 Skill 索引
+    'generateImage'          // 图片生成
 ]
 
 // ==================== 初始化函数====================
@@ -440,7 +460,8 @@ export function initializeDefaultTools(): void {
     // 平台解析工具
     registerTools([
         { name: 'readArticle', definition: readArticleDef, executor: readArticle },
-        { name: 'ocrImage', definition: ocrImageDef, executor: ocrImage }
+        { name: 'ocrImage', definition: ocrImageDef, executor: ocrImage },
+        { name: 'generateImage', definition: generateImageDef, executor: generateImage }
     ])
 
     // GitHub 工具
@@ -589,7 +610,11 @@ export function initializeDefaultTools(): void {
     registerTools([
         { name: 'manageMemory', definition: manageMemoryDef, executor: manageMemory },
         { name: 'manageSkill', definition: manageSkillDef, executor: manageSkill },
-        { name: 'manageMcpServer', definition: manageMcpServerDef, executor: manageMcpServer }
+        { name: 'manageSource', definition: manageSourceDef, executor: manageSource },
+        { name: 'manageMcpServer', definition: manageMcpServerDef, executor: manageMcpServer },
+        { name: 'manageAgent', definition: manageAgentDef, executor: manageAgent },
+        { name: 'manageTask', definition: manageTaskDef, executor: manageTask },
+        { name: 'refreshSkillRegistry', definition: refreshSkillRegistryDef, executor: refreshSkillRegistry }
     ])
 
     console.log(`[ToolSystem] ${getRegisteredToolNames().length} 个工具已初始化`)

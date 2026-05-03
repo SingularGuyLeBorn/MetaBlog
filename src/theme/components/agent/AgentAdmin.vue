@@ -160,31 +160,6 @@
               <div v-else-if="currentView === 'mcp'" key="mcp" class="view-mcp">
                 <MCPConfigPanel />
               </div>
-
-              <!-- 任务管理 -->
-              <div v-else-if="currentView === 'tasks'" key="tasks" class="view-tasks">
-                <TaskManager />
-              </div>
-
-              <!-- 日志监控 -->
-              <div v-else-if="currentView === 'logs'" key="logs" class="view-logs">
-                <LogViewer />
-              </div>
-
-              <!-- 文件管理 -->
-              <div v-else-if="currentView === 'files'" key="files" class="view-files">
-                <FileManager />
-              </div>
-
-              <!-- 文章管理 -->
-              <div v-else-if="currentView === 'articles'" key="articles" class="view-articles">
-                <ArticleManager />
-              </div>
-
-              <!-- Git 管理 -->
-              <div v-else-if="currentView === 'git'" key="git" class="view-git">
-                <GitManager />
-              </div>
             </main>
           </div>
         </div>
@@ -282,11 +257,6 @@ import AgentConfigPanel from './AgentConfigPanel.vue'
 import SkillsManager from './SkillsManager.vue'
 import MemoryManager from './MemoryManager.vue'
 import MCPConfigPanel from './MCPConfigPanel.vue'
-import TaskManager from './TaskManager.vue'
-import LogViewer from './LogViewer.vue'
-import FileManager from './FileManager.vue'
-import ArticleManager from './ArticleManager.vue'
-import GitManager from './GitManager.vue'
 import { Icon } from '@/theme/components/common'
 import { LiquidGlass } from '@/theme/components/common'
 
@@ -315,17 +285,12 @@ const {
 } = useAgentConfig()
 
 // 当前视图
-const currentView = ref<'agents' | 'skills' | 'memory' | 'mcp' | 'tasks' | 'logs' | 'files' | 'articles' | 'git'>('agents')
+const currentView = ref<'agents' | 'skills' | 'memory' | 'mcp'>('agents')
 const navItems = computed(() => [
   { id: 'agents' as const, label: 'Agents', icon: 'users', badge: agents.value.length },
   { id: 'skills' as const, label: 'Skills', icon: 'zap', badge: skills.value.length },
   { id: 'memory' as const, label: 'Memory', icon: 'database' },
-  { id: 'mcp' as const, label: 'MCP', icon: 'cpu' },
-  { id: 'tasks' as const, label: '任务', icon: 'list-checks' },
-  { id: 'logs' as const, label: '日志', icon: 'scroll-text' },
-  { id: 'files' as const, label: '文件', icon: 'folder-open' },
-  { id: 'articles' as const, label: '文章', icon: 'file-text' },
-  { id: 'git' as const, label: 'Git', icon: 'git-branch' }
+  { id: 'mcp' as const, label: 'MCP', icon: 'cpu' }
 ])
 
 // 选中的 Agent
@@ -358,7 +323,7 @@ function close() {
   selectedAgent.value = null
 }
 
-function switchView(view: 'agents' | 'skills' | 'memory' | 'mcp' | 'tasks' | 'logs' | 'files' | 'articles' | 'git') {
+function switchView(view: 'agents' | 'skills' | 'memory' | 'mcp') {
   if (currentView.value === view) return
   currentView.value = view
   selectedAgent.value = null

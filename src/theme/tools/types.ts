@@ -118,6 +118,12 @@ export interface ToolResult<T = any> {
    * 执行后,将匹配的工具 schema 加入下轮对话的可用工具列表
    */
   activateTools?: string[]
+  /**
+   * 结构化错误详情,包含具体字段、类型、期望值等
+   *
+   * 用于精确错误反馈(如"参数 X 的类型应为 Y,实际得到 Z")
+   */
+  details?: Record<string, any>
 }
 
 /**
@@ -277,13 +283,15 @@ export function createErrorResult(
   error: string,
   message?: string,
   suggestion?: string,
-  code?: string | number
+  code?: string | number,
+  details?: Record<string, any>
 ): ToolResult {
   return {
     success: false,
     error,
     message: message || `操作失败: ${error}`,
     suggestion: suggestion || '请检查参数后重试,或尝试其他方式',
-    code
+    code,
+    details
   }
 }

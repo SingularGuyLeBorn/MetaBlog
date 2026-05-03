@@ -33,6 +33,9 @@ const activeChainKey = ref<string | null>(null)
 /** 当前在 ToolResultSidebar 中查看的工具ID */
 const inspectedToolId = ref<string | null>(null)
 
+/** 当 toolChains 中找不到时的 fallback 数据（用于历史消息） */
+const inspectedToolData = ref<ToolChainItem | null>(null)
+
 // ==================== 辅助函数 ====================
 
 function buildChainKey(sessionId: string, groupId: string): string {
@@ -131,7 +134,10 @@ function updateToolCall(
 }
 
 /**
- * 标记工具调用成功完成
+ * 标记工具调用完成(成功或失败)
+ *
+ * 根据 result.success 自动判断状态. 如果失败,从 result 中提取
+ * error、code、suggestion、details 等结构化信息存入 item.
  */
 function completeToolCall(
   sessionId: string,
@@ -145,19 +151,24 @@ function completeToolCall(
   const item = chain.items.find(i => i.id === toolId)
   if (!item) return null
 
-  item.status = 'success'
+  // 根据 result.success 判断状态
+  const isSuccess = result?.success !== false
+  item.status = isSuccess ? 'success' : 'error'
   item.result = result
+  if (!isSuccess) {
+    item.error = result?.error || result?.message || '工具执行失败'
+  }
   item.endTime = Date.now()
   item.duration = item.endTime - item.startTime
   chain.updatedAt = Date.now()
 
   addLog({
-    level: 'debug',
+    level: isSuccess ? 'debug' : 'error',
     category: 'tool',
-    event: 'tool_call_complete',
-    message: `工具调用完成: ${item.name}`,
+    event: isSuccess ? 'tool_call_complete' : 'tool_call_error',
+    message: isSuccess ? `工具调用完成: ${item.name}` : `工具调用失败: ${item.name} - ${item.error}`,
     sessionId,
-    data: { toolName: item.name, toolId, duration: item.duration }
+    data: { toolName: item.name, toolId, duration: item.duration, error: item.error, code: result?.code }
   })
 
   return item
@@ -165,12 +176,14 @@ function completeToolCall(
 
 /**
  * 标记工具调用失败
+ *
+ * @param error - 错误信息,可以是字符串或结构化对象(含 message/suggestion/code/details)
  */
 function errorToolCall(
   sessionId: string,
   groupId: string,
   toolId: string,
-  error: string
+  error: string | { message?: string; suggestion?: string; code?: string | number; details?: Record<string, any> }
 ): ToolChainItem | null {
   const chain = toolChains[buildChainKey(sessionId, groupId)]
   if (!chain) return null
@@ -179,7 +192,12 @@ function errorToolCall(
   if (!item) return null
 
   item.status = 'error'
-  item.error = error
+  const errorStr = typeof error === 'string' ? error : (error.message || JSON.stringify(error))
+  item.error = errorStr
+  // 如果是结构化错误,保留完整结构供 UI 展示
+  if (typeof error !== 'string') {
+    item.result = { success: false, error: errorStr, suggestion: error.suggestion, code: error.code, details: error.details }
+  }
   item.endTime = Date.now()
   item.duration = item.endTime - item.startTime
   chain.updatedAt = Date.now()
@@ -188,9 +206,9 @@ function errorToolCall(
     level: 'error',
     category: 'tool',
     event: 'tool_call_error',
-    message: `工具调用失败: ${item.name} - ${error}`,
+    message: `工具调用失败: ${item.name} - ${errorStr}`,
     sessionId,
-    data: { toolName: item.name, toolId, error }
+    data: { toolName: item.name, toolId, error: errorStr, code: typeof error !== 'string' ? error.code : undefined }
   })
 
   return item
@@ -227,9 +245,11 @@ function clearSessionToolChains(sessionId: string): void {
 
 /**
  * 设置当前查看的工具ID
+ * @param fallbackData 可选 fallback，当 toolChains 中找不到时使用（历史消息）
  */
-function inspectTool(toolId: string | null): void {
+function inspectTool(toolId: string | null, fallbackData?: ToolChainItem): void {
   inspectedToolId.value = toolId
+  inspectedToolData.value = fallbackData || null
 }
 
 /**
@@ -443,6 +463,9 @@ export function useToolStore() {
     extractSearchResults,
     extractDocumentLinks,
     buildToolResultView,
+
+    // Fallback 数据
+    inspectedToolData: computed(() => inspectedToolData.value),
 
     // 查询
     getToolChain,

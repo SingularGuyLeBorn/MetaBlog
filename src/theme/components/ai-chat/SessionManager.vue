@@ -50,16 +50,16 @@
 
               <!-- 过滤器 -->
               <div class="toolbar-filters">
-                <GlassSelect
+                <DropdownSelect
                   v-model="agentFilter"
                   :options="agentOptions"
-                  placeholder="全部 Agent"
+                  placeholder="Agent"
                   size="small"
                 />
-                <GlassSelect
+                <DropdownSelect
                   v-model="dateFilter"
                   :options="dateOptions"
-                  placeholder="全部时间"
+                  placeholder="时间"
                   size="small"
                 />
               </div>
@@ -221,7 +221,7 @@
 </template>
 
 <script setup lang="ts">
-import GlassSelect from '@/theme/components/agent/GlassSelect.vue'
+import { DropdownSelect } from '@/theme/components/common'
 import { Icon } from '@/theme/components/common'
 import type { ChatSession } from '@/theme/types'
 import type { Agent } from '@/theme/types/agent'
@@ -263,7 +263,7 @@ const isBatchDelete = computed(() => sessionsToDelete.value.length > 1)
 
 // Agent 选项
 const agentOptions = computed(() => [
-  { value: '', label: '全部 Agent', subLabel: `${props.sessions.length} 个会话` },
+  { value: '', label: '全部', subLabel: `${props.sessions.length} 个会话` },
   ...props.agents.map(agent => ({
     value: agent.id,
     label: agent.name,
@@ -273,7 +273,7 @@ const agentOptions = computed(() => [
 
 // 时间选项
 const dateOptions = [
-  { value: '', label: '全部时间' },
+  { value: '', label: '全部' },
   { value: 'today', label: '今天' },
   { value: 'yesterday', label: '昨天' },
   { value: 'week', label: '最近7天' },
@@ -363,9 +363,9 @@ function toggleSelectAll() {
 function toggleSelect(sessionId: string) {
   const index = selectedSessions.value.indexOf(sessionId)
   if (index > -1) {
-    selectedSessions.value.splice(index, 1)
+    selectedSessions.value = selectedSessions.value.filter(id => id !== sessionId)
   } else {
-    selectedSessions.value.push(sessionId)
+    selectedSessions.value = [...selectedSessions.value, sessionId]
   }
 }
 

@@ -74,7 +74,7 @@
             <div class="memory-content">
               <div class="memory-header">
                 <span class="memory-agent">{{ memory.agentName || getCategoryInfo(memory.category).label }}</span>
-                <span class="memory-time">{{ formatRelativeTime(memory.createdAt) }}</span>
+                <span class="memory-time">{{ formatTime(memory.createdAt) }}</span>
               </div>
               <p class="memory-text">{{ memory.content }}</p>
             </div>
@@ -136,13 +136,17 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label>分类</label>
-                    <select v-model="form.category" class="lg-input">
-                      <option value="preference">用户偏好</option>
-                      <option value="skill">技能记忆</option>
-                      <option value="fact">事实知识</option>
-                      <option value="session">会话上下文</option>
-                      <option value="default">通用记忆</option>
-                    </select>
+                    <DropdownSelect
+                      v-model="form.category"
+                      :options="[
+                        { value: 'preference', label: '用户偏好', icon: '👤' },
+                        { value: 'skill', label: '技能记忆', icon: '🛠️' },
+                        { value: 'fact', label: '事实知识', icon: '📚' },
+                        { value: 'session', label: '会话上下文', icon: '💬' },
+                        { value: 'default', label: '通用记忆', icon: '🤖' }
+                      ]"
+                      placeholder="选择分类"
+                    />
                   </div>
                   <div class="form-group">
                     <label>重要性 (1-10)</label>
@@ -182,7 +186,8 @@
 </template>
 
 <script setup lang="ts">
-import { Icon, LiquidGlass } from '@/theme/components/common'
+import { DropdownSelect, Icon, LiquidGlass } from '@/theme/components/common'
+import { formatDate } from '@/theme/utils/formatDate'
 import { computed, onMounted, ref } from 'vue'
 
 interface Memory {
@@ -272,17 +277,9 @@ function getCategoryInfo(category?: string) {
   return categoryMap[category || ''] || categoryMap.default
 }
 
-// 相对时间格式化
-function formatRelativeTime(ts: number): string {
-  const diff = Date.now() - ts
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-  if (minutes < 1) return '刚刚'
-  if (minutes < 60) return `${minutes}分钟前`
-  if (hours < 24) return `${hours}小时前`
-  if (days < 7) return `${days}天前`
-  return new Date(ts).toLocaleDateString('zh-CN')
+// 时间格式化
+function formatTime(ts: number): string {
+  return formatDate(ts)
 }
 
 // 从后端加载记忆

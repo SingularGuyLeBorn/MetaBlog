@@ -1,243 +1,166 @@
+<!--
+  TaskManager - 任务管理
+  关联 Agent 的任务分配 + 定时任务
+-->
 <template>
   <div class="task-manager">
-    <!-- 头部 -->
-    <div class="tm-header">
-      <Icon name="list-checks" class="tm-icon" />
-      <div>
-        <h2 class="tm-title">任务管理</h2>
-        <p class="tm-desc">查看和管理 Agent 任务队列</p>
+    <div class="page-header">
+      <div class="header-info">
+        <h2 class="page-title">
+          <Icon name="check-square" :size="20" />
+          Tasks
+        </h2>
+        <span class="page-count">{{ tasks.length }} 个任务</span>
       </div>
+      <button class="new-task-btn" @click="showCreate = true">
+        <Icon name="plus" :size="14" />
+        New Task
+      </button>
     </div>
 
-    <!-- 统计卡片 -->
-    <div class="stats-grid">
-      <LiquidGlass
-        v-for="s in statusStats"
-        :key="s.status"
-        class="stat-card-glass"
-        :glow-color="s.color"
-        :intensity="0.25"
-        @click="statusFilter = s.status === statusFilter ? '' : s.status"
-      >
-        <div class="stat-card" :class="{ active: statusFilter === s.status }">
-          <div class="stat-count">{{ s.count }}</div>
-          <div class="stat-label">{{ s.label }}</div>
-        </div>
-      </LiquidGlass>
-    </div>
-
-    <!-- 操作栏 -->
-    <div class="toolbar">
-      <div class="filter-tabs">
+    <!-- 状态筛选 -->
+    <div class="filter-bar">
+      <div class="filter-group">
         <button
-          v-for="s in filterOptions"
-          :key="s.value"
-          class="filter-tab"
-          :class="{ active: statusFilter === s.value }"
-          @click="statusFilter = s.value"
+          v-for="f in statusFilters"
+          :key="f.value"
+          class="filter-chip"
+          :class="{ active: statusFilter === f.value }"
+          @click="statusFilter = f.value"
         >
-          {{ s.label }}
+          {{ f.label }}
         </button>
       </div>
-      <LiquidGlass glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.4">
-        <button class="trigger-btn" @click="showTriggerModal = true">
-          <Icon name="plus" />
-          新建任务
-        </button>
-      </LiquidGlass>
     </div>
 
     <!-- 任务列表 -->
-    <div v-if="loading" class="loading-state">
-      <Icon name="loader-2" spin class="loading-icon" />
-      加载中...
-    </div>
-    <div v-else-if="error" class="error-state">{{ error }}</div>
-    <div v-else-if="tasks.length === 0" class="empty-state">
-      <Icon name="inbox" class="empty-icon" />
-      暂无任务
-    </div>
-    <div v-else class="task-list">
+    <div class="task-list">
       <LiquidGlass
-        v-for="task in tasks"
+        v-for="task in filteredTasks"
         :key="task.id"
-        class="task-card-glass"
-        :glow-color="getStatusColor(task.status)"
-        :intensity="0.2"
+        class="task-item-glass"
+        glow-color="var(--sr-accent-star, #b8a090)"
+        :intensity="0.15"
       >
-        <div class="task-card">
+        <div class="task-item">
           <div class="task-main">
-            <div class="task-id">#{{ task.id.slice(-8) }}</div>
-            <div class="task-name">{{ task.name || task.type || '未命名任务' }}</div>
+            <div class="task-header">
+              <h3 class="task-name">{{ task.name }}</h3>
+              <span class="task-status" :class="task.status">{{ statusLabel(task.status) }}</span>
+            </div>
+            <p class="task-desc">{{ task.description }}</p>
             <div class="task-meta">
-              <span class="task-type">{{ task.type }}</span>
-              <span class="task-time">{{ formatTime(task.createdAt) }}</span>
+              <span class="meta-item">
+                <Icon name="bot" :size="12" />
+                分配给：{{ getAgentName(task.agentId) }}
+              </span>
+              <span class="meta-item">
+                <Icon name="clock" :size="12" />
+                {{ taskTypeLabel(task.type) }}
+              </span>
+              <span v-if="task.schedule" class="meta-item">
+                <Icon name="calendar" :size="12" />
+                {{ task.schedule }}
+              </span>
             </div>
           </div>
-          <div class="task-status">
-            <span class="status-badge" :class="task.status">
-              <span class="status-dot" />
-              {{ getStatusLabel(task.status) }}
-            </span>
-          </div>
           <div class="task-actions">
-            <button class="action-btn" title="查看详情" @click="viewDetail(task.id)">
-              <Icon name="eye" />
+            <button class="action-btn" @click="editTask(task)">
+              <Icon name="edit-2" :size="12" />
             </button>
             <button
-              v-if="task.status === 'running' || task.status === 'pending'"
-              class="action-btn"
-              title="取消"
-              @click="cancelTask(task.id)"
+              v-if="task.status === 'running'"
+              class="action-btn warning"
+              @click="pauseTask(task.id)"
             >
-              <Icon name="square" />
+              <Icon name="pause" :size="12" />
             </button>
             <button
-              v-if="task.status === 'failed' || task.status === 'cancelled'"
-              class="action-btn retry"
-              title="重试"
-              @click="retryTask(task.id)"
+              v-else-if="task.status === 'paused'"
+              class="action-btn success"
+              @click="resumeTask(task.id)"
             >
-              <Icon name="refresh-cw" />
+              <Icon name="play" :size="12" />
             </button>
-            <button class="action-btn danger" title="删除" @click="deleteTask(task.id)">
-              <Icon name="trash-2" />
+            <button class="action-btn danger" @click="deleteTask(task.id)">
+              <Icon name="trash-2" :size="12" />
             </button>
           </div>
         </div>
       </LiquidGlass>
     </div>
 
-    <!-- 新建任务弹窗 -->
+    <!-- 新建/编辑弹窗 -->
     <Teleport to="body">
       <Transition name="modal">
-        <div v-if="showTriggerModal" class="modal-overlay" @click.self="showTriggerModal = false">
-          <LiquidGlass class="modal-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.4">
-            <div class="trigger-modal">
-              <div class="modal-header">
-                <h3>新建任务</h3>
-                <button class="close-btn" @click="showTriggerModal = false">
-                  <Icon name="x" />
-                </button>
+        <div v-if="showCreate" class="modal-overlay" @click.self="showCreate = false">
+          <div class="modal-card">
+            <h3 class="modal-title">{{ editingTask ? '编辑任务' : '新建任务' }}</h3>
+            <div class="modal-body">
+              <div class="form-group">
+                <label>任务名称</label>
+                <input v-model="taskForm.name" type="text" class="lg-input" placeholder="输入任务名称" />
               </div>
-
-              <div class="modal-body">
+              <div class="form-group">
+                <label>描述</label>
+                <textarea v-model="taskForm.description" class="lg-input" rows="2" placeholder="任务描述..." />
+              </div>
+              <div class="form-row">
                 <div class="form-group">
-                  <label>任务模板</label>
-                  <select v-model="triggerForm.template" class="lg-input" @change="onTemplateChange">
-                    <option value="">自定义</option>
-                    <option v-for="t in templates" :key="t.type" :value="t.type">
-                      {{ t.name || t.type }}
-                    </option>
-                  </select>
+                  <label>类型</label>
+                  <DropdownSelect
+                    v-model="taskForm.type"
+                    :options="[
+                      { value: 'once', label: '单次任务' },
+                      { value: 'scheduled', label: '定时任务' },
+                      { value: 'event', label: '事件驱动' }
+                    ]"
+                    placeholder="选择类型"
+                  />
                 </div>
-
                 <div class="form-group">
-                  <label>任务名称</label>
-                  <input v-model="triggerForm.name" type="text" class="lg-input" placeholder="输入任务名称..." />
-                </div>
-
-                <div class="form-group">
-                  <label>任务类型</label>
-                  <input v-model="triggerForm.type" type="text" class="lg-input" placeholder="如: sync, crawl, analyze..." />
-                </div>
-
-                <div class="form-group">
-                  <label>描述</label>
-                  <textarea v-model="triggerForm.description" class="lg-input" rows="2" placeholder="任务描述..." />
-                </div>
-
-                <div class="form-group">
-                  <label>参数 (JSON)</label>
-                  <textarea v-model="triggerForm.params" class="lg-input json-input" rows="4" placeholder='{"key": "value"}' />
+                  <label>优先级</label>
+                  <DropdownSelect
+                    v-model="taskForm.priority"
+                    :options="[
+                      { value: 'low', label: '低' },
+                      { value: 'medium', label: '中' },
+                      { value: 'high', label: '高' },
+                      { value: 'urgent', label: '紧急' }
+                    ]"
+                    placeholder="选择优先级"
+                  />
                 </div>
               </div>
-
-              <div class="modal-footer">
-                <LiquidGlass glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.2">
-                  <button class="lg-btn" @click="showTriggerModal = false">取消</button>
-                </LiquidGlass>
-                <LiquidGlass glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.5">
-                  <button class="lg-btn lg-btn-primary" :disabled="triggerLoading" @click="triggerTask">
-                    <Icon v-if="triggerLoading" name="loader-2" spin />
-                    <Icon v-else name="play-circle" />
-                    {{ triggerLoading ? '创建中...' : '创建任务' }}
-                  </button>
-                </LiquidGlass>
+              <div class="form-group">
+                <label>分配给 Agent</label>
+                <DropdownSelect
+                  v-model="taskForm.agentId"
+                  :options="[{ value: '', label: '未分配' }, ...agents.map(a => ({ value: a.id, label: a.name }))]"
+                  placeholder="选择 Agent"
+                />
+              </div>
+              <div v-if="taskForm.type === 'scheduled'" class="form-group">
+                <label>Cron 表达式</label>
+                <input v-model="taskForm.schedule" type="text" class="lg-input" placeholder="0 9 * * *" />
+                <span class="form-hint">例如: 0 9 * * 1 (每周一早9点)</span>
+              </div>
+              <div class="form-group">
+                <label>任务内容</label>
+                <textarea v-model="taskForm.content" class="lg-input" rows="4" placeholder="任务执行内容或指令..." />
               </div>
             </div>
-          </LiquidGlass>
-        </div>
-      </Transition>
-    </Teleport>
-
-    <!-- 任务详情弹窗 -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="showDetailModal" class="modal-overlay" @click.self="showDetailModal = false">
-          <LiquidGlass class="modal-glass" glow-color="var(--sr-morandi-blue, #9aa8b8)" :intensity="0.35">
-            <div class="detail-modal">
-              <div class="modal-header">
-                <h3>任务详情</h3>
-                <button class="close-btn" @click="showDetailModal = false">
-                  <Icon name="x" />
-                </button>
-              </div>
-
-              <div v-if="detailLoading" class="modal-body loading">
-                <Icon name="loader-2" spin class="loading-icon" />
-                加载中...
-              </div>
-              <div v-else-if="detailError" class="modal-body error">{{ detailError }}</div>
-              <div v-else-if="detailTask" class="modal-body">
-                <div class="detail-row">
-                  <span class="detail-label">ID</span>
-                  <span class="detail-value">{{ detailTask.id }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">名称</span>
-                  <span class="detail-value">{{ detailTask.name || '—' }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">类型</span>
-                  <span class="detail-value">{{ detailTask.type || '—' }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">状态</span>
-                  <span class="detail-value">
-                    <span class="status-badge" :class="detailTask.status">
-                      <span class="status-dot" />
-                      {{ getStatusLabel(detailTask.status) }}
-                    </span>
-                  </span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">描述</span>
-                  <span class="detail-value">{{ detailTask.description || '—' }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">创建时间</span>
-                  <span class="detail-value">{{ formatTime(detailTask.createdAt) }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">更新时间</span>
-                  <span class="detail-value">{{ formatTime(detailTask.updatedAt) }}</span>
-                </div>
-                <div v-if="detailTask.params" class="detail-row">
-                  <span class="detail-label">参数</span>
-                  <pre class="detail-json">{{ JSON.stringify(detailTask.params, null, 2) }}</pre>
-                </div>
-                <div v-if="detailTask.result" class="detail-row">
-                  <span class="detail-label">结果</span>
-                  <pre class="detail-json">{{ JSON.stringify(detailTask.result, null, 2) }}</pre>
-                </div>
-                <div v-if="detailTask.error" class="detail-row">
-                  <span class="detail-label">错误</span>
-                  <pre class="detail-json error-json">{{ detailTask.error }}</pre>
-                </div>
-              </div>
+            <div class="modal-actions">
+              <button class="btn-secondary" @click="showCreate = false">
+                <Icon name="x" :size="14" />
+                取消
+              </button>
+              <button class="btn-primary" @click="saveTask">
+                <Icon name="save" :size="14" />
+                保存
+              </button>
             </div>
-          </LiquidGlass>
+          </div>
         </div>
       </Transition>
     </Teleport>
@@ -245,441 +168,304 @@
 </template>
 
 <script setup lang="ts">
-import { Icon, LiquidGlass } from '@/theme/components/common'
-import { ref, onMounted, computed, watch } from 'vue'
+import { DropdownSelect, Icon, LiquidGlass } from '@/theme/components/common'
+import { useAgentConfig } from '@/theme/stores'
+import { computed, ref } from 'vue'
+
+const { agents } = useAgentConfig()
 
 interface Task {
   id: string
-  name?: string
-  description?: string
-  type?: string
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
-  createdAt: number
-  updatedAt?: number
-  params?: any
-  result?: any
-  error?: string
-  metadata?: any
-}
-
-interface TaskTemplate {
-  type: string
-  name?: string
-  description?: string
-  defaultParams?: any
-}
-
-interface TaskStats {
-  pending: number
-  running: number
-  completed: number
-  failed: number
-  cancelled: number
+  name: string
+  description: string
+  agentId: string
+  type: 'once' | 'scheduled' | 'event'
+  status: 'pending' | 'running' | 'paused' | 'completed' | 'failed'
+  schedule?: string
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  content: string
+  createdAt: string
+  updatedAt: string
 }
 
 const tasks = ref<Task[]>([])
-const templates = ref<TaskTemplate[]>([])
-const stats = ref<TaskStats>({ pending: 0, running: 0, completed: 0, failed: 0, cancelled: 0 })
-const loading = ref(false)
-const error = ref('')
-const statusFilter = ref('')
+const statusFilter = ref('all')
+const showCreate = ref(false)
+const editingTask = ref<Task | null>(null)
 
-const showTriggerModal = ref(false)
-const triggerLoading = ref(false)
-const triggerForm = ref({
-  template: '',
-  name: '',
-  type: '',
-  description: '',
-  params: ''
-})
-
-const showDetailModal = ref(false)
-const detailTask = ref<Task | null>(null)
-const detailLoading = ref(false)
-const detailError = ref('')
-
-const filterOptions = [
-  { label: '全部', value: '' },
-  { label: '待处理', value: 'pending' },
-  { label: '运行中', value: 'running' },
-  { label: '已完成', value: 'completed' },
-  { label: '失败', value: 'failed' },
-  { label: '已取消', value: 'cancelled' },
-]
-
-const statusStats = computed(() => [
-  { status: 'pending', label: '待处理', count: stats.value.pending, color: 'var(--sr-morandi-blue, #9aa8b8)' },
-  { status: 'running', label: '运行中', count: stats.value.running, color: 'var(--sr-accent-star, #b8a090)' },
-  { status: 'completed', label: '已完成', count: stats.value.completed, color: 'var(--sr-morandi-green, #a8b3a8)' },
-  { status: 'failed', label: '失败', count: stats.value.failed, color: 'var(--sr-morandi-pink, #d4b8b8)' },
-  { status: 'cancelled', label: '已取消', count: stats.value.cancelled, color: 'var(--sr-text-muted, #94a3b8)' },
-])
-
-function getStatusColor(status: string) {
-  const map: Record<string, string> = {
-    pending: 'var(--sr-morandi-blue, #9aa8b8)',
-    running: 'var(--sr-accent-star, #b8a090)',
-    completed: 'var(--sr-morandi-green, #a8b3a8)',
-    failed: 'var(--sr-morandi-pink, #d4b8b8)',
-    cancelled: 'var(--sr-text-muted, #94a3b8)',
-  }
-  return map[status] || 'var(--sr-text-muted, #94a3b8)'
+interface TaskForm {
+  name: string
+  description: string
+  agentId: string
+  type: 'once' | 'scheduled' | 'event'
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  schedule: string
+  content: string
 }
 
-function getStatusLabel(status: string) {
+const taskForm = ref<TaskForm>({
+  name: '',
+  description: '',
+  agentId: '',
+  type: 'once',
+  priority: 'medium',
+  schedule: '',
+  content: ''
+})
+
+function resetTaskForm() {
+  taskForm.value = {
+    name: '',
+    description: '',
+    agentId: '',
+    type: 'once',
+    priority: 'medium',
+    schedule: '',
+    content: ''
+  }
+}
+
+const statusFilters = [
+  { label: '全部', value: 'all' },
+  { label: '进行中', value: 'running' },
+  { label: '已暂停', value: 'paused' },
+  { label: '已完成', value: 'completed' },
+  { label: '失败', value: 'failed' },
+  { label: '定时', value: 'scheduled' }
+]
+
+const filteredTasks = computed(() => {
+  let result = tasks.value
+  if (statusFilter.value !== 'all') {
+    if (statusFilter.value === 'scheduled') {
+      result = result.filter(t => t.type === 'scheduled')
+    } else {
+      result = result.filter(t => t.status === statusFilter.value)
+    }
+  }
+  return result
+})
+
+function getAgentName(agentId: string): string {
+  return agents.value.find(a => a.id === agentId)?.name || '未分配'
+}
+
+function statusLabel(status: string): string {
   const map: Record<string, string> = {
-    pending: '待处理',
-    running: '运行中',
+    pending: '等待中',
+    running: '进行中',
+    paused: '已暂停',
     completed: '已完成',
-    failed: '失败',
-    cancelled: '已取消',
+    failed: '失败'
   }
   return map[status] || status
 }
 
-function formatTime(ts?: number) {
-  if (!ts) return '—'
-  return new Date(ts).toLocaleString('zh-CN')
-}
-
-async function loadTasks() {
-  loading.value = true
-  error.value = ''
-  try {
-    const url = statusFilter.value
-      ? `/api/agent/tasks?status=${statusFilter.value}`
-      : '/api/agent/tasks'
-    const res = await fetch(url)
-    const json = await res.json()
-    if (json.success) {
-      tasks.value = json.data || []
-      if (json.stats) {
-        stats.value = json.stats
-      }
-    } else {
-      error.value = json.message || '加载失败'
-    }
-  } catch (e) {
-    error.value = '加载任务列表失败'
-    console.error('[TaskManager] 加载失败:', e)
-  } finally {
-    loading.value = false
+function taskTypeLabel(type: string): string {
+  const map: Record<string, string> = {
+    once: '单次任务',
+    scheduled: '定时任务',
+    event: '事件驱动'
   }
+  return map[type] || type
 }
 
-async function loadTemplates() {
-  try {
-    const res = await fetch('/api/agent/tasks/templates')
-    const json = await res.json()
-    if (json.success) {
-      templates.value = json.data || []
-    }
-  } catch (e) {
-    console.error('[TaskManager] 加载模板失败:', e)
+function editTask(task: Task) {
+  editingTask.value = task
+  taskForm.value = {
+    name: task.name,
+    description: task.description || '',
+    agentId: task.agentId || '',
+    type: task.type,
+    priority: task.priority,
+    schedule: task.schedule || '',
+    content: task.content || ''
   }
+  showCreate.value = true
 }
 
-function onTemplateChange() {
-  const t = templates.value.find(x => x.type === triggerForm.value.template)
-  if (t) {
-    triggerForm.value.type = t.type
-    if (t.defaultParams) {
-      triggerForm.value.params = JSON.stringify(t.defaultParams, null, 2)
-    }
-  }
-}
-
-async function triggerTask() {
-  triggerLoading.value = true
+async function saveTask() {
+  const body = { ...taskForm.value }
   try {
-    let params: any = {}
-    if (triggerForm.value.params.trim()) {
-      try {
-        params = JSON.parse(triggerForm.value.params)
-      } catch {
-        alert('参数 JSON 格式错误')
-        triggerLoading.value = false
-        return
-      }
-    }
-
-    const res = await fetch('/api/agent/tasks/trigger', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: triggerForm.value.name || undefined,
-        type: triggerForm.value.type || 'custom',
-        description: triggerForm.value.description || undefined,
-        params,
+    if (editingTask.value) {
+      const res = await fetch('/api/tasks/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingTask.value.id, ...body })
       })
-    })
-    const json = await res.json()
-    if (json.success) {
-      showTriggerModal.value = false
-      triggerForm.value = { template: '', name: '', type: '', description: '', params: '' }
-      await loadTasks()
+      const json = await res.json()
+      if (json.success) {
+        const idx = tasks.value.findIndex(t => t.id === editingTask.value!.id)
+        if (idx > -1) tasks.value[idx] = json.data
+      }
     } else {
-      alert('创建失败: ' + (json.message || '未知错误'))
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      const json = await res.json()
+      if (json.success) {
+        tasks.value.push(json.data)
+      }
     }
   } catch (e) {
-    alert('创建失败: ' + String(e))
-  } finally {
-    triggerLoading.value = false
+    console.error('[TaskManager] 保存任务失败:', e)
+  }
+  showCreate.value = false
+  editingTask.value = null
+  resetTaskForm()
+}
+
+async function pauseTask(id: string) {
+  try {
+    const res = await fetch(`/api/tasks/${id}/pause`, { method: 'POST' })
+    const json = await res.json()
+    if (json.success) {
+      const idx = tasks.value.findIndex(t => t.id === id)
+      if (idx > -1) tasks.value[idx] = json.data
+    }
+  } catch (e) {
+    console.error('[TaskManager] 暂停任务失败:', e)
   }
 }
 
-async function cancelTask(id: string) {
-  if (!confirm('确定要取消这个任务吗？')) return
+async function resumeTask(id: string) {
   try {
-    const res = await fetch('/api/agent/tasks/cancel', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taskId: id })
-    })
+    const res = await fetch(`/api/tasks/${id}/resume`, { method: 'POST' })
     const json = await res.json()
     if (json.success) {
-      await loadTasks()
-    } else {
-      alert('取消失败: ' + (json.message || '未知错误'))
+      const idx = tasks.value.findIndex(t => t.id === id)
+      if (idx > -1) tasks.value[idx] = json.data
     }
   } catch (e) {
-    alert('取消失败: ' + String(e))
-  }
-}
-
-async function retryTask(id: string) {
-  try {
-    const res = await fetch('/api/agent/tasks/retry', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taskId: id })
-    })
-    const json = await res.json()
-    if (json.success) {
-      await loadTasks()
-    } else {
-      alert('重试失败: ' + (json.message || '未知错误'))
-    }
-  } catch (e) {
-    alert('重试失败: ' + String(e))
+    console.error('[TaskManager] 恢复任务失败:', e)
   }
 }
 
 async function deleteTask(id: string) {
-  if (!confirm('确定要删除这个任务吗？')) return
+  if (!confirm('确定删除这个任务吗？')) return
   try {
-    const res = await fetch('/api/agent/tasks/delete', {
+    const res = await fetch('/api/tasks/delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taskId: id })
+      body: JSON.stringify({ id })
     })
     const json = await res.json()
     if (json.success) {
-      await loadTasks()
-    } else {
-      alert('删除失败: ' + (json.message || '未知错误'))
+      tasks.value = tasks.value.filter(t => t.id !== id)
     }
   } catch (e) {
-    alert('删除失败: ' + String(e))
+    console.error('[TaskManager] 删除任务失败:', e)
   }
 }
 
-async function viewDetail(id: string) {
-  showDetailModal.value = true
-  detailLoading.value = true
-  detailError.value = ''
-  detailTask.value = null
+// 加载任务
+async function loadTasks() {
   try {
-    const res = await fetch(`/api/agent/tasks/detail?id=${id}`)
+    const res = await fetch('/api/tasks')
     const json = await res.json()
-    if (json.success) {
-      detailTask.value = json.data
-    } else {
-      detailError.value = json.message || '加载失败'
+    if (json.success && Array.isArray(json.data)) {
+      tasks.value = json.data
     }
   } catch (e) {
-    detailError.value = '加载详情失败'
-    console.error('[TaskManager] 加载详情失败:', e)
-  } finally {
-    detailLoading.value = false
+    console.error('[TaskManager] 加载任务失败:', e)
   }
 }
 
-watch(statusFilter, loadTasks)
-
-onMounted(() => {
-  loadTasks()
-  loadTemplates()
-})
+loadTasks()
 </script>
 
 <style scoped>
 .task-manager {
-  max-width: 1000px;
-  margin: 0 auto;
   padding: 8px;
 }
 
-/* 头部 */
-.tm-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.tm-icon {
-  width: 48px;
-  height: 48px;
-  color: var(--sr-accent-star, #b8a090);
-}
-
-.tm-title {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--sr-text-primary, #1a1a2e);
-}
-
-.tm-desc {
-  margin: 4px 0 0;
-  font-size: 14px;
-  color: var(--sr-text-muted, #94a3b8);
-}
-
-/* 统计 */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.stat-card-glass {
-  border-radius: 16px;
-  cursor: pointer;
-}
-
-.stat-card {
-  padding: 20px;
-  text-align: center;
-  transition: all 0.2s;
-}
-
-.stat-card.active {
-  background: rgba(184, 160, 144, 0.08);
-}
-
-.stat-count {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--sr-text-primary, #1a1a2e);
-}
-
-.stat-label {
-  font-size: 13px;
-  color: var(--sr-text-muted, #94a3b8);
-  margin-top: 4px;
-}
-
-/* 工具栏 */
-.toolbar {
+.page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  gap: 12px;
-  flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
-.filter-tabs {
+.header-info {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
 }
 
-.filter-tab {
-  padding: 8px 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: var(--sr-glass-bg, rgba(255, 255, 255, 0.6));
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--sr-text-primary, #1a1a2e);
+}
+
+.page-count {
   font-size: 13px;
   color: var(--sr-text-muted, #94a3b8);
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.filter-tab:hover {
-  border-color: rgba(184, 160, 144, 0.3);
-  color: var(--sr-accent-star, #b8a090);
-}
-
-.filter-tab.active {
-  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
-  color: white;
-  border-color: transparent;
-}
-
-.trigger-btn {
+.new-task-btn {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
   background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
-  color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
+  color: white;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(184, 160, 144, 0.25);
 }
 
-.trigger-btn svg {
-  width: 16px;
-  height: 16px;
+.filter-bar {
+  margin-bottom: 16px;
 }
 
-/* 列表状态 */
-.loading-state,
-.error-state,
-.empty-state {
-  padding: 48px;
-  text-align: center;
+.filter-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(200, 195, 188, 0.25);
+  border-radius: 20px;
   color: var(--sr-text-muted, #94a3b8);
-  font-size: 15px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.error-state {
-  color: var(--sr-morandi-pink, #d4b8b8);
+.filter-chip.active {
+  background: rgba(184, 160, 144, 0.15);
+  border-color: rgba(184, 160, 144, 0.3);
+  color: var(--sr-morandi-purple, #b3a8b8);
+  font-weight: 600;
 }
 
-.empty-icon {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 12px;
-}
-
-.loading-icon {
-  width: 24px;
-  height: 24px;
-  margin-right: 8px;
-}
-
-/* 任务列表 */
 .task-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-.task-card-glass {
+.task-item-glass {
   border-radius: 16px;
 }
 
-.task-card {
+.task-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
   padding: 16px 20px;
 }
@@ -689,125 +475,101 @@ onMounted(() => {
   min-width: 0;
 }
 
-.task-id {
-  font-size: 12px;
-  color: var(--sr-text-muted, #94a3b8);
-  font-family: monospace;
-  margin-bottom: 2px;
+.task-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
 }
 
 .task-name {
+  margin: 0;
   font-size: 15px;
   font-weight: 600;
   color: var(--sr-text-primary, #1a1a2e);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.task-status {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.task-status.running {
+  background: rgba(168, 179, 168, 0.2);
+  color: #6a8a6a;
+}
+
+.task-status.paused {
+  background: rgba(212, 196, 176, 0.2);
+  color: #a89070;
+}
+
+.task-status.completed {
+  background: rgba(157, 170, 184, 0.2);
+  color: #5a7a9a;
+}
+
+.task-status.failed {
+  background: rgba(212, 184, 184, 0.2);
+  color: #a87070;
+}
+
+.task-status.pending {
+  background: rgba(200, 195, 188, 0.2);
+  color: #94a3b8;
+}
+
+.task-desc {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--sr-text-muted, #94a3b8);
+  line-height: 1.5;
 }
 
 .task-meta {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--sr-text-muted, #94a3b8);
 }
 
-.task-type {
-  background: rgba(184, 160, 144, 0.1);
-  color: var(--sr-accent-star, #b8a090);
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-weight: 500;
-}
-
-.task-status {
-  flex-shrink: 0;
-}
-
-.status-badge {
-  display: inline-flex;
+.meta-item {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 20px;
+  gap: 4px;
   font-size: 12px;
-  font-weight: 600;
-}
-
-.status-badge.pending {
-  background: rgba(154, 168, 184, 0.12);
-  color: var(--sr-morandi-blue, #9aa8b8);
-}
-
-.status-badge.running {
-  background: rgba(184, 160, 144, 0.12);
-  color: var(--sr-accent-star, #b8a090);
-}
-
-.status-badge.completed {
-  background: rgba(168, 179, 168, 0.12);
-  color: var(--sr-morandi-green, #a8b3a8);
-}
-
-.status-badge.failed {
-  background: rgba(212, 184, 184, 0.12);
-  color: var(--sr-morandi-pink, #d4b8b8);
-}
-
-.status-badge.cancelled {
-  background: rgba(148, 163, 184, 0.12);
   color: var(--sr-text-muted, #94a3b8);
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
 }
 
 .task-actions {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
 .action-btn {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 10px;
-  color: #64748b;
+  background: rgba(0, 0, 0, 0.04);
+  border: none;
+  border-radius: 8px;
+  color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .action-btn:hover {
-  background: rgba(184, 160, 144, 0.1);
-  border-color: rgba(184, 160, 144, 0.2);
-  color: var(--sr-accent-star, #b8a090);
+  background: rgba(184, 160, 144, 0.12);
+  color: var(--sr-morandi-purple, #b3a8b8);
 }
 
 .action-btn.danger:hover {
-  background: rgba(212, 184, 184, 0.1);
-  border-color: rgba(212, 184, 184, 0.2);
-  color: var(--sr-morandi-pink, #d4b8b8);
-}
-
-.action-btn.retry:hover {
-  background: rgba(168, 179, 168, 0.1);
-  border-color: rgba(168, 179, 168, 0.2);
-  color: var(--sr-morandi-green, #a8b3a8);
-}
-
-.action-btn svg {
-  width: 16px;
-  height: 16px;
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
 }
 
 /* 弹窗 */
@@ -817,217 +579,106 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 1100;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 200;
   padding: 24px;
 }
 
-.modal-glass {
-  width: 90%;
+.modal-card {
+  width: 100%;
   max-width: 520px;
-  max-height: 85vh;
-  overflow-y: auto;
-  border-radius: 24px;
-}
-
-.trigger-modal,
-.detail-modal {
+  background: var(--sr-bg-primary, #f8f6f3);
+  border-radius: 20px;
   padding: 28px;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.close-btn {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.05);
-  border: none;
-  border-radius: 10px;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.close-btn:hover {
-  background: rgba(212, 184, 184, 0.1);
-  color: var(--sr-morandi-pink, #d4b8b8);
-  transform: rotate(90deg);
-}
-
-.close-btn svg {
-  width: 20px;
-  height: 20px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12);
 }
 
 .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   max-height: 60vh;
   overflow-y: auto;
 }
 
-.modal-body.loading,
-.modal-body.error {
-  text-align: center;
-  padding: 32px;
-}
-
-.modal-body.error {
-  color: var(--sr-morandi-pink, #d4b8b8);
-}
-
 .form-group {
-  margin-bottom: 18px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.lg-input {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-  color: #1e293b;
-  outline: none;
-  transition: all 0.2s;
-  box-sizing: border-box;
-}
-
-.lg-input:focus {
-  border-color: var(--sr-accent-star, #b8a090);
-  box-shadow: 0 0 0 3px rgba(184, 160, 144, 0.1);
-}
-
-.json-input {
-  font-family: monospace;
-  font-size: 13px;
-}
-
-.modal-footer {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.lg-btn {
-  padding: 10px 20px;
-  border-radius: 10px;
-  border: none;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  background: transparent;
-  color: var(--sr-text-primary, #1a1a2e);
-  transition: all 0.2s;
-}
-
-.lg-btn-primary {
-  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
-  color: white;
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 6px;
 }
 
-.lg-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* 详情 */
-.detail-row {
-  display: flex;
-  gap: 16px;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-  align-items: flex-start;
-}
-
-.detail-label {
-  width: 80px;
-  flex-shrink: 0;
+.form-group label {
   font-size: 13px;
   font-weight: 600;
+  color: var(--sr-text-primary, #1a1a2e);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-hint {
+  font-size: 12px;
   color: var(--sr-text-muted, #94a3b8);
 }
 
-.detail-value {
-  flex: 1;
-  font-size: 14px;
+.modal-title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--sr-text-primary, #1a1a2e);
-  word-break: break-all;
 }
 
-.detail-json {
-  flex: 1;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 12px;
-  font-family: monospace;
-  color: #4a4a5a;
-  overflow-x: auto;
-  white-space: pre-wrap;
-  word-break: break-all;
-  margin: 0;
+.modal-placeholder {
+  padding: 40px;
+  text-align: center;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
-.error-json {
-  color: var(--sr-morandi-pink, #d4b8b8);
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
 }
 
-/* 动画 */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 10px;
+  color: var(--sr-text-muted, #94a3b8);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .modal-enter-active,
 .modal-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
-  transform: scale(0.9);
-}
-
-@media (max-width: 640px) {
-  .task-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 </style>

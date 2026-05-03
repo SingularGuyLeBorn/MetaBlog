@@ -17,6 +17,7 @@ import { CORE_TOOL_NAMES } from '@/theme/tools'
 import type { ChatMessage, ChatSession, MessageAttachment, MessageGroup, SessionConfig, ThinkingStep, ToolCallRecord } from '@/theme/types'
 import { calculateUsagePercent, estimateChatTokens, estimateTextTokens, formatTokenCount, getUsageStatus } from '@/theme/utils/tokenEstimator'
 import { computed, ref, watch } from 'vue'
+import { useBatchResultStore } from './batchResultStore'
 import { useStreamStore } from './streamStore'
 import { useToolStore } from './toolStore'
 
@@ -35,7 +36,8 @@ const sessions = ref<ChatSession[]>([])
 const currentSessionId = ref<string | null>(null)
 // 按会话存储消息组(支持版本)
 const messageGroups = ref<Record<string, MessageGroup[]>>({})
-const isStreaming = ref(false)
+const streamingSessions = ref<Record<string, boolean>>({})
+const isStreaming = computed(() => streamingSessions.value[currentSessionId.value || ''] || false)
 const isInitialized = ref(false)
 // 每个会话独立的 AbortController(切换会话不中断)
 const sessionControllers = new Map<string, AbortController>()
@@ -237,7 +239,7 @@ export function useAIChat() {
     const groups = messageGroups.value[sessionId] || []
 
     // 如果当前会话正在流式输出,将消息加入队列并立即显示用户消息
-    if (isStreaming.value && sessionId === currentSessionId.value && !_isQueued) {
+    if (streamingSessions.value[sessionId] && !_isQueued) {
       const userMsg: ChatMessage = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         sessionId,
@@ -347,10 +349,8 @@ export function useAIChat() {
       syncCurrentMessages()
     }
 
-    // 只为当前会话设置 isStreaming
-    if (sessionId === currentSessionId.value) {
-      isStreaming.value = true
-    }
+    // 设置当前会话的流式状态
+    streamingSessions.value[sessionId] = true
 
     // 创建或获取当前会话的 AbortController
     let controller = sessionControllers.get(sessionId)
@@ -505,6 +505,26 @@ export function useAIChat() {
           },
           onToolCallComplete: (item) => {
             toolStore.completeToolCall(sessionId, groupId, item.id, item.result)
+
+            // 【批量结果抽屉】大量结果自动收纳,避免堆积在 MessageBubble
+            const result = item.result
+            if (result && typeof result === 'object' && result.success) {
+              const resultStr = typeof result.data === 'string'
+                ? result.data
+                : JSON.stringify(result.data, null, 2)
+              const isBulkTool = item.name.includes('search') || item.name.includes('list') || item.name.includes('batch') || item.name.includes('create') || item.name.includes('append')
+              const isLargeResult = resultStr.length > 3000 || (Array.isArray(result.data) && result.data.length > 10)
+              if (isBulkTool && isLargeResult) {
+                const batchStore = useBatchResultStore()
+                batchStore.addItem({
+                  title: result.message || `${item.name} 结果`,
+                  type: item.name.includes('search') ? 'search' : item.name.includes('doc') || item.name.includes('wiki') ? 'document' : 'generic',
+                  content: resultStr,
+                  summary: `${Array.isArray(result.data) ? result.data.length + ' 条' : resultStr.length + ' 字符'}`,
+                  meta: { tool: item.name, duration: String(item.duration || 0) + 'ms' }
+                })
+              }
+            }
           },
           onComplete: () => {
             const currentProxyGroups = messageGroups.value[sessionId]
@@ -518,10 +538,8 @@ export function useAIChat() {
               model: config.model,
               toolRecords  // 保存工具调用记录到消息
             }
-            // 只有当前会话才更新全局 isStreaming
-            if (sessionId === currentSessionId.value) {
-              isStreaming.value = false
-            }
+            // 重置当前会话的流式状态
+            streamingSessions.value[sessionId] = false
             storage.saveMessageGroups(sessionId, currentProxyGroups)
             // 清理 controller
             sessionControllers.delete(sessionId)
@@ -586,10 +604,8 @@ export function useAIChat() {
               toolRecords,
               error: errorMessage
             }
-            // 只有当前会话才更新全局 isStreaming
-            if (sessionId === currentSessionId.value) {
-              isStreaming.value = false
-            }
+            // 重置当前会话的流式状态
+            streamingSessions.value[sessionId] = false
             // 清理 controller
             sessionControllers.delete(sessionId)
             storage.saveMessageGroups(sessionId, currentProxyGroups)
@@ -707,10 +723,8 @@ export function useAIChat() {
       return true
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
-      // 只有当前会话才更新全局 isStreaming
-      if (sessionId === currentSessionId.value) {
-        isStreaming.value = false
-      }
+      // 重置当前会话的流式状态
+      streamingSessions.value[sessionId] = false
       // 清理 controller
       sessionControllers.delete(sessionId)
 
@@ -755,7 +769,7 @@ export function useAIChat() {
 
   // ==================== 重新生成(添加新版本)====================
   async function regenerateResponse(userMessageId?: string): Promise<boolean> {
-    if (!currentSessionId.value || isStreaming.value) return false
+    if (!currentSessionId.value || streamingSessions.value[currentSessionId.value]) return false
 
     const sessionId = currentSessionId.value
     const groups = messageGroups.value[sessionId]
@@ -793,7 +807,7 @@ export function useAIChat() {
     targetGroup.currentVersionIndex = targetGroup.aiVersions.length - 1
     newVersion.isActiveVersion = true
 
-    isStreaming.value = true
+    streamingSessions.value[sessionId] = true
     const versionIndex = targetGroup.aiVersions.length - 1
 
     // 同步 currentMessages 反映新版本
@@ -911,7 +925,7 @@ export function useAIChat() {
           onComplete: () => {
             targetGroup.aiVersions[versionIndex].status = 'completed'
             targetGroup.aiVersions[versionIndex].updatedAt = Date.now()
-            isStreaming.value = false
+            streamingSessions.value[sessionId] = false
             storage.saveMessageGroups(sessionId, groups)
             syncCurrentMessages()
             streamStore.completeStream(sessionId)
@@ -929,14 +943,14 @@ export function useAIChat() {
             targetGroup.aiVersions[versionIndex].status = 'error'
             targetGroup.aiVersions[versionIndex].content = `错误：${err.message}`
             targetGroup.aiVersions[versionIndex].updatedAt = Date.now()
-            isStreaming.value = false
+            streamingSessions.value[sessionId] = false
             storage.saveMessageGroups(sessionId, groups)
             syncCurrentMessages()
             streamStore.errorStream(sessionId, err)
           }
         },
         undefined,  // signal
-        100,        // maxToolRounds
+        20,         // maxToolRounds
         sessionId,  // sessionId
         toolContext
       )
@@ -971,7 +985,7 @@ export function useAIChat() {
 
       return true
     } catch (err) {
-      isStreaming.value = false
+      streamingSessions.value[sessionId] = false
       return false
     }
   }
@@ -1107,10 +1121,8 @@ export function useAIChat() {
       sessionControllers.delete(targetSessionId)
     }
 
-    // 只有当前会话才更新全局 isStreaming
-    if (targetSessionId === currentSessionId.value) {
-      isStreaming.value = false
-    }
+    // 重置目标会话的流式状态
+    streamingSessions.value[targetSessionId] = false
 
     // 【Phase 1】通知流式状态机中断
     streamStore.interruptStream(targetSessionId)

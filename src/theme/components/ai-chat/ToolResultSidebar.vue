@@ -113,13 +113,14 @@ const isOpen = computed(() => !!toolStore.inspectedToolId.value)
 const toolItem = computed<ToolChainItem | null>(() => {
   const id = toolStore.inspectedToolId.value
   if (!id) return null
-  // 遍历所有 chain 查找 tool item
+  // 遍历所有 chain 查找 tool item（实时会话）
   for (const key of Object.keys(toolStore.toolChains.value)) {
     const chain = toolStore.toolChains.value[key]
     const item = chain?.items.find(i => i.id === id)
     if (item) return item
   }
-  return null
+  // 找不到则使用 fallback（历史消息）
+  return toolStore.inspectedToolData.value || null
 })
 
 const resultView = computed<ToolResultView | null>(() => {

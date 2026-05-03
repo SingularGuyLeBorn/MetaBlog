@@ -1026,7 +1026,7 @@ export const aiService = {
     config: SessionConfig,
     callbacks: StreamCallbacks,
     signal?: AbortSignal,
-    maxToolRounds: number = 100,
+    maxToolRounds: number = 20,
     sessionId?: string,
     toolContext?: {
       agentId?: string

@@ -23,18 +23,7 @@
           <span class="gradient-text">AI 助手</span>
         </h1>
         <p class="welcome-desc">基于 DeepSeek 大模型,为您提供专业智能对话体验</p>
-        <div class="quick-actions">
-          <button
-            v-for="(action, index) in quickActions"
-            :key="action.text"
-            class="quick-action-btn"
-            :style="{ animationDelay: `${index * 0.1}s` }"
-            @click="$emit('use-prompt', action.text)"
-          >
-            <span class="action-icon">{{ action.icon }}</span>
-            <span class="action-text">{{ action.text }}</span>
-          </button>
-        </div>
+        <!-- 快捷提示已移除 -->
       </div>
 
       <!-- 消息列表 -->
@@ -154,12 +143,6 @@ function teardownMessageObserver() {
   observedElements.clear()
 }
 
-const quickActions = [
-  { icon: '📝', text: '帮我写一篇技术博客' },
-  { icon: '💻', text: '解释这段代码的作用' },
-  { icon: '🐛', text: '帮我调试这个错误' },
-  { icon: '📚', text: '总结这篇文章要点' }
-]
 
 function isNearBottom(): boolean {
   const container = containerRef.value

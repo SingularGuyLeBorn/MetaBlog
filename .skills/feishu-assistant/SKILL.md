@@ -377,6 +377,57 @@ feishuWikiMemberAdd(space_id="xxx", member_id="ou_xxx", perm="view")  # 添加�
 feishuUserSearch(email="zhangsan@company.com")
 ```
 
+## 输出约束(⚠️ 必须严格遵守)
+
+### 禁止大段输出到 MessageBubble
+
+**绝不允许**将工具返回的原始数据(文档列表、搜索结果、用户列表、块结构等)直接复制粘贴到对话消息中. 
+
+✅ **正确做法**：
+- 用 **一句话摘要** 报告结果(如"已创建文档并写入 3 个内容块"、"找到 5 篇匹配文档")
+- 详细数据已通过工具返回,用户可在右侧抽屉查看
+- 如需引用具体数据,只摘取最关键的一两条
+
+❌ **错误做法**：
+- 把 `feishuDocBlocks` 返回的 50 个 block 逐行列出
+- 把 `feishuDocSearch` 返回的 20 条结果全部粘贴到消息里
+- 把 `feishuUserSearch` 返回的用户 JSON 直接输出
+
+### 任务进度记录
+
+涉及多步骤的操作(创建文档→追加内容→分享权限),**必须在每步完成后记录当前进度**：
+
+```
+[进度] 步骤 1/3: 文档已创建 → document_id: xxx
+[进度] 步骤 2/3: 内容已追加 → 写入 15 个块
+[进度] 步骤 3/3: 权限已分享 → 3 位用户获得访问权
+```
+
+如果某一步失败,记录失败位置和原因,不要静默跳过或从头重来. 
+
+## 错误码精确映射(⚠️ 必须根据 code 精准处理)
+
+工具返回的错误结果中包含 `code` 和 `details` 字段. `details` 中可能有 `field`(具体参数名)和 `fieldMessage`(具体原因). 
+
+| 错误码 | 精确含义 | 常见触发场景 | 处理方式 |
+|--------|---------|-------------|---------|
+| `1770001` | 参数不合法 | block_type 与内容不匹配、content 格式错误、缺少必填参数 | 检查 `details.field` 指出哪个参数有问题,对照 API 文档修正 |
+| `1770002` | 文档/块不存在 | document_id 或 block_id 错误 | 确认 ID 是否正确,文档是否被删除 |
+| `1770003` | 无权限访问文档 | 文档未分享给当前用户/应用 | 检查文档权限或改用 user_access_token |
+| `1770032` | 块内容为空 | 所有 elements 被过滤掉或 text_run.content 为空 | 检查 content 是否为空字符串或只有空格 |
+| `1770033` | 单个文本块超 10000 字符 | 单个 text_run.content 太长 | 拆分内容,使用多个段落 |
+| `1770034` | 单次请求块数超 50 | blocks 数组长度 > 50 | 分批写入,每批不超过 50 个 |
+| `99991661` | 缺少必填参数 | 请求体缺少必填字段 | 检查 `details.fieldViolations` 中缺失的字段 |
+| `99991662` | 参数类型错误 | 传了字符串但 API 要求数字/数组 | 检查 `details.field` 和 `details.expected` |
+| `99991679` | 缺少 scope 权限 | 当前 token 没有该 API 的权限 | 开发者后台开通权限 → 重新授权 → 换 token |
+| `99991677` | access_token 过期 | token 超过有效期 | 后端自动刷新,或手动调用 `feishuTokenRefresh()` |
+| `131006` | Wiki 需要 user_access_token | 用 tenant token 操作 Wiki | 改用 user_access_token 或传 `use_user_token=true` |
+
+**处理原则**：
+1. 先读 `code`,再读 `details.field` 和 `details.fieldMessage`
+2. 如果 `details` 包含具体参数名,在错误报告中明确指出(如"参数 `blocks[0].block_type` 不合法")
+3. 不要只报告"参数不合法",必须定位到具体参数
+
 ## 注意事项
 - **更新/删除前必须先获取块结构**：飞书 API 要求知道块在文档中的位置
 - **追加内容**：使用 `feishuDocAppend`,可以传 `content`(纯文本字符串,自动分段)或 `blocks`(飞书块格式数组)

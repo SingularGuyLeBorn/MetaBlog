@@ -23,7 +23,7 @@
 
 import type { ToolDefinition, ToolResult } from '@/theme/tools/types'
 import { createErrorResult, createSuccessResult } from '@/theme/tools/types'
-import { markdownToBlocks } from './markdown-to-blocks'
+import { markdownToBlocks, markdownToBlocksWithDiagnostics } from './markdown-to-blocks'
 
 /** 飞书 API 代理基础路径 */
 const API_BASE = '/api/lark'
@@ -88,6 +88,8 @@ async function larkApi(method: string, path: string, body?: any, query?: Record<
   }
   const data = await res.json()
   if (!data.code && !res.ok) data.code = res.status
+  // 后端 translateLarkError 已经把 details 精确拼接到 msg 中了，
+  // 前端不需要再追加，避免信息重复/冗长。
   return data
 }
 
@@ -408,13 +410,36 @@ export const feishuDocAppend = async (args: Record<string, any>): Promise<ToolRe
   const QPS_DELAY_MS = 400
 
   let allBlocks = blocks
+  let conversionDiagnostics: any = null
   if (!allBlocks && content) {
-    allBlocks = markdownToBlocks(String(content))
+    const conversion = markdownToBlocksWithDiagnostics(String(content))
+    allBlocks = conversion.blocks
+    conversionDiagnostics = conversion
     allBlocks = splitLongTextRuns(allBlocks, MAX_CHARS_PER_BLOCK)
   }
 
   if (!allBlocks || !Array.isArray(allBlocks) || allBlocks.length === 0) {
-    return createErrorResult('Missing blocks or content', '缺少内容', '请提供 blocks 或 content')
+    let errorMsg = 'Markdown 转换结果为空，未生成任何可写入的 block'
+    let suggestion = '请检查 content 内容是否为空或只包含不可见字符'
+    if (conversionDiagnostics) {
+      const d = conversionDiagnostics
+      const parts: string[] = []
+      if (d.warnings && d.warnings.length > 0) {
+        parts.push(`转换警告(${d.warnings.length} 条): ${d.warnings.slice(0, 5).join('; ')}`)
+      }
+      if (d.stats) {
+        parts.push(`输入长度 ${d.stats.inputLength} 字符，生成 ${d.stats.outputBlockCount} 个 block，过滤掉 ${d.stats.emptyBlockCount} 个空 block`)
+      }
+      if (d.unrecognizedFormats && d.unrecognizedFormats.length > 0) {
+        const u = d.unrecognizedFormats[0]
+        parts.push(`无法识别的格式: 第 ${u.lineNumber} 行 "${u.content}" — ${u.reason}`)
+      }
+      if (parts.length > 0) {
+        errorMsg = parts.join(' | ')
+        suggestion = '请检查 Markdown 语法：1) 段落顶格写，行首不要有空格；2) 列表用 "- " 开头；3) 标题用 "# " 后接空格；4) 避免使用 HTML 标签'
+      }
+    }
+    return createErrorResult(errorMsg, '缺少可写入的内容', suggestion)
   }
 
   const totalBlocks = allBlocks.length
@@ -431,10 +456,11 @@ export const feishuDocAppend = async (args: Record<string, any>): Promise<ToolRe
         const code = result.code
         let reason = result.msg || '未知错误'
         let suggestion = `错误码: ${code}`
-        if (code === 1770033) { reason = '单个文本块内容超过 10000 字符限制'; suggestion = '请缩短单段文本长度' }
-        else if (code === 1770034) { reason = '单次请求块数量超过 50 个限制'; suggestion = '请减少 blocks 数量' }
-        else if (code === 99992402) { reason = '请求字段校验失败'; suggestion = '检查内容长度和块数' }
-        else if (code === 1770029) { reason = '不支持创建该类型的块'; suggestion = '使用支持的 block_type' }
+        // 保留 result.msg（已包含后端翻译的精确字段信息），只覆盖 suggestion
+        if (code === 1770033) { suggestion = '请缩短单段文本长度，或拆分内容到多个段落' }
+        else if (code === 1770034) { suggestion = '请减少单次请求的 blocks 数量，feishuDocAppend 会自动分批' }
+        else if (code === 99992402) { suggestion = '检查内容长度、块数和字段格式是否符合飞书 API 要求' }
+        else if (code === 1770029) { suggestion = '使用支持的 block_type（2=text, 3-11=heading1-9, 12=bullet, 13=ordered, 14=code, 15=quote, 17=todo, 22=divider, 27=image, 31=table, 32=table_cell）' }
         return createErrorResult(reason, `追加内容失败：第 ${batchIndex + 1}/${totalBatches} 批写入出错(已写入 ${appendedCount}/${totalBlocks} 块)`, suggestion)
       }
       appendedCount += batch.length

@@ -338,7 +338,7 @@ export const skillIntegratedService = {
       enhancedConfig,
       callbacks,
       signal,
-      100, // maxToolRounds
+      20,  // maxToolRounds
       sessionId,
       {
         // 渐进式披露：默认只暴露核心工具,领域工具通过 search/load 动态激活

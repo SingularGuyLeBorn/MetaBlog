@@ -3,7 +3,7 @@
     <!-- 头部 -->
     <div class="config-header">
       <div class="header-title">
-        <Icon name="cpu" class="title-icon" />
+        <Icon name="plug" class="title-icon" />
         <div>
           <h2 class="title-text">MCP 配置</h2>
           <p class="title-desc">模型上下文协议(Model Context Protocol)设置</p>
@@ -120,12 +120,16 @@
             <span class="setting-label">日志级别</span>
             <span class="setting-desc">MCP 客户端日志详细程度</span>
           </div>
-          <select v-model="settings.logLevel" class="lg-input">
-            <option value="debug">Debug</option>
-            <option value="info">Info</option>
-            <option value="warn">Warning</option>
-            <option value="error">Error</option>
-          </select>
+          <DropdownSelect
+            v-model="settings.logLevel"
+            :options="[
+              { value: 'debug', label: 'Debug' },
+              { value: 'info', label: 'Info' },
+              { value: 'warn', label: 'Warning' },
+              { value: 'error', label: 'Error' }
+            ]"
+            placeholder="选择日志级别"
+          />
         </div>
       </div>
     </LiquidGlass>
@@ -237,7 +241,7 @@
 </template>
 
 <script setup lang="ts">
-import { Icon, LiquidGlass } from '@/theme/components/common'
+import { DropdownSelect, Icon, LiquidGlass } from '@/theme/components/common'
 import { ref, onMounted } from 'vue'
 
 interface MCPServer {

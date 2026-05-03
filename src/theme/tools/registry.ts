@@ -299,13 +299,23 @@ export async function executeToolWithRecord(
 
     return { result, record, injectMessages: result.injectMessages, activateTools: result.activateTools }
   } catch (error: any) {
-    // 更新记录为错误状态
+    // 更新记录为错误状态 — 保留完整错误结构(不只是 message)
     record.status = 'error'
-    record.error = error?.message || String(error)
+    const errorStr = error?.message || String(error)
+    record.error = errorStr
     record.endTime = Date.now()
 
+    const errResult = createErrorResult(
+      errorStr,
+      `执行操作 "${name}" 时发生错误`,
+      error?.suggestion || '请稍后重试,或联系管理员',
+      error?.code,
+      error?.details
+    )
+    record.result = errResult
+
     return {
-      result: createErrorResult(record.error || 'Unknown error'),
+      result: errResult,
       record,
       injectMessages: undefined,
       activateTools: undefined

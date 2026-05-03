@@ -112,14 +112,13 @@
                     class="param-input"
                   />
                   <!-- 枚举类型 -->
-                  <select
+                  <DropdownSelect
                     v-else-if="param.enum"
                     v-model="params[key]"
-                    class="param-select"
-                  >
-                    <option value="">请选择...</option>
-                    <option v-for="opt in param.enum" :key="opt" :value="opt">{{ opt }}</option>
-                  </select>
+                    :options="[{ value: '', label: '请选择...' }, ...param.enum.map((opt) => ({ value: opt, label: opt }))]"
+                    placeholder="请选择..."
+                    size="small"
+                  />
                   <!-- 数字类型 -->
                   <input
                     v-else-if="param.type === 'number' || param.type === 'integer'"
@@ -294,6 +293,7 @@
 </template>
 
 <script setup>
+import { DropdownSelect } from '@/theme/components/common'
 import { executeTool as executeRealTool, hasTool } from '@/theme/tools'
 import { computed, reactive, ref, watch } from 'vue'
 

@@ -227,7 +227,13 @@ async function loadLogs() {
     const res = await fetch(url)
     const json = await res.json()
     if (json.success) {
-      logs.value = json.data || []
+      let items = json.data || []
+      // 前端兜底过滤：确保 level 筛选生效
+      if (levelFilter.value) {
+        const lf = levelFilter.value.toLowerCase()
+        items = items.filter((log: LogEntry) => (log.level || '').toLowerCase() === lf)
+      }
+      logs.value = items
     } else {
       error.value = json.message || '加载失败'
     }

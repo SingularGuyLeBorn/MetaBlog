@@ -11,5 +11,8 @@
 
 export {
   ocrImage, ocrImageDef, readArticle, readArticleDef
-} from './generic';
+} from './generic'
+export {
+  generateImage, generateImageDef
+} from './image'
 

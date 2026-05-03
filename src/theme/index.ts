@@ -12,54 +12,41 @@
 import { createPinia } from "pinia";
 import type { Theme } from "vitepress";
 import DefaultTheme from "vitepress/theme";
-import { h } from "vue";
+import { defineAsyncComponent, h } from "vue";
 import Layout from "./Layout.vue";
 import "./style.css";
 import "./styles/animations.css";
 
-// ========== Pages ==========
-import AboutPage from "./components/pages/AboutPage.vue";
-import ChatPage from "./components/pages/ChatPage.vue";
+// ========== 首屏必需组件（同步加载） ==========
 import HomePage from "./components/pages/HomePage.vue";
-import KnowledgePage from "./components/pages/KnowledgePage.vue";
-import PostsPage from "./components/pages/PostsPage.vue";
-import ResourcesPage from "./components/pages/ResourcesPage.vue";
-
-// ========== Features ==========
-// Chat
-import { ChatLayout } from "./components/ai-chat";
-
-// Editor
-import EditFab from "./components/editor/EditFab.vue";
-
-// ========== Shared Components ==========
-// Layout
 import Breadcrumb from "./components/common/Breadcrumb.vue";
 import GlobalSidebar from "./components/common/GlobalSidebar.vue";
 import TocFab from "./components/common/TocFab.vue";
 import TocSidebar from "./components/common/TocSidebar.vue";
-
-// UI
-import AnimatedButton from "./components/common/AnimatedButton.vue";
-import AnimatedContainer from "./components/common/AnimatedContainer.vue";
-
-// Home
-import HomePortal from "./components/pages/HomePortal.vue";
-import SectionHero from "./components/pages/SectionHero.vue";
-import SectionHub from "./components/pages/SectionHub.vue";
-
-// KB Features
-import InlineMarkdownEditor from "./components/features/InlineMarkdownEditor.vue";
-import KnowledgeGraph from "./components/features/KnowledgeGraph.vue";
-import RAGSearch from "./components/features/RAGSearch.vue";
-
-// Dashboards
 import { ArticleCards, SectionIndex } from "./components/common";
-import AboutProfile from "./components/common/AboutProfile.vue";
 
-// Legacy
-import ControlCenter from "./components/common/ControlCenter.vue";
-import FullScreenPanel from "./components/common/FullScreenPanel.vue";
+// ========== 异步加载的大组件 ==========
+const AICenterPage = defineAsyncComponent(() => import("./components/pages/AICenterPage.vue"));
+const ChatPage = defineAsyncComponent(() => import("./components/pages/ChatPage.vue"));
+const AboutPage = defineAsyncComponent(() => import("./components/pages/AboutPage.vue"));
+const KnowledgePage = defineAsyncComponent(() => import("./components/pages/KnowledgePage.vue"));
+const PostsPage = defineAsyncComponent(() => import("./components/pages/PostsPage.vue"));
+const ResourcesPage = defineAsyncComponent(() => import("./components/pages/ResourcesPage.vue"));
+
+const ChatLayout = defineAsyncComponent(() => import("./components/ai-chat/ChatLayout.vue").then(m => m.ChatLayout));
+const EditFab = defineAsyncComponent(() => import("./components/editor/EditFab.vue"));
+const InlineMarkdownEditor = defineAsyncComponent(() => import("./components/features/InlineMarkdownEditor.vue"));
+const KnowledgeGraph = defineAsyncComponent(() => import("./components/features/KnowledgeGraph.vue"));
+const RAGSearch = defineAsyncComponent(() => import("./components/features/RAGSearch.vue"));
+
+const HomePortal = defineAsyncComponent(() => import("./components/pages/HomePortal.vue"));
+const SectionHero = defineAsyncComponent(() => import("./components/pages/SectionHero.vue"));
+const SectionHub = defineAsyncComponent(() => import("./components/pages/SectionHub.vue"));
+
+const AnimatedContainer = defineAsyncComponent(() => import("./components/common/AnimatedContainer.vue"));
+const AnimatedButton = defineAsyncComponent(() => import("./components/common/AnimatedButton.vue"));
+const AboutProfile = defineAsyncComponent(() => import("./components/common/AboutProfile.vue"));
+const FullScreenPanel = defineAsyncComponent(() => import("./components/common/FullScreenPanel.vue"));
 
 export default {
   extends: DefaultTheme,
@@ -102,9 +89,9 @@ export default {
 
     // ========== Register Dashboards ==========
     app.component("AboutProfile", AboutProfile);
+    app.component("AICenterPage", AICenterPage);
 
     // ========== Register Legacy ==========
-    app.component("ControlCenter", ControlCenter);
     app.component("FullScreenPanel", FullScreenPanel);
 
     // ========== Register Section Components ==========

@@ -66,20 +66,125 @@ const CODE_FENCE_RE = /^```(.*)$/
 // ============================================================
 
 /**
- * 将 Markdown 字符串转换为飞书 block 数组
+ * Markdown 转换诊断结果
+ */
+export interface MarkdownConversionResult {
+  blocks: any[]
+  warnings: string[]
+  stats: {
+    inputLength: number
+    outputBlockCount: number
+    emptyBlockCount: number
+    textBlockCount: number
+    headingBlockCount: number
+    listBlockCount: number
+    codeBlockCount: number
+    tableBlockCount: number
+    dividerBlockCount: number
+  }
+  /** 每个 block 对应的原始 Markdown 行号映射 */
+  lineMap: Array<{ blockIndex: number; blockType: number; startLine: number; endLine: number }>
+  /** 无法识别/降级处理的 Markdown 格式 */
+  unrecognizedFormats: Array<{ lineNumber: number; content: string; reason: string }>
+}
+
+/**
+ * 将 Markdown 字符串转换为飞书 block 数组（带详细诊断）
  *
- * 执行流程：输入清洗 → 块级解析 → 合并相邻纯文本碎片. 
- * 合并步骤可减少飞书 API 接收的 element 数量,提升写入效率. 
+ * 执行流程：输入验证 → 输入清洗 → 块级解析 → 合并相邻纯文本碎片 → 诊断报告
+ * 合并步骤可减少飞书 API 接收的 element 数量,提升写入效率.
+ *
+ * @param markdown - 原始 Markdown 文本
+ * @returns 转换结果，包含 blocks 数组和 warnings 诊断信息
+ * @throws 当输入严重非法时抛出错误（含详细原因）
+ */
+export function markdownToBlocksWithDiagnostics(markdown: string): MarkdownConversionResult {
+  const warnings: string[] = []
+  const unrecognizedFormats: Array<{ lineNumber: number; content: string; reason: string }> = []
+
+  // 1. 输入验证
+  if (markdown === undefined || markdown === null) {
+    throw new Error('Markdown 转换失败: 输入为 null 或 undefined')
+  }
+  if (typeof markdown !== 'string') {
+    throw new Error(`Markdown 转换失败: 输入类型应为 string，实际得到 ${typeof markdown}`)
+  }
+  if (markdown.length === 0) {
+    warnings.push('输入为空字符串，未生成任何 block')
+  }
+  if (markdown.length > 500000) {
+    warnings.push(`输入长度 ${markdown.length} 超过 500000 字符安全阈值，可能导致性能问题`)
+  }
+
+  // 2. 输入清洗
+  const cleaned = cleanInput(markdown)
+  if (cleaned.length === 0 && markdown.length > 0) {
+    warnings.push('输入清洗后为空（可能只包含不可见字符如 BOM、零宽字符）')
+  }
+
+  // 3. 块级解析（带行号信息）
+  let parsed: Array<{ block: any; startLine: number; endLine: number; isFallback: boolean }>
+  try {
+    parsed = parseBlocksWithLineNumbers(cleaned, unrecognizedFormats)
+  } catch (e: any) {
+    throw new Error(`Markdown 块级解析失败: ${e?.message || String(e)}`)
+  }
+
+  const preFilterCount = parsed.length
+
+  // 4. 合并 + 过滤
+  const merged = parsed.map((p) => ({ ...p, block: mergeBlockTextElements(p.block) }))
+  const filtered: typeof merged = []
+  for (const item of merged) {
+    const empty = isEmptyBlock(item.block)
+    if (empty && item.block.block_type !== 22 && item.block.block_type !== 31) {
+      // 记录被过滤的空 block 类型及行号
+      warnings.push(`过滤空 block: type=${item.block.block_type || 'unknown'}, 行号 ${item.startLine}-${item.endLine}`)
+    }
+    if (!empty) {
+      filtered.push(item)
+    }
+  }
+
+  if (preFilterCount > 0 && filtered.length === 0) {
+    warnings.push('所有 block 都被过滤掉了。可能原因：1) 内容只包含不可见字符；2) 所有文本块内容为空；3) 不支持的格式被全部丢弃')
+  }
+
+  // 5. 构建行号映射
+  const lineMap = filtered.map((item, idx) => ({
+    blockIndex: idx,
+    blockType: item.block.block_type,
+    startLine: item.startLine,
+    endLine: item.endLine,
+  }))
+
+  // 6. 统计
+  const blocks = filtered.map((item) => item.block)
+  const stats = {
+    inputLength: markdown.length,
+    outputBlockCount: blocks.length,
+    emptyBlockCount: preFilterCount - filtered.length,
+    textBlockCount: blocks.filter((b: any) => b.block_type === 2).length,
+    headingBlockCount: blocks.filter((b: any) => [3,4,5,6,7,8,9,10,11].includes(b.block_type)).length,
+    listBlockCount: blocks.filter((b: any) => [12,13,17].includes(b.block_type)).length,
+    codeBlockCount: blocks.filter((b: any) => b.block_type === 14).length,
+    tableBlockCount: blocks.filter((b: any) => b.block_type === 31).length,
+    dividerBlockCount: blocks.filter((b: any) => b.block_type === 22).length,
+  }
+
+  return { blocks, warnings, stats, lineMap, unrecognizedFormats }
+}
+
+/**
+ * 将 Markdown 字符串转换为飞书 block 数组（兼容旧版，无诊断信息）
  *
  * @param markdown - 原始 Markdown 文本
  * @returns 飞书 block 结构数组
+ * @throws 转换失败时抛出详细错误
  */
 export function markdownToBlocks(markdown: string): any[] {
-  const cleaned = cleanInput(markdown)
-  const blocks = parseBlocks(cleaned)
-  return blocks
-    .map(mergeBlockTextElements)
-    .filter((block) => !isEmptyBlock(block))
+  const result = markdownToBlocksWithDiagnostics(markdown)
+  return result.blocks
 }
 
 /**
@@ -146,13 +251,24 @@ function cleanInput(text: string): string {
  * @param markdown - 清洗后的 Markdown 文本
  * @returns 块级元素数组
  */
-function parseBlocks(markdown: string): any[] {
+interface ParsedBlockWithLine {
+  block: any
+  startLine: number
+  endLine: number
+  isFallback: boolean
+}
+
+function parseBlocksWithLineNumbers(
+  markdown: string,
+  unrecognizedFormats: Array<{ lineNumber: number; content: string; reason: string }>
+): ParsedBlockWithLine[] {
   const lines = markdown.split('\n')
-  const blocks: any[] = []
+  const blocks: ParsedBlockWithLine[] = []
   let i = 0
 
   while (i < lines.length) {
     const line = lines[i]
+    const startLine = i + 1 // 1-based line number for user-facing display
 
     // 空行直接跳过
     if (!line || line.trim() === '') {
@@ -160,9 +276,13 @@ function parseBlocks(markdown: string): any[] {
       continue
     }
 
+    // 检测潜在的未知格式（不是任何已知块级元素开头，但看起来像某种格式）
+    const looksLikeFormat = detectPotentialFormat(line)
+
     try {
       const result = parseBlock(lines, i)
-      blocks.push(result.block)
+      const endLine = result.nextIndex // nextIndex is 0-based, endLine in user terms
+      blocks.push({ block: result.block, startLine, endLine, isFallback: false })
       i = result.nextIndex
     } catch {
       // 容错：解析失败降级为普通段落,避免单点错误阻断整个流程
@@ -172,14 +292,49 @@ function parseBlocks(markdown: string): any[] {
         paraLines.push(lines[i])
         i++
       }
+      const endLine = i
+      if (looksLikeFormat) {
+        unrecognizedFormats.push({
+          lineNumber: startLine,
+          content: line.slice(0, 100),
+          reason: `疑似 ${looksLikeFormat} 格式，但解析失败已降级为普通段落。请检查语法是否正确`,
+        })
+      }
       blocks.push({
-        block_type: 2,
-        text: { elements: [{ text_run: { content: paraLines.join('\n') } }] },
+        block: {
+          block_type: 2,
+          text: { elements: [{ text_run: { content: paraLines.join('\n') } }] },
+        },
+        startLine,
+        endLine,
+        isFallback: true,
       })
     }
   }
 
   return blocks
+}
+
+/**
+ * 检测一行是否像某种已知格式但语法可能错误
+ *
+ * 用于在降级为普通段落时给出警告，帮助用户发现格式问题.
+ */
+function detectPotentialFormat(line: string): string | undefined {
+  const trimmed = line.trim()
+  // 看起来像标题但 # 后没有空格
+  if (/^#{1,9}[^\s]/.test(trimmed)) return '标题(缺少 # 后的空格)'
+  // 看起来像列表但格式不对
+  if (/^(\s*)[\*\+]\s/.test(trimmed)) return '列表(用了 * 或 +，应使用 - )'
+  // 看起来像任务列表但格式不对
+  if (/^(\s*)-\s*\[[^ xX]\]/.test(trimmed)) return '任务列表(复选框格式错误，应为 [ ] 或 [x])'
+  // 看起来像代码块但没有闭合
+  if (/^```/.test(trimmed) && trimmed.length > 3) return '代码块(语法可能不完整)'
+  // 看起来像表格但缺少分隔行
+  if (/^\s*\|.*\|\s*$/.test(trimmed) && !isTableDivider(trimmed)) return '表格(可能缺少分隔行 |---|---|)'
+  // HTML 标签
+  if (/^\s*<[a-zA-Z][^>]*>/.test(trimmed)) return 'HTML 标签(飞书不支持 HTML，应使用 Markdown 语法)'
+  return undefined
 }
 
 /**

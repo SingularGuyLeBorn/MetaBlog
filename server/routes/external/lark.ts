@@ -12,7 +12,7 @@
 import type { ViteDevServer } from "vite";
 import { lark as larkEnv } from "../../config/env";
 import { rateLimitExternal } from "../../middleware/rate-limit";
-import { translateLarkError } from "../../utils/lark-error-translator";
+import { translateLarkError, extractErrorDetails } from "../../utils/lark-error-translator";
 import {
   getUserAccessToken,
   getTokenStatus,
@@ -162,10 +162,20 @@ function sendLarkResult(res: any, result: any) {
   if (result.code === 0) {
     sendJson(res, 200, result);
   } else {
-    const translated = translateLarkError(result.msg, result.code);
-    sendJson(res, 400, { code: result.code, msg: translated.message, suggestion: translated.suggestion, original: result });
+    // 传递完整原始响应，让翻译器提取字段级错误信息
+    const translated = translateLarkError(result.msg, result.code, result);
+    // 从原始响应中提取结构化错误详情(具体字段、期望值等)
+    const details = translated.details || extractErrorDetails(result);
+    sendJson(res, 400, {
+      code: result.code,
+      msg: translated.message,
+      suggestion: translated.suggestion,
+      details,
+      original: result
+    });
   }
 }
+
 
 
 /** 统一布尔值转换 */

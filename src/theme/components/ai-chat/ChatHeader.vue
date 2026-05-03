@@ -30,46 +30,6 @@
         :context-window="contextWindow"
       />
 
-      <button class="icon-btn" title="清空对话" @click="$emit('clear-messages')">
-        <Icon name="trash" :size="18" />
-      </button>
-
-      <!-- 更多操作 -->
-      <div class="more-menu" ref="moreMenuRef">
-        <button
-          class="icon-btn"
-          :class="{ active: showMoreMenu }"
-          title="更多"
-          @click="showMoreMenu = !showMoreMenu"
-        >
-          <Icon name="more-vertical" :size="18" />
-        </button>
-        <Transition name="dropdown">
-          <div v-if="showMoreMenu" class="more-dropdown">
-            <button class="dropdown-item" @click="handleGoHome">
-              <Icon name="home" :size="14" />
-              <span>返回首页</span>
-            </button>
-            <button
-              class="dropdown-item"
-              :class="{ active: showLogDashboard }"
-              @click="handleToggleLog"
-            >
-              <Icon name="terminal" :size="14" />
-              <span>日志监控</span>
-            </button>
-            <button
-              class="dropdown-item"
-              :class="{ active: showAgentAdmin }"
-              @click="handleOpenAgentAdminFromMenu"
-            >
-              <Icon name="sparkles" :size="14" />
-              <span>Agent 控制中心</span>
-            </button>
-          </div>
-        </Transition>
-      </div>
-
       <button class="icon-btn" title="设置" @click="$emit('toggle-right')">
         <Icon name="sliders" :size="18" />
       </button>
@@ -99,8 +59,6 @@ interface Props {
   contextWindow: number
   leftCollapsed: boolean
   rightCollapsed: boolean
-  showLogDashboard: boolean
-  showAgentAdmin: boolean
   sessionId?: string | null
 }
 
@@ -109,45 +67,7 @@ defineProps<Props>()
 const emit = defineEmits<{
   'toggle-left': []
   'toggle-right': []
-  'open-agent-admin': []
-  'go-home': []
-  'toggle-log-dashboard': []
-  'clear-messages': []
 }>()
-
-// 更多菜单
-const showMoreMenu = ref(false)
-const moreMenuRef = ref<HTMLElement>()
-
-function handleGoHome() {
-  showMoreMenu.value = false
-  emit('go-home')
-}
-
-function handleToggleLog() {
-  showMoreMenu.value = false
-  emit('toggle-log-dashboard')
-}
-
-function handleOpenAgentAdminFromMenu() {
-  showMoreMenu.value = false
-  emit('open-agent-admin')
-}
-
-// 点击外部关闭下拉框
-function handleClickOutside(e: MouseEvent) {
-  if (moreMenuRef.value && !moreMenuRef.value.contains(e.target as Node)) {
-    showMoreMenu.value = false
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
 </script>
 
 <style scoped>

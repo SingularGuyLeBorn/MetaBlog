@@ -209,13 +209,17 @@
             <div class="modal-body">
               <div class="form-group">
                 <label>目标目录 <span class="required">*</span></label>
-                <select v-model="copyTargetDir" class="form-select">
-                  <option value="">选择目录...</option>
-                  <option value="posts">posts/</option>
-                  <option value="sections/posts">sections/posts/</option>
-                  <option value="sections/knowledge">sections/knowledge/</option>
-                  <option value="sections/resources">sections/resources/</option>
-                </select>
+                <DropdownSelect
+                  v-model="copyTargetDir"
+                  :options="[
+                    { value: '', label: '选择目录...' },
+                    { value: 'posts', label: 'posts/' },
+                    { value: 'sections/posts', label: 'sections/posts/' },
+                    { value: 'sections/knowledge', label: 'sections/knowledge/' },
+                    { value: 'sections/resources', label: 'sections/resources/' }
+                  ]"
+                  placeholder="选择目标目录"
+                />
               </div>
             </div>
             <div class="modal-footer">
@@ -241,13 +245,17 @@
             <div class="modal-body">
               <div class="form-group">
                 <label>目标目录 <span class="required">*</span></label>
-                <select v-model="targetDir" class="form-select">
-                  <option value="">选择目录...</option>
-                  <option value="posts">posts/</option>
-                  <option value="sections/posts">sections/posts/</option>
-                  <option value="sections/knowledge">sections/knowledge/</option>
-                  <option value="sections/resources">sections/resources/</option>
-                </select>
+                <DropdownSelect
+                  v-model="targetDir"
+                  :options="[
+                    { value: '', label: '选择目录...' },
+                    { value: 'posts', label: 'posts/' },
+                    { value: 'sections/posts', label: 'sections/posts/' },
+                    { value: 'sections/knowledge', label: 'sections/knowledge/' },
+                    { value: 'sections/resources', label: 'sections/resources/' }
+                  ]"
+                  placeholder="选择目标目录"
+                />
               </div>
             </div>
             <div class="modal-footer">
@@ -295,6 +303,7 @@
 </template>
 
 <script setup lang="ts">
+import { DropdownSelect } from '@/theme/components/common'
 import { logFileOperation, logger } from '@/theme/composables/useLogger';
 import { computed, ref } from 'vue';
 

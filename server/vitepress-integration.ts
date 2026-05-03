@@ -52,6 +52,7 @@ import {
   registerMcpRoutes,
   registerMemoriesRoutes,
   registerOCRRoutes,
+  registerSourcesRoutes,
   registerVoiceRoutes,
   registerPlatformParserRoutes,
   registerProxyRoutes,
@@ -59,6 +60,7 @@ import {
   registerSearchRoutes,
   registerSessionsRoutes,
   registerSkillsRoutes,
+  registerTaskRoutes,
   registerYuqueRoutes,
 } from "./routes";
 
@@ -416,8 +418,10 @@ export const metaBlogBffPlugin = (): Plugin => ({
     registerProxyRoutes(server, ctx);
     registerAgentSystemRoutes(server, ctx);
     registerSkillsRoutes(server, ctx);
+    registerSourcesRoutes(server, ctx);
     registerMemoriesRoutes(server, ctx);
     registerMcpRoutes(server, ctx);
+    registerTaskRoutes(server);
     registerSessionsRoutes(server, ctx);
     registerChatRoutes(server, ctx);
     registerOCRRoutes(server, ctx);

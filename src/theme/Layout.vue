@@ -12,9 +12,7 @@ import EditFab from './components/editor/EditFab.vue'
 
 // 椤甸潰缁勪欢瀵煎叆
 
-import AgentAdmin from './components/agent/AgentAdmin.vue'
-import ControlCenter from './components/common/ControlCenter.vue'
-// import LogDashboard from './features/chat/components/agent/LogDashboard.vue'
+// AgentAdmin removed - managed via router
 import { useAppStore } from './stores/app'
 
 const { Layout } = DefaultTheme
@@ -33,6 +31,7 @@ const isPureVuePage = computed(() => {
   
   // 鍙尮閰嶇‘鍒囩殑鍒楄〃椤甸潰锛屼笉鍖归厤瀛愰〉闈紙鏂囩珷璇︽儏锛?  if (p === '/' || p === '/index') return 'home'
   if (p === '/chat' || p.startsWith('/chat/')) return 'chat'
+  if (p === '/agents' || p.startsWith('/agents/')) return 'agents'
   if (p === '/sections/about' || p === '/sections/about/index') return 'about'
   if (p === '/sections/knowledge' || p === '/sections/knowledge/index') return 'knowledge'
   if (p === '/sections/posts' || p === '/sections/posts/index') return 'posts'
@@ -43,25 +42,6 @@ const isPureVuePage = computed(() => {
 
 // Control center panel state
 const activePanel = ref<'dashboard' | 'articles' | 'logs' | null>(null)
-const showAgentAdmin = ref(false)
-const showLogDashboard = ref(false)
-
-const handleControlOpen = (panel: 'dashboard' | 'articles' | 'logs') => {
-  activePanel.value = panel
-  
-  // 鎵撳紑 Agent 绠＄悊闈㈡澘
-  if (panel === 'dashboard') {
-    showAgentAdmin.value = true
-  } else if (panel === 'articles') {
-    router.go('/sections/posts/')
-  } else if (panel === 'logs') {
-    showLogDashboard.value = true
-  }
-}
-
-const handleAgentChange = (agent: any) => {
-  console.log('Agent changed:', agent.name)
-}
 
 // Panel widths configuration
 const LEFT_CONFIG = {
@@ -238,7 +218,7 @@ const rightResizerPosition = computed(() => rightWidth.value + 'px')
       }"
     >
       <!-- Three-Column Layout -->
-      <div class="layout-container">
+      <div class="layout-container" :class="{ 'pure-vue-page': !!isPureVuePage }">
         <!-- Left Sidebar -->
         <aside 
           v-if="showLeftSidebar && !isPureVuePage"
@@ -262,7 +242,7 @@ const rightResizerPosition = computed(() => rightWidth.value + 'px')
           <Layout :key="route.path">
             <!-- 瀵艰埅鏍忓寮?-->
             <template #nav-bar-content-after>
-              <ControlCenter @open="handleControlOpen" />
+              <!-- Manager 鍐呯疆鎺у埗鍙拌窡鍏ュ彛 -->
             </template>
             
             <!-- 椤甸潰甯冨眬鎻掓Ы (layout: page) -->
@@ -307,17 +287,9 @@ const rightResizerPosition = computed(() => rightWidth.value + 'px')
 
       <!-- FABs -->
       <TocFab v-if="showRightSidebar && !isPureVuePage" :headers="mergedHeaders" />
-      <EditFab />
+      <EditFab v-if="!isPureVuePage" />
       
-      <!-- Panels -->
-      <AgentAdmin 
-        v-model:visible="showAgentAdmin"
-        @agent-change="handleAgentChange"
-      />
-      <!-- <LogDashboard
-        v-model:visible="showLogDashboard"
-        @close="showLogDashboard = false"
-      /> -->
+      <!-- Panels removed - managed via router -->
     </div>
   </StarRiverLayout>
 </template>
@@ -435,8 +407,12 @@ const rightResizerPosition = computed(() => rightWidth.value + 'px')
 }
 
 /* Override VitePress default layout */
-.metablog-layout .VPContent {
+.metablog-layout .VPContent,
+.metablog-layout .VPPage {
   padding: 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+  width: 100% !important;
 }
 
 .metablog-layout .VPDoc {
@@ -472,8 +448,8 @@ const rightResizerPosition = computed(() => rightWidth.value + 'px')
 
 .metablog-layout .VPNav {
   z-index: 200;
-  background: rgba(12, 12, 20, 0.9) !important;
-  border-bottom: 1px solid var(--sr-glass-border) !important;
+  background: rgba(248, 246, 243, 0.78) !important;
+  border-bottom: 1px solid rgba(200, 195, 188, 0.25) !important;
 }
 
 /* Panel Action Buttons */
@@ -547,18 +523,23 @@ const rightResizerPosition = computed(() => rightWidth.value + 'px')
   --vp-layout-max-width: 100%;
 }
 
-.chat-layout-integrated .layout-container {
-  padding-top: 0;
-  min-height: calc(100vh - var(--vp-nav-height));
+.layout-container.pure-vue-page {
+  padding-top: var(--vp-nav-height);
+  min-height: 100vh;
 }
 
-.chat-layout-integrated .main-content {
+/* 覆盖 VitePress .Layout 的 min-height，防止撑大父容器 */
+.metablog-layout .Layout {
+  min-height: auto !important;
+}
+
+.layout-container.pure-vue-page .main-content {
   margin-left: 0 !important;
   margin-right: 0 !important;
   padding: 0 !important;
 }
 
-.chat-main-content {
+.pure-vue-page .chat-main-content {
   width: 100% !important;
   max-width: 100% !important;
   margin: 0 !important;

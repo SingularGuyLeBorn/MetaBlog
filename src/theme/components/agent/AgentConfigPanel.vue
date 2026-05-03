@@ -87,18 +87,20 @@
                     :glow-color="isSkillEnabled(skill.id) ? 'var(--sr-accent-star, #b8a090)' : '#e2e8f0'"
                     :intensity="isSkillEnabled(skill.id) ? 0.4 : 0.15"
                   >
-                    <div class="skill-item" @click="toggleSkill(skill.id)">
-                      <div class="skill-check" :class="{ checked: isSkillEnabled(skill.id) }">
-                        <Icon v-if="isSkillEnabled(skill.id)" name="check" class="check-icon" />
+                    <div class="skill-card" @click="toggleSkill(skill.id)">
+                      <div class="skill-card-header">
+                        <div class="skill-check" :class="{ checked: isSkillEnabled(skill.id) }">
+                          <Icon v-if="isSkillEnabled(skill.id)" name="check" class="check-icon" />
+                        </div>
+                        <button class="skill-detail-btn" @click.stop="showSkillDetail(skill)">
+                          <Icon name="info" />
+                        </button>
                       </div>
-                      <span class="skill-icon">{{ skill.icon }}</span>
-                      <div class="skill-info">
+                      <div class="skill-card-body">
+                        <span class="skill-icon">{{ skill.icon }}</span>
                         <div class="skill-name">{{ skill.name }}</div>
                         <div class="skill-desc">{{ skill.description }}</div>
                       </div>
-                      <button class="skill-detail-btn" @click.stop="showSkillDetail(skill)">
-                        <Icon name="info" />
-                      </button>
                     </div>
                   </LiquidGlass>
                 </div>
@@ -155,31 +157,82 @@
 
       <!-- 记忆 -->
       <div v-show="currentTab === 'memory'" class="panel">
-        <LiquidGlass class="memory-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.3">
-          <div class="memory-inner">
-            <label class="lg-toggle">
-              <input v-model="memoryConfig.enabled" type="checkbox" @change="saveMemory" />
-              <span class="lg-toggle-slider" :class="{ on: memoryConfig.enabled }" />
-              <span class="toggle-label">
-                <Icon name="database" />
-                启用长期记忆
-              </span>
-            </label>
-            <textarea
-              v-if="memoryConfig.enabled"
-              v-model="memoryConfig.content"
-              class="lg-input memory-textarea"
-              rows="12"
-              placeholder="在此输入需要 Agent 记住的长期信息..."
-              @blur="saveMemory"
-            />
-            <div v-else class="empty-state">
-              <Icon name="moon" class="empty-icon" />
-              <p>长期记忆已禁用</p>
-              <span class="empty-desc">开启后 Agent 将记住跨对话的信息</span>
-            </div>
+        <div class="layout">
+          <div class="main-col">
+            <LiquidGlass class="memory-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.3">
+              <div class="memory-inner">
+                <label class="lg-toggle">
+                  <input v-model="memoryConfig.enabled" type="checkbox" @change="saveMemory" />
+                  <span class="lg-toggle-slider" :class="{ on: memoryConfig.enabled }" />
+                  <span class="toggle-label">
+                    <Icon name="database" />
+                    启用长期记忆
+                  </span>
+                </label>
+
+                <div v-if="memoryConfig.enabled" class="agent-memories">
+                  <div class="memory-toolbar">
+                    <span class="memory-count">{{ agentMemories.length }} 条记忆</span>
+                    <button class="add-memory-btn" @click="openAddMemoryModal">
+                      <Icon name="plus" :size="14" />
+                      添加
+                    </button>
+                  </div>
+                  <div v-if="agentMemories.length === 0" class="memory-empty">
+                    <Icon name="database" class="empty-icon" />
+                    <p>暂无专属记忆</p>
+                    <span>Agent 会在对话中自动学习和存储记忆</span>
+                  </div>
+                  <div v-else class="memory-list">
+                    <LiquidGlass
+                      v-for="mem in agentMemories"
+                      :key="mem.id"
+                      class="memory-item-glass"
+                      :glow-color="getCategoryColor(mem.category)"
+                      :intensity="0.15"
+                    >
+                      <div class="memory-item">
+                        <div class="memory-content">
+                          <p class="memory-text">{{ mem.content }}</p>
+                          <div class="memory-meta">
+                            <span class="memory-cat">{{ getCategoryLabel(mem.category) }}</span>
+                            <span class="memory-time">{{ formatTime(mem.createdAt) }}</span>
+                          </div>
+                        </div>
+                        <button class="memory-delete" @click="deleteAgentMemory(mem.id)">
+                          <Icon name="x" :size="14" />
+                        </button>
+                      </div>
+                    </LiquidGlass>
+                  </div>
+                </div>
+
+                <div v-else class="empty-state">
+                  <Icon name="moon" class="empty-icon" />
+                  <p>长期记忆已禁用</p>
+                  <span class="empty-desc">开启后 Agent 将记住跨对话的信息</span>
+                </div>
+              </div>
+            </LiquidGlass>
           </div>
-        </LiquidGlass>
+
+          <div class="side-col">
+            <LiquidGlass class="stats-glass" glow-color="var(--sr-morandi-green, #a8b3a8)" :intensity="0.2">
+              <div class="stats-inner">
+                <div class="stat-item">
+                  <Icon name="database" class="stat-icon" />
+                  <span class="stat-label">记忆总数</span>
+                  <span class="stat-value">{{ agentMemories.length }}</span>
+                </div>
+                <div class="stat-item">
+                  <Icon name="trending-up" class="stat-icon" />
+                  <span class="stat-label">今日新增</span>
+                  <span class="stat-value">{{ todayMemories }}</span>
+                </div>
+              </div>
+            </LiquidGlass>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -209,17 +262,67 @@
         </div>
       </Transition>
     </Teleport>
+
+    <!-- 添加记忆弹窗 -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showAddMemoryModal" class="modal-overlay" @click.self="closeAddMemoryModal">
+          <LiquidGlass class="memory-modal-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.4">
+            <div class="memory-modal">
+              <div class="memory-modal-header">
+                <h3>添加记忆</h3>
+                <button class="close-btn" @click="closeAddMemoryModal">
+                  <Icon name="x" />
+                </button>
+              </div>
+              <div class="memory-modal-body">
+                <div class="form-group">
+                  <label>记忆内容</label>
+                  <textarea
+                    v-model="newMemoryContent"
+                    rows="3"
+                    class="lg-input"
+                    placeholder="输入 Agent 需要记住的信息..."
+                    @keydown.ctrl.enter="confirmAddMemory"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>分类</label>
+                  <DropdownSelect
+                    v-model="newMemoryCategory"
+                    :options="memoryCategories"
+                    placeholder="选择分类"
+                  />
+                </div>
+              </div>
+              <div class="memory-modal-footer">
+                <LiquidGlass glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.2">
+                  <button class="lg-btn" @click="closeAddMemoryModal">取消</button>
+                </LiquidGlass>
+                <LiquidGlass glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.5">
+                  <button class="lg-btn lg-btn-primary" @click="confirmAddMemory">
+                    <Icon name="plus" />
+                    添加
+                  </button>
+                </LiquidGlass>
+              </div>
+            </div>
+          </LiquidGlass>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useAgentConfig } from '@/theme/stores/agentStore'
 import type { Agent, Skill } from '@/theme/types/agent'
+import { formatDate } from '@/theme/utils/formatDate'
 import { computed, onMounted, ref, watch } from 'vue'
 import SkillDetailModal from './SkillDetailModal.vue'
 import TriggerPanel from './TriggerPanel.vue'
-// import ModelPanel from './ModelPanel.vue'
-import { Icon, LiquidGlass } from '@/theme/components/common'
+import ModelPanel from './ModelPanel.vue'
+import { DropdownSelect, Icon, LiquidGlass } from '@/theme/components/common'
 
 const props = defineProps<{ agent: Agent }>()
 const emit = defineEmits<{
@@ -247,6 +350,104 @@ const config = ref({
 const memoryConfig = ref({
   enabled: props.agent.memory?.enabled || false,
   content: props.agent.memory?.content || ''
+})
+
+const agentMemories = ref<any[]>([])
+
+// 添加记忆弹窗
+const showAddMemoryModal = ref(false)
+const newMemoryContent = ref('')
+const newMemoryCategory = ref('fact')
+const memoryCategories = [
+  { value: 'preference', label: '用户偏好', icon: '👤' },
+  { value: 'skill', label: '技能记忆', icon: '🛠️' },
+  { value: 'fact', label: '事实知识', icon: '📚' },
+  { value: 'session', label: '会话上下文', icon: '💬' },
+  { value: 'default', label: '通用记忆', icon: '🤖' }
+]
+
+function openAddMemoryModal() {
+  newMemoryContent.value = ''
+  newMemoryCategory.value = 'fact'
+  showAddMemoryModal.value = true
+}
+
+function closeAddMemoryModal() {
+  showAddMemoryModal.value = false
+  newMemoryContent.value = ''
+  newMemoryCategory.value = 'fact'
+}
+
+async function confirmAddMemory() {
+  const content = newMemoryContent.value.trim()
+  if (!content) return
+  try {
+    const res = await fetch('/api/memories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content,
+        agentName: props.agent.name,
+        agentId: props.agent.id,
+        category: newMemoryCategory.value,
+        importance: 0.7
+      })
+    })
+    const json = await res.json()
+    if (json.success) {
+      await loadAgentMemories()
+      closeAddMemoryModal()
+    } else {
+      alert('添加失败: ' + (json.error || '未知错误'))
+    }
+  } catch (e) { alert('添加失败: 网络错误') }
+}
+
+const categoryMap: Record<string, { label: string; color: string }> = {
+  preference: { label: '用户偏好', color: 'var(--sr-morandi-blue, #9daab8)' },
+  skill: { label: '技能记忆', color: 'var(--sr-morandi-green, #a8b3a8)' },
+  fact: { label: '事实知识', color: 'var(--sr-accent-star, #b8a090)' },
+  session: { label: '会话上下文', color: 'var(--sr-morandi-pink, #d4b8b8)' },
+  default: { label: '通用记忆', color: 'var(--sr-accent-star, #b8a090)' }
+}
+
+function getCategoryLabel(cat?: string) { return categoryMap[cat || '']?.label || categoryMap.default.label }
+function getCategoryColor(cat?: string) { return categoryMap[cat || '']?.color || categoryMap.default.color }
+function formatTime(ts: number): string {
+  return formatDate(ts)
+}
+
+async function loadAgentMemories() {
+  try {
+    const res = await fetch('/api/memories')
+    const json = await res.json()
+    if (json.success && Array.isArray(json.data)) {
+      agentMemories.value = json.data.filter((m: any) => (m.agentId || '') === props.agent.id)
+    }
+  } catch (e) { console.error('[AgentConfig] 加载记忆失败:', e) }
+}
+
+async function addQuickMemory() {
+  openAddMemoryModal()
+}
+
+async function deleteAgentMemory(id: string) {
+  if (!confirm('确定删除这条记忆吗?')) return
+  try {
+    const res = await fetch('/api/memories/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    })
+    const json = await res.json()
+    if (json.success) agentMemories.value = agentMemories.value.filter(m => m.id !== id)
+    else alert('删除失败: ' + (json.error || '未知错误'))
+  } catch (e) { alert('删除失败: 网络错误') }
+}
+
+const todayMemories = computed(() => {
+  const todayStart = new Date().setHours(0, 0, 0, 0)
+  return agentMemories.value.filter(m => (m.createdAt || 0) >= todayStart).length
 })
 
 const copied = ref(false)
@@ -321,13 +522,11 @@ function onTriggerSave(data: { type: string; config: any }) {
     triggers: [{ id: `trigger-${Date.now()}`, type: data.type as any, name: names[data.type], enabled: true, config: data.config }]
   }
   updateAgent(props.agent.id, updates)
-  currentTab.value = 'capabilities'
 }
 
-function onModelChange(id: string, p: any) {
-  // runtime 不在 AgentUpdateParams 中,需要类型断言
+function onModelChange(config: { model: string; temperature: number; maxTokens: number }) {
   const updates: any = {
-    runtime: { model: id, temperature: p.temperature, maxTokens: p.maxTokens, topP: p.topP, frequencyPenalty: p.frequencyPenalty, enableReasoning: p.enableReasoning, timeout: 60, retryCount: 3, retryDelay: 1 }
+    runtime: { model: config.model, temperature: config.temperature, maxTokens: config.maxTokens, timeout: 60, retryCount: 3, retryDelay: 1 }
   }
   updateAgent(props.agent.id, updates)
 }
@@ -340,9 +539,13 @@ async function saveMemory() {
 watch(() => props.agent, () => {
   initConfig()
   memoryConfig.value = { enabled: props.agent.memory?.enabled || false, content: props.agent.memory?.content || '' }
+  loadAgentMemories()
 }, { deep: true })
 
-onMounted(initConfig)
+onMounted(() => {
+  initConfig()
+  loadAgentMemories()
+})
 </script>
 
 <style scoped>
@@ -497,34 +700,53 @@ onMounted(initConfig)
   color: var(--sr-morandi-green, #a8b3a8);
 }
 
-/* Skills 列表 */
+/* Skills 卡片网格 */
 .skills-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .skill-item-glass {
   border-radius: 16px;
 }
 
-.skill-item {
+.skill-card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  cursor: pointer;
+  min-height: 150px;
+}
+
+.skill-card-header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
-  cursor: pointer;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.skill-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  gap: 8px;
 }
 
 .skill-check {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.05);
   border: 2px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+  border-radius: 7px;
   transition: all 0.3s ease;
 }
 
@@ -534,47 +756,50 @@ onMounted(initConfig)
 }
 
 .check-icon {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   color: var(--sr-accent-star, #b8a090);
 }
 
 .skill-icon {
-  font-size: 24px;
-}
-
-.skill-info {
-  flex: 1;
+  font-size: 32px;
+  line-height: 1;
 }
 
 .skill-name {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--sr-text-primary, #1a1a2e);
-  margin-bottom: 2px;
+  line-height: 1.3;
 }
 
 .skill-desc {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--sr-text-muted, #94a3b8);
+  line-height: 1.5;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .skill-detail-btn {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.05);
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   color: var(--sr-text-muted, #94a3b8);
   cursor: pointer;
   opacity: 0;
   transition: all 0.2s ease;
 }
 
-.skill-item:hover .skill-detail-btn {
+.skill-card:hover .skill-detail-btn {
   opacity: 1;
 }
 
@@ -641,7 +866,7 @@ onMounted(initConfig)
   line-height: 1.7;
   color: #475569;
   white-space: pre-wrap;
-  max-height: 400px;
+  max-height: 640px;
   overflow: auto;
 }
 
@@ -687,8 +912,6 @@ onMounted(initConfig)
 /* 记忆 */
 .memory-glass {
   border-radius: 24px;
-  max-width: 700px;
-  margin: 0 auto;
 }
 
 .memory-inner {
@@ -710,8 +933,205 @@ onMounted(initConfig)
   color: var(--sr-accent-star, #b8a090);
 }
 
-.memory-textarea {
+.memory-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-top: 20px;
+  margin-bottom: 12px;
+}
+
+.memory-count {
+  font-size: 14px;
+  color: var(--sr-text-muted, #94a3b8);
+}
+
+.add-memory-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(184, 160, 144, 0.15);
+  border: 1px solid rgba(184, 160, 144, 0.2);
+  border-radius: 10px;
+  color: var(--sr-morandi-purple, #b3a8b8);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-memory-btn:hover {
+  background: rgba(184, 160, 144, 0.25);
+}
+
+.memory-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px;
+  text-align: center;
+}
+
+.memory-empty .empty-icon {
+  width: 40px;
+  height: 40px;
+  color: #cbd5e1;
+}
+
+.memory-empty p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sr-text-muted, #94a3b8);
+}
+
+.memory-empty span {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* 添加记忆弹窗 */
+.memory-modal-glass {
+  width: 90%;
+  max-width: 440px;
+  border-radius: 24px;
+}
+
+.memory-modal {
+  padding: 24px;
+}
+
+.memory-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.memory-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--sr-text-primary, #1a1a2e);
+}
+
+.memory-modal-body .form-group {
+  margin-bottom: 16px;
+}
+
+.memory-modal-body .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sr-text-primary, #1a1a2e);
+}
+
+.memory-modal-body textarea.lg-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(200, 195, 188, 0.4);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--sr-text-primary, #1a1a2e);
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.memory-modal-body textarea.lg-input:hover,
+.memory-modal-body textarea.lg-input:focus {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(184, 160, 144, 0.4);
+  outline: none;
+}
+
+.memory-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.memory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.memory-item-glass {
+  border-radius: 16px;
+}
+
+.memory-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.memory-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.memory-text {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--sr-text-primary, #1a1a2e);
+  word-break: break-word;
+}
+
+.memory-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.memory-cat {
+  padding: 2px 8px;
+  background: rgba(184, 160, 144, 0.12);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sr-morandi-purple, #b3a8b8);
+}
+
+.memory-time {
+  font-size: 12px;
+  color: var(--sr-text-muted, #94a3b8);
+}
+
+.memory-delete {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.04);
+  border: none;
+  border-radius: 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.memory-item:hover .memory-delete {
+  opacity: 1;
+}
+
+.memory-delete:hover {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
 }
 
 .empty-state {

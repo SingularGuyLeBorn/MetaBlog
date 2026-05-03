@@ -67,6 +67,20 @@
           <div class="response-body" v-html="renderedHtml"></div>
         </div>
 
+        <!-- 长内容收纳提示 -->
+        <div
+          v-if="shouldStashContent && message.role === 'assistant'"
+          class="stash-banner"
+          @click="stashContent"
+        >
+          <Icon name="layers" :size="14" />
+          <span>内容较长，{{ contentLineCount }} 行 / {{ formatTokenCount(tokenCount) }} tokens</span>
+          <button class="stash-btn">
+            <Icon name="panel-right" :size="14" />
+            在侧边栏查看
+          </button>
+        </div>
+
         <!-- 实体链接卡片(工具执行产生的可点击链接) -->
         <div v-if="entityLinks.length > 0" class="entity-links-section">
           <div class="entity-links-label">生成的链接</div>
@@ -104,22 +118,21 @@
             v-if="message.role === 'assistant' && !isStreaming"
             class="action-btn"
             :class="{ speaking: isSpeaking }"
+            :title="isSpeaking ? '停止朗读' : '朗读'"
             @click="handleSpeak"
           >
             <Icon :name="isSpeaking ? 'square' : 'volume-2'" :size="14" />
-            <span>{{ isSpeaking ? '停止' : '朗读' }}</span>
           </button>
-          <button class="action-btn" :class="{ copied }" @click="copyContent">
+          <button class="action-btn" :class="{ copied }" :title="copied ? '已复制' : '复制'" @click="copyContent">
             <Icon :name="copied ? 'check' : 'copy'" :size="14" />
-            <span>{{ copied ? '已复制' : '复制' }}</span>
           </button>
           <button
             v-if="isLast && !versions"
             class="action-btn regenerate"
+            title="重新生成"
             @click="$emit('regenerate')"
           >
             <Icon name="refresh" :size="14" />
-            <span>重新生成</span>
           </button>
         </div>
       </div>
@@ -135,6 +148,7 @@ import { estimateTextTokens, formatTokenCount } from '@/theme/utils/tokenEstimat
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
 import markedKatex from 'marked-katex-extension'
+import { useBatchResultStore } from '@/theme/stores/batchResultStore'
 import { useVoice } from '@/theme/composables/useVoice'
 import { computed, onMounted, ref, watch } from 'vue'
 import 'katex/dist/katex.min.css'
@@ -171,6 +185,8 @@ interface MessageBubbleProps {
 
 const props = defineProps<MessageBubbleProps>()
 
+const batchStore = useBatchResultStore()
+
 const emit = defineEmits<{
   regenerate: []
   'switch-version': [payload: { userMessageId: string; versionIndex: number }]
@@ -201,6 +217,25 @@ const tokenCount = computed(() => {
   const reasoning = (props.message as any).reasoning_content || ''
   return estimateTextTokens(content) + estimateTextTokens(reasoning)
 })
+
+const contentLineCount = computed(() => {
+  return (props.message.content || '').split('\n').length
+})
+
+const shouldStashContent = computed(() => {
+  return contentLineCount.value > 40 || (props.message.content || '').length > 3000
+})
+
+function stashContent() {
+  const content = props.message.content || ''
+  const title = content.slice(0, 40).replace(/[#*\n]/g, ' ').trim() + '...'
+  batchStore.addItem({
+    title,
+    type: 'generic',
+    content,
+    summary: `来自消息 #${props.message.id}，共 ${contentLineCount.value} 行`,
+  })
+}
 
 // 从工具记录中提取实体链接(飞书/GitHub/语雀等)
 const entityLinks = computed((): EntityLink[] => {
@@ -821,6 +856,41 @@ async function copyContent() {
   text-decoration: underline;
 }
 
+/* Markdown 标题 */
+.response-body :deep(h1) {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 24px 0 12px;
+  color: var(--sr-text-primary, #2d2a26);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding-bottom: 8px;
+}
+.response-body :deep(h2) {
+  font-size: 19px;
+  font-weight: 700;
+  margin: 20px 0 10px;
+  color: var(--sr-text-primary, #2d2a26);
+}
+.response-body :deep(h3) {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  color: var(--sr-text-primary, #2d2a26);
+}
+.response-body :deep(h4) {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 14px 0 6px;
+  color: var(--sr-text-primary, #2d2a26);
+}
+.response-body :deep(h5),
+.response-body :deep(h6) {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 12px 0 4px;
+  color: var(--sr-text-muted, #6a6560);
+}
+
 /* 图片代理渲染 */
 .response-body :deep(img) {
   max-width: 100%;
@@ -920,23 +990,26 @@ async function copyContent() {
 /* ========== 操作按钮 ========== */
 .message-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 12px;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
   align-items: center;
 }
 
 .action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   background: rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(200, 195, 188, 0.4);
-  border-radius: 8px;
-  font-size: 12px;
+  border-radius: 6px;
   color: var(--sr-text-secondary, #6a6560);
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .action-btn:hover {
@@ -974,6 +1047,47 @@ async function copyContent() {
   font-size: 13px;
   color: var(--sr-text-secondary, #6a6560);
   vertical-align: middle;
+}
+
+/* ========== 长内容收纳提示 ========== */
+.stash-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 16px;
+  background: rgba(184, 160, 144, 0.08);
+  border: 1px solid rgba(184, 160, 144, 0.2);
+  border-radius: 12px;
+  color: var(--sr-text-muted, #94a3b8);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stash-banner:hover {
+  background: rgba(184, 160, 144, 0.15);
+  border-color: rgba(184, 160, 144, 0.3);
+}
+
+.stash-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(184, 160, 144, 0.15);
+  border: none;
+  border-radius: 8px;
+  color: var(--sr-accent-star, #b8a090);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stash-btn:hover {
+  background: rgba(184, 160, 144, 0.25);
 }
 
 /* ========== 实体链接卡片区域 ========== */

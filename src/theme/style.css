@@ -76,6 +76,12 @@ body {
     box-shadow 500ms var(--sr-spring-gentle) !important;
 }
 
+/* 隐藏 VitePress 默认的额外导航和汉堡菜单 */
+.VPNavBarExtra,
+.VPNavBarHamburger {
+  display: none !important;
+}
+
 /* 导航链接 */
 .VPNavBarMenuLink {
   position: relative;

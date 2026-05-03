@@ -126,6 +126,21 @@ export function registerSessionsRoutes(server: ViteDevServer, ctx: RouteContext)
           const body = JSON.parse(Buffer.concat(chunks).toString());
           const sessions = readSessions();
 
+          // 如果传入了已有 ID，更新而不是创建（防止重复）
+          const existingIndex = body.id ? sessions.findIndex((s: any) => s.id === body.id) : -1;
+
+          if (existingIndex > -1) {
+            sessions[existingIndex] = {
+              ...sessions[existingIndex],
+              ...body,
+              updatedAt: Date.now(),
+            };
+            writeSessions(sessions);
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ success: true, data: sessions[existingIndex] }));
+            return;
+          }
+
           const newSession = {
             id:
               body.id ||

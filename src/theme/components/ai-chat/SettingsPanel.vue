@@ -267,11 +267,12 @@
 
 <script setup lang="ts">
 import { Icon } from '@/theme/components/common'
+import { MODELS } from '@/theme/api/providers/models'
 import type { ModelType, SessionConfig } from '@/theme/types'
 import { computed, ref, Teleport, watch } from 'vue'
 
 interface ModelConfig {
-  id: ModelType
+  id: string
   name: string
   description: string
   recommended?: boolean
@@ -285,47 +286,19 @@ interface ModelConfig {
   defaultMaxTokens: number
 }
 
-const modelConfigs: ModelConfig[] = [
-  // ═══════════════════════════════════════════════════════════════
-  // DeepSeek V4 模型 - 仅文本输入
-  // ═══════════════════════════════════════════════════════════════
-  {
-    id: 'deepseek-v4-pro',
-    name: 'DeepSeek V4 Pro',
-    description: '最强推理,适合深度分析与复杂任务',
-    recommended: true,
-    supportsReasoning: true,
-    reasoningRequired: true,
-    supportsReasoningEffort: true,
-    isMultimodal: false,
-    defaultTemperature: 0.7,
-    defaultMaxTokens: 8192
-  },
-  {
-    id: 'deepseek-v4-flash',
-    name: 'DeepSeek V4 Flash',
-    description: '快速响应,性价比高,支持思考模式',
-    supportsReasoning: true,
-    supportsReasoningEffort: true,
-    isMultimodal: false,
-    defaultTemperature: 0.7,
-    defaultMaxTokens: 8192
-  },
-
-  // ═══════════════════════════════════════════════════════════════
-  // Kimi K2.5 - 原生多模态(图片+视频)
-  // ═══════════════════════════════════════════════════════════════
-  {
-    id: 'kimi-k2.5',
-    name: 'Kimi K2.5',
-    description: '原生多模态,支持图片/视频理解',
-    recommended: true,
-    supportsReasoning: true,
-    isMultimodal: true,
-    defaultTemperature: 0.6,
-    defaultMaxTokens: 8192
-  }
-]
+// 从统一模型配置中心映射，确保全局共用一份数据
+const modelConfigs: ModelConfig[] = MODELS.map(m => ({
+  id: m.id,
+  name: m.name,
+  description: m.description,
+  recommended: m.recommended,
+  supportsReasoning: m.capabilities.reasoning,
+  reasoningRequired: m.id === 'deepseek-v4-pro',
+  supportsReasoningEffort: m.id.startsWith('deepseek-v4'),
+  isMultimodal: m.capabilities.vision,
+  defaultTemperature: m.defaultTemperature,
+  defaultMaxTokens: m.maxOutputTokens
+}))
 
 interface Props {
   config: SessionConfig
@@ -352,11 +325,11 @@ const currentModelConfig = computed(() => {
   return modelConfigs.find(m => m.id === props.config.model)
 })
 
-function selectModel(modelId: ModelType) {
+function selectModel(modelId: string) {
   const model = modelConfigs.find(m => m.id === modelId)
   if (!model) return
 
-  const updates: Partial<SessionConfig> = { model: modelId }
+  const updates: Partial<SessionConfig> = { model: modelId as ModelType }
   
   if (model.supportsReasoning) {
     updates.enableReasoning = model.reasoningRequired || props.config.enableReasoning

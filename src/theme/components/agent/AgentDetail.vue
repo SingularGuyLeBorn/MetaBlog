@@ -100,12 +100,16 @@
           
           <div class="form-group-3d">
             <label>等级</label>
-            <select v-model="form.level" class="form-select-3d">
-              <option value="meta">元 Agent</option>
-              <option value="core">核心 Agent</option>
-              <option value="fixed">固定 Agent</option>
-              <option value="custom">自定义 Agent</option>
-            </select>
+            <DropdownSelect
+              v-model="form.level"
+              :options="[
+                { value: 'meta', label: '元 Agent' },
+                { value: 'core', label: '核心 Agent' },
+                { value: 'fixed', label: '固定 Agent' },
+                { value: 'custom', label: '自定义 Agent' }
+              ]"
+              placeholder="选择等级"
+            />
           </div>
         </section>
         
@@ -286,6 +290,7 @@
 </template>
 
 <script setup lang="ts">
+import { DropdownSelect } from '@/theme/components/common'
 import type { Agent, AgentPermission } from '@/theme/stores/useAgents';
 import { LEVEL_CONFIG, PERMISSION_TEMPLATES } from '@/theme/stores/useAgents';
 import { computed, reactive, ref, watch } from 'vue';

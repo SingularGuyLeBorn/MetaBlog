@@ -36,6 +36,8 @@ export { registerMemoriesRoutes } from "./internal/memories";
 export { registerSandboxRoutes } from "./internal/sandbox";
 export { registerSessionsRoutes } from "./internal/sessions";
 export { registerSkillsRoutes } from "./internal/skills";
+export { registerSourcesRoutes } from "./internal/sources";
+export { registerTaskRoutes } from "./internal/tasks";
 export { registerOCRRoutes } from "./internal/ocr";
 export { registerVoiceRoutes } from "./internal/voice";
 

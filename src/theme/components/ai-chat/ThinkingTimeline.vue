@@ -71,10 +71,11 @@
           <span class="tool-status">{{ statusText(item.toolRecord.status) }}</span>
           <button
             v-if="item.toolRecord.status === 'success' || item.toolRecord.status === 'error'"
-            class="tool-view-btn"
-            @click.stop="$emit('view-detail', item.toolRecord.id || item.id)"
+            class="tool-view-btn icon-only"
+            title="查看详情"
+            @click.stop="viewToolDetail(item.toolRecord)"
           >
-            查看详情
+            <Icon name="external-link" :size="12" />
           </button>
           <Icon
             :name="expandedItems[item.id] ? 'chevron-up' : 'chevron-down'"
@@ -126,7 +127,8 @@
 
 <script setup lang="ts">
 import { Icon } from '@/theme/components/common'
-import type { ChatMessage, ThinkingStep } from '@/theme/types'
+import { useToolStore } from '@/theme/stores'
+import type { ChatMessage, ThinkingStep, ToolChainItem } from '@/theme/types'
 import { extractLinksFromRecord, type EntityLink } from '@/theme/utils/extractEntityLinks'
 import { computed, ref, watch } from 'vue'
 import EntityLinkCard from './EntityLinkCard.vue'
@@ -143,6 +145,8 @@ const props = defineProps<ThinkingTimelineProps>()
 const emit = defineEmits<{
   (e: 'view-detail', toolId: string): void
 }>()
+
+const toolStore = useToolStore()
 
 // ========== 状态管理 ==========
 const isExpanded = ref(true)
@@ -267,6 +271,25 @@ function getToolArgsSummary(args: Record<string, any>): string {
 
 function toggleItem(itemId: string) {
   expandedItems.value[itemId] = !expandedItems.value[itemId]
+}
+
+function viewToolDetail(record: any) {
+  const id = record.id || `tool_${Date.now()}`
+  const fallback: ToolChainItem = {
+    id,
+    stepId: id,
+    name: record.name || record.toolName || 'unknown',
+    arguments: record.arguments || record.args || {},
+    status: record.status,
+    startTime: record.startTime || Date.now(),
+    endTime: record.endTime,
+    duration: record.duration,
+    result: record.result,
+    error: record.error,
+    round: 1,
+    index: 0
+  }
+  toolStore.inspectTool(id, fallback)
 }
 </script>
 
@@ -450,6 +473,15 @@ function toggleItem(itemId: string) {
 .tool-view-btn:hover {
   background: rgba(179, 168, 184, 0.3);
   border-color: rgba(179, 168, 184, 0.6);
+}
+
+.tool-view-btn.icon-only {
+  padding: 4px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 工具详情 */
