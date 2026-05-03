@@ -962,5 +962,74 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   margin-left: 4px;
 }
 
+/* 队列预览 */
+.queue-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 8px 0;
+  padding: 0 4px;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 10px;
+  font-size: 13px;
+  color: #475569;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.queue-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: linear-gradient(135deg, #e0e7ff, #dbeafe);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4f46e5;
+}
+
+.queue-content {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue-attachments {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.queue-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.queue-remove:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
 /* 链接功能已由 readArticle 工具覆盖 */
 </style>
