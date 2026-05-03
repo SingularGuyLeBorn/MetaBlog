@@ -70,21 +70,42 @@
       </button>
     </TransitionGroup>
     
-    <!-- 队列预览 -->
-    <TransitionGroup name="queue" tag="div" class="queue-preview" v-if="props.taskQueue && props.taskQueue.length > 0">
-      <div
-        v-for="(task, index) in props.taskQueue"
-        :key="task.id"
-        class="queue-item"
-      >
-        <span class="queue-index">{{ index + 1 }}</span>
-        <span class="queue-content">{{ task.content.slice(0, 40) }}{{ task.content.length > 40 ? '...' : '' }}</span>
-        <span v-if="task.attachments.length > 0" class="queue-attachments">📎{{ task.attachments.length }}</span>
-        <button class="queue-remove" @click="$emit('removeFromQueue', index)">
-          <Icon name="x" :size="12" />
-        </button>
+    <!-- 队列预览（默认折叠） -->
+    <div v-if="props.taskQueue && props.taskQueue.length > 0" class="queue-preview">
+      <div class="queue-header" @click="queueExpanded = !queueExpanded">
+        <span class="queue-header-icon">📋</span>
+        <span class="queue-header-text">队列 ({{ props.taskQueue.length }})</span>
+        <span class="queue-header-toggle">{{ queueExpanded ? '收起' : '展开' }}</span>
       </div>
-    </TransitionGroup>
+      <Transition name="queue-expand">
+        <div v-show="queueExpanded" class="queue-list">
+          <div
+            v-for="(task, index) in props.taskQueue"
+            :key="task.id"
+            class="queue-item"
+          >
+            <span class="queue-index">{{ index + 1 }}</span>
+            <template v-if="editingQueueIndex === index">
+              <input
+                ref="(el) => { if (el) queueEditInputs[index] = el as HTMLInputElement }"
+                v-model="editingQueueContent"
+                class="queue-edit-input"
+                @keydown.enter="saveQueueEdit(index)"
+                @keydown.esc="cancelQueueEdit"
+                @blur="saveQueueEdit(index)"
+              />
+            </template>
+            <template v-else>
+              <span class="queue-content" @click="startQueueEdit(index, task.content)">{{ task.content.slice(0, 40) }}{{ task.content.length > 40 ? '...' : '' }}</span>
+            </template>
+            <span v-if="task.attachments.length > 0" class="queue-attachments">📎{{ task.attachments.length }}</span>
+            <button class="queue-remove" @click.stop="$emit('removeFromQueue', index)">
+              <Icon name="x" :size="12" />
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </div>
 
     <!-- 主输入区域 -->
     <div class="input-container-3d" :class="{ focused: isFocused, 'has-attachments': attachments.length > 0, 'has-queue': props.taskQueue && props.taskQueue.length > 0 }">
@@ -254,6 +275,7 @@ const emit = defineEmits<{
   'stop': []
   'selectSkill': [skill: Skill | undefined]
   'removeFromQueue': [index: number]
+  'updateQueueItem': [index: number, content: string]
 }>()
 
 // 配置
@@ -272,6 +294,10 @@ const currentMentions = ref<Mention[]>([])
 const isFocused = ref(false)
 const attachments = ref<MessageAttachment[]>([])
 const showAttachMenu = ref(false)
+const queueExpanded = ref(false)
+const editingQueueIndex = ref<number | null>(null)
+const editingQueueContent = ref('')
+const queueEditInputs = ref<Record<number, HTMLInputElement>>({})
 
 // 计算属性
 const effectiveSkill = computed(() => props.selectedSkill || currentSkill.value)
@@ -482,6 +508,22 @@ async function handleSend() {
 function handleSkillChange(skill: Skill | null) {
   currentSkill.value = skill || undefined
   emit('selectSkill', skill || undefined)
+}
+
+function startQueueEdit(index: number, content: string) {
+  editingQueueIndex.value = index
+  editingQueueContent.value = content
+}
+
+function saveQueueEdit(index: number) {
+  if (editingQueueIndex.value === index) {
+    emit('updateQueueItem', index, editingQueueContent.value)
+  }
+  editingQueueIndex.value = null
+}
+
+function cancelQueueEdit() {
+  editingQueueIndex.value = null
 }
 
 function handleMentionsChange(mentions: Mention[]) {
@@ -971,6 +1013,64 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   padding: 0 4px;
 }
 
+.queue-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 10px;
+  font-size: 12px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.queue-header:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(226, 232, 240, 0.9);
+}
+
+.queue-header-icon {
+  font-size: 13px;
+}
+
+.queue-header-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.queue-header-toggle {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.queue-expand-enter-active,
+.queue-expand-leave-active {
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.queue-expand-enter-from,
+.queue-expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+.queue-expand-enter-to,
+.queue-expand-leave-from {
+  opacity: 1;
+  max-height: 200px;
+}
+
 .queue-item {
   display: flex;
   align-items: center;
@@ -1004,6 +1104,27 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: text;
+}
+
+.queue-content:hover {
+  color: #1e293b;
+}
+
+.queue-edit-input {
+  flex: 1;
+  padding: 3px 8px;
+  background: white;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #1e293b;
+  outline: none;
+}
+
+.queue-edit-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
 }
 
 .queue-attachments {
