@@ -462,13 +462,12 @@ function executeDelete() {
 }
 </script>
 
-<style scoped lang="scss">
+<style>
 /* ===== 遮罩层 ===== */
 .session-manager-overlay {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -483,16 +482,12 @@ function executeDelete() {
   max-width: 900px;
   height: 80vh;
   max-height: 700px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: #fff;
+  border: 1px solid #e2ddd6;
   border-radius: 28px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 
-    0 32px 64px rgba(31, 38, 135, 0.1),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 }
 
 .manager-glow {
@@ -503,7 +498,7 @@ function executeDelete() {
   height: 300px;
   background: radial-gradient(
     circle,
-    rgba(59, 130, 246, 0.1) 0%,
+    rgba(184, 160, 144, 0.1) 0%,
     transparent 70%
   );
   pointer-events: none;
@@ -542,11 +537,11 @@ function executeDelete() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(184, 160, 144, 0.1);
+  border: 1px solid rgba(184, 160, 144, 0.2);
   border-radius: 14px;
-  color: #3b82f6;
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+  color: #b8a090;
+  box-shadow: 0 8px 20px rgba(184, 160, 144, 0.2);
 }
 
 .title-text h3 {
@@ -558,7 +553,7 @@ function executeDelete() {
 
 .subtitle {
   font-size: 13px;
-  color: #64748b;
+  color: #9a9588;
 }
 
 .close-btn {
@@ -570,15 +565,15 @@ function executeDelete() {
   background: rgba(241, 245, 249, 0.8);
   border: 1px solid rgba(226, 232, 240, 0.6);
   border-radius: 12px;
-  color: #64748b;
+  color: #9a9588;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .close-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
+  background: rgba(212, 184, 184, 0.1);
+  border-color: rgba(212, 184, 184, 0.2);
+  color: #d4b8b8;
 }
 
 /* ===== 工具栏 ===== */
@@ -600,13 +595,13 @@ function executeDelete() {
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 12px;
-  color: #94a3b8;
+  color: #b8b3a8;
   transition: all 0.3s ease;
 }
 
 .toolbar-search:focus-within {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #b8a090;
+  box-shadow: 0 0 0 3px rgba(184, 160, 144, 0.1);
 }
 
 .toolbar-search input {
@@ -627,14 +622,14 @@ function executeDelete() {
   background: rgba(148, 163, 184, 0.2);
   border: none;
   border-radius: 50%;
-  color: #64748b;
+  color: #9a9588;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .clear-search:hover {
   background: rgba(148, 163, 184, 0.3);
-  color: #475569;
+  color: #6a6560;
 }
 
 .toolbar-filters {
@@ -653,10 +648,10 @@ function executeDelete() {
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(212, 184, 184, 0.1);
+  border: 1px solid rgba(212, 184, 184, 0.2);
   border-radius: 10px;
-  color: #ef4444;
+  color: #d4b8b8;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -664,7 +659,7 @@ function executeDelete() {
 }
 
 .btn-batch-delete:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(212, 184, 184, 0.2);
   transform: translateY(-1px);
 }
 
@@ -673,21 +668,21 @@ function executeDelete() {
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
-  background: linear-gradient(135deg, #6366f1, #3b82f6);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: linear-gradient(135deg, #d4c4b0, #b8a090);
+  border: 1px solid rgba(184, 160, 144, 0.2);
   border-radius: 10px;
   color: white;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(184, 160, 144, 0.3);
 }
 
 .btn-create:hover {
   transform: translateY(-1px);
-  background: linear-gradient(135deg, #4f46e5, #2563eb);
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #c4b0a0, #9a9588);
+  box-shadow: 0 6px 16px rgba(184, 160, 144, 0.4);
 }
 
 /* ===== 内容区 ===== */
@@ -708,7 +703,7 @@ function executeDelete() {
   border-bottom: 1px solid rgba(226, 232, 240, 0.6);
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: #9a9588;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -735,18 +730,18 @@ function executeDelete() {
 
 .session-row:hover {
   background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(59, 130, 246, 0.2);
+  border-color: rgba(184, 160, 144, 0.2);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .session-row.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.04));
-  border-color: rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, rgba(184, 160, 144, 0.08), rgba(212, 196, 176, 0.04));
+  border-color: rgba(184, 160, 144, 0.3);
 }
 
 .session-row.selected {
-  background: rgba(59, 130, 246, 0.12);
-  border-color: rgba(59, 130, 246, 0.4);
+  background: rgba(184, 160, 144, 0.12);
+  border-color: rgba(184, 160, 144, 0.4);
 }
 
 /* 复选框 */
@@ -766,7 +761,7 @@ function executeDelete() {
 .check-box {
   width: 18px;
   height: 18px;
-  border: 2px solid #cbd5e1;
+  border: 2px solid #d4ccc4;
   border-radius: 5px;
   display: flex;
   align-items: center;
@@ -777,7 +772,7 @@ function executeDelete() {
 
 .header-checkbox input:checked + .check-box,
 .row-checkbox input:checked + .check-box {
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  background: linear-gradient(135deg, #b8a090, #d4c4b0);
   border-color: transparent;
 }
 
@@ -811,7 +806,7 @@ function executeDelete() {
 
 .current-badge {
   padding: 2px 8px;
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  background: linear-gradient(135deg, #b8a090, #d4c4b0);
   border-radius: 100px;
   color: white;
   font-size: 10px;
@@ -823,7 +818,7 @@ function executeDelete() {
   width: 100%;
   padding: 6px 10px;
   background: white;
-  border: 2px solid #3b82f6;
+  border: 2px solid #b8a090;
   border-radius: 8px;
   font-size: 14px;
   outline: none;
@@ -840,12 +835,12 @@ function executeDelete() {
   border-radius: 100px;
   font-size: 12px;
   font-weight: 500;
-  color: #475569;
+  color: #6a6560;
 }
 
 .agent-badge.online {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
+  background: rgba(168, 179, 168, 0.1);
+  color: #a8b3a8;
 }
 
 /* 操作列 */
@@ -863,24 +858,24 @@ function executeDelete() {
   background: transparent;
   border: none;
   border-radius: 8px;
-  color: #64748b;
+  color: #9a9588;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .action-btn:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(184, 160, 144, 0.1);
+  color: #b8a090;
 }
 
 .action-btn.switch:hover {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
+  background: rgba(168, 179, 168, 0.1);
+  color: #a8b3a8;
 }
 
 .action-btn.delete:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: rgba(212, 184, 184, 0.1);
+  color: #d4b8b8;
 }
 
 /* ===== 空状态 ===== */
@@ -900,16 +895,16 @@ function executeDelete() {
 
 .empty-state p {
   font-size: 15px;
-  color: #64748b;
+  color: #9a9588;
   margin: 0 0 16px;
 }
 
 .btn-clear {
   padding: 10px 20px;
-  background: rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: rgba(212, 196, 176, 0.1);
+  border: 1px solid rgba(212, 196, 176, 0.2);
   border-radius: 10px;
-  color: #6366f1;
+  color: #d4c4b0;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -917,7 +912,7 @@ function executeDelete() {
 }
 
 .btn-clear:hover {
-  background: rgba(99, 102, 241, 0.2);
+  background: rgba(212, 196, 176, 0.2);
 }
 
 /* ===== 底部 ===== */
@@ -931,11 +926,11 @@ function executeDelete() {
   align-items: center;
   gap: 12px;
   font-size: 13px;
-  color: #64748b;
+  color: #9a9588;
 }
 
 .divider {
-  color: #cbd5e1;
+  color: #d4ccc4;
 }
 
 /* ===== 删除确认弹窗 ===== */
@@ -943,7 +938,6 @@ function executeDelete() {
   position: absolute;
   inset: 0;
   background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -973,7 +967,7 @@ function executeDelete() {
 
 .confirm-modal p {
   font-size: 14px;
-  color: #64748b;
+  color: #9a9588;
   margin: 0 0 24px;
 }
 
@@ -985,10 +979,10 @@ function executeDelete() {
 
 .btn-cancel {
   padding: 12px 24px;
-  background: #f1f5f9;
+  background: #f1ede8;
   border: none;
   border-radius: 10px;
-  color: #475569;
+  color: #6a6560;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -996,12 +990,12 @@ function executeDelete() {
 }
 
 .btn-cancel:hover {
-  background: #e2e8f0;
+  background: #e2ddd6;
 }
 
 .btn-confirm {
   padding: 12px 24px;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: linear-gradient(135deg, #d4b8b8, #c4a0a0);
   border: none;
   border-radius: 10px;
   color: white;
@@ -1013,7 +1007,7 @@ function executeDelete() {
 
 .btn-confirm:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(212, 184, 184, 0.3);
 }
 
 /* ===== 过渡动画 ===== */

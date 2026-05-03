@@ -92,7 +92,6 @@ import { ChatLayout } from '@/theme/components/ai-chat';
   top: 40px;
   left: 40px;
   background: var(--sr-glass-bg);
-  backdrop-filter: blur(8px);
   border-radius: 50%;
   display: flex;
   align-items: center;

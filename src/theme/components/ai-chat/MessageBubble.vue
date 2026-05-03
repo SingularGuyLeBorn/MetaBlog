@@ -40,120 +40,11 @@
       <AIAvatar :typing="isStreaming" />
       <div class="ai-body">
         <!-- 思考时间线 -->
-        <template v-if="hasTimelineItems">
-          <div class="thinking-timeline">
-            <div
-              v-for="item in timelineItems"
-              :key="item.id"
-              class="timeline-item"
-            >
-              <!-- 思考过程 -->
-              <div
-                v-if="item.type === 'thinking'"
-                class="thinking-compact"
-                :class="{ expanded: expandedItems[item.id] }"
-              >
-                <div class="thinking-header" @click="toggleItem(item.id)">
-                  <span class="dot-thinking"></span>
-                  <span class="thinking-label">思考过程</span>
-                  <span class="spacer"></span>
-                  <Icon
-                    :name="expandedItems[item.id] ? 'chevron-up' : 'chevron-down'"
-                    :size="12"
-                  />
-                </div>
-                <div v-if="expandedItems[item.id]" class="thinking-body">
-                  <div class="thinking-scroll">{{ item.content }}</div>
-                </div>
-              </div>
-
-              <!-- 中间说明 -->
-              <div
-                v-else-if="item.type === 'text'"
-                class="intermediate-text"
-                v-html="renderMarkdown(item.content || '')"
-              ></div>
-
-              <!-- 工具调用 -->
-              <div
-                v-else-if="item.type === 'tool_call' && item.toolRecord"
-                class="tool-indicator"
-                :class="[item.toolRecord.status]"
-              >
-                <div class="tool-row" @click="toggleItem(item.id)">
-                  <span class="tool-icon">{{ toolIcon(item.toolRecord.name) }}</span>
-                  <span class="tool-name">{{ item.toolRecord.name }}</span>
-                  <span
-                    v-if="getToolArgsSummary(item.toolRecord.arguments)"
-                    class="tool-args"
-                  >
-                    {{ getToolArgsSummary(item.toolRecord.arguments) }}
-                  </span>
-                  <span class="spacer"></span>
-                  <!-- 工具执行成功后的实体链接卡片(无需展开直接可见) -->
-                  <template v-if="item.toolRecord.status === 'success'">
-                    <EntityLinkCard
-                      v-for="link in getToolLinks(item.toolRecord).slice(0, 1)"
-                      :key="link.url"
-                      :link="link"
-                      class="timeline-link-card"
-                      @click.stop
-                    />
-                  </template>
-                  <span
-                    v-if="item.toolRecord.duration"
-                    class="tool-time"
-                  >
-                    {{ item.toolRecord.duration }}ms
-                  </span>
-                  <span class="tool-status">{{ statusText(item.toolRecord.status) }}</span>
-                  <Icon
-                    :name="expandedItems[item.id] ? 'chevron-up' : 'chevron-down'"
-                    :size="12"
-                  />
-                </div>
-                <div v-if="expandedItems[item.id]" class="tool-detail">
-                  <div class="detail-section">
-                    <div class="detail-label">参数</div>
-                    <pre class="detail-code">{{ JSON.stringify(item.toolRecord.arguments, null, 2) }}</pre>
-                  </div>
-                  <div
-                    v-if="item.toolRecord.status !== 'pending' && item.toolRecord.status !== 'running'"
-                    class="detail-section"
-                  >
-                    <div class="detail-label">结果</div>
-                    <pre class="detail-pre">{{ formatToolResult(item.toolRecord.result, item.id) }}</pre>
-                    <button
-                      v-if="shouldTruncateResult(item.toolRecord.result)"
-                      class="expand-btn"
-                      @click.stop="toggleResultExpand(item.id)"
-                    >
-                      {{ isResultExpanded(item.id) ? '收起' : '展开全部' }}
-                    </button>
-                  </div>
-                  <div v-else class="tool-running">
-                    <span class="pulse-dot"></span>
-                    <span class="pulse-dot"></span>
-                    <span class="pulse-dot"></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </template>
-
-        <!-- 传统思考框(兼容旧数据) -->
-        <div v-else-if="displayReasoning" class="legacy-reasoning">
-          <div class="legacy-header" @click="isExpanded = !isExpanded">
-            <span class="dot-thinking"></span>
-            <span>思考过程</span>
-            <span class="spacer"></span>
-            <Icon :name="isExpanded ? 'chevron-up' : 'chevron-down'" :size="12" />
-          </div>
-          <div v-show="isExpanded" class="legacy-content">
-            {{ displayReasoning }}
-          </div>
-        </div>
+        <ThinkingTimeline
+          :message="message"
+          :is-streaming="isStreaming"
+          :render-html="renderMarkdown"
+        />
 
         <!-- 最终回复 -->
         <div
@@ -238,8 +129,8 @@
 
 <script setup lang="ts">
 import { AIAvatar, Avatar, Icon, TypewriterText } from '@/theme/components/common'
-import type { ChatMessage, ChatMessage as ChatMessageType, ThinkingStep } from '@/theme/types'
-import { extractAllEntityLinks, extractLinksFromRecord, type EntityLink } from '@/theme/utils/extractEntityLinks'
+import type { ChatMessage, ChatMessage as ChatMessageType } from '@/theme/types'
+import { extractAllEntityLinks, type EntityLink } from '@/theme/utils/extractEntityLinks'
 import { estimateTextTokens, formatTokenCount } from '@/theme/utils/tokenEstimator'
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
@@ -263,6 +154,7 @@ proxyImageRenderer.image = ({ href, title, text }: any) => {
 marked.use({ renderer: proxyImageRenderer })
 import EntityLinkCard from './EntityLinkCard.vue'
 import MessageVersions from './MessageVersions.vue'
+import ThinkingTimeline from './ThinkingTimeline.vue'
 
 interface VersionInfo {
   versions: ChatMessageType[]
@@ -285,10 +177,7 @@ const emit = defineEmits<{
 }>()
 
 // ========== 状态管理 ==========
-const isExpanded = ref(true)
 const copied = ref(false)
-const expandedItems = ref<Record<string, boolean>>({})
-const resultExpandedMap = ref<Record<string, boolean>>({})
 
 // TTS
 const { speak, stopSpeaking, status: voiceStatus } = useVoice()
@@ -304,38 +193,6 @@ async function handleSpeak() {
   await speak(text)
 }
 
-const RESULT_TRUNCATE_LENGTH = 1200
-
-function isResultExpanded(itemId: string): boolean {
-  return resultExpandedMap.value[itemId] || false
-}
-
-function toggleResultExpand(itemId: string) {
-  resultExpandedMap.value[itemId] = !isResultExpanded(itemId)
-}
-
-function shouldTruncateResult(result: any): boolean {
-  const str = typeof result === 'string' ? result : JSON.stringify(result, null, 2)
-  return str.length > RESULT_TRUNCATE_LENGTH
-}
-
-function formatToolResult(result: any, itemId: string): string {
-  const str = typeof result === 'string' ? result : JSON.stringify(result, null, 2)
-  if (str.length <= RESULT_TRUNCATE_LENGTH || isResultExpanded(itemId)) {
-    return str
-  }
-  return str.slice(0, RESULT_TRUNCATE_LENGTH) + '\n\n... [内容已截断,点击展开查看全部]'
-}
-
-// 从单个工具记录中提取链接(用于 timeline 中每个 tool_call 项)
-function getToolLinks(toolRecord: any): EntityLink[] {
-  const links = extractLinksFromRecord(toolRecord)
-  if (links.length > 0) {
-    // 提取链接(调试用日志已移除)
-  }
-  return links
-}
-
 const typewriterRef = ref<InstanceType<typeof TypewriterText> | null>(null)
 
 // Token 计数
@@ -345,59 +202,11 @@ const tokenCount = computed(() => {
   return estimateTextTokens(content) + estimateTextTokens(reasoning)
 })
 
-// ========== 计算属性 ==========
-const allThinkingSteps = computed((): ThinkingStep[] => {
-  return props.message.metadata?.thinkingSteps || []
-})
-
-const toolRecords = computed(() => props.message.metadata?.toolRecords || [])
-
-const timelineItems = computed((): ThinkingStep[] => {
-  if (allThinkingSteps.value.length > 0) {
-    return allThinkingSteps.value
-  }
-  if (toolRecords.value.length > 0) {
-    return toolRecords.value.map((record, index) => ({
-      id: `legacy_tool_${record.id || index}`,
-      type: 'tool_call' as const,
-      round: 1,
-      index,
-      toolRecord: record,
-      createdAt: record.startTime || Date.now()
-    }))
-  }
-  return []
-})
-
-const hasTimelineItems = computed(() => timelineItems.value.length > 0)
-
 // 从工具记录中提取实体链接(飞书/GitHub/语雀等)
 const entityLinks = computed((): EntityLink[] => {
   if (!props.message.metadata?.toolRecords?.length) return []
   return extractAllEntityLinks(props.message.metadata.toolRecords)
 })
-
-// 初始化折叠状态：thinking 默认展开,tool_call 默认折叠
-watch(
-  timelineItems,
-  (items) => {
-    if (!items.length) return
-    const next: Record<string, boolean> = { ...expandedItems.value }
-    let changed = false
-    items.forEach((item) => {
-      if (next[item.id] === undefined) {
-        next[item.id] = item.type !== 'tool_call'
-        changed = true
-      }
-    })
-    if (changed) {
-      expandedItems.value = next
-    }
-  },
-  { immediate: true }
-)
-
-const displayReasoning = computed(() => props.message.reasoning?.content || '')
 
 // ========== 打字机效果控制 ==========
 const TYPEWRISTER_KEY = 'ai_chat_shown_message_ids'
@@ -456,28 +265,6 @@ function onTypewriterComplete() {
 }
 
 // ========== 辅助函数 ==========
-function statusText(status: string): string {
-  const map: Record<string, string> = {
-    pending: '等待中',
-    running: '执行中',
-    success: '成功',
-    error: '失败'
-  }
-  return map[status] || status
-}
-
-function toolIcon(name?: string): string {
-  const n = (name || '').toLowerCase()
-  if (n.includes('search')) return '🔍'
-  if (n.includes('fetch') || n.includes('proxy')) return '🌐'
-  if (n.includes('read') || n.includes('get')) return '📄'
-  if (n.includes('write') || n.includes('edit')) return '✏️'
-  if (n.includes('create') || n.includes('article')) return '📝'
-  if (n.includes('arxiv')) return '📚'
-  if (n.includes('scholar')) return '🎓'
-  return '🔧'
-}
-
 /**
  * 预处理 Markdown,修复表格行中公式包含 | 管道符的问题
  *
@@ -538,27 +325,6 @@ function renderMarkdown(content: string): string {
   } catch {
     return content
   }
-}
-
-function getToolArgsSummary(args: Record<string, any>): string {
-  if (!args || typeof args !== 'object') return ''
-  const priorityKeys = ['query', 'keyword', 'q', 'url', 'path', 'text', 'content', 'message']
-  for (const key of priorityKeys) {
-    if (args[key] && typeof args[key] === 'string') {
-      const val = args[key] as string
-      return val.length > 60 ? val.slice(0, 60) + '...' : val
-    }
-  }
-  for (const val of Object.values(args)) {
-    if (typeof val === 'string' && val.length > 0) {
-      return val.length > 60 ? val.slice(0, 60) + '...' : val
-    }
-  }
-  return ''
-}
-
-function toggleItem(itemId: string) {
-  expandedItems.value[itemId] = !expandedItems.value[itemId]
 }
 
 // ========== 消息解析 ==========
@@ -692,14 +458,10 @@ async function copyContent() {
 
 .user-bubble {
   padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(200, 195, 188, 0.5);
+  background: #fff;
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
   color: var(--sr-text-primary, #2d2a26);
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.04),
-    0 1px 2px rgba(0, 0, 0, 0.02),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 /* 用户消息附件缩略图 */
@@ -718,12 +480,11 @@ async function copyContent() {
   background: #f1f5f9;
   border: 1px solid rgba(226, 232, 240, 0.8);
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: opacity 0.2s;
 }
 
 .user-attachment-thumb:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  opacity: 0.9;
 }
 
 .user-attachment-thumb img,
@@ -793,8 +554,8 @@ async function copyContent() {
 
 /* 思考过程 */
 .thinking-compact {
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(200, 195, 188, 0.35);
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   overflow: hidden;
   transition: background 0.2s ease, box-shadow 0.2s ease;
@@ -1018,14 +779,10 @@ async function copyContent() {
 
 /* ========== 最终回复 ========== */
 .final-response {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(200, 195, 188, 0.4);
+  background: #fff;
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
   overflow: hidden;
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.04),
-    0 1px 2px rgba(0, 0, 0, 0.02),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .response-body {
@@ -1194,7 +951,7 @@ async function copyContent() {
 }
 
 .action-btn.speaking {
-  color: #d97706;
+  color: #9a9588;
   border-color: rgba(217, 119, 6, 0.4);
   background: rgba(217, 119, 6, 0.1);
   animation: pulse-speak 1.5s ease-in-out infinite;

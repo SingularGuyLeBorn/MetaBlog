@@ -348,7 +348,7 @@ const getColumnItems = (items: SubFolder[], colIndex: number, colCount: number) 
   background: rgba(255,255,255,0.2);
   border-radius: 100px;
   margin-bottom: 24px;
-  backdrop-filter: blur(10px);
+
 }
 
 .badge-icon { font-size: 18px; }
@@ -378,7 +378,7 @@ const getColumnItems = (items: SubFolder[], colIndex: number, colCount: number) 
   padding: 16px 24px;
   background: rgba(255,255,255,0.15);
   border-radius: 12px;
-  backdrop-filter: blur(10px);
+
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -420,7 +420,7 @@ const getColumnItems = (items: SubFolder[], colIndex: number, colCount: number) 
   align-items: center;
   justify-content: center;
   font-size: 40px;
-  backdrop-filter: blur(10px);
+
   animation: float 6s ease-in-out infinite;
 }
 

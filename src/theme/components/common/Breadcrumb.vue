@@ -72,9 +72,7 @@ const breadcrumbs = computed(() => {
 
 .breadcrumb {
   padding: 12px 32px;
-  background: var(--sr-glass-bg, rgba(255, 255, 255, 0.6));
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #f8f6f3;
   border-bottom: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
 }
 

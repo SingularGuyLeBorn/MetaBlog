@@ -658,7 +658,6 @@ onUnmounted(() => {
   border: 1px solid var(--sr-glass-border);
   border-radius: var(--sr-radius-full);
   background: var(--sr-glass-bg);
-  backdrop-filter: blur(8px);
 }
 
 .badge-star { font-size: 12px; color: var(--sr-accent-star); }
@@ -1105,7 +1104,6 @@ onUnmounted(() => {
   background: var(--sr-glass-bg);
   border: 1px solid var(--sr-glass-border);
   border-radius: var(--sr-radius-md);
-  backdrop-filter: blur(8px);
   transition: all 0.35s var(--sr-spring-bounce);
 }
 

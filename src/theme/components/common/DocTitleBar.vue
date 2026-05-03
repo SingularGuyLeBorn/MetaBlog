@@ -335,9 +335,7 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  background: var(--sr-glass-bg, rgba(255, 255, 255, 0.6));
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #f8f6f3;
   border-bottom: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
   gap: 16px;
   min-height: 64px;
@@ -461,9 +459,7 @@ const exportDoc = async (format: 'md' | 'pdf' | 'docx') => {
   top: calc(100% + 8px);
   right: 0;
   min-width: 260px;
-  background: var(--sr-glass-bg, rgba(255, 255, 255, 0.85));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #fff;
   border: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
   border-radius: var(--sr-radius-lg, 16px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);

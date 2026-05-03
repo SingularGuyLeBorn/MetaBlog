@@ -472,8 +472,7 @@ const rightResizerPosition = computed(() => rightWidth.value + 'px')
 
 .metablog-layout .VPNav {
   z-index: 200;
-  background: rgba(12, 12, 20, 0.8) !important;
-  backdrop-filter: blur(20px) !important;
+  background: rgba(12, 12, 20, 0.9) !important;
   border-bottom: 1px solid var(--sr-glass-border) !important;
 }
 

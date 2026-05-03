@@ -346,7 +346,7 @@ onMounted(initConfig)
 </script>
 
 <style scoped>
-/* 使用全局导入的 liquid-glass-theme.css */
+/* Star River 风格 */
 
 .agent-config {
   display: flex;
@@ -762,7 +762,6 @@ onMounted(initConfig)
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
   z-index: 1100;
   padding: 24px;
 }

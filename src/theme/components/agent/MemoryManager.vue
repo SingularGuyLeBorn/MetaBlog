@@ -46,6 +46,12 @@
               class="search-input"
             />
           </div>
+          <LiquidGlass glow-color="var(--sr-morandi-green, #a8b3a8)" :intensity="0.3">
+            <button class="create-btn" @click="showCreate = true">
+              <Icon name="plus" />
+              新增记忆
+            </button>
+          </LiquidGlass>
           <LiquidGlass glow-color="var(--sr-morandi-pink, #d4b8b8)" :intensity="0.3">
             <button class="clear-btn" @click="clearAll">
               <Icon name="trash-2" />
@@ -72,9 +78,14 @@
               </div>
               <p class="memory-text">{{ memory.content }}</p>
             </div>
-            <button class="delete-btn" @click="deleteMemory(memory.id)">
-              <Icon name="x" />
-            </button>
+            <div class="memory-actions">
+              <button class="action-btn" @click="editMemory(memory)" title="编辑">
+                <Icon name="edit" />
+              </button>
+              <button class="action-btn danger" @click="deleteMemory(memory.id)" title="删除">
+                <Icon name="x" />
+              </button>
+            </div>
           </div>
         </LiquidGlass>
 
@@ -102,6 +113,71 @@
         </button>
       </LiquidGlass>
     </div>
+
+    <!-- 新增/编辑弹窗 -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showCreate || editingMemory" class="modal-overlay" @click.self="closeModal">
+          <LiquidGlass class="modal-glass" glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.4">
+            <div class="memory-modal">
+              <div class="modal-header">
+                <h3>{{ editingMemory ? '编辑记忆' : '新增记忆' }}</h3>
+                <button class="close-btn" @click="closeModal">
+                  <Icon name="x" />
+                </button>
+              </div>
+
+              <div class="modal-body">
+                <div class="form-group">
+                  <label>内容</label>
+                  <textarea v-model="form.content" class="lg-input" rows="4" placeholder="记忆内容..." />
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>分类</label>
+                    <select v-model="form.category" class="lg-input">
+                      <option value="preference">用户偏好</option>
+                      <option value="skill">技能记忆</option>
+                      <option value="fact">事实知识</option>
+                      <option value="session">会话上下文</option>
+                      <option value="default">通用记忆</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>重要性 (1-10)</label>
+                    <input v-model.number="form.importance" type="number" class="lg-input" min="1" max="10" />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Agent 名称 (可选)</label>
+                    <input v-model="form.agentName" type="text" class="lg-input" placeholder="例如：Meta 助手" />
+                  </div>
+                  <div class="form-group">
+                    <label>Agent 头像 (可选)</label>
+                    <input v-model="form.agentAvatar" type="text" class="lg-input" placeholder="例如：🤖" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer">
+                <LiquidGlass glow-color="var(--sr-text-muted, #94a3b8)" :intensity="0.2">
+                  <button class="lg-btn" @click="closeModal">取消</button>
+                </LiquidGlass>
+                <LiquidGlass glow-color="var(--sr-accent-star, #b8a090)" :intensity="0.5">
+                  <button class="lg-btn lg-btn-primary" @click="saveMemory">
+                    <Icon name="save" />
+                    {{ editingMemory ? '保存' : '创建' }}
+                  </button>
+                </LiquidGlass>
+              </div>
+            </div>
+          </LiquidGlass>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -123,13 +199,72 @@ interface Memory {
 const searchQuery = ref('')
 const memories = ref<Memory[]>([])
 const loading = ref(false)
+const showCreate = ref(false)
+const editingMemory = ref<Memory | null>(null)
+
+const form = ref({
+  content: '',
+  category: 'default' as string,
+  importance: 5,
+  agentName: '',
+  agentAvatar: ''
+})
+
+function closeModal() {
+  showCreate.value = false
+  editingMemory.value = null
+  form.value = { content: '', category: 'default', importance: 5, agentName: '', agentAvatar: '' }
+}
+
+function editMemory(memory: Memory) {
+  editingMemory.value = memory
+  form.value = {
+    content: memory.content || '',
+    category: memory.category || 'default',
+    importance: (memory as any).importance || 5,
+    agentName: memory.agentName || '',
+    agentAvatar: memory.agentAvatar || ''
+  }
+}
+
+async function saveMemory() {
+  if (!form.value.content.trim()) {
+    alert('内容不能为空')
+    return
+  }
+  try {
+    const payload = {
+      ...(editingMemory.value ? { id: editingMemory.value.id } : {}),
+      content: form.value.content.trim(),
+      category: form.value.category,
+      importance: form.value.importance,
+      agentName: form.value.agentName.trim() || undefined,
+      agentAvatar: form.value.agentAvatar.trim() || undefined
+    }
+    const url = editingMemory.value ? '/api/memories/update' : '/api/memories'
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    const json = await res.json()
+    if (json.success) {
+      await loadMemories()
+      closeModal()
+    } else {
+      alert((editingMemory.value ? '更新' : '创建') + '失败: ' + (json.error || '未知错误'))
+    }
+  } catch (e) {
+    alert((editingMemory.value ? '更新' : '创建') + '失败: ' + String(e))
+  }
+}
 
 // 分类映射：中文标签 + emoji
 const categoryMap: Record<string, { label: string; emoji: string; color: string }> = {
   preference: { label: '用户偏好', emoji: '👤', color: 'var(--sr-morandi-blue, #9daab8)' },
   skill: { label: '技能记忆', emoji: '🛠️', color: 'var(--sr-morandi-green, #a8b3a8)' },
   fact: { label: '事实知识', emoji: '📚', color: 'var(--sr-accent-star, #b8a090)' },
-  session: { label: '会话上下文', emoji: '💬', color: '#ec4899' },
+  session: { label: '会话上下文', emoji: '💬', color: 'var(--sr-morandi-pink, #d4b8b8)' },
   default: { label: '通用记忆', emoji: '🤖', color: 'var(--sr-accent-star, #b8a090)' }
 }
 
@@ -183,9 +318,9 @@ const stats = computed(() => {
 
   return [
     { id: 'total', label: '总记忆数', value: String(total), icon: 'layers', gradient: 'linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8))', glowColor: 'var(--sr-accent-star, #b8a090)' },
-    { id: 'agents', label: '涉及 Agents', value: String(agents), icon: 'users', gradient: 'linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), #2563eb)', glowColor: 'var(--sr-morandi-blue, #9daab8)' },
+    { id: 'agents', label: '涉及 Agents', value: String(agents), icon: 'users', gradient: 'linear-gradient(135deg, var(--sr-morandi-blue, #9daab8), var(--sr-morandi-blue, #9daab8))', glowColor: 'var(--sr-morandi-blue, #9daab8)' },
     { id: 'size', label: '存储大小', value: size, icon: 'hard-drive', gradient: 'linear-gradient(135deg, var(--sr-morandi-green, #a8b3a8), var(--sr-morandi-green, #a8b3a8))', glowColor: 'var(--sr-morandi-green, #a8b3a8)' },
-    { id: 'today', label: '今日新增', value: String(today), icon: 'trending-up', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', glowColor: '#f59e0b' }
+    { id: 'today', label: '今日新增', value: String(today), icon: 'trending-up', gradient: 'linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8))', glowColor: 'var(--sr-accent-star, #b8a090)' }
   ]
 })
 
@@ -246,7 +381,7 @@ function exportMemories() {
 </script>
 
 <style scoped>
-/* 使用全局导入的liquid-glass-theme.css */
+/* Star River 风格 */
 
 .memory-manager {
   max-width: 1000px;
@@ -375,7 +510,7 @@ function exportMemories() {
   transform: translateY(-50%);
   width: 18px;
   height: 18px;
-  color: #94a3b8;
+  color: var(--sr-text-muted, #94a3b8);
 }
 
 .search-input {
@@ -394,6 +529,30 @@ function exportMemories() {
   background: rgba(0, 0, 0, 0.05);
   border-color: rgba(184, 160, 144, 0.3);
   outline: none;
+}
+
+.create-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: rgba(168, 179, 168, 0.1);
+  border: none;
+  border-radius: 10px;
+  color: var(--sr-morandi-green, #a8b3a8);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.create-btn:hover {
+  background: rgba(168, 179, 168, 0.2);
+}
+
+.create-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .clear-btn {
@@ -435,6 +594,8 @@ function exportMemories() {
   align-items: flex-start;
   gap: 16px;
   padding: 20px;
+  border: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
+  border-radius: inherit;
 }
 
 .memory-avatar {
@@ -477,7 +638,18 @@ function exportMemories() {
   line-height: 1.5;
 }
 
-.delete-btn {
+.memory-actions {
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.memory-item:hover .memory-actions {
+  opacity: 1;
+}
+
+.memory-actions .action-btn {
   width: 32px;
   height: 32px;
   display: flex;
@@ -488,20 +660,20 @@ function exportMemories() {
   border-radius: 8px;
   color: #94a3b8;
   cursor: pointer;
-  opacity: 0;
   transition: all 0.2s;
 }
 
-.memory-item:hover .delete-btn {
-  opacity: 1;
+.memory-actions .action-btn:hover {
+  background: rgba(184, 160, 144, 0.1);
+  color: var(--sr-accent-star, #b8a090);
 }
 
-.delete-btn:hover {
+.memory-actions .action-btn.danger:hover {
   background: rgba(212, 184, 184, 0.1);
   color: var(--sr-morandi-pink, #d4b8b8);
 }
 
-.delete-btn svg {
+.memory-actions .action-btn svg {
   width: 16px;
   height: 16px;
 }
@@ -520,7 +692,7 @@ function exportMemories() {
   width: 64px;
   height: 64px;
   margin-bottom: 16px;
-  color: #cbd5e1;
+  color: var(--sr-glass-border-strong, rgba(0,0,0,0.12));
 }
 
 .empty-state p {
@@ -565,19 +737,144 @@ function exportMemories() {
   height: 18px;
 }
 
+/* 弹窗 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1100;
+  padding: 24px;
+}
+
+.modal-glass {
+  width: 90%;
+  max-width: 520px;
+  border-radius: 24px;
+}
+
+.memory-modal {
+  padding: 28px;
+}
+
+.memory-modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.memory-modal .modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--sr-text-primary, #1a1a2e);
+}
+
+.memory-modal .close-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 10px;
+  color: var(--sr-text-muted, #94a3b8);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.memory-modal .close-btn:hover {
+  background: rgba(212, 184, 184, 0.1);
+  color: var(--sr-morandi-pink, #d4b8b8);
+  transform: rotate(90deg);
+}
+
+.memory-modal .close-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sr-text-primary, #1a1a2e);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.memory-modal .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.lg-btn {
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: var(--sr-text-muted, #94a3b8);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lg-btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--sr-accent-star, #b8a090), var(--sr-morandi-purple, #b3a8b8));
+  color: white;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
 @media (max-width: 768px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .memory-list-header {
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
   }
-  
+
   .search-input {
     width: 100%;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
   }
 }
 </style>

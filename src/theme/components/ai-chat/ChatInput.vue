@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ChatInput - 智能输入框(支持多模态)
   支持图片/视频上传、附件预览、多模态输入
 -->
@@ -108,10 +108,10 @@
     </div>
 
     <!-- 主输入区域 -->
-    <div class="input-container-3d" :class="{ focused: isFocused, 'has-attachments': attachments.length > 0, 'has-queue': props.taskQueue && props.taskQueue.length > 0, recording: isRecording }">
+    <div class="input-container" :class="{ focused: isFocused, 'has-attachments': attachments.length > 0, 'has-queue': props.taskQueue && props.taskQueue.length > 0, recording: isRecording }">
       <!-- 语音按钮 -->
       <button
-        class="voice-btn-3d"
+        class="voice-btn"
         :class="{ recording: isRecording, transcribing: isTranscribing }"
         :disabled="isStreaming || isTranscribing"
         @click="toggleRecording"
@@ -124,7 +124,7 @@
       <!-- 附件按钮 -->
       <div class="attach-menu-wrapper">
         <button 
-          class="attach-btn-3d" 
+          class="attach-btn" 
           @click="toggleAttachMenu"
           :disabled="attachments.length >= maxAttachments"
         >
@@ -176,14 +176,14 @@
       <!-- 发送/停止按钮 -->
       <button
         v-if="isStreaming"
-        class="send-btn-3d stop"
+        class="send-btn stop"
         @click="$emit('stop')"
       >
         <Icon name="square" :size="18" />
       </button>
       <button
         v-else
-        class="send-btn-3d"
+        class="send-btn"
         :disabled="!canSend"
         @click="handleSend"
       >
@@ -192,7 +192,7 @@
     </div>
     
     <!-- 输入提示 -->
-    <div class="input-hint-3d">
+    <div class="input-hint">
       <template v-if="!isStreaming">
         <span class="hint-key">Ctrl+Enter</span>
         <span>发送 ·</span>
@@ -206,7 +206,7 @@
         <span>语音</span>
       </template>
       <template v-else>
-        <span class="hint-key" style="color: #f59e0b;">处理中</span>
+        <span class="hint-key" style="color: #b8a090;">处理中</span>
         <span>Ctrl+Enter 加入队列 · 点击 ⏹ 停止</span>
         <span v-if="taskQueue && taskQueue.length > 0" class="queue-badge">队列 {{ taskQueue.length }} 条</span>
       </template>
@@ -600,9 +600,8 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 .chat-input-enhanced {
   position: relative;
   padding: 16px 24px 20px;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.9) 0%, #f1f5f9 100%);
-  border-top: 1px solid rgba(226, 232, 240, 0.8);
-  backdrop-filter: blur(10px);
+  background: #f1f5f9;
+  border-top: 1px solid #e2e8f0;
 }
 
 /* 附件预览区域 */
@@ -692,7 +691,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 }
 
 .remove-btn:hover {
-  background: rgba(239, 68, 68, 0.8);
+  background: rgba(212, 184, 184, 0.8);
 }
 
 .video-icon {
@@ -712,7 +711,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   justify-content: center;
   height: 100%;
   padding: 8px;
-  color: #64748b;
+  color: var(--sr-text-muted, #9a9588);
 }
 
 .file-info {
@@ -731,7 +730,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 
 .file-size {
   font-size: 9px;
-  color: #94a3b8;
+  color: var(--sr-text-muted, #9a9588);
 }
 
 /* 上传进度 */
@@ -746,7 +745,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(90deg, #b8b0a0, #b0a8b8);
   transition: width 0.3s ease;
 }
 
@@ -762,14 +761,14 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   background: #f8fafc;
   border: 2px dashed #cbd5e1;
   border-radius: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #9a9588);
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .add-attachment-btn:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
+  border-color: #b8b0a0;
+  color: #b8b0a0;
   background: #eff6ff;
 }
 
@@ -790,7 +789,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 }
 
 /* 输入容器 */
-.input-container-3d {
+.input-container {
   position: relative;
   display: flex;
   align-items: flex-end;
@@ -806,17 +805,17 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-.input-container-3d.has-attachments {
+.input-container.has-attachments {
   border-radius: 20px;
 }
 
-.input-container-3d.has-queue {
+.input-container.has-queue {
   box-shadow:
     0 2px 6px rgba(0, 0, 0, 0.03),
     0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
-.input-container-3d:hover {
+.input-container:hover {
   transform: translateY(-1px);
   box-shadow: 
     0 8px 20px rgba(0, 0, 0, 0.06),
@@ -824,7 +823,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
-.input-container-3d.focused {
+.input-container.focused {
   border-color: rgba(184, 160, 144, 0.5);
   box-shadow:
     0 0 0 4px rgba(184, 160, 144, 0.1),
@@ -838,7 +837,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   position: relative;
 }
 
-.attach-btn-3d {
+.attach-btn {
   width: 40px;
   height: 40px;
   display: flex;
@@ -847,20 +846,20 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #9a9588);
   cursor: pointer;
   transition: all 0.3s ease;
   flex-shrink: 0;
 }
 
-.attach-btn-3d:hover:not(:disabled) {
+.attach-btn:hover:not(:disabled) {
   background: linear-gradient(145deg, rgba(248, 246, 243, 0.9), rgba(240, 237, 232, 0.9));
   color: var(--sr-text-secondary, #6a6560);
   border-color: rgba(184, 160, 144, 0.35);
   transform: scale(1.05);
 }
 
-.attach-btn-3d:disabled {
+.attach-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
@@ -874,7 +873,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 12px;
   padding: 6px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   z-index: 100;
   min-width: 220px;
 }
@@ -906,13 +905,13 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 .menu-hint {
   margin-left: auto;
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--sr-text-muted, #9a9588);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .menu-hint.ocr {
-  color: #f59e0b;
+  color: #b8a090;
   background: #fffbeb;
   padding: 1px 6px;
   border-radius: 4px;
@@ -938,7 +937,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 }
 
 /* 发送按钮 */
-.send-btn-3d {
+.send-btn {
   width: 40px;
   height: 40px;
   display: flex;
@@ -956,21 +955,21 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
     0 8px 24px rgba(179, 168, 184, 0.18);
 }
 
-.send-btn-3d:hover:not(:disabled) {
+.send-btn:hover:not(:disabled) {
   transform: translateY(-2px) scale(1.05);
   box-shadow:
     0 8px 20px rgba(179, 168, 184, 0.45),
     0 16px 40px rgba(179, 168, 184, 0.25);
 }
 
-.send-btn-3d:disabled {
+.send-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
-.send-btn-3d.stop {
+.send-btn.stop {
   background: linear-gradient(135deg, rgba(201, 184, 179, 0.9) 0%, rgba(179, 168, 168, 0.9) 100%);
   box-shadow:
     0 4px 12px rgba(201, 184, 179, 0.35),
@@ -984,7 +983,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 }
 
 /* 语音按钮 */
-.voice-btn-3d {
+.voice-btn {
   width: 40px;
   height: 40px;
   display: flex;
@@ -993,39 +992,39 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #9a9588);
   cursor: pointer;
   transition: all 0.3s ease;
   flex-shrink: 0;
   position: relative;
 }
 
-.voice-btn-3d:hover:not(:disabled) {
+.voice-btn:hover:not(:disabled) {
   background: linear-gradient(145deg, rgba(248, 246, 243, 0.9), rgba(240, 237, 232, 0.9));
   color: var(--sr-text-secondary, #6a6560);
   border-color: rgba(184, 160, 144, 0.35);
   transform: scale(1.05);
 }
 
-.voice-btn-3d:disabled {
+.voice-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.voice-btn-3d.recording {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+.voice-btn.recording {
+  background: linear-gradient(135deg, #d4b8b8 0%, #c4a0a0 100%);
   color: white;
-  border-color: rgba(239, 68, 68, 0.5);
+  border-color: rgba(212, 184, 184, 0.5);
   animation: pulse-record 1.2s ease-in-out infinite;
 }
 
 @keyframes pulse-record {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 184, 184, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(212, 184, 184, 0); }
 }
 
-.voice-btn-3d.transcribing {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+.voice-btn.transcribing {
+  background: linear-gradient(135deg, #b8a090 0%, #9a9588 100%);
   color: white;
 }
 
@@ -1039,11 +1038,11 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 }
 
 /* 提示文字 */
-.input-hint-3d {
+.input-hint {
   text-align: center;
   margin-top: 10px;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--sr-text-muted, #9a9588);
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -1060,7 +1059,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   border-radius: 5px;
   font-size: 10px;
   font-weight: 700;
-  color: #64748b;
+  color: var(--sr-text-muted, #9a9588);
 }
 
 .hint-separator {
@@ -1068,7 +1067,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 }
 
 .hint-attachments {
-  color: #3b82f6;
+  color: #b8b0a0;
   font-weight: 600;
 }
 
@@ -1084,7 +1083,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 
 .model-badge.vision {
   background: linear-gradient(135deg, #dbeafe, #e0e7ff);
-  color: #3b82f6;
+  color: #b8b0a0;
 }
 
 .model-badge.video {
@@ -1101,7 +1100,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   font-size: 11px;
   font-weight: 600;
   background: linear-gradient(135deg, #fef3c7, #fde68a);
-  color: #d97706;
+  color: #9a9588;
   margin-left: 4px;
 }
 
@@ -1123,7 +1122,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   border: 1px solid rgba(226, 232, 240, 0.6);
   border-radius: 10px;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sr-text-muted, #9a9588);
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
@@ -1145,7 +1144,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 
 .queue-header-toggle {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--sr-text-muted, #9a9588);
 }
 
 .queue-list {
@@ -1177,13 +1176,11 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: #fff;
+  border: 1px solid #e2e8f0;
   border-radius: 10px;
   font-size: 13px;
-  color: #475569;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  color: var(--sr-text-secondary, #6a6560);
 }
 
 .queue-index {
@@ -1197,7 +1194,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   border-radius: 6px;
   font-size: 11px;
   font-weight: 700;
-  color: #4f46e5;
+  color: #b8a090;
 }
 
 .queue-content {
@@ -1209,7 +1206,7 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 }
 
 .queue-content:hover {
-  color: #1e293b;
+  color: var(--sr-text-primary, #2d2a26);
 }
 
 .queue-edit-input {
@@ -1219,18 +1216,18 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   border: 1px solid #c7d2fe;
   border-radius: 6px;
   font-size: 13px;
-  color: #1e293b;
+  color: var(--sr-text-primary, #2d2a26);
   outline: none;
 }
 
 .queue-edit-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+  border-color: #889888;
+  box-shadow: 0 0 0 2px rgba(136, 152, 136, 0.15);
 }
 
 .queue-attachments {
   font-size: 11px;
-  color: #64748b;
+  color: var(--sr-text-muted, #9a9588);
 }
 
 .queue-remove {
@@ -1243,14 +1240,14 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   background: transparent;
   border: none;
   border-radius: 6px;
-  color: #94a3b8;
+  color: var(--sr-text-muted, #9a9588);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .queue-remove:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: rgba(212, 184, 184, 0.1);
+  color: #d4b8b8;
 }
 
 /* 链接功能已由 readArticle 工具覆盖 */

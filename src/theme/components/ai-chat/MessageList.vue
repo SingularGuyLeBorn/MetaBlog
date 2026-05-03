@@ -1,11 +1,11 @@
-<!--
-  MessageList - 消息列表组件(3D 液态玻璃风格)
+﻿<!--
+  MessageList - 消息列表组件(Star River 风格)
 -->
 <template>
   <div class="message-list-wrapper">
-    <div ref="containerRef" class="message-list-3d" @scroll="handleScroll">
+    <div ref="containerRef" class="message-list" @scroll="handleScroll">
       <!-- 欢迎页面 -->
-      <div v-if="!sessionId || messages.length === 0" class="welcome-page-3d">
+      <div v-if="!sessionId || messages.length === 0" class="welcome-page">
         <!-- 背景光效 -->
         <div class="welcome-bg-effects">
           <div class="bg-orb orb-1"></div>
@@ -13,25 +13,25 @@
           <div class="bg-orb orb-3"></div>
         </div>
         
-        <div class="welcome-logo-3d">
+        <div class="welcome-logo">
           <div class="logo-glow"></div>
           <div class="logo-ring ring-1"></div>
           <div class="logo-ring ring-2"></div>
           <span class="logo-icon">✨</span>
         </div>
-        <h1 class="welcome-title-3d">
-          <span class="gradient-text-3d">AI 助手</span>
+        <h1 class="welcome-title">
+          <span class="gradient-text">AI 助手</span>
         </h1>
-        <p class="welcome-desc-3d">基于 DeepSeek 大模型,为您提供专业智能对话体验</p>
-        <div class="quick-actions-3d">
+        <p class="welcome-desc">基于 DeepSeek 大模型,为您提供专业智能对话体验</p>
+        <div class="quick-actions">
           <button
             v-for="(action, index) in quickActions"
             :key="action.text"
-            class="quick-action-btn-3d"
+            class="quick-action-btn"
             :style="{ animationDelay: `${index * 0.1}s` }"
             @click="$emit('use-prompt', action.text)"
           >
-            <span class="action-icon-3d">{{ action.icon }}</span>
+            <span class="action-icon">{{ action.icon }}</span>
             <span class="action-text">{{ action.text }}</span>
           </button>
         </div>
@@ -53,14 +53,14 @@
     </div>
 
     <!-- 滚动到底部按钮（固定在视口，不随消息滚动） -->
-    <Transition name="fade-3d">
+    <Transition name="fade">
       <button
         v-if="showScrollBtn"
-        class="scroll-to-bottom-3d"
+        class="scroll-to-bottom"
         @click="scrollToBottom(true)"
       >
         <Icon name="chevron-down" :size="20" />
-        <span v-if="isStreaming" class="new-messages-dot-3d" />
+        <span v-if="isStreaming" class="new-messages-dot" />
       </button>
     </Transition>
   </div>
@@ -289,15 +289,15 @@ defineExpose({ scrollToBottom, scrollToMessage })
   overflow: hidden;
 }
 
-.message-list-3d {
+.message-list {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
   scroll-behavior: smooth;
 }
 
-/* 3D 欢迎页面 */
-.welcome-page-3d {
+/* 欢迎页面 */
+.welcome-page {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -356,8 +356,8 @@ defineExpose({ scrollToBottom, scrollToMessage })
   50% { transform: translate(20px, -20px) scale(1.1); }
 }
 
-/* 3D Logo */
-.welcome-logo-3d {
+/* Logo */
+.welcome-logo {
   position: relative;
   margin-bottom: 32px;
   width: 120px;
@@ -414,7 +414,7 @@ defineExpose({ scrollToBottom, scrollToMessage })
   50% { transform: translateY(-8px); }
 }
 
-.welcome-title-3d {
+.welcome-title {
   font-size: 42px;
   font-weight: 300;
   margin-bottom: 16px;
@@ -424,7 +424,7 @@ defineExpose({ scrollToBottom, scrollToMessage })
   letter-spacing: -0.02em;
 }
 
-.gradient-text-3d {
+.gradient-text {
   background: linear-gradient(135deg, var(--sr-morandi-purple, #b3a8b8) 0%, var(--sr-morandi-warm, #d4c4b0) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -432,7 +432,7 @@ defineExpose({ scrollToBottom, scrollToMessage })
   filter: drop-shadow(0 4px 12px rgba(179, 168, 184, 0.15));
 }
 
-.welcome-desc-3d {
+.welcome-desc {
   font-size: 16px;
   color: var(--sr-text-secondary, #6a6560);
   margin-bottom: 40px;
@@ -442,8 +442,8 @@ defineExpose({ scrollToBottom, scrollToMessage })
   font-weight: 400;
 }
 
-/* 3D 快捷操作按钮 */
-.quick-actions-3d {
+/* 快捷操作按钮 */
+.quick-actions {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
@@ -452,18 +452,17 @@ defineExpose({ scrollToBottom, scrollToMessage })
   z-index: 1;
 }
 
-.quick-action-btn-3d {
+.quick-action-btn {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 20px 24px;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: #fff;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   text-align: left;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
   animation: card-fade-in 0.5s ease backwards;
 }
 
@@ -478,20 +477,18 @@ defineExpose({ scrollToBottom, scrollToMessage })
   }
 }
 
-.quick-action-btn-3d:hover {
-  border-color: rgba(184, 160, 144, 0.4);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 12px 30px rgba(184, 160, 144, 0.1), inset 0 0 16px rgba(184, 160, 144, 0.05);
-  transform: translateY(-4px) rotateX(5deg);
+.quick-action-btn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
 }
 
-.action-icon-3d {
+.action-icon {
   font-size: 24px;
   transition: transform 0.3s ease;
 }
 
-.quick-action-btn-3d:hover .action-icon-3d {
-  transform: scale(1.2) rotate(10deg);
+.quick-action-btn:hover .action-icon {
+  transform: scale(1.1);
 }
 
 .action-text {
@@ -500,8 +497,8 @@ defineExpose({ scrollToBottom, scrollToMessage })
   color: var(--sr-text-primary, #2d2a26);
 }
 
-/* 3D 滚动到底部按钮 */
-.scroll-to-bottom-3d {
+/* 滚动到底部按钮 */
+.scroll-to-bottom {
   position: absolute;
   bottom: 28px;
   right: 28px;
@@ -510,26 +507,22 @@ defineExpose({ scrollToBottom, scrollToMessage })
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: #fff;
+  border: 1px solid #e2e8f0;
   border-radius: 50%;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  color: #64748b;
+  color: var(--sr-text-muted, #9a9588);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 10;
 }
 
-.scroll-to-bottom-3d:hover {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(184, 160, 144, 0.4);
+.scroll-to-bottom:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
   color: var(--sr-text-secondary, #6a6560);
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(184, 160, 144, 0.12), inset 0 0 12px rgba(184, 160, 144, 0.05);
 }
 
-.new-messages-dot-3d {
+.new-messages-dot {
   position: absolute;
   top: -2px;
   right: -2px;
@@ -539,7 +532,7 @@ defineExpose({ scrollToBottom, scrollToMessage })
   border-radius: 50%;
   border: 2px solid var(--sr-bg-primary, #f8f6f3);
   animation: pulse-dot 1.5s ease-in-out infinite;
-  box-shadow: 0 0 12px rgba(184, 160, 144, 0.45);
+  border: 2px solid var(--sr-bg-primary, #f8f6f3);
 }
 
 @keyframes pulse-dot {
@@ -548,13 +541,13 @@ defineExpose({ scrollToBottom, scrollToMessage })
 }
 
 /* 过渡动画 */
-.fade-3d-enter-active,
-.fade-3d-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: all 0.3s ease;
 }
 
-.fade-3d-enter-from,
-.fade-3d-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
   transform: translateY(10px);
 }
@@ -572,11 +565,11 @@ defineExpose({ scrollToBottom, scrollToMessage })
 }
 
 @media (max-width: 640px) {
-  .quick-actions-3d {
+  .quick-actions {
     grid-template-columns: 1fr;
   }
   
-  .welcome-title-3d {
+  .welcome-title {
     font-size: 32px;
   }
   
@@ -584,7 +577,7 @@ defineExpose({ scrollToBottom, scrollToMessage })
     font-size: 48px;
   }
   
-  .welcome-logo-3d {
+  .welcome-logo {
     width: 100px;
     height: 100px;
   }

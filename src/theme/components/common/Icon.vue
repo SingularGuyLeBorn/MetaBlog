@@ -1,57 +1,29 @@
 <template>
-  <span class="icon" :class="[`icon-${name}`, { 'icon-spin': spin }]">
-    <svg v-if="isSvg && svgContent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" v-html="svgContent"></svg>
-    <span v-else>{{ iconContent }}</span>
+  <span class="icon" :class="{ 'icon-spin': spin }">
+    <svg v-if="svgContent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" v-html="svgContent"></svg>
+    <component v-else-if="LucideIcon" :is="LucideIcon" :size="16" stroke-width="2" />
+    <span v-else>{{ props.name }}</span>
   </span>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import * as lucide from 'lucide-vue-next'
 
 const props = defineProps<{
   name: string
   spin?: boolean
 }>()
 
-const isSvg = computed(() => !['🤖', '👤', '💬', '🎯', '⚡', '🔧', '📊', '🎨', '🔍', '💡', '🚀', '⚙️', '📱', '🗑️', '✏️', '✓', '✕', '←', '→', '↑', '↓', '+'].includes(props.name))
+const toPascalCase = (str: string) =>
+  str.replace(/(^|-)([a-z0-9])/g, (_, __, char) => char.toUpperCase())
 
-const iconContent = computed(() => {
-  const iconMap: Record<string, string> = {
-    'bot': '🤖',
-    'user': '👤',
-    'message': '💬',
-    'target': '🎯',
-    'zap': '⚡',
-    'tool': '🔧',
-    'chart': '📊',
-    'palette': '🎨',
-    'search': '🔍',
-    'lightbulb': '💡',
-    'rocket': '🚀',
-    'settings': '⚙️',
-    'phone': '📱',
-    'trash': '🗑️',
-    'edit': '✏️',
-    'check': '✓',
-    'x': '✕',
-    'close': '✕',
-    'close-circle': '⊗',
-    'arrow-left': '←',
-    'arrow-right': '→',
-    'plus': '+',
-    'users': '👥',
-    'database': '🗄️',
-    'cpu': '🖥️',
-    'circle': '○',
-    'check-circle': '●',
-    'alert-triangle': '⚠️',
-    'message-square': '💬',
-  }
-  return iconMap[props.name] || props.name
+const LucideIcon = computed(() => {
+  const key = toPascalCase(props.name)
+  return (lucide as Record<string, any>)[key] || null
 })
 
 const svgContent = computed(() => {
-  // SVG path definitions for common icons
   const paths: Record<string, string> = {
     'paperclip': '<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
     'image': '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
@@ -97,7 +69,13 @@ const svgContent = computed(() => {
     'menu': '<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
     'sparkles': '<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>',
     'mic': '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>',
+    'message': '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+    'close': '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
     'volume-2': '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>',
+    'tool': '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+    'plug': '<path d="M12 22v-5"/><path d="M9 12V2"/><path d="M15 12V2"/><path d="M6 12a6 6 0 0 0 12 0"/>',
+    'power': '<path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/>',
+    'save': '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
   }
   return paths[props.name] || null
 })

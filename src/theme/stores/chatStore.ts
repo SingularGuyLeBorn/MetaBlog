@@ -17,6 +17,8 @@ import { CORE_TOOL_NAMES } from '@/theme/tools'
 import type { ChatMessage, ChatSession, MessageAttachment, MessageGroup, SessionConfig, ThinkingStep, ToolCallRecord } from '@/theme/types'
 import { calculateUsagePercent, estimateChatTokens, estimateTextTokens, formatTokenCount, getUsageStatus } from '@/theme/utils/tokenEstimator'
 import { computed, ref, watch } from 'vue'
+import { useStreamStore } from './streamStore'
+import { useToolStore } from './toolStore'
 
 const DEFAULT_CONFIG: SessionConfig = {
   model: 'deepseek-v4-flash',
@@ -86,6 +88,10 @@ function estimateSessionInputTokens(sessionId: string): number {
 export function useAIChat() {
   // 获取 Agent 配置(用于工具权限校验)
   const { activeAgent, skills } = useAgentConfig()
+
+  // 流式状态机和工具链 Store(Phase 1 新增)
+  const streamStore = useStreamStore()
+  const toolStore = useToolStore()
 
   // ==================== 初始化 ====================
   async function initialize() {
@@ -176,22 +182,37 @@ export function useAIChat() {
     }
   }
 
-  async function deleteSession(id: string) {
+  async function deleteSession(id: string): Promise<boolean> {
     const index = sessions.value.findIndex(s => s.id === id)
-    if (index === -1) return
+    if (index === -1) return false
 
+    // 先调用后端删除，确认成功后再清理前端状态
+    const success = await storage.deleteSession(id)
+    if (!success) {
+      console.warn(`[chatStore] 删除会话失败: ${id}`)
+      return false
+    }
+
+    // 清理前端状态
     sessions.value.splice(index, 1)
     delete messageGroups.value[id]
+    delete pendingMessages.value[id]
+    delete tokenUsageMap.value[id]
+    sessionControllers.delete(id)
+
+    // 清理流式和工具状态
+    streamStore.resetStream(id)
+    toolStore.clearSessionToolChains(id)
 
     if (currentSessionId.value === id) {
       currentSessionId.value = sessions.value[0]?.id || null
     }
 
-    await storage.deleteSession(id)
-
     if (sessions.value.length === 0) {
       await createSession('新对话')
     }
+
+    return true
   }
 
   async function autoRenameSession(sessionId: string, firstMessage: string) {
@@ -372,6 +393,10 @@ export function useAIChat() {
         availableTools: CORE_TOOL_NAMES
       } : undefined
 
+      // 【Phase 1】启动流式状态机
+      const groupId = userMsg.id
+      streamStore.startStream(sessionId, userMsg.id, aiMsg.id)
+
       const { toolRecords: records, injectedMessages } = await aiService.chatStream(
         history,
         config,
@@ -388,6 +413,8 @@ export function useAIChat() {
               lastMsg.content = text
               lastMsg.updatedAt = Date.now()
             }
+            // 【Phase 1】同步到流式状态机
+            streamStore.setContentBuffer(sessionId, text)
           },
           onReasoning: (text) => {
             const currentProxyGroups = messageGroups.value[sessionId]
@@ -406,6 +433,8 @@ export function useAIChat() {
               }
               lastMsg.updatedAt = Date.now()
             }
+            // 【Phase 1】同步到流式状态机
+            streamStore.setReasoningBuffer(sessionId, text)
           },
           onThinkingStep: (step: ThinkingStep) => {
             const currentProxyGroups = messageGroups.value[sessionId]
@@ -438,6 +467,10 @@ export function useAIChat() {
               }
               lastMsg.updatedAt = Date.now()
             }
+            // 【Phase 1】中间文本同步到流式状态机
+            if (step.type === 'text' && step.content) {
+              streamStore.setIntermediateBuffer(sessionId, step.content)
+            }
           },
           onUsage: (usage) => {
             const existingUsage = getCurrentTokenUsage(sessionId)
@@ -448,6 +481,30 @@ export function useAIChat() {
               apiReportedTotal: usage.total_tokens,
               lastUpdated: Date.now()
             }
+          },
+          onPhaseChange: (phase, prevPhase) => {
+            // 【Phase 1】同步到流式状态机
+            streamStore.updatePhase(sessionId, phase)
+          },
+          onToolCallStart: (item) => {
+            // 【Phase 1】同步到工具链 Store
+            toolStore.startToolCall(sessionId, groupId, {
+              id: item.id,
+              stepId: item.stepId,
+              name: item.name,
+              arguments: item.arguments,
+              round: item.round,
+              index: item.index
+            })
+          },
+          onToolCallUpdate: (item) => {
+            toolStore.updateToolCall(sessionId, groupId, item.id, {
+              status: item.status,
+              progressText: item.progressText
+            })
+          },
+          onToolCallComplete: (item) => {
+            toolStore.completeToolCall(sessionId, groupId, item.id, item.result)
           },
           onComplete: () => {
             const currentProxyGroups = messageGroups.value[sessionId]
@@ -470,6 +527,9 @@ export function useAIChat() {
             sessionControllers.delete(sessionId)
             // 同步 currentMessages 确保最终状态一致
             syncCurrentMessages()
+
+            // 【Phase 1】流式状态机完成
+            streamStore.completeStream(sessionId)
 
             // 更新 Token 用量：估算输出 token
             const existingUsage = getCurrentTokenUsage(sessionId)
@@ -535,6 +595,9 @@ export function useAIChat() {
             storage.saveMessageGroups(sessionId, currentProxyGroups)
             // 同步 currentMessages 确保错误状态一致
             syncCurrentMessages()
+
+            // 【Phase 1】流式状态机错误
+            streamStore.errorStream(sessionId, err)
 
             // 记录错误日志
             addLog({
@@ -755,6 +818,10 @@ export function useAIChat() {
         availableTools: CORE_TOOL_NAMES
       } : undefined
 
+      // 【Phase 1】启动流式状态机(重新生成)
+      const regenGroupId = targetGroup.userMessage.id
+      streamStore.startStream(sessionId, targetGroup.userMessage.id, newVersion.id)
+
       const { toolRecords: records, injectedMessages } = await aiService.chatStream(
         history,
         config,
@@ -768,6 +835,7 @@ export function useAIChat() {
               msg.content = text
               msg.updatedAt = Date.now()
             }
+            streamStore.setContentBuffer(sessionId, text)
           },
           onReasoning: (text) => {
             targetGroup.aiVersions[versionIndex].reasoning = {
@@ -780,6 +848,7 @@ export function useAIChat() {
               msg.reasoning = { content: text, isVisible: true }
               msg.updatedAt = Date.now()
             }
+            streamStore.setReasoningBuffer(sessionId, text)
           },
           onThinkingStep: (step: ThinkingStep) => {
             const targetMsg = targetGroup.aiVersions[versionIndex]
@@ -809,6 +878,9 @@ export function useAIChat() {
               }
               msg.updatedAt = Date.now()
             }
+            if (step.type === 'text' && step.content) {
+              streamStore.setIntermediateBuffer(sessionId, step.content)
+            }
           },
           onUsage: (usage) => {
             const existingUsage = getCurrentTokenUsage(sessionId)
@@ -820,12 +892,29 @@ export function useAIChat() {
               lastUpdated: Date.now()
             }
           },
+          onPhaseChange: (phase) => {
+            streamStore.updatePhase(sessionId, phase)
+          },
+          onToolCallStart: (item) => {
+            toolStore.startToolCall(sessionId, regenGroupId, {
+              id: item.id,
+              stepId: item.stepId,
+              name: item.name,
+              arguments: item.arguments,
+              round: item.round,
+              index: item.index
+            })
+          },
+          onToolCallComplete: (item) => {
+            toolStore.completeToolCall(sessionId, regenGroupId, item.id, item.result)
+          },
           onComplete: () => {
             targetGroup.aiVersions[versionIndex].status = 'completed'
             targetGroup.aiVersions[versionIndex].updatedAt = Date.now()
             isStreaming.value = false
             storage.saveMessageGroups(sessionId, groups)
             syncCurrentMessages()
+            streamStore.completeStream(sessionId)
 
             // 更新 Token 用量：估算输出 token
             const existingUsage = getCurrentTokenUsage(sessionId)
@@ -843,6 +932,7 @@ export function useAIChat() {
             isStreaming.value = false
             storage.saveMessageGroups(sessionId, groups)
             syncCurrentMessages()
+            streamStore.errorStream(sessionId, err)
           }
         },
         undefined,  // signal
@@ -1021,6 +1111,9 @@ export function useAIChat() {
     if (targetSessionId === currentSessionId.value) {
       isStreaming.value = false
     }
+
+    // 【Phase 1】通知流式状态机中断
+    streamStore.interruptStream(targetSessionId)
   }
 
   function clearMessages() {

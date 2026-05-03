@@ -16,7 +16,6 @@ import { h } from "vue";
 import Layout from "./Layout.vue";
 import "./style.css";
 import "./styles/animations.css";
-import "./styles/liquid-glass-theme.css";
 
 // ========== Pages ==========
 import AboutPage from "./components/pages/AboutPage.vue";

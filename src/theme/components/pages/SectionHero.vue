@@ -262,8 +262,7 @@ const titleWords = computed(() => props.title.split(''))
   align-items: center;
   justify-content: center;
   border-radius: 24px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.2);
   cursor: pointer;
   transition: all 0.3s ease;

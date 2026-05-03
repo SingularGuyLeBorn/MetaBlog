@@ -67,13 +67,19 @@ export * from '@/theme/utils'
 
 // ===== Components =====
 // Chat 组件
+export { default as ChatHeader } from './ChatHeader.vue'
 export { default as ChatInput } from './ChatInput.vue'
 export { default as ChatLayout } from './ChatLayout.vue'
+export { default as FinalResponse } from './FinalResponse.vue'
 export { default as MessageBubble } from './MessageBubble.vue'
 export { default as MessageList } from './MessageList.vue'
 export { default as SessionManager } from './SessionManager.vue'
 export { default as SessionPanel } from './SessionPanel.vue'
 export { default as SettingsPanel } from './SettingsPanel.vue'
+export { default as StreamStatusIndicator } from './StreamStatusIndicator.vue'
+export { default as SystemPromptEditor } from './SystemPromptEditor.vue'
+export { default as ThinkingTimeline } from './ThinkingTimeline.vue'
+export { default as ToolResultSidebar } from './ToolResultSidebar.vue'
 
 // Agent 组件
 export {

@@ -496,9 +496,7 @@ onBeforeUnmount(() => {
   position: sticky;
   top: 80px; /* Below the nav bar */
   z-index: 1002;
-  background: rgba(var(--vp-c-bg-rgb, 255, 255, 255), 0.98);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #fff;
   border: 1px solid var(--vp-c-divider);
   border-radius: 12px;
   margin: 0 0 20px 0;
@@ -756,7 +754,7 @@ kbd {
   font-weight: 500;
   color: var(--vp-c-text-2);
   background: rgba(var(--vp-c-bg-rgb, 255, 255, 255), 0.9);
-  backdrop-filter: blur(8px);
+
   padding: 10px 18px;
   border-radius: 24px;
   border: 1px solid var(--vp-c-divider);

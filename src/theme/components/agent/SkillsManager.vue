@@ -307,7 +307,7 @@ async function deleteSkill(skill: Skill) {
 </script>
 
 <style scoped>
-/* 使用全局导入的 liquid-glass-theme.css */
+/* Star River 风格 */
 
 .skills-manager {
   max-width: 1200px;
@@ -322,11 +322,9 @@ async function deleteSkill(skill: Skill) {
   justify-content: space-between;
   margin-bottom: 24px;
   padding: 20px 24px;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: #f8f6f3;
+  border: 1px solid #e2e8f0;
   border-radius: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 .header-title {
@@ -480,6 +478,8 @@ async function deleteSkill(skill: Skill) {
 
 .skill-card {
   padding: 24px;
+  border: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
+  border-radius: inherit;
 }
 
 .card-header {
@@ -647,7 +647,6 @@ async function deleteSkill(skill: Skill) {
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
   z-index: 1100;
   padding: 24px;
 }

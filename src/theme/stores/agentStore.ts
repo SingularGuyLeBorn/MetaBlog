@@ -233,45 +233,6 @@ export function useAgentConfig() {
   // ==================== 系统提示词构建 ====================
 
   /**
-   * 获取技能的详细内容(用于动态加载)
-   */
-  function getSkillContent(skillId: string): string | null {
-    const skill = skills.value.find(s => s.id === skillId)
-    return skill?.content || null
-  }
-
-  /**
-   * 构建工具简要描述(用于系统提示词)
-   */
-  function buildToolsDescription(tools: Tool[]): string {
-    if (tools.length === 0) return ''
-
-    const lines: string[] = []
-    lines.push('\n## 可用工具')
-    lines.push(`你有以下 ${tools.length} 个工具可供调用：\n`)
-
-    // 按类别分组
-    const toolsByCategory = new Map<string, Tool[]>()
-    tools.forEach(tool => {
-      const category = tool.category || '其他'
-      if (!toolsByCategory.has(category)) {
-        toolsByCategory.set(category, [])
-      }
-      toolsByCategory.get(category)!.push(tool)
-    })
-
-    toolsByCategory.forEach((categoryTools, category) => {
-      lines.push(`\n### ${category}`)
-      categoryTools.forEach(tool => {
-        lines.push(`- **${tool.name}**: ${tool.description}`)
-      })
-    })
-
-    lines.push('\n当需要调用工具时,系统会自动提供完整的参数定义. ')
-    return lines.join('\n')
-  }
-
-  /**
    * 构建系统提示词 - Claude Code 风格渐进式披露 (LOD-0)
    * 
    * 核心设计：System Prompt 告诉 LLM "你有工具、你可以调用、怎么调用"

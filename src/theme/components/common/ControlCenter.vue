@@ -247,8 +247,7 @@ onUnmounted(() => {
 .control-panel-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.2);
   z-index: 9998;
 }
 
@@ -258,11 +257,8 @@ onUnmounted(() => {
   right: 0;
   width: 320px;
   height: 100vh;
-  background: var(--sr-glass-bg, rgba(255, 255, 255, 0.85));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-left: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
-  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.08);
+  background: #f8f6f3;
+  border-left: 1px solid #e2e8f0;
   z-index: 9999;
   display: flex;
   flex-direction: column;

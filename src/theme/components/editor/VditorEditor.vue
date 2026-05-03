@@ -281,7 +281,6 @@ defineExpose({
   padding: 8px 16px;
   background: var(--vp-c-bg-alt);
   border-bottom: 1px solid var(--vp-c-divider);
-  backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
   z-index: 10;

@@ -214,9 +214,7 @@ onUnmounted(() => {
 
 /* 玻璃模式 */
 .lg-container.is-glass {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  background: #f8f6f3;
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 
     0 4px 16px rgba(0, 0, 0, 0.06),

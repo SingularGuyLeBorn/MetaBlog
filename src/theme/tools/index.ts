@@ -108,6 +108,13 @@ export {
     executeSearchCapabilities, searchCapabilitiesDef
 } from './search_capabilities'
 
+// ==================== 自我管理工具 ====================
+export {
+    manageMemory, manageMemoryDef,
+    manageMcpServer, manageMcpServerDef,
+    manageSkill, manageSkillDef
+} from './self'
+
 // ==================== 导入用于初始化====================
 import { getRegisteredToolNames, registerTools } from './registry'
 
@@ -349,6 +356,16 @@ import { executeGetAllSkills, executeGetAllTools, getAllSkillsDef, getAllToolsDe
 // 能力搜索工具
 import { executeSearchCapabilities, searchCapabilitiesDef } from './search_capabilities'
 
+// 自我管理工具
+import {
+    manageMemory,
+    manageMemoryDef,
+    manageMcpServer,
+    manageMcpServerDef,
+    manageSkill,
+    manageSkillDef
+} from './self'
+
 // ==================== 核心工具列表(始终暴露) ====================
 
 /**
@@ -370,7 +387,10 @@ export const CORE_TOOL_NAMES = [
     'getCurrentTime',      // 通用基础工具
     'calculate',             // 通用基础工具
     'webSearch',             // 通用网络搜索
-    'createArticle'          // 内容创作核心 - 创建博客文章
+    'createArticle',         // 内容创作核心 - 创建博客文章
+    'manageMemory',          // 自我管理 - 记忆 CRUD
+    'manageSkill',           // 自我管理 - Skill CRUD
+    'manageMcpServer'        // 自我管理 - MCP 服务器 CRUD
 ]
 
 // ==================== 初始化函数====================
@@ -563,6 +583,13 @@ export function initializeDefaultTools(): void {
     // 能力搜索工具- 供 Agent 通过关键词搜索工具和 Skills
     registerTools([
         { name: 'searchCapabilities', definition: searchCapabilitiesDef, executor: executeSearchCapabilities }
+    ])
+
+    // 自我管理工具- 供 Agent 自我管理记忆、Skill、MCP 配置
+    registerTools([
+        { name: 'manageMemory', definition: manageMemoryDef, executor: manageMemory },
+        { name: 'manageSkill', definition: manageSkillDef, executor: manageSkill },
+        { name: 'manageMcpServer', definition: manageMcpServerDef, executor: manageMcpServer }
     ])
 
     console.log(`[ToolSystem] ${getRegisteredToolNames().length} 个工具已初始化`)

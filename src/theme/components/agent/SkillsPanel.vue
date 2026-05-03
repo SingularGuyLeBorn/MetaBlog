@@ -704,9 +704,7 @@ async function deleteSkill(skill: Skill) {
   align-items: center;
   justify-content: center;
   background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(8px);
   z-index: 1000;
-  perspective: 2000px;
 }
 
 .skill-modal-3d {

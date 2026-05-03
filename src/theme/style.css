@@ -65,8 +65,7 @@ body {
 
 .VPNav {
   background: rgba(248, 246, 243, 0.78) !important;
-  backdrop-filter: blur(32px) saturate(1.5) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(1.5) !important;
+
   border-bottom: 1px solid rgba(200, 195, 188, 0.25) !important;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.6),
@@ -106,9 +105,7 @@ body {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .VPSidebar {
-  background: rgba(248, 246, 243, 0.7) !important;
-  backdrop-filter: blur(24px) saturate(1.3) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.3) !important;
+  background: #f8f6f3 !important;
   border-right: 1px solid rgba(200, 195, 188, 0.2) !important;
   padding-top: 24px !important;
 }
@@ -272,8 +269,7 @@ body {
 .vp-doc div[class*="language-"] {
   border-radius: var(--sr-radius-lg);
   margin: 24px 0;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(16px);
+  background: #f8f6f3;
   border: 1px solid rgba(200, 195, 188, 0.25);
   overflow-x: auto;
   box-shadow:
@@ -350,8 +346,7 @@ body {
   display: table;
   table-layout: auto;
   min-width: 100%;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(12px);
+  background: #f8f6f3;
   border: 1px solid rgba(200, 195, 188, 0.25);
   overflow: hidden;
 }
@@ -385,7 +380,6 @@ body {
   padding: 20px 24px;
   margin: 24px 0;
   border-radius: 0 var(--sr-radius-md) var(--sr-radius-md) 0;
-  backdrop-filter: blur(8px);
   border: 1px solid rgba(184, 160, 144, 0.1);
   border-left-width: 3px;
   border-left-color: var(--sr-morandi-warm);
@@ -421,7 +415,6 @@ body {
   padding: 20px 24px;
   margin: 24px 0;
   border: 1px solid transparent;
-  backdrop-filter: blur(12px);
   transition:
     box-shadow 300ms var(--sr-spring-gentle),
     transform 300ms var(--sr-spring-gentle);
@@ -525,8 +518,7 @@ body.is-dragging::after {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .VPDocAsideOutline {
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(16px);
+  background: #f8f6f3;
   border-radius: var(--sr-radius-md);
   padding: 16px !important;
   border: 1px solid rgba(200, 195, 188, 0.2);
@@ -549,28 +541,16 @@ body.is-dragging::after {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: #f8f6f3;
+  border: 1px solid #e2e8f0;
   border-radius: var(--sr-radius-xl);
   padding: 24px;
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.04),
-    0 1px 3px rgba(0, 0, 0, 0.02),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  transition:
-    transform 400ms var(--sr-spring-bounce),
-    box-shadow 400ms var(--sr-spring-gentle),
-    background 400ms ease;
+  transition: background 400ms ease;
 }
 
 .glass-card:hover {
-  background: rgba(255, 255, 255, 0.82);
-  transform: translateY(-6px) scale(1.01);
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.08),
-    0 6px 16px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  background: #fff;
+  border-color: #cbd5e1;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

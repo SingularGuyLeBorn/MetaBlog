@@ -16,7 +16,7 @@ import {
   type ToolCall,
   type ToolDefinition
 } from '@/theme/tools/index'
-import type { ChatMessage, SessionConfig, ThinkingStep, ToolCallRecord } from '@/theme/types'
+import type { ChatMessage, SessionConfig, StreamCallbacks, ThinkingStep, ToolCallRecord } from '@/theme/types'
 import { addLog } from './logger'
 import { buildKimiImageContent, buildKimiVideoContent } from './multimediaService'
 import {
@@ -322,23 +322,6 @@ function getModelConfig(modelName: string): ModelConfig {
   throw new Error(`不支持的模型: ${modelName}. 请使用 DeepSeek 或 Kimi 系列模型. `)
 }
 
-
-// ==================== 类型定义 ====================
-
-/**
- * StreamCallbacks 接口定义
- *
- */
-export interface StreamCallbacks {
-  onContent: (text: string) => void
-  onReasoning: (text: string) => void
-  onComplete: () => void
-  onError: (error: Error) => void
-  onToolRecord?: (record: ToolCallRecord) => void
-  onThinkingStep?: (step: ThinkingStep) => void
-  onUsage?: (usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number }) => void
-  onTokenEstimate?: (estimate: { input: number }) => void
-}
 
 // ==================== 多模态消息处理 ====================
 
@@ -819,16 +802,40 @@ async function chatStreamInternal(
   let chunkCount = 0
   let toolCalls: any[] = []
 
+  // 【关键修复】检测是否为工具调用流,防止中间文本被当成最终回复展示
+  let isToolCallDetected = false
+  // 已 flush 给前端的 content 长度,用于检测是否需要撤回
+  let flushedContentLength = 0
+
+  // 流式阶段跟踪(用于 V2 回调)
+  let streamPhase: import('@/theme/types').StreamPhase = 'connecting' as import('@/theme/types').StreamPhase
+  function notifyPhase(newPhase: import('@/theme/types').StreamPhase) {
+    if (streamPhase !== newPhase) {
+      callbacks.onPhaseChange?.(newPhase, streamPhase)
+      streamPhase = newPhase
+    }
+  }
+
   // 流式回调 throttle,避免前端每 1~2 个 token 就重渲染一次
   const CONTENT_THROTTLE_MS = 80
   let lastContentFlush = 0
   let pendingContent = ''
   function flushContent(force = false) {
     if (!pendingContent && !force) return
+    // 一旦检测到工具调用,立即停止实时 flush content
+    if (isToolCallDetected) return
     const now = Date.now()
     if (!force && now - lastContentFlush < CONTENT_THROTTLE_MS) return
     lastContentFlush = now
+    flushedContentLength = pendingContent.length
     callbacks.onContent(cleanAIOutput(pendingContent))
+  }
+  /** 撤回已发送的 content(当检测到工具调用时) */
+  function revokeContent() {
+    if (flushedContentLength > 0) {
+      callbacks.onContent('')
+      flushedContentLength = 0
+    }
   }
 
   // 内部超时控制
@@ -893,6 +900,7 @@ async function chatStreamInternal(
         const data = line.slice(6).trim()
         if (data === '[DONE]') {
           flushContent(true)
+          notifyPhase('complete')
           return {
             content: fullContent,
             reasoningContent: fullReasoning,
@@ -914,8 +922,20 @@ async function chatStreamInternal(
           }
 
           const delta = chunk.choices?.[0]?.delta
+          const finishReason = chunk.choices?.[0]?.finish_reason
 
           if (delta?.tool_calls) {
+            // 【关键修复】检测到工具调用参数,标记为工具调用流
+            if (!isToolCallDetected) {
+              isToolCallDetected = true
+              // 撤回已实时 flush 出去的中间文本,防止"先像最终回复再消失"
+              revokeContent()
+              addLog({
+                level: 'debug', category: 'chat', component: 'aiService',
+                event: 'tool_call_stream_detected',
+                message: '流中检测到工具调用,停止 content 实时展示'
+              })
+            }
             for (const tc of delta.tool_calls) {
               const idx = tc.index
               if (!toolCalls[idx]) {
@@ -934,12 +954,34 @@ async function chatStreamInternal(
           if (delta?.reasoning_content) {
             fullReasoning += delta.reasoning_content
             callbacks.onReasoning(fullReasoning)
+            if (streamPhase === 'connecting') {
+              notifyPhase('reasoning')
+            }
           }
 
           if (delta?.content) {
             fullContent += delta.content
             pendingContent = fullContent
-            flushContent()
+            // 只有确认不是工具调用流时,才实时 flush content
+            if (!isToolCallDetected) {
+              // 第一次收到 content 且未检测到工具调用,进入 responding 阶段
+              if (streamPhase === 'connecting' || streamPhase === 'reasoning') {
+                notifyPhase('responding')
+              }
+              flushContent()
+            } else {
+              // 已检测到工具调用,content 是中间文本
+              if (streamPhase !== 'thinking') {
+                notifyPhase('thinking')
+              }
+            }
+          }
+
+          // 通过 finish_reason 再次确认：tool_calls 意味着 content 是中间文本
+          if (finishReason === 'tool_calls' && !isToolCallDetected) {
+            isToolCallDetected = true
+            revokeContent()
+            notifyPhase('tool_calling')
           }
         } catch {
           // 忽略解析错误
@@ -949,6 +991,7 @@ async function chatStreamInternal(
 
     // 返回最终在流结束时积累的数据(防由于网络结束但未发送[DONE])
     flushContent(true)
+    notifyPhase('complete')
     return {
       content: fullContent,
       reasoningContent: fullReasoning,
@@ -958,6 +1001,7 @@ async function chatStreamInternal(
     const errorObj = error instanceof Error ? error : new Error(String(error))
     const isAbort = errorObj.name === 'AbortError' || errorObj.message?.toLowerCase().includes('aborted')
     if (isAbort) {
+      notifyPhase('interrupted')
       return {
         content: fullContent,
         reasoningContent: fullReasoning,
@@ -965,6 +1009,7 @@ async function chatStreamInternal(
         aborted: true
       }
     }
+    notifyPhase('error')
     logApiError('/api/chat (stream)', errorObj, Date.now() - startTime, proxyBody)
     return { error: errorObj.message }
   } finally {
@@ -1151,6 +1196,9 @@ export const aiService = {
       let stepIndex = 0
       let lastResponseContent = ''
 
+      // 通知开始连接
+      callbacks.onPhaseChange?.('connecting', 'idle')
+
       while (hasMoreToolCalls && toolRound < maxToolRounds) {
         toolRound++
 
@@ -1208,6 +1256,9 @@ export const aiService = {
         const toolCalls = response.toolCalls
 
         // 处理中间文本(工具调用前 AI 生成的说明文字)
+        // 【关键修复】chatStreamInternal 已不再实时 flush 中间文本到 onContent,
+        // 所以不需要再调用 callbacks.onContent('') 清空.
+        // 中间文本直接作为 thinkingStep 发送到 timeline 展示.
         if (response.content && toolCalls && toolCalls.length > 0) {
           const textStep: ThinkingStep = {
             id: `text_${toolRound}_${Date.now()}_${stepIndex}`,
@@ -1220,8 +1271,8 @@ export const aiService = {
           stepIndex++
           callbacks.onThinkingStep?.(textStep)
 
-          // 清空 content 区域,避免中间文本残留为最终回复
-          callbacks.onContent('')
+          // 通知阶段变化：进入 tool_calling
+          callbacks.onPhaseChange?.('tool_calling', 'thinking')
 
           apiDebugLogger.logNote('intermediate_text', '【UI展示】中间文本', { content: response.content }, true)
         }
@@ -1262,6 +1313,9 @@ export const aiService = {
         const toolResultMessages = []
         const injectMessages: Array<{ role: string; content: string }> = []
 
+        // 通知阶段变化：进入 tool_running
+        callbacks.onPhaseChange?.('tool_running', 'tool_calling')
+
         for (const toolCall of toolCalls) {
           const args = JSON.parse(toolCall.function.arguments || '{}')
           const toolStartTime = Date.now()
@@ -1286,6 +1340,18 @@ export const aiService = {
           // 先显示 running 状态,让用户立刻看到工具正在执行
           callbacks.onThinkingStep?.(runningStep)
 
+          // 【V2 回调】通知工具调用开始
+          callbacks.onToolCallStart?.({
+            id: toolCall.id,
+            stepId: toolStepId,
+            name: toolCall.function.name,
+            arguments: args,
+            status: 'calling',
+            startTime: toolStartTime,
+            round: toolRound,
+            index: stepIndex - 1
+          })
+
           // 执行工具并获取结果
           // executeToolWithRecord 返回：
           // - result: ToolResult(执行结果)
@@ -1294,6 +1360,18 @@ export const aiService = {
           // - activateTools: 执行后应动态激活的工具名称列表(渐进式披露关键字段)
           const { result, record, injectMessages: toolInjectMessages, activateTools: toolActivated } = await executeToolWithRecord(toolCall)
           toolRecords.push(record)
+
+          // 【V2 回调】通知工具调用进入 running 状态(实际执行中)
+          callbacks.onToolCallUpdate?.({
+            id: toolCall.id,
+            stepId: toolStepId,
+            name: toolCall.function.name,
+            arguments: args,
+            status: 'running',
+            startTime: toolStartTime,
+            round: toolRound,
+            index: stepIndex - 1
+          })
 
           // ─────────────────────────────────────────────────────────────
           // 【渐进式披露】动态工具激活
@@ -1325,6 +1403,10 @@ export const aiService = {
           }
 
           // 执行完成后创建新的 step 对象(确保 Vue 响应式系统检测到变化)
+          const toolStatus = result.success !== false ? 'success' : 'error'
+          const toolEndTime = Date.now()
+          const toolDuration = record.duration || (toolEndTime - toolStartTime)
+
           const successStep: ThinkingStep = {
             ...runningStep,
             toolRecord: {
@@ -1332,13 +1414,40 @@ export const aiService = {
               name: toolCall.function.name,
               arguments: args,
               result: result,
-              status: result.success !== false ? 'success' : 'error',
+              status: toolStatus,
               startTime: record.startTime,
-              endTime: record.endTime,
-              duration: record.duration || (Date.now() - toolStartTime)
+              endTime: record.endTime || toolEndTime,
+              duration: toolDuration
             }
           }
           callbacks.onThinkingStep?.(successStep)
+
+          // 【V2 回调】通知工具调用完成
+          callbacks.onToolCallComplete?.({
+            id: toolCall.id,
+            stepId: toolStepId,
+            name: toolCall.function.name,
+            arguments: args,
+            status: toolStatus as 'success' | 'error',
+            startTime: toolStartTime,
+            endTime: toolEndTime,
+            duration: toolDuration,
+            result: result,
+            round: toolRound,
+            index: stepIndex - 1
+          })
+
+          // 【V2 回调】通知旧版 onToolRecord 以保持兼容
+          callbacks.onToolRecord?.({
+            id: toolCall.id,
+            name: toolCall.function.name,
+            arguments: args,
+            status: toolStatus as 'success' | 'error',
+            startTime: toolStartTime,
+            endTime: toolEndTime,
+            duration: toolDuration,
+            result: result
+          })
 
           apiDebugLogger.logNote('tool_call', '【UI展示】工具调用步骤', {
             name: toolCall.function.name,

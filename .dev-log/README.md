@@ -165,3 +165,4 @@
 | 2026-05-02 | session-2026-05-02.md | 飞书文档工具全量支持 URL 提取 document_id、工具 description 优化、注释规范化 | ✅ 已完成 |
 | 2026-05-03 | session-2026-05-03.md | 飞书 Wiki 工具链完整修复与封装、Token 热更新、OAuth 自动化 | ✅ 已完成 |
 | 2026-05-03 | session-2026-05-03.md | 集成 Piper TTS + Whisper 本地 ASR 语音服务 | ✅ 已完成 |
+| 2026-05-03 | session-2026-05-03.md | Chat 图标修复 + 顶部栏重构 + 下拉菜单/侧边栏优化 + UI 风格统一 + 全局 API 审计 + 删除 Bug 修复 | ✅ 已完成 |

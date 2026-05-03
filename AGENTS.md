@@ -1,23 +1,23 @@
 # MetaBlog Agent 指令
 
-> 本文件对项目中所有 AI 代理生效. 指令优先级：用户直接对话 > 本文件 > 子目录 AGENTS.md. 
+> 本文件对项目中所有 AI 代理生效. 指令优先级：用户直接对话 > 本文件 > 子目录 AGENTS.md.
 
 ---
 
 ## 强制：定期重读本文件
 
-**Agent 必须定期重新读取 `AGENTS.md`**. 
+**Agent 必须定期重新读取 `AGENTS.md`**.
 
 - 每完成 **3-5 个任务**后重新读取一次
 - 感觉到上下文被压缩(早期记忆模糊)时立即重新读取
 - 每次重新读取后简要确认已加载的约束条目
 
-目的：防止长期会话中上下文压缩导致核心约束被遗忘. 
+目的：防止长期会话中上下文压缩导致核心约束被遗忘.
 
 ### 为什么强制？
 
-用户明确要求：「每一次对话你做的事情都写到一个文件内 我需要知道你在做什么 你隐藏了思考过程 我很紧张」. 
-零隐藏不是可选项,是必选项. 
+用户明确要求：「每一次对话你做的事情都写到一个文件内 我需要知道你在做什么 你隐藏了思考过程 我很紧张」.
+零隐藏不是可选项,是必选项.
 
 ### 记录内容(必须包含)
 
@@ -35,6 +35,7 @@
 ### 禁止行为
 
 ❌ **不能藏**：
+
 - "我试了一下发现不行然后改了另一种" → **两种都要记录,失败原因写清楚**
 - "这个 bug 之前修过但又出现了" → **必须关联到之前的日志文件**
 - "代码看起来没问题但不确定" → **记录不确定性**
@@ -54,6 +55,7 @@
 **在零人类干预的情况下,自动读取项目需求,并严格按照软件工程的标准流程完成所有开发任务. **
 
 标准流程：
+
 ```
 分析 → 编码 → 测试 → 提交 → 下一个任务
 ```
@@ -88,7 +90,7 @@
 
 ### 语言
 
-**Commit message 必须使用中文**. 禁止纯英文 commit message. 
+**Commit message 必须使用中文**. 禁止纯英文 commit message.
 
 ### 提交频率
 
@@ -111,6 +113,7 @@
 ```
 
 示例：
+
 ```
 feat(github): 新增 PR 审查工具链
 
@@ -120,14 +123,15 @@ feat(github): 新增 PR 审查工具链
 ```
 
 常用 type：
-| 类型 | 说明 |
-|------|------|
-| feat | 新功能 |
-| fix | 修复 bug |
-| docs | 文档更新 |
-| refactor | 重构(无功能变化) |
-| chore | 杂项(清理、配置等) |
-| test | 测试相关 |
+
+| 类型     | 说明               |
+| -------- | ------------------ |
+| feat     | 新功能             |
+| fix      | 修复 bug           |
+| docs     | 文档更新           |
+| refactor | 重构(无功能变化)   |
+| chore    | 杂项(清理、配置等) |
+| test     | 测试相关           |
 
 ---
 
@@ -158,25 +162,26 @@ feat(github): 新增 PR 审查工具链
 ## Skill 设计规范
 
 所有 `.skills/` 目录下的 Skill 必须遵循 `.skills/SKILL_GUIDELINES.md` 中的规范：
+
 - description 是给模型看的触发规则,不只是简介
 - SKILL.md 负责调度,细节拆到 references / scripts / assets
 - 默认先交付初稿,不自动做超出用户预期的后续动作
 - 能脚本化的重复动作,不要只写成文字说明
 - 高影响操作必须先说明再执行
 
-新增或修改 Skill 前,先读取 `.skills/SKILL_GUIDELINES.md`. 
+新增或修改 Skill 前,先读取 `.skills/SKILL_GUIDELINES.md`.
 
 ---
 
 ## 技术栈速查
 
-| 层级 | 技术 |
-|------|------|
-| 前端 | Vue 3 + VitePress 1.x + Tailwind CSS 3.x |
-| 状态 | Pinia + Vue Composition API |
-| 后端 | Express 5.x(VitePress 插件集成) |
-| AI | DeepSeek / Kimi / Zhipu / OpenAI / Gemini / Anthropic / Qwen / ... |
-| 包管理 | pnpm |
+| 层级   | 技术                                                               |
+| ------ | ------------------------------------------------------------------ |
+| 前端   | Vue 3 + VitePress 1.x + Tailwind CSS 3.x                           |
+| 状态   | Pinia + Vue Composition API                                        |
+| 后端   | Express 5.x(VitePress 插件集成)                                    |
+| AI     | DeepSeek / Kimi / Zhipu / OpenAI / Gemini / Anthropic / Qwen / ... |
+| 包管理 | pnpm                                                               |
 
 ---
 
@@ -196,4 +201,7 @@ project/requirements/     # 需求管理(backlog + completed)
 
 ## 紧急联系
 
-如果用户对日志记录不满意,立即检查最近一次 `.dev-log/session-*.md` 是否遗漏了思考过程或失败尝试. 
+如果用户对日志记录不满意,立即检查最近一次 `.dev-log/session-*.md` 是否遗漏了思考过程或失败尝试.
+
+
+不要用 poewershell的批量替换,这很容易造成乱码

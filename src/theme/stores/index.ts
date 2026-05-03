@@ -15,6 +15,8 @@ export * from './useAgents'
 
 // Chat stores  
 export { useAIChat } from './chatStore'
+export { useStreamStore } from './streamStore'
+export { useToolStore } from './toolStore'
 
 // Skill stores - 避免重复导出类型,只导出 store 相关
 export { useSkills } from './skillStore'

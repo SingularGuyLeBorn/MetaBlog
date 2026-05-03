@@ -2,13 +2,12 @@
   SettingsPanel - 设置面板(3D 液态玻璃风格)
 -->
 <template>
-  <aside class="settings-panel-3d" :class="{ collapsed }">
+  <aside class="settings-panel" :class="{ collapsed }">
     <!-- 背景光效 -->
-    <div class="panel-bg-glow"></div>
     
-    <div class="panel-header-3d">
+    <div class="panel-header">
       <div class="header-title">
-        <div class="header-icon-3d">
+        <div class="header-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -16,7 +15,7 @@
         </div>
         <h3>设置</h3>
       </div>
-      <button class="close-btn-3d" @click="$emit('toggle-collapse')">
+      <button class="close-btn" @click="$emit('toggle-collapse')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
@@ -24,18 +23,18 @@
       </button>
     </div>
 
-    <div class="panel-content-3d">
+    <div class="panel-content">
       <!-- 模型选择 - 3D 卡片式 -->
-      <div class="setting-section-3d">
-        <label class="section-label-3d">
+      <div class="setting-section">
+        <label class="section-label">
           <span class="label-icon">🤖</span>
           模型
         </label>
-        <div class="model-selector-3d">
+        <div class="model-selector">
           <button
             v-for="(model, index) in availableModels"
             :key="model.id"
-            class="model-option-3d"
+            class="model-option"
             :class="{ 
               active: config.model === model.id,
               recommended: model.recommended 
@@ -48,8 +47,8 @@
               <div class="model-name">{{ model.name }}</div>
               <div class="model-desc">{{ model.description }}</div>
             </div>
-            <div v-if="model.recommended" class="model-badge-3d">推荐</div>
-            <div v-if="config.model === model.id" class="check-icon-3d">
+            <div v-if="model.recommended" class="model-badge">推荐</div>
+            <div v-if="config.model === model.id" class="check-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
@@ -70,15 +69,15 @@
       </div>
 
       <!-- 思考模式 -->
-      <div v-if="currentModelConfig?.supportsReasoning" class="setting-section-3d">
-        <div class="section-header-3d">
-          <label class="section-label-3d">
+      <div v-if="currentModelConfig?.supportsReasoning" class="setting-section">
+        <div class="section-header">
+          <label class="section-label">
             <span class="label-icon">💭</span>
             思考模式
           </label>
           <div class="toggle-wrapper">
             <button
-              class="toggle-btn-3d"
+              class="toggle-btn"
               :class="{ 
                 active: config.enableReasoning,
                 disabled: currentModelConfig?.reasoningRequired 
@@ -86,14 +85,14 @@
               :disabled="currentModelConfig?.reasoningRequired"
               @click="toggleReasoning"
             >
-              <span class="toggle-slider-3d"></span>
+              <span class="toggle-slider"></span>
             </button>
             <span class="toggle-status">
               {{ currentModelConfig?.reasoningRequired ? '始终开启' : (config.enableReasoning ? '开启' : '关闭') }}
             </span>
           </div>
         </div>
-        <p class="section-desc-3d">
+        <p class="section-desc">
           {{ currentModelConfig?.reasoningRequired 
             ? '该模型始终显示推理过程' 
             : '显示 AI 的推理过程,适合复杂问题' 
@@ -122,13 +121,13 @@
       </div>
 
       <!-- 温度 -->
-      <div class="setting-section-3d">
-        <label class="section-label-3d">
+      <div class="setting-section">
+        <label class="section-label">
           <span class="label-icon">🌡️</span>
           温度
-          <span class="value-badge-3d">{{ config.temperature }}</span>
+          <span class="value-badge">{{ config.temperature }}</span>
         </label>
-        <div class="slider-wrapper-3d">
+        <div class="slider-wrapper">
           <span class="slider-label">精确</span>
           <input
             v-model.number="config.temperature"
@@ -136,21 +135,21 @@
             min="0"
             max="2"
             step="0.1"
-            class="slider-3d"
+            class="slider"
           >
           <span class="slider-label">创意</span>
         </div>
-        <p class="section-desc-3d">较低值使回答更精确,较高值使回答更有创意</p>
+        <p class="section-desc">较低值使回答更精确,较高值使回答更有创意</p>
       </div>
 
       <!-- 最大 Token -->
-      <div class="setting-section-3d">
-        <label class="section-label-3d">
+      <div class="setting-section">
+        <label class="section-label">
           <span class="label-icon">📏</span>
           最大 Token
-          <span class="value-badge-3d">{{ config.maxTokens }}</span>
+          <span class="value-badge">{{ config.maxTokens }}</span>
         </label>
-        <div class="slider-wrapper-3d">
+        <div class="slider-wrapper">
           <span class="slider-label">短</span>
           <input
             v-model.number="config.maxTokens"
@@ -158,17 +157,17 @@
             min="256"
             max="8192"
             step="256"
-            class="slider-3d"
+            class="slider"
           >
           <span class="slider-label">长</span>
         </div>
-        <p class="section-desc-3d">控制回答的最大长度</p>
+        <p class="section-desc">控制回答的最大长度</p>
       </div>
 
       <!-- 系统提示词 - 模态框形式 -->
-      <div class="setting-section-3d">
+      <div class="setting-section">
         <div class="section-header-with-badge">
-          <label class="section-label-3d">
+          <label class="section-label">
             <span class="label-icon">📝</span>
             系统提示词
           </label>
@@ -199,7 +198,7 @@
         </div>
         
         <div class="prompt-info">
-          <p class="section-desc-3d">
+          <p class="section-desc">
             {{ isSystemPromptCustomized 
               ? '当前会话已自定义系统提示词,不再跟随 Agent 配置' 
               : '使用 Agent 默认的系统提示词,修改后将仅影响当前会话' 
@@ -253,8 +252,8 @@
       </Teleport>
 
       <!-- 重置按钮 -->
-      <div class="setting-section-3d">
-        <button class="reset-btn-3d" @click="resetSettings">
+      <div class="setting-section">
+        <button class="reset-btn" @click="resetSettings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="23 4 23 10 17 10"/>
             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
@@ -444,39 +443,27 @@ function resetToAgentPrompt() {
 }
 </script>
 
-<style scoped>
-.settings-panel-3d {
+<style>
+.settings-panel {
   position: relative;
   width: 340px;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(24px);
-  border-left: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: -8px 0 32px rgba(31, 38, 135, 0.1);
+  background: #f8f6f3;
+  border-left: 1px solid #e2ddd6;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
   overflow: hidden;
 }
 
-.settings-panel-3d.collapsed {
+.settings-panel.collapsed {
   width: 0;
   opacity: 0;
   overflow: hidden;
 }
 
-/* 背景光效 */
-.panel-bg-glow {
-  position: absolute;
-  inset: 0;
-  background: 
-    radial-gradient(ellipse at 100% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 100% 100%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
-  pointer-events: none;
-}
-
 /* 3D 头部 */
-.panel-header-3d {
+.panel-header {
   position: relative;
   display: flex;
   align-items: center;
@@ -493,25 +480,24 @@ function resetToAgentPrompt() {
   gap: 14px;
 }
 
-.header-icon-3d {
+.header-icon {
   width: 40px;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(184, 160, 144, 0.1);
   border-radius: 12px;
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #b8a090;
+  border: 1px solid rgba(184, 160, 144, 0.2);
   transition: all 0.3s ease;
 }
 
-.header-icon-3d:hover {
-  transform: translateY(-2px) rotate(10deg);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+.header-icon:hover {
+  background: rgba(184, 160, 144, 0.15);
 }
 
-.header-icon-3d svg {
+.header-icon svg {
   width: 22px;
   height: 22px;
 }
@@ -523,7 +509,7 @@ function resetToAgentPrompt() {
   margin: 0;
 }
 
-.close-btn-3d {
+.close-btn {
   width: 36px;
   height: 36px;
   display: flex;
@@ -532,24 +518,24 @@ function resetToAgentPrompt() {
   background: rgba(241, 245, 249, 0.8);
   border: 1px solid rgba(226, 232, 240, 0.6);
   border-radius: 10px;
-  color: #64748b;
+  color: #9a9588;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.close-btn-3d:hover {
+.close-btn:hover {
   background: rgba(226, 232, 240, 0.8);
   color: #1e293b;
   transform: translateY(-1px);
 }
 
-.close-btn-3d svg {
+.close-btn svg {
   width: 18px;
   height: 18px;
 }
 
 /* 内容区 */
-.panel-content-3d {
+.panel-content {
   position: relative;
   flex: 1;
   overflow-y: auto;
@@ -557,7 +543,7 @@ function resetToAgentPrompt() {
   z-index: 1;
 }
 
-.setting-section-3d {
+.setting-section {
   margin-bottom: 28px;
   animation: fade-in-up 0.4s ease-out;
 }
@@ -573,7 +559,7 @@ function resetToAgentPrompt() {
   }
 }
 
-.section-label-3d {
+.section-label {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -587,32 +573,32 @@ function resetToAgentPrompt() {
   font-size: 16px;
 }
 
-.value-badge-3d {
+.value-badge {
   margin-left: auto;
   padding: 4px 12px;
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(184, 160, 144, 0.1);
+  color: #b8a090;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 700;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(184, 160, 144, 0.2);
 }
 
-.section-desc-3d {
+.section-desc {
   font-size: 13px;
-  color: #94a3b8;
+  color: #b8b3a8;
   margin: 10px 0 0;
   line-height: 1.5;
 }
 
 /* 3D 模型选择器 */
-.model-selector-3d {
+.model-selector {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.model-option-3d {
+.model-option {
   position: relative;
   display: flex;
   align-items: center;
@@ -639,22 +625,22 @@ function resetToAgentPrompt() {
   }
 }
 
-.model-option-3d:hover {
-  transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1), inset 0 0 16px rgba(59, 130, 246, 0.05);
+.model-option:hover {
+  background: #fff;
+  border-color: #d4ccc4;
+  box-shadow: 0 8px 20px rgba(184, 160, 144, 0.1), inset 0 0 16px rgba(184, 160, 144, 0.05);
 }
 
-.model-option-3d.active {
-  background: linear-gradient(145deg, #eff6ff, #dbeafe);
-  border-color: rgba(59, 130, 246, 0.3);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15), inset 0 0 16px rgba(59, 130, 246, 0.05);
+.model-option.active {
+  background: linear-gradient(145deg, #f5f0eb, #e8dfd4);
+  border-color: rgba(184, 160, 144, 0.3);
+  box-shadow: 0 4px 16px rgba(184, 160, 144, 0.15), inset 0 0 16px rgba(184, 160, 144, 0.05);
 }
 
 .model-glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse, rgba(59, 130, 246, 0.1), transparent);
+  background: radial-gradient(ellipse, rgba(184, 160, 144, 0.1), transparent);
   opacity: 0;
   transition: opacity 0.3s;
 }
@@ -679,36 +665,36 @@ function resetToAgentPrompt() {
 
 .model-desc {
   font-size: 12px;
-  color: #64748b;
+  color: #9a9588;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.model-badge-3d {
+.model-badge {
   padding: 4px 10px;
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(184, 160, 144, 0.1);
+  color: #b8a090;
   border-radius: 20px;
   font-size: 10px;
   font-weight: 700;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(184, 160, 144, 0.2);
 }
 
-.check-icon-3d {
+.check-icon {
   width: 24px;
   height: 24px;
-  color: #3b82f6;
-  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.2));
+  color: #b8a090;
+  filter: drop-shadow(0 2px 4px rgba(184, 160, 144, 0.2));
 }
 
-.check-icon-3d svg {
+.check-icon svg {
   width: 100%;
   height: 100%;
 }
 
 /* 3D 切换头部 */
-.section-header-3d {
+.section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -721,7 +707,7 @@ function resetToAgentPrompt() {
   gap: 10px;
 }
 
-.toggle-btn-3d {
+.toggle-btn {
   width: 52px;
   height: 28px;
   padding: 2px;
@@ -733,18 +719,18 @@ function resetToAgentPrompt() {
   position: relative;
 }
 
-.toggle-btn-3d.active {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: #3b82f6;
-  box-shadow: inset 0 0 12px rgba(59, 130, 246, 0.1);
+.toggle-btn.active {
+  background: rgba(184, 160, 144, 0.2);
+  border-color: #b8a090;
+  box-shadow: inset 0 0 12px rgba(184, 160, 144, 0.1);
 }
 
-.toggle-btn-3d.disabled {
+.toggle-btn.disabled {
   background: rgba(241, 245, 249, 0.5);
   cursor: not-allowed;
 }
 
-.toggle-slider-3d {
+.toggle-slider {
   display: block;
   width: 22px;
   height: 22px;
@@ -754,18 +740,18 @@ function resetToAgentPrompt() {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
-.toggle-btn-3d.active .toggle-slider-3d {
+.toggle-btn.active .toggle-slider {
   transform: translateX(24px);
 }
 
 .toggle-status {
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: #9a9588;
 }
 
 /* 3D 滑块 */
-.slider-wrapper-3d {
+.slider-wrapper {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -777,14 +763,14 @@ function resetToAgentPrompt() {
 
 .slider-label {
   font-size: 11px;
-  color: #94a3b8;
+  color: #b8b3a8;
   font-weight: 700;
   white-space: nowrap;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.slider-3d {
+.slider {
   flex: 1;
   height: 8px;
   -webkit-appearance: none;
@@ -796,26 +782,26 @@ function resetToAgentPrompt() {
   border: 1px solid rgba(203, 213, 225, 0.5);
 }
 
-.slider-3d::-webkit-slider-thumb {
+.slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 22px;
   height: 22px;
-  background: #3b82f6;
+  background: #b8a090;
   border-radius: 50%;
   border: 3px solid #ffffff;
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 12px rgba(184, 160, 144, 0.3);
   transition: all 0.2s ease;
 }
 
-.slider-3d::-webkit-slider-thumb:hover {
+.slider::-webkit-slider-thumb:hover {
   transform: scale(1.15);
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 20px rgba(184, 160, 144, 0.4);
 }
 
 /* 3D 系统提示词输入 */
-.prompt-input-wrapper-3d {
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+.prompt-input-wrapper {
+  background: linear-gradient(145deg, #ffffff, #f8f6f3);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 16px;
   overflow: hidden;
@@ -823,44 +809,44 @@ function resetToAgentPrompt() {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
-.prompt-input-wrapper-3d:focus-within {
-  border-color: rgba(59, 130, 246, 0.5);
+.prompt-input-wrapper:focus-within {
+  border-color: rgba(184, 160, 144, 0.5);
   box-shadow: 
-    0 0 0 4px rgba(59, 130, 246, 0.1),
-    0 8px 20px rgba(59, 130, 246, 0.1);
+    0 0 0 4px rgba(184, 160, 144, 0.1),
+    0 8px 20px rgba(184, 160, 144, 0.1);
   transform: translateY(-2px);
 }
 
-.prompt-input-3d {
+.prompt-input {
   width: 100%;
   padding: 18px;
   background: transparent;
   border: none;
   font-size: 14px;
   line-height: 1.7;
-  color: #374151;
+  color: #2d2a26;
   resize: vertical;
   min-height: 100px;
   outline: none;
   font-family: inherit;
 }
 
-.prompt-input-3d::placeholder {
-  color: #94a3b8;
+.prompt-input::placeholder {
+  color: #b8b3a8;
 }
 
-.input-footer-3d {
+.input-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 18px;
-  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  background: linear-gradient(145deg, #f8f6f3, #f1ede8);
   border-top: 1px solid rgba(226, 232, 240, 0.6);
 }
 
 .char-count {
   font-size: 12px;
-  color: #94a3b8;
+  color: #b8b3a8;
   font-weight: 500;
 }
 
@@ -884,38 +870,38 @@ function resetToAgentPrompt() {
   border-radius: 100px;
   font-size: 11px;
   font-weight: 600;
-  color: #64748b;
+  color: #9a9588;
   transition: all 0.3s ease;
 }
 
 .customized-badge.customized {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.1));
-  border-color: rgba(245, 158, 11, 0.3);
-  color: #f59e0b;
+  background: linear-gradient(135deg, rgba(184, 160, 144, 0.15), rgba(212, 196, 176, 0.1));
+  border-color: rgba(184, 160, 144, 0.3);
+  color: #b8a090;
 }
 
-.prompt-input-3d.customized {
-  border-color: rgba(245, 158, 11, 0.4);
-  background: linear-gradient(145deg, #fffbeb, #ffffff);
+.prompt-input.customized {
+  border-color: rgba(184, 160, 144, 0.4);
+  background: linear-gradient(145deg, #f8f0e0, #ffffff);
 }
 
-.reset-btn-3d {
+.reset-btn {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  background: linear-gradient(145deg, #dbeafe, #bfdbfe);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: linear-gradient(145deg, #e8dfd4, #d4c4b0);
+  border: 1px solid rgba(184, 160, 144, 0.3);
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: #3b82f6;
+  color: #b8a090;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.reset-btn-3d:hover {
-  background: linear-gradient(145deg, #3b82f6, #2563eb);
+.reset-btn:hover {
+  background: linear-gradient(145deg, #b8a090, #9a9588);
   color: white;
   transform: translateY(-1px);
 }
@@ -927,15 +913,15 @@ function resetToAgentPrompt() {
 .agent-prompt-preview {
   margin-top: 10px;
   padding: 12px;
-  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+  background: linear-gradient(145deg, #f1ede8, #e2ddd6);
   border-radius: 10px;
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid #b8a090;
 }
 
 .preview-label {
   font-size: 11px;
   font-weight: 600;
-  color: #64748b;
+  color: #9a9588;
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -943,38 +929,38 @@ function resetToAgentPrompt() {
 
 .preview-text {
   font-size: 13px;
-  color: #475569;
+  color: #6a6560;
   line-height: 1.5;
 }
 
-.clear-btn-3d {
+.clear-btn {
   padding: 6px 14px;
-  background: linear-gradient(145deg, #ffffff, #f1f5f9);
+  background: linear-gradient(145deg, #ffffff, #f1ede8);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: #ef4444;
+  color: #d4b8b8;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-.clear-btn-3d:hover {
-  background: linear-gradient(145deg, #fee2e2, #fecaca);
-  border-color: rgba(239, 68, 68, 0.3);
+.clear-btn:hover {
+  background: linear-gradient(145deg, #f0e0e0, #e8d0d0);
+  border-color: rgba(212, 184, 184, 0.3);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 4px 8px rgba(212, 184, 184, 0.15);
 }
 
 /* 3D Agent 控制中心按钮 */
-.agent-center-btn-3d {
+.agent-center-btn {
   display: flex;
   align-items: center;
   gap: 14px;
   width: 100%;
   padding: 18px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.08));
+  background: linear-gradient(135deg, rgba(184, 160, 144, 0.08), rgba(212, 196, 176, 0.08));
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 16px;
   cursor: pointer;
@@ -983,13 +969,13 @@ function resetToAgentPrompt() {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
-.agent-center-btn-3d:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(99, 102, 241, 0.12));
-  border-color: rgba(59, 130, 246, 0.3);
+.agent-center-btn:hover {
+  background: linear-gradient(135deg, rgba(184, 160, 144, 0.12), rgba(212, 196, 176, 0.12));
+  border-color: rgba(184, 160, 144, 0.3);
   transform: translateY(-2px);
   box-shadow: 
-    0 8px 20px rgba(59, 130, 246, 0.15),
-    0 0 0 1px rgba(59, 130, 246, 0.05);
+    0 8px 20px rgba(184, 160, 144, 0.15),
+    0 0 0 1px rgba(184, 160, 144, 0.05);
 }
 
 .btn-icon {
@@ -1011,74 +997,74 @@ function resetToAgentPrompt() {
 
 .btn-desc {
   font-size: 12px;
-  color: #64748b;
+  color: #9a9588;
 }
 
 .btn-arrow {
   width: 20px;
   height: 20px;
-  color: #94a3b8;
+  color: #b8b3a8;
   transition: all 0.3s ease;
 }
 
-.agent-center-btn-3d:hover .btn-arrow {
-  color: #3b82f6;
+.agent-center-btn:hover .btn-arrow {
+  color: #b8a090;
   transform: translateX(6px);
 }
 
 /* 3D 重置按钮 */
-.reset-btn-3d {
+.reset-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   width: 100%;
   padding: 14px;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  background: linear-gradient(145deg, #ffffff, #f8f6f3);
   border: 1px dashed rgba(148, 163, 184, 0.5);
   border-radius: 12px;
   font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: #9a9588;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
-.reset-btn-3d:hover {
-  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+.reset-btn:hover {
+  background: linear-gradient(145deg, #f1ede8, #e2ddd6);
   border-color: rgba(100, 116, 139, 0.5);
-  color: #475569;
+  color: #6a6560;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
-.reset-btn-3d svg {
+.reset-btn svg {
   width: 16px;
   height: 16px;
 }
 
 /* 3D 滚动条 */
-.panel-content-3d::-webkit-scrollbar {
+.panel-content::-webkit-scrollbar {
   width: 6px;
 }
 
-.panel-content-3d::-webkit-scrollbar-track {
+.panel-content::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.panel-content-3d::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #cbd5e1, #94a3b8);
+.panel-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d4ccc4, #b8b3a8);
   border-radius: 3px;
 }
 
-.panel-content-3d::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #94a3b8, #64748b);
+.panel-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #b8b3a8, #9a9588);
 }
 
 /* ===== 提示词预览卡片 ===== */
 .prompt-preview-card {
-  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  background: linear-gradient(145deg, #f8f6f3, #f1ede8);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 12px;
   padding: 16px;
@@ -1087,14 +1073,14 @@ function resetToAgentPrompt() {
 }
 
 .prompt-preview-card:hover {
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  background: linear-gradient(145deg, #ffffff, #f8f6f3);
+  border-color: #b8a090;
+  box-shadow: 0 4px 12px rgba(184, 160, 144, 0.1);
 }
 
 .prompt-preview-card.customized {
-  background: linear-gradient(145deg, #fffbeb, #fef3c7);
-  border-color: rgba(245, 158, 11, 0.3);
+  background: linear-gradient(145deg, #f8f0e0, #f0e8c8);
+  border-color: rgba(184, 160, 144, 0.3);
 }
 
 .preview-header {
@@ -1107,7 +1093,7 @@ function resetToAgentPrompt() {
 .preview-header .preview-label {
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: #9a9588;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1117,23 +1103,23 @@ function resetToAgentPrompt() {
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(184, 160, 144, 0.1);
   border: none;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
-  color: #3b82f6;
+  color: #b8a090;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .edit-btn:hover {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(184, 160, 144, 0.2);
 }
 
 .preview-content {
   font-size: 13px;
-  color: #475569;
+  color: #6a6560;
   line-height: 1.5;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1148,8 +1134,7 @@ function resetToAgentPrompt() {
 .prompt-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(241, 245, 249, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1160,7 +1145,7 @@ function resetToAgentPrompt() {
 .prompt-modal {
   width: 100%;
   max-width: 600px;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  background: linear-gradient(145deg, #ffffff, #f8f6f3);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 20px;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
@@ -1191,14 +1176,14 @@ function resetToAgentPrompt() {
   background: rgba(241, 245, 249, 0.8);
   border: none;
   border-radius: 10px;
-  color: #64748b;
+  color: #9a9588;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .modal-close:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: rgba(212, 184, 184, 0.1);
+  color: #d4b8b8;
 }
 
 .modal-body {
@@ -1221,8 +1206,8 @@ function resetToAgentPrompt() {
 }
 
 .modal-textarea:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #b8a090;
+  box-shadow: 0 0 0 3px rgba(184, 160, 144, 0.1);
 }
 
 .modal-footer {
@@ -1239,23 +1224,23 @@ function resetToAgentPrompt() {
 
 .btn-cancel {
   padding: 10px 20px;
-  background: #f1f5f9;
+  background: #f1ede8;
   border: none;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
-  color: #475569;
+  color: #6a6560;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-cancel:hover {
-  background: #e2e8f0;
+  background: #e2ddd6;
 }
 
 .btn-save {
   padding: 10px 24px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #d4c4b0, #c4b0a0);
   border: none;
   border-radius: 10px;
   font-size: 14px;
@@ -1263,12 +1248,12 @@ function resetToAgentPrompt() {
   color: white;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(212, 196, 176, 0.3);
 }
 
 .btn-save:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 16px rgba(212, 196, 176, 0.4);
 }
 
 .btn-reset {
@@ -1276,18 +1261,18 @@ function resetToAgentPrompt() {
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(184, 160, 144, 0.1);
+  border: 1px solid rgba(184, 160, 144, 0.2);
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
-  color: #3b82f6;
+  color: #b8a090;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-reset:hover {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(184, 160, 144, 0.2);
 }
 
 /* 模态框过渡动画 */
@@ -1328,9 +1313,9 @@ function resetToAgentPrompt() {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(59, 130, 246, 0.06);
-  border: 1px solid rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
+  background: rgba(184, 160, 144, 0.06);
+  border: 1px solid rgba(184, 160, 144, 0.15);
+  color: #b8a090;
 }
 
 .multimodal-hint .hint-icon {
@@ -1353,7 +1338,7 @@ function resetToAgentPrompt() {
 .effort-label {
   font-size: 13px;
   font-weight: 600;
-  color: #475569;
+  color: #6a6560;
   white-space: nowrap;
 }
 
@@ -1371,26 +1356,26 @@ function resetToAgentPrompt() {
   background: rgba(241, 245, 249, 0.6);
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: #9a9588;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .effort-btn:hover {
   background: rgba(226, 232, 240, 0.8);
-  color: #475569;
+  color: #6a6560;
 }
 
 .effort-btn.active {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #d4c4b0, #c4b0a0);
   border-color: transparent;
   color: white;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 2px 8px rgba(212, 196, 176, 0.3);
 }
 
 /* 响应式 */
 @media (max-width: 1024px) {
-  .settings-panel-3d {
+  .settings-panel {
     position: absolute;
     right: 0;
     height: 100%;

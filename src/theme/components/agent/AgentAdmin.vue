@@ -2,11 +2,11 @@
   <div class="agent-admin-wrapper" v-if="visible">
     <Teleport to="body">
       <Transition name="archive">
-        <div class="glass-archive-overlay" @click.self="close">
+        <div class="archive-overlay" @click.self="close">
           <!-- 主容器 - 液态玻璃档案馆 -->
-          <div class="glass-archive-container" :class="{ 'config-mode': selectedAgent }">
+          <div class="archive-container" :class="{ 'config-mode': selectedAgent }">
             <!-- 顶部导航 - 液态玻璃条 -->
-            <header class="glass-nav-bar">
+            <header class="nav-bar">
               <div class="nav-brand">
                 <div class="brand-icon-wrapper">
                   <Icon name="bot" class="brand-icon" />
@@ -160,6 +160,31 @@
               <div v-else-if="currentView === 'mcp'" key="mcp" class="view-mcp">
                 <MCPConfigPanel />
               </div>
+
+              <!-- 任务管理 -->
+              <div v-else-if="currentView === 'tasks'" key="tasks" class="view-tasks">
+                <TaskManager />
+              </div>
+
+              <!-- 日志监控 -->
+              <div v-else-if="currentView === 'logs'" key="logs" class="view-logs">
+                <LogViewer />
+              </div>
+
+              <!-- 文件管理 -->
+              <div v-else-if="currentView === 'files'" key="files" class="view-files">
+                <FileManager />
+              </div>
+
+              <!-- 文章管理 -->
+              <div v-else-if="currentView === 'articles'" key="articles" class="view-articles">
+                <ArticleManager />
+              </div>
+
+              <!-- Git 管理 -->
+              <div v-else-if="currentView === 'git'" key="git" class="view-git">
+                <GitManager />
+              </div>
             </main>
           </div>
         </div>
@@ -257,6 +282,11 @@ import AgentConfigPanel from './AgentConfigPanel.vue'
 import SkillsManager from './SkillsManager.vue'
 import MemoryManager from './MemoryManager.vue'
 import MCPConfigPanel from './MCPConfigPanel.vue'
+import TaskManager from './TaskManager.vue'
+import LogViewer from './LogViewer.vue'
+import FileManager from './FileManager.vue'
+import ArticleManager from './ArticleManager.vue'
+import GitManager from './GitManager.vue'
 import { Icon } from '@/theme/components/common'
 import { LiquidGlass } from '@/theme/components/common'
 
@@ -285,12 +315,17 @@ const {
 } = useAgentConfig()
 
 // 当前视图
-const currentView = ref<'agents' | 'skills' | 'memory' | 'mcp'>('agents')
+const currentView = ref<'agents' | 'skills' | 'memory' | 'mcp' | 'tasks' | 'logs' | 'files' | 'articles' | 'git'>('agents')
 const navItems = computed(() => [
   { id: 'agents' as const, label: 'Agents', icon: 'users', badge: agents.value.length },
   { id: 'skills' as const, label: 'Skills', icon: 'zap', badge: skills.value.length },
   { id: 'memory' as const, label: 'Memory', icon: 'database' },
-  { id: 'mcp' as const, label: 'MCP', icon: 'cpu' }
+  { id: 'mcp' as const, label: 'MCP', icon: 'cpu' },
+  { id: 'tasks' as const, label: '任务', icon: 'list-checks' },
+  { id: 'logs' as const, label: '日志', icon: 'scroll-text' },
+  { id: 'files' as const, label: '文件', icon: 'folder-open' },
+  { id: 'articles' as const, label: '文章', icon: 'file-text' },
+  { id: 'git' as const, label: 'Git', icon: 'git-branch' }
 ])
 
 // 选中的 Agent
@@ -323,7 +358,7 @@ function close() {
   selectedAgent.value = null
 }
 
-function switchView(view: 'agents' | 'skills' | 'memory' | 'mcp') {
+function switchView(view: 'agents' | 'skills' | 'memory' | 'mcp' | 'tasks' | 'logs' | 'files' | 'articles' | 'git') {
   if (currentView.value === view) return
   currentView.value = view
   selectedAgent.value = null
@@ -385,47 +420,39 @@ async function executeDelete() {
 </script>
 
 <style scoped>
-/* 使用全局导入的 liquid-glass-theme.css */
-
 /* ===== 档案馆容器 ===== */
-.glass-archive-overlay {
+.archive-overlay {
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(20px);
+  background: rgba(0, 0, 0, 0.2);
   z-index: 1000;
   padding: 24px;
 }
 
-.glass-archive-container {
+.archive-container {
   width: 100%;
   max-width: 1400px;
   height: 85vh;
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(40px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 32px;
-  box-shadow: 
-    0 32px 64px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.5),
-    inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(200, 195, 188, 0.45);
+  border-radius: 24px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 /* ===== 顶部导航 ===== */
-.glass-nav-bar {
+.nav-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.6);
+  border-bottom: 1px solid rgba(200, 195, 188, 0.3);
 }
 
 .nav-brand {
@@ -465,10 +492,12 @@ async function executeDelete() {
   display: flex;
   gap: 8px;
   padding: 6px;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: #f8f6f3;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  max-width: 100%;
 }
 
 .nav-tab {
@@ -656,6 +685,8 @@ async function executeDelete() {
 
 .agent-card {
   padding: 24px;
+  border: 1px solid var(--sr-glass-border, rgba(0, 0, 0, 0.06));
+  border-radius: inherit;
 }
 
 .card-header {
@@ -825,7 +856,6 @@ async function executeDelete() {
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
   z-index: 1100;
   padding: 24px;
 }
@@ -963,12 +993,12 @@ async function executeDelete() {
 
 /* ===== 响应式 ===== */
 @media (max-width: 768px) {
-  .glass-archive-container {
+  .archive-container {
     height: 95vh;
     border-radius: 24px;
   }
   
-  .glass-nav-bar {
+  .nav-bar {
     flex-wrap: wrap;
     gap: 12px;
   }

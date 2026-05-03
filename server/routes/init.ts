@@ -212,23 +212,22 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
   // 后台任务调度器已移除(随 agent 模块一起移除)
 
 
-  // API请求日志中间件 - 使用 system 日志(版本2 - 绕过缓存问题)
+  // API请求日志中间件 - 已关闭(减少控制台输出)
+  // 如需调试API请求,取消下面注释即可
+  /*
   server.middlewares.use("/api/", (req, res, next) => {
     const startTime = Date.now();
     const url = req.url || "";
 
-    // 记录请求开始
     system.debug("api.request", `${req.method} ${url}`, {
       metadata: { method: req.method, url },
     });
 
-    // 监听响应完成
     const originalEnd = res.end.bind(res);
     res.end = function (...args: any[]) {
       const duration = Date.now() - startTime;
       const status = res.statusCode || 200;
 
-      // 记录响应
       if (status >= 400) {
         system.error(
           "api.response",
@@ -246,6 +245,7 @@ export function registerInitRoutes(server: ViteDevServer, ctx: RouteContext) {
 
     next();
   });
+  */
 
   server.middlewares.use(
     "/api/files/read",

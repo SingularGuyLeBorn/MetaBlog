@@ -47,6 +47,30 @@ html {
   --sr-accent-purple: #a898a8;
   --sr-accent-blue: #98a8b8;
   
+  /* 扩展莫兰迪色系 */
+  --sr-morandi-rose: #c4a8a0;
+  --sr-morandi-lavender: #b0a8b8;
+  --sr-morandi-sky: #a8b4c0;
+  --sr-morandi-mint: #a8c0b0;
+  --sr-morandi-sand: #c8b8a0;
+  --sr-morandi-stone: #b0aca8;
+  --sr-morandi-coral: #c9a898;
+  --sr-morandi-olive: #b0b898;
+  --sr-morandi-teal: #98b0a8;
+  --sr-morandi-amber: #c8b090;
+  --sr-morandi-slate: #a8a8b0;
+  --sr-morandi-clay: #b8a8a0;
+  
+  /* 状态色 - 莫兰迪低饱和版本 */
+  --sr-status-success: #a8b3a8;
+  --sr-status-success-bg: rgba(168, 179, 168, 0.12);
+  --sr-status-warning: #c8b090;
+  --sr-status-warning-bg: rgba(200, 176, 144, 0.12);
+  --sr-status-error: #c9a8a0;
+  --sr-status-error-bg: rgba(201, 168, 160, 0.12);
+  --sr-status-info: #9aa8b3;
+  --sr-status-info-bg: rgba(154, 168, 179, 0.12);
+  
   /* 文字色 - 柔和对比 */
   --sr-text-primary: #2d2a26;
   --sr-text-secondary: #6a6560;
@@ -54,11 +78,11 @@ html {
   --sr-text-tertiary: #b8b3a8;
   
   /* 玻璃拟态 - 浅色 */
-  --sr-glass-bg: rgba(255, 255, 255, 0.6);
-  --sr-glass-bg-hover: rgba(255, 255, 255, 0.85);
-  --sr-glass-border: rgba(255, 255, 255, 0.5);
-  --sr-glass-border-strong: rgba(200, 195, 188, 0.4);
-  --sr-glass-blur: blur(20px);
+  --sr-glass-bg: #f8f6f3;
+  --sr-glass-bg-hover: #fff;
+  --sr-glass-border: #e2e8f0;
+  --sr-glass-border-strong: #cbd5e1;
+  --sr-glass-blur: none;
   
   /* 新拟物 - 浅灰背景 */
   --sr-neu-bg: #e8e4dd;
@@ -193,34 +217,19 @@ html {
 /* ===== 玻璃拟态卡片 - 浅色 ===== */
 .glass-card {
   background: var(--sr-glass-bg);
-  backdrop-filter: var(--sr-glass-blur);
-  -webkit-backdrop-filter: var(--sr-glass-blur);
   border: 1px solid var(--sr-glass-border);
   border-radius: var(--sr-radius-lg);
-  box-shadow: 
-    0 4px 24px rgba(0, 0, 0, 0.04),
-    0 1px 2px rgba(0, 0, 0, 0.02),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  transition: 
-    transform 0.3s var(--sr-spring-bounce),
-    box-shadow 0.3s var(--sr-ease-out),
-    background 0.3s ease;
+  transition: background 0.3s ease;
 }
 
 .glass-card-hover:hover {
-  transform: translateY(-4px) scale(1.01);
   background: var(--sr-glass-bg-hover);
-  box-shadow: 
-    0 12px 48px rgba(0, 0, 0, 0.08),
-    0 4px 12px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border-color: var(--sr-glass-border-strong);
 }
 
 /* 玻璃面板 */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(40px) saturate(1.5);
-  -webkit-backdrop-filter: blur(40px) saturate(1.5);
+  background: #f8f6f3;
   border: 1px solid var(--sr-glass-border);
   border-radius: var(--sr-radius-xl);
 }
@@ -579,6 +588,35 @@ html {
 .sr-tag-morandi-blue { border-color: rgba(154, 168, 179, 0.4); color: #788898; }
 .sr-tag-morandi-green { border-color: rgba(168, 179, 168, 0.4); color: #889888; }
 .sr-tag-morandi-purple { border-color: rgba(179, 168, 184, 0.4); color: #988898; }
+
+/* ===== lg-input（液态玻璃输入框，兼容旧组件） ===== */
+.lg-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--sr-glass-bg, rgba(255, 255, 255, 0.6));
+  border: 1px solid var(--sr-glass-border-strong, rgba(0, 0, 0, 0.08));
+  border-radius: var(--sr-radius-md, 10px);
+  color: var(--sr-text-primary, #1a1a2e);
+  font-size: 0.9375rem;
+  font-family: inherit;
+  line-height: 1.5;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  resize: vertical;
+}
+
+.lg-input:hover {
+  background: var(--sr-glass-bg-hover, rgba(255, 255, 255, 0.8));
+}
+
+.lg-input:focus {
+  outline: none;
+  border-color: var(--sr-morandi-purple, #b8a090);
+  box-shadow: 0 0 0 3px rgba(184, 160, 144, 0.15);
+}
+
+.lg-input::placeholder {
+  color: var(--sr-text-muted, #94a3b8);
+}
 
 /* ===== 分隔线 ===== */
 .sr-divider {

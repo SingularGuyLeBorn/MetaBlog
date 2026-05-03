@@ -292,12 +292,44 @@ export interface DeepSeekStreamChunk {
 /**
  * StreamCallbacks 接口定义
  *
+ * V2 扩展：增加阶段变化、工具调用、增量更新等回调.
+ * 旧字段(onContent/onReasoning)保持兼容,新字段均为可选.
  */
 export interface StreamCallbacks {
+  /** 传统内容回调(完整内容,非增量) */
   onContent: (content: string) => void
+  /** 传统推理回调(完整推理内容) */
   onReasoning: (reasoning: string) => void
+  /** 思考步骤回调(兼容旧接口) */
+  onThinkingStep?: (step: ThinkingStep) => void
+  /** 工具记录回调(兼容旧接口) */
+  onToolRecord?: (record: ToolCallRecord) => void
+  /** Token 用量回调 */
+  onUsage?: (usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number }) => void
+  /** Token 估算回调 */
+  onTokenEstimate?: (estimate: number) => void
+  /** 完成回调 */
   onComplete: () => void
+  /** 错误回调 */
   onError: (error: Error) => void
+
+  // === V2 新增回调(可选) ===
+  /** 阶段变化 */
+  onPhaseChange?: (phase: import('./stream').StreamPhase, prevPhase: import('./stream').StreamPhase) => void
+  /** 流式进度(包含所有 buffer 的实时更新) */
+  onStreamProgress?: (progress: import('./stream').StreamProgress) => void
+  /** 推理内容增量 */
+  onReasoningDelta?: (delta: string, full: string) => void
+  /** 最终回复增量(仅在 responding 阶段回调) */
+  onContentDelta?: (delta: string, full: string) => void
+  /** 中间文本增量(仅在 thinking 阶段回调) */
+  onIntermediateDelta?: (delta: string, full: string) => void
+  /** 工具调用开始 */
+  onToolCallStart?: (item: import('./stream').ToolChainItem) => void
+  /** 工具调用更新 */
+  onToolCallUpdate?: (item: import('./stream').ToolChainItem) => void
+  /** 工具调用完成 */
+  onToolCallComplete?: (item: import('./stream').ToolChainItem) => void
 }
 
 // ═══════════════════════════════════════════════════════════════
