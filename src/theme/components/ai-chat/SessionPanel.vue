@@ -139,6 +139,29 @@ const editInput = ref<HTMLInputElement | null>(null)
 // 存储每个会话的 input ref
 const inputRefs = ref<Record<string, HTMLInputElement>>({})
 
+/**
+ * 自然排序：把字符串按数字和非数字分段比较
+ * 示例：'新对话 1' < '新对话 2' < '新对话 10'
+ */
+function naturalSort(a: string, b: string): number {
+  const re = /(\d+)|(\D+)/g
+  const aParts = a.match(re) || []
+  const bParts = b.match(re) || []
+
+  for (let i = 0; i < Math.min(aParts.length, bParts.length); i++) {
+    const aNum = parseInt(aParts[i], 10)
+    const bNum = parseInt(bParts[i], 10)
+
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+      if (aNum !== bNum) return aNum - bNum
+    } else {
+      if (aParts[i] !== bParts[i]) return aParts[i].localeCompare(bParts[i])
+    }
+  }
+
+  return aParts.length - bParts.length
+}
+
 const filteredGroups = computed(() => {
   let sessions = props.sessions
   
@@ -168,9 +191,9 @@ const filteredGroups = computed(() => {
     }
   })
 
-  // 每组内按更新时间降序排列（最新的在最上面）
+  // 每组内按标题自然排序（和本地文件夹顺序一致：1, 2, ..., 10）
   groups.forEach(g => {
-    g.sessions.sort((a, b) => b.updatedAt - a.updatedAt)
+    g.sessions.sort((a, b) => naturalSort(a.title, b.title))
   })
 
   return groups.filter(g => g.sessions.length > 0)
