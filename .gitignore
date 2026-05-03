@@ -26,7 +26,7 @@ web-access/
 # pnpm workspace (auto-generated)
 pnpm-workspace.yaml
 
-# 临时文件目录(临时/实验性文件统一放这�?禁止散落在根目录)
+# 临时文件目录(临时/实验性文件统一放这里，禁止散落在根目录)
 tmp/*
 !tmp/.gitkeep
 
@@ -35,7 +35,8 @@ __pycache__/
 *.pyc
 *.pyo
 
-# 外部二进制工具和 AI 模型（体积大，不提交 git�?# Piper TTS + Whisper ASR 的可执行文件、DLL、模型权重等
+# 外部二进制工具和 AI 模型（体积大，不提交 git）
+# Piper TTS + Whisper ASR 的可执行文件、DLL、模型权重等
 vendor/**/*
 !vendor/README.md
 /project/
