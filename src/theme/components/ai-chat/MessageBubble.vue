@@ -3,7 +3,7 @@
   紧凑单行 timeline indicator + 玻璃拟态卡片
 -->
 <template>
-  <div class="message-wrapper" :class="[message.role, { last: isLast }]">
+  <div :id="'msg-' + message.id" class="message-wrapper" :class="[message.role, { last: isLast }]">
     <!-- 用户消息 -->
     <div v-if="message.role === 'user'" class="user-message">
       <div class="user-bubble-wrapper">
@@ -209,6 +209,15 @@
         <!-- 操作按钮 -->
         <div class="message-actions">
           <span v-if="!isStreaming" class="token-badge">{{ formatTokenCount(tokenCount) }} tokens</span>
+          <button
+            v-if="message.role === 'assistant' && !isStreaming"
+            class="action-btn"
+            :class="{ speaking: isSpeaking }"
+            @click="handleSpeak"
+          >
+            <Icon :name="isSpeaking ? 'square' : 'volume-2'" :size="14" />
+            <span>{{ isSpeaking ? '停止' : '朗读' }}</span>
+          </button>
           <button class="action-btn" :class="{ copied }" @click="copyContent">
             <Icon :name="copied ? 'check' : 'copy'" :size="14" />
             <span>{{ copied ? '已复制' : '复制' }}</span>
@@ -235,16 +244,17 @@ import { estimateTextTokens, formatTokenCount } from '@/theme/utils/tokenEstimat
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
 import markedKatex from 'marked-katex-extension'
+import { useVoice } from '@/theme/composables/useVoice'
 import { computed, onMounted, ref, watch } from 'vue'
 import 'katex/dist/katex.min.css'
 
-// 启用 GFM（表格、任务列表、删除线等）
+// 启用 GFM(表格、任务列表、删除线等)
 marked.use({ gfm: true })
 
 // 启用 LaTeX 公式渲染
 marked.use(markedKatex({ throwOnError: false, nonStandard: true }))
 
-// 图片 URL 代理（绕过微信/知乎防盗链）
+// 图片 URL 代理(绕过微信/知乎防盗链)
 const proxyImageRenderer = new marked.Renderer()
 proxyImageRenderer.image = ({ href, title, text }: any) => {
   const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(href)}`
@@ -280,6 +290,20 @@ const copied = ref(false)
 const expandedItems = ref<Record<string, boolean>>({})
 const resultExpandedMap = ref<Record<string, boolean>>({})
 
+// TTS
+const { speak, stopSpeaking, status: voiceStatus } = useVoice()
+const isSpeaking = computed(() => voiceStatus.value === 'speaking')
+
+async function handleSpeak() {
+  if (isSpeaking.value) {
+    stopSpeaking()
+    return
+  }
+  const text = props.message.content
+  if (!text.trim()) return
+  await speak(text)
+}
+
 const RESULT_TRUNCATE_LENGTH = 1200
 
 function isResultExpanded(itemId: string): boolean {
@@ -300,7 +324,7 @@ function formatToolResult(result: any, itemId: string): string {
   if (str.length <= RESULT_TRUNCATE_LENGTH || isResultExpanded(itemId)) {
     return str
   }
-  return str.slice(0, RESULT_TRUNCATE_LENGTH) + '\n\n... [内容已截断，点击展开查看全部]'
+  return str.slice(0, RESULT_TRUNCATE_LENGTH) + '\n\n... [内容已截断,点击展开查看全部]'
 }
 
 // 从单个工具记录中提取链接(用于 timeline 中每个 tool_call 项)
@@ -353,7 +377,7 @@ const entityLinks = computed((): EntityLink[] => {
   return extractAllEntityLinks(props.message.metadata.toolRecords)
 })
 
-// 初始化折叠状态：thinking 默认展开，tool_call 默认折叠
+// 初始化折叠状态：thinking 默认展开,tool_call 默认折叠
 watch(
   timelineItems,
   (items) => {
@@ -454,15 +478,62 @@ function toolIcon(name?: string): string {
   return '🔧'
 }
 
+/**
+ * 预处理 Markdown,修复表格行中公式包含 | 管道符的问题
+ *
+ * Markdown 表格使用 | 作为列分隔符,公式如 $Q(y|x)$ 中的 | 会被错误分割. 
+ * 本函数检测表格区域,将表格行公式中的 | 替换为 \vert(LaTeX 等价符号),
+ * 确保 marked 的 GFM 表格解析器正确处理. 
+ *
+ * @param markdown - 原始 Markdown 文本
+ * @returns 预处理后的 Markdown 文本
+ */
+function preprocessMarkdownForTables(markdown: string): string {
+  const lines = markdown.split('\n')
+  const result: string[] = []
+  let inTable = false
+
+  // 判断是否是表格行(以 | 开头或结尾)
+  const isTableLine = (line: string): boolean => /^\s*\|/.test(line) || /\|\s*$/.test(line)
+  // 判断是否是表格分隔行 |---|---|
+  const isTableDivider = (line: string): boolean => /^\s*\|?[-:\|\s]+\|?\s*$/.test(line)
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+
+    // 检测表格开始：当前行是表格行,且下一行是分隔行
+    if (!inTable && isTableLine(line) && i + 1 < lines.length && isTableDivider(lines[i + 1])) {
+      inTable = true
+    }
+
+    if (inTable) {
+      if (!isTableLine(line) && !isTableDivider(line)) {
+        inTable = false
+        result.push(line)
+      } else {
+        // 保护表格行公式中的 |：将 $...$ 内的 | 替换为 \vert
+        result.push(
+          line.replace(/\$[^$\n]*\$/g, (match) => match.replace(/\|/g, '\\vert'))
+        )
+      }
+    } else {
+      result.push(line)
+    }
+  }
+
+  return result.join('\n')
+}
+
 const markdownCache = new Map<string, string>()
 function renderMarkdown(content: string): string {
   if (!content) return ''
-  const cached = markdownCache.get(content)
+  const processed = preprocessMarkdownForTables(content)
+  const cached = markdownCache.get(processed)
   if (cached !== undefined) return cached
   try {
-    const raw = marked.parse(content, { async: false }) as string
+    const raw = marked.parse(processed, { async: false }) as string
     const html = DOMPurify.sanitize(raw)
-    markdownCache.set(content, html)
+    markdownCache.set(processed, html)
     return html
   } catch {
     return content
@@ -546,7 +617,8 @@ function doParseHtml() {
   }
   try {
     if (props.message.role === 'assistant') {
-      renderedHtml.value = DOMPurify.sanitize(marked.parse(content) as string)
+      const processed = preprocessMarkdownForTables(content)
+      renderedHtml.value = DOMPurify.sanitize(marked.parse(processed) as string)
     } else {
       renderedHtml.value = content
     }
@@ -566,7 +638,7 @@ watch(
       doParseHtml()
       return
     }
-    // 流式时 throttle，避免每帧都 parse 导致 O(n²) 卡顿
+    // 流式时 throttle,避免每帧都 parse 导致 O(n²) 卡顿
     if (parseTimer) return
     parseTimer = setTimeout(() => {
       parseTimer = null
@@ -1119,6 +1191,18 @@ async function copyContent() {
   color: #889888;
   border-color: rgba(168, 179, 168, 0.5);
   background: rgba(168, 179, 168, 0.12);
+}
+
+.action-btn.speaking {
+  color: #d97706;
+  border-color: rgba(217, 119, 6, 0.4);
+  background: rgba(217, 119, 6, 0.1);
+  animation: pulse-speak 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-speak {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 /* mention capsule */

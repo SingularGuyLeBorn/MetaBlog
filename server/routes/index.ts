@@ -1,9 +1,20 @@
 /**
  * ============================================================================
+ * 路由模块 - index
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server/routes
+ */
+
+
+/**
+ * ============================================================================
  * 路由统一导出入口
  * ============================================================================
  *
- * 按领域分组导入，vitepress-integration.ts 只需 import 本文件即可。
+ * 按领域分组导入,vitepress-integration.ts 只需 import 本文件即可. 
  */
 
 // ─── 初始化与文件 ───
@@ -26,6 +37,7 @@ export { registerSandboxRoutes } from "./internal/sandbox";
 export { registerSessionsRoutes } from "./internal/sessions";
 export { registerSkillsRoutes } from "./internal/skills";
 export { registerOCRRoutes } from "./internal/ocr";
+export { registerVoiceRoutes } from "./internal/voice";
 
 // ─── Agent 相关 ───
 export { registerAgentNativeRoutes } from "./agent/agent-native";

@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * vitepress-integration 模块
+ * ============================================================================
+ *
+ * 本文件属于 MetaBlog 项目,遵循项目注释规范. 
+ *
+ * @module server
+ */
+
+
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
@@ -9,20 +20,20 @@ import { loadEnv } from "vite";
 // ═════════════════════════════════════════════════════════════════════════════
 //
 // 背景问题：
-//   server/routes/chat.ts 中的 MODEL_CONFIGS 是模块级常量，在 import 时就初始化。
-//   而 .vitepress/config.ts 中的 Object.assign(process.env, ...) 在配置加载时才执行。
-//   如果 chat.ts 被 import 的时间早于 config.ts 的 Object.assign，
-//   process.env 中还没有 .env 的变量，导致 apiKey 为空。
+//   server/routes/chat.ts 中的 MODEL_CONFIGS 是模块级常量,在 import 时就初始化. 
+//   而 .vitepress/config.ts 中的 Object.assign(process.env, ...) 在配置加载时才执行. 
+//   如果 chat.ts 被 import 的时间早于 config.ts 的 Object.assign,
+//   process.env 中还没有 .env 的变量,导致 apiKey 为空. 
 //
 // 解决方案：
-//   在 vitepress-integration.ts(server 的 entry 点)顶部，
-//   使用 Vite 内置的 loadEnv 提前将 .env 加载到 process.env 中。
-//   这样所有 server 模块在 import 时都能读取到正确的环境变量。
+//   在 vitepress-integration.ts(server 的 entry 点)顶部,
+//   使用 Vite 内置的 loadEnv 提前将 .env 加载到 process.env 中. 
+//   这样所有 server 模块在 import 时都能读取到正确的环境变量. 
 //
 // 社区最佳实践：
-//   - API Key 等敏感配置只存在于服务端，不以 VITE_ 前缀暴露给前端
-//   - 服务端在启动时一次性加载 .env，而非每次请求时读取
-//   - 配置使用 process.env 读取，不依赖模块加载顺序
+//   - API Key 等敏感配置只存在于服务端,不以 VITE_ 前缀暴露给前端
+//   - 服务端在启动时一次性加载 .env,而非每次请求时读取
+//   - 配置使用 process.env 读取,不依赖模块加载顺序
 //
 const envFromFile = loadEnv("", process.cwd(), "");
 Object.assign(process.env, envFromFile);
@@ -41,6 +52,7 @@ import {
   registerMcpRoutes,
   registerMemoriesRoutes,
   registerOCRRoutes,
+  registerVoiceRoutes,
   registerPlatformParserRoutes,
   registerProxyRoutes,
   registerSandboxRoutes,
@@ -219,16 +231,30 @@ function gitCommit(files: string | string[], message: string) {
 
 }
 
+/**
+ * Vite 路由插件 —— 修复 VitePress 默认路由无法匹配 folder-note 的问题
+ *
+ * 设计背景：
+ * VitePress 默认将 /attention 映射到 /attention.md,但本项目使用 folder-note 结构
+ * (/attention/attention.md). 本插件在运行时重写 URL,使 folder-note 能正常访问. 
+ *
+ * 附加功能：
+ * - URL 中文路径解码(如 /%E7%9B%AE%E5%BD%95 → /目录)
+ * - 跳过 API 路由和静态资源(以 /api/、/assets/ 开头的不处理)
+ * - SSR 阶段生成所有 pages 的链接映射,供导航使用
+ *
+ * @returns Vite 插件对象
+ */
 export const metaBlogRoutingPlugin = (): Plugin => ({
   name: "meta-blog-routing",
   configureServer(server: ViteDevServer) {
     /**
      * Bug Fix: Task 1 - 叶子文档变文件夹后的路由处理
      *
-     * 问题：当 A.md 变成 A/A.md 后，访问 /sections/posts/A/ 报 404
-     * 原因：VitePress 的 rewrites 在启动时生成，运行时不会更新
-     * 解决：在请求到达 VitePress 之前，动态检测 folder-note 模式，
-     *      将请求重写到 VitePress 的 @fs 路径，让其直接渲染文件
+     * 问题：当 A.md 变成 A/A.md 后,访问 /sections/posts/A/ 报 404
+     * 原因：VitePress 的 rewrites 在启动时生成,运行时不会更新
+     * 解决：在请求到达 VitePress 之前,动态检测 folder-note 模式,
+     *      将请求重写到 VitePress 的 @fs 路径,让其直接渲染文件
      */
 
     // 辅助函数：检查路径是否是 folder-note 模式
@@ -290,8 +316,8 @@ export const metaBlogRoutingPlugin = (): Plugin => ({
           /\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico|json)(\?|$)/,
         )
       ) {
-        // 对于 API 请求，直接调用 next()，让后续的 BFF 中间件处理
-        // 不要在此时返回，以确保请求继续传递到下一个中间件
+        // 对于 API 请求,直接调用 next(),让后续的 BFF 中间件处理
+        // 不要在此时返回,以确保请求继续传递到下一个中间件
         if (rawUrl.startsWith("/api/")) {
           next();
           return;
@@ -305,8 +331,8 @@ export const metaBlogRoutingPlugin = (): Plugin => ({
         console.log("[Routing] Processing:", url);
 
         // Redirect paths without trailing slash to have trailing slash
-        // FIX: 只处理 folder-note 模式的目录路径，不处理 .html 文件
-        // cleanUrls: false 时，叶子节点 URL 是 /path/file.html
+        // FIX: 只处理 folder-note 模式的目录路径,不处理 .html 文件
+        // cleanUrls: false 时,叶子节点 URL 是 /path/file.html
         const isFile = url.match(/\.(html|md)$/);
         if (!url.endsWith("/") && !isFile) {
           res.statusCode = 301;
@@ -328,8 +354,8 @@ export const metaBlogRoutingPlugin = (): Plugin => ({
         // 运行时 folder-note 热更新处理
         const folderInfo = getFolderNoteInfo(url);
         if (folderInfo) {
-          // 重写为 VitePress 路由路径，让 VitePress 正常渲染 markdown
-          // (不用 @fs，@fs 会绕过 VitePress 的 frontmatter 解析和页面数据生成)
+          // 重写为 VitePress 路由路径,让 VitePress 正常渲染 markdown
+          // (不用 @fs,@fs 会绕过 VitePress 的 frontmatter 解析和页面数据生成)
           const urlWithoutSlash = url.replace(/\/$/, "");
           const folderName = urlWithoutSlash.split("/").pop();
           const newUrl = `${urlWithoutSlash}/${folderName}`;
@@ -361,11 +387,22 @@ export const metaBlogRoutingPlugin = (): Plugin => ({
   },
 });
 
+/**
+ * Vite BFF 插件 —— 注册所有 BFF 路由和工具链
+ *
+ * 职责：
+ * 1. 优先加载 .env 到 process.env(确保后续 server 模块能读到配置)
+ * 2. 注册所有路由模块：init、chat、content、skills、sessions、agent、GitHub、Lark、Yuque、search、platform
+ * 3. 禁用 full-reload(保留 SPA 状态,避免聊天页面刷新丢失上下文)
+ * 4. 提供 system/structuredLog 统一日志和 Git commit 辅助函数
+ *
+ * @returns Vite 插件对象
+ */
 export const metaBlogBffPlugin = (): Plugin => ({
   name: "meta-blog-bff",
   configureServer(server: ViteDevServer) {
     const triggerReload = () => {
-      // 已禁用 full-reload，避免聊天页面状态丢失
+      // 已禁用 full-reload,避免聊天页面状态丢失
       console.log("[HMR] Trigger reload ignored to preserve SPA state");
     };
 
@@ -384,6 +421,7 @@ export const metaBlogBffPlugin = (): Plugin => ({
     registerSessionsRoutes(server, ctx);
     registerChatRoutes(server, ctx);
     registerOCRRoutes(server, ctx);
+    registerVoiceRoutes(server, ctx);
     registerSandboxRoutes(server);
     registerLarkRoutes(server, ctx);
     registerYuqueRoutes(server, ctx);
@@ -392,8 +430,8 @@ export const metaBlogBffPlugin = (): Plugin => ({
     registerSearchRoutes(server, ctx);
   },
   handleHotUpdate({ file }) {
-    // 只忽略数据目录的变更，避免不必要的 HMR
-    // 正常的 markdown 文件变更让 VitePress 自行处理，确保 frontmatter 更新后页面数据正确刷新
+    // 只忽略数据目录的变更,避免不必要的 HMR
+    // 正常的 markdown 文件变更让 VitePress 自行处理,确保 frontmatter 更新后页面数据正确刷新
     if (file.includes(path.sep + "data" + path.sep) || file.includes(path.sep + ".trash" + path.sep)) {
       return [];
     }

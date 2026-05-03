@@ -108,7 +108,19 @@
     </div>
 
     <!-- 主输入区域 -->
-    <div class="input-container-3d" :class="{ focused: isFocused, 'has-attachments': attachments.length > 0, 'has-queue': props.taskQueue && props.taskQueue.length > 0 }">
+    <div class="input-container-3d" :class="{ focused: isFocused, 'has-attachments': attachments.length > 0, 'has-queue': props.taskQueue && props.taskQueue.length > 0, recording: isRecording }">
+      <!-- 语音按钮 -->
+      <button
+        class="voice-btn-3d"
+        :class="{ recording: isRecording, transcribing: isTranscribing }"
+        :disabled="isStreaming || isTranscribing"
+        @click="toggleRecording"
+        :title="isRecording ? '点击停止录音' : '点击开始语音输入'"
+      >
+        <Icon :name="isRecording ? 'square' : 'mic'" :size="20" />
+        <span v-if="isTranscribing" class="voice-spinner"></span>
+      </button>
+
       <!-- 附件按钮 -->
       <div class="attach-menu-wrapper">
         <button 
@@ -189,7 +201,9 @@
         <span class="hint-key">/</span>
         <span>技能 ·</span>
         <span class="hint-key">@</span>
-        <span>引用</span>
+        <span>引用 ·</span>
+        <span class="hint-key">Mic</span>
+        <span>语音</span>
       </template>
       <template v-else>
         <span class="hint-key" style="color: #f59e0b;">处理中</span>
@@ -248,6 +262,7 @@ import { Icon } from '@/theme/components/common'
 import MentionInput, { type Mention } from '@/theme/components/common/MentionInput.vue'
 import type { Skill } from '@/theme/types/agent'
 import type { MessageAttachment } from '@/theme/types/chat'
+import { useVoice } from '@/theme/composables/useVoice'
 import { estimateTextTokens } from '@/theme/utils/tokenEstimator'
 import { computed, ref, watch } from 'vue'
 
@@ -287,6 +302,9 @@ const imageInputRef = ref<HTMLInputElement>()
 const videoInputRef = ref<HTMLInputElement>()
 const fileInputRef = ref<HTMLInputElement>()
 
+// 语音
+const { status: voiceStatus, startRecording, stopRecording, transcribeAudio } = useVoice()
+
 // 状态
 const inputValue = ref(props.modelValue)
 const currentSkill = ref<Skill | undefined>()
@@ -308,6 +326,9 @@ const canSend = computed(() => {
   // AI 处理中仍可输入,消息会自动加入队列
   return hasText || hasAttachments
 })
+
+const isRecording = computed(() => voiceStatus.value === 'recording')
+const isTranscribing = computed(() => voiceStatus.value === 'transcribing')
 
 const inputTokenCount = computed(() => {
   const text = inputValue.value.trim()
@@ -335,6 +356,25 @@ function getPlaceholder(): string {
 
 function toggleAttachMenu() {
   showAttachMenu.value = !showAttachMenu.value
+}
+
+// 语音输入：点击开始录音，再次点击停止并识别
+async function toggleRecording() {
+  if (isRecording.value) {
+    const blob = stopRecording()
+    if (blob) {
+      const text = await transcribeAudio(blob, 'zh')
+      if (text) {
+        inputValue.value = inputValue.value ? inputValue.value + ' ' + text : text
+        emit('update:modelValue', inputValue.value)
+      }
+    }
+  } else {
+    const ok = await startRecording()
+    if (!ok) {
+      alert('无法访问麦克风，请检查浏览器权限设置')
+    }
+  }
 }
 
 function triggerImageInput() {
@@ -941,6 +981,61 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
 @keyframes pulse-stop {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.85; transform: scale(0.95); }
+}
+
+/* 语音按钮 */
+.voice-btn-3d {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.voice-btn-3d:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(248, 246, 243, 0.9), rgba(240, 237, 232, 0.9));
+  color: var(--sr-text-secondary, #6a6560);
+  border-color: rgba(184, 160, 144, 0.35);
+  transform: scale(1.05);
+}
+
+.voice-btn-3d:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.voice-btn-3d.recording {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border-color: rgba(239, 68, 68, 0.5);
+  animation: pulse-record 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-record {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+
+.voice-btn-3d.transcribing {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.voice-spinner {
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
 }
 
 /* 提示文字 */
