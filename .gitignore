@@ -39,3 +39,15 @@ __pycache__/
 vendor/**/*
 !vendor/README.md
 /project/
+
+# IDE
+.vscode/
+
+# TypeScript
+*.tsbuildinfo
+
+# Caches
+.eslintcache
+.stylelintcache
+.cache/
+.turbo/
