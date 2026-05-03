@@ -770,6 +770,12 @@ defineExpose({ focus() { mentionInputRef.value?.focus() } })
   border-radius: 20px;
 }
 
+.input-container-3d.has-queue {
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.03),
+    0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
 .input-container-3d:hover {
   transform: translateY(-1px);
   box-shadow: 
