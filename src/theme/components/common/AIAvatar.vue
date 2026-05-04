@@ -1,7 +1,7 @@
 <template>
   <div 
     class="ai-avatar"
-    :class="[`ai-avatar--${size}`, { 'ai-avatar--animated': animated }]`"
+    :class="[`ai-avatar--${size}`, { 'ai-avatar--animated': animated }]"
   >
     <div class="ai-avatar__inner">
       <!-- 四芒星 SVG 图标 -->

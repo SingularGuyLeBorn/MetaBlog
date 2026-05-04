@@ -67,31 +67,7 @@
           <div class="response-body" v-html="renderedHtml"></div>
         </div>
 
-        <!-- 长内容收纳提示 -->
-        <div
-          v-if="shouldStashContent && message.role === 'assistant'"
-          class="stash-banner"
-          @click="stashContent"
-        >
-          <Icon name="layers" :size="14" />
-          <span>内容较长，{{ contentLineCount }} 行 / {{ formatTokenCount(tokenCount) }} tokens</span>
-          <button class="stash-btn">
-            <Icon name="panel-right" :size="14" />
-            在侧边栏查看
-          </button>
-        </div>
-
-        <!-- 实体链接卡片(工具执行产生的可点击链接) -->
-        <div v-if="entityLinks.length > 0" class="entity-links-section">
-          <div class="entity-links-label">生成的链接</div>
-          <div class="entity-links-list">
-            <EntityLinkCard
-              v-for="link in entityLinks"
-              :key="link.url"
-              :link="link"
-            />
-          </div>
-        </div>
+        <!-- 实体链接已自动收纳到批量结果抽屉中 -->
 
         <!-- 思考中占位 -->
         <div v-else-if="isStreaming" class="typing-placeholder">
@@ -218,30 +194,30 @@ const tokenCount = computed(() => {
   return estimateTextTokens(content) + estimateTextTokens(reasoning)
 })
 
-const contentLineCount = computed(() => {
-  return (props.message.content || '').split('\n').length
-})
-
-const shouldStashContent = computed(() => {
-  return contentLineCount.value > 40 || (props.message.content || '').length > 3000
-})
-
-function stashContent() {
-  const content = props.message.content || ''
-  const title = content.slice(0, 40).replace(/[#*\n]/g, ' ').trim() + '...'
-  batchStore.addItem({
-    title,
-    type: 'generic',
-    content,
-    summary: `来自消息 #${props.message.id}，共 ${contentLineCount.value} 行`,
-  })
-}
-
 // 从工具记录中提取实体链接(飞书/GitHub/语雀等)
 const entityLinks = computed((): EntityLink[] => {
   if (!props.message.metadata?.toolRecords?.length) return []
   return extractAllEntityLinks(props.message.metadata.toolRecords)
 })
+
+// 自动将工具生成的链接收纳到批量结果抽屉（基于消息ID去重，只收链接不收正文）
+const linksStashedForMessage = new Set<string>()
+watch(entityLinks, (links) => {
+  if (links.length === 0) return
+  if (linksStashedForMessage.has(props.message.id)) return
+  linksStashedForMessage.add(props.message.id)
+  const toolNames = props.message.metadata?.toolRecords
+    ?.filter((r: any) => r?.result?.success)
+    ?.map((r: any) => r.name || r.toolName)
+    ?.join(', ') || '工具调用'
+  const linkTexts = links.map((l) => `- [${l.title || l.url}](${l.url})`).join('\n')
+  batchStore.addItem({
+    title: `${toolNames} 生成的 ${links.length} 个链接`,
+    type: 'document',
+    content: linkTexts,
+    summary: `来自消息 #${props.message.id.slice(-6)}`,
+  })
+}, { immediate: true })
 
 // ========== 打字机效果控制 ==========
 const TYPEWRISTER_KEY = 'ai_chat_shown_message_ids'

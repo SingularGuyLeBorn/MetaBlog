@@ -33,7 +33,7 @@ const KnowledgePage = defineAsyncComponent(() => import("./components/pages/Know
 const PostsPage = defineAsyncComponent(() => import("./components/pages/PostsPage.vue"));
 const ResourcesPage = defineAsyncComponent(() => import("./components/pages/ResourcesPage.vue"));
 
-const ChatLayout = defineAsyncComponent(() => import("./components/ai-chat/ChatLayout.vue").then(m => m.ChatLayout));
+const ChatLayout = defineAsyncComponent(() => import("./components/ai-chat/ChatLayout.vue"));
 const EditFab = defineAsyncComponent(() => import("./components/editor/EditFab.vue"));
 const InlineMarkdownEditor = defineAsyncComponent(() => import("./components/features/InlineMarkdownEditor.vue"));
 const KnowledgeGraph = defineAsyncComponent(() => import("./components/features/KnowledgeGraph.vue"));

@@ -1,7 +1,7 @@
 <template>
   <div 
     class="avatar"
-    :class="[`avatar--${size}`, { 'avatar--online': online }]`"
+    :class="[`avatar--${size}`, { 'avatar--online': online }]"
     :style="avatarStyle"
   >
     <img v-if="src" :src="src" :alt="alt" />

@@ -254,13 +254,15 @@ function toolIcon(name?: string): string {
 
 function getToolArgsSummary(args: Record<string, any>): string {
   if (!args || typeof args !== 'object') return ''
-  const priorityKeys = ['query', 'keyword', 'q', 'url', 'path', 'text', 'content', 'message']
+  // 优先显示人类可读的标题/名称类字段，而不是 ID 类字段
+  const priorityKeys = ['title', 'name', 'document_id', 'query', 'keyword', 'q', 'url', 'path', 'text', 'content', 'message']
   for (const key of priorityKeys) {
     if (args[key] && typeof args[key] === 'string') {
       const val = args[key] as string
       return val.length > 60 ? val.slice(0, 60) + '...' : val
     }
   }
+  // 如果 title/name/document_id 等都不存在，才回退到任意字符串值
   for (const val of Object.values(args)) {
     if (typeof val === 'string' && val.length > 0) {
       return val.length > 60 ? val.slice(0, 60) + '...' : val

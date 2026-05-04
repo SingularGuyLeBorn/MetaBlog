@@ -63,9 +63,10 @@
         @remove-from-queue="(index: number) => taskQueue.splice(index, 1)"
         @select-skill="handleSelectSkill"
       />
+
     </main>
 
-    <!-- 右侧对话导航栏 -->
+    <!-- 对话导航：透明背景悬浮组件，固定在页面右侧 -->
     <aside
       v-if="showNavigator && messages.length > 0"
       class="chat-navigator"
@@ -73,36 +74,36 @@
       @mouseenter="isHovering = true"
       @mouseleave="isHovering = false"
     >
-      <!-- 缩略模式：悬浮横条 -->
-      <div class="nav-bars">
+      <!-- 缩略模式：右侧几个小圆点 -->
+      <div class="nav-dots">
         <div
           v-for="item in messageNavItems"
           :key="item.id"
-          class="nav-bar"
+          class="nav-dot-indicator"
           :class="{ active: activeMessageId === item.id }"
-          :style="{ width: calculateBarWidth(item) }"
           :title="item.summary"
           @click="scrollToMessage(item.id)"
         />
       </div>
-      <!-- 展开模式：完整内容 -->
-      <div class="nav-content">
-        <div class="nav-header">
-          <span class="nav-title">对话导航</span>
-          <button class="nav-toggle" @click.stop="navCollapsed = !navCollapsed">
-            <Icon name="chevron-right" :size="14" />
-          </button>
+      <!-- 展开模式：圆角浮动卡片 -->
+      <div class="nav-card">
+        <div class="nav-card-header">
+          <span class="nav-card-title">对话导航</span>
         </div>
-        <div class="nav-list">
+        <div class="nav-card-list">
           <div
             v-for="item in messageNavItems"
             :key="item.id"
-            class="nav-item"
+            class="nav-card-item"
             :class="{ active: activeMessageId === item.id }"
             @click="scrollToMessage(item.id)"
           >
-            <span class="nav-dot" :class="{ active: activeMessageId === item.id }" />
-            <span class="nav-text">{{ item.summary }}</span>
+            <span class="nav-card-index">{{ item.index }}</span>
+            <span class="nav-card-text">{{ item.summary }}</span>
+            <span
+              v-if="activeMessageId === item.id"
+              class="nav-card-active-bar"
+            />
           </div>
         </div>
       </div>
@@ -241,26 +242,14 @@ const activeMessageId = ref('')
 
 // 用户消息导航项
 const messageNavItems = computed(() => {
-  return messages.value
-    .filter(m => m.role === 'user')
-    .map(m => {
-      const text = m.content.replace(/<[^>]+>/g, '').trim()
-      const summary = text.length > 20 ? text.slice(0, 20) + '…' : text || '无内容'
-      return { id: m.id, summary }
-    })
+  const userMessages = messages.value.filter(m => m.role === 'user')
+  const total = userMessages.length
+  return userMessages.map((m, idx) => {
+    const text = m.content.replace(/<[^>]+>/g, '').trim()
+    const summary = text.length > 20 ? text.slice(0, 20) + '…' : text || '无内容'
+    return { id: m.id, summary, index: `${idx + 1}/${total}` }
+  })
 })
-
-// 计算导航条宽度：当前消息最长，其他按摘要长度比例
-const MAX_BAR_WIDTH = 28
-const MIN_BAR_WIDTH = 8
-function calculateBarWidth(item: { id: string; summary: string }): string {
-  if (activeMessageId.value === item.id) {
-    return `${MAX_BAR_WIDTH}px`
-  }
-  const ratio = Math.min(1, item.summary.length / 20)
-  const width = MIN_BAR_WIDTH + (MAX_BAR_WIDTH - MIN_BAR_WIDTH) * ratio
-  return `${width}px`
-}
 
 function handleActiveMessageChange(messageId: string) {
   activeMessageId.value = messageId
@@ -854,159 +843,148 @@ async function handleExpandDialog(agent: Agent, dialogMessages: any[]) {
 }
 
 /* ========== 右侧对话导航栏 ========== */
+/* ========== 对话导航：透明背景悬浮组件 ========== */
 .chat-navigator {
-  width: 32px;
-  flex-shrink: 0;
-  background: rgba(184, 160, 144, 0.08);
-  border-left: 1px solid rgba(184, 160, 144, 0.15);
-  transition: width 0.25s ease, background 0.25s ease;
-  position: relative;
-  overflow: hidden;
+  position: fixed;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 200;
   cursor: default;
 }
 
-.chat-navigator:hover,
-.chat-navigator.expanded {
-  width: 180px;
-  background: rgba(248, 250, 252, 0.6);
-  border-left-color: var(--ai-border-light);
-}
-
-/* 缩略模式：悬浮横条 */
-.nav-bars {
+/* 缩略模式：右侧几个小圆点 */
+.nav-dots {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  padding: 16px 4px;
-  width: 100%;
-  height: 100%;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
 }
 
-.nav-bar {
-  height: 4px;
+.nav-dot-indicator {
+  width: 3px;
+  height: 16px;
   border-radius: 2px;
-  background: rgba(184, 160, 144, 0.35);
+  background: rgba(184, 160, 144, 0.25);
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
+}
+
+.nav-dot-indicator.active {
+  background: rgba(59, 130, 246, 0.6);
+  width: 4px;
+}
+
+.nav-dot-indicator:hover {
+  background: rgba(184, 160, 144, 0.5);
+}
+
+/* 展开模式：圆角浮动卡片 */
+.nav-card {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 240px;
+  max-height: 70vh;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.chat-navigator:hover .nav-card,
+.chat-navigator.expanded .nav-card {
+  display: flex;
+}
+
+.chat-navigator:hover .nav-dots,
+.chat-navigator.expanded .nav-dots {
+  display: none;
+}
+
+.nav-card-header {
+  padding: 12px 16px 8px;
   flex-shrink: 0;
 }
 
-.nav-bar.active {
-  background: rgba(184, 160, 144, 0.85);
-  height: 5px;
-  border-radius: 3px;
-}
-
-.nav-bar:hover {
-  background: rgba(184, 160, 144, 0.65);
-}
-
-.chat-navigator:hover .nav-bars,
-.chat-navigator.expanded .nav-bars {
-  display: none;
-}
-
-/* 展开内容 */
-.nav-content {
-  width: 180px;
-  height: 100%;
-  display: none;
-  flex-direction: column;
-}
-
-.chat-navigator:hover .nav-content,
-.chat-navigator.expanded .nav-content {
-  display: flex;
-}
-
-.nav-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px;
-  border-bottom: 1px solid var(--ai-border-light);
-}
-
-.nav-title {
-  font-size: 12px;
+.nav-card-title {
+  font-size: 11px;
   font-weight: 600;
   color: var(--ai-text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
+  letter-spacing: 0.8px;
 }
 
-.nav-toggle {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  color: var(--ai-text-tertiary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.nav-toggle:hover {
-  background: var(--ai-gray-100);
-  color: var(--ai-text-primary);
-}
-
-.nav-list {
+.nav-card-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 0;
+  padding: 4px 8px 12px;
 }
 
-.nav-item {
+.nav-card-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
-  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  position: relative;
 }
 
-.nav-item:hover {
-  background: rgba(184, 160, 144, 0.06);
-}
-
-.nav-item.active {
+.nav-card-item:hover {
   background: rgba(184, 160, 144, 0.08);
-  border-left-color: var(--vp-c-brand);
 }
 
-.nav-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--ai-gray-300);
+.nav-card-item.active {
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.nav-card-index {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ai-text-tertiary);
   flex-shrink: 0;
-  transition: all 0.2s;
+  min-width: 28px;
+  text-align: right;
 }
 
-.nav-dot.active {
-  background: var(--vp-c-brand);
-  box-shadow: 0 0 0 3px rgba(184, 160, 144, 0.15);
+.nav-card-item.active .nav-card-index {
+  color: rgba(59, 130, 246, 0.8);
+  font-weight: 600;
 }
 
-.nav-text {
+.nav-card-text {
   font-size: 12px;
   color: var(--ai-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.4;
+  flex: 1;
 }
 
-.nav-item.active .nav-text {
+.nav-card-item.active .nav-card-text {
   color: var(--ai-text-primary);
   font-weight: 500;
+}
+
+.nav-card-active-bar {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+  background: rgba(59, 130, 246, 0.6);
 }
 
 /* 小屏幕隐藏导航栏 */

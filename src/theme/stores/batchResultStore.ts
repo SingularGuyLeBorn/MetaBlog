@@ -24,6 +24,18 @@ const items = reactive<BatchResultItem[]>([])
 
 export function useBatchResultStore() {
   function addItem(item: Omit<BatchResultItem, 'id' | 'timestamp'>) {
+    // 去重：如果已有相同 title + content 的 item，不再重复添加
+    const existingIndex = items.findIndex(
+      (i) => i.title === item.title && i.content === item.content
+    )
+    if (existingIndex > -1) {
+      // 已存在，移到顶部并返回现有 ID
+      const existing = items[existingIndex]
+      items.splice(existingIndex, 1)
+      items.unshift(existing)
+      isOpen.value = true
+      return existing.id
+    }
     const newItem: BatchResultItem = {
       ...item,
       id: `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
