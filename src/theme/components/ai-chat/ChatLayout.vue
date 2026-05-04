@@ -66,11 +66,12 @@
 
     </main>
 
-    <!-- 对话导航：透明背景悬浮组件，固定在页面右侧 -->
+    <!-- 对话导航：透明背景悬浮组件，固定在主内容区右侧 / SettingsPanel 左侧边缘 -->
     <aside
       v-if="showNavigator && messages.length > 0"
       class="chat-navigator"
       :class="{ expanded: !navCollapsed || isHovering }"
+      :style="{ right: navRightPx + 'px' }"
       @mouseenter="isHovering = true"
       @mouseleave="isHovering = false"
     >
@@ -249,6 +250,17 @@ const messageNavItems = computed(() => {
     const summary = text.length > 20 ? text.slice(0, 20) + '…' : text || '无内容'
     return { id: m.id, summary, index: `${idx + 1}/${total}` }
   })
+})
+
+// 导航条右侧位置：SettingsPanel 展开时贴其左侧边缘，折叠时贴页面最右侧
+const SETTINGS_PANEL_WIDTH = 340
+const SETTINGS_COLLAPSED_WIDTH = 40
+const NAV_MARGIN = 8
+const navRightPx = computed(() => {
+  if (rightCollapsed.value) {
+    return NAV_MARGIN
+  }
+  return SETTINGS_PANEL_WIDTH + NAV_MARGIN
 })
 
 function handleActiveMessageChange(messageId: string) {
